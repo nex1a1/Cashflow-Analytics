@@ -50,11 +50,11 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const DEFAULT_DAY_TYPES = [
-    { id: 'WORK', label: 'ทำงาน', color: '#60a5fa' },     // ฟ้าสว่างขึ้นนิดนึง
-    { id: 'HOLIDAY', label: 'วันหยุด', color: '#f87171' }, // แดงสว่าง
-    { id: 'SICK', label: 'ป่วย', color: '#fb923c' },       // ส้มสว่าง
-    { id: 'LEAVE', label: 'ลากิจ', color: '#c084fc' },      // ม่วงสว่าง
-    { id: 'EVENT', label: 'กิจกรรม บ.', color: '#2dd4bf' }   // เขียวมิ้นต์
+    { id: 'WORK', label: 'ทำงาน', color: '#22C55E' },     // Green
+    { id: 'HOLIDAY', label: 'วันหยุด', color: '#E2E8F0' }, // Light Slate
+    { id: 'SICK', label: 'ป่วย', color: '#EF4444' },       // Red
+    { id: 'LEAVE', label: 'ลากิจ', color: '#EAB308' },      // Yellow
+    { id: 'EVENT', label: 'กิจกรรม บ.', color: '#A855F7' }   // Purple
 ];
 
 const darkModeStyles = `
@@ -81,12 +81,9 @@ const darkModeStyles = `
   .dark-mode .hover\\:bg-slate-100:hover { background-color: #475569 !important; }
   .dark-mode .hover\\:bg-slate-200:hover { background-color: #64748b !important; }
   
-  /* ให้ความสำคัญกับ .day-type-badge ไม่ให้ถูก override ทับสีพื้นหลังในโหมดมืด */
   .dark-mode input, .dark-mode select:not(.day-type-badge), .dark-mode textarea { background-color: transparent !important; color: #f8fafc !important; border-color: #475569 !important; }
-  
   .dark-mode select optgroup { background-color: #0f172a !important; color: #60a5fa !important; font-weight: bold; }
   .dark-mode select option { background-color: #1e293b !important; color: #f8fafc !important; }
-  
   .dark-mode table thead th { background-color: #0f172a !important; color: #cbd5e1 !important; border-color: #334155 !important; }
   
   input[type="color"] { -webkit-appearance: none; border: none; padding: 0; overflow: hidden; border-radius: 4px; }
@@ -142,6 +139,90 @@ const getFilterLabel = (period) => {
     return period;
 };
 
+const isDateInFilter = (dateStr, filter) => {
+    if (filter === 'ALL') return true;
+    if (!dateStr) return false;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return false;
+    const m = parseInt(parts[1], 10), y = parts[2];
+    if (filter === y) return true; 
+    if (filter.includes('-')) {
+        const [fy, fType] = filter.split('-');
+        if (y !== fy) return false;
+        if (fType === 'H1') return m >= 1 && m <= 6;
+        if (fType === 'H2') return m >= 7 && m <= 12;
+        if (fType === 'Q1') return m >= 1 && m <= 3;
+        if (fType === 'Q2') return m >= 4 && m <= 6;
+        if (fType === 'Q3') return m >= 7 && m <= 9;
+        if (fType === 'Q4') return m >= 10 && m <= 12;
+        return fType === parts[1];
+    }
+    return false;
+};
+
+const generateDatesForPeriod = (period, allTransactions) => {
+    if (!allTransactions || allTransactions.length === 0) return [];
+
+    const filteredTx = allTransactions.filter(t => isDateInFilter(t.date, period));
+    if (filteredTx.length === 0) return [];
+
+    const txDates = filteredTx.map(t => parseDateStrToObj(t.date).getTime());
+    const minTxDate = new Date(Math.min(...txDates));
+    const maxTxDate = new Date(Math.max(...txDates));
+
+    let start, end;
+
+    if (period === 'ALL') {
+        start = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
+        end = maxTxDate;
+    } else if (period.match(/^\d{4}$/)) {
+        start = new Date(period, 0, 1);
+        end = new Date(period, 11, 31);
+    } else if (period.match(/^\d{4}-H1$/)) {
+        const y = period.split('-')[0];
+        start = new Date(y, 0, 1);
+        end = new Date(y, 5, 30);
+    } else if (period.match(/^\d{4}-H2$/)) {
+        const y = period.split('-')[0];
+        start = new Date(y, 6, 1);
+        end = new Date(y, 11, 31);
+    } else if (period.match(/^\d{4}-Q(\d)$/)) {
+        const [y, qStr] = period.split('-Q');
+        const q = parseInt(qStr);
+        start = new Date(y, (q - 1) * 3, 1);
+        end = new Date(y, q * 3, 0); 
+    } else if (period.match(/^\d{4}-\d{2}$/)) {
+        const [y, m] = period.split('-');
+        start = new Date(y, parseInt(m) - 1, 1);
+        end = new Date(y, parseInt(m), 0); 
+    } else {
+        return [];
+    }
+
+    if (period !== 'ALL' && !period.match(/^\d{4}-\d{2}$/)) {
+        if (end > maxTxDate) {
+            end = maxTxDate;
+        }
+        const minMonthStart = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
+        if (start < minMonthStart) {
+            start = minMonthStart;
+        }
+    }
+
+    const dateArray = [];
+    let curr = new Date(start);
+    let sanityCheck = 0;
+    while (curr <= end && sanityCheck < 5000) {
+        const d = String(curr.getDate()).padStart(2, '0');
+        const m = String(curr.getMonth() + 1).padStart(2, '0');
+        const y = curr.getFullYear();
+        dateArray.push(`${d}/${m}/${y}`);
+        curr.setDate(curr.getDate() + 1);
+        sanityCheck++;
+    }
+    return dateArray;
+};
+
 const autoCategorize = (description, categoryName, categoryList) => {
   const t = ((description || "") + " " + (categoryName || "")).toLowerCase();
   let matchedName = "อื่นๆ";
@@ -191,58 +272,6 @@ const cleanNumber = (val) => {
   let cleaned = val.replace(/[฿\s,"]/g, '');
   if (cleaned === '-' || cleaned === '') return 0;
   return parseFloat(cleaned) || 0;
-};
-
-const generateDatesForPeriod = (period, transactions) => {
-    if (!transactions || transactions.length === 0) return [];
-    let start, end;
-
-    const parseTHDate = (dStr) => {
-        const [d, m, y] = dStr.split('/');
-        return new Date(y, m - 1, d);
-    };
-
-    if (period === 'ALL') {
-        const dates = transactions.map(t => parseTHDate(t.date).getTime());
-        if (dates.length === 0) return [];
-        start = new Date(Math.min(...dates));
-        end = new Date(Math.max(...dates));
-    } else if (period.match(/^\d{4}$/)) {
-        start = new Date(period, 0, 1);
-        end = new Date(period, 11, 31);
-    } else if (period.match(/^\d{4}-H1$/)) {
-        const y = period.split('-')[0];
-        start = new Date(y, 0, 1);
-        end = new Date(y, 5, 30);
-    } else if (period.match(/^\d{4}-H2$/)) {
-        const y = period.split('-')[0];
-        start = new Date(y, 6, 1);
-        end = new Date(y, 11, 31);
-    } else if (period.match(/^\d{4}-Q(\d)$/)) {
-        const [y, qStr] = period.split('-Q');
-        const q = parseInt(qStr);
-        start = new Date(y, (q - 1) * 3, 1);
-        end = new Date(y, q * 3, 0); 
-    } else if (period.match(/^\d{4}-\d{2}$/)) {
-        const [y, m] = period.split('-');
-        start = new Date(y, parseInt(m) - 1, 1);
-        end = new Date(y, parseInt(m), 0);
-    } else {
-        return [];
-    }
-
-    const dateArray = [];
-    let curr = new Date(start);
-    let sanityCheck = 0;
-    while (curr <= end && sanityCheck < 5000) {
-        const d = String(curr.getDate()).padStart(2, '0');
-        const m = String(curr.getMonth() + 1).padStart(2, '0');
-        const y = curr.getFullYear();
-        dateArray.push(`${d}/${m}/${y}`);
-        curr.setDate(curr.getDate() + 1);
-        sanityCheck++;
-    }
-    return dateArray;
 };
 
 // ==========================================
@@ -318,7 +347,7 @@ const AnimatedNumber = ({ value }) => {
 // --- SUB-VIEW: DASHBOARD ---
 const DashboardView = ({ transactions, categories, filterPeriod, getFilterLabel, hideFixedExpenses, setHideFixedExpenses, analytics, dayTypeConfig, isDarkMode, dayTypes }) => {
     
-    const datesInPeriod = useMemo(() => generateDatesForPeriod(filterPeriod, transactions), [filterPeriod, transactions]);
+    const datesInPeriod = analytics.datesInPeriod || [];
 
     if (transactions.length === 0) {
         return (
@@ -331,6 +360,7 @@ const DashboardView = ({ transactions, categories, filterPeriod, getFilterLabel,
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300 group">
                     <div className="flex justify-between items-start mb-1">
@@ -463,6 +493,9 @@ const DashboardView = ({ transactions, categories, filterPeriod, getFilterLabel,
                                 </div>
                             );
                         })}
+                        <div className={`flex items-center gap-1.5 border-l-2 pl-3 sm:pl-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                            <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>รวมทั้งหมด <span className="text-slate-400 font-normal">({datesInPeriod.length} วัน)</span></span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -860,8 +893,8 @@ const CalendarView = ({ transactions, filterPeriod, setFilterPeriod, rawAvailabl
                                         )}
                                     </div>
 
-                                    {/* Floating Plus Button on Hover */}
-                                    <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl ${isDarkMode ? 'bg-slate-900/70' : 'bg-white/70'}`}>
+                                    {/* Floating Plus Button on Hover (Removed Backdrop blur to fix flickering) */}
+                                    <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl ${isDarkMode ? 'bg-slate-900/60' : 'bg-white/60'}`}>
                                         <div className="bg-[#00509E] text-white p-2 rounded-full shadow-lg flex items-center gap-1 transform scale-90 group-hover:scale-100 transition-transform">
                                             <PlusCircle className="w-5 h-5"/>
                                         </div>
@@ -885,13 +918,15 @@ const CalendarView = ({ transactions, filterPeriod, setFilterPeriod, rawAvailabl
                     <span className="text-sm font-bold text-slate-500 mr-2">สรุปวันในเดือนนี้:</span>
                     {dayTypeConfig.map(dt => {
                         const count = dayTypeCounts[dt.id] || 0;
-                        if (count === 0) return null;
                         return (
                             <div key={dt.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md shadow-sm" style={{ backgroundColor: dt.color, color: '#ffffff' }}>
                                 <span className="text-xs font-bold">{dt.label} <span className="opacity-80">({count})</span></span>
                             </div>
                         );
                     })}
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md shadow-sm ml-auto md:ml-2 font-bold text-xs ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+                        รวม: {dayCells.length} วัน
+                    </div>
                 </div>
             </div>
         </div>
@@ -1371,7 +1406,7 @@ export default function App() {
   const [dbStatus, setDbStatus] = useState('กำลังตรวจสอบ...');
   const [hideFixedExpenses, setHideFixedExpenses] = useState(false); 
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportMonths, setExportMonths] = useState([]);
+  const [exportPeriod, setExportPeriod] = useState('ALL'); // ใช้เก็บช่วงเวลาตอน Export
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [pendingItems, setPendingItems] = useState([]);
@@ -1545,54 +1580,154 @@ export default function App() {
 
   const processCSVText = async (rawText) => {
     try {
-        const parsedRows = parseCSV(rawText.trim());
-        if (parsedRows.length < 2) { 
-            alert("ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด");
+        const rawTrimmed = rawText.trim();
+        if (!rawTrimmed) { 
+            alert("ไม่พบข้อมูล");
             setIsProcessing(false); 
             return; 
         }
-        const headers = parsedRows[0];
-        const dateColIndex = 0;
-        const noteColIndex = headers.length - 1;
-        const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
 
         let newList = [];
         let batchId = Date.now();
+        let newDayTypes = { ...dayTypes }; // เตรียมอัปเดตชนิดวันจากไฟล์
 
-        for (let i = 1; i < parsedRows.length; i++) {
-            const row = parsedRows[i];
-            if (row.length < 2) continue;
-            const dateStr = row[dateColIndex];
-            if(!dateStr) continue;
-            const note = (row.length === headers.length) ? (row[noteColIndex] || '') : '';
+        // ตรวจสอบว่าเป็นรูปแบบ TSV (ข้อมูลที่คัดลอกจาก Excel หรือ Export จากแอป)
+        const firstLine = rawTrimmed.split('\n')[0];
+        const isTSVLong = firstLine.includes('\t');
 
-            for (let j = 1; j < Math.min(row.length, headers.length); j++) {
-                if (j === noteColIndex) continue;
-                const rawHeader = headers[j];
-                if (!rawHeader || excludeCategories.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
+        if (isTSVLong) {
+            const lines = rawTrimmed.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const row = lines[i].split('\t').map(c => c.trim());
+                
+                // ข้าม Header
+                if (row[0] === 'วันที่' || row[0].toLowerCase() === 'date') continue;
+                
+                // ถ้ายาวอย่างน้อย 4 คอลัมน์ ถือว่าอาจจะใช่
+                if (row.length >= 4) {
+                    const dateStr = row[0];
+                    if(!dateStr || !dateStr.includes('/')) continue; // ตรวจสอบรูปแบบวันที่เบื้องต้น
 
-                const amount = cleanNumber(row[j]);
-                if (amount !== 0) { 
-                    let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
-                    let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
-                    let description = catName;
-                    if (note !== '' && (catName.includes('ออนไลน์') || catName.includes('อื่นๆ'))) description = note; 
+                    let catName, desc, amtStr;
+                    // Format: วันที่ | ชนิดวัน | ประเภท | หมวดหมู่ | รายละเอียด | จำนวนเงิน (6 columns)
+                    if (row.length >= 6) {
+                         const foundType = dayTypeConfig.find(dt => dt.label === row[1]);
+                         if (foundType) newDayTypes[dateStr] = foundType.id;
+                         catName = row[3];
+                         desc = row[4];
+                         amtStr = row[5];
+                    }
+                    // Format: วันที่ | ประเภท | หมวดหมู่ | รายละเอียด | จำนวนเงิน (5 columns)
+                    else if (row.length === 5) {
+                         catName = row[2];
+                         desc = row[3];
+                         amtStr = row[4];
+                    } 
+                    // Format: วันที่ | หมวดหมู่ | รายละเอียด | จำนวนเงิน (4 columns)
+                    else { 
+                         catName = row[1];
+                         desc = row[2];
+                         amtStr = row[3];
+                    }
+                    
+                    const amount = cleanNumber(amtStr);
+                    if (amount !== 0) {
+                         newList.push({
+                             id: `csv_${batchId}_${i}`,
+                             date: dateStr,
+                             category: autoCategorize(desc, catName, categories),
+                             description: desc || catName,
+                             amount: Math.abs(amount),
+                             dayNote: ''
+                         });
+                    }
+                }
+            }
+        } else {
+            // รูปแบบตารางกว้าง (Wide Format) แบบเดิม
+            const parsedRows = parseCSV(rawTrimmed);
+            if (parsedRows.length < 2) { 
+                alert("ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด");
+                setIsProcessing(false); 
+                return; 
+            }
+            const headers = parsedRows[0];
+            const dateColIndex = 0;
+            const noteColIndex = headers.length - 1;
+            const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
 
-                    newList.push({ 
-                        id: `csv_${batchId}_${i}_${j}`, 
-                        date: dateStr, 
-                        category: autoCategorize(description, catName, categories), 
-                        description: description, 
-                        amount: Math.abs(amount), 
-                        dayNote: note 
-                    });
+            // กรณี Export เป็น CSV รองรับ 6 คอลัมน์ (มีชนิดวัน) หรือ 5 คอลัมน์
+            const isCsvLong = headers.length >= 4 && (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
+
+            for (let i = 1; i < parsedRows.length; i++) {
+                const row = parsedRows[i];
+                if (row.length < 2) continue;
+                const dateStr = row[dateColIndex];
+                if(!dateStr || !dateStr.includes('/')) continue;
+
+                if (isCsvLong) {
+                    let catName, desc, amtStr;
+                    // Format: วันที่ | ชนิดวัน | ประเภท | หมวดหมู่ | รายละเอียด | จำนวนเงิน
+                    if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
+                         const foundType = dayTypeConfig.find(dt => dt.label === row[1]);
+                         if (foundType) newDayTypes[dateStr] = foundType.id;
+                         catName = row[3]; desc = row[4]; amtStr = row[5];
+                    }
+                    // Format: วันที่ | ประเภท | หมวดหมู่ | รายละเอียด | จำนวนเงิน
+                    else if (headers[1] === 'ประเภท' && row.length >= 5) {
+                         catName = row[2]; desc = row[3]; amtStr = row[4];
+                    } else {
+                         catName = row[1]; desc = row[2]; amtStr = row[3];
+                    }
+                    const amount = cleanNumber(amtStr);
+                    if (amount !== 0) {
+                        newList.push({
+                            id: `csv_${batchId}_${i}`,
+                            date: dateStr,
+                            category: autoCategorize(desc, catName, categories),
+                            description: desc || catName,
+                            amount: Math.abs(amount),
+                            dayNote: ''
+                        });
+                    }
+                    continue;
+                }
+
+                const note = (row.length === headers.length) ? (row[noteColIndex] || '') : '';
+
+                for (let j = 1; j < Math.min(row.length, headers.length); j++) {
+                    if (j === noteColIndex) continue;
+                    const rawHeader = headers[j];
+                    if (!rawHeader || excludeCategories.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
+
+                    const amount = cleanNumber(row[j]);
+                    if (amount !== 0) { 
+                        let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
+                        let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
+                        let description = catName;
+                        if (note !== '' && (catName.includes('ออนไลน์') || catName.includes('อื่นๆ'))) description = note; 
+
+                        newList.push({ 
+                            id: `csv_${batchId}_${i}_${j}`, 
+                            date: dateStr, 
+                            category: autoCategorize(description, catName, categories), 
+                            description: description, 
+                            amount: Math.abs(amount), 
+                            dayNote: note 
+                        });
+                    }
                 }
             }
         }
+
         if(newList.length > 0) {
             await saveToDb(newList);
+            setDayTypes(newDayTypes); // บันทึกชนิดวันลง State ปฏิทิน
+            localStorage.setItem(DAY_TYPES_KEY, JSON.stringify(newDayTypes)); // เซฟลงเครื่อง
             alert(`อัปโหลดสำเร็จ ${newList.length} รายการ!`);
             setActiveTab('ledger');
+        } else {
+            alert("ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง");
         }
     } catch (err) {
         console.error(err);
@@ -1777,27 +1912,6 @@ export default function App() {
 
   const isReadOnlyView = !filterPeriod.match(/^\d{4}-\d{2}$/);
 
-  const isDateInFilter = (dateStr, filter) => {
-      if (filter === 'ALL') return true;
-      if (!dateStr) return false;
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return false;
-      const m = parseInt(parts[1], 10), y = parts[2];
-      if (filter === y) return true; 
-      if (filter.includes('-')) {
-          const [fy, fType] = filter.split('-');
-          if (y !== fy) return false;
-          if (fType === 'H1') return m >= 1 && m <= 6;
-          if (fType === 'H2') return m >= 7 && m <= 12;
-          if (fType === 'Q1') return m >= 1 && m <= 3;
-          if (fType === 'Q2') return m >= 4 && m <= 6;
-          if (fType === 'Q3') return m >= 7 && m <= 9;
-          if (fType === 'Q4') return m >= 10 && m <= 12;
-          return fType === parts[1];
-      }
-      return false;
-  };
-
   const analytics = useMemo(() => {
     const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
     let totalExpense = 0, totalIncome = 0, weekendTotal = 0, weekdayTotal = 0;
@@ -1979,7 +2093,7 @@ export default function App() {
         fixedTotal, variableTotal, fixedPercentage, variablePercentage,
         emergencyFundTarget: (totalExpense / numMonths) * 6, sortedCashflow,
         sparklineIncome, sparklineExpense, sparklineNet,
-        dayTypeCounts
+        dayTypeCounts, datesInPeriod
     };
   }, [transactions, filterPeriod, categories, hideFixedExpenses, dayTypes, dayTypeConfig]);
 
@@ -2026,40 +2140,53 @@ export default function App() {
   }, [transactions, filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, categories]);
 
   const openExportModal = () => {
-      if (filterPeriod === 'ALL') {
-          setExportMonths(rawAvailableMonths);
-      } else if (filterPeriod.match(/^\d{4}-\d{2}$/)) {
-          setExportMonths([filterPeriod]);
-      } else {
-          const matchedMonths = rawAvailableMonths.filter(m => {
-              const [my, mm] = m.split('-');
-              return isDateInFilter(`01/${mm}/${my}`, filterPeriod);
-          });
-          setExportMonths(matchedMonths);
-      }
+      setExportPeriod(filterPeriod); // ตั้งค่าเริ่มต้นให้ตรงกับหน้าที่ดูอยู่
       setShowExportModal(true);
   };
 
   const executeExport = () => {
-    const dataToExport = transactions.filter(t => {
-        if (!t.date) return false;
-        const parts = t.date.split('/');
-        if (parts.length !== 3) return false;
-        return exportMonths.includes(`${parts[2]}-${parts[1]}`);
-    });
-    if (dataToExport.length === 0) return alert("ไม่มีข้อมูลในเดือนที่เลือก");
-    let tsvContent = "วันที่\tประเภท\tหมวดหมู่\tรายละเอียด\tจำนวนเงิน\n";
+    const dataToExport = transactions.filter(t => isDateInFilter(t.date, exportPeriod));
+    
+    if (dataToExport.length === 0) return alert("ไม่มีข้อมูลในช่วงเวลาที่เลือก");
+    
+    // สร้างหัวตาราง CSV เพิ่ม ชนิดวัน
+    let csvContent = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n";
+    
+    // ฟังก์ชันช่วยครอบคำที่มีลูกน้ำด้วย ""
+    const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
+    
     dataToExport.forEach(item => {
-        const cleanDesc = (item.description || "").replace(/\t|\n/g, ' ');
+        // หาชนิดวันของวันที่นั้นๆ
+        const [d, m, y] = item.date.split('/');
+        const dayOfWeek = new Date(y, parseInt(m)-1, d).getDay();
+        const defaultType = (dayOfWeek === 0 || dayOfWeek === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+        const currentTypeId = dayTypes[item.date] || defaultType;
+        const typeConfig = dayTypeConfig.find(dt => dt.id === currentTypeId) || dayTypeConfig[0];
+        const dayTypeLabel = typeConfig ? typeConfig.label : '';
+
         const catObj = categories.find(c => c.name === item.category);
         const isInc = catObj ? catObj.type === 'income' : false;
-        tsvContent += `${item.date}\t${isInc ? 'รายรับ' : 'รายจ่าย'}\t${item.category}\t${cleanDesc}\t${item.amount}\n`;
+        const typeStr = isInc ? 'รายรับ' : 'รายจ่าย';
+        
+        // เพิ่มชนิดวันเข้าไปเป็นคอลัมน์ที่ 2
+        csvContent += `${item.date},${escapeCSV(dayTypeLabel)},${typeStr},${escapeCSV(item.category)},${escapeCSV(item.description || '')},${item.amount}\n`;
     });
-    const el = document.createElement('textarea'); el.value = tsvContent; document.body.appendChild(el); el.select();
-    try { document.execCommand('copy'); setShowToast(true); setTimeout(() => setShowToast(false), 3000); setShowExportModal(false); } catch (err) { alert("คัดลอกไม่สำเร็จ"); } finally { document.body.removeChild(el); }
-  };
 
-  const datesInPeriod = useMemo(() => generateDatesForPeriod(filterPeriod, transactions), [filterPeriod, transactions]);
+    // สร้างไฟล์ Blob แบบรองรับภาษาไทย (BOM)
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Expense_Export_${exportPeriod.replace('/', '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setShowToast(true); 
+    setTimeout(() => setShowToast(false), 3000); 
+    setShowExportModal(false);
+  };
 
   return (
     <div className={`text-slate-800 bg-slate-100 min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`} style={{ fontFamily: 'Tahoma, sans-serif' }}>
@@ -2087,7 +2214,7 @@ export default function App() {
                 }} className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5 px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95">
                   <CalendarPlus className="w-4 h-4" /> เพิ่มข้อมูลด่วน
                 </button>
-                <button onClick={openExportModal} className={`hidden md:flex text-sm font-bold flex items-center gap-1.5 px-4 py-2.5 rounded-lg transition-all shadow-sm border active:scale-95 ${isDarkMode ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 hover:bg-blue-900/50' : 'bg-blue-50 text-[#00509E] border-blue-200 hover:bg-[#00509E] hover:text-white'}`}><Download className="w-4 h-4" /> ส่งออก Excel</button>
+                <button onClick={openExportModal} className={`hidden md:flex text-sm font-bold flex items-center gap-1.5 px-4 py-2.5 rounded-lg transition-all shadow-sm border active:scale-95 ${isDarkMode ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 hover:bg-blue-900/50' : 'bg-blue-50 text-[#00509E] border-blue-200 hover:bg-[#00509E] hover:text-white'}`}><Download className="w-4 h-4" /> ส่งออก CSV</button>
                 <label className={`cursor-pointer flex items-center gap-2 font-medium px-5 py-2.5 rounded-lg shadow-sm transition-all active:scale-95 ${isProcessing ? (isDarkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-300 text-slate-600') : (isDarkMode ? 'bg-[#00509E] hover:bg-blue-700 text-white' : 'bg-[#00509E] hover:bg-[#003d7a] text-white')}`}>
                     {isProcessing ? <Zap className="w-5 h-5 animate-pulse text-[#F4B800]" /> : <FileSpreadsheet className={`w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-200'}`} />}
                     <span>{isProcessing ? 'กำลังประมวลผล...' : 'อัปโหลด CSV'}</span>
@@ -2134,7 +2261,7 @@ export default function App() {
         </div>
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
-          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} datesInPeriod={datesInPeriod} />}
+          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
           {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} />}
           {activeTab === 'ledger' && <LedgerView displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView} getFilterLabel={getFilterLabel} filterPeriod={filterPeriod} searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleOpenAddModal={handleOpenAddModal} handleUpdateTransaction={handleUpdateTransaction} handleDeleteTransaction={handleDeleteTransaction} handleDeleteMonth={handleDeleteMonth} categories={categories} advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory} advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup} advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate} availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode} />}
           {activeTab === 'settings' && <SettingsView categories={categories} handleAddCategory={handleAddCategory} handleCategoryChange={handleCategoryChange} handleDeleteCategory={handleDeleteCategory} handleMoveCategory={handleMoveCategory} dayTypeConfig={dayTypeConfig} setDayTypeConfig={setDayTypeConfig} />}
@@ -2250,24 +2377,36 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className={`rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><Download className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}/> ส่งออกเป็น Excel</h3>
+                    <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><Download className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}/> ส่งออกไฟล์ CSV</h3>
                     <button onClick={() => setShowExportModal(false)} className={`p-1.5 rounded-lg ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}><X className="w-5 h-5"/></button>
                 </div>
-                <div className={`max-h-60 overflow-y-auto mb-5 border rounded-xl p-2 space-y-1 custom-scrollbar ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                    <label className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border-b ${isDarkMode ? 'hover:bg-slate-800 border-slate-700' : 'hover:bg-blue-50 border-slate-200'}`}>
-                        <input type="checkbox" className="w-4 h-4 text-[#00509E] rounded" checked={exportMonths.length === rawAvailableMonths.length} onChange={(e) => setExportMonths(e.target.checked ? rawAvailableMonths : [])} />
-                        <span className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>เลือกทั้งหมด ทุกเดือน</span>
-                    </label>
-                    {rawAvailableMonths.map(p => (
-                        <label key={p} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-white'}`}>
-                            <input type="checkbox" className="w-4 h-4 text-[#00509E] rounded" checked={exportMonths.includes(p)} onChange={(e) => setExportMonths(e.target.checked ? [...exportMonths, p] : exportMonths.filter(m => m !== p))} />
-                            <span className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{getThaiMonth(p)}</span>
-                        </label>
-                    ))}
+                <div className={`mb-5 border rounded-xl p-4 space-y-2 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+                    <label className={`block text-sm font-bold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>เลือกรอบบิลที่ต้องการส่งออก (Export Period)</label>
+                    <select value={exportPeriod} onChange={(e) => setExportPeriod(e.target.value)} className={`w-full rounded-lg px-3 py-2 text-sm outline-none font-medium cursor-pointer appearance-none border transition-all ${isDarkMode ? 'bg-slate-800 border-slate-600 text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E]'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
+                        <option value="ALL">ดาวน์โหลดข้อมูลทั้งหมด (All Time)</option>
+                        {groupedOptions.sortedYears.map(year => {
+                            const data = groupedOptions.yearsMap[year];
+                            return (
+                                <optgroup key={year} label={`▶ ข้อมูลปี ${year}`}>
+                                    <option value={year}>➡️ สรุปทั้งปี {year}</option>
+                                    {data.halves.has(`${year}-H2`) && <option value={`${year}-H2`}>ครึ่งปีหลัง (H2)</option>}
+                                    {data.halves.has(`${year}-H1`) && <option value={`${year}-H1`}>ครึ่งปีแรก (H1)</option>}
+                                    {data.quarters.has(`${year}-Q4`) && <option value={`${year}-Q4`}>ไตรมาส 4 (Q4)</option>}
+                                    {data.quarters.has(`${year}-Q3`) && <option value={`${year}-Q3`}>ไตรมาส 3 (Q3)</option>}
+                                    {data.quarters.has(`${year}-Q2`) && <option value={`${year}-Q2`}>ไตรมาส 2 (Q2)</option>}
+                                    {data.quarters.has(`${year}-Q1`) && <option value={`${year}-Q1`}>ไตรมาส 1 (Q1)</option>}
+                                    <option disabled={true}>--- รายเดือน ---</option>
+                                    {Array.from(data.months).sort().reverse().map(m => (
+                                        <option key={m} value={m}>{getThaiMonth(m)}</option>
+                                    ))}
+                                </optgroup>
+                            );
+                        })}
+                    </select>
                 </div>
                 <div className="flex justify-end gap-3">
                     <button onClick={() => setShowExportModal(false)} className={`px-4 py-2.5 rounded-lg font-bold transition-all active:scale-95 ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>ยกเลิก</button>
-                    <button onClick={executeExport} disabled={exportMonths.length === 0} className={`px-5 py-2.5 text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50 transition-all active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#00509E] hover:bg-[#003d7a]'}`}><FileSpreadsheet className="w-4 h-4"/> ยืนยันส่งออก</button>
+                    <button onClick={executeExport} className={`px-5 py-2.5 text-white rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#00509E] hover:bg-[#003d7a]'}`}><FileSpreadsheet className="w-4 h-4"/> ดาวน์โหลด CSV</button>
                 </div>
             </div>
         </div>
