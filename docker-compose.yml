@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # 1. Database (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: expense_db
+    restart: always
+    environment:
+      POSTGRES_USER: expense_user
+      POSTGRES_PASSWORD: expense_password
+      POSTGRES_DB: expense_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Backend (Node.js API)
+  backend:
+    image: node:20-alpine
+    container_name: expense_api
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules # แคชแพ็กเกจไว้ ไม่ต้องโหลดใหม่
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      - PGHOST=postgres
+      - PGUSER=expense_user
+      - PGPASSWORD=expense_password
+      - PGDATABASE=expense_db
+      - PGPORT=5432
+      - PORT=3000
+    command: sh -c "npm install --no-audit --no-fund && npm start"
+
+  # 3. Frontend (React + Vite)
+  frontend:
+    image: node:20-alpine
+    container_name: expense_web
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules # แคชแพ็กเกจไว้ ไม่ต้องโหลดใหม่
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host"
+
+volumes:
+  pgdata:
+  backend_node_modules: # ประกาศ Volume แคช
+  frontend_node_modules: # ประกาศ Volume แคช
