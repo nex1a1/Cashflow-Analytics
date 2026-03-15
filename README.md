@@ -1,86 +1,135 @@
-📊 Expense Analytics PRO (X-30A)
+# 📊 Cashflow Analytics PRO
 
-Expense Analytics PRO คือเว็บแอปพลิเคชันสำหรับจัดการและวิเคราะห์รายรับ-รายจ่ายส่วนบุคคลระดับแอดวานซ์ ที่มาพร้อมกับ Dashboard สรุปข้อมูลเชิงลึก, ปฏิทินแสดงการใช้จ่ายรายวัน, กราฟแสดงกิจกรรมแบบ GitHub (Activity Graph) และระบบฐานข้อมูลแบบ Full-Stack รันผ่าน Docker
+> Personal finance tracker ระดับ advanced — วิเคราะห์รายรับรายจ่ายเชิงลึก พร้อม Dashboard, ปฏิทิน, Activity Graph และ Smart CSV Import
 
-✨ Crafted with Vibe Coding & Gemini Pro
-โปรเจกต์นี้ถูกสร้างขึ้นมาผ่านกระบวนการ "Vibe Coding" 100% โดยผู้พัฒนาทำหน้าที่ออกไอเดีย ออกแบบ UX/UI กำหนดทิศทางของระบบ และใช้ Google Gemini Pro เป็นผู้เขียนโค้ดและแก้ปัญหาทั้งหมด (Zero human code typing!)
+---
 
-🚀 ฟีเจอร์หลัก (Key Features)
+## ✨ Vibe Coded — จริงใจ 100%
 
-📈 Deep Analytics Dashboard:
+โปรเจกต์นี้สร้างขึ้นผ่านกระบวนการ **Vibe Coding** โดยไม่ได้พิมพ์โค้ดเองแม้แต่บรรทัดเดียว
 
-สรุปยอดเงินคงเหลือ, อัตราการออม (Savings Rate), อัตราการเผาผลาญเงินรายวัน
+ในเวอร์ชันแรก ใช้ **Google Gemini Pro** เป็นผู้เขียนโค้ด และในการพัฒนาต่อยอดรอบที่สองนี้ ย้ายมาใช้ **Claude (Anthropic)** ซึ่งให้ผลลัพธ์ที่ดีขึ้นอย่างเห็นได้ชัดทั้งในแง่ความแม่นยำของโค้ด, การจัดการ state, และการ debug
 
-เปรียบเทียบยอดการใช้จ่ายเทียบกับเดือนก่อนหน้า (MoM Growth)
+**บทบาทของผู้พัฒนา (ตัวผม):**
+- กำหนดทิศทางและ feature ทั้งหมด
+- ออกแบบ UX/UI และตัดสินใจด้าน layout
+- ทดสอบ, หา bug, และ review ผลลัพธ์
+- บอกว่าอะไรดีหรือไม่ดี แล้วให้ AI แก้
 
-กราฟโดนัทสัดส่วนหมวดหมู่ และ กราฟแท่งเทรนด์การใช้จ่ายรายเดือน
+**บทบาทของ AI:**
+- เขียนโค้ดทั้งหมด
+- refactor, debug, และ optimise
+- แนะนำ approach ที่เหมาะสม
 
-วิเคราะห์พฤติกรรมการใช้เงิน (วันธรรมดา vs วันหยุด)
+**ข้อเท็จจริงที่น่าสนใจ:** การทำงานแบบนี้ไม่ได้แปลว่าง่ายหรือไม่ต้องคิด ความยากอยู่ที่การ **รู้ว่าอยากได้อะไร** และ **สื่อสารให้ชัด** — ซึ่งต้องใช้ความเข้าใจระบบพอสมควร
 
-🗓️ Seamless Calendar & Activity Graph:
+---
 
-ปฏิทินรูปแบบ Grid ไร้รอยต่อ แสดงรายการใช้จ่าย Top 5 ของแต่ละวัน
+## 🚀 Features
 
-Activity Graph: ไทม์ไลน์กิจกรรมคล้าย GitHub Contribution Graph พร้อมระบบกำหนด "ชนิดของวัน" (เช่น วันทำงาน, วันหยุด, ลากิจ, ลาป่วย)
+### 📈 Dashboard วิเคราะห์เชิงลึก
+- สรุปรายรับ / รายจ่าย / เงินคงเหลือ พร้อม Sparkline
+- อัตราการออม (Savings Rate) และอัตราเผาผลาญเงิน/วัน
+- **ค่ากินเฉลี่ย/วัน** และ **รายจ่ายผันแปร/วัน** แยก card ชัดเจน
+- เปรียบเทียบ MoM (Month-over-Month) ในตาราง Cashflow Statement
+- กราฟโดนัท สัดส่วนหมวดหมู่ + Top 7 รายการใช้จ่าย
+- Activity Graph สไตล์ GitHub Contribution Graph
 
-📥 Smart Import & Export CSV:
+### 🗓️ ปฏิทินรายวัน
+- Grid ปฏิทินแสดงรายจ่าย/รายรับสูงสุด Top 5 ต่อวัน พร้อมราคา
+- คลิก cell เปิด **Day Detail Popup** — ดู, เพิ่ม, ลบรายการได้เลยโดยไม่ต้องออกไปหน้าอื่น
+- Optimistic UI — บันทึกแล้วเห็นผลทันทีโดยไม่รอ server
+- ระบบ Day Type: กำหนดประเภทวัน (ทำงาน, หยุด, ลาป่วย ฯลฯ) ต่อ cell
 
-นำเข้าข้อมูล (Import) จากตาราง Excel/Google Sheets ด้วยการ Copy & Paste
+### 📒 Ledger (ฐานข้อมูลบัญชี)
+- ค้นหา filter ขั้นสูงด้วย category, กลุ่มรายจ่าย, วันที่, และจำนวนเงิน
+- Summary bar แสดงยอดรวมรายรับ/รายจ่าย/คงเหลือของผลการค้นหา
+- ลบรายการรายวันได้จาก summary bar
 
-โหลดออก (Export) เป็นไฟล์ .csv พร้อมรองรับภาษาไทย 100% (BOM)
+### 📥 Smart Import CSV
+- รองรับ 2 format อัตโนมัติ — **ไม่ต้องเลือก format เอง**
+  - **Wide Format (Excel):** แต่ละคอลัมน์คือหมวดหมู่ย่อย — auto-map ไปหา category
+  - **Long Format (System Export):** ใส่ตรงได้เลย หมวดหมู่ไม่มีก็สร้างให้อัตโนมัติ
+- Preview modal ก่อน import จริง — แก้ไข category, description, amount, ลบรายการที่ไม่ต้องการได้
+- Pagination แบบ day-based ไม่ตัดกลางวัน
 
-⚙️ Customizable Settings & UI:
+### ⚙️ Settings
+- จัดการ category รายรับ/รายจ่าย: icon, ชื่อ, สี, กลุ่ม Cashflow, Fixed/Variable
+- Color palette 16 สีพร้อม custom color picker
+- จัดการ Day Types ของปฏิทิน
+- Danger Zone: Factory Reset
 
-ปรับแต่งหมวดหมู่รายรับ-รายจ่าย (ไอคอน, สี, กลุ่มกระแสเงินสด)
+### 🌓 Dark / Light Mode
+- ครอบคลุมทุกหน้า ทุก component รวมถึง modal และ popup
 
-เพิ่ม/ลบ และเปลี่ยนสี "ชนิดของวัน" (Day Types) ได้อย่างอิสระ
+---
 
-🌓 รองรับโหมดมืดและสว่าง (Dark / Light Mode) สมบูรณ์แบบ
+## 🛠️ Tech Stack
 
-🛠️ Tech Stack
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 (Vite), Tailwind CSS, Chart.js, Lucide Icons |
+| Backend | Node.js, Express.js |
+| Database | PostgreSQL 15 |
+| Infrastructure | Docker & Docker Compose |
 
-โปรเจกต์นี้ใช้สถาปัตยกรรมแบบ Full-Stack ภายในสภาพแวดล้อม Docker:
+**โครงสร้างโค้ด Frontend:**
+```
+src/
+├── App.jsx
+├── components/
+│   ├── DashboardView.jsx
+│   ├── CalendarView.jsx
+│   ├── LedgerView.jsx
+│   ├── SettingsView.jsx
+│   ├── DayDetailModal.jsx
+│   └── ui/ (AnimatedNumber, Sparkline, EditableInput)
+├── hooks/
+│   ├── useAnalytics.js
+│   └── useCategories.js
+└── utils/
+    ├── csvParser.js
+    ├── dateHelpers.js
+    └── formatters.js
+```
 
-Frontend: React.js (Vite), Tailwind CSS, Chart.js, Lucide Icons
+---
 
-Backend: Node.js, Express.js
+## 🐳 วิธีติดตั้ง
 
-Database: PostgreSQL
+**ต้องการ:** Docker Desktop
 
-Infrastructure: Docker & Docker Compose
+```bash
+# 1. Clone
+git clone https://github.com/yourusername/cashflow-analytics-pro.git
+cd cashflow-analytics-pro
 
-🐳 วิธีการติดตั้งและรันระบบ (How to Run)
-
-ข้อกำหนดเบื้องต้น: เครื่องคอมพิวเตอร์ของคุณต้องติดตั้ง Docker Desktop ไว้เรียบร้อยแล้ว
-
-Clone Repository นี้:
-
-git clone [https://github.com/yourusername/expense-analytics-pro.git](https://github.com/yourusername/expense-analytics-pro.git)
-cd expense-analytics-pro
-
-
-รันระบบผ่าน Docker Compose:
-ใช้คำสั่งด้านล่างเพื่อสร้าง Database, Backend และ Frontend ให้ทำงานร่วมกัน:
-
+# 2. Run
 docker-compose up -d --build
 
+# 3. เปิดเบราว์เซอร์
+# http://localhost:5173
 
-เข้าใช้งานแอปพลิเคชัน:
-เปิดเว็บเบราว์เซอร์และเข้าไปที่:
+# หยุดระบบ
+docker-compose down
+```
 
-http://localhost:5173
+---
 
+## 📌 สิ่งที่ยังไม่มี (Roadmap)
 
-(หากต้องการหยุดระบบ ให้ใช้คำสั่ง docker-compose down)
+- [ ] Budget ต่อหมวดหมู่ + แจ้งเตือนเมื่อใกล้เกิน
+- [ ] Recurring transaction (template รายการประจำ)
+- [ ] Yearly overview — กราฟภาพรวม 12 เดือน
+- [ ] Edit transaction inline ใน Ledger
 
-💡 เบื้องหลังการทำงาน (Behind the Scenes)
+---
 
-โปรเจกต์นี้เป็นข้อพิสูจน์ถึงพลังของการทำ Vibe Coding ยุคใหม่
+## 💬 บทส่งท้าย
 
-เราไม่ได้เขียนโค้ดเองทีละบรรทัด แต่เรา "คุย" กับ AI ให้สร้างมันขึ้นมา
+โปรเจกต์นี้เริ่มจากความต้องการส่วนตัว — อยากมีเครื่องมือติดตามการใช้เงินที่ **ตรงกับพฤติกรรมตัวเอง** มากกว่าแอปสำเร็จรูปทั่วไป
 
-เราให้ Gemini Pro จัดการ Logic ที่ซับซ้อน เช่น การคำนวณวันในปฏิทินย้อนหลัง, การรวมร่าง HTML/CSS/JS, การคุยกับ Database, ไปจนถึงการแก้บัค CSS
+ผลที่ได้คือแอปที่ใช้งานจริงทุกวัน และกระบวนการที่พิสูจน์ว่า Vibe Coding ไม่ใช่แค่ของเล่น — มันคือวิธีทำงานใหม่ที่ใครก็ตามที่มีไอเดียชัดเจน สามารถสร้างของจริงได้โดยไม่ต้องเป็นโปรแกรมเมอร์
 
-ใช้เวลาพัฒนาลดลงมหาศาล แต่ได้ผลลัพธ์ระดับโปรดักชันที่พร้อมใช้งานจริง
-
-Generated by [Gemini Pro] | Concept by [Natthawut Bokham]
+> Concept & Product by **Natthawut Bokham**
+> Code by **Claude (Anthropic)** — previously Gemini Pro

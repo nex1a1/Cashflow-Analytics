@@ -15,9 +15,10 @@ const pool = new Pool({
   port: process.env.PGPORT,
 });
 
-// สร้างตาราง Database อัตโนมัติ
+// สร้างตาราง Database อัตโนมัติ (v1.0)
 const initDB = async () => {
   try {
+    // 1. ตารางรายการบัญชี
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id VARCHAR(255) PRIMARY KEY,
@@ -28,14 +29,41 @@ const initDB = async () => {
         day_note TEXT
       );
     `);
-    console.log("✅ Database table 'transactions' is ready.");
+
+    // 2. ตารางชนิดวันของปฏิทิน
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS calendar_days (
+        date VARCHAR(20) PRIMARY KEY,
+        type_id VARCHAR(50) NOT NULL
+      );
+    `);
+
+    // 3. ตารางสำหรับเก็บการตั้งค่าระบบ (หมวดหมู่, ชนิดวัน)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        setting_key VARCHAR(100) PRIMARY KEY,
+        setting_value TEXT
+      );
+    `);
+
+    // 4. สร้าง Index เพื่อความรวดเร็วในการ Query
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+      CREATE INDEX IF NOT EXISTS idx_calendar_days_date ON calendar_days(date);
+    `);
+
+    console.log("✅ Database tables and indexes are ready (v1.0).");
   } catch (err) {
     console.error("❌ Database Initialization Error:", err);
   }
 };
 initDB();
 
-// API: ดึงข้อมูลบัญชีทั้งหมด
+// ==========================================
+// API: รายการบัญชี (Transactions)
+// ==========================================
+
+// ดึงข้อมูลบัญชีทั้งหมด
 app.get('/api/transactions', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM transactions ORDER BY date ASC');
@@ -53,7 +81,7 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
-// API: บันทึกข้อมูล (รองรับการเซฟทีละรายการ และหลายรายการพร้อมกัน)
+// บันทึกข้อมูล (รองรับการเซฟทีละรายการ และหลายรายการพร้อมกัน)
 app.post('/api/transactions', async (req, res) => {
   const items = Array.isArray(req.body) ? req.body : [req.body];
   try {
@@ -78,7 +106,7 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
-// API: ลบข้อมูล 1 รายการ
+// ลบข้อมูล 1 รายการ
 app.delete('/api/transactions/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM transactions WHERE id = $1', [req.params.id]);
@@ -88,12 +116,89 @@ app.delete('/api/transactions/:id', async (req, res) => {
   }
 });
 
-// API: ล้างข้อมูลทั้งหมดในฐานข้อมูล
+// ล้างข้อมูล transactions ทั้งหมด
 app.delete('/api/transactions', async (req, res) => {
   try {
     await pool.query('TRUNCATE TABLE transactions');
     res.json({ success: true });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// API: ระบบ Calendar (ชนิดวัน)
+// ==========================================
+
+app.get('/api/calendar', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT date, type_id FROM calendar_days');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/calendar', async (req, res) => {
+  const { date, type_id } = req.body;
+  try {
+    const query = `
+      INSERT INTO calendar_days (date, type_id)
+      VALUES ($1, $2)
+      ON CONFLICT (date) DO UPDATE SET type_id = EXCLUDED.type_id;
+    `;
+    await pool.query(query, [date, type_id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// API: ระบบ Settings (หมวดหมู่ และ ชนิดวัน)
+// ==========================================
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM settings');
+    const settings = {};
+    result.rows.forEach(row => {
+      settings[row.setting_key] = JSON.parse(row.setting_value);
+    });
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  const { key, value } = req.body;
+  try {
+    await pool.query(`
+      INSERT INTO settings (setting_key, setting_value)
+      VALUES ($1, $2)
+      ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value;
+    `, [key, JSON.stringify(value)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// API: ระบบ Reset (ล้างข้อมูลทั้งหมด)
+// ==========================================
+
+app.delete('/api/reset-all', async (req, res) => {
+  try {
+    await pool.query('BEGIN');
+    await pool.query('TRUNCATE TABLE transactions');
+    await pool.query('TRUNCATE TABLE calendar_days');
+    // โค้ดนี้จะเก็บ Settings ไว้ (เผื่อล้างข้อมูลแล้วไม่ต้องตั้งค่าหมวดหมู่ใหม่)
+    await pool.query('COMMIT');
+    res.json({ success: true, message: 'All data cleared successfully' });
+  } catch (err) {
+    await pool.query('ROLLBACK');
     res.status(500).json({ error: err.message });
   }
 });
