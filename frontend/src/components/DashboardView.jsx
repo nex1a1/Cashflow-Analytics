@@ -1,4 +1,5 @@
 // src/components/DashboardView.jsx
+import React from 'react';
 import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 import {
   Wallet, Coins, PiggyBank, Flame, Home, Scale,
@@ -177,7 +178,7 @@ export default function DashboardView({
                             <div className="text-center text-slate-400 py-4 text-sm font-medium">กรุณาเลือกช่วงเวลาที่มีข้อมูลเพื่อแสดงไทม์ไลน์</div>
                         ) : (
                             <div className="flex flex-wrap gap-1 md:gap-[5px] justify-start">
-                                {datesInPeriod.map((dateStr) => {
+                                {datesInPeriod.map((dateStr, idx) => {
                                     const [d, m, y] = dateStr.split('/');
                                     const dateObj = new Date(y, parseInt(m)-1, d);
                                     const dayOfWeek = dateObj.getDay();
@@ -191,8 +192,24 @@ export default function DashboardView({
                                     const shortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
                                     const displayDate = `${parseInt(d)} ${shortMonths[parseInt(m)-1]} ${y.slice(2)}`;
 
+                                    const isFirstOfMonth = d === '01';
+                                    const isFirstOfYear  = d === '01' && m === '01';
+
                                     return (
-                                        <div key={dateStr} className="group relative">
+                                        <React.Fragment key={dateStr}>
+                                          {/* separator | เดือน หรือ || ปี */}
+                                          {idx > 0 && isFirstOfMonth && (
+                                            <div className="flex flex-col items-center self-stretch mx-0.5">
+                                              <div className={`flex gap-px h-full`}>
+                                                <div className={`w-px rounded-full ${isFirstOfYear ? (isDarkMode ? 'bg-yellow-500' : 'bg-yellow-500') : (isDarkMode ? 'bg-slate-500' : 'bg-slate-400')}`} style={{minHeight:'14px'}}/>
+                                                {isFirstOfYear && <div className={`w-px rounded-full ${isDarkMode ? 'bg-yellow-500' : 'bg-yellow-500'}`} style={{minHeight:'14px'}}/>}
+                                              </div>
+                                              <span className={`text-[7px] font-bold leading-none mt-0.5 whitespace-nowrap ${isFirstOfYear ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
+                                                {isFirstOfYear ? y.slice(2) : shortMonths[parseInt(m)-1]}
+                                              </span>
+                                            </div>
+                                          )}
+                                          <div className="group relative">
                                             <div 
                                                 className={`w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
                                                 style={{ backgroundColor: typeConfig.color }}
@@ -203,7 +220,8 @@ export default function DashboardView({
                                                 <span style={{ color: typeConfig.color }}>{typeConfig.label}</span>
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-800"></div>
                                             </div>
-                                        </div>
+                                          </div>
+                                        </React.Fragment>
                                     );
                                 })}
                             </div>
@@ -364,11 +382,126 @@ export default function DashboardView({
                         <div className="relative w-full flex-grow min-h-[320px]">
                             {/* บังคับส่งค่าสีเส้นและตัวอักษรเข้าไปใน Options ของ Chart ให้เปลี่ยนตาม isDarkMode ทันที */}
                             {analytics.mainChartType === 'combo' ? (
-                              <Chart type="bar" data={analytics.mainChartData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: isDarkMode ? '#cbd5e1' : '#475569' } } }, animation: { duration: 1000 }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } }, y: { ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } } } }} />
+                              <Chart type="bar" data={analytics.mainChartData} options={{
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                  legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                      color: isDarkMode ? '#cbd5e1' : '#475569',
+                                      padding: 16,
+                                      usePointStyle: true,
+                                      pointStyle: 'circle',
+                                      font: { size: 12, weight: 'bold' },
+                                    }
+                                  },
+                                  tooltip: {
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                    titleColor: isDarkMode ? '#f1f5f9' : '#1e293b',
+                                    bodyColor: isDarkMode ? '#94a3b8' : '#475569',
+                                    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    cornerRadius: 10,
+                                    callbacks: {
+                                      label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+                                    }
+                                  }
+                                },
+                                animation: { duration: 800, easing: 'easeInOutQuart' },
+                                scales: {
+                                  x: {
+                                    ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } },
+                                    grid: { display: false },
+                                    border: { display: false },
+                                  },
+                                  y: {
+                                    ticks: {
+                                      color: isDarkMode ? '#94a3b8' : '#64748b',
+                                      font: { size: 11 },
+                                      callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v,
+                                    },
+                                    grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9', lineWidth: 1 },
+                                    border: { dash: [4, 4], display: false },
+                                  }
+                                }
+                              }} />
                             ) : analytics.mainChartType === 'bar' ? (
-                              <Bar data={analytics.mainChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { duration: 1000 }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } }, y: { ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } } } }} />
+                              <Bar data={analytics.mainChartData} options={{
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                  legend: { display: false },
+                                  tooltip: {
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                    titleColor: isDarkMode ? '#f1f5f9' : '#1e293b',
+                                    bodyColor: isDarkMode ? '#94a3b8' : '#475569',
+                                    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    cornerRadius: 10,
+                                    callbacks: {
+                                      label: (ctx) => ` ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+                                    }
+                                  }
+                                },
+                                animation: { duration: 800, easing: 'easeInOutQuart' },
+                                scales: {
+                                  x: {
+                                    ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } },
+                                    grid: { display: false },
+                                    border: { display: false },
+                                  },
+                                  y: {
+                                    ticks: {
+                                      color: isDarkMode ? '#94a3b8' : '#64748b',
+                                      font: { size: 11 },
+                                      callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v,
+                                    },
+                                    grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9' },
+                                    border: { dash: [4, 4], display: false },
+                                  }
+                                }
+                              }} />
                             ) : (
-                              <Line data={analytics.mainChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: { duration: 1000 }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } }, y: { beginAtZero: true, ticks: { color: isDarkMode ? '#94a3b8' : '#475569' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } } } }} />
+                              <Line data={analytics.mainChartData} options={{
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                  legend: { display: false },
+                                  tooltip: {
+                                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                    titleColor: isDarkMode ? '#f1f5f9' : '#1e293b',
+                                    bodyColor: isDarkMode ? '#94a3b8' : '#475569',
+                                    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    padding: 12,
+                                    cornerRadius: 10,
+                                    callbacks: {
+                                      label: (ctx) => ` ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+                                    }
+                                  }
+                                },
+                                animation: { duration: 800, easing: 'easeInOutQuart' },
+                                scales: {
+                                  x: {
+                                    ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } },
+                                    grid: { display: false },
+                                    border: { display: false },
+                                  },
+                                  y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                      color: isDarkMode ? '#94a3b8' : '#64748b',
+                                      font: { size: 11 },
+                                      callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v,
+                                    },
+                                    grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9' },
+                                    border: { dash: [4, 4], display: false },
+                                  }
+                                }
+                              }} />
                             )}
                         </div>
                     </div>

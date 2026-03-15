@@ -22,21 +22,23 @@ export default function DayDetailModal({
   const defaultExpenseCat = categories.find(c => c.type === 'expense')?.name || '';
   const defaultIncomeCat  = categories.find(c => c.type === 'income')?.name || '';
 
-  // useState ต้องอยู่ก่อนใช้งาน
-  const [localItems, setLocalItems] = useState([]);  // optimistic items before DB confirms
-  const [formType, setFormType]   = useState('expense');
 
-  // รวม transactions จริง + รายการที่เพิ่งเพิ่ม (optimistic) ก่อน DB confirm
-  const dayTx    = [...transactions.filter(t => t.date === dateStr), ...localItems];
-  const expenses  = dayTx.filter(t => categories.find(c => c.name === t.category)?.type !== 'income');
-  const income    = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'income');
-  const totalExp  = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-  const totalInc  = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-  const [formCat, setFormCat]     = useState(defaultExpenseCat);
-  const [formDesc, setFormDesc]   = useState('');
-  const [formAmt, setFormAmt]     = useState('');
-  const [isSaving, setIsSaving]   = useState(false);
+  const [localItems, setLocalItems]           = useState([]);
+  const [formType, setFormType]               = useState('expense');
+  const [formCat, setFormCat]                 = useState(defaultExpenseCat);
+  const [formDesc, setFormDesc]               = useState('');
+  const [formAmt, setFormAmt]                 = useState('');
+  const [isSaving, setIsSaving]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  // filter localItems ออกถ้า id นั้นถูก save ลง transactions จริงแล้ว (ป้องกัน duplicate key)
+  const txIds = new Set(transactions.map(t => t.id));
+  const pendingItems = localItems.filter(i => !txIds.has(i.id));
+  const dayTx   = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
+  const expenses = dayTx.filter(t => categories.find(c => c.name === t.category)?.type !== 'income');
+  const income   = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'income');
+  const totalExp = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+  const totalInc = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
   const switchType = (type) => {
     setFormType(type);
@@ -62,10 +64,14 @@ export default function DayDetailModal({
     setFormDesc('');
     setFormAmt('');
 
-    // 2. ส่ง DB ใน background (ไม่ block UI)
+    // 2. ส่ง DB ใน background
     setIsSaving(true);
     try {
-      await onSave(newItem);
+      await onSave(newItem); // รอจนบันทึกลง DB และโหลดข้อมูลใหม่เสร็จ
+      
+      // 🟢 เพิ่มบรรทัดนี้: ลบออกจาก localItems เพราะข้อมูลจริงวิ่งเข้า transactions แล้ว
+      setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
+      
     } catch (err) {
       // ถ้า save ไม่สำเร็จ ให้เอา optimistic item ออก
       setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
@@ -100,7 +106,7 @@ export default function DayDetailModal({
   const border      = isDarkMode ? 'border-slate-700' : 'border-slate-200';
   const textPrimary = isDarkMode ? 'text-slate-100' : 'text-slate-800';
   const textMuted   = isDarkMode ? 'text-slate-400' : 'text-slate-500';
-  const inputClass  = `w-full px-3 py-2 rounded-xl border outline-none focus:ring-1 text-sm font-medium transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E]'}`;
+  const inputClass  = `px-3 py-2 rounded-xl border outline-none focus:ring-1 text-sm font-medium transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E]'}`;
 
   const TxRow = ({ tx }) => {
     const cat = categories.find(c => c.name === tx.category);
@@ -212,7 +218,7 @@ export default function DayDetailModal({
           <select
             value={formCat}
             onChange={e => setFormCat(e.target.value)}
-            className={inputClass}
+            className={`${inputClass} w-full`}
           >
             {categories.filter(c => c.type === formType).map(c => (
               <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
