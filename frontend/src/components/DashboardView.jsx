@@ -177,7 +177,7 @@ export default function DashboardView({
                         {datesInPeriod.length === 0 ? (
                             <div className="text-center text-slate-400 py-4 text-sm font-medium">กรุณาเลือกช่วงเวลาที่มีข้อมูลเพื่อแสดงไทม์ไลน์</div>
                         ) : (
-                            <div className="flex flex-wrap gap-1 md:gap-[5px] justify-start">
+                            <div className="flex flex-wrap gap-[4px] justify-start">
                                 {datesInPeriod.map((dateStr, idx) => {
                                     const [d, m, y] = dateStr.split('/');
                                     const dateObj = new Date(y, parseInt(m)-1, d);
@@ -199,19 +199,19 @@ export default function DashboardView({
                                         <React.Fragment key={dateStr}>
                                           {/* separator | เดือน หรือ || ปี */}
                                           {idx > 0 && isFirstOfMonth && (
-                                            <div className="flex flex-col items-center self-stretch mx-0.5">
-                                              <div className={`flex gap-px h-full`}>
-                                                <div className={`w-px rounded-full ${isFirstOfYear ? (isDarkMode ? 'bg-yellow-500' : 'bg-yellow-500') : (isDarkMode ? 'bg-slate-500' : 'bg-slate-400')}`} style={{minHeight:'14px'}}/>
-                                                {isFirstOfYear && <div className={`w-px rounded-full ${isDarkMode ? 'bg-yellow-500' : 'bg-yellow-500'}`} style={{minHeight:'14px'}}/>}
+                                            <div className="flex flex-col items-center justify-start" style={{width: isFirstOfYear ? '8px' : '4px', marginLeft: '1px', marginRight: '1px'}}>
+                                              <div className="flex gap-[3px]" style={{height: '14px'}}>
+                                                <div className={`w-px h-full rounded-full ${isFirstOfYear ? (isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500') : (isDarkMode ? 'bg-slate-500' : 'bg-slate-300')}`}/>
+                                                {isFirstOfYear && <div className={`w-px h-full rounded-full ${isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500'}`}/>}
                                               </div>
-                                              <span className={`text-[7px] font-bold leading-none mt-0.5 whitespace-nowrap ${isFirstOfYear ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
+                                              <span className={`text-[6px] font-bold leading-none mt-px whitespace-nowrap ${isFirstOfYear ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
                                                 {isFirstOfYear ? y.slice(2) : shortMonths[parseInt(m)-1]}
                                               </span>
                                             </div>
                                           )}
                                           <div className="group relative">
                                             <div 
-                                                className={`w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
+                                                className={`w-3.5 h-3.5 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
                                                 style={{ backgroundColor: typeConfig.color }}
                                             ></div>
                                             {/* Tooltip */}

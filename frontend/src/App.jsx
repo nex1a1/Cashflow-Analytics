@@ -15,14 +15,13 @@ import {
 
 import { parseDateStrToObj, isDateInFilter, generateDatesForPeriod } from './utils/dateHelpers';
 import { autoCategorize, parseCSV, cleanNumber } from './utils/csvParser';
-import EditableInput from './components/ui/EditableInput';
-import Sparkline from './components/ui/Sparkline';
 import AnimatedNumber from './components/ui/AnimatedNumber';
 import useCategories from './hooks/useCategories';
 import useAnalytics from './hooks/useAnalytics';
 import SettingsView from './components/SettingsView';
 import CalendarView from './components/CalendarView';
 import LedgerView from './components/LedgerView';
+import PeriodPicker from './components/PeriodPicker';
 import DashboardView from './components/DashboardView';
 import { formatMoney, getThaiMonth, getFilterLabel, hexToRgb } from './utils/formatters';
 import {
@@ -851,7 +850,7 @@ const handleDeleteAllData = async () => {
             </div>
         </div>
 
-        <div className={`flex flex-col md:flex-row justify-between items-center px-6 border-b gap-4 transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50/80 border-slate-200'}`}>
+        <div className={`sticky top-0 z-50 flex flex-col md:flex-row justify-between items-center px-6 border-b gap-4 transition-colors duration-300 backdrop-blur-sm ${isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-slate-50/95 border-slate-200'}`}>
           <div className="flex w-full md:w-auto overflow-x-auto custom-scrollbar">
             <button onClick={() => setActiveTab('dashboard')} className={`flex-1 md:flex-none px-5 py-4 flex justify-center items-center gap-2 border-b-[3px] transition-all text-base whitespace-nowrap ${activeTab === 'dashboard' ? (isDarkMode ? 'border-blue-400 text-blue-400 font-bold bg-slate-800' : 'border-[#00509E] text-[#00509E] font-bold bg-blue-50/50') : (isDarkMode ? 'border-transparent text-slate-400 hover:text-blue-300 hover:bg-slate-800/50' : 'border-transparent text-slate-600 hover:text-[#00509E] hover:bg-slate-100')}`}><BarChart3 className="w-5 h-5" /> เจาะลึกวิเคราะห์</button>
             <button onClick={() => setActiveTab('calendar')} className={`flex-1 md:flex-none px-5 py-4 flex justify-center items-center gap-2 border-b-[3px] transition-all text-base whitespace-nowrap ${activeTab === 'calendar' ? (isDarkMode ? 'border-blue-400 text-blue-400 font-bold bg-slate-800' : 'border-[#00509E] text-[#00509E] font-bold bg-blue-50/50') : (isDarkMode ? 'border-transparent text-slate-400 hover:text-blue-300 hover:bg-slate-800/50' : 'border-transparent text-slate-600 hover:text-[#00509E] hover:bg-slate-100')}`}><CalendarIcon className="w-5 h-5" /> ปฏิทิน</button>
@@ -860,30 +859,12 @@ const handleDeleteAllData = async () => {
           </div>
           {(activeTab === 'dashboard' || activeTab === 'ledger' || activeTab === 'calendar') && (
             <div className="flex items-center gap-3 py-3 w-full md:w-auto justify-end flex-wrap">
-                <div className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-300'}`}>
-                  <CalendarDays className="w-5 h-5 text-[#D81A21]"/>
-                  <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)} className={`bg-transparent text-base font-semibold outline-none cursor-pointer ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                      <option value="ALL">ดูภาพรวมทั้งหมด (All Time)</option>
-                      {groupedOptions.sortedYears.map(year => {
-                          const data = groupedOptions.yearsMap[year];
-                          return (
-                              <optgroup key={year} label={`▶ ข้อมูลปี ${year}`}>
-                                  <option value={year}>➡️ สรุปทั้งปี {year}</option>
-                                  {data.halves.has(`${year}-H2`) && <option value={`${year}-H2`}>ครึ่งปีหลัง (H2)</option>}
-                                  {data.halves.has(`${year}-H1`) && <option value={`${year}-H1`}>ครึ่งปีแรก (H1)</option>}
-                                  {data.quarters.has(`${year}-Q4`) && <option value={`${year}-Q4`}>ไตรมาส 4 (Q4)</option>}
-                                  {data.quarters.has(`${year}-Q3`) && <option value={`${year}-Q3`}>ไตรมาส 3 (Q3)</option>}
-                                  {data.quarters.has(`${year}-Q2`) && <option value={`${year}-Q2`}>ไตรมาส 2 (Q2)</option>}
-                                  {data.quarters.has(`${year}-Q1`) && <option value={`${year}-Q1`}>ไตรมาส 1 (Q1)</option>}
-                                  <option disabled={true}>--- รายเดือน ---</option>
-                                  {Array.from(data.months).sort().reverse().map(m => (
-                                      <option key={m} value={m}>{getThaiMonth(m)}</option>
-                                  ))}
-                              </optgroup>
-                          );
-                      })}
-                  </select>
-                </div>
+                <PeriodPicker
+                  filterPeriod={filterPeriod}
+                  setFilterPeriod={setFilterPeriod}
+                  groupedOptions={groupedOptions}
+                  isDarkMode={isDarkMode}
+                />
             </div>
           )}
         </div>

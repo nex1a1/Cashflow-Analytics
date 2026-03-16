@@ -1,125 +1,114 @@
 const express = require('express');
-const { Pool } = require('pg');
+const Database = require('better-sqlite3');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// ตั้งค่าการเชื่อมต่อ PostgreSQL
-const pool = new Pool({
-  host: process.env.PGHOST,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE,
-  port: process.env.PGPORT,
-});
+// ตำแหน่งไฟล์ SQLite — mount ไว้ใน volume เพื่อ persist ข้อมูล
+const DB_PATH = process.env.DB_PATH || '/app/data/cashflow.db';
 
-// สร้างตาราง Database อัตโนมัติ (v1.0)
-const initDB = async () => {
-  try {
-    // 1. ตารางรายการบัญชี
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS transactions (
-        id VARCHAR(255) PRIMARY KEY,
-        date VARCHAR(50),
-        category VARCHAR(255),
-        description TEXT,
-        amount NUMERIC,
-        day_note TEXT
-      );
-    `);
+// สร้าง directory ถ้ายังไม่มี
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-    // 2. ตารางชนิดวันของปฏิทิน
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS calendar_days (
-        date VARCHAR(20) PRIMARY KEY,
-        type_id VARCHAR(50) NOT NULL
-      );
-    `);
+const db = new Database(DB_PATH);
 
-    // 3. ตารางสำหรับเก็บการตั้งค่าระบบ (หมวดหมู่, ชนิดวัน)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS settings (
-        setting_key VARCHAR(100) PRIMARY KEY,
-        setting_value TEXT
-      );
-    `);
+// เปิด WAL mode — เร็วขึ้นมากสำหรับ write
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
-    // 4. สร้าง Index เพื่อความรวดเร็วในการ Query
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
-      CREATE INDEX IF NOT EXISTS idx_calendar_days_date ON calendar_days(date);
-    `);
+// ==========================================
+// สร้างตาราง + Index อัตโนมัติ
+// ==========================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS transactions (
+    id          TEXT PRIMARY KEY,
+    date        TEXT,
+    category    TEXT,
+    description TEXT,
+    amount      REAL,
+    day_note    TEXT
+  );
 
-    console.log("✅ Database tables and indexes are ready (v1.0).");
-  } catch (err) {
-    console.error("❌ Database Initialization Error:", err);
-  }
-};
-initDB();
+  CREATE TABLE IF NOT EXISTS calendar_days (
+    date    TEXT PRIMARY KEY,
+    type_id TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    setting_key   TEXT PRIMARY KEY,
+    setting_value TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+  CREATE INDEX IF NOT EXISTS idx_calendar_days_date ON calendar_days(date);
+`);
+
+console.log('✅ SQLite database ready at', DB_PATH);
 
 // ==========================================
 // API: รายการบัญชี (Transactions)
 // ==========================================
 
-// ดึงข้อมูลบัญชีทั้งหมด
-app.get('/api/transactions', async (req, res) => {
+app.get('/api/transactions', (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM transactions ORDER BY date ASC');
-    const formatted = result.rows.map(row => ({
-      id: row.id,
-      date: row.date,
-      category: row.category,
+    const rows = db.prepare('SELECT * FROM transactions ORDER BY date ASC').all();
+    res.json(rows.map(row => ({
+      id:          row.id,
+      date:        row.date,
+      category:    row.category,
       description: row.description,
-      amount: parseFloat(row.amount),
-      dayNote: row.day_note
-    }));
-    res.json(formatted);
+      amount:      parseFloat(row.amount),
+      dayNote:     row.day_note,
+    })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// บันทึกข้อมูล (รองรับการเซฟทีละรายการ และหลายรายการพร้อมกัน)
-app.post('/api/transactions', async (req, res) => {
+app.post('/api/transactions', (req, res) => {
   const items = Array.isArray(req.body) ? req.body : [req.body];
-  try {
-    await pool.query('BEGIN');
-    for (let item of items) {
-      await pool.query(`
-        INSERT INTO transactions (id, date, category, description, amount, day_note)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (id) DO UPDATE SET
-          date = EXCLUDED.date,
-          category = EXCLUDED.category,
-          description = EXCLUDED.description,
-          amount = EXCLUDED.amount,
-          day_note = EXCLUDED.day_note;
-      `, [item.id, item.date, item.category, item.description, item.amount, item.dayNote || '']);
+  const upsert = db.prepare(`
+    INSERT INTO transactions (id, date, category, description, amount, day_note)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      date        = excluded.date,
+      category    = excluded.category,
+      description = excluded.description,
+      amount      = excluded.amount,
+      day_note    = excluded.day_note
+  `);
+
+  const runAll = db.transaction((rows) => {
+    for (const item of rows) {
+      upsert.run(item.id, item.date, item.category, item.description, item.amount, item.dayNote || '');
     }
-    await pool.query('COMMIT');
+  });
+
+  try {
+    runAll(items);
     res.json({ success: true, count: items.length });
   } catch (err) {
-    await pool.query('ROLLBACK');
     res.status(500).json({ error: err.message });
   }
 });
 
-// ลบข้อมูล 1 รายการ
-app.delete('/api/transactions/:id', async (req, res) => {
+app.delete('/api/transactions/:id', (req, res) => {
   try {
-    await pool.query('DELETE FROM transactions WHERE id = $1', [req.params.id]);
+    db.prepare('DELETE FROM transactions WHERE id = ?').run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ล้างข้อมูล transactions ทั้งหมด
-app.delete('/api/transactions', async (req, res) => {
+app.delete('/api/transactions', (req, res) => {
   try {
-    await pool.query('TRUNCATE TABLE transactions');
+    db.prepare('DELETE FROM transactions').run();
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -130,24 +119,21 @@ app.delete('/api/transactions', async (req, res) => {
 // API: ระบบ Calendar (ชนิดวัน)
 // ==========================================
 
-app.get('/api/calendar', async (req, res) => {
+app.get('/api/calendar', (req, res) => {
   try {
-    const result = await pool.query('SELECT date, type_id FROM calendar_days');
-    res.json(result.rows);
+    res.json(db.prepare('SELECT date, type_id FROM calendar_days').all());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/calendar', async (req, res) => {
+app.post('/api/calendar', (req, res) => {
   const { date, type_id } = req.body;
   try {
-    const query = `
-      INSERT INTO calendar_days (date, type_id)
-      VALUES ($1, $2)
-      ON CONFLICT (date) DO UPDATE SET type_id = EXCLUDED.type_id;
-    `;
-    await pool.query(query, [date, type_id]);
+    db.prepare(`
+      INSERT INTO calendar_days (date, type_id) VALUES (?, ?)
+      ON CONFLICT(date) DO UPDATE SET type_id = excluded.type_id
+    `).run(date, type_id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -155,14 +141,14 @@ app.post('/api/calendar', async (req, res) => {
 });
 
 // ==========================================
-// API: ระบบ Settings (หมวดหมู่ และ ชนิดวัน)
+// API: Settings
 // ==========================================
 
-app.get('/api/settings', async (req, res) => {
+app.get('/api/settings', (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM settings');
+    const rows = db.prepare('SELECT * FROM settings').all();
     const settings = {};
-    result.rows.forEach(row => {
+    rows.forEach(row => {
       settings[row.setting_key] = JSON.parse(row.setting_value);
     });
     res.json(settings);
@@ -171,14 +157,13 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-app.post('/api/settings', async (req, res) => {
+app.post('/api/settings', (req, res) => {
   const { key, value } = req.body;
   try {
-    await pool.query(`
-      INSERT INTO settings (setting_key, setting_value)
-      VALUES ($1, $2)
-      ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value;
-    `, [key, JSON.stringify(value)]);
+    db.prepare(`
+      INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)
+      ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value
+    `).run(key, JSON.stringify(value));
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -186,19 +171,19 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // ==========================================
-// API: ระบบ Reset (ล้างข้อมูลทั้งหมด)
+// API: Reset ล้างข้อมูลทั้งหมด
 // ==========================================
 
-app.delete('/api/reset-all', async (req, res) => {
+app.delete('/api/reset-all', (req, res) => {
+  const resetAll = db.transaction(() => {
+    db.prepare('DELETE FROM transactions').run();
+    db.prepare('DELETE FROM calendar_days').run();
+    // เก็บ settings ไว้ ไม่ลบหมวดหมู่
+  });
   try {
-    await pool.query('BEGIN');
-    await pool.query('TRUNCATE TABLE transactions');
-    await pool.query('TRUNCATE TABLE calendar_days');
-    // โค้ดนี้จะเก็บ Settings ไว้ (เผื่อล้างข้อมูลแล้วไม่ต้องตั้งค่าหมวดหมู่ใหม่)
-    await pool.query('COMMIT');
+    resetAll();
     res.json({ success: true, message: 'All data cleared successfully' });
   } catch (err) {
-    await pool.query('ROLLBACK');
     res.status(500).json({ error: err.message });
   }
 });

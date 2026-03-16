@@ -1,49 +1,30 @@
 version: '3.8'
 
 services:
-  # 1. Database (PostgreSQL)
-  postgres:
-    image: postgres:15-alpine
-    container_name: expense_db
-    restart: always
-    environment:
-      POSTGRES_USER: expense_user
-      POSTGRES_PASSWORD: expense_password
-      POSTGRES_DB: expense_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  # 2. Backend (Node.js API)
+  # 1. Backend (Node.js API + SQLite)
   backend:
     image: node:20-alpine
     container_name: expense_api
     working_dir: /app
     volumes:
       - ./backend:/app
-      - backend_node_modules:/app/node_modules # แคชแพ็กเกจไว้ ไม่ต้องโหลดใหม่
+      - backend_node_modules:/app/node_modules   # แคชแพ็กเกจ
+      - sqlite_data:/app/data                    # persist ไฟล์ SQLite
     ports:
       - "3000:3000"
-    depends_on:
-      - postgres
     environment:
-      - PGHOST=postgres
-      - PGUSER=expense_user
-      - PGPASSWORD=expense_password
-      - PGDATABASE=expense_db
-      - PGPORT=5432
       - PORT=3000
+      - DB_PATH=/app/data/cashflow.db
     command: sh -c "npm install --no-audit --no-fund && npm start"
 
-  # 3. Frontend (React + Vite)
+  # 2. Frontend (React + Vite)
   frontend:
     image: node:20-alpine
     container_name: expense_web
     working_dir: /app
     volumes:
       - ./frontend:/app
-      - frontend_node_modules:/app/node_modules # แคชแพ็กเกจไว้ ไม่ต้องโหลดใหม่
+      - frontend_node_modules:/app/node_modules  # แคชแพ็กเกจ
     ports:
       - "5173:5173"
     environment:
@@ -51,6 +32,6 @@ services:
     command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host"
 
 volumes:
-  pgdata:
-  backend_node_modules: # ประกาศ Volume แคช
-  frontend_node_modules: # ประกาศ Volume แคช
+  sqlite_data: 
+  backend_node_modules:
+  frontend_node_modules:
