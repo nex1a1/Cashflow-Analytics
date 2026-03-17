@@ -5,7 +5,7 @@ import {
   Donut, Download, CheckCircle, PlusCircle, Pencil, Trash2, Inbox,
   ArrowUpRight, ArrowDownRight, CalendarDays, Database, FileSpreadsheet, AlertCircle, Settings,
   Coffee, ShieldCheck, Scale, Activity, Home, Flame, Filter, X, Search, Coins, PiggyBank, CalendarPlus, Zap,
-  Moon, Sun, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Calendar as CalendarIcon
+  Moon, Sun, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Calendar as CalendarIcon, Star
 } from 'lucide-react';
 import {
   API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
@@ -15,6 +15,8 @@ import {
 
 import { parseDateStrToObj, isDateInFilter, generateDatesForPeriod } from './utils/dateHelpers';
 import { autoCategorize, parseCSV, cleanNumber } from './utils/csvParser';
+import EditableInput from './components/ui/EditableInput';
+import Sparkline from './components/ui/Sparkline';
 import AnimatedNumber from './components/ui/AnimatedNumber';
 import useCategories from './hooks/useCategories';
 import useAnalytics from './hooks/useAnalytics';
@@ -125,7 +127,8 @@ export default function App() {
   const [showImportGuide, setShowImportGuide] = useState(false); // { items, format, rawText }
   const [previewPage, setPreviewPage] = useState(1);
   const PREVIEW_PER_PAGE = 30;
-  const [exportPeriod, setExportPeriod] = useState('ALL'); // ใช้เก็บช่วงเวลาตอน Export
+  const [exportPeriod, setExportPeriod] = useState('ALL');
+  const [exportFormat, setExportFormat] = useState('long'); // ใช้เก็บช่วงเวลาตอน Export
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [pendingItems, setPendingItems] = useState([]);
@@ -549,6 +552,16 @@ const processCSVText = async (rawText) => {
     }
   };
 
+  const handleSaveTransaction = async (item) => {
+    try {
+      // ส่งเป็น array เพราะ API คาดหวัง array (ดูจาก submitBatch)
+      await saveToDb([item]);
+    } catch (err) {
+      console.error("Failed to save transaction:", err);
+      throw err; // ส่ง error กลับไปให้ DayDetailModal จัดการ
+    }
+  };
+
   const handleDeleteMonth = async (period) => {
       if (!period.match(/^\d{4}-\d{2}$/)) return alert("กรุณาเลือกรายเดือนเพื่อทำการลบข้อมูล");
       if (window.confirm(`🚨 ยืนยันการลบข้อมูลของเดือน ${getThaiMonth(period)} ทั้งหมดหรือไม่? (ไม่สามารถกู้คืนได้)`)) {
@@ -668,7 +681,37 @@ const handleDeleteAllData = async () => {
           handleAddPending();
       }
   };
+// --- Quick Suggestions สำหรับหน้า Batch Add ---
+  const quickSuggestions = useMemo(() => {
+      const typeTx = transactions.filter(t => {
+          const c = categories.find(cat => cat.name === t.category);
+          return c?.type === addForm.type;
+      });
 
+      const frequency = {};
+      typeTx.forEach(t => {
+          const key = `${t.category}|${t.description || t.category}|${t.amount}`;
+          frequency[key] = (frequency[key] || 0) + 1;
+      });
+
+      return Object.keys(frequency)
+          .map(key => ({ key, count: frequency[key] }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8)
+          .map(item => {
+              const [category, description, amount] = item.key.split('|');
+              return { category, description, amount, count: item.count };
+          });
+  }, [transactions, categories, addForm.type]);
+
+  const applyAddFormSuggestion = (sugg) => {
+      setAddForm(prev => ({
+          ...prev,
+          category: sugg.category,
+          description: sugg.description === sugg.category ? '' : sugg.description,
+          amount: sugg.amount
+      }));
+  };
   // --- FILTERS & COMPUTATIONS ---
   const groupedOptions = useMemo(() => {
       const yearsMap = {};
@@ -766,45 +809,57 @@ const handleDeleteAllData = async () => {
 
   const executeExport = () => {
     const dataToExport = transactions.filter(t => isDateInFilter(t.date, exportPeriod));
-    
     if (dataToExport.length === 0) return alert("ไม่มีข้อมูลในช่วงเวลาที่เลือก");
-    
-    // สร้างหัวตาราง CSV เพิ่ม ชนิดวัน
-    let csvContent = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n";
-    
-    // ฟังก์ชันช่วยครอบคำที่มีลูกน้ำด้วย ""
+
     const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
-    
-    dataToExport.forEach(item => {
-        // หาชนิดวันของวันที่นั้นๆ
+    let csvContent = '';
+    let filename = '';
+
+    if (exportFormat === 'long') {
+      csvContent = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n";
+      dataToExport.forEach(item => {
         const [d, m, y] = item.date.split('/');
         const dayOfWeek = new Date(y, parseInt(m)-1, d).getDay();
         const defaultType = (dayOfWeek === 0 || dayOfWeek === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
         const currentTypeId = dayTypes[item.date] || defaultType;
         const typeConfig = dayTypeConfig.find(dt => dt.id === currentTypeId) || dayTypeConfig[0];
-        const dayTypeLabel = typeConfig ? typeConfig.label : '';
-
         const catObj = categories.find(c => c.name === item.category);
-        const isInc = catObj ? catObj.type === 'income' : false;
-        const typeStr = isInc ? 'รายรับ' : 'รายจ่าย';
-        
-        // เพิ่มชนิดวันเข้าไปเป็นคอลัมน์ที่ 2
-        csvContent += `${item.date},${escapeCSV(dayTypeLabel)},${typeStr},${escapeCSV(item.category)},${escapeCSV(item.description || '')},${item.amount}\n`;
-    });
+        const isInc = catObj?.type === 'income';
+        csvContent += `${item.date},${escapeCSV(typeConfig?.label || '')},${isInc ? 'รายรับ' : 'รายจ่าย'},${escapeCSV(item.category)},${escapeCSV(item.description || '')},${item.amount}\n`;
+      });
+      filename = `Cashflow_Long_${exportPeriod.replace('/', '-')}.csv`;
+    } else {
+      const expCats = categories.filter(c => c.type === 'expense');
+      const usedCatNames = [...new Set(dataToExport.filter(t => categories.find(c => c.name === t.category)?.type === 'expense').map(t => t.category))];
+      const orderedCats = expCats.filter(c => usedCatNames.includes(c.name)).map(c => c.name);
+      csvContent = ['Date', ...orderedCats, 'รวม (Total)', 'Notes'].map(h => escapeCSV(h)).join(',') + '\n';
+      const allDates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => {
+        const [da,ma,ya] = a.split('/'); const [db,mb,yb] = b.split('/');
+        return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
+      });
+      allDates.forEach(dateStr => {
+        const dayTx = dataToExport.filter(t => t.date === dateStr);
+        const notes = dayTx.filter(t => t.description && t.description !== t.category).map(t => t.description).join(', ');
+        const rowValues = orderedCats.map(catName => {
+          const total = dayTx.filter(t => t.category === catName).reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+          return total > 0 ? `฿ ${total.toFixed(2)}` : '฿ -';
+        });
+        const dayTotal = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'expense').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+        csvContent += [dateStr, ...rowValues, `฿ ${dayTotal.toFixed(2)}`, notes].map(v => escapeCSV(v)).join(',') + '\n';
+      });
+      filename = `Cashflow_Wide_${exportPeriod.replace('/', '-')}.csv`;
+    }
 
-    // สร้างไฟล์ Blob แบบรองรับภาษาไทย (BOM)
     const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Expense_Export_${exportPeriod.replace('/', '-')}.csv`);
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    setShowToast(true); 
-    setTimeout(() => setShowToast(false), 3000); 
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
     setShowExportModal(false);
   };
 
@@ -857,7 +912,7 @@ const handleDeleteAllData = async () => {
             <button onClick={() => setActiveTab('ledger')} className={`flex-1 md:flex-none px-5 py-4 flex justify-center items-center gap-2 border-b-[3px] transition-all text-base whitespace-nowrap ${activeTab === 'ledger' ? (isDarkMode ? 'border-blue-400 text-blue-400 font-bold bg-slate-800' : 'border-[#00509E] text-[#00509E] font-bold bg-blue-50/50') : (isDarkMode ? 'border-transparent text-slate-400 hover:text-blue-300 hover:bg-slate-800/50' : 'border-transparent text-slate-600 hover:text-[#00509E] hover:bg-slate-100')}`}><ClipboardList className="w-5 h-5" /> ฐานข้อมูลบัญชี</button>
             <button onClick={() => setActiveTab('settings')} className={`flex-1 md:flex-none px-5 py-4 flex justify-center items-center gap-2 border-b-[3px] transition-all text-base whitespace-nowrap ${activeTab === 'settings' ? (isDarkMode ? 'border-blue-400 text-blue-400 font-bold bg-slate-800' : 'border-[#00509E] text-[#00509E] font-bold bg-blue-50/50') : (isDarkMode ? 'border-transparent text-slate-400 hover:text-blue-300 hover:bg-slate-800/50' : 'border-transparent text-slate-600 hover:text-[#00509E] hover:bg-slate-100')}`}><Settings className="w-5 h-5" /> ตั้งค่าระบบ</button>
           </div>
-          {(activeTab === 'dashboard' || activeTab === 'ledger' || activeTab === 'calendar') && (
+          {(activeTab === 'dashboard' || activeTab === 'analytics' || activeTab === 'ledger' || activeTab === 'calendar') && (
             <div className="flex items-center gap-3 py-3 w-full md:w-auto justify-end flex-wrap">
                 <PeriodPicker
                   filterPeriod={filterPeriod}
@@ -871,7 +926,7 @@ const handleDeleteAllData = async () => {
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
           {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
-          {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} />}
+          {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} onSaveTransaction={handleSaveTransaction} handleDeleteTransaction={handleDeleteTransaction} />}
           {activeTab === 'ledger' && <LedgerView displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView} getFilterLabel={getFilterLabel} filterPeriod={filterPeriod} searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleOpenAddModal={handleOpenAddModal} handleUpdateTransaction={handleUpdateTransaction} handleDeleteTransaction={handleDeleteTransaction} handleDeleteMonth={handleDeleteMonth} categories={categories} advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory} advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup} advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate} availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode} />}
           {activeTab === 'settings' && <SettingsView 
             categories={categories} 
@@ -891,14 +946,17 @@ const handleDeleteAllData = async () => {
       {/* --- ADD TRANSACTION MODAL (STAGING AREA) --- */}
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4 transition-all">
-            <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-4xl max-h-[90vh] animate-in zoom-in-95 duration-300 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+            {/* ขยายความกว้างเป็น max-w-6xl เพื่อรองรับ 3 คอลัมน์ */}
+            <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-6xl max-h-[90vh] animate-in zoom-in-95 duration-300 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                 <div className={`p-5 border-b flex justify-between items-center shrink-0 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                     <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><CalendarPlus className="w-6 h-6 text-emerald-600"/> สรุปค่าใช้จ่ายประจำวัน (Batch Add)</h3>
                     <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-200'}`}><X className="w-5 h-5"/></button>
                 </div>
 
                 <div className={`flex-grow overflow-y-auto flex flex-col lg:flex-row custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                    <div className={`w-full lg:w-2/5 p-6 border-b lg:border-b-0 lg:border-r space-y-4 shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                    
+                    {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล (30%) */}
+                    <div className={`w-full lg:w-[30%] p-6 border-b lg:border-b-0 lg:border-r space-y-4 shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
                         <div className={`flex p-1 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                             <button onClick={() => setAddForm({...addForm, type: 'expense', category: categories.find(c=>c.type==='expense')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'expense' ? (isDarkMode ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายจ่าย</button>
                             <button onClick={() => setAddForm({...addForm, type: 'income', category: categories.find(c=>c.type==='income')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'income' ? (isDarkMode ? 'bg-slate-700 text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายรับ</button>
@@ -927,7 +985,66 @@ const handleDeleteAllData = async () => {
                         </button>
                     </div>
 
-                    <div className={`w-full lg:w-3/5 flex flex-col p-6 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50'}`}>
+                    {/* คอลัมน์ 2: Quick Suggestions (30%) */}
+                    <div className={`w-full lg:w-[30%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500"/> 
+                                    รายการที่ใช้บ่อย
+                                </h4>
+                                <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>คลิกเพื่อดึงข้อมูลลงฟอร์ม</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                            {quickSuggestions.length === 0 ? (
+                               <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีข้อมูล</p>
+                            ) : (
+                              quickSuggestions.map((s, idx) => {
+                                const catObj = categories.find(c => c.name === s.category);
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => applyAddFormSuggestion(s)}
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${
+                                      isDarkMode
+                                        ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-slate-500'
+                                        : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-[#00509E]/30 shadow-sm hover:shadow'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                      <div 
+                                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" 
+                                        style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}
+                                      >
+                                        {catObj?.icon}
+                                      </div>
+                                      <div className="overflow-hidden">
+                                        <div className="flex items-center gap-2">
+                                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                            {s.description}
+                                            </p>
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
+                                            {s.count} ครั้ง
+                                            </span>
+                                        </div>
+                                        <p className={`text-xs truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                            {s.category}
+                                        </p>
+                                        </div>
+                                    </div>
+                                    <span className={`text-sm font-black shrink-0 ${addForm.type === 'expense' ? (isDarkMode ? 'text-red-400' : 'text-[#D81A21]') : (isDarkMode ? 'text-emerald-400' : 'text-emerald-600')}`}>
+                                      {s.amount} ฿
+                                    </span>
+                                  </button>
+                                );
+                              })
+                            )}
+                        </div>
+                    </div>
+
+                    {/* คอลัมน์ 3: ตะกร้าที่รอการบันทึก (40%) */}
+                    <div className={`w-full lg:w-[40%] flex flex-col p-6 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50'}`}>
                         <div className="flex justify-between items-center mb-4">
                             <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><ClipboardList className={`w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/> รายการที่รอการบันทึก</h4>
                             <span className={`text-white px-2.5 py-0.5 rounded-full text-xs font-bold ${isDarkMode ? 'bg-blue-600' : 'bg-[#00509E]'}`}>{pendingItems.length} รายการ</span>
@@ -949,10 +1066,12 @@ const handleDeleteAllData = async () => {
                                                     <div className="flex flex-col overflow-hidden">
                                                         <div className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={item.description}>{item.description}</div>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>{item._isInc ? 'รายรับ' : 'รายจ่าย'}</span>
+                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 whitespace-nowrap shrink-0 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
+                                                                {item._isInc ? 'รายรับ' : 'รายจ่าย'}
+                                                            </span>
                                                             <span 
                                                                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded truncate border ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                                                                style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color)}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color)}, ${isDarkMode ? 0.4 : 0.3})` }}
+                                                                style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})` }}
                                                             >
                                                                 {item._catObj?.icon} {item.category}
                                                             </span>
@@ -1220,6 +1339,65 @@ const handleDeleteAllData = async () => {
             </div>
 
             <div className={`px-6 py-4 border-t shrink-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <button
+                  onClick={() => {
+                    // Long Format sample — ครอบคลุมทุกกรณี
+                    const sample = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n" +
+                      // รายรับ
+                      "01/03/2026,ทำงาน,รายรับ,เงินเดือน,เงินเดือนประจำเดือนมีนาคม,25000\n" +
+                      // รายจ่ายปกติ
+                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเที่ยง,65\n" +
+                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,กาแฟ,45\n" +
+                      // description ว่าง (ใช้ชื่อ category แทน)
+                      "01/03/2026,ทำงาน,รายจ่าย,การเดินทาง,,89\n" +
+                      // description มี comma (ต้องครอบด้วย quotes)
+                      "02/03/2026,วันหยุด,รายจ่าย,อาหารและเครื่องดื่ม,ข้าว, น้ำ, ขนม,150\n" +
+                      // จำนวนเงินแบบมี comma
+                      "02/03/2026,วันหยุด,รายจ่าย,ช้อปปิ้งออนไลน์,Shopee ลดราคา,1,350\n" +
+                      // หมวดหมู่ที่ไม่มีในระบบ — จะสร้างใหม่อัตโนมัติ
+                      "02/03/2026,วันหยุด,รายจ่าย,ของฝาก,ของฝากเพื่อน,280\n" +
+                      // วันหยุด ไม่มีชนิดวัน
+                      "03/03/2026,,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเช้า,55\n" +
+                      // รายรับพิเศษ
+                      "03/03/2026,ทำงาน,รายรับ,รายรับพิเศษ/โบนัส,โบนัสพิเศษ,5000\n";
+                    const blob = new Blob(["﻿" + sample], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url;
+                    a.download = 'sample_long_format.csv';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                  }}
+                  className={`py-2.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${isDarkMode ? 'bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-[#00509E] border border-blue-200'}`}
+                >
+                  📋 ตัวอย่าง Long
+                </button>
+                <button
+                  onClick={() => {
+                    // Wide Format sample — ครอบคลุมทุกกรณี
+                    const sample = '"Date","อาหารและเครื่องดื่ม","ช้อปปิ้งออนไลน์","การเดินทาง","ที่อยู่อาศัยและของใช้","อื่นๆ","รวม (Total)","Notes"\n' +
+                      // วันปกติ มีหลาย category
+                      '"01/03/2026","฿ 110.00","฿ -","฿ 89.00","฿ -","฿ -","฿ 199.00",""\n' +
+                      // Notes มี comma ต้องครอบ quotes
+                      '"02/03/2026","฿ 120.00","฿ 350.00","฿ -","฿ -","฿ -","฿ 470.00","Shopee ลดราคา, จ่ายค่าส่งด้วย"\n' +
+                      // วันที่ไม่มีรายจ่ายเลย
+                      '"03/03/2026","฿ -","฿ -","฿ -","฿ -","฿ -","฿ -",""\n' +
+                      // category เดียวหลายรายการ รวมยอดไว้แล้ว
+                      '"04/03/2026","฿ 235.00","฿ -","฿ -","฿ -","฿ -","฿ 235.00","ข้าวเช้า+เที่ยง+เย็น"\n' +
+                      // Notes ไม่มี description ก็ว่างได้
+                      '"05/03/2026","฿ -","฿ 1350.00","฿ -","฿ 450.00","฿ -","฿ 1800.00",""\n' +
+                      // อื่นๆ พร้อม Notes อธิบาย
+                      '"06/03/2026","฿ 80.00","฿ -","฿ -","฿ -","฿ 200.00","฿ 280.00","ค่ายา"\n';
+                    const blob = new Blob(["﻿" + sample], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url;
+                    a.download = 'sample_wide_format.csv';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                  }}
+                  className={`py-2.5 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${isDarkMode ? 'bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'}`}
+                >
+                  📊 ตัวอย่าง Wide
+                </button>
+              </div>
               <button onClick={() => setShowImportGuide(false)} className={`w-full py-2.5 rounded-xl font-bold transition-all active:scale-95 ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                 ปิด
               </button>
@@ -1236,29 +1414,27 @@ const handleDeleteAllData = async () => {
                     <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><Download className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}/> ส่งออกไฟล์ CSV</h3>
                     <button onClick={() => setShowExportModal(false)} className={`p-1.5 rounded-lg ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}><X className="w-5 h-5"/></button>
                 </div>
-                <div className={`mb-5 border rounded-xl p-4 space-y-2 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                    <label className={`block text-sm font-bold mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>เลือกรอบบิลที่ต้องการส่งออก (Export Period)</label>
-                    <select value={exportPeriod} onChange={(e) => setExportPeriod(e.target.value)} className={`w-full rounded-lg px-3 py-2 text-sm outline-none font-medium cursor-pointer appearance-none border transition-all ${isDarkMode ? 'bg-slate-800 border-slate-600 text-white focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E]'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
-                        <option value="ALL">ดาวน์โหลดข้อมูลทั้งหมด (All Time)</option>
-                        {groupedOptions.sortedYears.map(year => {
-                            const data = groupedOptions.yearsMap[year];
-                            return (
-                                <optgroup key={year} label={`▶ ข้อมูลปี ${year}`}>
-                                    <option value={year}>➡️ สรุปทั้งปี {year}</option>
-                                    {data.halves.has(`${year}-H2`) && <option value={`${year}-H2`}>ครึ่งปีหลัง (H2)</option>}
-                                    {data.halves.has(`${year}-H1`) && <option value={`${year}-H1`}>ครึ่งปีแรก (H1)</option>}
-                                    {data.quarters.has(`${year}-Q4`) && <option value={`${year}-Q4`}>ไตรมาส 4 (Q4)</option>}
-                                    {data.quarters.has(`${year}-Q3`) && <option value={`${year}-Q3`}>ไตรมาส 3 (Q3)</option>}
-                                    {data.quarters.has(`${year}-Q2`) && <option value={`${year}-Q2`}>ไตรมาส 2 (Q2)</option>}
-                                    {data.quarters.has(`${year}-Q1`) && <option value={`${year}-Q1`}>ไตรมาส 1 (Q1)</option>}
-                                    <option disabled={true}>--- รายเดือน ---</option>
-                                    {Array.from(data.months).sort().reverse().map(m => (
-                                        <option key={m} value={m}>{getThaiMonth(m)}</option>
-                                    ))}
-                                </optgroup>
-                            );
-                        })}
-                    </select>
+                <div className={`mb-5 border rounded-xl p-4 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+                    <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>เลือกรอบบิลที่ต้องการส่งออก</label>
+                    <PeriodPicker
+                      filterPeriod={exportPeriod}
+                      setFilterPeriod={setExportPeriod}
+                      groupedOptions={groupedOptions}
+                      isDarkMode={isDarkMode}
+                    />
+                </div>
+                <div className={`mb-5 border rounded-xl p-4 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>รูปแบบไฟล์</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => setExportFormat('long')} className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left ${exportFormat === 'long' ? (isDarkMode ? 'border-blue-500 bg-blue-900/30' : 'border-[#00509E] bg-blue-50') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
+                      <span className={`text-sm font-black mb-1 ${exportFormat === 'long' ? (isDarkMode ? 'text-blue-300' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-200' : 'text-slate-700')}`}>📋 Long Format</span>
+                      <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว / 1 รายการ<br/>นำเข้ากลับได้ทันที</span>
+                    </button>
+                    <button onClick={() => setExportFormat('wide')} className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left ${exportFormat === 'wide' ? (isDarkMode ? 'border-blue-500 bg-blue-900/30' : 'border-[#00509E] bg-blue-50') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
+                      <span className={`text-sm font-black mb-1 ${exportFormat === 'wide' ? (isDarkMode ? 'text-blue-300' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-200' : 'text-slate-700')}`}>📊 Wide Format</span>
+                      <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว / 1 วัน<br/>เหมาะกับ Excel</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3">
                     <button onClick={() => setShowExportModal(false)} className={`px-4 py-2.5 rounded-lg font-bold transition-all active:scale-95 ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>ยกเลิก</button>

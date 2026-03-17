@@ -105,9 +105,9 @@ export default function useAnalytics({
     const periodDays = datesInPeriodForAvg.length || uniqueDays;
     const dailyAvg = totalExpense / periodDays;
 
-    const foodDailyAvg = foodTotal / uniqueDays;
+    const foodDailyAvg = foodTotal / periodDays;
     const foodPercentage = totalExpense > 0 ? ((foodTotal / totalExpense) * 100).toFixed(1) : 0;
-    const rentPercentage = totalExpense > 0 ? ((rentTotal / totalExpense) * 100).toFixed(1) : 0;
+    const rentPercentage = totalIncome > 0 ? ((rentTotal / totalIncome) * 100).toFixed(1) : 0;
     const fixedPercentage = totalExpense > 0 ? ((fixedTotal / totalExpense) * 100).toFixed(1) : 0;
     const variablePercentage = totalExpense > 0 ? ((variableTotal / totalExpense) * 100).toFixed(1) : 0;
 

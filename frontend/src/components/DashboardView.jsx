@@ -83,8 +83,11 @@ export default function DashboardView({
                         <h3 className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}><AnimatedNumber value={analytics.rentTotal} /> <span className={`text-lg font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>฿</span></h3>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {analytics.rentPercentage > 30 ? '⚠️ เกินเกณฑ์ 30%' :''}
+                        </span>
                         <span className={`font-bold px-2 py-1 rounded border transition-colors ${analytics.rentPercentage > 30 ? (isDarkMode ? 'text-red-400 bg-red-900/30 border-red-800' : 'text-red-600 bg-red-50 border-red-100') : (isDarkMode ? 'text-blue-400 bg-blue-900/30 border-blue-800' : 'text-blue-600 bg-blue-50 border-blue-100')}`}>
-                            {analytics.rentPercentage > 30 ? 'เกิน 30% ของรายจ่าย' : 'สัดส่วนกำลังดี'}
+                            {analytics.rentPercentage}% ของรายรับ
                         </span>
                     </div>
                 </div>
@@ -97,7 +100,7 @@ export default function DashboardView({
                         <h3 className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}><AnimatedNumber value={analytics.foodDailyAvg} /> <span className={`text-lg font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>฿/วัน</span></h3>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
-                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>รวมเดือนนี้</span>
+                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>สัดส่วนรวม</span>
                         <span className={`font-bold px-2 py-1 rounded border ${analytics.foodPercentage > 35 ? (isDarkMode ? 'text-red-400 bg-red-900/30 border-red-800' : 'text-red-600 bg-red-50 border-red-100') : (isDarkMode ? 'text-orange-400 bg-orange-900/30 border-orange-800' : 'text-orange-600 bg-orange-50 border-orange-100')}`}>
                             {analytics.foodPercentage}% ของรายจ่าย
                         </span>
@@ -110,12 +113,12 @@ export default function DashboardView({
                     <div>
                         <p className={`text-sm font-bold mb-1 flex items-center gap-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><TrendingUp className="w-4 h-4 text-pink-500"/> รายจ่ายผันแปร/วัน</p>
                         <h3 className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                            <AnimatedNumber value={analytics.variableTotal / (analytics.uniqueDays || 1)} />
+                            <AnimatedNumber value={analytics.variableTotal / (analytics.datesInPeriod?.length || 1)} />
                             <span className={`text-lg font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}> ฿/วัน</span>
                         </h3>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
-                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>รวมเดือนนี้</span>
+                        <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>สัดส่วนรวม</span>
                         <span className={`font-bold px-2 py-1 rounded border ${isDarkMode ? 'text-pink-400 bg-pink-900/30 border-pink-800' : 'text-pink-600 bg-pink-50 border-pink-100'}`}>
                             {analytics.variablePercentage}% ของรายจ่าย
                         </span>
@@ -211,7 +214,7 @@ export default function DashboardView({
                                           )}
                                           <div className="group relative">
                                             <div 
-                                                className={`w-3.5 h-3.5 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
+                                                className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
                                                 style={{ backgroundColor: typeConfig.color }}
                                             ></div>
                                             {/* Tooltip */}
