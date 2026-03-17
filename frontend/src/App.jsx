@@ -172,7 +172,7 @@ export default function App() {
       if (!res.ok) throw new Error("Network error transactions");
       const data = await res.json();
       setTransactions(sortTransactions(data));
-      setDbStatus('Online (PostgreSQL)');
+      setDbStatus('Online (SQLite3)');
 
       // โหลดชนิดวันบนปฏิทิน
       try {

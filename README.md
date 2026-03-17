@@ -10,66 +10,60 @@
 
 ในเวอร์ชันแรก ใช้ **Google Gemini Pro** เป็นผู้เขียนโค้ด และในการพัฒนาต่อยอดรอบที่สองนี้ ย้ายมาใช้ **Claude (Anthropic)** ซึ่งให้ผลลัพธ์ที่ดีขึ้นอย่างเห็นได้ชัดทั้งในแง่ความแม่นยำของโค้ด, การจัดการ state, และการ debug
 
-**บทบาทของผู้พัฒนา (ตัวผม):**
-- กำหนดทิศทางและ feature ทั้งหมด
-- ออกแบบ UX/UI และตัดสินใจด้าน layout
-- ทดสอบ, หา bug, และ review ผลลัพธ์
-- บอกว่าอะไรดีหรือไม่ดี แล้วให้ AI แก้
+**บทบาทของผู้พัฒนา (Concept & Product Owner):**
+- กำหนดทิศทางของแอปพลิเคชันและฟีเจอร์ทั้งหมด
+- ออกแบบ UX/UI, ตรรกะทางสถิติการเงิน (เช่น สัดส่วนค่าหอต่อรายรับ) และ Layout
+- ทดสอบการทำงาน, ตรวจสอบบั๊ก, และทำ Code Review เพื่อชี้จุดให้ AI แก้ไข
 
-**บทบาทของ AI:**
-- เขียนโค้ดทั้งหมด
-- refactor, debug, และ optimise
-- แนะนำ approach ที่เหมาะสม
+**บทบาทของ AI (Developer):**
+- เขียนโค้ดทั้งหมดตั้งแต่ Frontend ไปจนถึง Backend
+- Debug และ Optimize ประสิทธิภาพ (เช่น การใช้ `useMemo` เพื่อลดการ Render)
+- นำเสนอโซลูชันทางเทคนิคที่เหมาะสม
 
 ---
 
-## 🚀 Features
+## 🚀 Features (ฟีเจอร์เด่น)
 
 ### 📈 Dashboard วิเคราะห์เชิงลึก
-- สรุปรายรับ / รายจ่าย / เงินคงเหลือ พร้อม Sparkline
-- อัตราการออม (Savings Rate) และอัตราเผาผลาญเงิน/วัน
-- **ค่ากินเฉลี่ย/วัน** และ **รายจ่ายผันแปร/วัน** แยก card ชัดเจน
-- เปรียบเทียบ MoM (Month-over-Month) ในตาราง Cashflow Statement
-- กราฟโดนัท สัดส่วนหมวดหมู่ + Top 7 รายการใช้จ่าย
-- Activity Graph สไตล์ GitHub Contribution Graph
+- สรุปรายรับสุทธิ / รายจ่ายสุทธิ / เงินคงเหลือ พร้อมกราฟ Sparkline
+- คำนวณอัตราการออม (Savings Rate) และอัตราเผาผลาญเงินต่อวัน (Burn Rate)
+- **แยกการ์ดวิเคราะห์เฉพาะจุด:** ค่ากินเฉลี่ย/วัน, รายจ่ายผันแปร/วัน, สัดส่วนค่าที่พัก (ตามหลักการไม่ควรเกิน 30% ของรายรับ)
+- ตารางสรุปกระแสเงินสด (Cashflow Statement) เปรียบเทียบ MoM (Month-over-Month) สไตล์ Excel
+- Activity Graph แสดงไทม์ไลน์การทำธุรกรรมแบบสไตล์ GitHub Contribution
+
+### ⚡ Smart Quick Suggestions (ฟีเจอร์ใหม่)
+- วิเคราะห์ประวัติการใช้จ่ายที่บ่อยที่สุด และสร้างเป็นปุ่ม "รายการที่ใช้บ่อย" ให้อัตโนมัติ
+- แสดงจำนวน "ครั้ง" ที่เคยใช้รายการนั้นๆ
+- กดปุ่มปุ๊บ ข้อมูลจะวิ่งลงฟอร์มทันที ทั้งในหน้า **Day Detail Modal** (เลย์เอาต์ Side-by-side) และหน้า **Batch Add** (เลย์เอาต์ 3 คอลัมน์)
 
 ### 🗓️ ปฏิทินรายวัน
-- Grid ปฏิทินแสดงรายจ่าย/รายรับสูงสุด Top 5 ต่อวัน พร้อมราคา
-- คลิก cell เปิด **Day Detail Popup** — ดู, เพิ่ม, ลบรายการได้เลยโดยไม่ต้องออกไปหน้าอื่น
-- Optimistic UI — บันทึกแล้วเห็นผลทันทีโดยไม่รอ server
-- ระบบ Day Type: กำหนดประเภทวัน (ทำงาน, หยุด, ลาป่วย ฯลฯ) ต่อ cell
+- แสดงรายรับ/รายจ่ายสูงสุด 5 อันดับแรกของแต่ละวัน
+- รองรับการกำหนดประเภทวัน (Day Type) เช่น วันทำงาน, วันหยุด, ลาป่วย
+- คลิกที่ปฏิทินเพื่อเปิด Popup จัดการรายการของวันนั้นๆ ได้ทันทีโดยไม่ต้องเปลี่ยนหน้า (Optimistic UI)
 
 ### 📒 Ledger (ฐานข้อมูลบัญชี)
-- ค้นหา filter ขั้นสูงด้วย category, กลุ่มรายจ่าย, วันที่, และจำนวนเงิน
-- Summary bar แสดงยอดรวมรายรับ/รายจ่าย/คงเหลือของผลการค้นหา
-- ลบรายการรายวันได้จาก summary bar
+- ตัวกรองขั้นสูง (Advanced Filters) — กรองได้ตาม วันที่, กลุ่มรายจ่าย (Fixed/Variable), หมวดหมู่, และค้นหาจากข้อความ
+- แสดงยอดรวม (Summary Bar) เฉพาะผลลัพธ์ที่กรองออกมา
+- รองรับระบบ Pagination สำหรับข้อมูลจำนวนมาก
 
-### 📥 Smart Import CSV
-- รองรับ 2 format อัตโนมัติ — **ไม่ต้องเลือก format เอง**
-  - **Wide Format (Excel):** แต่ละคอลัมน์คือหมวดหมู่ย่อย — auto-map ไปหา category
-  - **Long Format (System Export):** ใส่ตรงได้เลย หมวดหมู่ไม่มีก็สร้างให้อัตโนมัติ
-- Preview modal ก่อน import จริง — แก้ไข category, description, amount, ลบรายการที่ไม่ต้องการได้
-- Pagination แบบ day-based ไม่ตัดกลางวัน
-
-### ⚙️ Settings
-- จัดการ category รายรับ/รายจ่าย: icon, ชื่อ, สี, กลุ่ม Cashflow, Fixed/Variable
-- Color palette 16 สีพร้อม custom color picker
-- จัดการ Day Types ของปฏิทิน
-- Danger Zone: Factory Reset
+### 📥 Smart Import / Export CSV
+- **อัปโหลดแบบไม่ต้องระบุ Format:** ระบบจะประเมินให้อัตโนมัติว่าไฟล์เป็น Wide Format (Excel) หรือ Long Format (System)
+- Auto-mapping Category: ถ้าชื่อใน Excel ไม่ตรงกับระบบ จะพยายามจับคู่เข้าหมวดหมู่ที่เหมาะสมให้
+- มีหน้า **Preview Modal** ให้ตรวจสอบ แก้ไข หรือลบรายการก่อนกดบันทึกลง Database จริง
+- สามารถ Export ข้อมูลออกมาเป็น CSV ได้ทั้ง 2 รูปแบบ
 
 ### 🌓 Dark / Light Mode
-- ครอบคลุมทุกหน้า ทุก component รวมถึง modal และ popup
-
+- สลับโหมดสีได้แบบ Real-time ครอบคลุมทุก Modal และ Popup เพื่อการใช้งานที่สบายตาในทุกช่วงเวลา
 ---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 (Vite), Tailwind CSS, Chart.js, Lucide Icons |
-| Backend | Node.js, Express.js |
-| Database | PostgreSQL 15 |
-| Infrastructure | Docker & Docker Compose |
+| **Frontend** | React 18 (Vite), Tailwind CSS, Chart.js, Lucide Icons |
+| **Backend** | Node.js, Express.js |
+| **Database** | **SQLite3**|
+| **Infrastructure**| Docker & Docker Compose |
 
 **โครงสร้างโค้ด Frontend:**
 ```
@@ -111,20 +105,10 @@ docker-compose up -d --build
 # หยุดระบบ
 docker-compose down
 ```
-
----
-
-## 📌 สิ่งที่ยังไม่มี (Roadmap)
-
-- [ ] Budget ต่อหมวดหมู่ + แจ้งเตือนเมื่อใกล้เกิน
-- [ ] Recurring transaction (template รายการประจำ)
-- [ ] Yearly overview — กราฟภาพรวม 12 เดือน
-- [ ] Edit transaction inline ใน Ledger
-
 ---
 
 ## 💬 บทส่งท้าย
 
 โปรเจกต์นี้เริ่มจากความต้องการส่วนตัว — อยากมีเครื่องมือติดตามการใช้เงินที่ **ตรงกับพฤติกรรมตัวเอง** มากกว่าแอปสำเร็จรูปทั่วไป
 > Concept & Product by **Natthawut Bokham**
-> Code by **Claude (Anthropic)** — previously Gemini Pro 3.1
+> Code by **Claude (Anthropic)** — **Gemini Pro 3.1**
