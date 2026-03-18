@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Crosshair, UploadCloud, BarChart3, ClipboardList, 
-  Wallet, Calculator, PieChart, CalendarClock, TrendingUp, 
-  Donut, Download, CheckCircle, PlusCircle, Pencil, Trash2, Inbox,
-  ArrowUpRight, ArrowDownRight, CalendarDays, Database, FileSpreadsheet, AlertCircle, Settings,
-  Coffee, ShieldCheck, Scale, Activity, Home, Flame, Filter, X, Search, Coins, PiggyBank, CalendarPlus, Zap,
-  Moon, Sun, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Calendar as CalendarIcon, Star
+  BarChart3, ClipboardList,  
+  Download, CheckCircle, PlusCircle, Trash2, Inbox,
+  Database, FileSpreadsheet, AlertCircle, Settings,
+  X, CalendarPlus, Zap,
+  Moon, Sun, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star
 } from 'lucide-react';
 import {
   API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
@@ -13,10 +12,8 @@ import {
   OLD_PALETTE_MAP, DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from './constants';
 
-import { parseDateStrToObj, isDateInFilter, generateDatesForPeriod } from './utils/dateHelpers';
+import { parseDateStrToObj, isDateInFilter } from './utils/dateHelpers';
 import { autoCategorize, parseCSV, cleanNumber } from './utils/csvParser';
-import EditableInput from './components/ui/EditableInput';
-import Sparkline from './components/ui/Sparkline';
 import AnimatedNumber from './components/ui/AnimatedNumber';
 import useCategories from './hooks/useCategories';
 import useAnalytics from './hooks/useAnalytics';
@@ -29,7 +26,6 @@ import { formatMoney, getThaiMonth, getFilterLabel, hexToRgb } from './utils/for
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler, defaults, LineController, BarController
 } from 'chart.js';
-import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler);
 defaults.font.family = 'Tahoma, sans-serif';
@@ -122,6 +118,9 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [dbStatus, setDbStatus] = useState('กำลังตรวจสอบ...');
   const [hideFixedExpenses, setHideFixedExpenses] = useState(false); 
+  const [dashboardCategory, setDashboardCategory] = useState('ALL');
+  const [chartGroupBy, setChartGroupBy] = useState('monthly');
+  const [topXLimit, setTopXLimit] = useState(7);
   const [showExportModal, setShowExportModal] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
   const [showImportGuide, setShowImportGuide] = useState(false); // { items, format, rawText }
@@ -755,6 +754,9 @@ const handleDeleteAllData = async () => {
   categories,
   filterPeriod,
   hideFixedExpenses,
+  dashboardCategory,
+  chartGroupBy,
+  topXLimit,
   dayTypes,
   dayTypeConfig,
   isDarkMode,
@@ -871,7 +873,7 @@ const handleDeleteAllData = async () => {
             <div className="flex items-center gap-4">
                 <div className="bg-gradient-to-br from-[#00509E] to-blue-800 text-white p-3 rounded-xl shadow-md"><Database className="w-7 h-7" /></div>
                 <div>
-                    <h1 className={`text-3xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Cashflow Analytics <span className="text-[#D81A21] text-2xl font-black italic">PRO</span></h1>
+                    <h1 className={`text-3xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Cashflow Analytics <span className="text-[#D81A21] text-2xl font-black italic">MASTER</span></h1>
                     <div className="flex items-center gap-3 mt-1">
                         <span className={`text-sm flex items-center gap-1.5 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}><span className={`w-2.5 h-2.5 rounded-full ${dbStatus.includes('Online') ? 'bg-emerald-500 animate-pulse' : 'bg-orange-400'}`}></span>{dbStatus}</span>
                         <span className={`text-sm ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>|</span>
@@ -925,7 +927,7 @@ const handleDeleteAllData = async () => {
         </div>
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
-          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
+          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory} chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} topXLimit={topXLimit} setTopXLimit={setTopXLimit} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
           {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} onSaveTransaction={handleSaveTransaction} handleDeleteTransaction={handleDeleteTransaction} />}
           {activeTab === 'ledger' && <LedgerView displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView} getFilterLabel={getFilterLabel} filterPeriod={filterPeriod} searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleOpenAddModal={handleOpenAddModal} handleUpdateTransaction={handleUpdateTransaction} handleDeleteTransaction={handleDeleteTransaction} handleDeleteMonth={handleDeleteMonth} categories={categories} advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory} advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup} advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate} availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode} />}
           {activeTab === 'settings' && <SettingsView 
@@ -1406,36 +1408,122 @@ const handleDeleteAllData = async () => {
         </div>
       )}
 
-      {/* --- EXPORT MODAL --- */}
+{/* --- EXPORT MODAL --- */}
       {showExportModal && (
         <div className="fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className={`rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-4">
+            {/* 1. ขยายขนาด Modal จาก max-w-md เป็น max-w-3xl */}
+            <div className={`rounded-2xl shadow-2xl p-6 w-full max-w-3xl animate-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                <div className="flex justify-between items-center mb-5">
                     <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><Download className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}/> ส่งออกไฟล์ CSV</h3>
                     <button onClick={() => setShowExportModal(false)} className={`p-1.5 rounded-lg ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}><X className="w-5 h-5"/></button>
                 </div>
-                <div className={`mb-5 border rounded-xl p-4 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                    <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>เลือกรอบบิลที่ต้องการส่งออก</label>
-                    <PeriodPicker
-                      filterPeriod={exportPeriod}
-                      setFilterPeriod={setExportPeriod}
-                      groupedOptions={groupedOptions}
-                      isDarkMode={isDarkMode}
-                    />
+                
+                {/* --- 2 คอลัมน์ที่ปรับสมดุล (Balanced Layout) --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  
+                  {/* กล่องซ้าย: เลือกรอบบิล */}
+                  <div className={`border rounded-xl p-5 flex flex-col h-full shadow-sm ${isDarkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-white'}`}>
+                      <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>เลือกรอบบิลที่ต้องการส่งออก</label>
+                      <PeriodPicker
+                        filterPeriod={exportPeriod}
+                        setFilterPeriod={setExportPeriod}
+                        groupedOptions={groupedOptions}
+                        isDarkMode={isDarkMode}
+                      />
+                      {/* เพิ่มข้อความ Hint ช่วยเติมเต็มพื้นที่ว่างให้สมดุลกับฝั่งขวา */}
+                      <p className={`text-[11px] mt-3 leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        *แนะนำให้ส่งออกแบบ <strong className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>รายเดือน</strong> เพื่อให้ตาราง Wide Format แยกยอดรายวันได้อย่างสมบูรณ์
+                      </p>
+                      
+                      <div className={`mt-auto pt-5 flex gap-3 items-start text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-[#00509E]'}`}>
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                        <p>
+                          ระบบจะดึงข้อมูล <span className={isDarkMode ? 'text-emerald-400 font-bold' : 'text-emerald-600 font-bold'}>รายรับ</span> และ <span className={isDarkMode ? 'text-red-400 font-bold' : 'text-red-600 font-bold'}>รายจ่าย</span> ใน 
+                          <span className={`font-bold ml-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            {getFilterLabel(exportPeriod)}
+                          </span> มาสร้างเป็นไฟล์ CSV เพื่อนำไปวิเคราะห์ต่อได้ทันที
+                        </p>
+                      </div>
+                  </div>
+
+                  {/* กล่องขวา: รูปแบบไฟล์ */}
+                  <div className={`border rounded-xl p-5 flex flex-col h-full shadow-sm ${isDarkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-white'}`}>
+                    <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>รูปแบบไฟล์</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* เปลี่ยน Emoji เป็น Icon จริง */}
+                      <button onClick={() => setExportFormat('long')} className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left ${exportFormat === 'long' ? (isDarkMode ? 'border-blue-500 bg-blue-900/20 shadow-inner' : 'border-[#00509E] bg-blue-50/50 shadow-inner') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
+                        <span className={`text-sm font-black mb-1.5 flex items-center gap-1.5 ${exportFormat === 'long' ? (isDarkMode ? 'text-blue-400' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
+                          <ClipboardList className="w-4 h-4"/> Long Format
+                        </span>
+                        <span className={`text-[11px] leading-snug ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว ต่อ 1 รายการ<br/>(เหมาะสำหรับ Import กลับ)</span>
+                      </button>
+                      <button onClick={() => setExportFormat('wide')} className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left ${exportFormat === 'wide' ? (isDarkMode ? 'border-blue-500 bg-blue-900/20 shadow-inner' : 'border-[#00509E] bg-blue-50/50 shadow-inner') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
+                        <span className={`text-sm font-black mb-1.5 flex items-center gap-1.5 ${exportFormat === 'wide' ? (isDarkMode ? 'text-blue-400' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-300' : 'text-slate-700')}`}>
+                          <FileSpreadsheet className="w-4 h-4"/> Wide Format
+                        </span>
+                        <span className={`text-[11px] leading-snug ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว ต่อ 1 วัน<br/>(เหมาะสำหรับอ่านใน Excel)</span>
+                      </button>
+                    </div>
+                    
+                    <div className={`mt-auto pt-5 flex gap-3 items-start text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                          <CheckCircle className="w-4 h-4" />
+                        </div>
+                        <p>
+                          ไฟล์ที่ส่งออกรองรับ <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>ภาษาไทย 100%</span> สามารถนำไปเปิดในโปรแกรม Excel หรือ Google Sheets ได้โดยสระและตัวอักษรไม่เพี้ยน
+                        </p>
+                    </div>
+                  </div>
+
                 </div>
-                <div className={`mb-5 border rounded-xl p-4 ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                  <label className={`block text-sm font-bold mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>รูปแบบไฟล์</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setExportFormat('long')} className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left ${exportFormat === 'long' ? (isDarkMode ? 'border-blue-500 bg-blue-900/30' : 'border-[#00509E] bg-blue-50') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
-                      <span className={`text-sm font-black mb-1 ${exportFormat === 'long' ? (isDarkMode ? 'text-blue-300' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-200' : 'text-slate-700')}`}>📋 Long Format</span>
-                      <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว / 1 รายการ<br/>นำเข้ากลับได้ทันที</span>
-                    </button>
-                    <button onClick={() => setExportFormat('wide')} className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left ${exportFormat === 'wide' ? (isDarkMode ? 'border-blue-500 bg-blue-900/30' : 'border-[#00509E] bg-blue-50') : (isDarkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`}>
-                      <span className={`text-sm font-black mb-1 ${exportFormat === 'wide' ? (isDarkMode ? 'text-blue-300' : 'text-[#00509E]') : (isDarkMode ? 'text-slate-200' : 'text-slate-700')}`}>📊 Wide Format</span>
-                      <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>1 แถว / 1 วัน<br/>เหมาะกับ Excel</span>
-                    </button>
+
+                {/* 🌟 แสดงตัวอย่างข้อมูล (Preview Table) เต็มความกว้าง 🌟 */}
+                <div className={`mb-6 border rounded-lg overflow-hidden transition-all duration-300 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                  <div className={`px-4 py-2.5 text-sm font-bold border-b flex items-center gap-2 ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                    👀 ตัวอย่างหน้าตาไฟล์ที่จะได้ ({exportFormat === 'long' ? 'Long Format' : 'Wide Format'})
+                  </div>
+                  <div className={`overflow-x-auto custom-scrollbar p-0 ${isDarkMode ? 'bg-slate-900/40' : 'bg-white'}`}>
+                    {exportFormat === 'long' ? (
+                      <table className={`w-full text-xs text-left whitespace-nowrap ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <thead className={`border-b ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-400' : 'border-slate-100 bg-slate-50 text-slate-500'}`}>
+                          <tr>
+                            <th className="px-4 py-3 font-bold">วันที่</th>
+                            <th className="px-4 py-3 font-bold">ชนิดวัน</th>
+                            <th className="px-4 py-3 font-bold">ประเภท</th>
+                            <th className="px-4 py-3 font-bold">หมวดหมู่</th>
+                            <th className="px-4 py-3 font-bold">รายละเอียด</th>
+                            <th className="px-4 py-3 font-bold text-right">จำนวนเงิน</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
+                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">อาหารและเครื่องดื่ม</td><td className="px-4 py-2.5">ข้าวเที่ยง</td><td className="px-4 py-2.5 text-right font-mono font-bold">65</td></tr>
+                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">การเดินทาง</td><td className="px-4 py-2.5">รถไฟฟ้า</td><td className="px-4 py-2.5 text-right font-mono font-bold">45</td></tr>
+                          <tr><td className="px-4 py-2.5">02/03/2026</td><td className="px-4 py-2.5">วันหยุด</td><td className="px-4 py-2.5 text-emerald-500 font-bold">รายรับ</td><td className="px-4 py-2.5">รายรับพิเศษ/โบนัส</td><td className="px-4 py-2.5">ขายของ</td><td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-500">500</td></tr>
+                        </tbody>
+                      </table>
+                    ) : (
+                      <table className={`w-full text-xs text-left whitespace-nowrap ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <thead className={`border-b ${isDarkMode ? 'border-slate-700 bg-slate-800/50 text-slate-400' : 'border-slate-100 bg-slate-50 text-slate-500'}`}>
+                          <tr>
+                            <th className="px-4 py-3 font-bold">Date</th>
+                            <th className="px-4 py-3 font-bold text-right">อาหารและเครื่องดื่ม</th>
+                            <th className="px-4 py-3 font-bold text-right">ช้อปปิ้งออนไลน์</th>
+                            <th className="px-4 py-3 font-bold text-right">รวม (Total)</th>
+                            <th className="px-4 py-3 font-bold">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
+                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5 text-right font-mono font-bold">฿ 110.00</td><td className="px-4 py-2.5 text-right font-mono text-slate-400">฿ -</td><td className="px-4 py-2.5 text-right font-mono font-black text-[#D81A21]">฿ 110.00</td><td className="px-4 py-2.5 text-slate-400"></td></tr>
+                          <tr><td className="px-4 py-2.5">02/03/2026</td><td className="px-4 py-2.5 text-right font-mono text-slate-400">฿ -</td><td className="px-4 py-2.5 text-right font-mono font-bold">฿ 299.00</td><td className="px-4 py-2.5 text-right font-mono font-black text-[#D81A21]">฿ 299.00</td><td className="px-4 py-2.5">Shopee</td></tr>
+                          <tr><td className="px-4 py-2.5">03/03/2026</td><td className="px-4 py-2.5 text-right font-mono text-slate-400">฿ -</td><td className="px-4 py-2.5 text-right font-mono text-slate-400">฿ -</td><td className="px-4 py-2.5 text-right font-mono font-black text-[#D81A21]">฿ -</td><td className="px-4 py-2.5 text-slate-400"></td></tr>
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
+
                 <div className="flex justify-end gap-3">
                     <button onClick={() => setShowExportModal(false)} className={`px-4 py-2.5 rounded-lg font-bold transition-all active:scale-95 ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>ยกเลิก</button>
                     <button onClick={executeExport} className={`px-5 py-2.5 text-white rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-[#00509E] hover:bg-[#003d7a]'}`}><FileSpreadsheet className="w-4 h-4"/> ดาวน์โหลด CSV</button>

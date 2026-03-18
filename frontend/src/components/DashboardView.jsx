@@ -4,7 +4,7 @@ import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 import {
   Wallet, Coins, PiggyBank, Flame, Home, Scale,
   CalendarClock, TrendingUp, PieChart, FileSpreadsheet,
-  Filter, AlertCircle, Inbox, Activity, UtensilsCrossed,
+  Filter, AlertCircle, Inbox, Activity, UtensilsCrossed
 } from 'lucide-react';
 import AnimatedNumber from './ui/AnimatedNumber';
 import Sparkline from './ui/Sparkline';
@@ -12,8 +12,9 @@ import { formatMoney } from '../utils/formatters';
 import { getThaiMonth } from '../utils/formatters';
 export default function DashboardView({
   transactions, categories, filterPeriod, getFilterLabel,
-  hideFixedExpenses, setHideFixedExpenses, analytics,
-  dayTypeConfig, isDarkMode, dayTypes,allTransactions,
+  hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
+  chartGroupBy, setChartGroupBy,
+  analytics, dayTypeConfig, isDarkMode, dayTypes,allTransactions,topXLimit, setTopXLimit,
 }) {
   const datesInPeriod = analytics.datesInPeriod || [];
     if (transactions.length === 0) {
@@ -253,7 +254,7 @@ export default function DashboardView({
               <div className={`rounded-xl shadow-md border overflow-hidden hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
                   <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
                       <h3 className="font-bold flex items-center gap-2"><FileSpreadsheet className="w-5 h-5 text-emerald-400"/> ตารางสรุปกระแสเงินสด (Cashflow Statement)</h3>
-                      <span className="text-xs font-medium text-slate-300 bg-slate-800 px-2 py-1 rounded">รูปแบบคล้าย Excel</span>
+                      <span className="text-xs font-medium text-slate-300 bg-slate-800 px-2 py-1 rounded">รูปแบบ Excel</span>
                   </div>
                   <div className="overflow-x-auto custom-scrollbar">
                       <table className="w-full text-right text-sm whitespace-nowrap">
@@ -369,18 +370,51 @@ export default function DashboardView({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                           <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                               <TrendingUp className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> 
-                              {analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสดและรายจ่าย' : analytics.mainChartType === 'bar' ? 'เทรนด์รายจ่ายไลฟ์สไตล์เปรียบเทียบ' : `กราฟรายจ่ายรายวันในงวดที่เลือก`}
+                              {analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสดและรายจ่าย' : analytics.mainChartType === 'bar' ? 'เทรนด์รายจ่ายเปรียบเทียบ' : `กราฟรายจ่ายรายวันในงวดที่เลือก`}
                           </h3>
-                          <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}>
-                              <div className="relative">
-                                  <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
-                                  <div className={`block w-10 h-6 rounded-full transition-colors duration-300 ease-in-out ${hideFixedExpenses ? 'bg-[#D81A21]' : (isDarkMode ? 'bg-slate-600' : 'bg-slate-300')}`}></div>
-                                  <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ease-in-out ${hideFixedExpenses ? 'transform translate-x-4' : ''}`}></div>
-                              </div>
-                              <span className={`text-xs font-bold flex items-center gap-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                  <Filter className="w-3 h-3"/> ซ่อนยอดภาระคงที่
-                              </span>
-                          </label>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            {/* 🌟 Toggle สลับมุมมองกราฟ (โชว์เฉพาะเวลาเลือกดูหลายเดือน) 🌟 */}
+                              {!filterPeriod.match(/^\d{4}-\d{2}$/) && (
+                                  <div className={`flex p-1 rounded-lg border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                                      <button
+                                          onClick={() => setChartGroupBy('monthly')}
+                                          className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+                                      >
+                                          รายเดือน
+                                      </button>
+                                      <button
+                                          onClick={() => setChartGroupBy('daily')}
+                                          className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+                                      >
+                                          รายวัน
+                                      </button>
+                                  </div>
+                              )}
+                              {/* 🌟 Dropdown เลือกหมวดหมู่ (สไตล์ปุ่มมน เข้ากับ PeriodPicker) 🌟 */}
+                              <select 
+                                  value={dashboardCategory} 
+                                  onChange={(e) => setDashboardCategory(e.target.value)}
+                                  className={`px-3 py-1.5 border rounded-lg shadow-sm transition-colors text-sm font-semibold outline-none cursor-pointer appearance-none pl-3 pr-8 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 focus:border-[#00509E]'}`}
+                                  style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem center', backgroundSize: '1em' }}
+                              >
+                                  <option value="ALL">📊 รวมทุกหมวดหมู่</option>
+                                  {categories.filter(c => c.type === 'expense').map(c => (
+                                      <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
+                                  ))}
+                              </select>
+
+                              {/* Toggle ซ่อนภาระคงที่ (สไตล์ปุ่มมน เข้าชุดกัน) */}
+                              <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border shadow-sm transition-colors ${dashboardCategory !== 'ALL' ? 'opacity-40 pointer-events-none' : ''} ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-300 hover:bg-slate-50'}`}>
+                                  <div className="relative flex items-center">
+                                      <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
+                                      <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${hideFixedExpenses ? 'bg-[#D81A21]' : (isDarkMode ? 'bg-slate-600' : 'bg-slate-300')}`} style={{ height: '1.125rem' }}></div>
+                                      <div className={`dot absolute left-[2px] top-[2px] bg-white w-3.5 h-3.5 rounded-full transition-transform duration-300 ease-in-out ${hideFixedExpenses ? 'transform translate-x-3.5' : ''}`}></div>
+                                  </div>
+                                  <span className={`text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                                      <Filter className="w-3.5 h-3.5"/> ซ่อนยอดภาระคงที่
+                                  </span>
+                              </label>
+                          </div>
                         </div>
                         <div className="relative w-full flex-grow min-h-[320px]">
                             {/* บังคับส่งค่าสีเส้นและตัวอักษรเข้าไปใน Options ของ Chart ให้เปลี่ยนตาม isDarkMode ทันที */}
@@ -511,102 +545,134 @@ export default function DashboardView({
                 </div>
 
                 <div className="flex flex-col h-full">
-                    <div className={`rounded-xl shadow-sm border p-6 flex flex-col flex-grow h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                        <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 ${isDarkMode ? 'text-slate-200 border-slate-700' : 'text-slate-800 border-slate-100'}`}>
-                            <PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สัดส่วนรายจ่าย (ในกราฟ)
-                        </h3>
-                        <div className="w-full h-[220px] flex-shrink-0 flex justify-center relative mb-4">
-                            <Doughnut data={analytics.catChartData} options={{ maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } }, animation: { animateScale: true, animateRotate: true, duration: 1000 } }}/>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className={`text-xs font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ยอดรวม</span>
-                                <span className={`text-base font-black ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}>{formatMoney(analytics.chartTotal)}</span>
+                    <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                        {/* 🌟 ย้ายยอดรวมมาไว้ที่ Header */}
+                        <div className={`flex items-center justify-between mb-4 border-b pb-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                            <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                <PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สัดส่วนรายจ่าย
+                            </h3>
+                            <div className="text-right">
+                                <span className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยอดรวมในกราฟ</span>
+                                <div className={`text-sm font-black ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}>{formatMoney(analytics.chartTotal)} ฿</div>
                             </div>
                         </div>
-                        <div className="w-full overflow-y-auto pr-2 custom-scrollbar flex-grow" style={{maxHeight: "300px"}}>
-                            <table className="w-full text-sm text-left">
-                                <thead className={`sticky top-0 shadow-sm ${isDarkMode ? 'bg-slate-800/90' : 'bg-slate-50'}`}>
-                                    <tr>
-                                        <th className={`px-2 py-2 font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>หมวดหมู่</th>
-                                        <th className={`px-2 py-2 font-semibold text-right ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>ยอดรวม</th>
-                                        {analytics.numMonths > 1 && <th className={`px-2 py-2 font-semibold text-right ${isDarkMode ? 'text-slate-400 bg-blue-900/20' : 'text-slate-500 bg-blue-50/50'}`}>เฉลี่ย/ด.</th>}
-                                    </tr>
-                                </thead>
-                                <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700/50' : 'divide-slate-100'}`}>
-                                    {analytics.sortedCats.map((cat, idx) => {
-                                        const catDef = categories.find(c => c.name === cat.name);
-                                        return (
-                                          <tr key={idx} className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'}`}>
-                                              <td className="px-2 py-2.5 flex items-center gap-1.5 truncate max-w-[120px]" title={cat.name}>
-                                                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 group-hover:scale-125 transition-transform" style={{backgroundColor: analytics.catChartData.datasets[0].backgroundColor[idx]}}></div>
-                                                  <span className={`truncate text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{catDef?.icon} {cat.name}</span>
-                                              </td>
-                                              <td className={`px-2 py-2.5 text-right font-bold text-xs ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatMoney(cat.amount)}</td>
-                                              {analytics.numMonths > 1 && <td className={`px-2 py-2.5 text-right font-bold text-xs transition-colors ${isDarkMode ? 'text-blue-400 bg-blue-900/10' : 'text-[#00509E] bg-blue-50/30'}`}>{formatMoney(cat.avgPerMonth)}</td>}
-                                          </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                        
+                        <div className="w-full flex-grow flex justify-center items-center relative min-h-[250px] lg:min-h-[350px]">
+                            {/* 🌟 แสดงเฉพาะกราฟ ไม่มีตารางรกๆ ด้านล่างแล้ว */}
+                            <Doughnut 
+                                data={analytics.catChartData} 
+                                options={{ 
+                                    maintainAspectRatio: false, 
+                                    cutout: '70%', 
+                                    plugins: { 
+                                        legend: { display: false },
+                                        tooltip: {
+                                            backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                                            titleColor: isDarkMode ? '#f1f5f9' : '#1e293b',
+                                            bodyColor: isDarkMode ? '#94a3b8' : '#475569',
+                                            borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                                            borderWidth: 1,
+                                            padding: 12,
+                                            cornerRadius: 8,
+                                            callbacks: {
+                                                label: (ctx) => ` ${ctx.label}: ${ctx.raw?.toLocaleString('th-TH')} ฿`
+                                            }
+                                        }
+                                    }, 
+                                    animation: { animateScale: true, animateRotate: true, duration: 1000 } 
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
-                <div className={`rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                    <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 ${isDarkMode ? "text-slate-200 border-slate-700" : "text-slate-800 border-slate-100"}`}>
-                        <AlertCircle className="w-5 h-5 text-[#D81A21]" /> TOP 7 รายการที่จ่ายแพงที่สุด (ในกราฟ)
-                    </h3>
-                    <div className="space-y-3">
-                        {analytics.top7Transactions.map((tx, idx) => {
+            {/* แถวที่ 3: TOP X และ สรุปหมวดหมู่ (ปรับให้ยืดความสูงเท่ากันเป๊ะแบบไม่มีแถบเลื่อน) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2 items-stretch">
+                
+                {/* 🌟 กล่องซ้าย: TOP X */}
+                <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                    <div className={`flex items-center justify-between mb-4 border-b pb-3 shrink-0 ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                        <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>
+                            <AlertCircle className="w-5 h-5 text-[#D81A21]" /> 
+                            TOP 
+                            <select 
+                                value={topXLimit} 
+                                onChange={(e) => setTopXLimit(Number(e.target.value))}
+                                className={`mx-0.5 px-1 py-0.5 text-sm font-black rounded border outline-none cursor-pointer transition-colors text-center appearance-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600' : 'bg-slate-100 border-slate-300 text-[#D81A21] hover:bg-slate-200'}`}
+                            >
+                                <option value={5}>5</option>
+                                <option value={7}>7</option>
+                                <option value={10}>10</option>
+                                <option value={15}>15</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                            รายการที่จ่ายแพงสุด 
+                            {dashboardCategory !== 'ALL' ? <span className={`font-normal text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>({dashboardCategory})</span> : <span className={`font-normal text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>(ในกราฟ)</span>}
+                        </h3>
+                    </div>
+
+                    {/* 🌟 ลดระยะห่างระหว่างแถวจาก space-y-3 เป็น space-y-2 */}
+                    <div className="space-y-2 flex-grow">
+                        {analytics.topTransactions.map((tx, idx) => {
                             const catDef = categories.find(c => c.name === tx.category);
                             return (
-                              <div key={tx.id} className={`flex justify-between items-start p-3 transition-colors rounded-lg border hover:shadow-sm ${isDarkMode ? "bg-slate-900/40 hover:bg-slate-700 border-slate-700" : "bg-slate-50 hover:bg-slate-100 border-slate-100"}`}>
-                                  <div className="overflow-hidden pr-2 flex items-center gap-3">
-                                      <div className="text-lg font-black text-slate-300 w-6 text-center">{idx + 1}</div>
-                                      <div>
-                                          <p className={`text-sm font-bold truncate ${isDarkMode ? "text-slate-200" : "text-slate-800"}`} title={tx.description}>{tx.description}</p>
-                                          <div className="flex items-center gap-2 mt-1">
+                              // 🌟 ปรับ padding เป็น px-3 py-2 และใช้ items-center
+                              <div key={tx.id} className={`flex justify-between items-center px-3 py-2 transition-colors rounded-lg border hover:shadow-sm ${isDarkMode ? "bg-slate-900/40 hover:bg-slate-700 border-slate-700" : "bg-slate-50 hover:bg-slate-100 border-slate-100"}`}>
+                                  <div className="overflow-hidden pr-2 flex items-center gap-2.5">
+                                      {/* 🌟 ย่อขนาดตัวเลขลำดับลง */}
+                                      <div className="text-base font-black text-slate-300 w-5 text-center shrink-0">{idx + 1}</div>
+                                      <div className="overflow-hidden">
+                                          <p className={`text-sm font-bold truncate leading-tight mb-0.5 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`} title={tx.description}>{tx.description}</p>
+                                          <div className="flex items-center gap-1.5">
                                             <span 
-                                                className="text-[10px] font-bold px-2 py-0.5 rounded-md border text-white" 
+                                                // 🌟 ย่อขนาดป้ายกำกับหมวดหมู่ให้บางลง
+                                                className="text-[11px] font-bold px-1.5 py-[1px] rounded border text-white truncate max-w-[180px] shrink-0" 
                                                 style={{ backgroundColor: catDef?.color || '#64748B', borderColor: catDef?.color || '#64748B' }}
                                                 title={tx.category}
                                             >
                                               {catDef?.icon} {tx.category}
                                             </span>
-                                            <span className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{tx.date}</span>
+                                            {/* 🌟 ย่อขนาดวันที่ */}
+                                            <span className={`text-[10px] font-medium shrink-0 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{tx.date}</span>
                                           </div>
                                       </div>
                                   </div>
-                                  <span className="font-black text-[#D81A21] whitespace-nowrap">{formatMoney(tx.amount)} ฿</span>
+                                  {/* 🌟 ลดขนาดตัวอักษรยอดเงินลงมานิดนึงให้สมดุล */}
+                                  <span className="text-sm font-black text-[#D81A21] whitespace-nowrap shrink-0">{formatMoney(tx.amount)} ฿</span>
                               </div>
                             );
                         })}
                     </div>
                 </div>
 
-                <div className={`rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                    <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 ${isDarkMode ? "text-slate-200 border-slate-700" : "text-slate-800 border-slate-100"}`}>
-                        <PieChart className="w-5 h-5 text-[#00509E]" /> 7 หมวดหมู่ที่ละลายทรัพย์สุด
+                {/* 🌟 กล่องขวา: สรุปยอดรายจ่ายแยกตามหมวดหมู่ */}
+                <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                    <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 shrink-0 ${isDarkMode ? "text-slate-200 border-slate-700" : "text-slate-800 border-slate-100"}`}>
+                        <PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สรุปยอดรายจ่ายแยกตามหมวดหมู่
                     </h3>
-                    <div className="space-y-5 mt-4">
-                        {analytics.sortedCats.slice(0, 7).map((cat, idx) => {
+                    
+                    {/* เอา overflow และ maxHeight ออก ใส่ flex-grow เช่นกัน */}
+                    <div className="flex flex-col gap-4 mt-4 flex-grow">
+                        {analytics.sortedCats.map((cat, idx) => {
                             const catDef = categories.find(c => c.name === cat.name);
                             const pColor = catDef?.color || '#D81A21';
                             return (
-                              <div key={idx}>
-                                  <div className="flex justify-between text-sm font-medium mb-1.5">
-                                      <span className={`truncate pr-2 font-bold flex items-center gap-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`} title={cat.name}>
-                                          <span className="text-slate-400">{idx+1}.</span> {catDef ? catDef.icon : '📌'} {cat.name}
+                              <div key={idx} className="flex flex-col group">
+                                  <div className="flex justify-between items-end mb-1.5">
+                                      <span className={`truncate pr-2 text-sm font-bold flex items-center gap-2 transition-colors ${isDarkMode ? "text-slate-300 group-hover:text-slate-100" : "text-slate-700 group-hover:text-slate-900"}`} title={cat.name}>
+                                          {catDef ? catDef.icon : '📌'} {cat.name}
                                       </span>
-                                      <span className={`font-black whitespace-nowrap ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{formatMoney(cat.amount)} ฿</span>
+                                      <div className="flex items-baseline gap-2 shrink-0">
+                                          <span className="text-xs font-bold opacity-90 w-12 text-right tracking-wide" style={{color: pColor}}>{cat.percentage}%</span>
+                                          <span className={`text-sm font-black whitespace-nowrap w-24 text-right transition-colors ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{formatMoney(cat.amount)} ฿</span>
+                                      </div>
                                   </div>
-                                  <div className={`w-full rounded-full h-2 overflow-hidden ${isDarkMode ? "bg-slate-700" : "bg-slate-100"}`}>
-                                      <div className="h-2 rounded-full transition-all duration-1000 ease-out" style={{width: `${cat.percentage}%`, backgroundColor: pColor, opacity: 1 - (idx * 0.1)}}></div>
-                                  </div>
-                                  <div className="flex justify-between mt-1">
-                                      <p className={`text-[11px] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>เฉลี่ย {formatMoney(cat.avgPerMonth)}/เดือน</p>
-                                      <p className="text-[11px] font-bold" style={{color: pColor}}>{cat.percentage}%</p>
+                                  <div className={`w-full rounded-full h-1.5 overflow-hidden ${isDarkMode ? "bg-slate-700" : "bg-slate-100"}`}>
+                                      <div className="h-1.5 rounded-full transition-all duration-1000 ease-out relative" style={{width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.5, 1 - (idx * 0.05))}}>
+                                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                      </div>
                                   </div>
                               </div>
                             );
