@@ -93,8 +93,8 @@ src/
 
 ```bash
 # 1. Clone
-git clone https://github.com/yourusername/cashflow-analytics-pro.git
-cd cashflow-analytics-pro
+git clone https://github.com/nex1a1/Cashflow-Analytics.git
+cd Cashflow-Analytics
 
 # 2. Run
 docker-compose up -d --build

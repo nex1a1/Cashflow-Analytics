@@ -280,6 +280,7 @@ export default function SettingsView({
   handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, setDayTypeConfig, isDarkMode,
   handleDeleteAllData, saveSettingToDb,
+  paymentMethods = [], setPaymentMethods 
 }) {
   const [newCatId, setNewCatId] = useState(null); // track newly added cat for auto-focus
 
@@ -318,7 +319,37 @@ export default function SettingsView({
       saveSettingToDb(DAY_TYPE_CONFIG_KEY, newConfig);
     }
   };
+// 🌟 [เพิ่มใหม่] ฟังก์ชันจัดการกระเป๋าเงิน (Payment Methods)
+  const handleAddPaymentMethod = () => {
+    const newMethods = [
+      ...paymentMethods,
+      { id: `pm_${Date.now()}`, name: 'กระเป๋าใหม่', type: 'bank', color: '#3B82F6' },
+    ];
+    setPaymentMethods(newMethods);
+  };
 
+  const handlePaymentMethodChange = (id, field, value) => {
+    const newMethods = paymentMethods.map(pm =>
+      pm.id === id ? { ...pm, [field]: value } : pm
+    );
+    setPaymentMethods(newMethods);
+  };
+
+  const handleDeletePaymentMethod = (id) => {
+    const newMethods = paymentMethods.filter(pm => pm.id !== id);
+    setPaymentMethods(newMethods);
+  };
+
+  const handleMovePaymentMethod = (id, direction) => {
+    const index = paymentMethods.findIndex(pm => pm.id === id);
+    if (index < 0) return;
+    const targetIndex = direction === 'UP' ? index - 1 : index + 1;
+    if (targetIndex >= 0 && targetIndex < paymentMethods.length) {
+      const newMethods = [...paymentMethods];
+      [newMethods[index], newMethods[targetIndex]] = [newMethods[targetIndex], newMethods[index]];
+      setPaymentMethods(newMethods);
+    }
+  };
   const onAddCategory = (type) => {
     handleAddCategory(type);
     // หา id ของ category ที่จะถูกเพิ่มใหม่ (ตัวสุดท้ายของ type นั้น หลังจาก state update)
@@ -492,8 +523,71 @@ export default function SettingsView({
           ))}
         </div>
       </div>
+          {/* 🌟 [เพิ่มใหม่] ── Payment Methods (กระเป๋าเงิน) ── */}
+      <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm mt-6`}>
+        <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('indigo')}`}>
+          <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-800'}`}>
+            <Wallet className="w-5 h-5" /> กระเป๋าเงิน / ช่องทางจ่าย
+          </h2>
+          <button
+            onClick={handleAddPaymentMethod}
+            className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-indigo-600/80 hover:bg-indigo-500' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+          >
+            <PlusCircle className="w-4 h-4" /> เพิ่ม
+          </button>
+        </div>
+        <div className="p-3 space-y-2">
+          {paymentMethods.length === 0 && (
+            <p className={`text-sm text-center py-4 ${textMuted}`}>ยังไม่มีช่องทางชำระเงิน</p>
+          )}
+          {paymentMethods.map(pm => (
+            <div
+              key={pm.id}
+              className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors group ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-100 hover:bg-slate-50'}`}
+            >
+              {/* Reorder */}
+              <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
+                <button onClick={() => handleMovePaymentMethod(pm.id, 'UP')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
+                <button onClick={() => handleMovePaymentMethod(pm.id, 'DOWN')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
+              </div>
 
+              {/* Type Select */}
+              <select
+                value={pm.type || 'bank'}
+                onChange={e => handlePaymentMethodChange(pm.id, 'type', e.target.value)}
+                className={`border rounded-lg text-xs font-bold py-1.5 px-2 outline-none transition-colors cursor-pointer shrink-0 ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-white border-slate-300 text-slate-700'}`}
+              >
+                <option value="bank">🏦 บัญชี</option>
+                <option value="credit">💳 เครดิต</option>
+                <option value="cash">💵 เงินสด</option>
+              </select>
+
+              {/* Label */}
+              <input
+                type="text"
+                value={pm.name}
+                onChange={e => handlePaymentMethodChange(pm.id, 'name', e.target.value)}
+                className={`flex-1 min-w-0 px-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-indigo-500' : 'border-slate-200 text-slate-800 focus:border-indigo-400'}`}
+                placeholder="ชื่อกระเป๋า (เช่น SCB, บัตรเครดิต)"
+              />
+
+              {/* Color picker */}
+              <ColorPicker
+                color={pm.color || '#3B82F6'}
+                onChange={c => handlePaymentMethodChange(pm.id, 'color', c)}
+                isDarkMode={isDarkMode}
+              />
+
+              <div className={`w-px h-5 shrink-0 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
+
+              {/* Delete */}
+              <ConfirmDeleteButton onConfirm={() => handleDeletePaymentMethod(pm.id)} isDarkMode={isDarkMode} />
+            </div>
+          ))}
+        </div>
+      </div>
         </div> {/* end right col */}
+        
       </div> {/* end 2-col grid */}
 
       {/* ── Danger Zone ── */}

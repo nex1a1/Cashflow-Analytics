@@ -80,6 +80,7 @@ export default function App() {
   // State สำหรับ Day Types ของปฏิทิน (โหลดจาก DB ใน loadData)
   const [dayTypes, setDayTypes] = useState({});
   const [dayTypeConfig, setDayTypeConfig] = useState(DEFAULT_DAY_TYPES);
+  const [paymentMethods, setPaymentMethods] = useState([]);
 // ฟังก์ชันยิง API เซฟลง Database
   const saveSettingToDb = async (key, value) => {
       try {
@@ -114,6 +115,7 @@ export default function App() {
   const [advancedFilterCategory, setAdvancedFilterCategory] = useState('ALL');
   const [advancedFilterGroup, setAdvancedFilterGroup] = useState('ALL');
   const [advancedFilterDate, setAdvancedFilterDate] = useState('ALL');
+  const [advancedFilterWallet, setAdvancedFilterWallet] = useState('ALL');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [dbStatus, setDbStatus] = useState('กำลังตรวจสอบ...');
@@ -136,7 +138,8 @@ export default function App() {
       date: new Date().toISOString().split('T')[0],
       category: '',
       description: '',
-      amount: ''
+      amount: '',
+      paymentMethodId: ''
   });
 
   const fileInputRef = useRef(null);
@@ -221,6 +224,17 @@ export default function App() {
               if (dbSettings[DAY_TYPE_CONFIG_KEY]) {
                   setDayTypeConfig(dbSettings[DAY_TYPE_CONFIG_KEY]);
               }
+              
+              // 🌟 [เพิ่มใหม่] โหลดข้อมูลกระเป๋าเงิน (ถ้าไม่มีให้ใช้ค่าเริ่มต้น)
+              if (dbSettings['payment_methods_config']) {
+                  setPaymentMethods(dbSettings['payment_methods_config']);
+              } else {
+                  setPaymentMethods([
+                      { id: 'pm_scb', name: 'SCB (ใช้จ่าย)', type: 'bank', color: '#8B5CF6' },
+                      { id: 'pm_cash', name: 'เงินสด', type: 'cash', color: '#10B981' },
+                      { id: 'pm_credit', name: 'บัตรเครดิต', type: 'credit', color: '#3B82F6' }
+                  ]);
+              }
           }
       } catch (setErr) {
           console.error("Failed to load settings from DB:", setErr);
@@ -267,6 +281,11 @@ const handleDeleteCategory = (id) =>
       setDayTypeConfig(newConfig);
       saveSettingToDb(DAY_TYPE_CONFIG_KEY, newConfig);
   };
+  // 🌟 [เพิ่มใหม่] ฟังก์ชันสำหรับบันทึกกระเป๋าเงิน
+  const handleUpdatePaymentMethods = (newMethods) => {
+      setPaymentMethods(newMethods);
+      saveSettingToDb('payment_methods_config', newMethods);
+  };
 
 const processCSVText = async (rawText) => {
     try {
@@ -280,29 +299,23 @@ const processCSVText = async (rawText) => {
         let newList = [];
         let batchId = Date.now();
         let newDayTypes = { ...dayTypes }; 
-        let updatedDayTypeConfig = [...dayTypeConfig]; // เก็บ state เพื่อเพิ่มชนิดวันใหม่
-        let updatedCategories = [...categories];       // เก็บ state เพื่อเพิ่มหมวดหมู่ใหม่
+        let updatedDayTypeConfig = [...dayTypeConfig];
+        let updatedCategories = [...categories];       
         let isConfigChanged = false;
         let isCategoryChanged = false;
 
-        // 🟢 ฟังก์ชันช่วยสร้างชนิดวันใหม่ (ถ้าไม่มีในระบบ)
         const getOrCreateDayType = (label) => {
             if (!label || label.trim() === '') return null;
             label = label.trim();
             let found = updatedDayTypeConfig.find(dt => dt.label === label);
             if (!found) {
-                found = { 
-                    id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, 
-                    label: label, 
-                    color: '#64748B' // สีเทา (แก้ไขทีหลังได้ที่หน้าตั้งค่า)
-                };
+                found = { id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, label: label, color: '#64748B' };
                 updatedDayTypeConfig.push(found);
                 isConfigChanged = true;
             }
             return found.id;
         };
 
-        // 🟢 ฟังก์ชันช่วยสร้างหมวดหมู่ใหม่ (ถ้าไม่มีในระบบ)
         const getOrCreateCategory = (name, typeStr = 'รายจ่าย') => {
             if (!name || name.trim() === '') return updatedCategories.filter(c => c.type === 'expense')[0]?.name || "อื่นๆ";
             name = name.trim();
@@ -311,12 +324,9 @@ const processCSVText = async (rawText) => {
                 const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
                 found = {
                     id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-                    name: name,
-                    icon: "📌",
-                    color: isIncome ? "#10B981" : "#64748B",
+                    name: name, icon: "📌", color: isIncome ? "#10B981" : "#64748B",
                     type: isIncome ? 'income' : 'expense',
-                    cashflowGroup: isIncome ? 'bonus' : 'variable',
-                    isFixed: false
+                    cashflowGroup: isIncome ? 'bonus' : 'variable', isFixed: false
                 };
                 updatedCategories.push(found);
                 isCategoryChanged = true;
@@ -324,149 +334,102 @@ const processCSVText = async (rawText) => {
             return found.name;
         };
 
-        // ตรวจสอบรูปแบบไฟล์
-        const firstLine = rawTrimmed.split('\n')[0];
-        const isTSVLong = firstLine.includes('\t');
+        // 🌟 Helper สำหรับหากระเป๋าเงินตอน Import
+        const getPaymentMethodId = (pmName) => {
+            if (!pmName || pmName.trim() === '') return null;
+            const found = paymentMethods.find(p => p.name.toLowerCase() === pmName.trim().toLowerCase());
+            return found ? found.id : null;
+        };
 
-        if (isTSVLong) {
-            const lines = rawTrimmed.split('\n');
-            for (let i = 0; i < lines.length; i++) {
-                const row = lines[i].split('\t').map(c => c.trim());
-                if (row[0] === 'วันที่' || row[0].toLowerCase() === 'date') continue;
+        const parsedRows = parseCSV(rawTrimmed);
+        if (parsedRows.length < 2) { 
+            alert("ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด");
+            setIsProcessing(false); 
+            return; 
+        }
+        
+        const headers = parsedRows[0];
+        const dateColIndex = 0;
+        const noteColIndex = headers.length - 1;
+        // 🌟 หา Index ของคอลัมน์กระเป๋าเงิน (ถ้ามี)
+        const pmColIndex = headers.findIndex(h => h === 'กระเป๋าเงิน' || h === 'Wallet' || h === 'ช่องทางชำระ');
+        const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total', 'กระเป๋าเงิน', 'wallet', 'ช่องทางชำระ'];
+        const isCsvLong = headers.length >= 4 && (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
+
+        for (let i = 1; i < parsedRows.length; i++) {
+            const row = parsedRows[i];
+            if (row.length < 2) continue;
+            const dateStr = row[dateColIndex];
+            if(!dateStr || !dateStr.includes('/')) continue;
+
+            if (isCsvLong) {
+                let catName, desc, amtStr, typeStr = 'รายจ่าย', pmId = null;
                 
-                if (row.length >= 4) {
-                    const dateStr = row[0];
-                    if(!dateStr || !dateStr.includes('/')) continue;
-
-                    let catName, desc, amtStr, typeStr = 'รายจ่าย';
-                    if (row.length >= 6) {
-                         // รูปแบบ: วันที่ | ชนิดวัน | ประเภท | หมวดหมู่ | รายละเอียด | จำนวนเงิน
-                         const typeId = getOrCreateDayType(row[1]);
-                         if (typeId) newDayTypes[dateStr] = typeId;
-                         typeStr = row[2];
-                         catName = row[3];
-                         desc = row[4];
-                         amtStr = row[5];
-                    }
-                    else if (row.length === 5) {
-                         typeStr = row[1];
-                         catName = row[2];
-                         desc = row[3];
-                         amtStr = row[4];
-                    } 
-                    else { 
-                         catName = row[1];
-                         desc = row[2];
-                         amtStr = row[3];
-                    }
-                    
-                    const finalCatName = getOrCreateCategory(catName, typeStr);
-                    const amount = cleanNumber(amtStr);
-                    
-                    if (amount !== 0) {
-                         newList.push({
-                             id: `csv_${batchId}_${i}`,
-                             date: dateStr,
-                             category: finalCatName,
-                             description: desc || finalCatName,
-                             amount: Math.abs(amount),
-                             dayNote: ''
-                         });
-                    }
-                }
-            }
-        } else {
-            const parsedRows = parseCSV(rawTrimmed);
-            if (parsedRows.length < 2) { 
-                alert("ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด");
-                setIsProcessing(false); 
-                return; 
-            }
-            const headers = parsedRows[0];
-            const dateColIndex = 0;
-            const noteColIndex = headers.length - 1;
-            const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
-            const isCsvLong = headers.length >= 4 && (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
-
-            for (let i = 1; i < parsedRows.length; i++) {
-                const row = parsedRows[i];
-                if (row.length < 2) continue;
-                const dateStr = row[dateColIndex];
-                if(!dateStr || !dateStr.includes('/')) continue;
-
-                if (isCsvLong) {
-                    let catName, desc, amtStr, typeStr = 'รายจ่าย';
-                    if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
-                         const typeId = getOrCreateDayType(row[1]);
-                         if (typeId) newDayTypes[dateStr] = typeId;
-                         typeStr = row[2]; catName = row[3]; desc = row[4]; amtStr = row[5];
-                    }
-                    else if (headers[1] === 'ประเภท' && row.length >= 5) {
-                         typeStr = row[1]; catName = row[2]; desc = row[3]; amtStr = row[4];
-                    } else {
-                         catName = row[1]; desc = row[2]; amtStr = row[3];
-                    }
-                    
-                    const finalCatName = getOrCreateCategory(catName, typeStr);
-                    const amount = cleanNumber(amtStr);
-                    
-                    if (amount !== 0) {
-                        newList.push({
-                            id: `csv_${batchId}_${i}`,
-                            date: dateStr,
-                            category: finalCatName,
-                            description: desc || finalCatName,
-                            amount: Math.abs(amount),
-                            dayNote: ''
-                        });
-                    }
-                    continue;
+                // 🌟 ดึงข้อมูลกระเป๋าถ้าหาคอลัมน์เจอ
+                if (pmColIndex !== -1 && row[pmColIndex]) {
+                    pmId = getPaymentMethodId(row[pmColIndex]);
                 }
 
-                // รูปแบบ Wide format (แบบเก่า)
-                const note = (row.length === headers.length) ? (row[noteColIndex] || '') : '';
-                for (let j = 1; j < Math.min(row.length, headers.length); j++) {
-                    if (j === noteColIndex) continue;
-                    const rawHeader = headers[j];
-                    if (!rawHeader || excludeCategories.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
+                if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
+                     const typeId = getOrCreateDayType(row[1]);
+                     if (typeId) newDayTypes[dateStr] = typeId;
+                     typeStr = row[2]; catName = row[3]; 
+                     
+                     // ถ้ารูปแบบใหม่ที่มี 7 คอลัมน์ กระเป๋าจะอยู่ตำแหน่ง [4] และดันที่เหลือไป
+                     if (pmColIndex === 4 && row.length >= 7) {
+                         desc = row[5]; amtStr = row[6];
+                     } else {
+                         desc = row[4]; amtStr = row[5];
+                     }
+                } else if (headers[1] === 'ประเภท' && row.length >= 5) {
+                     typeStr = row[1]; catName = row[2]; desc = row[3]; amtStr = row[4];
+                } else {
+                     catName = row[1]; desc = row[2]; amtStr = row[3];
+                }
+                
+                const finalCatName = getOrCreateCategory(catName, typeStr);
+                const amount = cleanNumber(amtStr);
+                
+                if (amount !== 0) {
+                    newList.push({
+                        id: `csv_${batchId}_${i}`, date: dateStr, category: finalCatName,
+                        description: desc || finalCatName, amount: Math.abs(amount),
+                        dayNote: '', paymentMethodId: pmId // 🌟 แนบกระเป๋าไปแสดงในพรีวิว
+                    });
+                }
+                continue;
+            }
 
-                    const amount = cleanNumber(row[j]);
-                    if (amount !== 0) { 
-                        let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
-                        
-                        let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
-                        console.log('col:', cleanStr, '→', catName, '→', autoCategorize(catName, catName, categories));
-                        let description = note && note.trim() ? `${catName} · ${note.trim()}` : catName;
-                        if (!note && catName === 'อื่นๆ') description = catName;
+            // รูปแบบ Wide format (ตาราง Excel วันละบรรทัด)
+            const note = (row.length === headers.length) ? (row[noteColIndex] || '') : '';
+            for (let j = 1; j < Math.min(row.length, headers.length); j++) {
+                if (j === noteColIndex || j === pmColIndex) continue;
+                const rawHeader = headers[j];
+                if (!rawHeader || excludeCategories.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
 
-                        const autoCat = autoCategorize(catName, catName, updatedCategories);
-                        const finalCatName = autoCat !== 'อื่นๆ' 
-                            ? autoCat 
-                            : getOrCreateCategory(catName, 'รายจ่าย');
+                const amount = cleanNumber(row[j]);
+                if (amount !== 0) { 
+                    let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
+                    let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
+                    let description = note && note.trim() ? `${catName} · ${note.trim()}` : catName;
+                    if (!note && catName === 'อื่นๆ') description = catName;
 
-                        newList.push({ 
-                            id: `csv_${batchId}_${i}_${j}`, 
-                            date: dateStr, 
-                            category: finalCatName, 
-                            description: description, 
-                            amount: Math.abs(amount), 
-                            dayNote: note 
-                        });
-                    }
+                    const autoCat = autoCategorize(catName, catName, updatedCategories);
+                    const finalCatName = autoCat !== 'อื่นๆ' ? autoCat : getOrCreateCategory(catName, 'รายจ่าย');
+                    
+                    let pmId = pmColIndex !== -1 && row[pmColIndex] ? getPaymentMethodId(row[pmColIndex]) : null;
+
+                    newList.push({ 
+                        id: `csv_${batchId}_${i}_${j}`, date: dateStr, category: finalCatName, 
+                        description: description, amount: Math.abs(amount), 
+                        dayNote: note, paymentMethodId: pmId 
+                    });
                 }
             }
         }
 
         if(newList.length > 0) {
-            // แสดง Preview ก่อน import จริง
-            setImportPreview({ 
-                items: newList,
-                updatedDayTypeConfig, 
-                updatedCategories, 
-                isConfigChanged, 
-                isCategoryChanged, 
-                newDayTypes 
-            });
+            setImportPreview({ items: newList, updatedDayTypeConfig, updatedCategories, isConfigChanged, isCategoryChanged, newDayTypes });
             setPreviewPage(1);
         } else {
             alert("ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง");
@@ -614,12 +577,13 @@ const handleDeleteAllData = async () => {
           ...prev, 
           date: formattedDate, 
           type: type, 
-          category: categories.find(c => c.type === type)?.name || ''
+          category: categories.find(c => c.type === type)?.name || '',
+          paymentMethodId: paymentMethods.length > 0 ? paymentMethods[0].id : ''
       }));
       setShowAddModal(true);
   };
 
-  // --- BATCH ADD SYSTEM ---
+// --- BATCH ADD SYSTEM ---
   const handleAddPending = () => {
       if(!addForm.amount || isNaN(addForm.amount) || Number(addForm.amount) <= 0) return alert('กรุณาใส่จำนวนเงินให้ถูกต้อง (มากกว่า 0)');
       if(!addForm.date) return alert('กรุณาเลือกวันที่');
@@ -628,6 +592,9 @@ const handleDeleteAllData = async () => {
       const formattedDate = `${d}/${m}/${y}`;
       const targetCat = addForm.category || categories.find(c => c.type === addForm.type)?.name || 'อื่นๆ';
       const catObj = categories.find(c => c.name === targetCat);
+      
+      // 🌟 ดึงข้อมูลกระเป๋าที่เลือกมา
+      const pmObj = paymentMethods.find(p => p.id === addForm.paymentMethodId) || paymentMethods[0];
 
       const newItem = {
           id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -636,7 +603,9 @@ const handleDeleteAllData = async () => {
           description: addForm.description || targetCat,
           amount: Number(addForm.amount),
           dayNote: '',
+          paymentMethodId: pmObj ? pmObj.id : null, // 🌟 ส่ง ID ไปรอเซฟลง DB
           _catObj: catObj,
+          _pmObj: pmObj, // 🌟 เก็บ Object ไว้ให้ UI แสดงป้ายสวยๆ
           _isInc: addForm.type === 'income'
       };
 
@@ -658,7 +627,8 @@ const handleDeleteAllData = async () => {
               category: item.category,
               description: item.description,
               amount: item.amount,
-              dayNote: item.dayNote
+              dayNote: item.dayNote,
+              paymentMethodId: item.paymentMethodId // 🌟 ส่ง ID ให้ Database
           }));
 
           await saveToDb(finalItems);
@@ -794,6 +764,9 @@ const handleDeleteAllData = async () => {
             }
         });
     }
+    if (advancedFilterWallet !== 'ALL') {
+        filtered = filtered.filter(t => t.paymentMethodId === advancedFilterWallet);
+    }
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(t => 
@@ -818,7 +791,8 @@ const handleDeleteAllData = async () => {
     let filename = '';
 
     if (exportFormat === 'long') {
-      csvContent = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n";
+      // 🌟 เพิ่มหัวข้อคอลัมน์ "กระเป๋าเงิน"
+      csvContent = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,กระเป๋าเงิน,รายละเอียด,จำนวนเงิน\n";
       dataToExport.forEach(item => {
         const [d, m, y] = item.date.split('/');
         const dayOfWeek = new Date(y, parseInt(m)-1, d).getDay();
@@ -827,7 +801,9 @@ const handleDeleteAllData = async () => {
         const typeConfig = dayTypeConfig.find(dt => dt.id === currentTypeId) || dayTypeConfig[0];
         const catObj = categories.find(c => c.name === item.category);
         const isInc = catObj?.type === 'income';
-        csvContent += `${item.date},${escapeCSV(typeConfig?.label || '')},${isInc ? 'รายรับ' : 'รายจ่าย'},${escapeCSV(item.category)},${escapeCSV(item.description || '')},${item.amount}\n`;
+        const pmObj = paymentMethods.find(p => p.id === item.paymentMethodId);
+        const pmName = pmObj ? pmObj.name : '';
+        csvContent += `${item.date},${escapeCSV(typeConfig?.label || '')},${isInc ? 'รายรับ' : 'รายจ่าย'},${escapeCSV(item.category)},${escapeCSV(pmName)},${escapeCSV(item.description || '')},${item.amount}\n`;
       });
       filename = `Cashflow_Long_${exportPeriod.replace('/', '-')}.csv`;
     } else {
@@ -886,7 +862,13 @@ const handleDeleteAllData = async () => {
                     {isDarkMode ? <Sun className="w-5 h-5 text-orange-500" /> : <Moon className="w-5 h-5" />}
                 </button>
                 <button onClick={() => {
-                    setAddForm(prev => ({...prev, date: new Date().toISOString().split('T')[0], category: categories.find(c => c.type === 'expense')?.name || ''}));
+                    setAddForm(prev => ({
+                        ...prev, 
+                        date: new Date().toISOString().split('T')[0], 
+                        category: categories.find(c => c.type === 'expense')?.name || '',
+                        // 🌟 [เพิ่มใหม่] ให้ Default เป็นกระเป๋าใบแรกที่ตั้งค่าไว้ (ถ้ามี)
+                        paymentMethodId: paymentMethods.length > 0 ? paymentMethods[0].id : '' 
+                    }));
                     setShowAddModal(true);
                 }} className="text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5 px-4 py-2.5 rounded-lg transition-all shadow-sm active:scale-95">
                   <CalendarPlus className="w-4 h-4" /> เพิ่มข้อมูลด่วน
@@ -928,8 +910,31 @@ const handleDeleteAllData = async () => {
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
           {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory} chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} topXLimit={topXLimit} setTopXLimit={setTopXLimit} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
-          {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} onSaveTransaction={handleSaveTransaction} handleDeleteTransaction={handleDeleteTransaction} />}
-          {activeTab === 'ledger' && <LedgerView displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView} getFilterLabel={getFilterLabel} filterPeriod={filterPeriod} searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleOpenAddModal={handleOpenAddModal} handleUpdateTransaction={handleUpdateTransaction} handleDeleteTransaction={handleDeleteTransaction} handleDeleteMonth={handleDeleteMonth} categories={categories} advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory} advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup} advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate} availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode} />}
+          {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} onSaveTransaction={handleSaveTransaction} handleDeleteTransaction={handleDeleteTransaction} paymentMethods={paymentMethods}/>}
+          {activeTab === 'ledger' && <LedgerView 
+            displayTransactions={displayTransactions} 
+            isReadOnlyView={isReadOnlyView} 
+            getFilterLabel={getFilterLabel} 
+            filterPeriod={filterPeriod} 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery} 
+            handleOpenAddModal={handleOpenAddModal} 
+            handleUpdateTransaction={handleUpdateTransaction} 
+            handleDeleteTransaction={handleDeleteTransaction} 
+            handleDeleteMonth={handleDeleteMonth} 
+            categories={categories} 
+            advancedFilterCategory={advancedFilterCategory} 
+            setAdvancedFilterCategory={setAdvancedFilterCategory} 
+            advancedFilterGroup={advancedFilterGroup} 
+            setAdvancedFilterGroup={setAdvancedFilterGroup} 
+            advancedFilterDate={advancedFilterDate} 
+            setAdvancedFilterDate={setAdvancedFilterDate} 
+            availableDatesInPeriod={availableDatesInPeriod} 
+            isDarkMode={isDarkMode} 
+            paymentMethods={paymentMethods}
+            advancedFilterWallet={advancedFilterWallet}
+            setAdvancedFilterWallet={setAdvancedFilterWallet}
+          />}
           {activeTab === 'settings' && <SettingsView 
             categories={categories} 
             handleAddCategory={handleAddCategory} 
@@ -938,6 +943,8 @@ const handleDeleteAllData = async () => {
             handleMoveCategory={handleMoveCategory} 
             dayTypeConfig={dayTypeConfig}
             setDayTypeConfig={handleUpdateDayTypeConfig}
+            paymentMethods={paymentMethods}
+            setPaymentMethods={handleUpdatePaymentMethods}
             isDarkMode={isDarkMode} 
             handleDeleteAllData={handleDeleteAllData}
             saveSettingToDb={saveSettingToDb}
@@ -949,7 +956,7 @@ const handleDeleteAllData = async () => {
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4 transition-all">
             {/* ขยายความกว้างเป็น max-w-6xl เพื่อรองรับ 3 คอลัมน์ */}
-            <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-6xl max-h-[90vh] animate-in zoom-in-95 duration-300 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+            <div className={`rounded-2xl shadow-2xl flex flex-col w-[96vw] max-w-[1300px] max-h-[90vh] animate-in zoom-in-95 duration-300 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                 <div className={`p-5 border-b flex justify-between items-center shrink-0 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                     <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><CalendarPlus className="w-6 h-6 text-emerald-600"/> สรุปค่าใช้จ่ายประจำวัน (Batch Add)</h3>
                     <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-200'}`}><X className="w-5 h-5"/></button>
@@ -957,8 +964,8 @@ const handleDeleteAllData = async () => {
 
                 <div className={`flex-grow overflow-y-auto flex flex-col lg:flex-row custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                     
-                    {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล (30%) */}
-                    <div className={`w-full lg:w-[30%] p-6 border-b lg:border-b-0 lg:border-r space-y-4 shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                    {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล (27%) */}
+                    <div className={`w-full lg:w-[27%] p-6 border-b lg:border-b-0 lg:border-r space-y-4 shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
                         <div className={`flex p-1 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                             <button onClick={() => setAddForm({...addForm, type: 'expense', category: categories.find(c=>c.type==='expense')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'expense' ? (isDarkMode ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายจ่าย</button>
                             <button onClick={() => setAddForm({...addForm, type: 'income', category: categories.find(c=>c.type==='income')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'income' ? (isDarkMode ? 'bg-slate-700 text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายรับ</button>
@@ -978,6 +985,31 @@ const handleDeleteAllData = async () => {
                             <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>รายละเอียด (Description)</label>
                             <input type="text" value={addForm.description} onChange={(e) => setAddForm({...addForm, description: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder="เช่น ค่าข้าวเที่ยง, รถไฟฟ้า" className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500' : 'border-slate-300 focus:border-[#00509E]'}`} />
                         </div>
+                        {/* 🌟 [เพิ่มใหม่] UI ปุ่มเลือกกระเป๋าเงิน */}
+                        <div className="pt-2">
+                            <label className={`block text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จ่ายจากกระเป๋าไหน? (Wallet)</label>
+                            <div className="flex flex-wrap gap-2">
+                                {paymentMethods.length === 0 ? (
+                                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีกระเป๋าเงิน (ไปเพิ่มที่หน้าตั้งค่า)</span>
+                                ) : (
+                                    paymentMethods.map(pm => (
+                                        <button
+                                            key={pm.id}
+                                            type="button"
+                                            onClick={() => setAddForm({...addForm, paymentMethodId: pm.id})}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                addForm.paymentMethodId === pm.id 
+                                                ? (isDarkMode ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-[#00509E] border-[#00509E] text-white shadow-md') 
+                                                : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
+                                            }`}
+                                        >
+                                            {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                        {/* --- จบส่วน UI เลือกกระเป๋า --- */}
                         <div>
                             <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จำนวนเงิน (Amount)</label>
                             <input type="number" value={addForm.amount} onChange={(e) => setAddForm({...addForm, amount: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder="0.00" className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 font-black text-xl text-right transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-blue-400 focus:border-blue-500 focus:ring-blue-500' : 'border-slate-300 focus:border-[#00509E] text-[#00509E]'}`} />
@@ -987,8 +1019,8 @@ const handleDeleteAllData = async () => {
                         </button>
                     </div>
 
-                    {/* คอลัมน์ 2: Quick Suggestions (30%) */}
-                    <div className={`w-full lg:w-[30%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
+                    {/* คอลัมน์ 2: Quick Suggestions (27%) */}
+                    <div className={`w-full lg:w-[27%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
@@ -1045,8 +1077,8 @@ const handleDeleteAllData = async () => {
                         </div>
                     </div>
 
-                    {/* คอลัมน์ 3: ตะกร้าที่รอการบันทึก (40%) */}
-                    <div className={`w-full lg:w-[40%] flex flex-col p-6 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50'}`}>
+                    {/* คอลัมน์ 3: ตะกร้าที่รอการบันทึก (46%) */}
+                    <div className={`w-full lg:w-[46%] flex flex-col p-6 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50'}`}>
                         <div className="flex justify-between items-center mb-4">
                             <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><ClipboardList className={`w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/> รายการที่รอการบันทึก</h4>
                             <span className={`text-white px-2.5 py-0.5 rounded-full text-xs font-bold ${isDarkMode ? 'bg-blue-600' : 'bg-[#00509E]'}`}>{pendingItems.length} รายการ</span>
@@ -1063,21 +1095,44 @@ const handleDeleteAllData = async () => {
                                     {pendingItems.map((item, idx) => {
                                         return (
                                             <div key={item.id} className={`flex items-center justify-between p-3 transition-colors group animate-in fade-in slide-in-from-right-4 duration-300 ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <div className={`text-xs font-bold w-5 text-right ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>{idx+1}.</div>
-                                                    <div className="flex flex-col overflow-hidden">
+                                                {/* 🌟 โครงสร้างรายการ 1 บรรทัด */}
+                                                <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                                                    <div className={`text-xs font-bold w-5 text-right shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>{idx+1}.</div>
+                                                    
+                                                    <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                                                         <div className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={item.description}>{item.description}</div>
-                                                        <div className="flex items-center gap-2 mt-1">
+                                                        
+                                                        {/* 🌟 แถวของป้าย (Badge) บังคับให้อยู่บรรทัดเดียว (overflow-hidden) */}
+                                                        <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden w-full">
+                                                            {/* 1. ป้ายรายรับ/รายจ่าย (ไม่ย่อ) */}
                                                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 whitespace-nowrap shrink-0 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
                                                                 {item._isInc ? 'รายรับ' : 'รายจ่าย'}
                                                             </span>
+                                                            
+                                                            {/* 2. ป้ายหมวดหมู่ (ถ้ายาวไปให้ใส่ ... แทน) */}
                                                             <span 
-                                                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded truncate border ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                                                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
                                                                 style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})` }}
                                                             >
-                                                                {item._catObj?.icon} {item.category}
+                                                                <span className="shrink-0">{item._catObj?.icon}</span>
+                                                                <span className="truncate">{item.category}</span>
                                                             </span>
-                                                            <span className={`text-xs font-medium hidden sm:inline ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.date}</span>
+
+                                                            {/* 3. ป้ายกระเป๋าเงิน (ถ้ายาวไปให้ใส่ ... แทน) */}
+                                                            {item._pmObj && (
+                                                                <span 
+                                                                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                                                                    style={{ backgroundColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.4 : 0.3})` }}
+                                                                >
+                                                                    <span className="shrink-0">{item._pmObj.type === 'credit' ? '💳' : (item._pmObj.type === 'cash' ? '💵' : '🏦')}</span>
+                                                                    <span className="truncate">{item._pmObj.name}</span>
+                                                                </span>
+                                                            )}
+
+                                                            {/* 4. วันที่ */}
+                                                            <span className={`text-[10px] font-medium hidden sm:inline shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                                {item.date}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1155,8 +1210,8 @@ const handleDeleteAllData = async () => {
               </div>
 
               {/* Table header */}
-              <div className={`grid grid-cols-[80px_160px_1fr_110px_36px] gap-2 px-4 py-2 text-xs font-bold border-b shrink-0 ${isDarkMode ? 'bg-slate-800/60 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                <span>ประเภท</span><span>หมวดหมู่</span><span>รายละเอียด</span><span className="text-right">จำนวนเงิน</span><span/>
+              <div className={`grid grid-cols-[55px_120px_100px_1fr_80px_36px] gap-2 px-4 py-2 text-[11px] font-bold border-b shrink-0 ${isDarkMode ? 'bg-slate-800/60 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                <span>ประเภท</span><span>หมวดหมู่</span><span>กระเป๋าเงิน</span><span>รายละเอียด</span><span className="text-right">จำนวนเงิน</span><span/>
               </div>
 
               {/* Rows — grouped by date */}
@@ -1165,28 +1220,39 @@ const handleDeleteAllData = async () => {
                   const catObj = allCats.find(c => c.name === item.category);
                   const isInc = catObj?.type === 'income';
                   const isNewDate = idx === 0 || item.date !== pageItems[idx - 1].date;
-                  const inputCls = `w-full bg-transparent outline-none text-sm px-1.5 py-1 rounded border focus:ring-1 transition-colors ${isDarkMode ? 'border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500 hover:bg-slate-800' : 'border-slate-200 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E] hover:bg-slate-100'}`;
+                  const inputCls = `w-full bg-transparent outline-none text-xs px-1.5 py-1 rounded border focus:ring-1 transition-colors ${isDarkMode ? 'border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500 hover:bg-slate-800' : 'border-slate-200 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E] hover:bg-slate-100'}`;
                   return (
                     <div key={item.id}>
-                      {/* Date group header */}
                       {isNewDate && (
                         <div className={`px-4 py-1.5 text-xs font-black sticky top-0 z-10 border-b ${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                           {item.date}
                         </div>
                       )}
-                      <div className={`grid grid-cols-[80px_160px_1fr_110px_36px] gap-2 px-4 py-1.5 items-center border-b transition-colors ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/40' : 'border-slate-100 hover:bg-slate-50/80'}`}>
+                      {/* 🌟 ปรับขนาดช่องให้ตรงกับ Header */}
+                      <div className={`grid grid-cols-[55px_120px_100px_1fr_80px_36px] gap-2 px-4 py-1.5 items-center border-b transition-colors ${isDarkMode ? 'border-slate-800 hover:bg-slate-800/40' : 'border-slate-100 hover:bg-slate-50/80'}`}>
                         {/* Type badge */}
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded text-center ${isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
+                        <span className={`text-[10px] font-bold px-1 py-0.5 rounded text-center truncate ${isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
                           {isInc ? 'รายรับ' : 'รายจ่าย'}
                         </span>
                         {/* Category */}
                         <select
                           value={item.category}
                           onChange={e => updatePreviewItem(item.id, 'category', e.target.value)}
-                          className={`text-xs font-bold py-1 px-1.5 rounded border outline-none cursor-pointer transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-600 text-slate-300' : 'bg-white border-slate-200 text-slate-700'}`}
+                          className={`text-[11px] font-bold py-1 px-1 rounded border outline-none cursor-pointer transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-600 text-slate-300' : 'bg-white border-slate-200 text-slate-700'}`}
                         >
                           {allCats.map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
                         </select>
+                        
+                        {/* 🌟 Wallet (กระเป๋าเงิน) */}
+                        <select
+                          value={item.paymentMethodId || ''}
+                          onChange={e => updatePreviewItem(item.id, 'paymentMethodId', e.target.value)}
+                          className={`text-[10px] font-bold py-1 px-1 rounded border outline-none cursor-pointer transition-colors ${item.paymentMethodId ? (isDarkMode ? 'bg-blue-900/30 border-blue-800 text-blue-300' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (isDarkMode ? 'bg-slate-800 border-slate-600 text-slate-400' : 'bg-white border-slate-200 text-slate-400')}`}
+                        >
+                          <option value="" disabled>👛 กระเป๋า...</option>
+                          {paymentMethods?.map(pm => <option key={pm.id} value={pm.id}>{pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}</option>)}
+                        </select>
+
                         {/* Description */}
                         <input type="text" value={item.description} onChange={e => updatePreviewItem(item.id, 'description', e.target.value)} className={inputCls} />
                         {/* Amount */}
@@ -1300,20 +1366,20 @@ const handleDeleteAllData = async () => {
                     <table className={`text-xs w-full border-collapse rounded-lg overflow-hidden ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                       <thead>
                         <tr className={isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}>
-                          {['วันที่','ชนิดวัน','ประเภท','หมวดหมู่','รายละเอียด','จำนวนเงิน'].map(h => (
+                          {['วันที่','ชนิดวัน','ประเภท','หมวดหมู่','กระเป๋าเงิน','รายละเอียด','จำนวนเงิน'].map(h => (
                             <th key={h} className="px-2 py-1.5 text-left font-bold border-b border-r last:border-r-0" style={{borderColor: isDarkMode ? '#334155' : '#e2e8f0'}}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {[
-                          ['01/02/2026','วันหยุด','รายจ่าย','อาหารและเครื่องดื่ม','ข้าวเที่ยง','25'],
-                          ['01/02/2026','วันหยุด','รายจ่าย','ช้อปปิ้งออนไลน์','Shopee','299'],
-                          ['02/02/2026','ทำงาน','รายรับ','เงินเดือน','เงินเดือนเดือน ก.พ.','25000'],
+                          ['01/02/2026','วันหยุด','รายจ่าย','อาหารและเครื่องดื่ม','เงินสด','ข้าวเที่ยง','25'],
+                          ['01/02/2026','วันหยุด','รายจ่าย','ช้อปปิ้งออนไลน์','บัตรเครดิต','Shopee','299'],
+                          ['02/02/2026','ทำงาน','รายรับ','เงินเดือน','KBANK','เงินเดือนเดือน ก.พ.','25000'],
                         ].map((row, i) => (
                           <tr key={i} className={i % 2 === 0 ? (isDarkMode ? 'bg-slate-800/60' : 'bg-white') : (isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50')}>
                             {row.map((cell, j) => (
-                              <td key={j} className="px-2 py-1.5 border-b border-r last:border-r-0 font-mono" style={{borderColor: isDarkMode ? '#1e293b' : '#f1f5f9'}}>{cell}</td>
+                              <td key={j} className={`px-2 py-1.5 border-b border-r last:border-r-0 font-mono ${j === 4 ? (isDarkMode ? 'text-blue-400 font-bold' : 'text-[#00509E] font-bold') : ''}`} style={{borderColor: isDarkMode ? '#1e293b' : '#f1f5f9'}}>{cell}</td>
                             ))}
                           </tr>
                         ))}
@@ -1344,26 +1410,26 @@ const handleDeleteAllData = async () => {
               <div className="grid grid-cols-2 gap-4 mb-3">
                 <button
                   onClick={() => {
-                    // Long Format sample — ครอบคลุมทุกกรณี
-                    const sample = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n" +
+                    // 🌟 Long Format sample — อัปเดตคอลัมน์ กระเป๋าเงิน
+                    const sample = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,กระเป๋าเงิน,รายละเอียด,จำนวนเงิน\n" +
                       // รายรับ
-                      "01/03/2026,ทำงาน,รายรับ,เงินเดือน,เงินเดือนประจำเดือนมีนาคม,25000\n" +
+                      "01/03/2026,ทำงาน,รายรับ,เงินเดือน,KBANK,เงินเดือนประจำเดือนมีนาคม,25000\n" +
                       // รายจ่ายปกติ
-                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเที่ยง,65\n" +
-                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,กาแฟ,45\n" +
+                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,เงินสด,ข้าวเที่ยง,65\n" +
+                      "01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,SCB,กาแฟ,45\n" +
                       // description ว่าง (ใช้ชื่อ category แทน)
-                      "01/03/2026,ทำงาน,รายจ่าย,การเดินทาง,,89\n" +
+                      "01/03/2026,ทำงาน,รายจ่าย,การเดินทาง,บัตรเครดิต,,89\n" +
                       // description มี comma (ต้องครอบด้วย quotes)
-                      "02/03/2026,วันหยุด,รายจ่าย,อาหารและเครื่องดื่ม,ข้าว, น้ำ, ขนม,150\n" +
+                      "02/03/2026,วันหยุด,รายจ่าย,อาหารและเครื่องดื่ม,เงินสด,\"ข้าว, น้ำ, ขนม\",150\n" +
                       // จำนวนเงินแบบมี comma
-                      "02/03/2026,วันหยุด,รายจ่าย,ช้อปปิ้งออนไลน์,Shopee ลดราคา,1,350\n" +
+                      "02/03/2026,วันหยุด,รายจ่าย,ช้อปปิ้งออนไลน์,SPayLater,Shopee ลดราคา,\"1,350\"\n" +
                       // หมวดหมู่ที่ไม่มีในระบบ — จะสร้างใหม่อัตโนมัติ
-                      "02/03/2026,วันหยุด,รายจ่าย,ของฝาก,ของฝากเพื่อน,280\n" +
+                      "02/03/2026,วันหยุด,รายจ่าย,ของฝาก,KBANK,ของฝากเพื่อน,280\n" +
                       // วันหยุด ไม่มีชนิดวัน
-                      "03/03/2026,,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเช้า,55\n" +
+                      "03/03/2026,,รายจ่าย,อาหารและเครื่องดื่ม,เงินสด,ข้าวเช้า,55\n" +
                       // รายรับพิเศษ
-                      "03/03/2026,ทำงาน,รายรับ,รายรับพิเศษ/โบนัส,โบนัสพิเศษ,5000\n";
-                    const blob = new Blob(["﻿" + sample], { type: 'text/csv;charset=utf-8;' });
+                      "03/03/2026,ทำงาน,รายรับ,รายรับพิเศษ/โบนัส,KBANK,โบนัสพิเศษ,5000\n";
+                    const blob = new Blob(["\ufeff" + sample], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url;
                     a.download = 'sample_long_format.csv';
@@ -1493,14 +1559,15 @@ const handleDeleteAllData = async () => {
                             <th className="px-4 py-3 font-bold">ชนิดวัน</th>
                             <th className="px-4 py-3 font-bold">ประเภท</th>
                             <th className="px-4 py-3 font-bold">หมวดหมู่</th>
+                            <th className="px-4 py-3 font-bold text-blue-500">กระเป๋าเงิน</th>
                             <th className="px-4 py-3 font-bold">รายละเอียด</th>
                             <th className="px-4 py-3 font-bold text-right">จำนวนเงิน</th>
                           </tr>
                         </thead>
                         <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
-                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">อาหารและเครื่องดื่ม</td><td className="px-4 py-2.5">ข้าวเที่ยง</td><td className="px-4 py-2.5 text-right font-mono font-bold">65</td></tr>
-                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">การเดินทาง</td><td className="px-4 py-2.5">รถไฟฟ้า</td><td className="px-4 py-2.5 text-right font-mono font-bold">45</td></tr>
-                          <tr><td className="px-4 py-2.5">02/03/2026</td><td className="px-4 py-2.5">วันหยุด</td><td className="px-4 py-2.5 text-emerald-500 font-bold">รายรับ</td><td className="px-4 py-2.5">รายรับพิเศษ/โบนัส</td><td className="px-4 py-2.5">ขายของ</td><td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-500">500</td></tr>
+                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">อาหารและเครื่องดื่ม</td><td className="px-4 py-2.5 text-blue-500 font-bold">SCB</td><td className="px-4 py-2.5">ข้าวเที่ยง</td><td className="px-4 py-2.5 text-right font-mono font-bold">65</td></tr>
+                          <tr><td className="px-4 py-2.5">01/03/2026</td><td className="px-4 py-2.5">ทำงาน</td><td className="px-4 py-2.5">รายจ่าย</td><td className="px-4 py-2.5">การเดินทาง</td><td className="px-4 py-2.5 text-blue-500 font-bold">บัตรเครดิต</td><td className="px-4 py-2.5">รถไฟฟ้า</td><td className="px-4 py-2.5 text-right font-mono font-bold">45</td></tr>
+                          <tr><td className="px-4 py-2.5">02/03/2026</td><td className="px-4 py-2.5">วันหยุด</td><td className="px-4 py-2.5 text-emerald-500 font-bold">รายรับ</td><td className="px-4 py-2.5">รายรับพิเศษ/โบนัส</td><td className="px-4 py-2.5 text-blue-500 font-bold">KBANK</td><td className="px-4 py-2.5">ขายของ</td><td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-500">500</td></tr>
                         </tbody>
                       </table>
                     ) : (

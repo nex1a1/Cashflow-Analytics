@@ -9,6 +9,7 @@ export default function DayDetailModal({
   dateStr,
   transactions,
   categories,
+  paymentMethods = [],
   isDarkMode,
   onClose,
   onSave,
@@ -21,6 +22,8 @@ export default function DayDetailModal({
 
   const defaultExpenseCat = categories.find(c => c.type === 'expense')?.name || '';
   const defaultIncomeCat  = categories.find(c => c.type === 'income')?.name || '';
+  const defaultPaymentMethodId = paymentMethods.length > 0 ? paymentMethods[0].id : '';
+  const [formPaymentMethodId, setFormPaymentMethodId] = useState(defaultPaymentMethodId);
 
   const [localItems, setLocalItems]           = useState([]);
   const [formType, setFormType]               = useState('expense');
@@ -84,6 +87,7 @@ export default function DayDetailModal({
       description: formDesc || formCat,
       amount: amt,
       dayNote: '',
+      paymentMethodId: formPaymentMethodId,
     };
 
     const catObj = categories.find(c => c.name === formCat);
@@ -131,22 +135,45 @@ export default function DayDetailModal({
   const inputClass  = `px-3 py-2 rounded-xl border outline-none focus:ring-1 text-sm font-medium transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E]'}`;
 
   const TxRow = ({ tx }) => {
+    // 🌟 1. เช็คว่ามีบรรทัดนี้อยู่ตรงนี้ไหม (ต้องอยู่ใน TxRow)
     const cat = categories.find(c => c.name === tx.category);
+    const pmObj = paymentMethods.find(p => p.id === tx.paymentMethodId); 
+    
+    // โค้ดเดิมของคุณที่ดึงค่าสีและสถานะ
     const isInc = cat?.type === 'income';
     const color = cat?.color || '#94a3b8';
     const isConfirming = confirmDeleteId === tx.id;
+
     return (
       <div
         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700/60' : 'border-slate-100'}`}
         style={{ backgroundColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.06 : 0.04})` }}
       >
         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+        
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold truncate ${textPrimary}`}>{tx.description || tx.category}</p>
-          <p className="text-[11px] font-medium" style={{ color, filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.7)' }}>
-            {cat?.icon} {tx.category}
+          
+          {/* 🌟 2. ส่วนที่แสดงไอคอนและป้ายกระเป๋าเงิน */}
+          <p className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5" style={{ color, filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.7)' }}>
+            <span>{cat?.icon} {tx.category}</span>
+            
+            {/* โชว์ป้ายกระเป๋าเงิน ถ้าหาเจอ (ดึงสีจาก Settings มาใช้) */}
+            {pmObj && (
+              <span 
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                style={{ 
+                  backgroundColor: `rgba(${hexToRgb(pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.2 : 0.1})`, 
+                  borderColor: `rgba(${hexToRgb(pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.4 : 0.3})` 
+                }}
+              >
+                {pmObj.type === 'credit' ? '💳' : (pmObj.type === 'cash' ? '💵' : '🏦')} {pmObj.name}
+              </span>
+            )}
           </p>
         </div>
+
+        {/* ... (ส่วนจำนวนเงินและปุ่มลบ ยังเหมือนเดิม) ... */}
         <span className={`text-sm font-black shrink-0 ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-red-600')}`}>
           {isInc ? '+' : '-'}{formatMoney(tx.amount)} ฿
         </span>
@@ -266,7 +293,34 @@ export default function DayDetailModal({
                 className={`${inputClass} w-24 md:w-28 text-right font-black`}
               />
             </div>
-
+              {/* 🌟 [เพิ่มใหม่] ปุ่มให้กดเลือกกระเป๋า */}
+            {paymentMethods.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {paymentMethods.map(pm => {
+                  const isSelected = formPaymentMethodId === pm.id;
+                  const pmColor = pm.color || '#3B82F6';
+                  
+                  return (
+                    <button
+                      key={pm.id}
+                      type="button"
+                      onClick={() => setFormPaymentMethodId(pm.id)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border flex items-center gap-1 ${
+                        isSelected 
+                          ? 'text-white shadow-sm scale-105' 
+                          : (isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900')
+                      }`}
+                      style={{
+                        backgroundColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.15 : 0.05})`,
+                        borderColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.4 : 0.2})`
+                      }}
+                    >
+                      {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <button
               onClick={handleSave}
               disabled={!formAmt || parseFloat(formAmt) <= 0 || isSaving}

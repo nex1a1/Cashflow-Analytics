@@ -15,7 +15,8 @@ export default function LedgerView({
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
-  availableDatesInPeriod, isDarkMode,
+  availableDatesInPeriod, isDarkMode,paymentMethods = [],
+  advancedFilterWallet, setAdvancedFilterWallet
 }) {
     const [currentPage, setCurrentPage] = useState(1);
     
@@ -67,6 +68,7 @@ export default function LedgerView({
         setAdvancedFilterCategory('ALL');
         setAdvancedFilterGroup('ALL');
         setAdvancedFilterDate('ALL');
+        setAdvancedFilterWallet('ALL');
     };
 
     if (isReadOnlyView) {
@@ -86,7 +88,7 @@ export default function LedgerView({
 
     const totalPages = pages.length || 1;
     const currentData = pages[currentPage - 1] || [];
-    const isFilterActive = searchQuery || advancedFilterDate !== 'ALL' || advancedFilterGroup !== 'ALL' || advancedFilterCategory !== 'ALL';
+    const isFilterActive = searchQuery || advancedFilterDate !== 'ALL' || advancedFilterGroup !== 'ALL' || advancedFilterCategory !== 'ALL' || advancedFilterWallet !== 'ALL';
 
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -124,6 +126,14 @@ export default function LedgerView({
                     <select value={advancedFilterDate} onChange={(e) => setAdvancedFilterDate(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
                         <option value="ALL">🗓️ ทุกวันที่</option>
                         {availableDatesInPeriod.map(d => <option key={d} value={d}>เฉพาะวันที่ {d}</option>)}
+                    </select>
+                    <select value={advancedFilterWallet} onChange={(e) => setAdvancedFilterWallet(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
+                        <option value="ALL">👛 ทุกกระเป๋าเงิน</option>
+                        {paymentMethods?.map(pm => (
+                            <option key={pm.id} value={pm.id}>
+                                {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                            </option>
+                        ))}
                     </select>
                     <select value={advancedFilterGroup} onChange={(e) => setAdvancedFilterGroup(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
                         <option value="ALL">📦 ทุกกลุ่ม (กระแสเงินสด)</option>
@@ -164,6 +174,7 @@ export default function LedgerView({
                                     <th className={`px-4 py-2.5 font-bold min-w-[130px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>วันที่</th>
                                     <th className={`px-2 py-2.5 font-bold min-w-[90px] text-center ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>ประเภท</th>
                                     <th className={`px-4 py-2.5 font-bold min-w-[290px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>หมวดหมู่</th>
+                                    <th className={`px-4 py-2.5 font-bold min-w-[160px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>กระเป๋าเงิน</th>
                                     <th className={`px-4 py-2.5 font-bold w-full min-w-[250px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>รายละเอียด / หมายเหตุ</th>
                                     <th className={`px-4 py-2.5 font-bold text-right min-w-[150px] ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>จำนวนเงิน (฿)</th>
                                     <th className={`px-2 py-2.5 font-bold w-12 text-center ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>ลบ</th>
@@ -176,11 +187,13 @@ export default function LedgerView({
                                    const isInc = currentCatObj.type === 'income';
                                    const availableCatsForSelect = categories.filter(c => c.type === currentCatObj.type);
                                    
+                                   // 🌟 1. หาข้อมูลกระเป๋า
+                                   const pmObj = paymentMethods?.find(p => p.id === item.paymentMethodId);
+                                   
                                    return (
                                     <tr key={item.id} className={`group transition-colors duration-200 ${isNewDate ? (isDarkMode ? 'border-t-2 border-slate-700' : 'border-t-2 border-slate-200') : ''} ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
                                       <td className="px-4 py-1.5 align-middle">
                                         {isNewDate ? (
-                                          // ป้ายวันที่ในตาราง - ทำให้กลมกลืนใน Dark Mode
                                           <div className={`flex items-center gap-2 font-bold px-2 py-1 rounded border shadow-sm w-fit transition-colors ${isDarkMode ? 'text-slate-200 bg-slate-800 border-slate-700' : 'text-slate-800 bg-white border-slate-200'}`}>
                                               {item.date} 
                                               <div className={`flex items-center ml-1 border-l pl-2 ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`}>
@@ -191,19 +204,10 @@ export default function LedgerView({
                                         ) : <span className={`pl-4 ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>"</span>}
                                       </td>
                                       <td className="px-2 py-1.5 align-middle text-center">
-                                        <span className={`
-                                            /* 1. เปลี่ยนเป็น inline-flex และกำหนดความกว้างที่แน่นอน */
-                                            inline-flex items-center justify-center w-[60px] 
-                                            
-                                            text-[13px] font-black py-1 rounded transition-colors 
-                                            ${isInc 
-                                            ? (isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700') 
-                                            : (isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700')
-                                            }
-                                        `}>
+                                        <span className={`inline-flex items-center justify-center w-[60px] text-[13px] font-black py-1 rounded transition-colors ${isInc ? (isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700')}`}>
                                             {isInc ? 'รายรับ' : 'รายจ่าย'}
                                         </span>
-                                        </td>
+                                      </td>
                                       
                                       <td className="px-4 py-1.5 relative align-middle">
                                         <div 
@@ -230,15 +234,51 @@ export default function LedgerView({
                                         </div>
                                       </td>
 
+                                      {/* 🌟 คอลัมน์ใหม่: กระเป๋าเงิน (แยกเป็นคอลัมน์เดี่ยวๆ พร้อมดึงสีมาใช้) */}
+                                      <td className="px-4 py-1.5 relative align-middle">
+                                        <div 
+                                            className={`relative w-full min-w-[140px] flex items-center rounded-lg border transition-colors shadow-sm focus-within:ring-2 focus-within:ring-opacity-50 ${!pmObj ? (isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50') : ''}`}
+                                            style={pmObj ? { 
+                                                backgroundColor: `rgba(${hexToRgb(pmObj.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, 
+                                                borderColor: `rgba(${hexToRgb(pmObj.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})`
+                                            } : {}}
+                                        >
+                                            {/* จุดสีเล็กๆ ด้านหน้า (ถ้าเลือกกระเป๋าแล้ว) */}
+                                            {pmObj && <div className="absolute left-3 w-2.5 h-2.5 rounded-full pointer-events-none shadow-sm border border-white/30" style={{ backgroundColor: pmObj.color || '#cbd5e1' }}></div>}
+                                            
+                                            <select
+                                                value={item.paymentMethodId || ''}
+                                                onChange={(e) => handleUpdateTransaction(item.id, 'paymentMethodId', e.target.value)}
+                                                // 🌟 แก้ตรงนี้: ใส่ text-left และปรับ padding ตอนที่ยังไม่เลือกกระเป๋าเป็น pl-3
+                                                className={`w-full bg-transparent outline-none appearance-none py-1.5 cursor-pointer font-bold border-none transition-colors text-xs text-left ${pmObj ? 'pl-8 pr-6' : 'pl-3 pr-6'}`}
+                                                style={{
+                                                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                                                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em',
+                                                    color: pmObj?.color || (isDarkMode ? '#94a3b8' : '#64748B'),
+                                                    filter: isDarkMode ? 'brightness(1.2)' : 'none'
+                                                }}
+                                            >
+                                                <option value="" disabled>👛 ระบุกระเป๋า...</option>
+                                                {paymentMethods?.map(pm => (
+                                                    <option key={pm.id} value={pm.id}>
+                                                        {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                      </td>
+
+                                      {/* คอลัมน์: รายละเอียด / หมายเหตุ (ตอนนี้อยู่เดี่ยวๆ โล่งๆ แล้ว) */}
                                       <td className="px-4 py-1.5 group/input relative align-middle">
-                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-blue-400' : 'text-[#00509E]')}`} />
+                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none z-10 ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-blue-400' : 'text-[#00509E]')}`} />
                                         <EditableInput 
                                             initialValue={item.description}
                                             onSave={(val) => handleUpdateTransaction(item.id, 'description', val)}
-                                            className={`w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-lg py-1.5 px-3 pl-8 font-medium transition-all ${isDarkMode ? 'text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:border-blue-500 focus:ring-blue-500' : 'text-slate-800 hover:bg-slate-100 focus:bg-white ' + (isInc ? 'focus:border-emerald-500 focus:ring-emerald-500' : 'focus:border-[#00509E] focus:ring-[#00509E]')}`}
+                                            className={`w-full min-w-[150px] bg-transparent border border-transparent outline-none focus:ring-1 rounded-lg py-1.5 px-3 pl-8 font-medium transition-all ${isDarkMode ? 'text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:border-blue-500 focus:ring-blue-500' : 'text-slate-800 hover:bg-slate-100 focus:bg-white ' + (isInc ? 'focus:border-emerald-500 focus:ring-emerald-500' : 'focus:border-[#00509E] focus:ring-[#00509E]')}`}
                                             placeholder="ระบุรายละเอียด..."
                                         />
                                       </td>
+
                                       <td className="px-4 py-1.5 group/input relative align-middle">
                                         <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-[#D81A21]')}`} />
                                         <EditableInput 
@@ -250,7 +290,6 @@ export default function LedgerView({
                                         />
                                       </td>
                                       <td className="px-2 py-1.5 text-center align-middle">
-                                        {/* ปุ่มถังขยะในตาราง - ลดแสงใน Dark Mode */}
                                         <button onClick={() => handleDeleteTransaction(item.id)} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`} title="ลบรายการนี้">
                                           <Trash2 className="w-4 h-4" />
                                         </button>

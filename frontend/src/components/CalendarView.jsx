@@ -12,7 +12,7 @@ export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
   handleOpenAddModal, categories, isDarkMode, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
-  handleDeleteTransaction, onSaveTransaction,
+  handleDeleteTransaction, onSaveTransaction,paymentMethods
 }) {
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -363,6 +363,7 @@ export default function CalendarView({
         onClose={() => setSelectedDate(null)}
         onSave={async (item) => { await onSaveTransaction(item); }}
         onDelete={(id) => { handleDeleteTransaction(id); }}
+        paymentMethods={paymentMethods}
       />
     )}
     </div>

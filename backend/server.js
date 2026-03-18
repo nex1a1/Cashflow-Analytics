@@ -48,6 +48,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_calendar_days_date ON calendar_days(date);
 `);
 
+// 🌟 [เพิ่มใหม่] พยายามเพิ่มคอลัมน์ payment_method_id ถ้ายังไม่มี
+try {
+  db.exec('ALTER TABLE transactions ADD COLUMN payment_method_id TEXT');
+  console.log('✅ Added payment_method_id column to transactions');
+} catch (err) {
+  // ถ้ามีคอลัมน์นี้อยู่แล้ว SQLite จะ Error ออกมา เราก็จับ catch ไว้เงียบๆ ไม่ต้องทำอะไร
+}
+
 console.log('✅ SQLite database ready at', DB_PATH);
 
 // ==========================================
@@ -58,12 +66,14 @@ app.get('/api/transactions', (req, res) => {
   try {
     const rows = db.prepare('SELECT * FROM transactions ORDER BY date ASC').all();
     res.json(rows.map(row => ({
-      id:          row.id,
-      date:        row.date,
-      category:    row.category,
-      description: row.description,
-      amount:      parseFloat(row.amount),
-      dayNote:     row.day_note,
+      id:              row.id,
+      date:            row.date,
+      category:        row.category,
+      description:     row.description,
+      amount:          parseFloat(row.amount),
+      dayNote:         row.day_note,
+      // 🌟 [เพิ่มใหม่] ส่ง paymentMethodId กลับไปให้ Frontend ด้วย
+      paymentMethodId: row.payment_method_id || null, 
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -72,20 +82,32 @@ app.get('/api/transactions', (req, res) => {
 
 app.post('/api/transactions', (req, res) => {
   const items = Array.isArray(req.body) ? req.body : [req.body];
+  
+  // 🌟 [เพิ่มใหม่] แก้ SQL ให้บันทึกและอัปเดต payment_method_id ด้วย
   const upsert = db.prepare(`
-    INSERT INTO transactions (id, date, category, description, amount, day_note)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (id, date, category, description, amount, day_note, payment_method_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
-      date        = excluded.date,
-      category    = excluded.category,
-      description = excluded.description,
-      amount      = excluded.amount,
-      day_note    = excluded.day_note
+      date              = excluded.date,
+      category          = excluded.category,
+      description       = excluded.description,
+      amount            = excluded.amount,
+      day_note          = excluded.day_note,
+      payment_method_id = excluded.payment_method_id
   `);
 
   const runAll = db.transaction((rows) => {
     for (const item of rows) {
-      upsert.run(item.id, item.date, item.category, item.description, item.amount, item.dayNote || '');
+      // 🌟 [เพิ่มใหม่] ส่งค่า item.paymentMethodId เข้าไปใน .run()
+      upsert.run(
+        item.id, 
+        item.date, 
+        item.category, 
+        item.description, 
+        item.amount, 
+        item.dayNote || '',
+        item.paymentMethodId || null
+      );
     }
   });
 
