@@ -55,7 +55,7 @@ export default function LedgerView({
 
     useEffect(() => { 
         setCurrentPage(1); 
-    }, [filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate]);
+    }, [filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, advancedFilterWallet]);
 
     useEffect(() => {
         if (pages.length > 0 && currentPage > pages.length) {
@@ -114,7 +114,7 @@ export default function LedgerView({
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
                     <div className="relative group">
                         <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-slate-500 group-focus-within:text-blue-400' : 'text-slate-400 group-focus-within:text-[#00509E]'}`}/>
                         <input 
@@ -127,7 +127,9 @@ export default function LedgerView({
                         <option value="ALL">🗓️ ทุกวันที่</option>
                         {availableDatesInPeriod.map(d => <option key={d} value={d}>เฉพาะวันที่ {d}</option>)}
                     </select>
-                    <select value={advancedFilterWallet} onChange={(e) => setAdvancedFilterWallet(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
+                    
+                    {/* 🌟 ช่องตัวกรองกระเป๋าเงิน ย้ายมาอยู่ตรงกลาง */}
+                    <select value={advancedFilterWallet || 'ALL'} onChange={(e) => setAdvancedFilterWallet(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
                         <option value="ALL">👛 ทุกกระเป๋าเงิน</option>
                         {paymentMethods?.map(pm => (
                             <option key={pm.id} value={pm.id}>
@@ -135,6 +137,7 @@ export default function LedgerView({
                             </option>
                         ))}
                     </select>
+
                     <select value={advancedFilterGroup} onChange={(e) => setAdvancedFilterGroup(e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:ring-[#00509E] focus:bg-white'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}>
                         <option value="ALL">📦 ทุกกลุ่ม (กระแสเงินสด)</option>
                         <option value="INCOME">🟢 รายรับทั้งหมด</option>
@@ -183,11 +186,24 @@ export default function LedgerView({
                             <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                                 {currentData.map((item, index, arr) => {
                                    const isNewDate = index === 0 || item.date !== arr[index-1].date;
-                                   const currentCatObj = categories.find(c => c.name === item.category) || categories[categories.length-1];
-                                   const isInc = currentCatObj.type === 'income';
-                                   const availableCatsForSelect = categories.filter(c => c.type === currentCatObj.type);
                                    
-                                   // 🌟 1. หาข้อมูลกระเป๋า
+                                   // 🌟 1. ดักจับรายการ "โอนเงิน"
+                                   const isTransfer = item.category === 'โอนเงินเข้า' || item.category === 'โอนเงินออก';
+                                   
+                                   // 🌟 2. สร้างหมวดหมู่จำลองสีพิเศษ (Indigo) ให้การโอนเงิน เพื่อไม่ให้มันไปดึงหมวดหมู่อื่นมาแสดง
+                                   const currentCatObj = isTransfer 
+                                        ? { 
+                                            name: item.category, 
+                                            type: item.category === 'โอนเงินเข้า' ? 'income' : 'expense', 
+                                            color: '#6366f1', // สีม่วง Indigo ดูเป็นกลาง ไม่ใช่รับ ไม่ใช่จ่าย
+                                            icon: item.category === 'โอนเงินเข้า' ? '📥' : '📤' 
+                                          }
+                                        : (categories.find(c => c.name === item.category) || categories[categories.length-1]);
+                                        
+                                   const isInc = currentCatObj.type === 'income';
+                                   
+                                   // 🌟 3. ล็อคให้แสดงแค่หมวดหมู่เดียวถ้าเป็นการโอนเงิน
+                                   const availableCatsForSelect = isTransfer ? [currentCatObj] : categories.filter(c => c.type === currentCatObj.type);
                                    const pmObj = paymentMethods?.find(p => p.id === item.paymentMethodId);
                                    
                                    return (
@@ -203,15 +219,21 @@ export default function LedgerView({
                                           </div>
                                         ) : <span className={`pl-4 ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>"</span>}
                                       </td>
+                                      
+                                      {/* 🌟 ปรับสีป้ายกำกับ โอนเข้า / โอนออก */}
                                       <td className="px-2 py-1.5 align-middle text-center">
-                                        <span className={`inline-flex items-center justify-center w-[60px] text-[13px] font-black py-1 rounded transition-colors ${isInc ? (isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700')}`}>
-                                            {isInc ? 'รายรับ' : 'รายจ่าย'}
+                                        <span className={`inline-flex items-center justify-center w-[60px] text-[13px] font-black py-1 rounded transition-colors ${
+                                            isTransfer 
+                                            ? (isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-100 text-indigo-700')
+                                            : (isInc ? (isDarkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-700'))
+                                        }`}>
+                                            {isTransfer ? (item.category === 'โอนเงินเข้า' ? 'โอนเข้า' : 'โอนออก') : (isInc ? 'รายรับ' : 'รายจ่าย')}
                                         </span>
                                       </td>
                                       
                                       <td className="px-4 py-1.5 relative align-middle">
                                         <div 
-                                            className="relative w-full min-w-[200px] flex items-center rounded-lg border transition-colors shadow-sm focus-within:ring-2 focus-within:ring-opacity-50" 
+                                            className={`relative w-full min-w-[200px] flex items-center rounded-lg border transition-colors shadow-sm focus-within:ring-2 focus-within:ring-opacity-50 ${isTransfer && !isDarkMode ? 'bg-indigo-50/50' : ''}`} 
                                             style={{ 
                                                 backgroundColor: `rgba(${hexToRgb(currentCatObj?.color)}, ${isDarkMode ? 0.2 : 0.1})`, 
                                                 borderColor: `rgba(${hexToRgb(currentCatObj?.color)}, ${isDarkMode ? 0.4 : 0.3})`
@@ -221,7 +243,8 @@ export default function LedgerView({
                                             <select 
                                               value={item.category}
                                               onChange={(e) => handleUpdateTransaction(item.id, 'category', e.target.value)}
-                                              className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-1.5 cursor-pointer font-bold border-none transition-colors"
+                                              disabled={isTransfer} // 🌟 ล็อคไม่ให้คลิกเปลี่ยนหมวดหมู่
+                                              className={`w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-1.5 font-bold border-none transition-colors ${isTransfer ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'}`}
                                               style={{
                                                 backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
                                                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em',
@@ -234,7 +257,6 @@ export default function LedgerView({
                                         </div>
                                       </td>
 
-                                      {/* 🌟 คอลัมน์ใหม่: กระเป๋าเงิน (แยกเป็นคอลัมน์เดี่ยวๆ พร้อมดึงสีมาใช้) */}
                                       <td className="px-4 py-1.5 relative align-middle">
                                         <div 
                                             className={`relative w-full min-w-[140px] flex items-center rounded-lg border transition-colors shadow-sm focus-within:ring-2 focus-within:ring-opacity-50 ${!pmObj ? (isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50') : ''}`}
@@ -243,13 +265,10 @@ export default function LedgerView({
                                                 borderColor: `rgba(${hexToRgb(pmObj.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})`
                                             } : {}}
                                         >
-                                            {/* จุดสีเล็กๆ ด้านหน้า (ถ้าเลือกกระเป๋าแล้ว) */}
                                             {pmObj && <div className="absolute left-3 w-2.5 h-2.5 rounded-full pointer-events-none shadow-sm border border-white/30" style={{ backgroundColor: pmObj.color || '#cbd5e1' }}></div>}
-                                            
                                             <select
                                                 value={item.paymentMethodId || ''}
                                                 onChange={(e) => handleUpdateTransaction(item.id, 'paymentMethodId', e.target.value)}
-                                                // 🌟 แก้ตรงนี้: ใส่ text-left และปรับ padding ตอนที่ยังไม่เลือกกระเป๋าเป็น pl-3
                                                 className={`w-full bg-transparent outline-none appearance-none py-1.5 cursor-pointer font-bold border-none transition-colors text-xs text-left ${pmObj ? 'pl-8 pr-6' : 'pl-3 pr-6'}`}
                                                 style={{
                                                     backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
@@ -268,24 +287,28 @@ export default function LedgerView({
                                         </div>
                                       </td>
 
-                                      {/* คอลัมน์: รายละเอียด / หมายเหตุ (ตอนนี้อยู่เดี่ยวๆ โล่งๆ แล้ว) */}
                                       <td className="px-4 py-1.5 group/input relative align-middle">
-                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none z-10 ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-blue-400' : 'text-[#00509E]')}`} />
+                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none z-10 ${isTransfer ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-600') : (isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-blue-400' : 'text-[#00509E]'))}`} />
                                         <EditableInput 
                                             initialValue={item.description}
                                             onSave={(val) => handleUpdateTransaction(item.id, 'description', val)}
-                                            className={`w-full min-w-[150px] bg-transparent border border-transparent outline-none focus:ring-1 rounded-lg py-1.5 px-3 pl-8 font-medium transition-all ${isDarkMode ? 'text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:border-blue-500 focus:ring-blue-500' : 'text-slate-800 hover:bg-slate-100 focus:bg-white ' + (isInc ? 'focus:border-emerald-500 focus:ring-emerald-500' : 'focus:border-[#00509E] focus:ring-[#00509E]')}`}
+                                            className={`w-full min-w-[150px] bg-transparent border border-transparent outline-none focus:ring-1 rounded-lg py-1.5 px-3 pl-8 font-medium transition-all ${isDarkMode ? 'text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:border-blue-500 focus:ring-blue-500' : 'text-slate-800 hover:bg-slate-100 focus:bg-white ' + (isTransfer ? 'focus:border-indigo-500 focus:ring-indigo-500' : (isInc ? 'focus:border-emerald-500 focus:ring-emerald-500' : 'focus:border-[#00509E] focus:ring-[#00509E]'))}`}
                                             placeholder="ระบุรายละเอียด..."
                                         />
                                       </td>
 
+                                      {/* 🌟 ปรับสีตัวเลขให้เป็นสีม่วง (Indigo) เฉพาะเวลาเป็นรายการโอน */}
                                       <td className="px-4 py-1.5 group/input relative align-middle">
-                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none ${isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-[#D81A21]')}`} />
+                                        <Pencil className={`w-3.5 h-3.5 absolute left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition-all duration-300 pointer-events-none ${isTransfer ? (isDarkMode ? 'text-indigo-400' : 'text-indigo-600') : (isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-[#D81A21]'))}`} />
                                         <EditableInput 
                                             type="number"
                                             initialValue={item.amount === 0 ? '' : item.amount}
                                             onSave={(val) => handleUpdateTransaction(item.id, 'amount', val)}
-                                            className={`w-full min-w-[120px] bg-transparent border border-transparent rounded-lg py-1.5 px-3 text-right font-black outline-none pl-8 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDarkMode ? 'hover:bg-slate-800 focus:bg-slate-800 focus:ring-1 ' + (isInc ? 'text-emerald-400 focus:border-emerald-500 focus:ring-emerald-500' : 'text-slate-200 focus:border-red-500 focus:ring-red-500') : 'hover:bg-slate-100 focus:bg-white focus:ring-1 ' + (isInc ? 'text-emerald-600 focus:border-emerald-500 focus:ring-emerald-500' : 'text-slate-900 focus:border-[#D81A21] focus:ring-[#D81A21]')}`}
+                                            className={`w-full min-w-[120px] bg-transparent border border-transparent rounded-lg py-1.5 px-3 text-right font-black outline-none pl-8 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                                isDarkMode 
+                                                ? 'hover:bg-slate-800 focus:bg-slate-800 focus:ring-1 ' + (isTransfer ? 'text-indigo-400 focus:border-indigo-500 focus:ring-indigo-500' : (isInc ? 'text-emerald-400 focus:border-emerald-500 focus:ring-emerald-500' : 'text-slate-200 focus:border-red-500 focus:ring-red-500')) 
+                                                : 'hover:bg-slate-100 focus:bg-white focus:ring-1 ' + (isTransfer ? 'text-indigo-600 focus:border-indigo-500 focus:ring-indigo-500' : (isInc ? 'text-emerald-600 focus:border-emerald-500 focus:ring-emerald-500' : 'text-slate-900 focus:border-[#D81A21] focus:ring-[#D81A21]'))
+                                            }`}
                                             placeholder="0"
                                         />
                                       </td>

@@ -4,7 +4,7 @@ import {
   Download, CheckCircle, PlusCircle, Trash2, Inbox,
   Database, FileSpreadsheet, AlertCircle, Settings,
   X, CalendarPlus, Zap,
-  Moon, Sun, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star
+  Moon, Sun, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star, ArrowRightLeft
 } from 'lucide-react';
 import {
   API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
@@ -503,15 +503,38 @@ const processCSVText = async (rawText) => {
   };
 
   const handleDeleteTransaction = async (id) => {
-    if(window.confirm('ยืนยันการลบรายการนี้?')) { 
-        try {
-            const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error("Network Error");
-        } catch (err) { 
-            console.error("Failed to delete transaction:", err);
-        }
-        await loadData();
-    }
+      // 🌟 ตรวจสอบก่อนว่าเป็นรายการโอนเงินข้ามกระเป๋าหรือไม่
+      const targetTx = transactions.find(t => t.id === id);
+      const isTransfer = targetTx && (targetTx.category === 'โอนเงินเข้า' || targetTx.category === 'โอนเงินออก') && id.includes('tx_tr_');
+      
+      // 🌟 เปลี่ยนข้อความแจ้งเตือนให้ชัดเจนขึ้น
+      const confirmMsg = isTransfer 
+          ? '🔄 นี่คือรายการ "โอนเงินข้ามกระเป๋า"\nระบบจะทำการลบทั้งฝั่งรับและฝั่งจ่ายที่เชื่อมโยงกัน ยืนยันหรือไม่?' 
+          : 'ยืนยันการลบรายการนี้?';
+
+      if(window.confirm(confirmMsg)) { 
+          try {
+              let idsToDelete = [id];
+              
+              // 🌟 หาคู่ของมันเพื่อแนบใส่รายชื่อที่จะถูกลบ
+              if (isTransfer) {
+                  const baseId = id.replace('_out', '').replace('_in', '');
+                  const pairId = id.includes('_out') ? `${baseId}_in` : `${baseId}_out`;
+                  if (transactions.some(t => t.id === pairId)) {
+                      idsToDelete.push(pairId);
+                  }
+              }
+
+              // 🌟 สั่งลบไปที่ฐานข้อมูล (ถ้ามี 2 อันก็ลบ 2 รอบ)
+              for (const delId of idsToDelete) {
+                  const res = await fetch(`${API_URL}/${delId}`, { method: 'DELETE' });
+                  if (!res.ok) throw new Error("Network Error");
+              }
+          } catch (err) { 
+              console.error("Failed to delete transaction:", err);
+          }
+          await loadData();
+      }
   };
 
   const handleSaveTransaction = async (item) => {
@@ -590,10 +613,53 @@ const handleDeleteAllData = async () => {
 
       const [y, m, d] = addForm.date.split('-');
       const formattedDate = `${d}/${m}/${y}`;
+
+      // 🌟 ถ้ารูปแบบเป็น โอนเงินข้ามกระเป๋า (จ่ายบิล)
+      if (addForm.type === 'transfer') {
+          if (!addForm.paymentMethodId || !addForm.toPaymentMethodId) return alert('กรุณาเลือกกระเป๋าต้นทางและปลายทาง');
+          if (addForm.paymentMethodId === addForm.toPaymentMethodId) return alert('ไม่สามารถโอนเข้ากระเป๋าเดียวกันได้');
+
+          const fromPmObj = paymentMethods.find(p => p.id === addForm.paymentMethodId);
+          const toPmObj = paymentMethods.find(p => p.id === addForm.toPaymentMethodId);
+
+          const transferGroupId = Date.now();
+
+          // ขาออก (หักเงินกระเป๋าต้นทาง)
+          const outItem = {
+              id: `temp_tr_${transferGroupId}_out`,
+              date: formattedDate,
+              category: 'โอนเงินออก', 
+              description: addForm.description || `โอนเงินไป ${toPmObj.name}`,
+              amount: Number(addForm.amount),
+              dayNote: '',
+              paymentMethodId: fromPmObj.id,
+              _catObj: { name: 'โอนเงินออก', type: 'expense', color: '#64748B', icon: '📤' },
+              _pmObj: fromPmObj,
+              _isInc: false // โชว์สีแดง
+          };
+
+          // ขาเข้า (เพิ่มเงินกระเป๋าปลายทาง)
+          const inItem = {
+              id: `temp_tr_${transferGroupId}_in`,
+              date: formattedDate,
+              category: 'โอนเงินเข้า',
+              description: addForm.description || `รับโอนจาก ${fromPmObj.name}`,
+              amount: Number(addForm.amount),
+              dayNote: '',
+              paymentMethodId: toPmObj.id,
+              _catObj: { name: 'โอนเงินเข้า', type: 'income', color: '#64748B', icon: '📥' },
+              _pmObj: toPmObj,
+              _isInc: true // โชว์สีเขียว
+          };
+
+          setPendingItems([...pendingItems, outItem, inItem]);
+          setAddForm(prev => ({ ...prev, description: '', amount: '' }));
+          return;
+      }
+
+      // --- กรณีรายรับ/รายจ่ายปกติ ---
       const targetCat = addForm.category || categories.find(c => c.type === addForm.type)?.name || 'อื่นๆ';
       const catObj = categories.find(c => c.name === targetCat);
-      
-      // 🌟 ดึงข้อมูลกระเป๋าที่เลือกมา
       const pmObj = paymentMethods.find(p => p.id === addForm.paymentMethodId) || paymentMethods[0];
 
       const newItem = {
@@ -603,9 +669,9 @@ const handleDeleteAllData = async () => {
           description: addForm.description || targetCat,
           amount: Number(addForm.amount),
           dayNote: '',
-          paymentMethodId: pmObj ? pmObj.id : null, // 🌟 ส่ง ID ไปรอเซฟลง DB
+          paymentMethodId: pmObj ? pmObj.id : null,
           _catObj: catObj,
-          _pmObj: pmObj, // 🌟 เก็บ Object ไว้ให้ UI แสดงป้ายสวยๆ
+          _pmObj: pmObj, 
           _isInc: addForm.type === 'income'
       };
 
@@ -614,22 +680,38 @@ const handleDeleteAllData = async () => {
   };
 
   const handleRemovePending = (tempId) => {
-      setPendingItems(pendingItems.filter(item => item.id !== tempId));
+      // 🌟 ถ้ากดลบรายการโอนเงินในตะกร้า ให้หาคู่ของมันและลบออกพร้อมกัน
+      if (tempId.includes('temp_tr_')) {
+          const baseId = tempId.replace('_out', '').replace('_in', '');
+          setPendingItems(pendingItems.filter(item => !item.id.includes(baseId)));
+      } else {
+          setPendingItems(pendingItems.filter(item => item.id !== tempId));
+      }
   };
 
   const submitBatch = async () => {
       if (pendingItems.length === 0) return;
       setIsProcessing(true);
       try {
-          const finalItems = pendingItems.map((item, idx) => ({
-              id: `tx_${Date.now()}_${idx}`,
-              date: item.date,
-              category: item.category,
-              description: item.description,
-              amount: item.amount,
-              dayNote: item.dayNote,
-              paymentMethodId: item.paymentMethodId // 🌟 ส่ง ID ให้ Database
-          }));
+          const batchTime = Date.now();
+          const finalItems = pendingItems.map((item, idx) => {
+              
+              // 🌟 เช็คว่าถ้าเป็นรายการโอน ให้คงรหัสเชื่อมโยงไว้ตอนลง Database
+              let finalId = `tx_${batchTime}_${idx}`;
+              if (item.id.startsWith('temp_tr_')) {
+                  finalId = item.id.replace('temp_tr_', 'tx_tr_'); // แปลงเป็น tx_tr_...
+              }
+
+              return {
+                  id: finalId,
+                  date: item.date,
+                  category: item.category,
+                  description: item.description,
+                  amount: item.amount,
+                  dayNote: item.dayNote,
+                  paymentMethodId: item.paymentMethodId
+              };
+          });
 
           await saveToDb(finalItems);
           setPendingItems([]);
@@ -650,37 +732,84 @@ const handleDeleteAllData = async () => {
           handleAddPending();
       }
   };
-// --- Quick Suggestions สำหรับหน้า Batch Add ---
-  const quickSuggestions = useMemo(() => {
-      const typeTx = transactions.filter(t => {
-          const c = categories.find(cat => cat.name === t.category);
-          return c?.type === addForm.type;
-      });
+const quickSuggestions = useMemo(() => {
+    if (addForm.type === 'transfer') {
+        const outTxs = transactions.filter(t => t.category === 'โอนเงินออก');
+        const inTxs = transactions.filter(t => t.category === 'โอนเงินเข้า');
+        const pairs = [];
+        
+        outTxs.forEach(outTx => {
+            const matchingInTx = inTxs.find(inTx =>
+                inTx.date === outTx.date &&
+                inTx.amount === outTx.amount &&
+                inTx.description === outTx.description
+            );
+            if (matchingInTx) {
+                pairs.push({
+                    description: outTx.description,
+                    amount: outTx.amount,
+                    fromPm: outTx.paymentMethodId,
+                    toPm: matchingInTx.paymentMethodId
+                });
+            }
+        });
 
-      const frequency = {};
-      typeTx.forEach(t => {
-          const key = `${t.category}|${t.description || t.category}|${t.amount}`;
-          frequency[key] = (frequency[key] || 0) + 1;
-      });
+        const frequency = {};
+        pairs.forEach(p => {
+            const key = `transfer|${p.description}|${p.amount}|${p.fromPm}|${p.toPm}`;
+            frequency[key] = (frequency[key] || 0) + 1;
+        });
 
-      return Object.keys(frequency)
-          .map(key => ({ key, count: frequency[key] }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 8)
-          .map(item => {
-              const [category, description, amount] = item.key.split('|');
-              return { category, description, amount, count: item.count };
-          });
-  }, [transactions, categories, addForm.type]);
+        return Object.keys(frequency)
+            .map(key => ({ key, count: frequency[key] }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8)
+            .map(item => {
+                const [, description, amount, fromPm, toPm] = item.key.split('|');
+                return { type: 'transfer', description, amount, fromPm, toPm, count: item.count };
+            });
+    }
 
-  const applyAddFormSuggestion = (sugg) => {
-      setAddForm(prev => ({
-          ...prev,
-          category: sugg.category,
-          description: sugg.description === sugg.category ? '' : sugg.description,
-          amount: sugg.amount
-      }));
-  };
+    const typeTx = transactions.filter(t => {
+        const c = categories.find(cat => cat.name === t.category);
+        return c?.type === addForm.type;
+    });
+
+    const frequency = {};
+    typeTx.forEach(t => {
+        const key = `${t.category}|${t.description || t.category}|${t.amount}`;
+        frequency[key] = (frequency[key] || 0) + 1;
+    });
+
+    return Object.keys(frequency)
+        .map(key => ({ key, count: frequency[key] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8)
+        .map(item => {
+            const [category, description, amount] = item.key.split('|');
+            return { type: 'normal', category, description, amount, count: item.count };
+        });
+}, [transactions, categories, addForm.type]);
+
+// 🌟 ฟังก์ชันเ Suggestion ให้ดึงกระเป๋าลงฟอร์ม
+const applyAddFormSuggestion = (sugg) => {
+    if (sugg.type === 'transfer') {
+        setAddForm(prev => ({
+            ...prev,
+            description: sugg.description === 'โอนเงิน' ? '' : sugg.description,
+            amount: sugg.amount,
+            paymentMethodId: sugg.fromPm || prev.paymentMethodId,
+            toPaymentMethodId: sugg.toPm || prev.toPaymentMethodId
+        }));
+    } else {
+        setAddForm(prev => ({
+            ...prev,
+            category: sugg.category,
+            description: sugg.description === sugg.category ? '' : sugg.description,
+            amount: sugg.amount
+        }));
+    }
+};
   // --- FILTERS & COMPUTATIONS ---
   const groupedOptions = useMemo(() => {
       const yearsMap = {};
@@ -718,9 +847,9 @@ const handleDeleteAllData = async () => {
   }, [rawAvailableMonths]);
 
   const isReadOnlyView = !filterPeriod.match(/^\d{4}-\d{2}$/);
-
- const analytics = useAnalytics({
-  transactions,
+  const validAnalyticsTxs = useMemo(() => transactions.filter(t => t.category !== 'โอนเงินออก' && t.category !== 'โอนเงินเข้า'), [transactions]);
+const analytics = useAnalytics({
+  transactions: validAnalyticsTxs,
   categories,
   filterPeriod,
   hideFixedExpenses,
@@ -743,6 +872,9 @@ const handleDeleteAllData = async () => {
     
     if (advancedFilterDate !== 'ALL') {
         filtered = filtered.filter(t => t.date === advancedFilterDate);
+    }
+    if (advancedFilterWallet !== 'ALL') {
+        filtered = filtered.filter(t => t.paymentMethodId === advancedFilterWallet);
     }
     if (advancedFilterCategory !== 'ALL') {
         filtered = filtered.filter(t => t.category === advancedFilterCategory);
@@ -775,7 +907,7 @@ const handleDeleteAllData = async () => {
         );
     }
     return filtered;
-  }, [transactions, filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, categories]);
+  }, [transactions, filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, advancedFilterWallet, categories]);
 
   const openExportModal = () => {
       setExportPeriod(filterPeriod); // ตั้งค่าเริ่มต้นให้ตรงกับหน้าที่ดูอยู่
@@ -909,7 +1041,7 @@ const handleDeleteAllData = async () => {
         </div>
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
-          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory} chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} topXLimit={topXLimit} setTopXLimit={setTopXLimit} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} />}
+          {activeTab === 'dashboard' && <DashboardView analytics={analytics} transactions={transactions} filterPeriod={filterPeriod} getFilterLabel={getFilterLabel} hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses} dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory} chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} topXLimit={topXLimit} setTopXLimit={setTopXLimit} categories={categories} dayTypeConfig={dayTypeConfig} isDarkMode={isDarkMode} dayTypes={dayTypes} paymentMethods={paymentMethods}/>}
           {activeTab === 'calendar' && <CalendarView transactions={transactions} filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths} handleOpenAddModal={handleOpenAddModal} categories={categories} isDarkMode={isDarkMode} dayTypes={dayTypes} handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig} getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView} onSaveTransaction={handleSaveTransaction} handleDeleteTransaction={handleDeleteTransaction} paymentMethods={paymentMethods}/>}
           {activeTab === 'ledger' && <LedgerView 
             displayTransactions={displayTransactions} 
@@ -948,217 +1080,234 @@ const handleDeleteAllData = async () => {
             isDarkMode={isDarkMode} 
             handleDeleteAllData={handleDeleteAllData}
             saveSettingToDb={saveSettingToDb}
+            transactions={transactions}
         />}
         </div>
       </div>
 
       {/* --- ADD TRANSACTION MODAL (STAGING AREA) --- */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4 transition-all">
-            {/* ขยายความกว้างเป็น max-w-6xl เพื่อรองรับ 3 คอลัมน์ */}
-            <div className={`rounded-2xl shadow-2xl flex flex-col w-[96vw] max-w-[1300px] max-h-[90vh] animate-in zoom-in-95 duration-300 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                <div className={`p-5 border-b flex justify-between items-center shrink-0 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                    <h3 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><CalendarPlus className="w-6 h-6 text-emerald-600"/> สรุปค่าใช้จ่ายประจำวัน (Batch Add)</h3>
-                    <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-200'}`}><X className="w-5 h-5"/></button>
+        <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6 md:p-8 transition-all">
+            <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-[1350px] max-h-[95vh] lg:max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                
+                {/* Header */}
+                <div className={`p-5 md:p-6 border-b flex justify-between items-center shrink-0 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                    <h3 className={`text-lg md:text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}><CalendarPlus className="w-5 h-5 md:w-6 md:h-6 text-emerald-600"/> สรุปค่าใช้จ่ายประจำวัน (Batch Add)</h3>
+                    <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}><X className="w-6 h-6"/></button>
                 </div>
 
-                <div className={`flex-grow overflow-y-auto flex flex-col lg:flex-row custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                     
-                    {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล (27%) */}
-                    <div className={`w-full lg:w-[27%] p-6 border-b lg:border-b-0 lg:border-r space-y-4 shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
-                        <div className={`flex p-1 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                    {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล */}
+                    <div className={`w-full lg:w-[32%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 lg:overflow-y-auto custom-scrollbar ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                        
+                        <div className={`flex p-1 mb-4 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                             <button onClick={() => setAddForm({...addForm, type: 'expense', category: categories.find(c=>c.type==='expense')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'expense' ? (isDarkMode ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายจ่าย</button>
                             <button onClick={() => setAddForm({...addForm, type: 'income', category: categories.find(c=>c.type==='income')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'income' ? (isDarkMode ? 'bg-slate-700 text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายรับ</button>
+                            <button onClick={() => setAddForm({...addForm, type: 'transfer', category: 'โอนเงิน', paymentMethodId: '', toPaymentMethodId: ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'transfer' ? (isDarkMode ? 'bg-slate-700 text-indigo-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>🔄 โอนเงิน</button>
                         </div>
-                        <div>
-                            <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>วันที่ (Date)</label>
-                            <input type="date" value={addForm.date} onChange={(e) => setAddForm({...addForm, date: e.target.value})} className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 font-medium transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 focus:border-[#00509E]'}`} />
-                        </div>
-                        <div>
-                            <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>หมวดหมู่ (Category)</label>
-                            <select value={addForm.category} onChange={(e) => setAddForm({...addForm, category: e.target.value})} className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 font-bold transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-50 border-slate-300 focus:border-[#00509E]'}`}>
-                                <option value="" disabled>เลือกหมวดหมู่...</option>
-                                {categories.filter(c => c.type === addForm.type).map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>รายละเอียด (Description)</label>
-                            <input type="text" value={addForm.description} onChange={(e) => setAddForm({...addForm, description: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder="เช่น ค่าข้าวเที่ยง, รถไฟฟ้า" className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500' : 'border-slate-300 focus:border-[#00509E]'}`} />
-                        </div>
-                        {/* 🌟 [เพิ่มใหม่] UI ปุ่มเลือกกระเป๋าเงิน */}
-                        <div className="pt-2">
-                            <label className={`block text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จ่ายจากกระเป๋าไหน? (Wallet)</label>
-                            <div className="flex flex-wrap gap-2">
-                                {paymentMethods.length === 0 ? (
-                                    <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีกระเป๋าเงิน (ไปเพิ่มที่หน้าตั้งค่า)</span>
-                                ) : (
-                                    paymentMethods.map(pm => (
-                                        <button
-                                            key={pm.id}
-                                            type="button"
-                                            onClick={() => setAddForm({...addForm, paymentMethodId: pm.id})}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                                                addForm.paymentMethodId === pm.id 
-                                                ? (isDarkMode ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-[#00509E] border-[#00509E] text-white shadow-md') 
-                                                : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
-                                            }`}
-                                        >
-                                            {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
-                                        </button>
-                                    ))
-                                )}
+                        
+                        <div className="flex gap-3 mb-4">
+                            <div className="flex-1">
+                                <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>วันที่</label>
+                                <input type="date" value={addForm.date} onChange={(e) => setAddForm({...addForm, date: e.target.value})} className={`w-full px-3 py-2.5 text-sm border rounded-lg outline-none focus:ring-1 font-medium transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-[#00509E]'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จำนวนเงิน ฿</label>
+                                <input type="number" value={addForm.amount} onChange={(e) => setAddForm({...addForm, amount: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder="0.00" className={`w-full px-3 py-2.5 text-sm border rounded-lg outline-none focus:ring-1 font-black text-right transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-blue-400 focus:border-blue-500' : 'border-slate-300 focus:border-[#00509E] text-[#00509E]'}`} />
                             </div>
                         </div>
-                        {/* --- จบส่วน UI เลือกกระเป๋า --- */}
-                        <div>
-                            <label className={`block text-xs font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จำนวนเงิน (Amount)</label>
-                            <input type="number" value={addForm.amount} onChange={(e) => setAddForm({...addForm, amount: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder="0.00" className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-1 font-black text-xl text-right transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-blue-400 focus:border-blue-500 focus:ring-blue-500' : 'border-slate-300 focus:border-[#00509E] text-[#00509E]'}`} />
+                        
+                        {addForm.type !== 'transfer' && (
+                            <div className="mb-4">
+                                <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>หมวดหมู่</label>
+                                <select value={addForm.category} onChange={(e) => setAddForm({...addForm, category: e.target.value})} className={`w-full px-3 py-2.5 text-sm border rounded-lg outline-none focus:ring-1 font-bold transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-[#00509E]'}`}>
+                                    {categories.filter(c => c.type === addForm.type).map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                                </select>
+                            </div>
+                        )}
+                        
+                        <div className="mb-4">
+                            <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{addForm.type === 'transfer' ? 'หมายเหตุ (ตัวเลือก)' : 'รายละเอียด'}</label>
+                            <input type="text" value={addForm.description} onChange={(e) => setAddForm({...addForm, description: e.target.value})} onKeyDown={handleAddFormKeyDown} placeholder={addForm.type === 'transfer' ? 'เช่น จ่ายบิลบัตรเครดิต' : 'เช่น ค่าข้าวเที่ยง'} className={`w-full px-3 py-2.5 text-sm border rounded-lg outline-none focus:ring-1 transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500' : 'border-slate-300 focus:border-[#00509E]'}`} />
                         </div>
-                        <button onClick={handleAddPending} className={`w-full mt-2 px-4 py-3 border rounded-xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-blue-400 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-[#00509E] border-slate-300'}`}>
+
+                        {addForm.type === 'transfer' ? (
+                            <div className={`p-4 rounded-xl border flex flex-col gap-4 ${isDarkMode ? 'bg-indigo-900/10 border-indigo-900/50' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                                <div>
+                                    <label className={`block text-[11px] font-black uppercase mb-2 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>📤 โอนจาก (หักเงิน)</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {paymentMethods.map(pm => (
+                                            <button key={`from_${pm.id}`} type="button" onClick={() => setAddForm({...addForm, paymentMethodId: pm.id})} className={`px-2.5 py-1.5 rounded border text-xs font-bold transition-all ${addForm.paymentMethodId === pm.id ? (isDarkMode ? 'bg-red-900/50 border-red-500 text-red-300 shadow-sm' : 'bg-red-50 border-red-500 text-red-700 shadow-sm') : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
+                                                {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={`block text-[11px] font-black uppercase mb-2 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>📥 โอนเข้า (รับเงิน)</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {paymentMethods.map(pm => (
+                                            <button key={`to_${pm.id}`} type="button" onClick={() => setAddForm({...addForm, toPaymentMethodId: pm.id})} className={`px-2.5 py-1.5 rounded border text-xs font-bold transition-all ${addForm.toPaymentMethodId === pm.id ? (isDarkMode ? 'bg-emerald-900/50 border-emerald-500 text-emerald-300 shadow-sm' : 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm') : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
+                                                {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className={`block text-[11px] font-bold uppercase mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จ่ายจากกระเป๋าไหน?</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {paymentMethods.map(pm => (
+                                        <button key={pm.id} type="button" onClick={() => setAddForm({...addForm, paymentMethodId: pm.id})} className={`px-3 py-2 rounded-lg border text-xs font-bold transition-all ${addForm.paymentMethodId === pm.id ? (isDarkMode ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-[#00509E] border-[#00509E] text-white shadow-sm') : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
+                                            {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={handleAddPending} className={`w-full mt-6 px-4 py-3 border rounded-xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-blue-400 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-[#00509E] border-slate-300'}`}>
                             <PlusCircle className="w-5 h-5"/> เพิ่มลงตะกร้า (Enter)
                         </button>
                     </div>
 
-                    {/* คอลัมน์ 2: Quick Suggestions (27%) */}
-                    <div className={`w-full lg:w-[27%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 transition-colors duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500"/> 
-                                    รายการที่ใช้บ่อย
-                                </h4>
-                                <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>คลิกเพื่อดึงข้อมูลลงฟอร์ม</p>
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                    {/* คอลัมน์ 2: Quick Suggestions */}
+                    <div className={`w-full lg:w-[28%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
+                        <h4 className={`shrink-0 font-bold flex items-center gap-2 mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Quick Suggestions
+                        </h4>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
                             {quickSuggestions.length === 0 ? (
-                               <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีข้อมูล</p>
-                            ) : (
-                              quickSuggestions.map((s, idx) => {
-                                const catObj = categories.find(c => c.name === s.category);
-                                return (
-                                  <button
-                                    key={idx}
-                                    onClick={() => applyAddFormSuggestion(s)}
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${
-                                      isDarkMode
-                                        ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-slate-500'
-                                        : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-[#00509E]/30 shadow-sm hover:shadow'
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                      <div 
-                                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" 
-                                        style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}
-                                      >
-                                        {catObj?.icon}
-                                      </div>
-                                      <div className="overflow-hidden">
-                                        <div className="flex items-center gap-2">
-                                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                                            {s.description}
-                                            </p>
-                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
-                                            {s.count} ครั้ง
-                                            </span>
+                                addForm.type === 'transfer' ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 space-y-3 py-6">
+                                        <div className={`p-4 rounded-full ${isDarkMode ? 'bg-indigo-900/20' : 'bg-indigo-100'}`}>
+                                            <ArrowRightLeft className={`w-10 h-10 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-500'}`} />
                                         </div>
-                                        <p className={`text-xs truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                            {s.category}
-                                        </p>
+                                        <div>
+                                            <p className="font-bold text-sm mb-1">การโอนเงิน</p>
+                                            <p className="text-xs">จะสร้างรายการ <b className="text-red-400">ออก</b>/<b className="text-emerald-400">เข้า</b><br/>ลงตะกร้าพร้อมกัน 2 รายการ</p>
                                         </div>
                                     </div>
-                                    <span className={`text-sm font-black shrink-0 ${addForm.type === 'expense' ? (isDarkMode ? 'text-red-400' : 'text-[#D81A21]') : (isDarkMode ? 'text-emerald-400' : 'text-emerald-600')}`}>
-                                      {s.amount} ฿
-                                    </span>
-                                  </button>
-                                );
-                              })
+                                ) : (
+                                    <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีข้อมูล</p>
+                                )
+                            ) : (
+                                quickSuggestions.map((s, idx) => {
+                                    if (s.type === 'transfer') {
+                                        const fromPmObj = paymentMethods.find(p => p.id === s.fromPm);
+                                        const toPmObj = paymentMethods.find(p => p.id === s.toPm);
+                                        return (
+                                            <button key={idx} onClick={() => applyAddFormSuggestion(s)} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow'}`}>
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `rgba(99, 102, 241, ${isDarkMode ? 0.2 : 0.1})` }}>
+                                                        <ArrowRightLeft className={`w-4 h-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
+                                                            {/* 🌟 ป้ายบอกจำนวนครั้ง (โอนเงิน) */}
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                                {s.count} ครั้ง
+                                                            </span>
+                                                        </div>
+                                                        <p className={`text-[10px] font-bold flex items-center gap-1 mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                            <span className="truncate max-w-[60px]" style={{ color: fromPmObj?.color }}>{fromPmObj?.name || '?'}</span>
+                                                            <span>➡️</span>
+                                                            <span className="truncate max-w-[60px]" style={{ color: toPmObj?.color }}>{toPmObj?.name || '?'}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm font-black shrink-0 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{s.amount}</span>
+                                            </button>
+                                        );
+                                    } else {
+                                        const catObj = categories.find(c => c.name === s.category);
+                                        return (
+                                            <button key={idx} onClick={() => applyAddFormSuggestion(s)} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow'}`}>
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}>{catObj?.icon}</div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
+                                                            {/* 🌟 ป้ายบอกจำนวนครั้ง (รับ/จ่ายปกติ) */}
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
+                                                                {s.count} ครั้ง
+                                                            </span>
+                                                        </div>
+                                                        <p className={`text-xs truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{s.category}</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-sm font-black shrink-0 ${addForm.type === 'expense' ? (isDarkMode ? 'text-red-400' : 'text-[#D81A21]') : (isDarkMode ? 'text-emerald-400' : 'text-emerald-600')}`}>{s.amount}</span>
+                                            </button>
+                                        );
+                                    }
+                                })
                             )}
                         </div>
                     </div>
 
-                    {/* คอลัมน์ 3: ตะกร้าที่รอการบันทึก (46%) */}
-                    <div className={`w-full lg:w-[46%] flex flex-col p-6 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/50'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><ClipboardList className={`w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/> รายการที่รอการบันทึก</h4>
-                            <span className={`text-white px-2.5 py-0.5 rounded-full text-xs font-bold ${isDarkMode ? 'bg-blue-600' : 'bg-[#00509E]'}`}>{pendingItems.length} รายการ</span>
+                    {/* คอลัมน์ 3: ตะกร้า */}
+                    <div className={`w-full lg:w-[40%] flex flex-col p-6 min-h-0 ${isDarkMode ? 'bg-slate-800/30' : 'bg-slate-50/30'}`}>
+                        <div className="shrink-0 flex justify-between items-center mb-4">
+                            <h4 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><ClipboardList className={`w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}/> ตะกร้า</h4>
+                            <span className={`text-white px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isDarkMode ? 'bg-blue-600' : 'bg-[#00509E]'}`}>{pendingItems.length} รายการ</span>
                         </div>
-                        <div className={`flex-grow overflow-y-auto custom-scrollbar border rounded-xl transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                        <div className={`flex-1 overflow-y-auto custom-scrollbar border rounded-xl ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
                             {pendingItems.length === 0 ? (
-                                <div className={`h-full min-h-[250px] flex flex-col items-center justify-center ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                <div className={`h-full min-h-[150px] flex flex-col items-center justify-center ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                     <Inbox className={`w-12 h-12 mb-3 ${isDarkMode ? 'opacity-20' : 'opacity-30'}`} />
                                     <p className="text-sm font-medium">ยังไม่มีรายการในตะกร้า</p>
-                                    <p className="text-xs mt-1">กรอกข้อมูลด้านซ้ายแล้วกด "เพิ่มลงตะกร้า"</p>
                                 </div>
                             ) : (
                                 <div className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-                                    {pendingItems.map((item, idx) => {
-                                        return (
-                                            <div key={item.id} className={`flex items-center justify-between p-3 transition-colors group animate-in fade-in slide-in-from-right-4 duration-300 ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
-                                                {/* 🌟 โครงสร้างรายการ 1 บรรทัด */}
-                                                <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
-                                                    <div className={`text-xs font-bold w-5 text-right shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>{idx+1}.</div>
-                                                    
-                                                    <div className="flex flex-col overflow-hidden flex-1 min-w-0">
-                                                        <div className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={item.description}>{item.description}</div>
-                                                        
-                                                        {/* 🌟 แถวของป้าย (Badge) บังคับให้อยู่บรรทัดเดียว (overflow-hidden) */}
-                                                        <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden w-full">
-                                                            {/* 1. ป้ายรายรับ/รายจ่าย (ไม่ย่อ) */}
-                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 whitespace-nowrap shrink-0 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
-                                                                {item._isInc ? 'รายรับ' : 'รายจ่าย'}
+                                    {pendingItems.map((item, idx) => (
+                                        <div key={item.id} className={`flex items-center justify-between p-3.5 transition-colors group animate-in fade-in slide-in-from-right-4 duration-300 ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                                                <div className={`text-xs font-bold w-5 text-right shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>{idx+1}.</div>
+                                                <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+                                                    <div className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={item.description}>{item.description}</div>
+                                                    <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden w-full">
+                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center shrink-0 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
+                                                            {item._isInc ? 'รายรับ' : 'รายจ่าย'}
+                                                        </span>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})` }}>
+                                                            <span className="shrink-0">{item._catObj?.icon}</span>
+                                                            <span className="truncate">{item.category}</span>
+                                                        </span>
+                                                        {item._pmObj && (
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} style={{ backgroundColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.4 : 0.3})` }}>
+                                                                <span className="shrink-0">{item._pmObj.type === 'credit' ? '💳' : (item._pmObj.type === 'cash' ? '💵' : '🏦')}</span>
+                                                                <span className="truncate">{item._pmObj.name}</span>
                                                             </span>
-                                                            
-                                                            {/* 2. ป้ายหมวดหมู่ (ถ้ายาวไปให้ใส่ ... แทน) */}
-                                                            <span 
-                                                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                                                                style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})` }}
-                                                            >
-                                                                <span className="shrink-0">{item._catObj?.icon}</span>
-                                                                <span className="truncate">{item.category}</span>
-                                                            </span>
-
-                                                            {/* 3. ป้ายกระเป๋าเงิน (ถ้ายาวไปให้ใส่ ... แทน) */}
-                                                            {item._pmObj && (
-                                                                <span 
-                                                                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                                                                    style={{ backgroundColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.4 : 0.3})` }}
-                                                                >
-                                                                    <span className="shrink-0">{item._pmObj.type === 'credit' ? '💳' : (item._pmObj.type === 'cash' ? '💵' : '🏦')}</span>
-                                                                    <span className="truncate">{item._pmObj.name}</span>
-                                                                </span>
-                                                            )}
-
-                                                            {/* 4. วันที่ */}
-                                                            <span className={`text-[10px] font-medium hidden sm:inline shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                                                {item.date}
-                                                            </span>
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 pl-2 shrink-0">
-                                                    <span className={`font-black text-base whitespace-nowrap ${item._isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-[#D81A21]')}`}>{formatMoney(item.amount)} ฿</span>
-                                                    <button onClick={() => handleRemovePending(item.id)} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-500 hover:text-white hover:bg-red-600/80' : 'text-slate-300 hover:text-white hover:bg-red-500'}`} title="ลบออกจากตะกร้า"><Trash2 className="w-4 h-4"/></button>
-                                                </div>
                                             </div>
-                                        )
-                                    })}
+                                            <div className="flex items-center gap-3 pl-2 shrink-0">
+                                                <span className={`font-black text-base whitespace-nowrap ${item._isInc ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-600') : (isDarkMode ? 'text-red-400' : 'text-[#D81A21]')}`}>{formatMoney(item.amount)} ฿</span>
+                                                <button onClick={() => handleRemovePending(item.id)} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-500 hover:text-white hover:bg-red-600/80' : 'text-slate-300 hover:text-white hover:bg-red-500'}`} title="ลบออกจากตะกร้า"><Trash2 className="w-4 h-4"/></button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className={`p-5 border-t flex flex-col sm:flex-row justify-between items-center shrink-0 gap-4 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                {/* Footer */}
+                <div className={`p-5 md:p-6 border-t flex flex-col sm:flex-row justify-between items-center shrink-0 gap-4 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex items-center gap-3">
-                        <span className={`font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ยอดรวมในตะกร้า:</span>
+                        <span className={`font-bold text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ยอดรวมในตะกร้า:</span>
                         <span className={`text-2xl font-black ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}>
                             <AnimatedNumber value={pendingItems.reduce((acc, curr) => acc + (curr._isInc ? curr.amount : -curr.amount), 0)} /> ฿
                         </span>
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`flex-1 sm:flex-none px-5 py-3 border rounded-xl font-bold transition-all active:scale-95 ${isDarkMode ? 'text-slate-300 bg-slate-800 border-slate-600 hover:bg-slate-700' : 'text-slate-600 bg-white border-slate-300 hover:bg-slate-100'}`}>ทิ้งข้อมูล</button>
-                        <button onClick={submitBatch} disabled={pendingItems.length === 0 || isProcessing} className={`flex-1 sm:flex-none px-6 py-3 disabled:opacity-50 text-white rounded-xl font-bold flex justify-center items-center gap-2 shadow-md transition-all active:scale-95 ${isDarkMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                        <button onClick={() => { setShowAddModal(false); setPendingItems([]); }} className={`flex-1 sm:flex-none px-5 py-3 border rounded-xl font-bold text-sm transition-all active:scale-95 ${isDarkMode ? 'text-slate-300 bg-slate-800 border-slate-600 hover:bg-slate-700' : 'text-slate-600 bg-white border-slate-300 hover:bg-slate-100'}`}>ทิ้งข้อมูล</button>
+                        <button onClick={submitBatch} disabled={pendingItems.length === 0 || isProcessing} className={`flex-1 sm:flex-none px-6 py-3 disabled:opacity-50 text-white rounded-xl font-bold text-sm flex justify-center items-center gap-2 shadow-md transition-all active:scale-95 ${isDarkMode ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
                             {isProcessing ? <Zap className="w-5 h-5 animate-pulse"/> : <CheckCircle className="w-5 h-5"/>} 
                             {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมดลง DB'}
                         </button>

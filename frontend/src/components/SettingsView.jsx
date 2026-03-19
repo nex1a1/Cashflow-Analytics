@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   PlusCircle, Trash2, Coins, CalendarClock, AlertCircle,
-  Settings, ChevronUp, ChevronDown, Wallet,
+  Settings, ChevronUp, ChevronDown, Wallet, Lock, Unlock, Zap, X
 } from 'lucide-react';
 import { DAY_TYPE_CONFIG_KEY } from '../constants';
 
@@ -14,7 +14,6 @@ const COLOR_PALETTE = [
 ];
 
 // ── Inline Confirm Button ──────────────────────────────────────────────────
-// กดครั้งแรก → เปลี่ยนเป็น "ยืนยัน?" กดครั้งสองถึงจะลบจริง
 function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm' }) {
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef(null);
@@ -54,7 +53,7 @@ function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm' }) {
   );
 }
 
-// ── Color Picker with Palette (fixed position to escape overflow:hidden) ───
+// ── Color Picker with Palette ─────────────────────────────────────────────
 function ColorPicker({ color, onChange, isDarkMode }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -75,7 +74,6 @@ function ColorPicker({ color, onChange, isDarkMode }) {
     setOpen(v => !v);
   };
 
-  // Close only when clicking outside BOTH button and palette
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -89,7 +87,6 @@ function ColorPicker({ color, onChange, isDarkMode }) {
 
   return (
     <div className="relative shrink-0">
-      {/* Swatch button */}
       <button
         ref={btnRef}
         onClick={handleOpen}
@@ -97,15 +94,12 @@ function ColorPicker({ color, onChange, isDarkMode }) {
         style={{ backgroundColor: color, borderColor: color }}
         title="เลือกสี"
       />
-
-      {/* Palette — fixed position, always visible */}
       {open && (
         <div
           ref={paletteRef}
           className={`fixed z-[9999] p-2.5 rounded-xl shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
           style={{ top: pos.top, left: pos.left, width: '156px' }}
         >
-          {/* Preset swatches */}
           <div className="grid grid-cols-8 gap-1 mb-2">
             {COLOR_PALETTE.map(c => (
               <button
@@ -117,7 +111,6 @@ function ColorPicker({ color, onChange, isDarkMode }) {
               />
             ))}
           </div>
-          {/* Custom color */}
           <div className={`flex items-center gap-1.5 border-t pt-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
             <div className="w-5 h-5 rounded shrink-0 border" style={{ backgroundColor: color, borderColor: color }} />
             <input
@@ -135,7 +128,7 @@ function ColorPicker({ color, onChange, isDarkMode }) {
   );
 }
 
-// ── Auto-focus input when newly added ────────────────────────────────────
+// ── Auto-focus input ─────────────────────────────────────────────────────
 function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -174,23 +167,15 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         : (isDarkMode ? 'hover:bg-slate-700/40' : 'hover:bg-slate-50')
     } ${isDarkMode ? 'border-slate-700/60' : 'border-slate-100'}`}>
 
-      {/* Reorder arrows */}
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
-        <button
-          onClick={() => onMove(cat.id, 'UP')}
-          className={`p-0.5 rounded transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-600'}`}
-        >
+        <button onClick={() => onMove(cat.id, 'UP')} className={`p-0.5 rounded transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-600'}`}>
           <ChevronUp className="w-3.5 h-3.5" />
         </button>
-        <button
-          onClick={() => onMove(cat.id, 'DOWN')}
-          className={`p-0.5 rounded transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-600'}`}
-        >
+        <button onClick={() => onMove(cat.id, 'DOWN')} className={`p-0.5 rounded transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-600'}`}>
           <ChevronDown className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Icon + Name — flex-1 to fill available space */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <input
           type="text"
@@ -211,10 +196,7 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         />
       </div>
 
-      {/* Controls */}
       <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-
-        {/* Cashflow group */}
         <select
           value={cat.cashflowGroup || (isIncome ? 'bonus' : 'variable')}
           onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
@@ -239,35 +221,19 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
           )}
         </select>
 
-        {/* Fixed toggle (expense only) */}
         {!isIncome && (
-          <label
-            className={`flex items-center gap-1 cursor-pointer px-2 py-1.5 rounded-lg transition-colors border text-xs font-bold ${
+          <label className={`flex items-center gap-1 cursor-pointer px-2 py-1.5 rounded-lg transition-colors border text-xs font-bold ${
               cat.isFixed
                 ? (isDarkMode ? 'bg-purple-900/40 text-purple-400 border-purple-800/50' : 'bg-purple-100 text-purple-700 border-purple-200')
                 : (isDarkMode ? 'text-slate-500 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-300')
-            }`}
-            title="ตั้งเป็นภาระคงที่"
-          >
-            <input
-              type="checkbox"
-              checked={!!cat.isFixed}
-              onChange={e => onChange(cat.id, 'isFixed', e.target.checked)}
-              className="w-3 h-3 accent-purple-600 cursor-pointer"
-            />
+            }`} title="ตั้งเป็นภาระคงที่">
+            <input type="checkbox" checked={!!cat.isFixed} onChange={e => onChange(cat.id, 'isFixed', e.target.checked)} className="w-3 h-3 accent-purple-600 cursor-pointer" />
             Fixed
           </label>
         )}
 
-        {/* Color picker with palette */}
-        <ColorPicker
-          color={cat.color || '#64748B'}
-          onChange={c => onChange(cat.id, 'color', c)}
-          isDarkMode={isDarkMode}
-        />
-
+        <ColorPicker color={cat.color || '#64748B'} onChange={c => onChange(cat.id, 'color', c)} isDarkMode={isDarkMode} />
         <div className={`w-px h-5 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
-
         <ConfirmDeleteButton onConfirm={() => onDelete(cat.id)} isDarkMode={isDarkMode} />
       </div>
     </div>
@@ -280,9 +246,22 @@ export default function SettingsView({
   handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, setDayTypeConfig, isDarkMode,
   handleDeleteAllData, saveSettingToDb,
-  paymentMethods = [], setPaymentMethods 
+  paymentMethods = [], setPaymentMethods, transactions = []
 }) {
-  const [newCatId, setNewCatId] = useState(null); // track newly added cat for auto-focus
+  const [unlockedWallets, setUnlockedWallets] = useState({});
+  const [newCatId, setNewCatId] = useState(null);
+  
+  // State สำหรับ Modal ปรับจูนยอดเงิน
+  const [adjustModal, setAdjustModal] = useState({ isOpen: false, pmId: null, pmName: '' });
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const adjustInputRef = useRef(null);
+
+  // Focus input อัตโนมัติเมื่อเปิด Modal
+  useEffect(() => {
+    if (adjustModal.isOpen && adjustInputRef.current) {
+      adjustInputRef.current.focus();
+    }
+  }, [adjustModal.isOpen]);
 
   const handleDayTypeConfigChange = (id, field, value) => {
     const newConfig = dayTypeConfig.map(dt =>
@@ -319,11 +298,11 @@ export default function SettingsView({
       saveSettingToDb(DAY_TYPE_CONFIG_KEY, newConfig);
     }
   };
-// 🌟 [เพิ่มใหม่] ฟังก์ชันจัดการกระเป๋าเงิน (Payment Methods)
+
   const handleAddPaymentMethod = () => {
     const newMethods = [
       ...paymentMethods,
-      { id: `pm_${Date.now()}`, name: 'กระเป๋าใหม่', type: 'bank', color: '#3B82F6' },
+      { id: `pm_${Date.now()}`, name: 'กระเป๋าใหม่', type: 'bank', color: '#3B82F6', initialBalance: 0 },
     ];
     setPaymentMethods(newMethods);
   };
@@ -350,14 +329,47 @@ export default function SettingsView({
       setPaymentMethods(newMethods);
     }
   };
+
+  // 🌟 เปิด Modal ปรับยอด
+  const openAdjustModal = (pmId, pmName) => {
+    setAdjustModal({ isOpen: true, pmId, pmName });
+    setAdjustAmount('');
+  };
+
+  // 🌟 ยืนยันการปรับยอด (คำนวณและ Save)
+  const confirmAdjustBalance = () => {
+    if (!adjustAmount) return;
+    const targetNum = parseFloat(adjustAmount.replace(/,/g, ''));
+    if (isNaN(targetNum)) {
+      alert("กรุณาใส่เป็นตัวเลขที่ถูกต้องครับ");
+      return;
+    }
+
+    const pmId = adjustModal.pmId;
+    const historySum = transactions.reduce((acc, tx) => {
+      if (tx.paymentMethodId !== pmId) return acc;
+      const amount = Number(tx.amount) || 0;
+
+      if (tx.category === 'โอนเงินเข้า') return acc + amount;
+      if (tx.category === 'โอนเงินออก') return acc - amount;
+
+      const catObj = categories.find(c => c.name === tx.category);
+      if (!catObj) return acc;
+      return catObj.type === 'income' ? acc + amount : acc - amount;
+    }, 0);
+
+    const calculatedInitial = targetNum - historySum;
+    handlePaymentMethodChange(pmId, 'initialBalance', calculatedInitial);
+    
+    alert(`✅ ปรับจูนยอด "${adjustModal.pmName}" สำเร็จ!\nยอดปัจจุบันของคุณจะแสดงเป็น ${targetNum.toLocaleString()} ฿`);
+    setAdjustModal({ isOpen: false, pmId: null, pmName: '' });
+  };
+
   const onAddCategory = (type) => {
     handleAddCategory(type);
-    // หา id ของ category ที่จะถูกเพิ่มใหม่ (ตัวสุดท้ายของ type นั้น หลังจาก state update)
-    // ใช้ setTimeout เล็กน้อยให้ state update ก่อน
     setTimeout(() => {
       const added = [...categories].reverse().find(c => c.type === type);
       if (added) setNewCatId(added.id);
-      // clear after 1s
       setTimeout(() => setNewCatId(null), 1000);
     }, 50);
   };
@@ -368,9 +380,8 @@ export default function SettingsView({
   const sectionHd  = (color) => isDarkMode ? `bg-${color}-900/20 border-${color}-900/50` : `bg-${color}-50 border-${color}-200`;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto py-6 space-y-6">
+    <div className="relative animate-in fade-in slide-in-from-bottom-4 duration-500 w-full py-4 space-y-6">
 
-      {/* Info banner */}
       <div className={`rounded-xl px-4 py-3 text-sm border ${isDarkMode ? 'bg-blue-900/20 border-blue-800/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-[#00509E]'}`}>
         <p className="font-bold flex items-center gap-2 mb-1">
           <Settings className="w-4 h-4" /> วิธีตั้งค่ากลุ่มกระแสเงินสด
@@ -381,214 +392,160 @@ export default function SettingsView({
         </p>
       </div>
 
-      {/* ── 2-Column Layout ── */}
       <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6 items-start">
 
         {/* LEFT: Categories */}
         <div className="space-y-6">
-
-      {/* ── Income Categories ── */}
-      <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
-        <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('emerald')}`}>
-          <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
-            <Coins className="w-5 h-5" /> หมวดหมู่รายรับ
-            <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-emerald-900/40 text-emerald-500' : 'bg-emerald-100 text-emerald-600'}`}>
-              {categories.filter(c => c.type === 'income').length} รายการ
-            </span>
-          </h2>
-          <button
-            onClick={() => onAddCategory('income')}
-            className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-emerald-600/80 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-          >
-            <PlusCircle className="w-4 h-4" /> เพิ่ม
-          </button>
-        </div>
-        <div>
-          {categories.filter(c => c.type === 'income').length === 0 ? (
-            <p className={`text-sm text-center py-8 ${textMuted}`}>ยังไม่มีหมวดหมู่รายรับ</p>
-          ) : (
-            categories.filter(c => c.type === 'income').map(cat => (
-              <CategoryRow
-                key={cat.id}
-                cat={cat}
-                isNew={cat.id === newCatId}
-                isIncome={true}
-                isDarkMode={isDarkMode}
-                onMove={handleMoveCategory}
-                onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory}
-              />
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ── Expense Categories ── */}
-      <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
-        <div className={`px-4 py-3 border-b flex justify-between items-center ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-          <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-            <Wallet className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> หมวดหมู่รายจ่าย
-            <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-              {categories.filter(c => c.type === 'expense').length} รายการ
-            </span>
-          </h2>
-          <button
-            onClick={() => onAddCategory('expense')}
-            className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-blue-600/80 hover:bg-blue-500' : 'bg-[#00509E] hover:bg-[#003d7a]'}`}
-          >
-            <PlusCircle className="w-4 h-4" /> เพิ่ม
-          </button>
-        </div>
-        <div>
-          {categories.filter(c => c.type === 'expense').length === 0 ? (
-            <p className={`text-sm text-center py-8 ${textMuted}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
-          ) : (
-            categories.filter(c => c.type === 'expense').map(cat => (
-              <CategoryRow
-                key={cat.id}
-                cat={cat}
-                isNew={cat.id === newCatId}
-                isIncome={false}
-                isDarkMode={isDarkMode}
-                onMove={handleMoveCategory}
-                onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory}
-              />
-            ))
-          )}
-        </div>
-      </div>
-
-        </div> {/* end left col */}
-
-        {/* RIGHT: Day Types */}
-        <div className="space-y-6">
-
-      {/* ── Day Types ── */}
-      <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
-        <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('orange')}`}>
-          <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-orange-400' : 'text-orange-800'}`}>
-            <CalendarClock className="w-5 h-5" /> ชนิดของวันบนปฏิทิน
-          </h2>
-          <button
-            onClick={handleAddDayType}
-            className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-orange-600/80 hover:bg-orange-500' : 'bg-orange-600 hover:bg-orange-700'}`}
-          >
-            <PlusCircle className="w-4 h-4" /> เพิ่ม
-          </button>
-        </div>
-        <div className="p-3 space-y-2">
-          {dayTypeConfig.map(dt => (
-            <div
-              key={dt.id}
-              className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors group ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-100 hover:bg-slate-50'}`}
-            >
-              {/* Reorder */}
-              <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
-                <button onClick={() => handleMoveDayType(dt.id, 'UP')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-orange-400' : 'hover:text-orange-600'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
-                <button onClick={() => handleMoveDayType(dt.id, 'DOWN')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-orange-400' : 'hover:text-orange-600'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
-              </div>
-
-              {/* Color preview dot */}
-              <div className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
-
-              {/* Label */}
-              <input
-                type="text"
-                value={dt.label}
-                onChange={e => handleDayTypeConfigChange(dt.id, 'label', e.target.value)}
-                className={`flex-1 min-w-0 px-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-orange-500' : 'border-slate-200 text-slate-800 focus:border-orange-400'}`}
-                placeholder="ชื่อชนิดวัน"
-              />
-
-              {/* Color picker with palette */}
-              <ColorPicker
-                color={dt.color}
-                onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)}
-                isDarkMode={isDarkMode}
-              />
-
-              <div className={`w-px h-5 shrink-0 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
-
-              {/* Delete — disabled if only 2 left */}
-              <button
-                onClick={() => handleDeleteDayType(dt.id)}
-                disabled={dayTypeConfig.length <= 2}
-                className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'text-slate-500 hover:text-white hover:bg-red-500/80' : 'text-slate-400 hover:text-white hover:bg-red-500'}`}
-                title={dayTypeConfig.length <= 2 ? 'ต้องมีอย่างน้อย 2 ชนิด' : 'ลบ'}
-              >
-                <Trash2 className="w-4 h-4" />
+          {/* ── Income Categories ── */}
+          <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
+            <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('emerald')}`}>
+              <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
+                <Coins className="w-5 h-5" /> หมวดหมู่รายรับ
+              </h2>
+              <button onClick={() => onAddCategory('income')} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-emerald-600/80 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                <PlusCircle className="w-4 h-4" /> เพิ่ม
               </button>
             </div>
-          ))}
-        </div>
-      </div>
-          {/* 🌟 [เพิ่มใหม่] ── Payment Methods (กระเป๋าเงิน) ── */}
-      <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm mt-6`}>
-        <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('indigo')}`}>
-          <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-800'}`}>
-            <Wallet className="w-5 h-5" /> กระเป๋าเงิน / ช่องทางจ่าย
-          </h2>
-          <button
-            onClick={handleAddPaymentMethod}
-            className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-indigo-600/80 hover:bg-indigo-500' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-          >
-            <PlusCircle className="w-4 h-4" /> เพิ่ม
-          </button>
-        </div>
-        <div className="p-3 space-y-2">
-          {paymentMethods.length === 0 && (
-            <p className={`text-sm text-center py-4 ${textMuted}`}>ยังไม่มีช่องทางชำระเงิน</p>
-          )}
-          {paymentMethods.map(pm => (
-            <div
-              key={pm.id}
-              className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors group ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-100 hover:bg-slate-50'}`}
-            >
-              {/* Reorder */}
-              <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
-                <button onClick={() => handleMovePaymentMethod(pm.id, 'UP')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
-                <button onClick={() => handleMovePaymentMethod(pm.id, 'DOWN')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
-              </div>
-
-              {/* Type Select */}
-              <select
-                value={pm.type || 'bank'}
-                onChange={e => handlePaymentMethodChange(pm.id, 'type', e.target.value)}
-                className={`border rounded-lg text-xs font-bold py-1.5 px-2 outline-none transition-colors cursor-pointer shrink-0 ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-white border-slate-300 text-slate-700'}`}
-              >
-                <option value="bank">🏦 บัญชี</option>
-                <option value="credit">💳 เครดิต</option>
-                <option value="cash">💵 เงินสด</option>
-              </select>
-
-              {/* Label */}
-              <input
-                type="text"
-                value={pm.name}
-                onChange={e => handlePaymentMethodChange(pm.id, 'name', e.target.value)}
-                className={`flex-1 min-w-0 px-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-indigo-500' : 'border-slate-200 text-slate-800 focus:border-indigo-400'}`}
-                placeholder="ชื่อกระเป๋า (เช่น SCB, บัตรเครดิต)"
-              />
-
-              {/* Color picker */}
-              <ColorPicker
-                color={pm.color || '#3B82F6'}
-                onChange={c => handlePaymentMethodChange(pm.id, 'color', c)}
-                isDarkMode={isDarkMode}
-              />
-
-              <div className={`w-px h-5 shrink-0 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
-
-              {/* Delete */}
-              <ConfirmDeleteButton onConfirm={() => handleDeletePaymentMethod(pm.id)} isDarkMode={isDarkMode} />
+            <div>
+              {categories.filter(c => c.type === 'income').length === 0 ? (
+                <p className={`text-sm text-center py-8 ${textMuted}`}>ยังไม่มีหมวดหมู่รายรับ</p>
+              ) : (
+                categories.filter(c => c.type === 'income').map(cat => (
+                  <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true} isDarkMode={isDarkMode} onMove={handleMoveCategory} onChange={handleCategoryChange} onDelete={handleDeleteCategory} />
+                ))
+              )}
             </div>
-          ))}
+          </div>
+
+          {/* ── Expense Categories ── */}
+          <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
+            <div className={`px-4 py-3 border-b flex justify-between items-center ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                <Wallet className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> หมวดหมู่รายจ่าย
+              </h2>
+              <button onClick={() => onAddCategory('expense')} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-blue-600/80 hover:bg-blue-500' : 'bg-[#00509E] hover:bg-[#003d7a]'}`}>
+                <PlusCircle className="w-4 h-4" /> เพิ่ม
+              </button>
+            </div>
+            <div>
+              {categories.filter(c => c.type === 'expense').length === 0 ? (
+                <p className={`text-sm text-center py-8 ${textMuted}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
+              ) : (
+                categories.filter(c => c.type === 'expense').map(cat => (
+                  <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false} isDarkMode={isDarkMode} onMove={handleMoveCategory} onChange={handleCategoryChange} onDelete={handleDeleteCategory} />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Day Types & Wallets */}
+        <div className="space-y-6">
+          {/* ── Day Types ── */}
+          <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm`}>
+            <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('orange')}`}>
+              <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-orange-400' : 'text-orange-800'}`}>
+                <CalendarClock className="w-5 h-5" /> ชนิดของวันบนปฏิทิน
+              </h2>
+              <button onClick={handleAddDayType} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-orange-600/80 hover:bg-orange-500' : 'bg-orange-600 hover:bg-orange-700'}`}>
+                <PlusCircle className="w-4 h-4" /> เพิ่ม
+              </button>
+            </div>
+            <div className="p-3 space-y-2">
+              {dayTypeConfig.map(dt => (
+                <div key={dt.id} className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors group ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
+                    <button onClick={() => handleMoveDayType(dt.id, 'UP')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-orange-400' : 'hover:text-orange-600'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleMoveDayType(dt.id, 'DOWN')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-orange-400' : 'hover:text-orange-600'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
+                  </div>
+                  <div className="w-3 h-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
+                  <input type="text" value={dt.label} onChange={e => handleDayTypeConfigChange(dt.id, 'label', e.target.value)} className={`flex-1 min-w-0 px-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-orange-500' : 'border-slate-200 text-slate-800 focus:border-orange-400'}`} placeholder="ชื่อชนิดวัน" />
+                  <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} isDarkMode={isDarkMode} />
+                  <div className={`w-px h-5 shrink-0 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
+                  <button onClick={() => handleDeleteDayType(dt.id)} disabled={dayTypeConfig.length <= 2} className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'text-slate-500 hover:text-white hover:bg-red-500/80' : 'text-slate-400 hover:text-white hover:bg-red-500'}`} title={dayTypeConfig.length <= 2 ? 'ต้องมีอย่างน้อย 2 ชนิด' : 'ลบ'}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Payment Methods (กระเป๋าเงิน) ── */}
+          <div className={`${surface} rounded-xl border ${border} overflow-hidden shadow-sm mt-6`}>
+            <div className={`px-4 py-3 border-b flex justify-between items-center ${sectionHd('indigo')}`}>
+              <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-800'}`}>
+                <Wallet className="w-5 h-5" /> กระเป๋าเงิน / ช่องทางจ่าย
+              </h2>
+              <button onClick={handleAddPaymentMethod} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-indigo-600/80 hover:bg-indigo-500' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                <PlusCircle className="w-4 h-4" /> เพิ่ม
+              </button>
+            </div>
+            
+            {/* 🌟 Info Banner อธิบายการใช้งานกระเป๋าเงิน */}
+            <div className={`mx-3 mt-3 p-3 rounded-lg text-xs border ${isDarkMode ? 'bg-indigo-900/20 border-indigo-800/50 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-700'}`}>
+               <p className="font-bold mb-1">💡 การจัดการยอดเงิน:</p>
+               <ul className="space-y-1 ml-4 list-disc">
+                 <li><strong>ช่องยอดยกมา:</strong> สามารถกด <Unlock className="inline w-3 h-3 text-orange-500" /> เพื่อปลดล็อคและพิมพ์ยอดตั้งต้นได้เอง</li>
+                 <li><strong>ปุ่ม <Zap className="inline w-3 h-3 text-emerald-500" /> (ปรับยอดด่วน):</strong> กรอกแค่ <u>ยอดเงินจริงที่มีอยู่ตอนนี้</u> ระบบจะคำนวณยอดยกมาย้อนหลังให้ตรงเป๊ะอัตโนมัติ</li>
+               </ul>
+            </div>
+
+            <div className="p-3 space-y-2">
+              {paymentMethods.length === 0 && (
+                <p className={`text-sm text-center py-4 ${textMuted}`}>ยังไม่มีช่องทางชำระเงิน</p>
+              )}
+              {paymentMethods.map(pm => (
+                <div key={pm.id} className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors group ${isDarkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-100 hover:bg-slate-50'}`}>
+                  
+                  <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>
+                    <button onClick={() => handleMovePaymentMethod(pm.id, 'UP')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleMovePaymentMethod(pm.id, 'DOWN')} className={`p-0.5 rounded ${isDarkMode ? 'hover:text-indigo-400' : 'hover:text-indigo-600'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
+                  </div>
+
+                  <select value={pm.type || 'bank'} onChange={e => handlePaymentMethodChange(pm.id, 'type', e.target.value)} className={`border rounded-lg text-xs font-bold py-1.5 px-2 outline-none transition-colors cursor-pointer shrink-0 ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-white border-slate-300 text-slate-700'}`}>
+                    <option value="bank">🏦 บัญชี</option>
+                    <option value="credit">💳 เครดิต</option>
+                    <option value="cash">💵 เงินสด</option>
+                  </select>
+
+                  <input type="text" value={pm.name} onChange={e => handlePaymentMethodChange(pm.id, 'name', e.target.value)} className={`flex-1 min-w-0 px-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-indigo-500' : 'border-slate-200 text-slate-800 focus:border-indigo-400'}`} placeholder="ชื่อกระเป๋า" />
+                  
+                  <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="relative w-[110px]">
+                          <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>฿</span>
+                          <input
+                            type="number"
+                            value={pm.initialBalance === undefined ? '' : pm.initialBalance}
+                            onChange={e => handlePaymentMethodChange(pm.id, 'initialBalance', parseFloat(e.target.value) || 0)}
+                            disabled={!unlockedWallets[pm.id]}
+                            className={`w-full pl-6 pr-2 py-1.5 border rounded-lg outline-none focus:ring-1 font-black text-sm text-right transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                !unlockedWallets[pm.id] 
+                                ? (isDarkMode ? 'bg-slate-800/50 text-slate-500 border-slate-700 cursor-not-allowed' : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed') 
+                                : (isDarkMode ? 'bg-slate-900 border-indigo-500 text-slate-200 shadow-inner' : 'bg-white border-indigo-400 text-slate-800 shadow-inner')
+                            }`}
+                            placeholder="ยอดยกมา"
+                          />
+                      </div>
+                      <button type="button" onClick={() => setUnlockedWallets(prev => ({ ...prev, [pm.id]: !prev[pm.id] }))} className={`p-1.5 rounded-lg transition-colors border ${!unlockedWallets[pm.id] ? (isDarkMode ? 'text-slate-500 border-slate-700 hover:text-slate-300 hover:bg-slate-800' : 'text-slate-400 border-slate-200 hover:text-slate-600 hover:bg-slate-100') : (isDarkMode ? 'text-orange-400 bg-orange-900/30 border-orange-800/50' : 'text-orange-600 bg-orange-50 border-orange-200')}`} title={!unlockedWallets[pm.id] ? "ปลดล็อคเพื่อแก้ไข" : "ล็อคยอดเงิน"}>
+                          {!unlockedWallets[pm.id] ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                      </button>
+                  </div>
+                  
+                  <ColorPicker color={pm.color || '#3B82F6'} onChange={c => handlePaymentMethodChange(pm.id, 'color', c)} isDarkMode={isDarkMode} />
+                  <div className={`w-px h-5 shrink-0 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-200'}`} />
+                  
+                  {/* ปุ่มเปิด Modal ปรับยอด */}
+                  <button onClick={() => openAdjustModal(pm.id, pm.name)} className={`p-1.5 rounded-lg transition-all active:scale-95 border ${isDarkMode ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800/50 hover:bg-emerald-500 hover:text-white' : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white'}`} title="ปรับยอดให้ตรงกับเงินจริงตอนนี้">
+                    <Zap className="w-4 h-4" />
+                  </button>
+                  
+                  <ConfirmDeleteButton onConfirm={() => handleDeletePaymentMethod(pm.id)} isDarkMode={isDarkMode} />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-        </div> {/* end right col */}
-        
-      </div> {/* end 2-col grid */}
 
       {/* ── Danger Zone ── */}
       <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-red-900/10 border-red-900/50' : 'bg-red-50 border-red-200'}`}>
@@ -607,6 +564,71 @@ export default function SettingsView({
         </div>
       </div>
 
+      {/* 🌟 Modal ปรับจูนยอดเงิน (แสดงทับส่วนอื่นๆ เมื่อถูกเรียก) */}
+      {adjustModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 animate-in fade-in duration-200">
+          <div className={`w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            {/* Modal Header */}
+            <div className={`px-4 py-3 border-b flex justify-between items-center ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                <Zap className="w-5 h-5" /> ปรับยอดเงินปัจจุบัน
+              </h3>
+              <button 
+                onClick={() => setAdjustModal({ isOpen: false, pmId: null, pmName: '' })}
+                className={`p-1 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-4 space-y-4">
+              <div>
+                <label className={`block text-sm font-bold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  ยอดเงินใน <span className="text-indigo-500">"{adjustModal.pmName}"</span> ปัจจุบันมีเท่าไหร่?
+                </label>
+                <p className={`text-xs mb-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  ระบบจะคำนวณยอดยกมาย้อนหลังให้ตรงกับตัวเลขนี้โดยอัตโนมัติ
+                </p>
+                <div className="relative">
+                  <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>฿</span>
+                  <input
+                    ref={adjustInputRef}
+                    type="number"
+                    value={adjustAmount}
+                    onChange={e => setAdjustAmount(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && confirmAdjustBalance()}
+                    placeholder="0.00"
+                    className={`w-full pl-8 pr-4 py-2.5 text-lg font-black rounded-xl border outline-none focus:ring-2 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                      isDarkMode 
+                        ? 'bg-slate-900 border-slate-600 focus:border-emerald-500 focus:ring-emerald-500/20 text-white' 
+                        : 'bg-slate-50 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20 text-slate-800'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setAdjustModal({ isOpen: false, pmId: null, pmName: '' })}
+                  className={`flex-1 px-4 py-2.5 rounded-xl font-bold transition-colors ${
+                    isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmAdjustBalance}
+                  className="flex-1 px-4 py-2.5 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm"
+                >
+                  บันทึกยอดใหม่
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

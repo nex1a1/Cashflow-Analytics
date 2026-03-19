@@ -4,7 +4,8 @@ import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 import {
   Wallet, Coins, PiggyBank, Flame, Home, Scale,
   CalendarClock, TrendingUp, PieChart, FileSpreadsheet,
-  Filter, AlertCircle, Inbox, Activity, UtensilsCrossed
+  Filter, AlertCircle, Inbox, Activity, UtensilsCrossed,
+  Lock, Unlock, Zap, X, Eye, EyeOff
 } from 'lucide-react';
 import AnimatedNumber from './ui/AnimatedNumber';
 import Sparkline from './ui/Sparkline';
@@ -15,7 +16,49 @@ export default function DashboardView({
   hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
   chartGroupBy, setChartGroupBy,
   analytics, dayTypeConfig, isDarkMode, dayTypes,allTransactions,topXLimit, setTopXLimit,
+  paymentMethods = []
 }) {
+// 🌟 คำนวณยอดเงินปัจจุบันของแต่ละกระเป๋า (รองรับระบบโอนเงินข้ามกระเป๋า)
+  const walletBalances = React.useMemo(() => {
+      if (!paymentMethods || paymentMethods.length === 0) return [];
+      
+      const balances = paymentMethods.map(pm => ({
+          ...pm,
+          currentBalance: Number(pm.initialBalance) || 0
+      }));
+
+      transactions.forEach(tx => {
+          if (!tx.paymentMethodId) return;
+          const pmIndex = balances.findIndex(b => b.id === tx.paymentMethodId);
+          if (pmIndex === -1) return;
+
+          const amount = Number(tx.amount) || 0;
+
+          // 🌟 1. ดักจับรายการ "โอนเงิน" (ไม่สนหมวดหมู่ปกติ)
+          if (tx.category === 'โอนเงินเข้า') {
+              balances[pmIndex].currentBalance += amount;
+              return;
+          }
+          if (tx.category === 'โอนเงินออก') {
+              balances[pmIndex].currentBalance -= amount;
+              return;
+          }
+
+          // 🌟 2. ดักจับรายการ "รายรับ/รายจ่าย" ปกติ
+          const catObj = categories.find(c => c.name === tx.category);
+          if (!catObj) return;
+
+          if (catObj.type === 'income') {
+              balances[pmIndex].currentBalance += amount;
+          } else {
+              balances[pmIndex].currentBalance -= amount;
+          }
+      });
+
+      return balances;
+  }, [transactions, paymentMethods, categories]);
+// 🌟 State สำหรับซ่อน/แสดงยอดเงินกระเป๋า
+  const [hideAllBalances, setHideAllBalances] = React.useState(false);
   const datesInPeriod = analytics.datesInPeriod || [];
     if (transactions.length === 0) {
         return (
@@ -65,7 +108,6 @@ export default function DashboardView({
                     <h3 className={`text-4xl font-black tracking-tight ${isDarkMode ? (analytics.netCashflow >= 0 ? 'text-blue-300' : 'text-orange-400') : (analytics.netCashflow >= 0 ? 'text-[#00509E]' : 'text-orange-600')}`}><AnimatedNumber value={analytics.netCashflow} /> <span className="text-xl font-medium">฿</span></h3>
                 </div>
             </div>
-
             {/* แถวที่ 2: อัตราเผาผลาญ / ค่ากิน / หอพัก / โครงสร้าง / วันทำงาน vs วันหยุด */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 <div className={`border-l-[5px] border-[#F4B800] rounded-xl p-4 shadow-sm flex flex-col justify-between relative overflow-hidden hover:-translate-y-1 transition-transform duration-300 ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
@@ -163,7 +205,37 @@ export default function DashboardView({
                     </div>
                 </div> */}
             </div>
+{/* 🌟 แถบสถานะกระเป๋าเงิน (มีปุ่มเปิด-ปิดยอดรวมชิดขวา) */}
+            {walletBalances.length > 0 && (
+                <div className={`rounded-xl shadow-sm border p-3 mb-5 flex flex-col md:flex-row md:items-center gap-3 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <h3 className={`shrink-0 text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 border-b md:border-b-0 md:border-r pb-2 md:pb-0 md:pr-3 ${isDarkMode ? 'text-slate-400 border-slate-700' : 'text-slate-500 border-slate-200'}`}>
+                        <Wallet className="w-3.5 h-3.5" /> ยอดปัจจุบัน
+                    </h3>
+                    
+                    {/* ใส่ flex-1 เพื่อดันปุ่มตาให้ไปชิดขวาสุด */}
+                    <div className="flex-1 flex flex-wrap items-center gap-x-5 gap-y-2">
+                        {walletBalances.map(wb => (
+                            <div key={wb.id} className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: wb.color || '#94a3b8' }}></div>
+                                <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{wb.name}</span>
+                                <span className={`text-xs font-black ml-0.5 transition-all duration-300 ${hideAllBalances ? 'blur-[4px] select-none opacity-50' : ''} ${wb.currentBalance < 0 ? 'text-red-500' : (isDarkMode ? 'text-slate-200' : 'text-slate-700')}`}>
+                                    {formatMoney(wb.currentBalance)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
 
+                    {/* 🌟 ปุ่มตา เปิด-ปิด ยอดรวมทั้งหมด (ชิดขวาสุด) */}
+                    <button 
+                        type="button"
+                        onClick={() => setHideAllBalances(!hideAllBalances)}
+                        className={`ml-auto shrink-0 p-1.5 rounded-lg transition-colors border ${isDarkMode ? 'text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 border-slate-200 hover:text-slate-700 hover:bg-slate-100'}`}
+                        title={hideAllBalances ? "แสดงยอดเงินทั้งหมด" : "ซ่อนยอดเงินทั้งหมด"}
+                    >
+                        {hideAllBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
+            )}
             {/* Activity Timeline (GitHub Style Contribution Graph) */}
             {Object.keys(analytics.dayTypeCounts).length > 0 && (
                 <div className={`rounded-xl shadow-sm border p-4 md:p-6 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
