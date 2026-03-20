@@ -1,6 +1,6 @@
 // src/components/DayDetailModal.jsx
 import { useState, useMemo } from 'react';
-import { X, Trash2, Coins, Wallet, CheckCircle, Zap, Star, ArrowRightLeft } from 'lucide-react';
+import { X, Trash2, Coins, Wallet, CheckCircle, Zap, Star } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../utils/formatters';
 
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -9,7 +9,6 @@ export default function DayDetailModal({
   dateStr,
   transactions,
   categories,
-  paymentMethods = [],
   isDarkMode,
   onClose,
   onSave,
@@ -22,11 +21,7 @@ export default function DayDetailModal({
 
   const defaultExpenseCat = categories.find(c => c.type === 'expense')?.name || '';
   const defaultIncomeCat  = categories.find(c => c.type === 'income')?.name || '';
-  const defaultPaymentMethodId = paymentMethods.length > 0 ? paymentMethods[0].id : '';
   
-  const [formPaymentMethodId, setFormPaymentMethodId] = useState(defaultPaymentMethodId);
-  const [formToPaymentMethodId, setFormToPaymentMethodId] = useState('');
-
   const [localItems, setLocalItems]           = useState([]);
   const [formType, setFormType]               = useState('expense');
   const [formCat, setFormCat]                 = useState(defaultExpenseCat);
@@ -39,64 +34,15 @@ export default function DayDetailModal({
   const pendingItems = localItems.filter(i => !txIds.has(i.id));
   const dayTx   = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
   
-  const expenses = dayTx.filter(t => {
-    if (t.category === 'โอนเงินออก') return true;
-    if (t.category === 'โอนเงินเข้า') return false;
-    return categories.find(c => c.name === t.category)?.type !== 'income';
-  });
-  const income = dayTx.filter(t => {
-    if (t.category === 'โอนเงินเข้า') return true;
-    if (t.category === 'โอนเงินออก') return false;
-    return categories.find(c => c.name === t.category)?.type === 'income';
-  });
+  // แยกรายรับและรายจ่ายปกติ
+  const expenses = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'expense');
+  const income = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'income');
 
   const totalExp = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
   const totalInc = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
-  // 🌟 Logic สำหรับ Quick Suggestions (อัปเกรดให้รองรับโอนเงินด้วย)
+  // Logic สำหรับ Quick Suggestions (รายรับ/รายจ่ายปกติ)
   const quickSuggestions = useMemo(() => {
-    if (formType === 'transfer') {
-      // 1. ดึงข้อมูลโอนเงินทั้งหมด
-      const outTxs = transactions.filter(t => t.category === 'โอนเงินออก');
-      const inTxs = transactions.filter(t => t.category === 'โอนเงินเข้า');
-
-      // 2. จับคู่ โอนออก-โอนเข้า (อิงจากวันที่, ยอดเงิน, และรายละเอียด)
-      const pairs = [];
-      outTxs.forEach(outTx => {
-        const matchingInTx = inTxs.find(inTx =>
-          inTx.date === outTx.date &&
-          inTx.amount === outTx.amount &&
-          inTx.description === outTx.description
-        );
-        if (matchingInTx) {
-          pairs.push({
-            description: outTx.description,
-            amount: outTx.amount,
-            fromPm: outTx.paymentMethodId,
-            toPm: matchingInTx.paymentMethodId
-          });
-        }
-      });
-
-      // 3. นับความถี่ของการโอนแต่ละรูปแบบ
-      const frequency = {};
-      pairs.forEach(p => {
-        const key = `transfer|${p.description}|${p.amount}|${p.fromPm}|${p.toPm}`;
-        frequency[key] = (frequency[key] || 0) + 1;
-      });
-
-      // 4. เรียงลำดับและส่งออก
-      return Object.keys(frequency)
-        .map(key => ({ key, count: frequency[key] }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8)
-        .map(item => {
-          const [, description, amount, fromPm, toPm] = item.key.split('|');
-          return { type: 'transfer', description, amount, fromPm, toPm, count: item.count };
-        });
-    }
-
-    // --- ส่วนรายรับรายจ่ายปกติ ---
     const typeTx = transactions.filter(t => {
       const c = categories.find(cat => cat.name === t.category);
       return c?.type === formType;
@@ -114,91 +60,42 @@ export default function DayDetailModal({
       .slice(0, 8)
       .map(item => {
         const [category, description, amount] = item.key.split('|');
-        return { type: 'normal', category, description, amount, count: item.count };
+        return { category, description, amount, count: item.count };
       });
   }, [transactions, categories, formType]);
 
   const applySuggestion = (sugg) => {
-    if (sugg.type === 'transfer') {
-      setFormDesc(sugg.description === 'โอนเงิน' ? '' : sugg.description);
-      setFormAmt(sugg.amount);
-      if (sugg.fromPm) setFormPaymentMethodId(sugg.fromPm);
-      if (sugg.toPm) setFormToPaymentMethodId(sugg.toPm);
-    } else {
-      setFormCat(sugg.category);
-      setFormDesc(sugg.description === sugg.category ? '' : sugg.description);
-      setFormAmt(sugg.amount);
-    }
+    setFormCat(sugg.category);
+    setFormDesc(sugg.description === sugg.category ? '' : sugg.description);
+    setFormAmt(sugg.amount);
   };
 
   const switchType = (type) => {
     setFormType(type);
-    if (type !== 'transfer') {
-      setFormCat(type === 'expense' ? defaultExpenseCat : defaultIncomeCat);
-    }
+    setFormCat(type === 'expense' ? defaultExpenseCat : defaultIncomeCat);
   };
 
   const handleSave = async () => {
     const amt = parseFloat(formAmt);
-    if (!amt || amt <= 0) return;
+    if (!amt || amt <= 0 || !formCat) return;
 
     setIsSaving(true);
     try {
-      if (formType === 'transfer') {
-        if (!formPaymentMethodId || !formToPaymentMethodId || formPaymentMethodId === formToPaymentMethodId) {
-          alert('กรุณาเลือกกระเป๋าต้นทางและปลายทางให้ถูกต้อง (ต้องไม่ซ้ำกัน)');
-          setIsSaving(false);
-          return;
-        }
+      const newItem = {
+        id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        date: dateStr,
+        category: formCat,
+        description: formDesc || formCat,
+        amount: amt,
+        dayNote: ''
+      };
 
-        const txOut = {
-          id: `tx_${Date.now()}_out`,
-          date: dateStr,
-          category: 'โอนเงินออก',
-          description: formDesc || 'โอนเงิน',
-          amount: amt,
-          dayNote: '',
-          paymentMethodId: formPaymentMethodId,
-        };
-        const txIn = {
-          id: `tx_${Date.now()}_in`,
-          date: dateStr,
-          category: 'โอนเงินเข้า',
-          description: formDesc || 'โอนเงิน',
-          amount: amt,
-          dayNote: '',
-          paymentMethodId: formToPaymentMethodId,
-        };
-
-        setLocalItems(prev => [...prev, 
-          { ...txOut, _catObj: { type: 'expense', color: '#6366f1', icon: '📤' } },
-          { ...txIn, _catObj: { type: 'income', color: '#6366f1', icon: '📥' } }
-        ]);
-
-        await onSave(txOut);
-        await onSave(txIn);
-
-        setLocalItems(prev => prev.filter(i => i.id !== txOut.id && i.id !== txIn.id));
-
-      } else {
-        if (!formCat) return;
-        const newItem = {
-          id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-          date: dateStr,
-          category: formCat,
-          description: formDesc || formCat,
-          amount: amt,
-          dayNote: '',
-          paymentMethodId: formPaymentMethodId,
-        };
-
-        const catObj = categories.find(c => c.name === formCat);
-        setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);
-        
-        await onSave(newItem);
-        setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
-      }
-
+      const catObj = categories.find(c => c.name === formCat);
+      setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);
+      
+      await onSave(newItem);
+      
+      setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
       setFormDesc('');
       setFormAmt('');
     } catch (err) {
@@ -236,12 +133,7 @@ export default function DayDetailModal({
   const inputClass  = `px-3 py-2 rounded-xl border outline-none focus:ring-1 text-sm font-medium transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E]'}`;
 
   const TxRow = ({ tx }) => {
-    const isTransfer = tx.category === 'โอนเงินเข้า' || tx.category === 'โอนเงินออก';
-    const cat = isTransfer 
-      ? { name: tx.category, type: tx.category === 'โอนเงินเข้า' ? 'income' : 'expense', color: '#6366f1', icon: tx.category === 'โอนเงินเข้า' ? '📥' : '📤' }
-      : categories.find(c => c.name === tx.category);
-    
-    const pmObj = paymentMethods.find(p => p.id === tx.paymentMethodId); 
+    const cat = categories.find(c => c.name === tx.category);
     const isInc = cat?.type === 'income';
     const color = cat?.color || '#94a3b8';
     const isConfirming = confirmDeleteId === tx.id;
@@ -257,17 +149,6 @@ export default function DayDetailModal({
           <p className={`text-sm font-bold truncate ${textPrimary}`}>{tx.description || tx.category}</p>
           <p className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5" style={{ color, filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.7)' }}>
             <span>{cat?.icon} {tx.category}</span>
-            {pmObj && (
-              <span 
-                className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
-                style={{ 
-                  backgroundColor: `rgba(${hexToRgb(pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.2 : 0.1})`, 
-                  borderColor: `rgba(${hexToRgb(pmObj.color || '#3B82F6')}, ${isDarkMode ? 0.4 : 0.3})` 
-                }}
-              >
-                {pmObj.type === 'credit' ? '💳' : (pmObj.type === 'cash' ? '💵' : '🏦')} {pmObj.name}
-              </span>
-            )}
           </p>
         </div>
 
@@ -326,7 +207,7 @@ export default function DayDetailModal({
             {expenses.length > 0 && (
               <div>
                 <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
-                  <Wallet className="w-3.5 h-3.5" /> รายจ่าย (รวมโอนออก)
+                  <Wallet className="w-3.5 h-3.5" /> รายจ่าย
                 </p>
                 <div className="space-y-1.5">{expenses.map(tx => <TxRow key={tx.id} tx={tx} />)}</div>
               </div>
@@ -334,7 +215,7 @@ export default function DayDetailModal({
             {income.length > 0 && (
               <div>
                 <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                  <Coins className="w-3.5 h-3.5" /> รายรับ (รวมโอนเข้า)
+                  <Coins className="w-3.5 h-3.5" /> รายรับ
                 </p>
                 <div className="space-y-1.5">{income.map(tx => <TxRow key={tx.id} tx={tx} />)}</div>
               </div>
@@ -347,70 +228,13 @@ export default function DayDetailModal({
             <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-900' : 'bg-slate-200/60'}`}>
               <button onClick={() => switchType('expense')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${formType === 'expense' ? (isDarkMode ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : textMuted}`}>รายจ่าย</button>
               <button onClick={() => switchType('income')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${formType === 'income' ? (isDarkMode ? 'bg-slate-700 text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm') : textMuted}`}>รายรับ</button>
-              <button onClick={() => switchType('transfer')} className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${formType === 'transfer' ? (isDarkMode ? 'bg-slate-700 text-indigo-400 shadow-sm' : 'bg-white text-indigo-600 shadow-sm') : textMuted}`}>โอนเงิน</button>
             </div>
 
-            {formType === 'transfer' ? (
-              <div className={`p-3 rounded-xl border space-y-4 mb-2 ${isDarkMode ? 'bg-indigo-900/10 border-indigo-900/50' : 'bg-indigo-50/50 border-indigo-200'}`}>
-                <div className="flex flex-col gap-2">
-                  <label className={`text-xs font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}`}>จากกระเป๋า (ต้นทาง)</label>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {paymentMethods.map(pm => {
-                      const isSelected = formPaymentMethodId === pm.id;
-                      const pmColor = pm.color || '#3B82F6';
-                      return (
-                        <button
-                          key={`from_${pm.id}`}
-                          type="button"
-                          onClick={() => setFormPaymentMethodId(pm.id)}
-                          className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border flex items-center gap-1.5 ${
-                            isSelected ? 'text-white shadow-sm scale-105' : (isDarkMode ? 'text-slate-200 hover:text-white' : 'text-slate-700 hover:text-slate-900')
-                          }`}
-                          style={{
-                            backgroundColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.15 : 0.05})`,
-                            borderColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.4 : 0.2})`
-                          }}
-                        >
-                          {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className={`text-xs font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}`}>ไปกระเป๋า (ปลายทาง)</label>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {paymentMethods.map(pm => {
-                      const isSelected = formToPaymentMethodId === pm.id;
-                      const pmColor = pm.color || '#3B82F6';
-                      return (
-                        <button
-                          key={`to_${pm.id}`}
-                          type="button"
-                          onClick={() => setFormToPaymentMethodId(pm.id)}
-                          className={`px-3 py-2 rounded-xl text-sm font-bold transition-all border flex items-center gap-1.5 ${
-                            isSelected ? 'text-white shadow-sm scale-105' : (isDarkMode ? 'text-slate-200 hover:text-white' : 'text-slate-700 hover:text-slate-900')
-                          }`}
-                          style={{
-                            backgroundColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.15 : 0.05})`,
-                            borderColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.4 : 0.2})`
-                          }}
-                        >
-                          {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <select value={formCat} onChange={e => setFormCat(e.target.value)} className={`${inputClass} w-full`}>
-                {categories.filter(c => c.type === formType).map(c => (
-                  <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
-                ))}
-              </select>
-            )}
+            <select value={formCat} onChange={e => setFormCat(e.target.value)} className={`${inputClass} w-full`}>
+              {categories.filter(c => c.type === formType).map(c => (
+                <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
+              ))}
+            </select>
 
             <div className="flex gap-2">
               <input
@@ -418,7 +242,7 @@ export default function DayDetailModal({
                 value={formDesc}
                 onChange={e => setFormDesc(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={formType === 'transfer' ? 'บันทึกช่วยจำ (เช่น คืนเงินเพื่อน)...' : 'รายละเอียด...'}
+                placeholder="รายละเอียด..."
                 className={`${inputClass} flex-1`}
               />
               <input
@@ -431,40 +255,13 @@ export default function DayDetailModal({
               />
             </div>
 
-            {formType !== 'transfer' && paymentMethods.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {paymentMethods.map(pm => {
-                  const isSelected = formPaymentMethodId === pm.id;
-                  const pmColor = pm.color || '#3B82F6';
-                  return (
-                    <button
-                      key={pm.id}
-                      type="button"
-                      onClick={() => setFormPaymentMethodId(pm.id)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border flex items-center gap-1 ${
-                        isSelected ? 'text-white shadow-sm scale-105' : (isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900')
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.15 : 0.05})`,
-                        borderColor: isSelected ? pmColor : `rgba(${hexToRgb(pmColor)}, ${isDarkMode ? 0.4 : 0.2})`
-                      }}
-                    >
-                      {pm.type === 'credit' ? '💳' : (pm.type === 'cash' ? '💵' : '🏦')} {pm.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
             <button
               onClick={handleSave}
               disabled={!formAmt || parseFloat(formAmt) <= 0 || isSaving}
-              className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-white shadow-sm ${
+              className={`w-full mt-2 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-white shadow-sm ${
                 formType === 'expense'
                   ? 'bg-red-500 hover:bg-red-600'
-                  : formType === 'income' 
-                    ? 'bg-emerald-500 hover:bg-emerald-600'
-                    : 'bg-indigo-500 hover:bg-indigo-600'
+                  : 'bg-emerald-500 hover:bg-emerald-600'
               }`}
             >
               {isSaving
@@ -492,87 +289,37 @@ export default function DayDetailModal({
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
             {quickSuggestions.length === 0 ? (
-               formType === 'transfer' ? (
-                <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 space-y-4 animate-in fade-in">
-                  <div className={`p-4 rounded-full ${isDarkMode ? 'bg-indigo-900/20' : 'bg-indigo-100'}`}>
-                    <ArrowRightLeft className={`w-10 h-10 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-500'}`} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm mb-1">การโอนเงินข้ามกระเป๋า</p>
-                    <p className="text-xs">ระบบจะสร้าง <b className="text-red-400">โอนออก</b> และ <b className="text-emerald-400">รับเข้า</b><br/>อัตโนมัติ 2 รายการ</p>
-                  </div>
-                </div>
-               ) : (
-                <p className={`text-sm text-center py-6 ${textMuted}`}>ยังไม่มีข้อมูลการใช้จ่ายในหมวดนี้</p>
-               )
+               <p className={`text-sm text-center py-6 ${textMuted}`}>ยังไม่มีข้อมูลการใช้จ่ายในหมวดนี้</p>
             ) : (
               quickSuggestions.map((s, idx) => {
-                // 🌟 แยก UI ระหว่างโอนเงิน กับ รับจ่ายปกติ
-                if (s.type === 'transfer') {
-                  const fromPmObj = paymentMethods.find(p => p.id === s.fromPm);
-                  const toPmObj = paymentMethods.find(p => p.id === s.toPm);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => applySuggestion(s)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `rgba(99, 102, 241, ${isDarkMode ? 0.2 : 0.1})` }}>
-                          <ArrowRightLeft className={`w-4 h-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
-                        </div>
-                        <div className="overflow-hidden">
-                          <div className="flex items-center gap-2">
-                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-100 text-indigo-700'}`}>
-                              {s.count} ครั้ง
-                            </span>
-                          </div>
-                          <p className={`text-[10px] font-bold flex items-center gap-1 mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <span className="truncate max-w-[70px]" style={{ color: fromPmObj?.color }}>{fromPmObj?.name || 'ต้นทาง?'}</span>
-                            <span>➡️</span>
-                            <span className="truncate max-w-[70px]" style={{ color: toPmObj?.color }}>{toPmObj?.name || 'ปลายทาง?'}</span>
-                          </p>
-                        </div>
+                const catObj = categories.find(c => c.name === s.category);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => applySuggestion(s)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${
+                      isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}>
+                        {catObj?.icon}
                       </div>
-                      <span className={`text-sm font-black shrink-0 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                        {s.amount} ฿
-                      </span>
-                    </button>
-                  );
-                } else {
-                  // รายรับ-รายจ่ายปกติ
-                  const catObj = categories.find(c => c.name === s.category);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => applySuggestion(s)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-95 text-left group ${
-                        isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}>
-                          {catObj?.icon}
+                      <div className="overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
+                            {s.count} ครั้ง
+                          </span>
                         </div>
-                        <div className="overflow-hidden">
-                          <div className="flex items-center gap-2">
-                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
-                              {s.count} ครั้ง
-                            </span>
-                          </div>
-                          <p className={`text-xs truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{s.category}</p>
-                        </div>
+                        <p className={`text-xs truncate ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{s.category}</p>
                       </div>
-                      <span className={`text-sm font-black shrink-0 ${formType === 'expense' ? (isDarkMode ? 'text-red-400' : 'text-red-500') : (isDarkMode ? 'text-emerald-400' : 'text-emerald-500')}`}>
-                        {s.amount} ฿
-                      </span>
-                    </button>
-                  );
-                }
+                    </div>
+                    <span className={`text-sm font-black shrink-0 ${formType === 'expense' ? (isDarkMode ? 'text-red-400' : 'text-red-500') : (isDarkMode ? 'text-emerald-400' : 'text-emerald-500')}`}>
+                      {s.amount} ฿
+                    </span>
+                  </button>
+                );
               })
             )}
           </div>
