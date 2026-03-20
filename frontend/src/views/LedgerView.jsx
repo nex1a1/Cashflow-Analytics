@@ -1,10 +1,10 @@
-// src/components/LedgerView.jsx
+// src/views/LedgerView.jsx
 import { useState, useMemo, useEffect } from 'react';
 import {
   CalendarDays, ChevronLeft, ChevronRight,
   Filter, Inbox, Pencil, PlusCircle, Search, Trash2, X,
 } from 'lucide-react';
-import EditableInput from './ui/EditableInput';
+import EditableInput from '../components/ui/EditableInput';
 import { formatMoney } from '../utils/formatters';
 import { hexToRgb } from '../utils/formatters';
 

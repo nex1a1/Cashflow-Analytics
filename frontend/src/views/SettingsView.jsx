@@ -1,4 +1,4 @@
-// src/components/SettingsView.jsx
+// src/views/SettingsView.jsx
 import { useState, useEffect, useRef } from 'react';
 import {
   PlusCircle, Trash2, Coins, CalendarClock, AlertCircle,
@@ -183,7 +183,7 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
           onChange={e => onChange(cat.id, 'icon', e.target.value)}
           maxLength="2"
           className={`w-9 h-9 text-center text-lg rounded-lg outline-none focus:ring-1 border shrink-0 transition-colors ${
-            isDarkMode ? 'bg-slate-900 border-slate-600 text-white focus:ring-slate-400' : 'bg-slate-100 border-slate-200 text-slate-800 focus:ring-slate-400'
+            isDarkMode ? 'bg-slate-900 border-slate-600 text-white focus:ring-slate-400' : 'bg-slate-100 border-slate-200 text-slate-800 focus:ring-slate-400'  
           }`}
           title="ไอคอน"
         />
@@ -322,7 +322,7 @@ export default function SettingsView({
               <h2 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
                 <Coins className="w-5 h-5" /> หมวดหมู่รายรับ
               </h2>
-              <button onClick={() => onAddCategory('income')} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-emerald-600/80 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+              <button onClick={() => onAddCategory('income')} className={`text-white px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-emerald-600/80 hover:bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}>     
                 <PlusCircle className="w-4 h-4" /> เพิ่ม
               </button>
             </div>
@@ -398,7 +398,7 @@ export default function SettingsView({
           <AlertCircle className="w-5 h-5 text-red-500" />
           <h2 className="font-bold text-red-500">Danger Zone</h2>
         </div>
-        <div className={`p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDarkMode ? 'bg-slate-900/50' : 'bg-white'}`}>
+        <div className={`p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isDarkMode ? 'bg-slate-900/50' : 'bg-white'}`}>      
           <div>
             <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>ลบข้อมูลทั้งหมด (Factory Reset)</p>
             <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>

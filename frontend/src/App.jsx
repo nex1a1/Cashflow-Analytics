@@ -12,16 +12,17 @@ import {
   OLD_PALETTE_MAP, DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from './constants';
 
+import { transactionService, calendarService, settingsService } from './services/api';
 import { parseDateStrToObj, isDateInFilter } from './utils/dateHelpers';
 import { autoCategorize, parseCSV, cleanNumber } from './utils/csvParser';
 import AnimatedNumber from './components/ui/AnimatedNumber';
 import useCategories from './hooks/useCategories';
 import useAnalytics from './hooks/useAnalytics';
-import SettingsView from './components/SettingsView';
-import CalendarView from './components/CalendarView';
-import LedgerView from './components/LedgerView';
+import SettingsView from './views/SettingsView';
+import CalendarView from './views/CalendarView';
+import LedgerView from './views/LedgerView';
 import PeriodPicker from './components/PeriodPicker';
-import DashboardView from './components/DashboardView';
+import DashboardView from './views/DashboardView';
 import BatchAddModal from './components/BatchAddModal';
 import ExportModal from './components/ExportModal';
 import ImportGuideModal from './components/ImportGuideModal';
@@ -87,11 +88,7 @@ export default function App() {
   // ฟังก์ชันยิง API เซฟลง Database
   const saveSettingToDb = async (key, value) => {
       try {
-          await fetch(SETTINGS_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ key, value })
-          });
+          await settingsService.save(key, value);
       } catch (err) {
           console.error(`Failed to save ${key} to DB:`, err);
       }
@@ -101,11 +98,7 @@ export default function App() {
       const newTypes = { ...dayTypes, [dateStr]: type };
       setDayTypes(newTypes);
       try {
-          await fetch(CALENDAR_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ date: dateStr, type_id: type })
-          });
+          await calendarService.save(dateStr, type);
       } catch (err) {
           console.error("Failed to save day type to DB:", err);
       }

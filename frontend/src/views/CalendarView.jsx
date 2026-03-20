@@ -1,6 +1,6 @@
-// src/components/CalendarView.jsx
+// src/views/CalendarView.jsx
 import { useMemo, useState } from 'react';
-import DayDetailModal from './DayDetailModal';
+import DayDetailModal from '../components/DayDetailModal';
 import {
   CalendarDays, Calendar as CalendarIcon,
   ChevronLeft, ChevronRight, PlusCircle,
