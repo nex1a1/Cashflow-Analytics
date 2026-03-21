@@ -7,10 +7,18 @@ import {
 import { DAY_TYPE_CONFIG_KEY } from '../constants';
 
 const COLOR_PALETTE = [
-  '#EF4444','#F97316','#F59E0B','#EAB308',
-  '#22C55E','#10B981','#14B8A6','#06B6D4',
-  '#3B82F6','#6366F1','#8B5CF6','#A855F7',
-  '#EC4899','#F43F5E','#64748B','#059669',
+  // reds / pinks
+  '#EF4444','#F43F5E','#EC4899','#DB2777','#BE185D',
+  // oranges / yellows
+  '#F97316','#FB923C','#F59E0B','#EAB308','#CA8A04',
+  // greens
+  '#22C55E','#16A34A','#10B981','#059669','#14B8A6',
+  // blues / cyans
+  '#06B6D4','#0EA5E9','#3B82F6','#2563EB','#1D4ED8',
+  // purples / indigos
+  '#6366F1','#4F46E5','#8B5CF6','#7C3AED','#A855F7',
+  // neutrals / special
+  '#64748B','#475569','#334155','#78716C','#D97706',
 ];
 
 // ── Inline Confirm Button ──────────────────────────────────────────────────
@@ -63,8 +71,8 @@ function ColorPicker({ color, onChange, isDarkMode }) {
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      const paletteW = 156;
-      const paletteH = 110;
+      const paletteW = 196;
+      const paletteH = 150;
       let left = rect.left;
       if (left + paletteW > window.innerWidth - 8) left = rect.right - paletteW;
       let top = rect.bottom + 6;
@@ -98,14 +106,14 @@ function ColorPicker({ color, onChange, isDarkMode }) {
         <div
           ref={paletteRef}
           className={`fixed z-[9999] p-2.5 rounded-xl shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
-          style={{ top: pos.top, left: pos.left, width: '156px' }}
+          style={{ top: pos.top, left: pos.left, width: '196px' }}
         >
-          <div className="grid grid-cols-8 gap-1 mb-2">
+          <div className="grid grid-cols-6 gap-1.5 mb-2">
             {COLOR_PALETTE.map(c => (
               <button
                 key={c}
                 onClick={() => { onChange(c); setOpen(false); }}
-                className={`w-[15px] h-[15px] rounded-full transition-transform hover:scale-125 ${color === c ? 'ring-2 ring-offset-1 ring-slate-400 scale-125' : ''}`}
+                className={`w-5 h-5 rounded-full transition-transform hover:scale-125 ${color === c ? 'ring-2 ring-offset-1 ring-slate-400 scale-125' : ''}`}
                 style={{ backgroundColor: c }}
                 title={c}
               />

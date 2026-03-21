@@ -9,6 +9,13 @@ import {
 import AnimatedNumber from '../components/ui/AnimatedNumber';
 import Sparkline from '../components/ui/Sparkline';
 import { formatMoney, getThaiMonth } from '../utils/formatters';
+import PropTypes from 'prop-types';
+import {
+  getComboChartOptions,
+  getBarChartOptions,
+  getLineChartOptions,
+  getDoughnutChartOptions,
+} from '../utils/chartOptions';
 
 export default function DashboardView({
   transactions, categories, filterPeriod, getFilterLabel,
@@ -136,7 +143,83 @@ export default function DashboardView({
                   </div>
               </div>
           </div>
-
+                  
+          {/* Activity Timeline (GitHub Style Contribution Graph) */}
+          {Object.keys(analytics.dayTypeCounts).length > 0 && (
+              <div className={`rounded-xl shadow-sm border p-4 md:p-6 transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 border-b pb-3 gap-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                      <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                          <CalendarClock className="w-5 h-5 text-[#00509E]" />
+                          ไทม์ไลน์กิจกรรม (Activity Graph)
+                      </h3>
+                      <span className={`text-sm font-medium px-3 py-1 rounded-lg border transition-colors ${isDarkMode ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                          {getFilterLabel(filterPeriod)}
+                      </span>
+                  </div>
+                  <div className={`border p-4 rounded-xl mb-6 transition-colors ${isDarkMode ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                      {datesInPeriod.length === 0 ? (
+                          <div className="text-center text-slate-400 py-4 text-sm font-medium">กรุณาเลือกช่วงเวลาที่มีข้อมูลเพื่อแสดงไทม์ไลน์</div>
+                      ) : (
+                          <div className="flex flex-wrap gap-[4px] justify-start">
+                              {datesInPeriod.map((dateStr, idx) => {
+                                  const [d, m, y] = dateStr.split('/');
+                                  const dateObj = new Date(y, parseInt(m)-1, d);
+                                  const dayOfWeek = dateObj.getDay();
+                                  const defaultType = (dayOfWeek === 0 || dayOfWeek === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+                                  const currentType = dayTypes[dateStr] || defaultType;
+                                  const typeConfig = dayTypeConfig.find(dt => dt.id === currentType) || dayTypeConfig[0];
+                                  const today = new Date();
+                                  const isToday = parseInt(d) === today.getDate() && parseInt(m)-1 === today.getMonth() && parseInt(y) === today.getFullYear();
+                                  const shortMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+                                  const displayDate = `${parseInt(d)} ${shortMonths[parseInt(m)-1]} ${y.slice(2)}`;
+                                  const isFirstOfMonth = d === '01';
+                                  const isFirstOfYear  = d === '01' && m === '01';
+                                  return (
+                                      <React.Fragment key={dateStr}>
+                                        {idx > 0 && isFirstOfMonth && (
+                                          <div className="flex flex-col items-center justify-start" style={{width: isFirstOfYear ? '8px' : '4px', marginLeft: '1px', marginRight: '1px'}}>
+                                            <div className="flex gap-[3px]" style={{height: '14px'}}>
+                                              <div className={`w-px h-full rounded-full ${isFirstOfYear ? (isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500') : (isDarkMode ? 'bg-slate-500' : 'bg-slate-300')}`}/>
+                                              {isFirstOfYear && <div className={`w-px h-full rounded-full ${isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500'}`}/>}
+                                            </div>
+                                            <span className={`text-[6px] font-bold leading-none mt-px whitespace-nowrap ${isFirstOfYear ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
+                                              {isFirstOfYear ? y.slice(2) : shortMonths[parseInt(m)-1]}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="group relative">
+                                          <div
+                                              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
+                                              style={{ backgroundColor: typeConfig.color }}
+                                          />
+                                          <div className="opacity-0 invisible group-hover:opacity-100 group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max min-w-[90px] bg-slate-800 text-white text-center rounded-md py-1.5 px-2 z-50 text-[11px] font-medium shadow-lg transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 pointer-events-none">
+                                              <span className="text-slate-300 font-normal">{displayDate}</span><br/>
+                                              <span style={{ color: typeConfig.color }}>{typeConfig.label}</span>
+                                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-800"/>
+                                          </div>
+                                        </div>
+                                      </React.Fragment>
+                                  );
+                              })}
+                          </div>
+                      )}
+                  </div>
+                  <div className="flex flex-wrap gap-3 sm:gap-5 text-xs font-bold justify-center">
+                      {dayTypeConfig.map(dt => {
+                          const count = analytics.dayTypeCounts[dt.id] || 0;
+                          return (
+                              <div key={dt.id} className="flex items-center gap-1.5">
+                                  <div className="w-3.5 h-3.5 rounded shadow-sm" style={{ backgroundColor: dt.color }}/>
+                                  <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>{dt.label} <span className="text-slate-400 font-normal">({count})</span></span>
+                              </div>
+                          );
+                      })}
+                      <div className={`flex items-center gap-1.5 border-l-2 pl-3 sm:pl-5 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>รวมทั้งหมด <span className="text-slate-400 font-normal">({datesInPeriod.length} วัน)</span></span>
+                      </div>
+                  </div>
+              </div>
+          )}
           {/* Excel-like Cashflow Summary Table */}
           {analytics.numMonths > 0 && (
             <div className={`rounded-xl shadow-md border overflow-hidden hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
@@ -266,11 +349,11 @@ export default function DashboardView({
                       </div>
                       <div className="relative w-full flex-grow min-h-[320px]">
                           {analytics.mainChartType === 'combo' ? (
-                            <Chart type="bar" data={analytics.mainChartData} options={{ maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { position: 'bottom', labels: { color: isDarkMode ? '#cbd5e1' : '#475569', padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 12, weight: 'bold' } } }, tooltip: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', titleColor: isDarkMode ? '#f1f5f9' : '#1e293b', bodyColor: isDarkMode ? '#94a3b8' : '#475569', borderColor: isDarkMode ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 10, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿` } } }, animation: { duration: 800, easing: 'easeInOutQuart' }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } }, grid: { display: false }, border: { display: false } }, y: { ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 }, callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v }, grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9', lineWidth: 1 }, border: { dash: [4, 4], display: false } } } }} />
+                            <Chart type="bar" data={analytics.mainChartData} options={getComboChartOptions(isDarkMode)} />
                           ) : analytics.mainChartType === 'bar' ? (
-                            <Bar data={analytics.mainChartData} options={{ maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', titleColor: isDarkMode ? '#f1f5f9' : '#1e293b', bodyColor: isDarkMode ? '#94a3b8' : '#475569', borderColor: isDarkMode ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 10, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿` } } }, animation: { duration: 800, easing: 'easeInOutQuart' }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } }, grid: { display: false }, border: { display: false } }, y: { ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 }, callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v }, grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9' }, border: { dash: [4, 4], display: false } } } }} />
+                            <Bar data={analytics.mainChartData} options={getBarChartOptions(isDarkMode)} />
                           ) : (
-                            <Line data={analytics.mainChartData} options={{ maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', titleColor: isDarkMode ? '#f1f5f9' : '#1e293b', bodyColor: isDarkMode ? '#94a3b8' : '#475569', borderColor: isDarkMode ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 10, callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿` } } }, animation: { duration: 800, easing: 'easeInOutQuart' }, scales: { x: { ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 } }, grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, ticks: { color: isDarkMode ? '#94a3b8' : '#64748b', font: { size: 11 }, callback: (v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v }, grid: { color: isDarkMode ? '#1e293b' : '#f1f5f9' }, border: { dash: [4, 4], display: false } } } }} />
+                            <Line data={analytics.mainChartData} options={getLineChartOptions(isDarkMode)} />
                           )}
                       </div>
                   </div>
@@ -288,7 +371,7 @@ export default function DashboardView({
                           </div>
                       </div>
                       <div className="w-full flex-grow flex justify-center items-center relative min-h-[250px] lg:min-h-[350px]">
-                          <Doughnut data={analytics.catChartData} options={{ maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', titleColor: isDarkMode ? '#f1f5f9' : '#1e293b', bodyColor: isDarkMode ? '#94a3b8' : '#475569', borderColor: isDarkMode ? '#334155' : '#e2e8f0', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw?.toLocaleString('th-TH')} ฿` } } }, animation: { animateScale: true, animateRotate: true, duration: 1000 } }} />
+                          <Doughnut data={analytics.catChartData} options={getDoughnutChartOptions(isDarkMode)} />
                       </div>
                   </div>
               </div>
@@ -329,4 +412,23 @@ export default function DashboardView({
           </div>
       </div>
   );
+};
+
+DashboardView.propTypes = {
+  transactions:         PropTypes.array.isRequired,
+  categories:           PropTypes.array.isRequired,
+  filterPeriod:         PropTypes.string.isRequired,
+  getFilterLabel:       PropTypes.func.isRequired,
+  hideFixedExpenses:    PropTypes.bool.isRequired,
+  setHideFixedExpenses: PropTypes.func.isRequired,
+  dashboardCategory:    PropTypes.string.isRequired,
+  setDashboardCategory: PropTypes.func.isRequired,
+  chartGroupBy:         PropTypes.string.isRequired,
+  setChartGroupBy:      PropTypes.func.isRequired,
+  topXLimit:            PropTypes.number.isRequired,
+  setTopXLimit:         PropTypes.func.isRequired,
+  analytics:            PropTypes.object.isRequired,
+  dayTypeConfig:        PropTypes.array.isRequired,
+  dayTypes:             PropTypes.object.isRequired,
+  isDarkMode:           PropTypes.bool.isRequired,
 };
