@@ -7,18 +7,26 @@ import {
 import { DAY_TYPE_CONFIG_KEY } from '../constants';
 
 const COLOR_PALETTE = [
-  // reds / pinks
-  '#EF4444','#F43F5E','#EC4899','#DB2777','#BE185D',
-  // oranges / yellows
-  '#F97316','#FB923C','#F59E0B','#EAB308','#CA8A04',
-  // greens
-  '#22C55E','#16A34A','#10B981','#059669','#14B8A6',
-  // blues / cyans
-  '#06B6D4','#0EA5E9','#3B82F6','#2563EB','#1D4ED8',
-  // purples / indigos
-  '#6366F1','#4F46E5','#8B5CF6','#7C3AED','#A855F7',
-  // neutrals / special
-  '#64748B','#475569','#334155','#78716C','#D97706',
+  // ── แดง ──────────────────────────────
+  '#FF0000','#EF4444','#DC2626','#B91C1C','#7F1D1D',
+  // ── ส้ม-แดง ──────────────────────────
+  '#F97316','#EA580C','#C2410C','#F43F5E','#E11D48',
+  // ── ส้ม-เหลือง ───────────────────────
+  '#FB923C','#FBBF24','#F59E0B','#D97706','#B45309',
+  // ── เหลือง-เขียว ─────────────────────
+  '#EAB308','#CA8A04','#A3E635','#84CC16','#65A30D',
+  // ── เขียว ────────────────────────────
+  '#22C55E','#16A34A','#15803D','#166534','#10B981',
+  // ── เขียว-ฟ้า (Teal) ─────────────────
+  '#059669','#047857','#14B8A6','#0D9488','#0F766E',
+  // ── ฟ้าอ่อน (Cyan) ───────────────────
+  '#06B6D4','#0891B2','#0E7490','#22D3EE','#67E8F9',
+  // ── น้ำเงิน ──────────────────────────
+  '#3B82F6','#2563EB','#1D4ED8','#1E40AF','#0EA5E9',
+  // ── ม่วง-น้ำเงิน (Indigo) ────────────
+  '#6366F1','#4F46E5','#4338CA','#3730A3','#818CF8',
+  // ── ม่วง-ชมพู ────────────────────────
+  '#8B5CF6','#7C3AED','#A855F7','#9333EA','#EC4899',
 ];
 
 // ── Inline Confirm Button ──────────────────────────────────────────────────
@@ -71,8 +79,8 @@ function ColorPicker({ color, onChange, isDarkMode }) {
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      const paletteW = 196;
-      const paletteH = 150;
+      const paletteW = 236;
+      const paletteH = 170;
       let left = rect.left;
       if (left + paletteW > window.innerWidth - 8) left = rect.right - paletteW;
       let top = rect.bottom + 6;
@@ -106,14 +114,14 @@ function ColorPicker({ color, onChange, isDarkMode }) {
         <div
           ref={paletteRef}
           className={`fixed z-[9999] p-2.5 rounded-xl shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
-          style={{ top: pos.top, left: pos.left, width: '196px' }}
+          style={{ top: pos.top, left: pos.left, width: '236px' }}
         >
-          <div className="grid grid-cols-6 gap-1.5 mb-2">
+          <div className="grid grid-cols-10 gap-1 mb-2">
             {COLOR_PALETTE.map(c => (
               <button
                 key={c}
                 onClick={() => { onChange(c); setOpen(false); }}
-                className={`w-5 h-5 rounded-full transition-transform hover:scale-125 ${color === c ? 'ring-2 ring-offset-1 ring-slate-400 scale-125' : ''}`}
+                className={`w-4 h-4 rounded-full transition-transform hover:scale-125 ${color === c ? 'ring-2 ring-offset-1 ring-slate-400 scale-125' : ''}`}
                 style={{ backgroundColor: c }}
                 title={c}
               />

@@ -2,10 +2,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   CalendarPlus, X, PlusCircle, Star, 
-  ClipboardList, Inbox, Trash2, Zap, CheckCircle 
+  ClipboardList, Inbox, Trash2, Zap, CheckCircle, CalendarDays 
 } from 'lucide-react';
 import AnimatedNumber from './ui/AnimatedNumber';
 import { formatMoney, hexToRgb } from '../utils/formatters';
+import DatePicker from './ui/DatePicker';
 
 export default function BatchAddModal({
   isOpen,
@@ -20,6 +21,7 @@ export default function BatchAddModal({
 }) {
   const [pendingItems, setPendingItems] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [suggCatFilter, setSuggCatFilter] = useState('ALL');
   const [addForm, setAddForm] = useState({
     type: 'expense',
     date: new Date().toISOString().split('T')[0],
@@ -39,6 +41,7 @@ export default function BatchAddModal({
         amount: ''
       });
       setPendingItems([]);
+      setSuggCatFilter('ALL');
     }
   }, [isOpen, defaultType, defaultDate, defaultCategory, categories]);
 
@@ -46,24 +49,30 @@ export default function BatchAddModal({
   const quickSuggestions = useMemo(() => {
     const typeTx = transactions.filter(t => {
       const c = categories.find(cat => cat.name === t.category);
-      return c?.type === addForm.type;
+      if (c?.type !== addForm.type) return false;
+      if (suggCatFilter !== 'ALL' && t.category !== suggCatFilter) return false;
+      return true;
     });
 
+    // key = category|description เท่านั้น — ราคาต่างกันถือว่าเป็นรายการเดียวกัน
     const frequency = {};
     typeTx.forEach(t => {
-      const key = `${t.category}|${t.description || t.category}|${t.amount}`;
-      frequency[key] = (frequency[key] || 0) + 1;
+      const desc = (t.description && t.description !== t.category) ? t.description : '';
+      const key = `${t.category}|${desc}`;
+      if (!frequency[key]) frequency[key] = { count: 0, amount: parseFloat(t.amount) || 0 };
+      frequency[key].count += 1;
+      // เก็บ amount ที่ใช้บ่อยที่สุด (ใช้ของล่าสุดก็ได้)
+      frequency[key].amount = parseFloat(t.amount) || frequency[key].amount;
     });
 
-    return Object.keys(frequency)
-      .map(key => ({ key, count: frequency[key] }))
-      .sort((a, b) => b.count - a.count)
+    return Object.entries(frequency)
+      .sort(([, a], [, b]) => b.count - a.count || b.amount - a.amount)
       .slice(0, 8)
-      .map(item => {
-        const [category, description, amount] = item.key.split('|');
-        return { type: 'normal', category, description, amount, count: item.count };
+      .map(([key, { count, amount }]) => {
+        const [category, description] = key.split('|');
+        return { type: 'normal', category, description, amount: String(amount), count };
       });
-  }, [transactions, categories, addForm.type]);
+  }, [transactions, categories, addForm.type, suggCatFilter]);
 
   const handleAddPending = () => {
     if (!addForm.amount || isNaN(addForm.amount) || Number(addForm.amount) <= 0) {
@@ -107,7 +116,7 @@ export default function BatchAddModal({
     setAddForm(prev => ({
       ...prev,
       category: sugg.category,
-      description: sugg.description === sugg.category ? '' : sugg.description,
+      description: sugg.description || '',
       amount: sugg.amount
     }));
   };
@@ -143,7 +152,7 @@ export default function BatchAddModal({
   // ─── UI RENDERING ───────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6 md:p-8 transition-all">
-      <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-[1350px] max-h-[95vh] lg:max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+      <div className={`rounded-2xl shadow-2xl flex flex-col w-full max-w-[1350px] min-h-[520px] max-h-[95vh] lg:max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* Header */}
         <div className={`p-5 md:p-6 border-b flex justify-between items-center shrink-0 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
@@ -158,7 +167,7 @@ export default function BatchAddModal({
         <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
           
           {/* คอลัมน์ 1: ฟอร์มกรอกข้อมูล */}
-          <div className={`w-full lg:w-[32%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col shrink-0 lg:overflow-y-auto custom-scrollbar ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className={`w-full lg:w-[32%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto custom-scrollbar ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className={`flex p-1 mb-4 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
               <button onClick={() => setAddForm({...addForm, type: 'expense', category: categories.find(c=>c.type==='expense')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'expense' ? (isDarkMode ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายจ่าย</button>
               <button onClick={() => setAddForm({...addForm, type: 'income', category: categories.find(c=>c.type==='income')?.name || ''})} className={`flex-1 py-2 font-bold text-sm rounded-md transition-all ${addForm.type === 'income' ? (isDarkMode ? 'bg-slate-700 text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายรับ</button>
@@ -167,7 +176,11 @@ export default function BatchAddModal({
             <div className="flex gap-3 mb-4">
               <div className="flex-1">
                 <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>วันที่</label>
-                <input type="date" value={addForm.date} onChange={(e) => setAddForm({...addForm, date: e.target.value})} className={`w-full px-3 py-2.5 text-sm border rounded-lg outline-none focus:ring-1 font-medium transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500' : 'bg-slate-50 border-slate-300 focus:border-[#00509E]'}`} />
+                <DatePicker
+                value={addForm.date}
+                onChange={(v) => setAddForm({...addForm, date: v})}
+                isDarkMode={isDarkMode}
+              />
               </div>
               <div className="flex-1">
                 <label className={`block text-[11px] font-bold uppercase mb-1.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>จำนวนเงิน ฿</label>
@@ -194,9 +207,28 @@ export default function BatchAddModal({
 
           {/* คอลัมน์ 2: Quick Suggestions */}
           <div className={`w-full lg:w-[28%] p-6 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
-            <h4 className={`shrink-0 font-bold flex items-center gap-2 mb-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <h4 className={`shrink-0 font-bold flex items-center gap-2 mb-3 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
               <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Quick Suggestions
             </h4>
+
+            {/* Category filter dropdown */}
+            <div className="mb-3 shrink-0">
+              <select
+                value={suggCatFilter}
+                onChange={e => setSuggCatFilter(e.target.value)}
+                className={`w-full px-3 py-2 text-sm border rounded-lg outline-none font-medium transition-colors ${
+                  isDarkMode
+                    ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500'
+                    : 'bg-white border-slate-300 text-slate-700 focus:border-[#00509E]'
+                }`}
+              >
+                <option value="ALL">📊 ทุกหมวดหมู่</option>
+                {categories.filter(c => c.type === addForm.type).map(c => (
+                  <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
               {quickSuggestions.length === 0 ? (
                 <p className={`text-sm text-center py-6 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีข้อมูล</p>
@@ -209,7 +241,7 @@ export default function BatchAddModal({
                         <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})` }}>{catObj?.icon}</div>
                         <div className="overflow-hidden">
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
+                            <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description || s.category}</p>
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
                               {s.count} ครั้ง
                             </span>
@@ -245,13 +277,18 @@ export default function BatchAddModal({
                         <div className={`text-xs font-bold w-5 text-right shrink-0 ${isDarkMode ? 'text-slate-500' : 'text-slate-300'}`}>{idx+1}.</div>
                         <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                           <div className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={item.description}>{item.description}</div>
-                          <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden w-full">
+                          {/* 🌟 เปลี่ยนเป็น flex-wrap เพื่อไม่ให้ป้ายวันที่โดนเบียดจนหายไป */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5 overflow-hidden w-full">
                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center shrink-0 ${item._isInc ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-700') : (isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-700')}`}>
                               {item._isInc ? 'รายรับ' : 'รายจ่าย'}
                             </span>
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink min-w-0 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} style={{ backgroundColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.2 : 0.1})`, borderColor: `rgba(${hexToRgb(item._catObj?.color || '#94a3b8')}, ${isDarkMode ? 0.4 : 0.3})` }}>
                               <span className="shrink-0">{item._catObj?.icon}</span>
                               <span className="truncate">{item.category}</span>
+                            </span>
+                            {/* 🌟 เพิ่มป้ายวันที่ตรงนี้ */}
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 shrink-0 ${isDarkMode ? 'text-slate-300 border-slate-700 bg-slate-800/80' : 'text-slate-500 border-slate-200 bg-slate-100'}`}>
+                              <CalendarDays className="w-3 h-3" /> {item.date}
                             </span>
                           </div>
                         </div>

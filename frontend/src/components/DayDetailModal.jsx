@@ -29,6 +29,7 @@ export default function DayDetailModal({
   const [formAmt, setFormAmt]                 = useState('');
   const [isSaving, setIsSaving]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [suggCatFilter, setSuggCatFilter]     = useState('ALL');
 
   const txIds = new Set(transactions.map(t => t.id));
   const pendingItems = localItems.filter(i => !txIds.has(i.id));
@@ -45,34 +46,40 @@ export default function DayDetailModal({
   const quickSuggestions = useMemo(() => {
     const typeTx = transactions.filter(t => {
       const c = categories.find(cat => cat.name === t.category);
-      return c?.type === formType;
+      if (c?.type !== formType) return false;
+      if (suggCatFilter !== 'ALL' && t.category !== suggCatFilter) return false;
+      return true;
     });
 
+    // key = category|description เท่านั้น — ราคาต่างกันถือว่าเป็นรายการเดียวกัน
     const frequency = {};
     typeTx.forEach(t => {
-      const key = `${t.category}|${t.description || t.category}|${t.amount}`;
-      frequency[key] = (frequency[key] || 0) + 1;
+      const desc = (t.description && t.description !== t.category) ? t.description : '';
+      const key = `${t.category}|${desc}`;
+      if (!frequency[key]) frequency[key] = { count: 0, amount: parseFloat(t.amount) || 0 };
+      frequency[key].count += 1;
+      frequency[key].amount = parseFloat(t.amount) || frequency[key].amount;
     });
 
-    return Object.keys(frequency)
-      .map(key => ({ key, count: frequency[key] }))
-      .sort((a, b) => b.count - a.count)
+    return Object.entries(frequency)
+      .sort(([, a], [, b]) => b.count - a.count || b.amount - a.amount)
       .slice(0, 8)
-      .map(item => {
-        const [category, description, amount] = item.key.split('|');
-        return { category, description, amount, count: item.count };
+      .map(([key, { count, amount }]) => {
+        const [category, description] = key.split('|');
+        return { category, description, amount: String(amount), count };
       });
-  }, [transactions, categories, formType]);
+  }, [transactions, categories, formType, suggCatFilter]);
 
   const applySuggestion = (sugg) => {
     setFormCat(sugg.category);
-    setFormDesc(sugg.description === sugg.category ? '' : sugg.description);
+    setFormDesc(sugg.description || '');
     setFormAmt(sugg.amount);
   };
 
   const switchType = (type) => {
     setFormType(type);
     setFormCat(type === 'expense' ? defaultExpenseCat : defaultIncomeCat);
+    setSuggCatFilter('ALL');
   };
 
   const handleSave = async () => {
@@ -287,6 +294,24 @@ export default function DayDetailModal({
             </button>
           </div>
 
+          {/* Category filter dropdown */}
+          <div className={`px-4 py-2.5 border-b shrink-0 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+            <select
+              value={suggCatFilter}
+              onChange={e => setSuggCatFilter(e.target.value)}
+              className={`w-full px-3 py-2 text-sm border rounded-lg outline-none font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500'
+                  : 'bg-white border-slate-300 text-slate-700 focus:border-[#00509E]'
+              }`}
+            >
+              <option value="ALL">📊 ทุกหมวดหมู่</option>
+              {categories.filter(c => c.type === formType).map(c => (
+                <option key={c.id} value={c.name}>{c.icon} {c.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
             {quickSuggestions.length === 0 ? (
                <p className={`text-sm text-center py-6 ${textMuted}`}>ยังไม่มีข้อมูลการใช้จ่ายในหมวดนี้</p>
@@ -307,7 +332,7 @@ export default function DayDetailModal({
                       </div>
                       <div className="overflow-hidden">
                         <div className="flex items-center gap-2">
-                          <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description}</p>
+                          <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{s.description || s.category}</p>
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-100 text-[#00509E]'}`}>
                             {s.count} ครั้ง
                           </span>

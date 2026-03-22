@@ -1,6 +1,6 @@
-// src/views/CalendarView.jsx
+// src/components/CalendarView.jsx
 import { useMemo, useState } from 'react';
-import DayDetailModal from '../components/DayDetailModal';
+import DayDetailModal from '../components/DayDetailModal.jsx';
 import {
   CalendarDays, Calendar as CalendarIcon,
   ChevronLeft, ChevronRight, PlusCircle,
@@ -95,9 +95,8 @@ export default function CalendarView({
   const surfaceAlt = isDarkMode ? 'bg-slate-800' : 'bg-slate-50';
   const border = isDarkMode ? 'border-slate-700' : 'border-slate-200';
   const textMuted = isDarkMode ? 'text-slate-400' : 'text-slate-500';
-  const gapColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-200';
+  const gapColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-100';
 
-  // Early return หลัง hooks ทั้งหมด ไม่ทำให้ Rules of Hooks พัง
   if (isReadOnlyView) {
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -192,55 +191,55 @@ export default function CalendarView({
 
             let cellBg = isDarkMode ? 'bg-slate-800' : 'bg-white';
             if (isToday) cellBg = isDarkMode ? 'bg-blue-950' : 'bg-blue-50';
-            else if (isWeekend && !hasData) cellBg = isDarkMode ? 'bg-slate-800/60' : 'bg-slate-50/70';
+            else if (isWeekend && !hasData) cellBg = isDarkMode ? 'bg-slate-800/80' : 'bg-slate-50';
 
             return (
               <div
                 key={d}
-                onClick={() => setSelectedDate(dateStr)}
-                className={`min-h-[180px] md:min-h-[210px] p-2.5 flex flex-col relative cursor-pointer group transition-colors duration-150 ${cellBg} ${!isToday && (isDarkMode ? 'hover:bg-slate-700/60' : 'hover:bg-blue-50/40')}`}
+                className={`min-h-[180px] md:min-h-[210px] flex flex-col relative group transition-colors duration-150 ${cellBg}`}
               >
                 {/* Today ring */}
                 {isToday && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[#00509E] rounded-[1px] opacity-50" />
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[#00509E] rounded-[1px] opacity-50 z-20" />
                 )}
 
-                {/* Cell header */}
-                <div className="flex items-start justify-between mb-1.5 shrink-0">
-                  <span className={`text-base md:text-lg font-black leading-none w-8 h-8 flex items-center justify-center rounded-full shrink-0 ${
+                {/* 🌟 1. Header ของวัน (แยกโซนสำหรับเลือกชนิดวัน) */}
+                <div className={`flex items-center justify-between p-2 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-700/60 bg-slate-800/80' : 'border-slate-100 bg-white'}`}>
+                  <span className={`text-base md:text-lg font-black leading-none w-8 h-8 flex items-center justify-center rounded-full shrink-0 shadow-sm ${
                     isToday
                       ? 'bg-[#00509E] text-white'
                       : isWeekend
-                        ? (isDarkMode ? 'text-red-400' : 'text-red-500')
-                        : (isDarkMode ? 'text-slate-200' : 'text-slate-700')
+                        ? (isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-500 bg-red-50')
+                        : (isDarkMode ? 'text-slate-200 bg-slate-700/50' : 'text-slate-700 bg-slate-100')
                   }`}>
                     {d}
                   </span>
 
-                  <div onClick={e => e.stopPropagation()}>
-                    <select
-                      value={curType}
-                      onChange={e => handleDayTypeChange(dateStr, e.target.value)}
-                      className="day-type-badge text-[10px] md:text-[11px] font-bold px-1.5 py-0.5 rounded-full cursor-pointer outline-none appearance-none text-center border transition-colors"
-                      style={{
-                        backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.1})`,
-                        borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.35 : 0.22})`,
-                        color: typeConf?.color || '#64748b',
-                        filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.72)',
-                      }}
-                    >
-                      {dayTypeConfig.map(dt => (
-                        <option key={dt.id} value={dt.id} style={{ backgroundColor: isDarkMode ? '#1e293b' : '#fff', color: isDarkMode ? '#f8fafc' : '#1e293b' }}>
-                          {dt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* 🌟 Dropdown เลือกวันหยุด ที่กว้างและกดง่ายขึ้น */}
+                  <select
+                    value={curType}
+                    onChange={e => handleDayTypeChange(dateStr, e.target.value)}
+                    className="day-type-badge text-[10px] md:text-[11px] font-bold px-2 py-1 rounded-lg cursor-pointer outline-none appearance-none text-center border transition-all hover:scale-105 active:scale-95 shadow-sm"
+                    style={{
+                      backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.1})`,
+                      borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.4 : 0.3})`,
+                      color: typeConf?.color || '#64748b',
+                      filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.8)',
+                    }}
+                  >
+                    {dayTypeConfig.map(dt => (
+                      <option key={dt.id} value={dt.id} style={{ backgroundColor: isDarkMode ? '#1e293b' : '#fff', color: isDarkMode ? '#f8fafc' : '#1e293b' }}>
+                        {dt.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Content */}
-                <div className="flex flex-col flex-grow gap-1.5 overflow-hidden">
-
+                {/* 🌟 2. Content (คลิกตรงนี้เพื่อดูรายละเอียด/เพิ่มข้อมูล) */}
+                <div 
+                  onClick={() => setSelectedDate(dateStr)}
+                  className={`flex flex-col flex-grow gap-1.5 p-2 overflow-hidden cursor-pointer z-10 ${!isToday && (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-blue-50/60')}`}
+                >
                   {data.exp > 0 && (
                     <div className={`text-sm md:text-base font-black leading-tight ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                       ฿{Math.round(data.exp).toLocaleString('th-TH')}
@@ -280,7 +279,7 @@ export default function CalendarView({
                     <div className={`w-full h-px my-0.5 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`} />
                   )}
 
-                  {/* Top 5 */}
+                  {/* Expense Items (Top 5) */}
                   {data.items.slice(0, 5).map(tx => {
                     const color = tx._catObj?.color || '#94a3b8';
                     return (
@@ -312,12 +311,12 @@ export default function CalendarView({
                       +{data.incItems.length - 2} รายรับ
                     </span>
                   )}
-                </div>
 
-                {/* Hover overlay */}
-                <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none ${isDarkMode ? 'bg-slate-900/50' : 'bg-white/50'}`}>
-                  <div className="bg-[#00509E] text-white p-2 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform duration-150">
-                    <PlusCircle className="w-5 h-5" />
+                  {/* Hover overlay (เฉพาตอน hover บน Content) */}
+                  <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none ${isDarkMode ? 'bg-slate-900/30' : 'bg-blue-50/40'}`}>
+                    <div className="bg-[#00509E] text-white p-2 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform duration-150">
+                      <PlusCircle className="w-5 h-5" />
+                    </div>
                   </div>
                 </div>
               </div>

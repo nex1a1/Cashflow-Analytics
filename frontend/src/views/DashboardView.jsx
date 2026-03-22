@@ -1,5 +1,5 @@
 // src/views/DashboardView.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 import {
   Wallet, Coins, PiggyBank, Flame, Home, Scale,
@@ -24,7 +24,27 @@ export default function DashboardView({
   analytics, dayTypeConfig, isDarkMode, dayTypes, topXLimit, setTopXLimit
 }) {
 
+  // 🌟 1. State สำหรับ Tooltip ลอยตัว
+  const [activityTooltip, setActivityTooltip] = useState({ show: false, x: 0, y: 0, date: '', label: '', color: '' });
+
   const datesInPeriod = analytics.datesInPeriod || [];
+
+  // 🌟 2. ฟังก์ชันคำนวณตำแหน่งเมื่อเอาเมาส์ชี้
+  const handleTooltipEnter = (e, displayDate, typeConfig) => {
+      const rect = e.target.getBoundingClientRect();
+      setActivityTooltip({
+          show: true,
+          x: rect.left + (rect.width / 2), // กึ่งกลางกล่อง
+          y: rect.top - 8,                 // ขยับขึ้นไปเหนือกล่อง 8px เพื่อหลบเมาส์
+          date: displayDate,
+          label: typeConfig?.label || '',
+          color: typeConfig?.color || '#cbd5e1'
+      });
+  };
+
+  const handleTooltipLeave = () => {
+      setActivityTooltip(prev => ({ ...prev, show: false }));
+  };
 
   if (transactions.length === 0) {
       return (
@@ -36,7 +56,7 @@ export default function DashboardView({
   }
 
   return (
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 relative">
           
           {/* 3 การ์ดบนสุด */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -156,51 +176,113 @@ export default function DashboardView({
                           {getFilterLabel(filterPeriod)}
                       </span>
                   </div>
-                  <div className={`border p-4 rounded-xl mb-6 transition-colors ${isDarkMode ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                  
+                  {/* 🌟 กล่องแสดงกราฟ: ปรับให้ Center โดย Default 🌟 */}
+                  <div className={`border rounded-xl mb-6 transition-colors overflow-hidden ${isDarkMode ? 'bg-slate-900/60 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
                       {datesInPeriod.length === 0 ? (
                           <div className="text-center text-slate-400 py-4 text-sm font-medium">กรุณาเลือกช่วงเวลาที่มีข้อมูลเพื่อแสดงไทม์ไลน์</div>
                       ) : (
-                          <div className="flex flex-wrap gap-[4px] justify-start">
-                              {datesInPeriod.map((dateStr, idx) => {
-                                  const [d, m, y] = dateStr.split('/');
-                                  const dateObj = new Date(y, parseInt(m)-1, d);
-                                  const dayOfWeek = dateObj.getDay();
-                                  const defaultType = (dayOfWeek === 0 || dayOfWeek === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
-                                  const currentType = dayTypes[dateStr] || defaultType;
-                                  const typeConfig = dayTypeConfig.find(dt => dt.id === currentType) || dayTypeConfig[0];
-                                  const today = new Date();
-                                  const isToday = parseInt(d) === today.getDate() && parseInt(m)-1 === today.getMonth() && parseInt(y) === today.getFullYear();
-                                  const shortMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-                                  const displayDate = `${parseInt(d)} ${shortMonths[parseInt(m)-1]} ${y.slice(2)}`;
-                                  const isFirstOfMonth = d === '01';
-                                  const isFirstOfYear  = d === '01' && m === '01';
-                                  return (
-                                      <React.Fragment key={dateStr}>
-                                        {idx > 0 && isFirstOfMonth && (
-                                          <div className="flex flex-col items-center justify-start" style={{width: isFirstOfYear ? '8px' : '4px', marginLeft: '1px', marginRight: '1px'}}>
-                                            <div className="flex gap-[3px]" style={{height: '14px'}}>
-                                              <div className={`w-px h-full rounded-full ${isFirstOfYear ? (isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500') : (isDarkMode ? 'bg-slate-500' : 'bg-slate-300')}`}/>
-                                              {isFirstOfYear && <div className={`w-px h-full rounded-full ${isDarkMode ? 'bg-yellow-400' : 'bg-yellow-500'}`}/>}
-                                            </div>
-                                            <span className={`text-[6px] font-bold leading-none mt-px whitespace-nowrap ${isFirstOfYear ? (isDarkMode ? 'text-yellow-400' : 'text-yellow-600') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
-                                              {isFirstOfYear ? y.slice(2) : shortMonths[parseInt(m)-1]}
-                                            </span>
+                          // w-full + overflow-x-auto เป็นตัวครอบเพื่อรองรับการเลื่อน
+                          <div className="w-full overflow-x-auto custom-scrollbar pb-6 pt-3 px-4">
+                              {/* 🌟 w-max + mx-auto คือคีย์เวิร์ดที่ทำให้กล่องมาอยู่ตรงกลางถ้าเล็กกว่าจอ แต่ขยายออกข้างซ้ายขวาได้อิสระถ้าใหญ่กว่าจอ 🌟 */}
+                              <div className="flex w-max mx-auto gap-x-[3.5px] md:gap-x-[4px] relative">
+                                  
+                                  {/* แกน Y (วัน อา. - ส.) ล็อคไว้ซ้ายสุด (Sticky) */}
+                                  <div 
+                                    className="flex flex-col gap-[3.5px] md:gap-[4px] shrink-0 sticky left-0 z-20 pr-2 border-r" 
+                                    style={{ 
+                                      backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                                      borderColor: isDarkMode ? '#334155' : '#e2e8f0'
+                                    }}
+                                  >
+                                      <div className="h-5"></div> {/* ช่องว่างดันให้ตรงกับแถบชื่อเดือน */}
+                                      {['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].map((day, idx) => (
+                                          <div key={day} className={`h-3.5 md:h-4 flex items-center justify-end text-[9px] sm:text-[10px] font-bold ${idx === 0 || idx === 6 ? (isDarkMode ? 'text-red-400' : 'text-red-500') : (isDarkMode ? 'text-slate-500' : 'text-slate-400')}`}>
+                                              {day}
                                           </div>
-                                        )}
-                                        <div className="group relative">
-                                          <div
-                                              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 rounded-sm cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
-                                              style={{ backgroundColor: typeConfig.color }}
-                                          />
-                                          <div className="opacity-0 invisible group-hover:opacity-100 group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max min-w-[90px] bg-slate-800 text-white text-center rounded-md py-1.5 px-2 z-50 text-[11px] font-medium shadow-lg transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 pointer-events-none">
-                                              <span className="text-slate-300 font-normal">{displayDate}</span><br/>
-                                              <span style={{ color: typeConfig.color }}>{typeConfig.label}</span>
-                                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-800"/>
+                                      ))}
+                                  </div>
+
+                                  {/* ตารางข้อมูล (คอลัมน์สัปดาห์ ชนกันเป็นผืนเดียว) */}
+                                  {(() => {
+                                      const weeks = [];
+                                      let currentWeek = Array(7).fill(null);
+                                      let currentMonthLabel = null;
+                                      const shortMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+                                      datesInPeriod.forEach((dateStr, i) => {
+                                          const [d, m, y] = dateStr.split('/');
+                                          const dateObj = new Date(y, parseInt(m)-1, d);
+                                          const dow = dateObj.getDay();
+
+                                          // ถ้าเป็นวันที่ 1 หรือวันแรกสุดของข้อมูล ให้แปะป้ายชื่อเดือนไว้ที่สัปดาห์นี้
+                                          if (d === '01' || i === 0) {
+                                              currentMonthLabel = `${shortMonths[parseInt(m)-1]} ${y.slice(2)}`;
+                                          }
+
+                                          currentWeek[dow] = dateStr;
+
+                                          // ถ้าจบสัปดาห์ (วันเสาร์) หรือเป็นวันสุดท้ายของข้อมูล ให้ตัดขึ้นคอลัมน์ใหม่
+                                          if (dow === 6 || i === datesInPeriod.length - 1) {
+                                              weeks.push({
+                                                  days: [...currentWeek],
+                                                  monthLabel: currentMonthLabel
+                                              });
+                                              currentWeek = Array(7).fill(null);
+                                              currentMonthLabel = null;
+                                          }
+                                      });
+
+                                      return weeks.map((week, wIdx) => (
+                                          <div key={wIdx} className="flex flex-col gap-[3.5px] md:gap-[4px] shrink-0">
+                                              
+                                              {/* แถบชื่อเดือน (Header) */}
+                                              <div className="h-5 relative flex items-end pb-1">
+                                                  {week.monthLabel && (
+                                                      <div className="absolute left-0 bottom-1 flex items-end">
+                                                          {/* ขีดเส้นแบ่งเดือนมินิมอล */}
+                                                          <div className={`w-[2px] h-3.5 mr-1 rounded-full ${isDarkMode ? 'bg-slate-600' : 'bg-slate-300'}`} />
+                                                          <span className={`text-[10px] font-bold leading-none ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+                                                              {week.monthLabel}
+                                                          </span>
+                                                      </div>
+                                                  )}
+                                              </div>
+
+                                              {/* กล่องสี่เหลี่ยม 7 วันในสัปดาห์ */}
+                                              {week.days.map((dateStr, dIdx) => {
+                                                  // วาดกล่องเปล่าๆ ถ้าไม่มีวัน
+                                                  if (!dateStr) return <div key={`empty-${wIdx}-${dIdx}`} className="w-3.5 h-3.5 md:w-4 md:h-4 bg-transparent" />;
+
+                                                  const [d, m, y] = dateStr.split('/');
+                                                  const dateObj = new Date(y, parseInt(m)-1, d);
+                                                  const dow = dateObj.getDay();
+                                                  const defaultType = (dow === 0 || dow === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+                                                  const currentType = dayTypes[dateStr] || defaultType;
+                                                  const typeConfig = dayTypeConfig.find(dt => dt.id === currentType) || dayTypeConfig[0];
+                                                  
+                                                  const displayDate = `${parseInt(d)} ${shortMonths[parseInt(m)-1]} ${y.slice(2)}`;
+                                                  const today = new Date();
+                                                  const isToday = parseInt(d) === today.getDate() && parseInt(m)-1 === today.getMonth() && parseInt(y) === today.getFullYear();
+                                                  
+                                                  // 🌟 แก้ไข: ลบการบังคับสีเทาออก ให้ดึงสีจาก Setting (typeConfig.color) มาใช้ตรงๆ 100%
+                                                  const renderColor = typeConfig?.color || '#cbd5e1';
+
+                                                  return (
+                                                      <div key={dateStr} className="relative">
+                                                          <div
+                                                              className={`w-3.5 h-3.5 md:w-4 md:h-4 rounded-[3px] cursor-pointer transition-all duration-200 ${isToday ? 'ring-2 ring-slate-800 dark:ring-slate-300 scale-125 z-10 shadow-md' : 'hover:scale-125 hover:z-10 hover:shadow-sm opacity-90 hover:opacity-100'}`}
+                                                              style={{ backgroundColor: renderColor }}
+                                                              onMouseEnter={(e) => handleTooltipEnter(e, displayDate, typeConfig)}
+                                                              onMouseLeave={handleTooltipLeave}
+                                                          />
+                                                      </div>
+                                                  );
+                                              })}
                                           </div>
-                                        </div>
-                                      </React.Fragment>
-                                  );
-                              })}
+                                      ));
+                                  })()}
+                              </div>
                           </div>
                       )}
                   </div>
@@ -209,6 +291,7 @@ export default function DashboardView({
                           const count = analytics.dayTypeCounts[dt.id] || 0;
                           return (
                               <div key={dt.id} className="flex items-center gap-1.5">
+                                  {/* 🌟 แก้ไข: ลบการบังคับสีเทาในคำอธิบายสัญลักษณ์ด้วยเช่นกัน */}
                                   <div className="w-3.5 h-3.5 rounded shadow-sm" style={{ backgroundColor: dt.color }}/>
                                   <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>{dt.label} <span className="text-slate-400 font-normal">({count})</span></span>
                               </div>
@@ -220,6 +303,100 @@ export default function DashboardView({
                   </div>
               </div>
           )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+              <div className="lg:col-span-2 flex flex-col h-full">
+                  <div className={`rounded-xl shadow-sm border p-6 flex flex-col flex-grow h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                            <TrendingUp className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> 
+                            {analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสดและรายจ่าย' : analytics.mainChartType === 'bar' ? 'เทรนด์รายจ่ายเปรียบเทียบ' : `กราฟรายจ่ายรายวันในงวดที่เลือก`}
+                        </h3>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {!filterPeriod.match(/^\d{4}-\d{2}$/) && (
+                                <div className={`flex p-1 rounded-lg border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                                    <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
+                                    <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
+                                </div>
+                            )}
+                            <select value={dashboardCategory} onChange={(e) => setDashboardCategory(e.target.value)} className={`px-3 py-1.5 border rounded-lg shadow-sm transition-colors text-sm font-semibold outline-none cursor-pointer appearance-none pl-3 pr-8 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 focus:border-[#00509E]'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem center', backgroundSize: '1em' }}>
+                                <option value="ALL">📊 รวมทุกหมวดหมู่</option>
+                                {categories.filter(c => c.type === 'expense').map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                            </select>
+                            <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border shadow-sm transition-colors ${dashboardCategory !== 'ALL' ? 'opacity-40 pointer-events-none' : ''} ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-300 hover:bg-slate-50'}`}>
+                                <div className="relative flex items-center">
+                                    <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
+                                    <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${hideFixedExpenses ? 'bg-[#D81A21]' : (isDarkMode ? 'bg-slate-600' : 'bg-slate-300')}`} style={{ height: '1.125rem' }}></div>
+                                    <div className={`dot absolute left-[2px] top-[2px] bg-white w-3.5 h-3.5 rounded-full transition-transform duration-300 ease-in-out ${hideFixedExpenses ? 'transform translate-x-3.5' : ''}`}></div>
+                                </div>
+                                <span className={`text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}><Filter className="w-3.5 h-3.5"/> ซ่อนยอดภาระคงที่</span>
+                            </label>
+                        </div>
+                      </div>
+                      <div className="relative w-full flex-grow min-h-[320px]">
+                          {analytics.mainChartType === 'combo' ? (
+                            <Chart type="bar" data={analytics.mainChartData} options={getComboChartOptions(isDarkMode)} />
+                          ) : analytics.mainChartType === 'bar' ? (
+                            <Bar data={analytics.mainChartData} options={getBarChartOptions(isDarkMode)} />
+                          ) : (
+                            <Line data={analytics.mainChartData} options={getLineChartOptions(isDarkMode)} />
+                          )}
+                      </div>
+                  </div>
+              </div>
+
+              <div className="flex flex-col h-full">
+                  <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                      <div className={`flex items-center justify-between mb-4 border-b pb-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                          <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                              <PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สัดส่วนรายจ่าย
+                          </h3>
+                          <div className="text-right">
+                              <span className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยอดรวมในกราฟ</span>
+                              <div className={`text-sm font-black ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}>{formatMoney(analytics.chartTotal)} ฿</div>
+                          </div>
+                      </div>
+                      <div className="w-full flex-grow flex justify-center items-center relative min-h-[250px] lg:min-h-[350px]">
+                          <Doughnut data={analytics.catChartData} options={getDoughnutChartOptions(isDarkMode)} />
+                      </div>
+                  </div>
+              </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2 items-stretch">
+              <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                  <div className={`flex items-center justify-between mb-4 border-b pb-3 shrink-0 ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                      <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}><AlertCircle className="w-5 h-5 text-[#D81A21]" /> TOP <select value={topXLimit} onChange={(e) => setTopXLimit(Number(e.target.value))} className={`mx-0.5 px-1 py-0.5 text-sm font-black rounded border outline-none cursor-pointer transition-colors text-center appearance-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600' : 'bg-slate-100 border-slate-300 text-[#D81A21] hover:bg-slate-200'}`}><option value={5}>5</option><option value={7}>7</option><option value={10}>10</option><option value={15}>15</option><option value={20}>20</option><option value={50}>50</option></select> รายการที่จ่ายแพงสุด</h3>
+                  </div>
+                  <div className="space-y-2 flex-grow">
+                      {analytics.topTransactions.map((tx, idx) => {
+                          const catDef = categories.find(c => c.name === tx.category);
+                          return (
+                            <div key={tx.id} className={`flex justify-between items-center px-3 py-2 transition-colors rounded-lg border hover:shadow-sm ${isDarkMode ? "bg-slate-900/40 hover:bg-slate-700 border-slate-700" : "bg-slate-50 hover:bg-slate-100 border-slate-100"}`}>
+                                <div className="overflow-hidden pr-2 flex items-center gap-2.5"><div className="text-base font-black text-slate-300 w-5 text-center shrink-0">{idx + 1}</div><div className="overflow-hidden"><p className={`text-sm font-bold truncate leading-tight mb-0.5 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`} title={tx.description}>{tx.description}</p><div className="flex items-center gap-1.5"><span className="text-[11px] font-bold px-1.5 py-[1px] rounded border text-white truncate max-w-[180px] shrink-0" style={{ backgroundColor: catDef?.color || '#64748B', borderColor: catDef?.color || '#64748B' }}>{catDef?.icon} {tx.category}</span><span className={`text-[10px] font-medium shrink-0 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{tx.date}</span></div></div></div>
+                                <span className="text-sm font-black text-[#D81A21] whitespace-nowrap shrink-0">{formatMoney(tx.amount)} ฿</span>
+                            </div>
+                          );
+                      })}
+                  </div>
+              </div>
+              <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                  <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 shrink-0 ${isDarkMode ? "text-slate-200 border-slate-700" : "text-slate-800 border-slate-100"}`}><PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สรุปยอดรายจ่ายแยกตามหมวดหมู่</h3>
+                  <div className="flex flex-col gap-4 mt-4 flex-grow">
+                      {analytics.sortedCats.map((cat, idx) => {
+                          const catDef = categories.find(c => c.name === cat.name);
+                          const pColor = catDef?.color || '#D81A21';
+                          return (
+                            <div key={idx} className="flex flex-col group">
+                                <div className="flex justify-between items-end mb-1.5"><span className={`truncate pr-2 text-sm font-bold flex items-center gap-2 transition-colors ${isDarkMode ? "text-slate-300 group-hover:text-slate-100" : "text-slate-700 group-hover:text-slate-900"}`} title={cat.name}>{catDef ? catDef.icon : '📌'} {cat.name}</span><div className="flex items-baseline gap-2 shrink-0"><span className="text-xs font-bold opacity-90 w-12 text-right tracking-wide" style={{color: pColor}}>{cat.percentage}%</span><span className={`text-sm font-black whitespace-nowrap w-24 text-right transition-colors ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{formatMoney(cat.amount)} ฿</span></div></div>
+                                <div className={`w-full rounded-full h-1.5 overflow-hidden ${isDarkMode ? "bg-slate-700" : "bg-slate-100"}`}><div className="h-1.5 rounded-full transition-all duration-1000 ease-out relative" style={{width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.5, 1 - (idx * 0.05))}}><div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div></div></div>
+                            </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          </div>
+
           {/* Excel-like Cashflow Summary Table */}
           {analytics.numMonths > 0 && (
             <div className={`rounded-xl shadow-md border overflow-hidden hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
@@ -317,99 +494,19 @@ export default function DashboardView({
                 </div>
             </div>
           )}
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-              <div className="lg:col-span-2 flex flex-col h-full">
-                  <div className={`rounded-xl shadow-sm border p-6 flex flex-col flex-grow h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                            <TrendingUp className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> 
-                            {analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสดและรายจ่าย' : analytics.mainChartType === 'bar' ? 'เทรนด์รายจ่ายเปรียบเทียบ' : `กราฟรายจ่ายรายวันในงวดที่เลือก`}
-                        </h3>
-                        <div className="flex items-center gap-3 flex-wrap">
-                            {!filterPeriod.match(/^\d{4}-\d{2}$/) && (
-                                <div className={`flex p-1 rounded-lg border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                                    <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
-                                    <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (isDarkMode ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
-                                </div>
-                            )}
-                            <select value={dashboardCategory} onChange={(e) => setDashboardCategory(e.target.value)} className={`px-3 py-1.5 border rounded-lg shadow-sm transition-colors text-sm font-semibold outline-none cursor-pointer appearance-none pl-3 pr-8 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 focus:border-[#00509E]'}`} style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem center', backgroundSize: '1em' }}>
-                                <option value="ALL">📊 รวมทุกหมวดหมู่</option>
-                                {categories.filter(c => c.type === 'expense').map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
-                            </select>
-                            <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border shadow-sm transition-colors ${dashboardCategory !== 'ALL' ? 'opacity-40 pointer-events-none' : ''} ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-300 hover:bg-slate-50'}`}>
-                                <div className="relative flex items-center">
-                                    <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
-                                    <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${hideFixedExpenses ? 'bg-[#D81A21]' : (isDarkMode ? 'bg-slate-600' : 'bg-slate-300')}`} style={{ height: '1.125rem' }}></div>
-                                    <div className={`dot absolute left-[2px] top-[2px] bg-white w-3.5 h-3.5 rounded-full transition-transform duration-300 ease-in-out ${hideFixedExpenses ? 'transform translate-x-3.5' : ''}`}></div>
-                                </div>
-                                <span className={`text-sm font-semibold flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}><Filter className="w-3.5 h-3.5"/> ซ่อนยอดภาระคงที่</span>
-                            </label>
-                        </div>
-                      </div>
-                      <div className="relative w-full flex-grow min-h-[320px]">
-                          {analytics.mainChartType === 'combo' ? (
-                            <Chart type="bar" data={analytics.mainChartData} options={getComboChartOptions(isDarkMode)} />
-                          ) : analytics.mainChartType === 'bar' ? (
-                            <Bar data={analytics.mainChartData} options={getBarChartOptions(isDarkMode)} />
-                          ) : (
-                            <Line data={analytics.mainChartData} options={getLineChartOptions(isDarkMode)} />
-                          )}
-                      </div>
-                  </div>
-              </div>
 
-              <div className="flex flex-col h-full">
-                  <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                      <div className={`flex items-center justify-between mb-4 border-b pb-3 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                          <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                              <PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สัดส่วนรายจ่าย
-                          </h3>
-                          <div className="text-right">
-                              <span className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ยอดรวมในกราฟ</span>
-                              <div className={`text-sm font-black ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`}>{formatMoney(analytics.chartTotal)} ฿</div>
-                          </div>
-                      </div>
-                      <div className="w-full flex-grow flex justify-center items-center relative min-h-[250px] lg:min-h-[350px]">
-                          <Doughnut data={analytics.catChartData} options={getDoughnutChartOptions(isDarkMode)} />
-                      </div>
-                  </div>
+          {/* 🌟 3. ป๊อปอัป Tooltip ลอยตัวแบบ Global (Fixed Position) */}
+          {activityTooltip.show && (
+              <div
+                  className="fixed z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-full bg-slate-800 text-white text-center rounded-md py-1.5 px-2 text-[11px] font-medium shadow-xl transition-opacity duration-150 w-max min-w-[90px]"
+                  style={{ top: activityTooltip.y, left: activityTooltip.x }}
+              >
+                  <span className="text-slate-300 font-normal">{activityTooltip.date}</span><br/>
+                  <span style={{ color: activityTooltip.color }}>{activityTooltip.label}</span>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-800"/>
               </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2 items-stretch">
-              <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                  <div className={`flex items-center justify-between mb-4 border-b pb-3 shrink-0 ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
-                      <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}><AlertCircle className="w-5 h-5 text-[#D81A21]" /> TOP <select value={topXLimit} onChange={(e) => setTopXLimit(Number(e.target.value))} className={`mx-0.5 px-1 py-0.5 text-sm font-black rounded border outline-none cursor-pointer transition-colors text-center appearance-none ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white hover:bg-slate-600' : 'bg-slate-100 border-slate-300 text-[#D81A21] hover:bg-slate-200'}`}><option value={5}>5</option><option value={7}>7</option><option value={10}>10</option><option value={15}>15</option><option value={20}>20</option><option value={50}>50</option></select> รายการที่จ่ายแพงสุด</h3>
-                  </div>
-                  <div className="space-y-2 flex-grow">
-                      {analytics.topTransactions.map((tx, idx) => {
-                          const catDef = categories.find(c => c.name === tx.category);
-                          return (
-                            <div key={tx.id} className={`flex justify-between items-center px-3 py-2 transition-colors rounded-lg border hover:shadow-sm ${isDarkMode ? "bg-slate-900/40 hover:bg-slate-700 border-slate-700" : "bg-slate-50 hover:bg-slate-100 border-slate-100"}`}>
-                                <div className="overflow-hidden pr-2 flex items-center gap-2.5"><div className="text-base font-black text-slate-300 w-5 text-center shrink-0">{idx + 1}</div><div className="overflow-hidden"><p className={`text-sm font-bold truncate leading-tight mb-0.5 ${isDarkMode ? "text-slate-200" : "text-slate-800"}`} title={tx.description}>{tx.description}</p><div className="flex items-center gap-1.5"><span className="text-[11px] font-bold px-1.5 py-[1px] rounded border text-white truncate max-w-[180px] shrink-0" style={{ backgroundColor: catDef?.color || '#64748B', borderColor: catDef?.color || '#64748B' }}>{catDef?.icon} {tx.category}</span><span className={`text-[10px] font-medium shrink-0 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{tx.date}</span></div></div></div>
-                                <span className="text-sm font-black text-[#D81A21] whitespace-nowrap shrink-0">{formatMoney(tx.amount)} ฿</span>
-                            </div>
-                          );
-                      })}
-                  </div>
-              </div>
-              <div className={`rounded-xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-shadow duration-300 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-                  <h3 className={`font-bold mb-4 flex items-center gap-2 border-b pb-3 shrink-0 ${isDarkMode ? "text-slate-200 border-slate-700" : "text-slate-800 border-slate-100"}`}><PieChart className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} /> สรุปยอดรายจ่ายแยกตามหมวดหมู่</h3>
-                  <div className="flex flex-col gap-4 mt-4 flex-grow">
-                      {analytics.sortedCats.map((cat, idx) => {
-                          const catDef = categories.find(c => c.name === cat.name);
-                          const pColor = catDef?.color || '#D81A21';
-                          return (
-                            <div key={idx} className="flex flex-col group">
-                                <div className="flex justify-between items-end mb-1.5"><span className={`truncate pr-2 text-sm font-bold flex items-center gap-2 transition-colors ${isDarkMode ? "text-slate-300 group-hover:text-slate-100" : "text-slate-700 group-hover:text-slate-900"}`} title={cat.name}>{catDef ? catDef.icon : '📌'} {cat.name}</span><div className="flex items-baseline gap-2 shrink-0"><span className="text-xs font-bold opacity-90 w-12 text-right tracking-wide" style={{color: pColor}}>{cat.percentage}%</span><span className={`text-sm font-black whitespace-nowrap w-24 text-right transition-colors ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{formatMoney(cat.amount)} ฿</span></div></div>
-                                <div className={`w-full rounded-full h-1.5 overflow-hidden ${isDarkMode ? "bg-slate-700" : "bg-slate-100"}`}><div className="h-1.5 rounded-full transition-all duration-1000 ease-out relative" style={{width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.5, 1 - (idx * 0.05))}}><div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div></div></div>
-                            </div>
-                          );
-                      })}
-                  </div>
-              </div>
-          </div>
+          )}
+
       </div>
   );
 };
