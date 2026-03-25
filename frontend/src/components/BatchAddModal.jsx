@@ -46,7 +46,7 @@ export default function BatchAddModal({
   }, [isOpen, defaultType, defaultDate, defaultCategory, categories]);
 
   // ─── LOGIC FUNCTIONS (ต้องประกาศให้เสร็จก่อนที่จะมีการ return) ────────────────
-  const quickSuggestions = useMemo(() => {
+const quickSuggestions = useMemo(() => {
     const typeTx = transactions.filter(t => {
       const c = categories.find(cat => cat.name === t.category);
       if (c?.type !== addForm.type) return false;
@@ -54,18 +54,21 @@ export default function BatchAddModal({
       return true;
     });
 
-    // key = category|description เท่านั้น — ราคาต่างกันถือว่าเป็นรายการเดียวกัน
+    // เปลี่ยน Key ให้รวมราคาเข้าไปด้วย
     const frequency = {};
     typeTx.forEach(t => {
       const desc = (t.description && t.description !== t.category) ? t.description : '';
-      const key = `${t.category}|${desc}`;
-      if (!frequency[key]) frequency[key] = { count: 0, amount: parseFloat(t.amount) || 0 };
+      const amt = parseFloat(t.amount) || 0;
+      
+      // แยก key ด้วย category | description | amount
+      const key = `${t.category}|${desc}|${amt}`;
+      
+      if (!frequency[key]) frequency[key] = { count: 0, amount: amt };
       frequency[key].count += 1;
-      // เก็บ amount ที่ใช้บ่อยที่สุด (ใช้ของล่าสุดก็ได้)
-      frequency[key].amount = parseFloat(t.amount) || frequency[key].amount;
     });
 
     return Object.entries(frequency)
+      // เรียงตามจำนวนครั้งที่เกิด (มากไปน้อย) -> ถ้าเท่ากัน เรียงตามราคา (มากไปน้อย)
       .sort(([, a], [, b]) => b.count - a.count || b.amount - a.amount)
       .slice(0, 8)
       .map(([key, { count, amount }]) => {
