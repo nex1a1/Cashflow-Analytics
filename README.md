@@ -1,89 +1,108 @@
 # 📊 Cashflow Analytics PRO
 
-> Personal finance tracker ระดับ advanced — โฟกัสกระแสเงินสด (Cashflow) แบบเพียวๆ ตัดความซับซ้อนทิ้ง วิเคราะห์รายรับรายจ่ายเชิงลึก พร้อม Dashboard, ปฏิทิน, Activity Graph สไตล์ GitHub และ Smart CSV Import
+> **Personal Finance Tracker ระดับ Advanced** — เน้นการวิเคราะห์กระแสเงินสด (Cashflow) ตัดความซับซ้อนของระบบบัญชีแบบเดิมทิ้ง เพื่อให้คุณเห็นภาพรวมสุขภาพทางการเงินที่แท้จริง พร้อม Dashboard เชิงลึก, Activity Graph และระบบ Smart CSV Import
+
+[![Vibe Coded](https://img.shields.io/badge/Vibe-Coded-blueviolet?style=for-the-badge)](https://github.com/nex1a/Cashflow-Analytics)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite)](https://sqlite.org/)
 
 ---
 
 ## ✨ 100% Vibe Coded Project
 
-โปรเจกต์นี้คือเครื่องพิสูจน์พลังของ **Vibe Coding** — การสร้างแอปพลิเคชันตั้งแต่ศูนย์จนจบระดับ Production-ready โดยที่ผู้พัฒนา **"ไม่ได้พิมพ์โค้ดเองแม้แต่บรรทัดเดียว"**
+โปรเจกต์นี้คือผลงานจากการใช้แนวคิด **Vibe Coding** — การสร้างแอปพลิเคชันระดับ Production-ready โดยที่ผู้พัฒนาเน้นการสื่อสารความต้องการและวิสัยทัศน์ (Vibe) ให้ AI (Google Gemini & Claude) เป็นผู้ลงมือเขียนโค้ดและจัดการสถาปัตยกรรมทั้งหมด
 
-แอปพลิเคชันนี้เกิดจากการทำงานร่วมกันอย่างลงตัวระหว่าง Human (Concept & Product Owner) และ AI (Google Gemini & Claude ในฐานะ Developer) จนออกมาเป็นโปรเจกต์ที่มี Clean Architecture และ UI/UX ที่สมบูรณ์แบบ
-
-**💡 แนวทางการพัฒนา (How we built this):**
-- **Human (Product Owner):** กำหนดวิสัยทัศน์, ออกแบบ Logic ทางการเงิน, ตัดสินใจฟีเจอร์ (เช่น การหั่นระบบ Wallet ที่ซับซ้อนทิ้งเพื่อเน้น Core Cashflow), รีวิวโค้ดอย่างละเอียด, และออกแบบ Layout ให้ใช้งานจริงได้ไหลลื่น
-- **AI (Developer):** รับ Requirement มาแปลงเป็นโค้ดตั้งแต่ Frontend (React/Tailwind) ไปจนถึง Backend (Node.js/SQLite), จัดการ State Management, และ Optimize ประสิทธิภาพหน้า UI
+**💡 บทบาทในการพัฒนา:**
+- **Human (Product Owner):** ออกแบบ User Experience, กำหนด Logic ทางการเงิน (เช่น การเน้น Cashflow แทนการทำ Double-entry bookkeeping), รีวิวคุณภาพโค้ด และปรับจูน UI ให้ใช้งานง่ายที่สุด
+- **AI (Developer):** รับ Requirement มาเปลี่ยนเป็น Full-stack Code (React/Node.js), ออกแบบ Schema ของ SQLite, จัดการ State Management ที่ซับซ้อน และสร้าง UI Components ที่ตอบสนองได้รวดเร็ว
 
 ---
 
-## 🚀 Features (ฟีเจอร์เด่น)
+## 🚀 Key Features
 
-### 📈 Dashboard & Activity Graph
-- สรุปรายรับสุทธิ / รายจ่ายสุทธิ / เงินคงเหลือ / อัตราการออม
-- เฝ้าระวังตัวเลขสำคัญ: อัตราเผาผลาญรายจ่ายต่อวัน, สัดส่วนค่าหอ/ค่าที่พัก, สัดส่วนค่ากิน
-- **(New!) Activity Graph:** ไทม์ไลน์กิจกรรมสไตล์ GitHub ดูกระแสเงินสดและวันหยุดรายปี ชนกันเป็นผืนเดียวพร้อมสมูท Scrollbar แนวนอน
-- ตาราง Cashflow Statement รูปแบบคล้าย Excel โชว์ยอดการเติบโตแบบ MoM (Month-over-Month)
+### 📈 Dashboard & Activity Heatmap
+- **Financial Analytics:** สรุปรายรับ-รายจ่ายสุทธิ, อัตราการออม (Savings Rate) และเงินคงเหลือ
+- **Burn Rate Monitoring:** ติดตามอัตราการใช้จ่ายต่อวัน และสัดส่วนค่าใช้จ่ายสำคัญ (เช่น ค่าอาหาร, ที่พัก)
+- **Activity Graph:** ไทม์ไลน์กิจกรรมสไตล์ GitHub ที่รวมข้อมูลกระแสเงินสดและประเภทวัน (ทำงาน/หยุด) ไว้ในที่เดียว ช่วยให้เห็น Pattern การใช้เงินสัมพันธ์กับไลฟ์สไตล์
 
-### 🧺 สรุปค่าใช้จ่ายประจำวัน (Batch Add)
-- ระบบตะกร้าให้เพิ่มรายการทีละหลายๆ รายการแล้วกดบันทึกรวดเดียว
-- **Quick Suggestions:** เรียนรู้จากประวัติเก่า ช่วยให้กดเพิ่มรายการประจำได้ใน 1 คลิก
-- **Date Badge:** กำกับป้ายวันที่ในตะกร้าชัดเจน หมดปัญหาความสับสนเวลาจดย้อนหลัง
+### 🧺 Smart Batch Add & Suggestions
+- **Basket System:** เพิ่มรายการได้ทีละหลายรายการ (Batch) แล้วบันทึกรวดเดียว ช่วยประหยัดเวลา
+- **Quick Suggestions:** ระบบจดจำประวัติเก่า เพื่อแนะนำรายการที่ใช้บ่อย ให้คุณบันทึกได้ใน 1 คลิก
 
-### 📅 Calendar & Day Settings
-- ปฏิทินรายเดือนที่แยกโซน Header (วันที่/ชนิดวัน) กับ Content (รายการบัญชี) อย่างชัดเจน
-- กำหนดชนิดวันได้ (ทำงาน, วันหยุด, ลาป่วย, ลากิจ) พร้อมสรุปจำนวนวันในแต่ละเดือน
+### 📅 Advanced Calendar & Day Settings
+- **Holistic View:** ปฏิทินที่แยกโซนข้อมูลชัดเจน เห็นยอดสรุปรายวันและประเภทของวัน
+- **Day Categorization:** กำหนดประเภทวัน (Work, Holiday, Sick, Leave) เพื่อนำไปวิเคราะห์ผลกระทบต่อกระแสเงินสด
 
-### 📋 Ledger (สมุดบัญชี)
-- หน้าสมุดบัญชีที่คลีน โฟกัสเฉพาะรายรับ-รายจ่าย พร้อมฟังก์ชันแก้ไขข้อมูลในตารางโดยตรง (Inline Edit)
-- Advanced Filters กรองแบบผสมได้หลายเงื่อนไข
+### 📋 Clean Ledger (สมุดบัญชี)
+- **Inline Editing:** แก้ไขข้อมูลได้โดยตรงจากตาราง ไม่ต้องเปิดหน้าใหม่
+- **Powerful Filters:** ระบบกรองข้อมูลขั้นสูง กรองตามช่วงเวลา, หมวดหมู่, หรือกลุ่ม Cashflow (Income/Expense/Fixed/Debt)
 
-### 📥 Smart CSV Import
-- นำเข้าไฟล์ CSV พร้อมระบบจับคู่หมวดหมู่อัตโนมัติ (Auto-categorization) จากประวัติเดิม
-- Preview Modal พร้อมระบบแบ่งหน้า (Pagination) ให้ตรวจสอบ แก้ไข หรือลบรายการก่อนกดเข้า Database จริง
-
-### 🌓 Dark / Light Mode
-- สลับโหมดสีได้แบบ Real-time ครอบคลุมทุก Component, Modal, กราฟ และ Activity Graph เพื่อการใช้งานที่สบายตา
+### 📥 Smart CSV Import & Export
+- **Auto-Mapping:** ระบบจับคู่หมวดหมู่อัตโนมัติจากประวัติเดิมเมื่อนำเข้า CSV
+- **Import Preview:** ตรวจสอบและแก้ไขข้อมูลก่อนนำเข้า Database จริง
+- **Data Portability:** รองรับการ Export ข้อมูลทั้งหมดออกมาเป็นไฟล์ CSV เพื่อนำไปใช้งานต่อ
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
 | **Frontend** | React 18 (Vite), Tailwind CSS, Chart.js, Lucide Icons |
-| **Backend** | Node.js, Express.js |
-| **Database** | **SQLite3** |
+| **Backend** | Node.js (Express) |
+| **Database** | **SQLite3** (via better-sqlite3) |
 | **Infrastructure**| Docker & Docker Compose |
 
-**โครงสร้างโปรเจกต์ (Clean Architecture):**
+---
+
+## 📂 Project Structure
+
 ```text
 .
 ├── backend/
 │   ├── data/                 # SQLite Database Volume
 │   └── src/
-│       ├── config/
-│       ├── controllers/
-│       ├── models/
-│       └── routes/
+│       ├── config/           # Database Connection
+│       ├── controllers/      # Business Logic
+│       ├── models/           # DB Schema & Initialization
+│       └── routes/           # API Endpoints
 └── frontend/
     └── src/
-        ├── components/       # Modals & Reusable Components
-        │   └── ui/           # Base UI Elements (Sparkline, DatePicker, etc.)
-        ├── constants/
-        ├── hooks/            # Custom React Hooks
-        ├── services/         # API Calls
-        ├── styles/
-        ├── utils/            # Helpers & Formatters
-        └── views/            # Main Pages (Dashboard, Calendar, Ledger)
+        ├── components/       # UI & Modals (BatchAdd, Export, Import)
+        ├── hooks/            # Custom React Hooks (Analytics, Filters, CSV)
+        ├── services/         # API Service Layer
+        ├── views/            # Page Components (Dashboard, Calendar, Ledger, Settings)
+        └── utils/            # Formatters & Helpers
+```
 
-🐳 วิธีติดตั้งและใช้งาน
-Prerequisites: Docker Desktop
+---
 
-# 1. Clone repository
-git clone [https://github.com/nex1a/Cashflow-Analytics.git](https://github.com/nex1a/Cashflow-Analytics.git)
+## 🐳 Getting Started (Docker)
 
-# 2. Start the application
-docker compose up -d
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-# 3. Access the web app
-# เปิดเบราว์เซอร์ไปที่: http://localhost:5173
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/nex1a/Cashflow-Analytics.git
+   cd Cashflow-Analytics
+   ```
+
+2. **Spin up with Docker Compose**
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Access the Application**
+   - **Web Interface:** [http://localhost:5173](http://localhost:5173)
+   - **Backend API:** [http://localhost:3000/api](http://localhost:3000/api)
+
+---
+
+## 🌓 Dark / Light Mode
+รองรับการเปลี่ยนโหมดสีแบบ Real-time ซึ่งครอบคลุมทุกส่วนของแอปพลิเคชัน รวมถึง Chart และ Activity Graph เพื่อความสบายตาในการใช้งานทุกสภาพแสง
+
+---
+
+## 📝 License
+This project is for educational and personal use. Created with ❤️ and AI.
