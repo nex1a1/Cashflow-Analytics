@@ -16,7 +16,6 @@ export default function CalendarView({
 }) {
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // ── Hooks ต้องอยู่ก่อน early return ทั้งหมด ──
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
       const [y, m] = filterPeriod.split('-');
@@ -99,10 +98,10 @@ export default function CalendarView({
 
   if (isReadOnlyView) {
     return (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-        <div className={`flex flex-col items-center justify-center py-32 rounded-2xl border-2 border-dashed h-[65vh] transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
-          <CalendarDays className={`w-16 h-16 mb-4 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>ไม่สามารถแสดงปฏิทินได้</p>
+      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
+          <CalendarDays className={`w-14 h-14 mb-3 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+          <p className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>ไม่สามารถแสดงปฏิทินได้</p>
           <p className={`text-sm px-6 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             กรุณาเปลี่ยนจาก <strong>{getFilterLabel(filterPeriod)}</strong> เป็น{' '}
             <strong className={isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}>รายเดือน</strong>
@@ -113,70 +112,64 @@ export default function CalendarView({
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 space-y-4">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
 
       {/* Header */}
-      <div className={`${surface} rounded-2xl border ${border} shadow-sm p-4 md:p-5`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className={`text-2xl font-black flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-              <CalendarIcon className={`w-6 h-6 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
+      <div className={`${surface} rounded-sm border ${border} shadow-sm p-3 md:p-4`}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className={`text-xl font-black flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+              <CalendarIcon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
               {thaiMonths[m]} {y}
             </h2>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {monthInc > 0 && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                   ▲ {formatMoney(monthInc)} ฿
                 </span>
               )}
               {monthExp > 0 && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-red-900/40 text-red-400' : 'bg-red-50 text-red-600'}`}>
+                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-200'}`}>
                   ▼ {formatMoney(monthExp)} ฿
                 </span>
               )}
               {(monthInc > 0 || monthExp > 0) && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-[#00509E]') : (isDarkMode ? 'bg-orange-900/40 text-orange-400' : 'bg-orange-50 text-orange-600')}`}>
+                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-900/40 text-blue-400 border-blue-800/50' : 'bg-blue-50 text-[#00509E] border-blue-200') : (isDarkMode ? 'bg-orange-900/40 text-orange-400 border-orange-800/50' : 'bg-orange-50 text-orange-600 border-orange-200')}`}>
                   คงเหลือ {formatMoney(monthNet)} ฿
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={prevMonth} disabled={!hasPrev} className={`p-2 rounded-xl border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              <ChevronLeft className="w-5 h-5" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button onClick={prevMonth} disabled={!hasPrev} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={goToLatest} className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              เดือนล่าสุด
+            <button onClick={goToLatest} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              เดือนปัจจุบัน
             </button>
-            <button onClick={nextMonth} disabled={!hasNext} className={`p-2 rounded-xl border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              <ChevronRight className="w-5 h-5" />
+            <button onClick={nextMonth} disabled={!hasNext} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className={`rounded-2xl border ${border} shadow-sm overflow-hidden`}>
-
-        {/* Day headers */}
+      <div className={`rounded-sm border ${border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
         <div className={`grid grid-cols-7 ${surfaceAlt} border-b ${border}`}>
           {DAYS_LABEL.map((label, i) => (
-            <div key={label} className={`py-3 text-center text-sm font-bold tracking-wide ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : textMuted}`}>
+            <div key={label} className={`py-2 text-center text-[15px] font-bold tracking-wide ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : textMuted}`}>
               {label}
             </div>
           ))}
         </div>
 
-        {/* Grid body */}
-        <div className={`grid grid-cols-7 gap-[1px] ${gapColor}`}>
-
-          {/* Blanks */}
+        <div className={`grid grid-cols-7 gap-[1px] ${gapColor} flex-1`}>
           {blanks.map((_, i) => (
-            <div key={`blank-${i}`} className={`min-h-[180px] md:min-h-[210px] ${surfaceAlt}`} />
+            <div key={`blank-${i}`} className={`min-h-[120px] 2xl:min-h-[140px] ${surfaceAlt}`} />
           ))}
 
-          {/* Day cells */}
           {dayCells.map(d => {
             const data = calendarData[d];
             const hasData = data.inc > 0 || data.exp > 0 || data.incItems?.length > 0;
@@ -196,35 +189,31 @@ export default function CalendarView({
             return (
               <div
                 key={d}
-                className={`min-h-[180px] md:min-h-[210px] flex flex-col relative group transition-colors duration-150 ${cellBg}`}
+                className={`min-h-[120px] 2xl:min-h-[140px] flex flex-col relative group transition-colors duration-150 ${cellBg}`}
               >
-                {/* Today ring */}
                 {isToday && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[#00509E] rounded-[1px] opacity-50 z-20" />
+                  <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-[#00509E] opacity-50 z-20" />
                 )}
 
-                {/* 🌟 1. Header ของวัน (แยกโซนสำหรับเลือกชนิดวัน) */}
-                <div className={`flex items-center justify-between p-2 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-700/60 bg-slate-800/80' : 'border-slate-100 bg-white'}`}>
-                  <span className={`text-base md:text-lg font-black leading-none w-8 h-8 flex items-center justify-center rounded-full shrink-0 shadow-sm ${
+                <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-700/60 bg-slate-800/80' : 'border-slate-100 bg-white'}`}>
+                  <span className={`text-[15px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
                     isToday
                       ? 'bg-[#00509E] text-white'
                       : isWeekend
                         ? (isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-500 bg-red-50')
-                        : (isDarkMode ? 'text-slate-200 bg-slate-700/50' : 'text-slate-700 bg-slate-100')
+                        : (isDarkMode ? 'text-slate-200' : 'text-slate-700')
                   }`}>
                     {d}
                   </span>
 
-                  {/* 🌟 Dropdown เลือกวันหยุด ที่กว้างและกดง่ายขึ้น */}
                   <select
                     value={curType}
                     onChange={e => handleDayTypeChange(dateStr, e.target.value)}
-                    className="day-type-badge text-[10px] md:text-[11px] font-bold px-2 py-1 rounded-lg cursor-pointer outline-none appearance-none text-center border transition-all hover:scale-105 active:scale-95 shadow-sm"
+                    className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-sm cursor-pointer outline-none appearance-none text-center border transition-all hover:scale-105 shadow-sm"
                     style={{
-                      backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.1})`,
-                      borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.4 : 0.3})`,
+                      backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.05})`,
+                      borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.4 : 0.2})`,
                       color: typeConf?.color || '#64748b',
-                      filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.8)',
                     }}
                   >
                     {dayTypeConfig.map(dt => (
@@ -235,87 +224,54 @@ export default function CalendarView({
                   </select>
                 </div>
 
-                {/* 🌟 2. Content (คลิกตรงนี้เพื่อดูรายละเอียด/เพิ่มข้อมูล) */}
                 <div 
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`flex flex-col flex-grow gap-1.5 p-2 overflow-hidden cursor-pointer z-10 ${!isToday && (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-blue-50/60')}`}
+                  className={`flex flex-col flex-grow gap-1 p-1.5 overflow-hidden cursor-pointer z-10 ${!isToday && (isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-blue-50/40')}`}
                 >
-                  {data.exp > 0 && (
-                    <div className={`text-sm md:text-base font-black leading-tight ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
-                      ฿{Math.round(data.exp).toLocaleString('th-TH')}
-                    </div>
-                  )}
+                  <div className="flex justify-between items-baseline mb-0.5">
+                     {data.exp > 0 ? (
+                      <div className={`text-[13px] font-black leading-none ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+                        {Math.round(data.exp).toLocaleString('th-TH')}
+                      </div>
+                     ) : <div/>}
+                     {data.inc > 0 && (
+                      <div className={`text-[13px] font-bold leading-none ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        +{Math.round(data.inc).toLocaleString('th-TH')}
+                      </div>
+                    )}
+                  </div>
 
-                  {data.inc > 0 && (
-                    <div className={`text-xs md:text-sm font-bold leading-tight ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                      +{Math.round(data.inc).toLocaleString('th-TH')}
-                    </div>
-                  )}
-
-                  {/* Income items */}
-                  {data.incItems?.slice(0, 2).map(tx => {
+                  {data.incItems?.slice(0, 1).map(tx => {
                     const color = tx._catObj?.color || '#10b981';
                     return (
-                      <div key={tx.id} className="flex items-center gap-1 overflow-hidden" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span
-                          className="truncate text-[11px] md:text-xs font-medium leading-tight flex-1 min-w-0"
-                          style={{ color, filter: isDarkMode ? 'brightness(1.35) saturate(1.1)' : 'brightness(0.65)' }}
-                        >
-                          {tx.description || tx.category}
-                        </span>
-                        <span
-                          className="text-[10px] md:text-[11px] font-black shrink-0 ml-1"
-                          style={{ color, filter: isDarkMode ? 'brightness(1.35) saturate(1.1)' : 'brightness(0.65)' }}
-                        >
-                          {Math.round(tx.amount).toLocaleString('th-TH')}
-                        </span>
+                      <div key={tx.id} className="flex items-center gap-1 overflow-hidden opacity-90" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
+                        <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                        <span className="truncate text-[12px] font-medium leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
                       </div>
                     );
                   })}
 
-                  {/* Divider between income and expense items */}
-                  {data.incItems?.length > 0 && data.items?.length > 0 && (
-                    <div className={`w-full h-px my-0.5 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`} />
-                  )}
-
-                  {/* Expense Items (Top 5) */}
-                  {data.items.slice(0, 5).map(tx => {
+                  {data.items.slice(0, 4).map(tx => {
                     const color = tx._catObj?.color || '#94a3b8';
                     return (
                       <div key={tx.id} className="flex items-center gap-1 overflow-hidden" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                        <span
-                          className="truncate text-[11px] md:text-xs font-medium leading-tight flex-1 min-w-0"
-                          style={{ color, filter: isDarkMode ? 'brightness(1.35) saturate(1.1)' : 'brightness(0.65)' }}
-                        >
-                          {tx.description || tx.category}
-                        </span>
-                        <span
-                          className="text-[10px] md:text-[11px] font-black shrink-0 ml-1"
-                          style={{ color, filter: isDarkMode ? 'brightness(1.35) saturate(1.1)' : 'brightness(0.65)' }}
-                        >
-                          {Math.round(tx.amount).toLocaleString('th-TH')}
-                        </span>
+                        <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                        <span className="truncate text-[12px] font-medium leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
+                        <span className="text-[12px] font-bold shrink-0 ml-1 opacity-70" style={{ color }}>{Math.round(tx.amount).toLocaleString('th-TH')}</span>
                       </div>
                     );
                   })}
 
-                  {data.items.length > 5 && (
-                    <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                      +{data.items.length - 5} รายการ
-                    </span>
-                  )}
-                  {data.incItems?.length > 2 && (
-                    <span className={`text-[11px] font-bold ${isDarkMode ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                      +{data.incItems.length - 2} รายรับ
-                    </span>
+                  {(data.items.length > 4 || data.incItems?.length > 1) && (
+                    <div className="mt-auto pt-1 flex justify-between">
+                       {data.items.length > 4 && <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>+{data.items.length - 4} จ่าย</span>}
+                       {data.incItems?.length > 1 && <span className={`text-[11px] font-bold text-right flex-1 ${isDarkMode ? 'text-emerald-700' : 'text-emerald-400'}`}>+{data.incItems.length - 1} รับ</span>}
+                    </div>
                   )}
 
-                  {/* Hover overlay (เฉพาตอน hover บน Content) */}
-                  <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none ${isDarkMode ? 'bg-slate-900/30' : 'bg-blue-50/40'}`}>
-                    <div className="bg-[#00509E] text-white p-2 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform duration-150">
-                      <PlusCircle className="w-5 h-5" />
+                  <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none ${isDarkMode ? 'bg-slate-900/20' : 'bg-blue-50/30'}`}>
+                    <div className="bg-[#00509E] text-white p-1.5 rounded-sm shadow-sm scale-90 group-hover:scale-100 transition-transform duration-150">
+                      <PlusCircle className="w-4 h-4" />
                     </div>
                   </div>
                 </div>
@@ -325,34 +281,32 @@ export default function CalendarView({
         </div>
       </div>
 
-      {/* Day Type Summary */}
-      <div className={`${surface} rounded-2xl border ${border} shadow-sm p-3 flex flex-wrap gap-2 items-center`}>
-        <span className={`text-xs font-bold mr-1 ${textMuted}`}>สรุปเดือนนี้:</span>
+      {/* Summary Footer */}
+      <div className={`${surface} rounded-sm border ${border} shadow-sm p-2 px-3 flex flex-wrap gap-2 items-center`}>
+        <span className={`text-[13px] font-bold mr-1 ${textMuted}`}>สรุป:</span>
         {dayTypeConfig.map(dt => {
           const count = dayTypeCounts[dt.id] || 0;
           if (count === 0) return null;
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-bold"
               style={{
-                backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.08})`,
+                backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
                 borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.3 : 0.2})`,
                 color: dt.color,
-                filter: isDarkMode ? 'brightness(1.3)' : 'brightness(0.7)',
               }}
             >
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dt.color, filter: 'none' }} />
-              <span style={{ filter: 'inherit' }}>{dt.label} ({count})</span>
+              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: dt.color }} />
+              <span>{dt.label} ({count})</span>
             </div>
           );
         })}
-        <div className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+        <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
           {daysInMonth} วัน
         </div>
       </div>
 
-    {/* Day Detail Modal */}
     {selectedDate && (
       <DayDetailModal
         dateStr={selectedDate}
