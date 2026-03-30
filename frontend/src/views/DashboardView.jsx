@@ -59,31 +59,32 @@ export default function DashboardView({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-10 flex flex-col gap-4">
 
-      {/* ══════════════════════════════════════════════════════════
+{/* ══════════════════════════════════════════════════════════
           ROW 1 — SUMMARY BAR
       ══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_220px] gap-4 items-stretch">
+      {/* ขยายกล่องกลางเป็น 250-260px แล้วแบ่งพื้นที่ซ้ายขวาด้วยสัดส่วน 1.4fr และ 1.2fr */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_250px_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,1.4fr)_260px_minmax(0,1.2fr)] gap-4 items-stretch">
 
         {/* ── Zone A: KPI trio + debt bar ── */}
-        <div className={`${card} p-4 flex flex-col justify-between gap-4`}>
+        <div className={`${card} p-4 flex flex-col justify-between gap-4 min-w-0`}>
 
-          {/* 3 KPI inline แบบปรับใหม่ให้เต็มตาขึ้น */}
+          {/* 3 KPI inline */}
           <div className="grid grid-cols-3 gap-3 flex-1">
             {/* รายรับ */}
             <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${dm ? 'bg-gradient-to-br from-emerald-900/50 to-slate-900/80 border-emerald-800/50' : 'bg-gradient-to-br from-emerald-50/80 to-white border-emerald-200 shadow-sm'}`}>
               <Coins className={`absolute -right-2 -bottom-2 w-20 h-20 -rotate-12 pointer-events-none ${dm ? 'text-emerald-400 opacity-[0.04]' : 'text-emerald-600 opacity-10'}`} />
               
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                  <div className={`p-1 rounded-md ${dm ? 'bg-emerald-500/20' : 'bg-emerald-100 text-emerald-700'}`}>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                  <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-emerald-500/20' : 'bg-emerald-100 text-emerald-700'}`}>
                     <Coins className="w-3.5 h-3.5" />
                   </div>
                   รายรับ
                 </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>
                   {formatMoney(analytics.totalIncome)}
                 </span>
-                <span className={`text-[10px] font-semibold ${dm ? 'text-emerald-500' : 'text-emerald-600/80'}`}>
+                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-emerald-500' : 'text-emerald-600/80'}`}>
                   เฉลี่ย {formatMoney(avgIncome)}/วัน
                 </span>
               </div>
@@ -100,16 +101,16 @@ export default function DashboardView({
               <Wallet className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-12 pointer-events-none ${dm ? 'text-red-400 opacity-[0.04]' : 'text-red-600 opacity-10'}`} />
               
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-700'}`}>
-                  <div className={`p-1 rounded-md ${dm ? 'bg-red-500/20' : 'bg-red-100 text-red-700'}`}>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-700'}`}>
+                  <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-red-500/20' : 'bg-red-100 text-red-700'}`}>
                     <Wallet className="w-3.5 h-3.5" />
                   </div>
                   รายจ่าย
                 </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none ${dm ? 'text-red-300' : 'text-red-800'}`}>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-red-300' : 'text-red-800'}`}>
                   {formatMoney(analytics.totalExpense)}
                 </span>
-                <span className={`text-[10px] font-semibold ${dm ? 'text-red-500' : 'text-red-600/80'}`}>
+                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-red-500' : 'text-red-600/80'}`}>
                   เฉลี่ย {formatMoney(avgExpense)}/วัน
                 </span>
               </div>
@@ -126,13 +127,13 @@ export default function DashboardView({
               <PiggyBank className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-6 pointer-events-none ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400 opacity-[0.04]' : 'text-[#00509E] opacity-[0.08]') : (dm ? 'text-orange-400 opacity-[0.04]' : 'text-orange-600 opacity-[0.08]')}`} />
               
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold flex items-center gap-1.5 ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}`}>
-                  <div className={`p-1 rounded-md ${analytics.netCashflow >= 0 ? (dm ? 'bg-blue-500/20' : 'bg-blue-100 text-blue-700') : (dm ? 'bg-orange-500/20' : 'bg-orange-100 text-orange-700')}`}>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}`}>
+                  <div className={`p-1 rounded-md shrink-0 ${analytics.netCashflow >= 0 ? (dm ? 'bg-blue-500/20' : 'bg-blue-100 text-blue-700') : (dm ? 'bg-orange-500/20' : 'bg-orange-100 text-orange-700')}`}>
                     <PiggyBank className="w-3.5 h-3.5" />
                   </div>
                   คงเหลือ
                 </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-300' : 'text-[#00509E]') : (dm ? 'text-orange-300' : 'text-orange-700')}`}>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-300' : 'text-[#00509E]') : (dm ? 'text-orange-300' : 'text-orange-700')}`}>
                   {formatMoney(analytics.netCashflow)}
                 </span>
               </div>
@@ -140,7 +141,7 @@ export default function DashboardView({
               {/* Progress Bar แสดงอัตราการออม */}
               <div className="relative z-10 mt-3 flex flex-col gap-1">
                 <div className="flex justify-between items-center text-[10px] font-bold">
-                  <span className={dm ? 'text-slate-400' : 'text-slate-500'}>สัดส่วนการออม</span>
+                  <span className={`whitespace-nowrap ${dm ? 'text-slate-400' : 'text-slate-500'}`}>สัดส่วนการออม</span>
                   <span className={analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}>
                     {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
                   </span>
@@ -157,13 +158,13 @@ export default function DashboardView({
 
           {/* Debt structure bar — แนวนอน full width */}
           <div className={`rounded-sm px-3 py-2 ${dm ? 'bg-slate-900/60' : 'bg-slate-50'}`}>
-            <div className="flex justify-between items-center mb-1.5">
-              <span className={`text-[10px] font-bold flex items-center gap-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            <div className="flex justify-between items-center mb-1.5 gap-2">
+              <span className={`text-[10px] font-bold whitespace-nowrap flex items-center gap-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
                 <Scale className="w-3 h-3 text-purple-500" /> โครงสร้างรายจ่าย
               </span>
-              <div className="flex gap-3">
-                <span className={`text-[10px] font-bold ${dm ? 'text-purple-400' : 'text-purple-600'}`}>คงที่ {analytics.fixedPercentage}%</span>
-                <span className={`text-[10px] font-bold ${dm ? 'text-pink-400' : 'text-pink-600'}`}>ผันแปร {analytics.variablePercentage}%</span>
+              <div className="flex gap-3 shrink-0">
+                <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-purple-400' : 'text-purple-600'}`}>คงที่ {analytics.fixedPercentage}%</span>
+                <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-pink-400' : 'text-pink-600'}`}>ผันแปร {analytics.variablePercentage}%</span>
               </div>
             </div>
             <div className={`w-full rounded-sm h-2 flex overflow-hidden ${dm ? 'bg-slate-700' : 'bg-slate-200'}`}>
@@ -174,7 +175,69 @@ export default function DashboardView({
 
         </div>
 
-        {/* ── Zone B: Doughnut + category legend ── */}
+        {/* ── Zone C: Key indicators column (ตรงกลาง) ── */}
+        <div className={`${card} p-4 flex flex-col gap-3 min-w-0`}>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ตัวชี้วัดสำคัญ</p>
+
+          {/* เผาผลาญ/วัน */}
+          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-amber-900/40 to-slate-900/80 border-amber-800/50' : 'bg-gradient-to-br from-amber-50/80 to-white border-amber-200 shadow-sm'}`}>
+             <Flame className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-amber-500 opacity-10' : 'text-amber-500 opacity-[0.06]'}`} />
+             <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
+                      <Flame className="w-4 h-4" />
+                   </div>
+                   <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>เผาผลาญ/วัน</span>
+                </div>
+                <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-amber-400' : 'text-amber-600'}`}>{formatMoney(analytics.dailyAvg)}</span>
+             </div>
+          </div>
+
+          {/* ค่ากิน/วัน */}
+          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-orange-900/40 to-slate-900/80 border-orange-800/50' : 'bg-gradient-to-br from-orange-50/80 to-white border-orange-200 shadow-sm'}`}>
+             <UtensilsCrossed className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-orange-500 opacity-10' : 'text-orange-500 opacity-[0.06]'}`} />
+             <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
+                      <UtensilsCrossed className="w-4 h-4" />
+                   </div>
+                   <div className="flex flex-col min-w-0">
+                     <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่ากิน/วัน</span>
+                     <span className={`text-[9px] font-semibold whitespace-nowrap ${dm ? 'text-orange-400/80' : 'text-orange-500'}`}>สัดส่วน {analytics.foodPercentage}%</span>
+                   </div>
+                </div>
+                <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(analytics.foodDailyAvg)}</span>
+             </div>
+             {/* Progress Bar แสดงสัดส่วนค่ากิน */}
+             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-orange-100'}`}>
+                <div className="h-full bg-orange-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.foodPercentage}%` }} />
+             </div>
+          </div>
+
+          {/* ค่าที่พัก */}
+          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/80 border-blue-800/50' : 'bg-gradient-to-br from-blue-50/80 to-white border-blue-200 shadow-sm'}`}>
+             <Home className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-blue-500 opacity-10' : 'text-blue-500 opacity-[0.06]'}`} />
+             <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                      <Home className="w-4 h-4" />
+                   </div>
+                   <div className="flex flex-col min-w-0">
+                     <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่าที่พัก</span>
+                     <span className={`text-[9px] font-semibold whitespace-nowrap ${dm ? 'text-blue-400/80' : 'text-blue-500'}`}>สัดส่วน {analytics.rentPercentage}%</span>
+                   </div>
+                </div>
+                <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-blue-400' : 'text-blue-600'}`}>{formatMoney(analytics.rentTotal)}</span>
+             </div>
+             {/* Progress Bar แสดงสัดส่วนค่าที่พัก */}
+             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-blue-100'}`}>
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.rentPercentage}%` }} />
+             </div>
+          </div>
+
+        </div>
+
+        {/* ── Zone B: Doughnut + category legend (ขวาสุด) ── */}
         {(() => {
           const catCount = analytics.sortedCats.length;
           const isSmall  = catCount <= 6;
@@ -183,16 +246,17 @@ export default function DashboardView({
           const CatList = ({ cols = 1 }) => (
             <div
               className="grid gap-x-4 gap-y-1.5 w-full"
-              style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
             >
               {analytics.sortedCats.map((cat, idx) => {
                 const catDef = categories.find(c => c.name === cat.name);
                 const pColor = catDef?.color || '#D81A21';
                 return (
-                  <div key={idx} className="flex flex-col">
+                  <div key={idx} className="flex flex-col min-w-0">
                     <div className="flex justify-between items-baseline gap-1 mb-0.5">
                       <span className={`text-[11px] font-bold truncate flex items-center gap-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`} title={cat.name}>
-                        {catDef?.icon} {cat.name}
+                        <span className="shrink-0">{catDef?.icon}</span>
+                        <span className="truncate">{cat.name}</span>
                       </span>
                       <div className="flex items-baseline gap-1 shrink-0">
                         <span className="text-[10px] font-bold" style={{ color: pColor }}>{cat.percentage}%</span>
@@ -209,7 +273,7 @@ export default function DashboardView({
           );
 
           if (isSmall) return (
-            <div className={`${card} p-4 flex gap-4 items-center`} style={{ minWidth: 340, maxWidth: 420 }}>
+            <div className={`${card} p-4 flex gap-4 items-center min-w-0`}>
               <div className="relative shrink-0" style={{ width: 120, height: 120 }}>
                 <Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} />
               </div>
@@ -218,7 +282,7 @@ export default function DashboardView({
           );
 
           if (isMid) return (
-            <div className={`${card} p-4 flex flex-col gap-3`} style={{ minWidth: 380, maxWidth: 480 }}>
+            <div className={`${card} p-4 flex flex-col gap-3 min-w-0`}>
               <div className="flex gap-4 items-center">
                 <div className="relative shrink-0" style={{ width: 110, height: 110 }}>
                   <Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} />
@@ -228,10 +292,11 @@ export default function DashboardView({
                     const catDef = categories.find(c => c.name === cat.name);
                     const pColor = catDef?.color || '#D81A21';
                     return (
-                      <div key={idx} className="flex flex-col">
+                      <div key={idx} className="flex flex-col min-w-0">
                         <div className="flex justify-between items-baseline gap-1 mb-0.5">
                           <span className={`text-[11px] font-bold truncate flex items-center gap-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`} title={cat.name}>
-                            {catDef?.icon} {cat.name}
+                            <span className="shrink-0">{catDef?.icon}</span>
+                            <span className="truncate">{cat.name}</span>
                           </span>
                           <div className="flex items-baseline gap-1 shrink-0">
                             <span className="text-[10px] font-bold" style={{ color: pColor }}>{cat.percentage}%</span>
@@ -255,77 +320,15 @@ export default function DashboardView({
           );
 
           return (
-            <div className={`${card} p-4`} style={{ minWidth: 380, maxWidth: 520 }}>
+            <div className={`${card} p-4 min-w-0`}>
               <div className={`flex items-center gap-2 mb-3 pb-2.5 border-b ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
                 <PieChart className={`w-3.5 h-3.5 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-                <span className={`text-xs font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>สัดส่วนรายจ่าย ({catCount} หมวด)</span>
+                <span className={`text-xs font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>สัดส่วนรายจ่าย ({catCount} หมวด)</span>
               </div>
               <CatList cols={2} />
             </div>
           );
         })()}
-
-        {/* ── Zone C: Key indicators column ── */}
-        <div className={`${card} p-4 flex flex-col gap-3`}>
-          <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ตัวชี้วัดสำคัญ</p>
-
-          {/* เผาผลาญ/วัน */}
-          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-amber-900/40 to-slate-900/80 border-amber-800/50' : 'bg-gradient-to-br from-amber-50/80 to-white border-amber-200 shadow-sm'}`}>
-             <Flame className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-amber-500 opacity-10' : 'text-amber-500 opacity-[0.06]'}`} />
-             <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2.5">
-                   <div className={`p-1.5 rounded-lg ${dm ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
-                      <Flame className="w-4 h-4" />
-                   </div>
-                   <span className={`text-[11px] font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>เผาผลาญ/วัน</span>
-                </div>
-                <span className={`text-base font-black ${dm ? 'text-amber-400' : 'text-amber-600'}`}>{formatMoney(analytics.dailyAvg)}</span>
-             </div>
-          </div>
-
-          {/* ค่ากิน/วัน */}
-          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-orange-900/40 to-slate-900/80 border-orange-800/50' : 'bg-gradient-to-br from-orange-50/80 to-white border-orange-200 shadow-sm'}`}>
-             <UtensilsCrossed className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-orange-500 opacity-10' : 'text-orange-500 opacity-[0.06]'}`} />
-             <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2.5">
-                   <div className={`p-1.5 rounded-lg ${dm ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                      <UtensilsCrossed className="w-4 h-4" />
-                   </div>
-                   <div className="flex flex-col">
-                     <span className={`text-[11px] font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่ากิน/วัน</span>
-                     <span className={`text-[9px] font-semibold ${dm ? 'text-orange-400/80' : 'text-orange-500'}`}>สัดส่วน {analytics.foodPercentage}%</span>
-                   </div>
-                </div>
-                <span className={`text-base font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(analytics.foodDailyAvg)}</span>
-             </div>
-             {/* Progress Bar แสดงสัดส่วนค่ากิน */}
-             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-orange-100'}`}>
-                <div className="h-full bg-orange-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.foodPercentage}%` }} />
-             </div>
-          </div>
-
-          {/* ค่าที่พัก */}
-          <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/80 border-blue-800/50' : 'bg-gradient-to-br from-blue-50/80 to-white border-blue-200 shadow-sm'}`}>
-             <Home className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-blue-500 opacity-10' : 'text-blue-500 opacity-[0.06]'}`} />
-             <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2.5">
-                   <div className={`p-1.5 rounded-lg ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                      <Home className="w-4 h-4" />
-                   </div>
-                   <div className="flex flex-col">
-                     <span className={`text-[11px] font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่าที่พัก</span>
-                     <span className={`text-[9px] font-semibold ${dm ? 'text-blue-400/80' : 'text-blue-500'}`}>สัดส่วน {analytics.rentPercentage}%</span>
-                   </div>
-                </div>
-                <span className={`text-base font-black ${dm ? 'text-blue-400' : 'text-blue-600'}`}>{formatMoney(analytics.rentTotal)}</span>
-             </div>
-             {/* Progress Bar แสดงสัดส่วนค่าที่พัก */}
-             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-blue-100'}`}>
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.rentPercentage}%` }} />
-             </div>
-          </div>
-
-        </div>
 
       </div>
 
