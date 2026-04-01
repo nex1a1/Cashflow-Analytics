@@ -1,12 +1,5 @@
 // src/utils/chartOptions.js
 // ─────────────────────────────────────────────────────────────
-// Chart.js options ที่ใช้ซ้ำใน DashboardView
-// แทนที่จะเขียน inline object ยาวๆ ซ้ำ 3–4 ครั้ง
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Tooltip options ที่ใช้ร่วมกันทุก chart
- */
 const getTooltipOptions = (isDarkMode) => ({
   backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
   titleColor:      isDarkMode ? '#f1f5f9' : '#1e293b',
@@ -17,11 +10,6 @@ const getTooltipOptions = (isDarkMode) => ({
   cornerRadius: 10,
 });
 
-/**
- * Scale options (แกน X/Y) ที่ใช้ร่วมกัน
- * @param {boolean} isDarkMode
- * @param {boolean} beginAtZero - Line chart ต้องการ beginAtZero: true
- */
 const getScaleOptions = (isDarkMode, beginAtZero = false) => ({
   x: {
     ticks: {
@@ -43,14 +31,6 @@ const getScaleOptions = (isDarkMode, beginAtZero = false) => ({
   },
 });
 
-// ─────────────────────────────────────────────────────────────
-// Main chart options (combo / bar / line)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Options สำหรับ Combo chart (Bar + Line ซ้อนกัน)
- * ต่างจาก bar/line ตรงที่ legend แสดงอยู่ (position: 'bottom')
- */
 export const getComboChartOptions = (isDarkMode) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
@@ -68,8 +48,7 @@ export const getComboChartOptions = (isDarkMode) => ({
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) =>
-          ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
       },
     },
   },
@@ -77,19 +56,25 @@ export const getComboChartOptions = (isDarkMode) => ({
   scales: getScaleOptions(isDarkMode),
 });
 
-/**
- * Options สำหรับ Bar chart
- */
-export const getBarChartOptions = (isDarkMode) => ({
+// เพิ่ม showLegend parameter
+export const getBarChartOptions = (isDarkMode, showLegend = false) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { display: false },
+    legend: { 
+        display: showLegend,
+        position: 'bottom',
+        labels: { 
+           color: isDarkMode ? '#cbd5e1' : '#475569', 
+           usePointStyle: true, 
+           boxWidth: 6,         // ลดขนาดจุดสี
+           font: { size: 10 }   // ลดขนาดตัวอักษร
+        }
+    },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) =>
-          ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
       },
     },
   },
@@ -97,33 +82,27 @@ export const getBarChartOptions = (isDarkMode) => ({
   scales: getScaleOptions(isDarkMode),
 });
 
-/**
- * Options สำหรับ Line chart
- */
-export const getLineChartOptions = (isDarkMode) => ({
+// เพิ่ม showLegend parameter
+export const getLineChartOptions = (isDarkMode, showLegend = false) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { display: false },
+    legend: { 
+        display: showLegend,
+        position: 'bottom',
+        labels: { color: isDarkMode ? '#cbd5e1' : '#475569', usePointStyle: true, boxWidth: 8 }
+    },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) =>
-          ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
       },
     },
   },
   animation: { duration: 800, easing: 'easeInOutQuart' },
-  scales: getScaleOptions(isDarkMode, true), // beginAtZero: true
+  scales: getScaleOptions(isDarkMode, true),
 });
 
-// ─────────────────────────────────────────────────────────────
-// Doughnut chart options
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Options สำหรับ Doughnut chart (สัดส่วนรายจ่าย)
- */
 export const getDoughnutChartOptions = (isDarkMode) => ({
   maintainAspectRatio: false,
   cutout: '70%',
@@ -131,16 +110,11 @@ export const getDoughnutChartOptions = (isDarkMode) => ({
     legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
-      cornerRadius: 8, // Doughnut ใช้ cornerRadius เล็กกว่านิดหน่อย
+      cornerRadius: 8,
       callbacks: {
-        label: (ctx) =>
-          ` ${ctx.label}: ${ctx.raw?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.label}: ${ctx.raw?.toLocaleString('th-TH')} ฿`,
       },
     },
   },
-  animation: {
-    animateScale:  true,
-    animateRotate: true,
-    duration:      1000,
-  },
+  animation: { animateScale: true, animateRotate: true, duration: 1000 },
 });

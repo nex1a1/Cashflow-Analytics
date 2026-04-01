@@ -1,11 +1,11 @@
 // src/views/DashboardView.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Bar, Doughnut, Line, Chart } from 'react-chartjs-2';
 import {
   Wallet, Coins, PiggyBank, Flame, Home, Scale,
   CalendarClock, TrendingUp, PieChart, FileSpreadsheet,
-  Filter, AlertCircle, Inbox, UtensilsCrossed,
+  Filter, AlertCircle, Inbox, UtensilsCrossed, ChevronDown
 } from 'lucide-react';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
 import Sparkline from '../components/ui/Sparkline';
@@ -18,7 +18,6 @@ import {
   getDoughnutChartOptions,
 } from '../utils/chartOptions';
 
-/* ─── tiny helper ─── */
 const D = ({ isDarkMode: d, light, dark }) => d ? dark : light;
 
 export default function DashboardView({
@@ -28,12 +27,28 @@ export default function DashboardView({
   analytics, dayTypeConfig, isDarkMode: dm, dayTypes, topXLimit, setTopXLimit,
 }) {
   const [activityTooltip, setActivityTooltip] = useState(null);
-  const datesInPeriod = analytics.datesInPeriod || [];
+  const [showCatMenu, setShowCatMenu] = useState(false); 
   
-  // คำนวณจำนวนวันเพื่อใช้หาค่าเฉลี่ย
+  // 1. เพิ่ม State สำหรับเปิด/ปิด เส้นเทรนด์ MTD
+  const [showTrendLines, setShowTrendLines] = useState(true);
+
+  const datesInPeriod = analytics.datesInPeriod || [];
   const periodDays = Math.max(1, datesInPeriod.length);
   const avgIncome = analytics.totalIncome / periodDays;
   const avgExpense = analytics.totalExpense / periodDays;
+
+  // 2. กรอง Dataset ก่อนนำไปวาดกราฟ (ถ้าปิด toggle ให้ซ่อนเส้น line)
+  const displayChartData = useMemo(() => {
+    if (!analytics.mainChartData) return null;
+    if (analytics.mainChartType === 'combo' && !showTrendLines) {
+      return {
+        ...analytics.mainChartData,
+        // กรองเอาเฉพาะกราฟแท่ง (bar) ทิ้งเส้นเทรนด์ (line) ไป
+        datasets: analytics.mainChartData.datasets.filter(ds => ds.type !== 'line')
+      };
+    }
+    return analytics.mainChartData;
+  }, [analytics.mainChartData, analytics.mainChartType, showTrendLines]);
 
   const handleTooltipEnter = (e, displayDate, typeConfig) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -41,7 +56,6 @@ export default function DashboardView({
   };
   const handleTooltipLeave = () => setActivityTooltip(null);
 
-  /* ── card base ── */
   const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
   const divider = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
@@ -59,109 +73,50 @@ export default function DashboardView({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-10 flex flex-col gap-4">
 
-{/* ══════════════════════════════════════════════════════════
+      {/* ══════════════════════════════════════════════════════════
           ROW 1 — SUMMARY BAR
       ══════════════════════════════════════════════════════════ */}
-      {/* ขยายกล่องกลางเป็น 250-260px แล้วแบ่งพื้นที่ซ้ายขวาด้วยสัดส่วน 1.4fr และ 1.2fr */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_250px_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,1.4fr)_260px_minmax(0,1.2fr)] gap-4 items-stretch">
-
-        {/* ── Zone A: KPI trio + debt bar ── */}
         <div className={`${card} p-4 flex flex-col justify-between gap-4 min-w-0`}>
-
-          {/* 3 KPI inline */}
           <div className="grid grid-cols-3 gap-3 flex-1">
-            {/* รายรับ */}
             <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${dm ? 'bg-gradient-to-br from-emerald-900/50 to-slate-900/80 border-emerald-800/50' : 'bg-gradient-to-br from-emerald-50/80 to-white border-emerald-200 shadow-sm'}`}>
               <Coins className={`absolute -right-2 -bottom-2 w-20 h-20 -rotate-12 pointer-events-none ${dm ? 'text-emerald-400 opacity-[0.04]' : 'text-emerald-600 opacity-10'}`} />
-              
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                  <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-emerald-500/20' : 'bg-emerald-100 text-emerald-700'}`}>
-                    <Coins className="w-3.5 h-3.5" />
-                  </div>
-                  รายรับ
-                </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>
-                  {formatMoney(analytics.totalIncome)}
-                </span>
-                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-emerald-500' : 'text-emerald-600/80'}`}>
-                  เฉลี่ย {formatMoney(avgIncome)}/วัน
-                </span>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}><div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-emerald-500/20' : 'bg-emerald-100 text-emerald-700'}`}><Coins className="w-3.5 h-3.5" /></div>รายรับ</span>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>{formatMoney(analytics.totalIncome)}</span>
+                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-emerald-500' : 'text-emerald-600/80'}`}>เฉลี่ย {formatMoney(avgIncome)}/วัน</span>
               </div>
-
-              <div className="relative z-10 mt-3 flex justify-end">
-                <div className="opacity-90">
-                  <Sparkline data={analytics.sparklineIncome} color="#10B981" width={80} height={24} />
-                </div>
-              </div>
+              <div className="relative z-10 mt-3 flex justify-end"><div className="opacity-90"><Sparkline data={analytics.sparklineIncome} color="#10B981" width={80} height={24} /></div></div>
             </div>
-
-            {/* รายจ่าย */}
             <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${dm ? 'bg-gradient-to-br from-red-900/50 to-slate-900/80 border-red-800/50' : 'bg-gradient-to-br from-red-50/80 to-white border-red-200 shadow-sm'}`}>
               <Wallet className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-12 pointer-events-none ${dm ? 'text-red-400 opacity-[0.04]' : 'text-red-600 opacity-10'}`} />
-              
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-700'}`}>
-                  <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-red-500/20' : 'bg-red-100 text-red-700'}`}>
-                    <Wallet className="w-3.5 h-3.5" />
-                  </div>
-                  รายจ่าย
-                </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-red-300' : 'text-red-800'}`}>
-                  {formatMoney(analytics.totalExpense)}
-                </span>
-                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-red-500' : 'text-red-600/80'}`}>
-                  เฉลี่ย {formatMoney(avgExpense)}/วัน
-                </span>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-700'}`}><div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-red-500/20' : 'bg-red-100 text-red-700'}`}><Wallet className="w-3.5 h-3.5" /></div>รายจ่าย</span>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-red-300' : 'text-red-800'}`}>{formatMoney(analytics.totalExpense)}</span>
+                <span className={`text-[10px] font-semibold truncate ${dm ? 'text-red-500' : 'text-red-600/80'}`}>เฉลี่ย {formatMoney(avgExpense)}/วัน</span>
               </div>
-
-              <div className="relative z-10 mt-3 flex justify-end">
-                <div className="opacity-90">
-                  <Sparkline data={analytics.sparklineExpense} color="#EF4444" width={80} height={24} />
-                </div>
-              </div>
+              <div className="relative z-10 mt-3 flex justify-end"><div className="opacity-90"><Sparkline data={analytics.sparklineExpense} color="#EF4444" width={80} height={24} /></div></div>
             </div>
-
-            {/* คงเหลือ */}
             <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${analytics.netCashflow >= 0 ? (dm ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/80 border-blue-800/50' : 'bg-gradient-to-br from-blue-50/80 to-white border-blue-200 shadow-sm') : (dm ? 'bg-gradient-to-br from-orange-900/50 to-slate-900/80 border-orange-800/50' : 'bg-gradient-to-br from-orange-50/80 to-white border-orange-200 shadow-sm')}`}>
               <PiggyBank className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-6 pointer-events-none ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400 opacity-[0.04]' : 'text-[#00509E] opacity-[0.08]') : (dm ? 'text-orange-400 opacity-[0.04]' : 'text-orange-600 opacity-[0.08]')}`} />
-              
               <div className="relative z-10 flex flex-col gap-1">
-                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}`}>
-                  <div className={`p-1 rounded-md shrink-0 ${analytics.netCashflow >= 0 ? (dm ? 'bg-blue-500/20' : 'bg-blue-100 text-blue-700') : (dm ? 'bg-orange-500/20' : 'bg-orange-100 text-orange-700')}`}>
-                    <PiggyBank className="w-3.5 h-3.5" />
-                  </div>
-                  คงเหลือ
-                </span>
-                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-300' : 'text-[#00509E]') : (dm ? 'text-orange-300' : 'text-orange-700')}`}>
-                  {formatMoney(analytics.netCashflow)}
-                </span>
+                <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}`}><div className={`p-1 rounded-md shrink-0 ${analytics.netCashflow >= 0 ? (dm ? 'bg-blue-500/20' : 'bg-blue-100 text-blue-700') : (dm ? 'bg-orange-500/20' : 'bg-orange-100 text-orange-700')}`}><PiggyBank className="w-3.5 h-3.5" /></div>คงเหลือ</span>
+                <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-300' : 'text-[#00509E]') : (dm ? 'text-orange-300' : 'text-orange-700')}`}>{formatMoney(analytics.netCashflow)}</span>
               </div>
-
-              {/* Progress Bar แสดงอัตราการออม */}
               <div className="relative z-10 mt-3 flex flex-col gap-1">
                 <div className="flex justify-between items-center text-[10px] font-bold">
                   <span className={`whitespace-nowrap ${dm ? 'text-slate-400' : 'text-slate-500'}`}>สัดส่วนการออม</span>
-                  <span className={analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}>
-                    {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
-                  </span>
+                  <span className={analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}>{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</span>
                 </div>
                 <div className={`w-full h-1.5 rounded-full overflow-hidden ${dm ? 'bg-slate-900/80' : 'bg-slate-200'}`}>
-                  <div 
-                    className={`h-full rounded-full transition-all duration-1000 ${analytics.netCashflow >= 0 ? 'bg-blue-500' : 'bg-orange-500'}`}
-                    style={{ width: `${Math.min(100, Math.max(0, analytics.totalIncome > 0 ? analytics.savingsRate : 0))}%` }}
-                  />
+                  <div className={`h-full rounded-full transition-all duration-1000 ${analytics.netCashflow >= 0 ? 'bg-blue-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(100, Math.max(0, analytics.totalIncome > 0 ? analytics.savingsRate : 0))}%` }} />
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Debt structure bar — แนวนอน full width */}
           <div className={`rounded-sm px-3 py-2 ${dm ? 'bg-slate-900/60' : 'bg-slate-50'}`}>
             <div className="flex justify-between items-center mb-1.5 gap-2">
-              <span className={`text-[10px] font-bold whitespace-nowrap flex items-center gap-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-                <Scale className="w-3 h-3 text-purple-500" /> โครงสร้างรายจ่าย
-              </span>
+              <span className={`text-[10px] font-bold whitespace-nowrap flex items-center gap-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}><Scale className="w-3 h-3 text-purple-500" /> โครงสร้างรายจ่าย</span>
               <div className="flex gap-3 shrink-0">
                 <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-purple-400' : 'text-purple-600'}`}>คงที่ {analytics.fixedPercentage}%</span>
                 <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-pink-400' : 'text-pink-600'}`}>ผันแปร {analytics.variablePercentage}%</span>
@@ -172,35 +127,25 @@ export default function DashboardView({
               <div className="bg-pink-400 h-2 transition-all duration-500" style={{ width: `${analytics.variablePercentage}%` }} />
             </div>
           </div>
-
         </div>
 
-        {/* ── Zone C: Key indicators column (ตรงกลาง) ── */}
         <div className={`${card} p-4 flex flex-col gap-3 min-w-0`}>
           <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ตัวชี้วัดสำคัญ</p>
-
-          {/* เผาผลาญ/วัน */}
           <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-amber-900/40 to-slate-900/80 border-amber-800/50' : 'bg-gradient-to-br from-amber-50/80 to-white border-amber-200 shadow-sm'}`}>
              <Flame className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-amber-500 opacity-10' : 'text-amber-500 opacity-[0.06]'}`} />
              <div className="flex items-center justify-between gap-2 relative z-10">
                 <div className="flex items-center gap-2.5 min-w-0">
-                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
-                      <Flame className="w-4 h-4" />
-                   </div>
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}><Flame className="w-4 h-4" /></div>
                    <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>เผาผลาญ/วัน</span>
                 </div>
                 <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-amber-400' : 'text-amber-600'}`}>{formatMoney(analytics.dailyAvg)}</span>
              </div>
           </div>
-
-          {/* ค่ากิน/วัน */}
           <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-orange-900/40 to-slate-900/80 border-orange-800/50' : 'bg-gradient-to-br from-orange-50/80 to-white border-orange-200 shadow-sm'}`}>
              <UtensilsCrossed className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-orange-500 opacity-10' : 'text-orange-500 opacity-[0.06]'}`} />
              <div className="flex items-center justify-between gap-2 relative z-10">
                 <div className="flex items-center gap-2.5 min-w-0">
-                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                      <UtensilsCrossed className="w-4 h-4" />
-                   </div>
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}><UtensilsCrossed className="w-4 h-4" /></div>
                    <div className="flex flex-col min-w-0">
                      <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่ากิน/วัน</span>
                      <span className={`text-[9px] font-semibold whitespace-nowrap ${dm ? 'text-orange-400/80' : 'text-orange-500'}`}>สัดส่วน {analytics.foodPercentage}%</span>
@@ -208,20 +153,13 @@ export default function DashboardView({
                 </div>
                 <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(analytics.foodDailyAvg)}</span>
              </div>
-             {/* Progress Bar แสดงสัดส่วนค่ากิน */}
-             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-orange-100'}`}>
-                <div className="h-full bg-orange-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.foodPercentage}%` }} />
-             </div>
+             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-orange-100'}`}><div className="h-full bg-orange-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.foodPercentage}%` }} /></div>
           </div>
-
-          {/* ค่าที่พัก */}
           <div className={`relative overflow-hidden flex flex-col justify-center gap-2 px-3.5 py-3 rounded-xl border transition-all flex-1 ${dm ? 'bg-gradient-to-br from-blue-900/40 to-slate-900/80 border-blue-800/50' : 'bg-gradient-to-br from-blue-50/80 to-white border-blue-200 shadow-sm'}`}>
              <Home className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-blue-500 opacity-10' : 'text-blue-500 opacity-[0.06]'}`} />
              <div className="flex items-center justify-between gap-2 relative z-10">
                 <div className="flex items-center gap-2.5 min-w-0">
-                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                      <Home className="w-4 h-4" />
-                   </div>
+                   <div className={`p-1.5 rounded-lg shrink-0 ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}><Home className="w-4 h-4" /></div>
                    <div className="flex flex-col min-w-0">
                      <span className={`text-[11px] font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>ค่าที่พัก</span>
                      <span className={`text-[9px] font-semibold whitespace-nowrap ${dm ? 'text-blue-400/80' : 'text-blue-500'}`}>สัดส่วน {analytics.rentPercentage}%</span>
@@ -229,107 +167,54 @@ export default function DashboardView({
                 </div>
                 <span className={`text-base font-black truncate shrink-0 ${dm ? 'text-blue-400' : 'text-blue-600'}`}>{formatMoney(analytics.rentTotal)}</span>
              </div>
-             {/* Progress Bar แสดงสัดส่วนค่าที่พัก */}
-             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-blue-100'}`}>
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.rentPercentage}%` }} />
-             </div>
+             <div className={`w-full h-1.5 rounded-full overflow-hidden mt-0.5 relative z-10 ${dm ? 'bg-slate-800' : 'bg-blue-100'}`}><div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${analytics.rentPercentage}%` }} /></div>
           </div>
-
         </div>
 
-        {/* ── Zone B: Doughnut + category legend (ขวาสุด) ── */}
         {(() => {
           const catCount = analytics.sortedCats.length;
-          const isSmall  = catCount <= 6;
-          const isMid    = catCount >= 7 && catCount <= 12;
-
-          const CatList = ({ cols = 1 }) => (
-            <div
-              className="grid gap-x-4 gap-y-1.5 w-full"
-              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-            >
-              {analytics.sortedCats.map((cat, idx) => {
+          const CatList = ({ cols = 1, data = analytics.sortedCats }) => (
+            <div className="grid gap-x-4 gap-y-1.5 w-full" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+              {data.map((cat, idx) => {
                 const catDef = categories.find(c => c.name === cat.name);
                 const pColor = catDef?.color || '#D81A21';
                 return (
                   <div key={idx} className="flex flex-col min-w-0">
                     <div className="flex justify-between items-baseline gap-1 mb-0.5">
-                      <span className={`text-[11px] font-bold truncate flex items-center gap-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`} title={cat.name}>
-                        <span className="shrink-0">{catDef?.icon}</span>
-                        <span className="truncate">{cat.name}</span>
-                      </span>
-                      <div className="flex items-baseline gap-1 shrink-0">
-                        <span className="text-[10px] font-bold" style={{ color: pColor }}>{cat.percentage}%</span>
-                        <span className={`text-[11px] font-black ${dm ? 'text-slate-100' : 'text-slate-900'}`}>{formatMoney(cat.amount)}</span>
-                      </div>
+                      <span className={`text-[11px] font-bold truncate flex items-center gap-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`} title={cat.name}><span className="shrink-0">{catDef?.icon}</span><span className="truncate">{cat.name}</span></span>
+                      <div className="flex items-baseline gap-1 shrink-0"><span className="text-[10px] font-bold" style={{ color: pColor }}>{cat.percentage}%</span><span className={`text-[11px] font-black ${dm ? 'text-slate-100' : 'text-slate-900'}`}>{formatMoney(cat.amount)}</span></div>
                     </div>
-                    <div className={`w-full rounded-sm h-[3px] overflow-hidden ${dm ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                      <div className="h-[3px] rounded-sm" style={{ width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.55, 1 - idx * 0.04) }} />
-                    </div>
+                    <div className={`w-full rounded-sm h-[3px] overflow-hidden ${dm ? 'bg-slate-700' : 'bg-slate-100'}`}><div className="h-[3px] rounded-sm" style={{ width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.55, 1 - idx * 0.04) }} /></div>
                   </div>
                 );
               })}
             </div>
           );
 
-          if (isSmall) return (
+          if (catCount <= 6) return (
             <div className={`${card} p-4 flex gap-4 items-center min-w-0`}>
-              <div className="relative shrink-0" style={{ width: 120, height: 120 }}>
-                <Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} />
-              </div>
+              <div className="relative shrink-0" style={{ width: 120, height: 120 }}><Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} /></div>
               <div className="flex-1 min-w-0"><CatList cols={1} /></div>
             </div>
           );
 
-          if (isMid) return (
+          if (catCount >= 7 && catCount <= 12) return (
             <div className={`${card} p-4 flex flex-col gap-3 min-w-0`}>
               <div className="flex gap-4 items-center">
-                <div className="relative shrink-0" style={{ width: 110, height: 110 }}>
-                  <Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} />
-                </div>
-                <div className="flex-1 min-w-0 grid gap-x-3 gap-y-1.5" style={{ gridTemplateColumns: '1fr' }}>
-                  {analytics.sortedCats.slice(0, 4).map((cat, idx) => {
-                    const catDef = categories.find(c => c.name === cat.name);
-                    const pColor = catDef?.color || '#D81A21';
-                    return (
-                      <div key={idx} className="flex flex-col min-w-0">
-                        <div className="flex justify-between items-baseline gap-1 mb-0.5">
-                          <span className={`text-[11px] font-bold truncate flex items-center gap-1 ${dm ? 'text-slate-300' : 'text-slate-700'}`} title={cat.name}>
-                            <span className="shrink-0">{catDef?.icon}</span>
-                            <span className="truncate">{cat.name}</span>
-                          </span>
-                          <div className="flex items-baseline gap-1 shrink-0">
-                            <span className="text-[10px] font-bold" style={{ color: pColor }}>{cat.percentage}%</span>
-                            <span className={`text-[11px] font-black ${dm ? 'text-slate-100' : 'text-slate-900'}`}>{formatMoney(cat.amount)}</span>
-                          </div>
-                        </div>
-                        <div className={`w-full rounded-sm h-[3px] overflow-hidden ${dm ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                          <div className="h-[3px] rounded-sm" style={{ width: `${cat.percentage}%`, backgroundColor: pColor, opacity: Math.max(0.55, 1 - idx * 0.04) }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <div className="relative shrink-0" style={{ width: 110, height: 110 }}><Doughnut data={analytics.catChartData} options={{ ...getDoughnutChartOptions(dm), maintainAspectRatio: false }} /></div>
+                <div className="flex-1 min-w-0 grid gap-x-3 gap-y-1.5" style={{ gridTemplateColumns: '1fr' }}><CatList cols={1} data={analytics.sortedCats.slice(0, 4)} /></div>
               </div>
-              {analytics.sortedCats.length > 4 && (
-                <div className={`pt-2 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
-                  <CatList cols={2} />
-                </div>
-              )}
+              {analytics.sortedCats.length > 4 && <div className={`pt-2 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}><CatList cols={2} data={analytics.sortedCats.slice(4)} /></div>}
             </div>
           );
 
           return (
             <div className={`${card} p-4 min-w-0`}>
-              <div className={`flex items-center gap-2 mb-3 pb-2.5 border-b ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
-                <PieChart className={`w-3.5 h-3.5 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-                <span className={`text-xs font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>สัดส่วนรายจ่าย ({catCount} หมวด)</span>
-              </div>
+              <div className={`flex items-center gap-2 mb-3 pb-2.5 border-b ${dm ? 'border-slate-700' : 'border-slate-100'}`}><PieChart className={`w-3.5 h-3.5 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} /><span className={`text-xs font-bold whitespace-nowrap ${dm ? 'text-slate-300' : 'text-slate-600'}`}>สัดส่วนรายจ่าย ({catCount} หมวด)</span></div>
               <CatList cols={2} />
             </div>
           );
         })()}
-
       </div>
 
       {/* ══════════════════════════════════════════════════════════
@@ -337,50 +222,164 @@ export default function DashboardView({
       ══════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-stretch">
 
-        {/* ── Main Chart — h-full เพื่อยืดตาม Top X ── */}
+        {/* ── Main Chart ── */}
         <div className={`${card} p-5 flex flex-col min-h-0`}>
-          <div className={`flex items-center justify-between gap-3 ${divider} flex-wrap`}>
+          <div className={`flex items-center justify-between gap-3 ${divider} flex-wrap relative z-20`}>
             <h3 className={cardHd}>
               <TrendingUp className={`w-4 h-4 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-              {analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสด' : analytics.mainChartType === 'bar' ? 'เทรนด์เปรียบเทียบ' : 'รายจ่ายรายวัน'}
+              {analytics.mainChartType === 'combo' && analytics.mainChartData?.datasets?.some(ds => ds.label && ds.label.includes('เฉลี่ยสะสม')) && showTrendLines
+                ? 'เทรนด์รายจ่ายรายวัน (MTD Average)'
+                : analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสด' 
+                : analytics.mainChartType === 'bar' ? 'เทรนด์เปรียบเทียบ' : 'รายจ่ายรายวัน'}
             </h3>
+            
             <div className="flex items-center gap-2 flex-wrap">
               {!filterPeriod.match(/^\d{4}-\d{2}$/) && (
-                <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                  <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1 text-xs font-bold rounded-sm transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
-                  <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1 text-xs font-bold rounded-sm transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
+                <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                  <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
+                  <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
                 </div>
               )}
-              <select
-                value={dashboardCategory} onChange={(e) => setDashboardCategory(e.target.value)}
-                className={`px-3 py-1.5 border rounded-sm shadow-sm text-xs font-semibold outline-none cursor-pointer appearance-none pl-3 pr-7 ${dm ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'}`}
-                style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.9em' }}
-              >
-                <option value="ALL">📊 รวมทุกหมวดหมู่</option>
-                {categories.filter(c => c.type === 'expense').map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
-              </select>
-              <label className={`flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-sm border shadow-sm transition-colors ${dashboardCategory !== 'ALL' ? 'opacity-40 pointer-events-none' : ''} ${dm ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-300 hover:bg-slate-50'}`}>
-                <div className="relative flex items-center">
-                  <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
-                  <div className={`block w-7 h-4 rounded-sm transition-colors duration-300 ${hideFixedExpenses ? 'bg-[#D81A21]' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                  <div className={`dot absolute left-[2px] top-[2px] bg-white w-3 h-3 rounded-sm transition-transform duration-300 ${hideFixedExpenses ? 'translate-x-3' : ''}`} />
-                </div>
-                <span className={`text-xs font-semibold flex items-center gap-1 ${dm ? 'text-white' : 'text-slate-800'}`}>
-                  <Filter className="w-3 h-3" /> ซ่อนภาระคงที่
-                </span>
-              </label>
+
+              {/* --- ปุ่มตัวกรองแบบใหม่ --- */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCatMenu(!showCatMenu)}
+                  className={`px-3 py-1.5 border rounded-md shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>{dashboardCategory.length}</span> : ''}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCatMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showCatMenu && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowCatMenu(false)} />
+                    <div className={`absolute right-0 top-full mt-2 w-[340px] rounded-xl shadow-2xl border z-40 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
+                      
+                      <div className={`p-4 border-b flex flex-col gap-4 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                        
+                        {/* 1. Toggle: แสดงเส้นเทรนด์ MTD (ใหม่) */}
+                        <label className="flex items-center justify-between cursor-pointer group">
+                          <div className="flex flex-col">
+                            <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
+                            <span className={`text-[10px] ${dm ? 'text-slate-400' : 'text-slate-500'}`}>วาดเส้นค่าเฉลี่ยสะสมและค่าเฉลี่ยรายเดือน</span>
+                          </div>
+                          <div className="relative flex items-center shrink-0">
+                            <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} />
+                            <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? (dm ? 'bg-amber-500' : 'bg-amber-500') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                            <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
+                          </div>
+                        </label>
+
+                        {/* 2. Toggle: ซ่อนรายจ่ายคงที่ */}
+                        <label className="flex items-center justify-between cursor-pointer group">
+                          <div className="flex flex-col">
+                            <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed Expenses)</span>
+                            <span className={`text-[10px] ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟเส้นและวงแหวน</span>
+                          </div>
+                          <div className="relative flex items-center shrink-0">
+                            <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
+                            <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${hideFixedExpenses ? (dm ? 'bg-blue-500' : 'bg-[#00509E]') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                            <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${hideFixedExpenses ? 'translate-x-4' : ''}`} />
+                          </div>
+                        </label>
+
+                      </div>
+                      
+                      <div className="p-4 flex flex-col gap-3">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ (Multi-line)</span>
+                        
+                        {(() => {
+                          const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+                          const toggleCategory = (catName) => {
+                            if (catName === 'ALL') { setDashboardCategory(['ALL']); } 
+                            else {
+                              let newCats = activeCats.filter(c => c !== 'ALL');
+                              if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
+                              else newCats.push(catName);
+                              if (newCats.length === 0) newCats = ['ALL'];
+                              setDashboardCategory(newCats);
+                            }
+                          };
+
+                          const selectAllVariable = () => {
+                            const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed).map(c => c.name);
+                            setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
+                          };
+
+                          return (
+                            <>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button 
+                                  onClick={() => setDashboardCategory(['ALL'])}
+                                  className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}
+                                >
+                                  📊 เส้นรวมทั้งหมด
+                                </button>
+                                <button 
+                                  onClick={selectAllVariable}
+                                  className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}
+                                >
+                                  🔄 เทียบหมวดผันแปร
+                                </button>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                {categories.filter(c => c.type === 'expense').map(c => {
+                                  const isActive = activeCats.includes(c.name);
+                                  return (
+                                    <button 
+                                      key={c.id}
+                                      onClick={() => toggleCategory(c.name)}
+                                      className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`}
+                                      style={{ 
+                                        backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'),
+                                        borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'),
+                                        color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569')
+                                      }}
+                                    >
+                                      <span className="opacity-90">{c.icon}</span> {c.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
+
           <div className="relative w-full flex-1 min-h-[300px]">
-            {/* ครอบกราฟด้วย absolute inset-0 ให้มันยอมหดตัวตาม Top X List */}
             <div className="absolute inset-0">
-              {analytics.mainChartType === 'combo'
-                ? <Chart type="bar" data={analytics.mainChartData} options={{...getComboChartOptions(dm), maintainAspectRatio: false}} />
-                : analytics.mainChartType === 'bar'
-                ? <Bar data={analytics.mainChartData} options={{...getBarChartOptions(dm), maintainAspectRatio: false}} />
-                : <Line data={analytics.mainChartData} options={{...getLineChartOptions(dm), maintainAspectRatio: false}} />}
+              {(() => {
+                const hasMultipleLines = displayChartData?.datasets?.length > 1;
+                if (analytics.mainChartType === 'combo') {
+                  return <Chart type="bar" data={displayChartData} options={{...getComboChartOptions(dm), maintainAspectRatio: false}} />;
+                } else if (analytics.mainChartType === 'bar') {
+                  return <Bar data={displayChartData} options={{...getBarChartOptions(dm, hasMultipleLines), maintainAspectRatio: false}} />;
+                } else {
+                  return <Line data={displayChartData} options={{...getLineChartOptions(dm, hasMultipleLines), maintainAspectRatio: false}} />;
+                }
+              })()}
             </div>
           </div>
+
+          {/* Info Box แสดงวิธีอ่านกราฟ MTD Average */}
+          {showTrendLines && analytics.mainChartData?.datasets?.some(ds => ds.label && ds.label.includes('เฉลี่ยสะสม')) && (
+            <div className={`mt-4 p-3 rounded-lg text-xs flex gap-2 items-start animate-in fade-in duration-500 ${dm ? 'bg-slate-900/50 text-slate-400' : 'bg-slate-50 text-slate-600'}`}>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+              <p>
+                <strong>วิธีอ่านกราฟ:</strong> เส้นประสีเทาคือ <span className="text-slate-500">ค่าเฉลี่ยสรุปของเดือน</span> ส่วนเส้นโค้งสีเหลืองคือ <span className="text-amber-500 font-bold">ค่าเฉลี่ยสะสม (MTD Average)</span> จะแสดงให้เห็นว่าตั้งแต่ต้นเดือนมาจนถึงวันนี้ พฤติกรรมการใช้จ่ายเฉลี่ยรายวันของเรามีแนวโน้มลดลง (ประหยัดขึ้น) หรือเพิ่มขึ้น 
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── Top X Transactions ── */}
@@ -416,7 +415,6 @@ export default function DashboardView({
             })}
           </div>
         </div>
-
       </div>
 
       {/* ══════════════════════════════════════════════════════════
@@ -532,27 +530,57 @@ export default function DashboardView({
                     { label: 'ไอที', cls: dm ? 'text-slate-300' : 'text-slate-700' },
                     { label: 'ยอดจ่ายสุทธิ', cls: `border-l-2 font-black ${dm ? 'text-red-400 border-slate-600' : 'text-red-800 border-slate-300'}` },
                     { label: 'เงินคงเหลือ', cls: `font-black ${dm ? 'text-blue-400' : 'text-[#00509E]'}` },
+                    { label: '% ออม', cls: `font-black text-center ${dm ? 'text-emerald-400' : 'text-emerald-600'}` },
                   ].map(({ label, cls }) => (
                     <th key={label} className={`px-4 py-2.5 font-bold ${cls}`}>{label}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className={`divide-y ${dm ? 'divide-slate-700/50' : 'divide-slate-200'}`}>
-                {analytics.sortedCashflow.map(row => (
-                  <tr key={row.monthStr} className="group transition-colors">
-                    <td className={`px-4 py-2 font-bold text-center sticky left-0 z-10 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors ${dm ? 'bg-slate-800 border-slate-700 text-slate-200 group-hover:bg-slate-700' : 'bg-white border-slate-100 text-slate-700 group-hover:bg-slate-50'}`}>{getThaiMonth(row.monthStr)}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-emerald-400 group-hover:bg-slate-800' : 'text-emerald-700 group-hover:bg-slate-50'}`}>{row.salary > 0 ? formatMoney(row.salary) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-emerald-400 group-hover:bg-slate-800' : 'text-emerald-700 group-hover:bg-slate-50'}`}>{row.bonus > 0 ? formatMoney(row.bonus) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.rent > 0 ? formatMoney(row.rent) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-purple-400 group-hover:bg-slate-800' : 'text-purple-700 group-hover:bg-slate-50'}`}>{row.subs > 0 ? formatMoney(row.subs) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.food > 0 ? formatMoney(row.food) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.variable > 0 ? formatMoney(row.variable) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.invest > 0 ? formatMoney(row.invest) : '-'}</td>
-                    <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.it > 0 ? formatMoney(row.it) : '-'}</td>
-                    <td className={`px-4 py-2 font-bold border-l-2 ${dm ? 'text-red-400 border-slate-700 group-hover:bg-slate-800' : 'text-red-700 border-slate-200 group-hover:bg-slate-50'}`}>{formatMoney(row.totalExp)}</td>
-                    <td className={`px-4 py-2 font-black ${dm ? 'text-blue-400 group-hover:bg-slate-800' : 'text-[#00509E] group-hover:bg-slate-50'}`}>{formatMoney(row.income - row.totalExp)}</td>
-                  </tr>
-                ))}
+                {analytics.sortedCashflow.map((row, index, array) => {
+                  
+                  const prevMonth = array[index - 1];
+                  let expMoM = null;
+                  if (prevMonth && prevMonth.totalExp > 0) {
+                    const diff = row.totalExp - prevMonth.totalExp;
+                    const percent = (diff / prevMonth.totalExp) * 100;
+                    expMoM = (
+                      <span className={`text-[10px] ml-1.5 ${percent > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {percent > 0 ? '↑' : '↓'} {Math.abs(percent).toFixed(1)}%
+                      </span>
+                    );
+                  }
+
+                  const savingsRateNum = row.income > 0 ? ((row.income - row.totalExp) / row.income * 100) : 0;
+                  const isNegSave = savingsRateNum < 0;
+                  const saveColor = isNegSave 
+                    ? (dm ? 'text-red-400' : 'text-red-600') 
+                    : (dm ? 'text-emerald-400' : 'text-emerald-600');
+
+                  return (
+                    <tr key={row.monthStr} className="group transition-colors">
+                      <td className={`px-4 py-2 font-bold text-center sticky left-0 z-10 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors ${dm ? 'bg-slate-800 border-slate-700 text-slate-200 group-hover:bg-slate-700' : 'bg-white border-slate-100 text-slate-700 group-hover:bg-slate-50'}`}>{getThaiMonth(row.monthStr)}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-emerald-400 group-hover:bg-slate-800' : 'text-emerald-700 group-hover:bg-slate-50'}`}>{row.salary > 0 ? formatMoney(row.salary) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-emerald-400 group-hover:bg-slate-800' : 'text-emerald-700 group-hover:bg-slate-50'}`}>{row.bonus > 0 ? formatMoney(row.bonus) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.rent > 0 ? formatMoney(row.rent) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-purple-400 group-hover:bg-slate-800' : 'text-purple-700 group-hover:bg-slate-50'}`}>{row.subs > 0 ? formatMoney(row.subs) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.food > 0 ? formatMoney(row.food) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.variable > 0 ? formatMoney(row.variable) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.invest > 0 ? formatMoney(row.invest) : '-'}</td>
+                      <td className={`px-4 py-2 font-medium ${dm ? 'text-slate-300 group-hover:bg-slate-800' : 'text-slate-700 group-hover:bg-slate-50'}`}>{row.it > 0 ? formatMoney(row.it) : '-'}</td>
+                      <td className={`px-4 py-2 font-bold border-l-2 ${dm ? 'text-red-400 border-slate-700 group-hover:bg-slate-800' : 'text-red-700 border-slate-200 group-hover:bg-slate-50'}`}>
+                        <div className="flex items-center justify-end">
+                          {formatMoney(row.totalExp)}
+                          {expMoM}
+                        </div>
+                      </td>
+                      <td className={`px-4 py-2 font-black ${dm ? 'text-blue-400 group-hover:bg-slate-800' : 'text-[#00509E] group-hover:bg-slate-50'}`}>{formatMoney(row.income - row.totalExp)}</td>
+                      <td className={`px-4 py-2 font-black text-center ${saveColor} ${dm ? 'group-hover:bg-slate-800' : 'group-hover:bg-slate-50'}`}>
+                        {savingsRateNum.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot className={`font-bold border-t-2 ${dm ? 'bg-slate-900 border-slate-600 text-slate-200' : 'bg-slate-800 border-slate-900 text-white'}`}>
                 <tr>
@@ -567,6 +595,9 @@ export default function DashboardView({
                   <td className="px-4 py-2.5">{formatMoney(analytics.sortedCashflow.reduce((s, r) => s + r.it, 0))}</td>
                   <td className={`px-4 py-2.5 border-l-2 ${dm ? 'text-red-400 border-slate-600' : 'text-red-300 border-slate-700'}`}>{formatMoney(analytics.totalExpense)}</td>
                   <td className={`px-4 py-2.5 ${dm ? 'text-blue-400' : 'text-blue-300'}`}>{formatMoney(analytics.netCashflow)}</td>
+                  <td className={`px-4 py-2.5 text-center ${analytics.savingsRate < 0 ? (dm ? 'text-red-400' : 'text-red-400') : (dm ? 'text-emerald-400' : 'text-emerald-300')}`}>
+                    {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
+                  </td>
                 </tr>
               </tfoot>
             </table>

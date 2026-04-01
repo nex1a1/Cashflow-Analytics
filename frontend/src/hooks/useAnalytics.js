@@ -1,14 +1,14 @@
 // src/hooks/useAnalytics.js
 import { useMemo } from 'react';
 import { isDateInFilter, generateDatesForPeriod, parseDateStrToObj } from '../utils/dateHelpers';
-import { getThaiMonth, hexToRgb } from '../utils/formatters';
+import { getThaiMonth, hexToRgb, formatMoney } from '../utils/formatters';
 
 export default function useAnalytics({
   transactions,
   categories,
   filterPeriod,
   hideFixedExpenses,
-  dashboardCategory = 'ALL',
+  dashboardCategory = 'ALL', // จะถูกจัดการให้เป็น Array ด้านใน
   chartGroupBy = 'monthly',
   topXLimit = 7,
   dayTypes,
@@ -80,27 +80,34 @@ export default function useAnalytics({
       return true;
     });
 
-    let catMap = {}, dayMap = {}, monthGroupMap = {};
+    let catMap = {};
+    let dailyAllMap = {}, monthlyAllMap = {};
+    let dailyCatMap = {}, monthlyCatMap = {};
     
-    // 1. วงแหวน (CatMap) เอาข้อมูลทั้งหมด (chartTx)
+    // เตรียมข้อมูล Array ของหมวดหมู่ที่ถูกเลือกมาวาดกราฟ
+    const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+
     chartTx.forEach(item => {
       if (!item.date) return;
       const amt = parseFloat(item.amount) || 0;
-      catMap[item.category] = (catMap[item.category] || 0) + amt;
-    });
-
-    // 2. กราฟเทรนด์และ Top7 (TrendTx) จะถูกกรองตามหมวดหมู่ที่เลือก
-    const trendTx = dashboardCategory === 'ALL' 
-        ? chartTx 
-        : chartTx.filter(t => t.category === dashboardCategory);
-
-    trendTx.forEach(item => {
-      if (!item.date) return;
-      const amt = parseFloat(item.amount) || 0;
-      dayMap[item.date] = (dayMap[item.date] || 0) + amt;
       const parts = item.date.split('/');
-      if (parts.length === 3)
-        monthGroupMap[`${parts[2]}-${parts[1]}`] = (monthGroupMap[`${parts[2]}-${parts[1]}`] || 0) + amt;
+      const ym = parts.length === 3 ? `${parts[2]}-${parts[1]}` : null;
+
+      // สำหรับวงแหวน (CatMap)
+      catMap[item.category] = (catMap[item.category] || 0) + amt;
+
+      // ข้อมูลผลรวมรายวัน/เดือน สำหรับกราฟ (เส้น ALL)
+      dailyAllMap[item.date] = (dailyAllMap[item.date] || 0) + amt;
+      if (ym) monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
+
+      // ข้อมูลแยกรายหมวดหมู่ (สำหรับเส้น Multi-line)
+      if (!dailyCatMap[item.category]) dailyCatMap[item.category] = {};
+      dailyCatMap[item.category][item.date] = (dailyCatMap[item.category][item.date] || 0) + amt;
+
+      if (ym) {
+        if (!monthlyCatMap[item.category]) monthlyCatMap[item.category] = {};
+        monthlyCatMap[item.category][ym] = (monthlyCatMap[item.category][ym] || 0) + amt;
+      }
     });
 
     const chartTotal = chartTx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -112,9 +119,8 @@ export default function useAnalytics({
         avgPerMonth: c[1] / numMonths,
       }));
 
-    const uniqueDays = Object.keys(dayMap).length || 1;
     const datesInPeriodForAvg = generateDatesForPeriod(filterPeriod, transactions);
-    const periodDays = datesInPeriodForAvg.length || uniqueDays;
+    const periodDays = datesInPeriodForAvg.length || 1;
     const dailyAvg = totalExpense / periodDays;
 
     const foodDailyAvg = foodTotal / periodDays;
@@ -137,13 +143,10 @@ export default function useAnalytics({
     };
 
     // --- Main Chart ---
-    let mainChartData = null, mainChartType = 'bar';
+    let mainChartData = null, mainChartType = 'line';
     const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
-    const sortedCashflow = Object.values(cashflowMap)
-      .sort((a, b) => a.monthStr.localeCompare(b.monthStr));
+    const sortedCashflow = Object.values(cashflowMap).sort((a, b) => a.monthStr.localeCompare(b.monthStr));
     const sparklineIncome = [], sparklineExpense = [], sparklineNet = [];
-
-    // ดึงลิสต์วันที่ทั้งหมดในช่วงที่เลือกมาเตรียมไว้
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
 
     if (!isSingleMonthView) {
@@ -162,62 +165,116 @@ export default function useAnalytics({
     }
 
     const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
+    const sortedMonthsKeys = Object.keys(cashflowMap).sort();
+    
+    // แกน X สำหรับกราฟ
+    const xLabels = showMonthly 
+      ? sortedMonthsKeys.map(m => getThaiMonth(m))
+      : isSingleMonthView 
+        ? datesInPeriod.map(d => `วันที่ ${d.split('/')[0]}`)
+        : datesInPeriod.map(d => `${d.split('/')[0]}/${d.split('/')[1]}`);
 
-    if (showMonthly) {
-      const sortedMonths = Object.keys(cashflowMap).sort();
-      if (!hideFixedExpenses && dashboardCategory === 'ALL') {
-        mainChartType = 'combo';
-        mainChartData = {
-          labels: sortedMonths.map(m => getThaiMonth(m)),
-          datasets: [
-            { type: 'line', label: 'Cashflow', data: sortedMonths.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#00509E', backgroundColor: '#00509E', borderWidth: 3, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
-            { type: 'bar', label: 'รายรับ', data: sortedMonths.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderRadius: 4 },
-            { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonths.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderRadius: 4 },
-          ],
-        };
-      } else {
-        mainChartType = 'line';
-        const catColor = dashboardCategory === 'ALL' ? '#D81A21' : (categories.find(c=>c.name===dashboardCategory)?.color || '#D81A21');
-        const bgColor = dashboardCategory === 'ALL' ? 'rgba(216,26,33,0.1)' : `rgba(${hexToRgb(catColor)}, 0.1)`;
-        mainChartData = {
-          labels: sortedMonths.map(m => getThaiMonth(m)),
-          datasets: [{ 
-              label: dashboardCategory === 'ALL' ? (hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : 'รายจ่ายรวม (บาท)') : `รายจ่ายหมวด ${dashboardCategory} (บาท)`, 
-              data: sortedMonths.map(m => monthGroupMap[m] || 0), 
-              borderColor: catColor,
-              backgroundColor: bgColor,
-              borderWidth: 2, fill: true, tension: 0.3, pointRadius: 4,
-              pointBackgroundColor: catColor,
-          }],
-        };
-      }
-    } else {
-      mainChartType = 'line';
-      const dailyData = datesInPeriod.map(d => dayMap[d] || 0);
+    const isOnlyAll = activeCats.length === 1 && activeCats[0] === 'ALL';
 
-      const catColor = dashboardCategory === 'ALL' ? (hideFixedExpenses ? '#D81A21' : '#EF4444') : (categories.find(c=>c.name===dashboardCategory)?.color || '#EF4444');
-      const bgColor = dashboardCategory === 'ALL' ? (hideFixedExpenses ? 'rgba(216,26,33,0.1)' : 'rgba(239,68,68,0.1)') : `rgba(${hexToRgb(catColor)}, 0.1)`;
+    if (showMonthly && isOnlyAll && !hideFixedExpenses) {
+      mainChartType = 'combo';
+      mainChartData = {
+        labels: xLabels,
+        datasets: [
+          { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#00509E', backgroundColor: '#00509E', borderWidth: 3, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+          { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderRadius: 4 },
+          { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderRadius: 4 },
+        ],
+      };
+    } else if (!showMonthly && isOnlyAll) {
+      // มุมมองรายวัน (Bar + MTD Average + เส้นค่าเฉลี่ยรวม)
+      mainChartType = 'combo';
+      
+      // คำนวณ MTD (Month-to-Date) Average
+      let runningSum = 0;
+      const mtdAvgData = datesInPeriod.map((d, index) => {
+          runningSum += (dailyAllMap[d] || 0);
+          return runningSum / (index + 1); // หารด้วยจำนวนวันที่ผ่านมาตั้งแต่ต้นเดือน
+      });
 
-      const xLabels = isSingleMonthView 
-          ? datesInPeriod.map(d => `วันที่ ${d.split('/')[0]}`)
-          : datesInPeriod.map(d => `${d.split('/')[0]}/${d.split('/')[1]}`);
+      const currentTotal = datesInPeriod.reduce((sum, d) => sum + (dailyAllMap[d] || 0), 0);
+      const currentDailyAvg = datesInPeriod.length > 0 ? currentTotal / datesInPeriod.length : 0;
 
       mainChartData = {
         labels: xLabels,
-        datasets: [{
-          label: dashboardCategory === 'ALL' ? (hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : 'ยอดใช้จ่ายรายวัน (บาท)') : `ยอดใช้จ่ายหมวด ${dashboardCategory} (บาท)`,
-          data: dailyData,
-          borderColor: catColor,
-          backgroundColor: bgColor,
-          borderWidth: 2, fill: true, tension: 0.3, 
-          pointRadius: isSingleMonthView ? 3 : 0, 
-          pointHitRadius: 10,
-          pointBackgroundColor: catColor,
-        }],
+        datasets: [
+          {
+            type: 'line',
+            label: 'เฉลี่ยสะสม (MTD)',
+            data: mtdAvgData,
+            borderColor: '#F59E0B',
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            order: 1
+          },
+          {
+            type: 'line',
+            label: `เฉลี่ยทั้งเดือน ${formatMoney(currentDailyAvg)}/วัน`,
+            data: datesInPeriod.map(() => currentDailyAvg),
+            borderColor: isDarkMode ? '#94a3b8' : '#64748b',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            pointHitRadius: 0,
+            order: 2
+          },
+          {
+            type: 'bar',
+            label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : 'รายจ่ายจริง',
+            data: datesInPeriod.map(d => dailyAllMap[d] || 0),
+            backgroundColor: hideFixedExpenses ? (isDarkMode ? 'rgba(216,26,33,0.6)' : 'rgba(216,26,33,0.4)') : (isDarkMode ? 'rgba(239,68,68,0.6)' : 'rgba(239,68,68,0.4)'),
+            borderRadius: 4,
+            order: 3
+          }
+        ]
       };
+    } else {
+      mainChartType = 'line';
+      const datasets = [];
+
+      activeCats.forEach(catName => {
+        if (catName === 'ALL') {
+          datasets.push({
+            label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)',
+            data: showMonthly 
+                ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0)
+                : datesInPeriod.map(d => dailyAllMap[d] || 0),
+            borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444',
+            backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : 'rgba(239,68,68,0.1)',
+            borderWidth: activeCats.length > 1 ? 3 : 2,
+            borderDash: activeCats.length > 1 ? [5, 5] : [],
+            fill: activeCats.length === 1,
+            tension: 0.3, pointRadius: isSingleMonthView ? 3 : 0, pointHitRadius: 10,
+          });
+        } else {
+          const catObj = categories.find(c => c.name === catName) || {};
+          const catColor = catObj.color || '#64748B';
+          const rgb = hexToRgb(catColor);
+          datasets.push({
+            label: catName, 
+            data: showMonthly
+                ? sortedMonthsKeys.map(m => monthlyCatMap[catName]?.[m] || 0)
+                : datesInPeriod.map(d => dailyCatMap[catName]?.[d] || 0),
+            borderColor: catColor,
+            backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent',
+            borderWidth: 2,
+            fill: activeCats.length === 1,
+            tension: 0.3, pointRadius: isSingleMonthView || showMonthly ? 3 : 0, pointHitRadius: 10,
+          });
+        }
+      });
+      mainChartData = { labels: xLabels, datasets };
     }
 
-    // --- Day Type Counts ---
     const dayTypeCounts = {};
     dayTypeConfig.forEach(dt => { dayTypeCounts[dt.id] = 0; });
     datesInPeriod.forEach(dateStr => {
@@ -236,8 +293,8 @@ export default function useAnalytics({
     return {
       totalExpense, totalIncome, netCashflow, savingsRate, chartTotal, numMonths,
       sortedCats,
-      topTransactions: [...trendTx].sort((a, b) => b.amount - a.amount).slice(0, topXLimit),
-      dailyAvg, uniqueDays,
+      topTransactions: [...chartTx].sort((a, b) => b.amount - a.amount).slice(0, topXLimit),
+      dailyAvg, uniqueDays: datesInPeriod.length,
       catChartData, mainChartData, mainChartType,
       foodTotal, foodDailyAvg, foodPercentage,
       rentTotal, rentPercentage,
