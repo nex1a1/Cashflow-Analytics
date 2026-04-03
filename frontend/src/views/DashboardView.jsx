@@ -29,26 +29,39 @@ export default function DashboardView({
   const [activityTooltip, setActivityTooltip] = useState(null);
   const [showCatMenu, setShowCatMenu] = useState(false); 
   
-  // 1. เพิ่ม State สำหรับเปิด/ปิด เส้นเทรนด์ MTD
-  const [showTrendLines, setShowTrendLines] = useState(true);
+  // ปิด MTD เป็น Default และเพิ่ม State สำหรับตั้งค่าเส้นโค้ง/เส้นตรง (Default โค้ง)
+  const [showTrendLines, setShowTrendLines] = useState(false);
+  const [isSmoothLine, setIsSmoothLine] = useState(true);
 
   const datesInPeriod = analytics.datesInPeriod || [];
   const periodDays = Math.max(1, datesInPeriod.length);
   const avgIncome = analytics.totalIncome / periodDays;
   const avgExpense = analytics.totalExpense / periodDays;
 
-  // 2. กรอง Dataset ก่อนนำไปวาดกราฟ (ถ้าปิด toggle ให้ซ่อนเส้น line)
+  // กรอง Dataset และปรับความโค้ง (Tension) ตาม State
   const displayChartData = useMemo(() => {
     if (!analytics.mainChartData) return null;
+    
+    let filteredDatasets = [...analytics.mainChartData.datasets];
+
+    // กรองเส้นเทรนด์ออกถ้าไม่ได้เปิด (ซ่อน MTD)
     if (analytics.mainChartType === 'combo' && !showTrendLines) {
-      return {
-        ...analytics.mainChartData,
-        // กรองเอาเฉพาะกราฟแท่ง (bar) ทิ้งเส้นเทรนด์ (line) ไป
-        datasets: analytics.mainChartData.datasets.filter(ds => ds.type !== 'line')
-      };
+      filteredDatasets = filteredDatasets.filter(ds => ds.type !== 'line');
     }
-    return analytics.mainChartData;
-  }, [analytics.mainChartData, analytics.mainChartType, showTrendLines]);
+
+    // ปรับความโค้งของเส้น (0 = เส้นตรง, 0.4 = เส้นโค้ง)
+    const processedDatasets = filteredDatasets.map(ds => {
+      if (ds.type === 'line' || analytics.mainChartType === 'line') {
+        return { ...ds, tension: isSmoothLine ? 0.4 : 0 };
+      }
+      return ds;
+    });
+
+    return {
+      ...analytics.mainChartData,
+      datasets: processedDatasets
+    };
+  }, [analytics.mainChartData, analytics.mainChartType, showTrendLines, isSmoothLine]);
 
   const handleTooltipEnter = (e, displayDate, typeConfig) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -241,6 +254,28 @@ export default function DashboardView({
                 </div>
               )}
 
+              {/* --- ปุ่มเลือกเส้นตรง / เส้นโค้ง พร้อมไอคอน --- */}
+              <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                <button 
+                  onClick={() => setIsSmoothLine(false)} 
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${!isSmoothLine ? 'opacity-100' : 'opacity-60'}`}>
+                    <polyline points="3 17 9 10 14 15 21 6" />
+                  </svg>
+                  เส้นตรง
+                </button>
+                <button 
+                  onClick={() => setIsSmoothLine(true)} 
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${isSmoothLine ? 'opacity-100' : 'opacity-60'}`}>
+                    <path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" />
+                  </svg>
+                  เส้นโค้ง
+                </button>
+              </div>
+
               {/* --- ปุ่มตัวกรองแบบใหม่ --- */}
               <div className="relative">
                 <button
@@ -255,28 +290,28 @@ export default function DashboardView({
                 {showCatMenu && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setShowCatMenu(false)} />
-                    <div className={`absolute right-0 top-full mt-2 w-[340px] rounded-xl shadow-2xl border z-40 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
+                    <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
                       
-                      <div className={`p-4 border-b flex flex-col gap-4 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                         
-                        {/* 1. Toggle: แสดงเส้นเทรนด์ MTD (ใหม่) */}
+                        {/* 1. Toggle: แสดงเส้นเทรนด์ MTD */}
                         <label className="flex items-center justify-between cursor-pointer group">
-                          <div className="flex flex-col">
+                          <div className="flex flex-col pr-3">
                             <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
-                            <span className={`text-[10px] ${dm ? 'text-slate-400' : 'text-slate-500'}`}>วาดเส้นค่าเฉลี่ยสะสมและค่าเฉลี่ยรายเดือน</span>
+                            <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูแนวโน้มค่าเฉลี่ยสะสมว่าประหยัดขึ้น หรือใช้เยอะขึ้นเมื่อเทียบกับต้นเดือน</span>
                           </div>
                           <div className="relative flex items-center shrink-0">
                             <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} />
-                            <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? (dm ? 'bg-amber-500' : 'bg-amber-500') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                            <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
                             <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
                           </div>
                         </label>
 
                         {/* 2. Toggle: ซ่อนรายจ่ายคงที่ */}
                         <label className="flex items-center justify-between cursor-pointer group">
-                          <div className="flex flex-col">
+                          <div className="flex flex-col pr-3">
                             <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed Expenses)</span>
-                            <span className={`text-[10px] ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟเส้นและวงแหวน</span>
+                            <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟเส้นและวงแหวน</span>
                           </div>
                           <div className="relative flex items-center shrink-0">
                             <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
@@ -287,7 +322,7 @@ export default function DashboardView({
 
                       </div>
                       
-                      <div className="p-4 flex flex-col gap-3">
+                      <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ (Multi-line)</span>
                         
                         {(() => {
@@ -356,7 +391,7 @@ export default function DashboardView({
             </div>
           </div>
 
-          <div className="relative w-full flex-1 min-h-[300px]">
+          <div className="relative w-full flex-1 min-h-[350px]">
             <div className="absolute inset-0">
               {(() => {
                 const hasMultipleLines = displayChartData?.datasets?.length > 1;
@@ -370,16 +405,6 @@ export default function DashboardView({
               })()}
             </div>
           </div>
-
-          {/* Info Box แสดงวิธีอ่านกราฟ MTD Average */}
-          {showTrendLines && analytics.mainChartData?.datasets?.some(ds => ds.label && ds.label.includes('เฉลี่ยสะสม')) && (
-            <div className={`mt-4 p-3 rounded-lg text-xs flex gap-2 items-start animate-in fade-in duration-500 ${dm ? 'bg-slate-900/50 text-slate-400' : 'bg-slate-50 text-slate-600'}`}>
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-              <p>
-                <strong>วิธีอ่านกราฟ:</strong> เส้นประสีเทาคือ <span className="text-slate-500">ค่าเฉลี่ยสรุปของเดือน</span> ส่วนเส้นโค้งสีเหลืองคือ <span className="text-amber-500 font-bold">ค่าเฉลี่ยสะสม (MTD Average)</span> จะแสดงให้เห็นว่าตั้งแต่ต้นเดือนมาจนถึงวันนี้ พฤติกรรมการใช้จ่ายเฉลี่ยรายวันของเรามีแนวโน้มลดลง (ประหยัดขึ้น) หรือเพิ่มขึ้น 
-              </p>
-            </div>
-          )}
         </div>
 
         {/* ── Top X Transactions ── */}
@@ -428,12 +453,22 @@ export default function DashboardView({
               ไทม์ไลน์กิจกรรม
             </h3>
             <div className="flex items-center gap-3 flex-wrap">
-              {dayTypeConfig.map(dt => (
-                <div key={dt.id} className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: dt.color }} />
-                  <span className={muted}>{dt.label}</span>
-                </div>
-              ))}
+              {/* แสดงจำนวนวันของแต่ละประเภท */}
+              {dayTypeConfig.map(dt => {
+                const count = analytics.dayTypeCounts[dt.id] || 0;
+                return (
+                  <div key={dt.id} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: dt.color }} />
+                    <span className={muted}>
+                      {dt.label} <span className="opacity-75">({count})</span>
+                    </span>
+                  </div>
+                );
+              })}
+              {/* เส้นกั้นและสรุปจำนวนวันรวมทั้งหมด */}
+              <div className={`ml-1 pl-3 border-l ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+                <span className={muted}>รวม {datesInPeriod.length} วัน</span>
+              </div>
             </div>
           </div>
           <div className={`border rounded-sm ${dm ? 'bg-slate-900/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
@@ -628,7 +663,7 @@ DashboardView.propTypes = {
   getFilterLabel:       PropTypes.func.isRequired,
   hideFixedExpenses:    PropTypes.bool.isRequired,
   setHideFixedExpenses: PropTypes.func.isRequired,
-  dashboardCategory:    PropTypes.string.isRequired,
+  dashboardCategory:    PropTypes.oneOfType([PropTypes.string, PropTypes.array]).isRequired,
   setDashboardCategory: PropTypes.func.isRequired,
   chartGroupBy:         PropTypes.string.isRequired,
   setChartGroupBy:      PropTypes.func.isRequired,

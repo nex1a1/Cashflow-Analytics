@@ -1,4 +1,4 @@
-// src/components/CalendarView.jsx
+// src/views/CalendarView.jsx
 import { useMemo, useState } from 'react';
 import DayDetailModal from '../components/DayDetailModal.jsx';
 import {
@@ -12,7 +12,7 @@ export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
   handleOpenAddModal, categories, isDarkMode, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
-  handleDeleteTransaction, onSaveTransaction,paymentMethods
+  handleDeleteTransaction, onSaveTransaction, paymentMethods
 }) {
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -97,15 +97,26 @@ export default function CalendarView({
   const gapColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-100';
 
   if (isReadOnlyView) {
+    const latestMonth = rawAvailableMonths && rawAvailableMonths.length > 0 ? rawAvailableMonths[0] : null;
     return (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
-        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
-          <CalendarDays className={`w-14 h-14 mb-3 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>ไม่สามารถแสดงปฏิทินได้</p>
-          <p className={`text-sm px-6 text-center ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            กรุณาเปลี่ยนจาก <strong>{getFilterLabel(filterPeriod)}</strong> เป็น{' '}
-            <strong className={isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}>รายเดือน</strong>
+      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 max-w-screen-2xl mx-auto w-full">
+        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
+          <div className={`p-4 rounded-sm mb-4 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+            <CalendarDays className={`w-12 h-12 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
+          </div>
+          <p className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>โหมดปฏิทินรองรับเฉพาะรายเดือน</p>
+          <p className={`text-sm px-6 text-center max-w-md leading-relaxed mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            ตอนนี้คุณกำลังดูข้อมูลแบบ <strong>{getFilterLabel(filterPeriod)}</strong><br/>
+            ปฏิทินจะแสดงผลได้ดีที่สุดเมื่อดูเป็นรายเดือนครับ
           </p>
+          {latestMonth && (
+            <button 
+              onClick={() => setFilterPeriod(latestMonth)}
+              className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}
+            >
+              สลับไปดูเดือนล่าสุด ({getFilterLabel(latestMonth)})
+            </button>
+          )}
         </div>
       </div>
     );
@@ -113,7 +124,6 @@ export default function CalendarView({
 
   return (
     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
-
       {/* Header */}
       <div className={`${surface} rounded-sm border ${border} shadow-sm p-3 md:p-4`}>
         <div className="flex items-center justify-between gap-4">

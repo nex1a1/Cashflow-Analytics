@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   CalendarDays, ChevronLeft, ChevronRight,
   Filter, Inbox, Pencil, PlusCircle, Search, Trash2, X,
-  PieChart, Wallet, Coins
+  PieChart, Wallet, Coins, FileSpreadsheet
 } from 'lucide-react';
 import EditableInput from '../components/ui/EditableInput';
 import { formatMoney, hexToRgb } from '../utils/formatters';
@@ -17,7 +17,8 @@ export default function LedgerView({
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
-  availableDatesInPeriod, isDarkMode
+  availableDatesInPeriod, isDarkMode,
+  setFilterPeriod, rawAvailableMonths // ⭐️ รับ Props 2 ตัวนี้เพิ่มเข้ามา
 }) {
   const dm = isDarkMode;
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,14 +58,26 @@ export default function LedgerView({
   const selCls  = `w-full border rounded-sm px-3 py-2 text-sm outline-none focus:ring-1 font-medium transition-all cursor-pointer appearance-none ${dm ? 'bg-slate-900 border-slate-700 text-slate-300 focus:border-blue-500' : 'bg-slate-50 border-slate-300 text-slate-700 focus:border-[#00509E] focus:bg-white'}`;
 
   if (isReadOnlyView) {
+    const latestMonth = rawAvailableMonths && rawAvailableMonths.length > 0 ? rawAvailableMonths[0] : null;
     return (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
-        <div className={`flex flex-col items-center justify-center text-slate-500 py-32 rounded-sm border-2 border-dashed ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <CalendarDays className={`w-16 h-16 mb-4 ${dm ? 'text-slate-600' : 'text-slate-300'}`} />
-          <p className={`text-xl font-bold mb-3 ${dm ? 'text-slate-200' : 'text-slate-700'}`}>โหมดภาพรวมกว้าง (อ่านอย่างเดียว)</p>
-          <p className={`text-sm px-6 py-2.5 rounded-sm border text-center ${dm ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
-            กรุณาเปลี่ยนจาก <strong>{getFilterLabel(filterPeriod)}</strong> เป็น <strong className={`font-black ${dm ? 'text-blue-400' : 'text-[#00509E]'}`}>รายเดือน</strong>
+      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 max-w-screen-2xl mx-auto w-full">
+        <div className={`flex flex-col items-center justify-center py-24 rounded-sm border-2 border-dashed transition-colors shadow-sm ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <div className={`p-4 rounded-sm mb-4 ${dm ? 'bg-slate-800' : 'bg-slate-50'}`}>
+            <FileSpreadsheet className={`w-12 h-12 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
+          </div>
+          <p className={`text-xl font-bold mb-2 ${dm ? 'text-slate-200' : 'text-slate-700'}`}>รายการเดินบัญชีรองรับเฉพาะรายเดือน</p>
+          <p className={`text-sm px-6 text-center max-w-md leading-relaxed mb-6 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            ตอนนี้คุณกำลังดูข้อมูลแบบ <strong>{getFilterLabel(filterPeriod)}</strong><br/>
+            หากต้องการแก้ไขข้อมูลหรือดูรายการเดินบัญชีแบบละเอียด กรุณาเลือกช่วงเวลาเป็น "รายเดือน"
           </p>
+          {latestMonth && setFilterPeriod && (
+            <button 
+              onClick={() => setFilterPeriod(latestMonth)}
+              className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${dm ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}
+            >
+              สลับไปดูเดือนล่าสุด ({getFilterLabel(latestMonth)})
+            </button>
+          )}
         </div>
       </div>
     );

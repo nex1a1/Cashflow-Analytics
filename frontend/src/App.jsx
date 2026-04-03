@@ -65,7 +65,7 @@ export default function App() {
   });
 
   const [hideFixedExpenses, setHideFixedExpenses] = useState(false);
-  const [dashboardCategory, setDashboardCategory] = useState('ALL');
+  const [dashboardCategory, setDashboardCategory] = useState(['ALL']);
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
 
@@ -239,6 +239,7 @@ export default function App() {
           {activeTab === 'ledger' && (
             <LedgerView
               displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView}
+              setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
               getFilterLabel={getFilterLabel} filterPeriod={filterPeriod}
               searchQuery={searchQuery} setSearchQuery={setSearchQuery}
               handleOpenAddModal={handleOpenAddModal}
