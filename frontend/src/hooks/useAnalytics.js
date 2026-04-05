@@ -100,7 +100,7 @@ export default function useAnalytics({
       dailyAllMap[item.date] = (dailyAllMap[item.date] || 0) + amt;
       if (ym) monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
 
-      // ข้อมูลแยกรายหมวดหมู่ (สำหรับเส้น Multi-line)
+      // ข้อมูลแยกรายหมวดหมู่ (สำหรับเส้น Multi-line และ Stacked Bar)
       if (!dailyCatMap[item.category]) dailyCatMap[item.category] = {};
       dailyCatMap[item.category][item.date] = (dailyCatMap[item.category][item.date] || 0) + amt;
 
@@ -181,9 +181,9 @@ export default function useAnalytics({
       mainChartData = {
         labels: xLabels,
         datasets: [
-          { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#00509E', backgroundColor: '#00509E', borderWidth: 3, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
-          { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderRadius: 4 },
-          { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderRadius: 4 },
+          { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#00509E', backgroundColor: '#00509E', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+          { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 4 },
+          { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 4 },
         ],
       };
     } else if (!showMonthly && isOnlyAll) {
@@ -209,7 +209,7 @@ export default function useAnalytics({
             data: mtdAvgData,
             borderColor: '#F59E0B',
             backgroundColor: 'transparent',
-            borderWidth: 3,
+            borderWidth: 4,
             tension: 0.4,
             pointRadius: 0,
             pointHitRadius: 10,
@@ -232,6 +232,8 @@ export default function useAnalytics({
             label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : 'รายจ่ายจริง',
             data: datesInPeriod.map(d => dailyAllMap[d] || 0),
             backgroundColor: hideFixedExpenses ? (isDarkMode ? 'rgba(216,26,33,0.6)' : 'rgba(216,26,33,0.4)') : (isDarkMode ? 'rgba(239,68,68,0.6)' : 'rgba(239,68,68,0.4)'),
+            borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444',
+            borderWidth: 2,
             borderRadius: 4,
             order: 3
           }
@@ -304,6 +306,7 @@ export default function useAnalytics({
       sparklineIncome, sparklineExpense, sparklineNet,
       dayTypeCounts, datesInPeriod,
       weekendTotal, weekdayTotal, dayOfWeekMap,
+      dailyCatMap, monthlyCatMap, dailyAllMap, monthlyAllMap, sortedMonthsKeys
     };
 }, [transactions, filterPeriod, categories, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode]);
 
