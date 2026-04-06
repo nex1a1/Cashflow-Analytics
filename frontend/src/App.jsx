@@ -6,7 +6,6 @@
 //   - ไม่มี business logic / API call อยู่ในนี้โดยตรง
 // ─────────────────────────────────────────────────────────────
 import React, { useState, useEffect, useMemo } from 'react';
-import { CheckCircle } from 'lucide-react';
 import {
   CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
@@ -21,11 +20,12 @@ import useTransactionData from './hooks/useTransactionData';
 import useImportCSV from './hooks/useImportCSV';
 import useFilters from './hooks/useFilters';
 import AppHeader from './components/AppHeader';
+import AppToast from './components/AppToast';
 import './styles/darkMode.css';
 import SettingsView from './views/SettingsView';
 import CalendarView from './views/CalendarView';
 import LedgerView from './views/LedgerView';
-import DashboardView from './views/DashboardView';
+import DashboardView from './views/Dashboard/index';
 import BatchAddModal from './components/BatchAddModal';
 import ExportModal from './components/ExportModal';
 import ImportGuideModal from './components/ImportGuideModal';
@@ -69,8 +69,20 @@ export default function App() {
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
 
+  // ⭐️ แก้ปัญหา Dark Mode ขอบจอขาว โดยยัดลงระดับ Body 
   useEffect(() => {
     localStorage.setItem('expense_dark_mode', isDarkMode);
+    
+    if (isDarkMode) {
+      document.body.style.backgroundColor = '#020617'; // bg-slate-950
+      document.body.style.color = '#f1f5f9';
+      document.documentElement.classList.add('dark');
+    } else {
+      document.body.style.backgroundColor = '#f1f5f9'; // bg-slate-100
+      document.body.style.color = '#1e293b';
+      document.documentElement.classList.remove('dark');
+    }
+
     defaults.color = isDarkMode ? '#94a3b8' : '#475569';
     defaults.scale.grid.color = isDarkMode ? '#334155' : '#e2e8f0';
   }, [isDarkMode]);
@@ -185,7 +197,7 @@ export default function App() {
 
   return (
     <div
-      className={`text-slate-800 bg-slate-100 min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`}
+      className={`min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`}
       style={{ fontFamily: 'Tahoma, sans-serif' }}
     >
       <div className={`max-w-[98%] 2xl:max-w-screen-2xl w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl pb-6 flex-grow flex flex-col overflow-hidden relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
@@ -295,10 +307,11 @@ export default function App() {
         getFilterLabel={getFilterLabel} initialPeriod={filterPeriod}
       />
 
-      <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3 z-50 ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'} ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-slate-800'}`}>
-        <CheckCircle className="w-6 h-6 text-green-400" />
-        <span className="font-medium text-base">ทำรายการสำเร็จ!</span>
-      </div>
+      {/* ⭐️ เปลี่ยนมาใช้ AppToast ของแท้ที่เราแก้มากับมือ */}
+      <AppToast 
+        toast={{ visible: showToast, message: 'ทำรายการสำเร็จ!', type: 'success' }} 
+        isDarkMode={isDarkMode} 
+      />
     </div>
   );
 }

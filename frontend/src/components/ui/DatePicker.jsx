@@ -1,13 +1,4 @@
 // src/components/ui/DatePicker.jsx
-// ─────────────────────────────────────────────────────────────
-// Custom date picker ที่ follow dark/light mode ของเว็บ
-// แทนที่ native <input type="date"> ที่ควบคุม theme ไม่ได้
-//
-// Props:
-//   value      — string "YYYY-MM-DD"
-//   onChange   — (value: "YYYY-MM-DD") => void
-//   isDarkMode — boolean
-// ─────────────────────────────────────────────────────────────
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
@@ -36,39 +27,34 @@ function formatDisplay(v) {
   return `${d} ${THAI_MONTHS[m - 1]} ${y}`;
 }
 
-export default function DatePicker({ value, onChange, isDarkMode }) {
+export default function DatePicker({ value, onChange, isDarkMode, required }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
   const [viewDate, setViewDate] = useState(() => parseValue(value));
-  const ref = useRef(null);
+  
+  // 1. ใช้ Ref ตัวเดียวคลุมทั้ง Input และ Dropdown เพื่อแก้ปัญหา ID ซ้ำกัน
+  const containerRef = useRef(null);
 
-  const handleOpen = () => {
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      const dropW = 288; // w-72
-      const dropH = 320;
-      let left = rect.left;
-      let top = rect.bottom + 6;
-      if (left + dropW > window.innerWidth - 8) left = rect.right - dropW;
-      if (top + dropH > window.innerHeight - 8) top = rect.top - dropH - 6;
-      setPos({ top, left });
-    }
-    setOpen(v => !v);
-  };
   useEffect(() => {
     if (value) setViewDate(parseValue(value));
   }, [value]);
 
-  // ปิด picker เมื่อคลิกนอก
+  // 2. จัดการคลิกนอกกรอบโดยใช้ containerRef (สะอาดและปลอดภัยกว่า)
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (!ref.current?.contains(e.target) && !document.getElementById('datepicker-portal')?.contains(e.target)) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // 3. เพิ่มการปิดด้วย ESC
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape' && open) setOpen(false); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [open]);
 
   const y = viewDate.getFullYear();
@@ -108,7 +94,7 @@ export default function DatePicker({ value, onChange, isDarkMode }) {
     setOpen(false);
   };
 
-  // ── Styles ────────────────────────────────────────────────
+  /* ── Styles ── */
   const surface   = isDarkMode ? 'bg-slate-800' : 'bg-white';
   const border    = isDarkMode ? 'border-slate-600' : 'border-slate-300';
   const textMain  = isDarkMode ? 'text-slate-100' : 'text-slate-800';
@@ -116,44 +102,40 @@ export default function DatePicker({ value, onChange, isDarkMode }) {
   const hoverDay  = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-blue-50';
 
   return (
-    <div ref={ref} className="relative w-full">
+    // คลุมด้วย relative เพื่อเป็นจุดอ้างอิงให้ Popup
+    <div ref={containerRef} className="relative w-full">
       {/* Trigger button */}
       <button
         type="button"
-        onClick={handleOpen}
-        className={`w-full px-3 py-2.5 text-sm border rounded-lg flex items-center justify-between gap-2 font-medium transition-colors outline-none
+        onClick={() => setOpen(!open)}
+        className={`w-full px-3 py-2.5 text-sm border rounded-sm flex items-center justify-between gap-2 font-medium transition-colors outline-none
           ${isDarkMode
-            ? 'bg-slate-800 border-slate-700 text-white hover:border-blue-500 focus:border-blue-500'
-            : 'bg-slate-50 border-slate-300 text-slate-800 hover:border-[#00509E] focus:border-[#00509E]'
+            ? 'bg-slate-900 border-slate-700 text-white hover:border-blue-500 focus:border-blue-500'
+            : 'bg-white border-slate-300 text-slate-800 hover:border-[#00509E] focus:border-[#00509E]'
           }`}
       >
         <span className={value ? textMain : textMuted}>{formatDisplay(value)}</span>
         <Calendar className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
       </button>
 
-      {/* Calendar dropdown — fixed ลอยทับทุกอย่าง ไม่กระทบ layout */}
+      {/* Calendar dropdown 
+        4. เปลี่ยนจาก fixed ลอยๆ มาเป็น absolute 
+        (เกาะติดกับ input เสมอ ไม่หลุดจอตอน scroll)
+      */}
       {open && (
-        <div
-          id="datepicker-portal"
-          className={`fixed z-[9999] rounded-xl border shadow-2xl p-3 w-72 ${surface} ${border}`}
-          style={{ top: pos.top, left: pos.left }}
-        >
+        <div className={`absolute top-[calc(100%+6px)] left-0 z-[200] rounded-sm border shadow-2xl p-3 w-72 ${surface} ${border}`}>
 
           {/* Month nav */}
           <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={prevMonth}
-              className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-            >
+            <button type="button" onClick={prevMonth}
+              className={`p-1.5 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className={`text-sm font-bold ${textMain}`}>
               {THAI_MONTHS[m]} {y}
             </span>
-            <button
-              onClick={nextMonth}
-              className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-            >
+            <button type="button" onClick={nextMonth}
+              className={`p-1.5 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -161,14 +143,7 @@ export default function DatePicker({ value, onChange, isDarkMode }) {
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {DAY_LABELS.map((l, i) => (
-              <div
-                key={l}
-                className={`text-center text-[11px] font-bold py-1 ${
-                  i === 0 || i === 6
-                    ? (isDarkMode ? 'text-red-400' : 'text-red-500')
-                    : textMuted
-                }`}
-              >
+              <div key={l} className={`text-center text-[11px] font-bold py-1 ${i === 0 || i === 6 ? (isDarkMode ? 'text-red-400' : 'text-red-500') : textMuted}`}>
                 {l}
               </div>
             ))}
@@ -182,12 +157,13 @@ export default function DatePicker({ value, onChange, isDarkMode }) {
               return (
                 <button
                   key={d}
+                  type="button"
                   onClick={() => selectDay(d)}
-                  className={`h-8 w-full rounded-lg text-sm font-medium transition-all
+                  className={`h-8 w-full rounded-sm text-sm font-medium transition-all
                     ${isSelected(d)
-                      ? 'bg-[#00509E] text-white font-bold'
+                      ? 'bg-[#00509E] text-white font-bold shadow-sm'
                       : isToday(d)
-                        ? `ring-2 ring-[#00509E] ${textMain} ${hoverDay}`
+                        ? `ring-1 ring-[#00509E] ${textMain} ${hoverDay}`
                         : weekend
                           ? `${isDarkMode ? 'text-red-400' : 'text-red-500'} ${hoverDay}`
                           : `${textMain} ${hoverDay}`
@@ -202,16 +178,12 @@ export default function DatePicker({ value, onChange, isDarkMode }) {
 
           {/* Footer */}
           <div className={`flex justify-between mt-3 pt-2.5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-            <button
-              onClick={() => { onChange(''); setOpen(false); }}
-              className={`text-xs font-bold px-2 py-1 rounded transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
-            >
+            <button type="button" onClick={() => { onChange(''); setOpen(false); }}
+              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>
               ล้าง
             </button>
-            <button
-              onClick={goToday}
-              className={`text-xs font-bold px-2 py-1 rounded transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-slate-700' : 'text-[#00509E] hover:bg-blue-50'}`}
-            >
+            <button type="button" onClick={goToday}
+              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-slate-700' : 'text-[#00509E] hover:bg-blue-50'}`}>
               วันนี้
             </button>
           </div>

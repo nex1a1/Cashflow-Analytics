@@ -1,8 +1,15 @@
 // src/components/ImportGuideModal.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 export default function ImportGuideModal({ isOpen, onClose, isDarkMode }) {
+  // ดักปุ่ม ESC เพื่อปิด Modal
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape' && isOpen) onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   const dm = isDarkMode;
   const th = `px-3 py-2 text-left font-bold border-b border-r last:border-r-0 ${dm ? 'border-slate-700' : 'border-slate-200'}`;

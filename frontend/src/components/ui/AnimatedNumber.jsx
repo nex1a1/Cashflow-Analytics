@@ -1,28 +1,43 @@
 // src/components/ui/AnimatedNumber.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatMoney } from '../../utils/formatters';
 
 export default function AnimatedNumber({ value }) {
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(value);
+  const animationRef = useRef(null);
+  const displayRef = useRef(displayValue); // เก็บค่าปัจจุบันไว้เทียบ
 
   useEffect(() => {
     let startTimestamp = null;
     const duration = 800;
-    const initialValue = displayValue;
+    const initialValue = displayRef.current;
     const difference = value - initialValue;
+
+    if (difference === 0) return; // ถ้าค่าเดิม ไม่ต้อง animate
 
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       const easeProgress = 1 - Math.pow(1 - progress, 4);
-      setDisplayValue(initialValue + difference * easeProgress);
+      
+      const currentVal = initialValue + difference * easeProgress;
+      setDisplayValue(currentVal);
+      displayRef.current = currentVal;
+
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        animationRef.current = window.requestAnimationFrame(step);
       } else {
         setDisplayValue(value);
+        displayRef.current = value;
       }
     };
-    window.requestAnimationFrame(step);
+    
+    animationRef.current = window.requestAnimationFrame(step);
+
+    // 🚨 สำคัญมาก: ต้องมี Cleanup function หยุด Animation ถ้า Component ถูกปิด
+    return () => {
+      if (animationRef.current) window.cancelAnimationFrame(animationRef.current);
+    };
   }, [value]);
 
   return <span>{formatMoney(displayValue)}</span>;

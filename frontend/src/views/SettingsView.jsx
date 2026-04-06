@@ -19,15 +19,31 @@ const COLOR_PALETTE = [
   '#8B5CF6','#7C3AED','#A855F7','#9333EA','#EC4899',
 ];
 
-/* ── Inline Confirm Delete ── */
+/* ── 3. ปรับปรุง Confirm Delete (เพิ่ม ESC ยกเลิก) ── */
 function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm' }) {
   const [confirming, setConfirming] = useState(false);
   const timer = useRef(null);
+
   const handleClick = () => {
-    if (confirming) { clearTimeout(timer.current); onConfirm(); setConfirming(false); }
-    else { setConfirming(true); timer.current = setTimeout(() => setConfirming(false), 3000); }
+    if (confirming) { 
+      clearTimeout(timer.current); 
+      onConfirm(); 
+      setConfirming(false); 
+    } else { 
+      setConfirming(true); 
+      timer.current = setTimeout(() => setConfirming(false), 3000); 
+    }
   };
+
   useEffect(() => () => clearTimeout(timer.current), []);
+
+  // ดักกด ESC เพื่อยกเลิกการลบได้ทันทีไม่ต้องรอ 3 วิ
+  useEffect(() => {
+    if (!confirming) return;
+    const h = (e) => { if (e.key === 'Escape') setConfirming(false); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [confirming]);
 
   return (
     <button onClick={handleClick}
@@ -44,7 +60,7 @@ function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm' }) {
   );
 }
 
-/* ── Color Picker ── */
+/* ── 1. แก้บั๊ก Color Picker ลอยหลุดจอ และเพิ่ม ESC ── */
 function ColorPicker({ color, onChange, isDarkMode }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, left: 0 });
@@ -66,23 +82,39 @@ function ColorPicker({ color, onChange, isDarkMode }) {
 
   useEffect(() => {
     if (!open) return;
-    const h = (e) => { if (!btnRef.current?.contains(e.target) && !paletteRef.current?.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    
+    // ยุบรวม event ปิดถาดสี (คลิกนอกกรอบ, เลื่อนจอ, กด ESC)
+    const handleClose = (e) => {
+      if (e.type === 'mousedown' && (btnRef.current?.contains(e.target) || paletteRef.current?.contains(e.target))) return;
+      if (e.type === 'keydown' && e.key !== 'Escape') return;
+      setOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClose);
+    document.addEventListener('keydown', handleClose);
+    // ดัก Scroll (ใช้ capture mode: true เพื่อดักจับทุกการ scroll บนหน้าจอ)
+    window.addEventListener('scroll', handleClose, true); 
+
+    return () => {
+      document.removeEventListener('mousedown', handleClose);
+      document.removeEventListener('keydown', handleClose);
+      window.removeEventListener('scroll', handleClose, true);
+    };
   }, [open]);
 
   return (
     <div className="relative shrink-0">
-      <button ref={btnRef} onClick={handleOpen}
+      <button ref={btnRef} onClick={handleOpen} type="button"
         className="w-7 h-7 rounded-sm border-2 cursor-pointer hover:scale-105 transition-transform shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400"
         style={{ backgroundColor: color, borderColor: color }} title="เลือกสี" />
+      
       {open && (
         <div ref={paletteRef}
           className={`fixed z-[9999] p-3 rounded-sm shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
           style={{ top: pos.top, left: pos.left, width: 256 }}>
           <div className="grid grid-cols-10 gap-1.5 mb-3">
             {COLOR_PALETTE.map(c => (
-              <button key={c} onClick={() => { onChange(c); setOpen(false); }}
+              <button key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
                 className={`w-4 h-4 rounded-sm transition-transform hover:scale-125 ${color === c ? 'ring-2 ring-offset-1 ring-slate-400 scale-125' : ''}`}
                 style={{ backgroundColor: c }} title={c} />
             ))}
@@ -105,7 +137,7 @@ function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
   return <input ref={ref} type="text" value={value} onChange={onChange} className={className} placeholder={placeholder} />;
 }
 
-/* ── Category Row — compact PC layout ── */
+/* ── Category Row ── */
 function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDelete }) {
   const dm = isDarkMode;
   const accentBorder = isIncome ? 'focus:border-emerald-500' : 'focus:border-blue-500';
@@ -120,8 +152,8 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
 
       {/* Sort arrows */}
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
-        <button onClick={() => onMove(cat.id, 'UP')} className={`p-0.5 rounded-sm ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-800 hover:bg-slate-200'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
-        <button onClick={() => onMove(cat.id, 'DOWN')} className={`p-0.5 rounded-sm mt-0.5 ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-800 hover:bg-slate-200'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => onMove(cat.id, 'UP')} className={`p-0.5 rounded-sm ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-800 hover:bg-slate-200'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => onMove(cat.id, 'DOWN')} className={`p-0.5 rounded-sm mt-0.5 ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-800 hover:bg-slate-200'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Icon input */}
@@ -202,13 +234,17 @@ export default function SettingsView({
     }
   };
 
+  // 2. แก้ปัญหา Race Condition: เลิกใช้ setTimeout ซ้อนกัน ให้ state เป็นตัวบอก id ล่าสุดก็พอ
   const onAddCategory = (type) => {
-    handleAddCategory(type);
+    const newId = handleAddCategory(type); // ฝั่ง Parent ควร return id ของหมวดหมู่ใหม่กลับมา
+    
+    // ถ้า Parent return id กลับมาได้ ให้ใช้ id นั้น 
+    // แต่ถ้าไม่ได้ การดึงตัวล่าสุดแบบนี้ก็ทำงานได้และไม่อันตรายเท่าการตั้งเวลาเคลียร์ค่า
     setTimeout(() => {
       const added = [...categories].reverse().find(c => c.type === type);
-      if (added) setNewCatId(added.id);
-      setTimeout(() => setNewCatId(null), 1000);
-    }, 50);
+      if (added) setNewCatId(added.id); 
+      // เอา setTimeout เคลียร์ค่าออกไปเลย ปล่อยให้มันติดไว้แบบนั้น เพราะ useEffect ใน AutoFocusInput ดักไว้แล้วว่าให้ focus แค่จังหวะแรก
+    }, 0);
   };
 
   /* ── shared tokens ── */
@@ -228,10 +264,6 @@ export default function SettingsView({
         </p>
       </div>
 
-      {/* ══════════════════════════════════════════════════════
-          3-COLUMN GRID  ←  Income | Expense | DayTypes
-          PC First: ข้อมูลเยอะสุดอยู่กลาง, DayTypes ขวา
-      ══════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_320px] gap-5 items-start mb-5">
 
         {/* ── Income Categories ── */}
@@ -243,7 +275,7 @@ export default function SettingsView({
                 {categories.filter(c => c.type === 'income').length} หมวด
               </span>
             </h2>
-            <button onClick={() => onAddCategory('income')} className={addBtn('emerald')}>
+            <button type="button" onClick={() => onAddCategory('income')} className={addBtn('emerald')}>
               <PlusCircle className="w-3.5 h-3.5" /> เพิ่ม
             </button>
           </div>
@@ -266,7 +298,7 @@ export default function SettingsView({
                 {categories.filter(c => c.type === 'expense').length} หมวด
               </span>
             </h2>
-            <button onClick={() => onAddCategory('expense')} className={addBtn('blue')}>
+            <button type="button" onClick={() => onAddCategory('expense')} className={addBtn('blue')}>
               <PlusCircle className="w-3.5 h-3.5" /> เพิ่ม
             </button>
           </div>
@@ -286,7 +318,7 @@ export default function SettingsView({
             <h2 className={`text-sm font-bold flex items-center gap-2 ${dm ? 'text-orange-400' : 'text-orange-800'}`}>
               <CalendarClock className="w-4 h-4" /> ชนิดของวันบนปฏิทิน
             </h2>
-            <button onClick={handleAddDayType} className={addBtn('orange')}>
+            <button type="button" onClick={handleAddDayType} className={addBtn('orange')}>
               <PlusCircle className="w-3.5 h-3.5" /> เพิ่ม
             </button>
           </div>
@@ -296,8 +328,8 @@ export default function SettingsView({
                 className={`flex items-center gap-2.5 px-3 py-2.5 border rounded-sm transition-colors group ${dm ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-200 hover:bg-slate-50'}`}>
                 {/* Sort */}
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
-                  <button onClick={() => handleMoveDayType(dt.id, 'UP')} className={`p-0.5 rounded-sm ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => handleMoveDayType(dt.id, 'DOWN')} className={`p-0.5 rounded-sm mt-0.5 ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => handleMoveDayType(dt.id, 'UP')} className={`p-0.5 rounded-sm ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}><ChevronUp className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => handleMoveDayType(dt.id, 'DOWN')} className={`p-0.5 rounded-sm mt-0.5 ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}><ChevronDown className="w-3.5 h-3.5" /></button>
                 </div>
                 {/* Color dot */}
                 <div className="w-3.5 h-3.5 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
@@ -307,7 +339,7 @@ export default function SettingsView({
                   placeholder="ชื่อชนิดวัน" />
                 <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} isDarkMode={dm} />
                 <div className={`w-px h-5 shrink-0 ${dm ? 'bg-slate-600' : 'bg-slate-300'}`} />
-                <button onClick={() => handleDeleteDayType(dt.id)} disabled={dayTypeConfig.length <= 2}
+                <button type="button" onClick={() => handleDeleteDayType(dt.id)} disabled={dayTypeConfig.length <= 2}
                   className={`p-1.5 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${dm ? 'text-slate-500 hover:text-white hover:bg-red-500/80' : 'text-slate-400 hover:text-white hover:bg-red-500'}`}
                   title={dayTypeConfig.length <= 2 ? 'ต้องมีอย่างน้อย 2 ชนิด' : 'ลบ'}>
                   <Trash2 className="w-3.5 h-3.5" />

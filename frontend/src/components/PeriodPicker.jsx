@@ -11,19 +11,31 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const [expandedYear, setExpandedYear] = useState(null);
   const ref = useRef(null);
 
+  // คลิกนอกกรอบเพื่อปิด
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // 3. ดักปุ่ม ESC เพื่อปิด
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape' && open) setOpen(false); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [open]);
+
+  // 2. เติม Dependencies ให้ครบ + 1. ป้องกันแอปพังถ้าข้อมูลยังไม่มา
   useEffect(() => {
     if (open) {
       const year = filterPeriod?.split('-')[0];
-      if (year && groupedOptions.yearsMap[year]) setExpandedYear(year);
-      else setExpandedYear(groupedOptions.sortedYears[0] || null);
+      if (year && groupedOptions?.yearsMap?.[year]) {
+        setExpandedYear(year);
+      } else {
+        setExpandedYear(groupedOptions?.sortedYears?.[0] || null);
+      }
     }
-  }, [open]);
+  }, [open, filterPeriod, groupedOptions]);
 
   const select = (val) => { setFilterPeriod(val); setOpen(false); };
 
@@ -49,7 +61,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const itemActive = dm ? 'bg-blue-900/40 text-blue-300 font-bold' : 'bg-blue-50 text-[#00509E] font-bold';
   const isActive   = (val) => filterPeriod === val;
   const pillBase   = `flex-1 text-[10px] py-1 px-1.5 rounded-sm transition-colors font-medium`;
-  const pillActive = dm ? 'bg-slate-700 text-blue-400' : 'bg-white text-[#00509E] shadow-sm';
+  const pillActive = dm ? 'bg-slate-700 text-blue-400' : 'bg-white text-[#00509E] shadow-sm ring-1 ring-[#00509E]/20'; // เพิ่ม ring ให้เด่นขึ้นนิดนึง
   const pillIdle   = dm ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600';
 
   const Item = ({ val, label }) => (
@@ -71,7 +83,8 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
       {/* Dropdown */}
       {open && (
-        <div className={`absolute right-0 top-full mt-1.5 z-[300] rounded-sm border shadow-2xl overflow-hidden ${surface}`} style={{ width: 248 }}>
+        // 4. เปลี่ยน style={{ width: 248 }} เป็น w-64 (256px) แทน ให้ตรงตามมาตรฐาน Tailwind
+        <div className={`absolute right-0 top-full mt-1.5 z-[300] rounded-sm border shadow-2xl overflow-hidden w-64 ${surface}`}>
 
           {/* All Time */}
           <div className={`p-2 border-b ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -80,59 +93,66 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
           {/* Per Year */}
           <div className="p-2 space-y-0.5 overflow-y-auto" style={{ maxHeight: 400, scrollbarWidth: 'thin' }}>
-            {groupedOptions.sortedYears.map(year => {
-              const data       = groupedOptions.yearsMap[year];
-              const isExpanded = expandedYear === year;
-              const months     = Array.from(data.months).sort().reverse();
-              return (
-                <div key={year}>
-                  <button onClick={() => setExpandedYear(isExpanded ? null : year)}
-                    className={`${itemBase} ${itemHover} font-bold`}>
-                    <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${dm ? 'text-slate-400' : 'text-slate-400'}`} />
-                    <span>📅 {year}</span>
-                  </button>
+            {/* 1. เติม ?. กันแอปพังถ้า API ส่งข้อมูลช้าหรือไม่มีข้อมูล */}
+            {groupedOptions?.sortedYears?.length === 0 ? (
+               <div className={`text-center py-4 text-xs ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+                 ยังไม่มีข้อมูลปี
+               </div>
+            ) : (
+              groupedOptions?.sortedYears?.map(year => {
+                const data       = groupedOptions.yearsMap[year];
+                const isExpanded = expandedYear === year;
+                const months     = Array.from(data.months).sort().reverse();
+                return (
+                  <div key={year}>
+                    <button onClick={() => setExpandedYear(isExpanded ? null : year)}
+                      className={`${itemBase} ${itemHover} font-bold`}>
+                      <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${dm ? 'text-slate-400' : 'text-slate-400'}`} />
+                      <span>📅 {year}</span>
+                    </button>
 
-                  {isExpanded && (
-                    <div className={`ml-2 pl-2 border-l space-y-0.5 mt-0.5 mb-1 ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
-                      <Item val={year} label={`ทั้งปี ${year}`} />
+                    {isExpanded && (
+                      <div className={`ml-2 pl-2 border-l space-y-0.5 mt-0.5 mb-1 ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <Item val={year} label={`ทั้งปี ${year}`} />
 
-                      {/* ครึ่งปี */}
-                      {(data.halves.has(`${year}-H1`) || data.halves.has(`${year}-H2`)) && (
-                        <div className="flex gap-1 px-1 py-0.5">
-                          {data.halves.has(`${year}-H1`) && (
-                            <button onClick={() => select(`${year}-H1`)} className={`${pillBase} ${isActive(`${year}-H1`) ? pillActive : pillIdle}`}>H1</button>
-                          )}
-                          {data.halves.has(`${year}-H2`) && (
-                            <button onClick={() => select(`${year}-H2`)} className={`${pillBase} ${isActive(`${year}-H2`) ? pillActive : pillIdle}`}>H2</button>
-                          )}
+                        {/* ครึ่งปี */}
+                        {(data.halves.has(`${year}-H1`) || data.halves.has(`${year}-H2`)) && (
+                          <div className="flex gap-1 px-1 py-0.5">
+                            {data.halves.has(`${year}-H1`) && (
+                              <button onClick={() => select(`${year}-H1`)} className={`${pillBase} ${isActive(`${year}-H1`) ? pillActive : pillIdle}`}>H1</button>
+                            )}
+                            {data.halves.has(`${year}-H2`) && (
+                              <button onClick={() => select(`${year}-H2`)} className={`${pillBase} ${isActive(`${year}-H2`) ? pillActive : pillIdle}`}>H2</button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ไตรมาส */}
+                        {[1,2,3,4].some(q => data.quarters.has(`${year}-Q${q}`)) && (
+                          <div className="flex gap-1 px-1 py-0.5">
+                            {[1,2,3,4].map(q => data.quarters.has(`${year}-Q${q}`) && (
+                              <button key={q} onClick={() => select(`${year}-Q${q}`)} className={`${pillBase} ${isActive(`${year}-Q${q}`) ? pillActive : pillIdle}`}>Q{q}</button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* เดือน — 3 cols */}
+                        <div className="grid grid-cols-3 gap-1 px-1 pt-0.5">
+                          {months.map(m => {
+                            const [, mo] = m.split('-');
+                            return (
+                              <button key={m} onClick={() => select(m)} className={`text-[10px] py-1.5 rounded-sm transition-colors font-medium ${isActive(m) ? pillActive : pillIdle}`}>
+                                {THAI_MONTHS_SHORT[parseInt(mo) - 1]}
+                              </button>
+                            );
+                          })}
                         </div>
-                      )}
-
-                      {/* ไตรมาส */}
-                      {[1,2,3,4].some(q => data.quarters.has(`${year}-Q${q}`)) && (
-                        <div className="flex gap-1 px-1 py-0.5">
-                          {[1,2,3,4].map(q => data.quarters.has(`${year}-Q${q}`) && (
-                            <button key={q} onClick={() => select(`${year}-Q${q}`)} className={`${pillBase} ${isActive(`${year}-Q${q}`) ? pillActive : pillIdle}`}>Q{q}</button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* เดือน — 3 cols */}
-                      <div className="grid grid-cols-3 gap-1 px-1 pt-0.5">
-                        {months.map(m => {
-                          const [, mo] = m.split('-');
-                          return (
-                            <button key={m} onClick={() => select(m)} className={`text-[10px] py-1.5 rounded-sm transition-colors font-medium ${isActive(m) ? pillActive : pillIdle}`}>
-                              {THAI_MONTHS_SHORT[parseInt(mo) - 1]}
-                            </button>
-                          );
-                        })}
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       )}

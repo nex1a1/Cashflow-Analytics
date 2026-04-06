@@ -29,35 +29,45 @@ export default function CalendarView({
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const firstDayOfMonth = new Date(y, m, 1).getDay();
 
-  const calendarData = useMemo(() => {
+  /* ── 2. Performance Fix: ใช้ String matching ตัดรอบไวกว่า, และรวม Total มาเลย ── */
+  const { dayData: calendarData, monthInc, monthExp } = useMemo(() => {
     let dayData = {};
+    let tInc = 0, tExp = 0;
+    
     for (let i = 1; i <= daysInMonth; i++) {
       dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
     }
+
+    // สร้าง Pattern ไว้เช็คเร็วๆ เช่น "04/2026"
+    const targetMonthYear = `${(m + 1).toString().padStart(2, '0')}/${y}`;
+
     transactions.forEach(t => {
-      const parts = t.date.split('/');
-      if (parts.length === 3) {
-        const txY = parseInt(parts[2]);
-        const txM = parseInt(parts[1]) - 1;
-        const txD = parseInt(parts[0]);
-        if (txY === y && txM === m && dayData[txD]) {
-          const catObj = categories.find(c => c.name === t.category);
-          const amt = parseFloat(t.amount) || 0;
-          if (catObj?.type === 'income') {
-            dayData[txD].inc += amt;
-            dayData[txD].incItems.push({ ...t, _catObj: catObj });
-          } else {
-            dayData[txD].exp += amt;
-            dayData[txD].items.push({ ...t, _catObj: catObj });
-          }
+      // ดักเคสให้ทำเฉพาะเดือนนี้ ปีนี้ เท่านั้น! (ประหยัดพลังงานมาก)
+      if (!t.date || !t.date.endsWith(targetMonthYear)) return;
+
+      const txD = parseInt(t.date.split('/')[0], 10);
+      if (dayData[txD]) {
+        const catObj = categories.find(c => c.name === t.category);
+        const amt = parseFloat(t.amount) || 0;
+        
+        if (catObj?.type === 'income') {
+          dayData[txD].inc += amt;
+          dayData[txD].incItems.push({ ...t, _catObj: catObj });
+          tInc += amt;
+        } else {
+          dayData[txD].exp += amt;
+          dayData[txD].items.push({ ...t, _catObj: catObj });
+          tExp += amt;
         }
       }
     });
+
     for (let i = 1; i <= daysInMonth; i++) {
       dayData[i].items.sort((a, b) => b.amount - a.amount);
       dayData[i].incItems.sort((a, b) => b.amount - a.amount);
     }
-    return dayData;
+    
+    return { dayData, monthInc: tInc, monthExp: tExp };
   }, [transactions, y, m, daysInMonth, categories]);
 
   const dayTypeCounts = {};
@@ -82,9 +92,6 @@ export default function CalendarView({
 
   const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const today = new Date();
-
-  const monthInc = dayCells.reduce((s, d) => s + calendarData[d].inc, 0);
-  const monthExp = dayCells.reduce((s, d) => s + calendarData[d].exp, 0);
   const monthNet = monthInc - monthExp;
 
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
@@ -205,18 +212,24 @@ export default function CalendarView({
                   <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-[#00509E] opacity-50 z-20" />
                 )}
 
+                {/* 3. UX Fix: เอา Overlay ออก ย้ายไอคอน Plus มาไว้ตรงหัวปฏิทินให้สวยๆ ไม่บังสายตา */}
                 <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-700/60 bg-slate-800/80' : 'border-slate-100 bg-white'}`}>
-                  <span className={`text-[15px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
-                    isToday
-                      ? 'bg-[#00509E] text-white'
-                      : isWeekend
-                        ? (isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-500 bg-red-50')
-                        : (isDarkMode ? 'text-slate-200' : 'text-slate-700')
-                  }`}>
-                    {d}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[15px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
+                      isToday
+                        ? 'bg-[#00509E] text-white'
+                        : isWeekend
+                          ? (isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-500 bg-red-50')
+                          : (isDarkMode ? 'text-slate-200' : 'text-slate-700')
+                    }`}>
+                      {d}
+                    </span>
+                    <PlusCircle className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
+                  </div>
 
+                  {/* 1. Bug Fix: ใส่ stopPropagation() เพื่อกันไม่ให้ไปเปิด Modal ตอนจะเปลี่ยนชนิดวัน */}
                   <select
+                    onClick={(e) => e.stopPropagation()} 
                     value={curType}
                     onChange={e => handleDayTypeChange(dateStr, e.target.value)}
                     className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-sm cursor-pointer outline-none appearance-none text-center border transition-all hover:scale-105 shadow-sm"
@@ -278,12 +291,6 @@ export default function CalendarView({
                        {data.incItems?.length > 1 && <span className={`text-[11px] font-bold text-right flex-1 ${isDarkMode ? 'text-emerald-700' : 'text-emerald-400'}`}>+{data.incItems.length - 1} รับ</span>}
                     </div>
                   )}
-
-                  <div className={`absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none ${isDarkMode ? 'bg-slate-900/20' : 'bg-blue-50/30'}`}>
-                    <div className="bg-[#00509E] text-white p-1.5 rounded-sm shadow-sm scale-90 group-hover:scale-100 transition-transform duration-150">
-                      <PlusCircle className="w-4 h-4" />
-                    </div>
-                  </div>
                 </div>
               </div>
             );

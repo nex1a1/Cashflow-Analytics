@@ -11,14 +11,25 @@ export default function ExportModal({
   const dm = isDarkMode;
   const [exportPeriod, setExportPeriod] = useState(initialPeriod || 'ALL');
   const [exportFormat, setExportFormat] = useState('long');
-  const [showToast, setShowToast]       = useState(false);
+
+  // ดักปุ่ม ESC เพื่อปิด Modal
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape' && isOpen) onClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
   useEffect(() => { if (isOpen) setExportPeriod(initialPeriod || 'ALL'); }, [isOpen, initialPeriod]);
+  
   if (!isOpen) return null;
 
+  // กรองข้อมูลล่วงหน้าเพื่อเช็คว่ามีข้อมูลให้โหลดไหม
+  const dataToExport = transactions.filter(t => isDateInFilter(t.date, exportPeriod) && !t.category.includes('หักวงเงิน'));
+  const hasData = dataToExport.length > 0;
+
   const executeExport = () => {
-    const dataToExport = transactions.filter(t => isDateInFilter(t.date, exportPeriod) && !t.category.includes('หักวงเงิน'));
-    if (dataToExport.length === 0) return alert('ไม่มีข้อมูลในช่วงเวลาที่เลือก');
+    if (!hasData) return;
+    
     const esc = (str) => `"${String(str).replace(/"/g, '""')}"`;
     let csv = '', filename = '';
 
@@ -26,7 +37,7 @@ export default function ExportModal({
       csv = 'วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n';
       dataToExport.forEach(item => {
         const [d, m, y] = item.date.split('/');
-        const dow = new Date(y, parseInt(m) - 1, d).getDay();
+        const dow = new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getDay();
         const def = (dow === 0 || dow === 6) ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
         const tc  = dayTypeConfig.find(dt => dt.id === (dayTypes[item.date] || def)) || dayTypeConfig[0];
         const isInc = categories.find(c => c.name === item.category)?.type === 'income';
@@ -37,11 +48,15 @@ export default function ExportModal({
       const expCats    = categories.filter(c => c.type === 'expense');
       const usedNames  = [...new Set(dataToExport.filter(t => categories.find(c => c.name === t.category)?.type === 'expense').map(t => t.category))];
       const ordered    = expCats.filter(c => usedNames.includes(c.name)).map(c => c.name);
+      
       csv = ['Date', ...ordered, 'รวม (Total)', 'Notes'].map(h => esc(h)).join(',') + '\n';
+      
       const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => {
-        const [da,ma,ya] = a.split('/'); const [db,mb,yb] = b.split('/');
+        const [da,ma,ya] = a.split('/').map(Number); 
+        const [db,mb,yb] = b.split('/').map(Number);
         return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
       });
+      
       dates.forEach(ds => {
         const dayTx  = dataToExport.filter(t => t.date === ds);
         const notes  = dayTx.filter(t => t.description && t.description !== t.category).map(t => t.description).join(', ');
@@ -56,8 +71,9 @@ export default function ExportModal({
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a'); a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setShowToast(true);
-    setTimeout(() => { setShowToast(false); onClose(); }, 2500);
+    
+    // โหลดเสร็จแล้วปิด Modal ทันที ไม่ต้องกั๊กผู้ใช้ไว้
+    onClose(); 
   };
 
   const fmtCard = (active) => `flex flex-col items-start p-3.5 rounded-sm border-2 transition-all text-left ${active ? (dm ? 'border-blue-500 bg-blue-900/20' : 'border-[#00509E] bg-blue-50/50') : (dm ? 'border-slate-700 hover:border-slate-600' : 'border-slate-200 hover:border-slate-300')}`;
@@ -111,15 +127,16 @@ export default function ExportModal({
               <div className={`p-1.5 rounded-sm shrink-0 ${dm ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
               </div>
-              <p>รองรับ <span className={`font-bold ${dm ? 'text-slate-300' : 'text-slate-700'}`}>ภาษาไทย 100%</span> เปิดใน Excel / Google Sheets ได้โดยตรง</p>
+              <p>รองรับ <span className={`font-bold ${dm ? 'text-slate-300' : 'text-slate-700'}`}>ภาษาไทย 100%</span> เปิดใน Excel / Sheets ได้โดยตรง</p>
             </div>
           </div>
         </div>
 
         {/* Preview table */}
         <div className={`mb-5 border rounded-sm overflow-hidden ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
-          <div className={`px-4 py-2.5 text-xs font-bold border-b flex items-center gap-2 ${dm ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-            👀 ตัวอย่างไฟล์ ({exportFormat === 'long' ? 'Long Format' : 'Wide Format'})
+          <div className={`px-4 py-2.5 text-xs font-bold border-b flex items-center justify-between ${dm ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+            <span>👀 ตัวอย่างไฟล์ ({exportFormat === 'long' ? 'Long Format' : 'Wide Format'})</span>
+            {!hasData && <span className="text-red-500">❌ ไม่มีข้อมูลในช่วงเวลานี้</span>}
           </div>
           <div className={`overflow-x-auto ${dm ? 'bg-slate-900/40' : 'bg-white'}`} style={{ scrollbarWidth: 'thin' }}>
             {exportFormat === 'long' ? (
@@ -150,15 +167,12 @@ export default function ExportModal({
         {/* Actions */}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className={`px-4 py-2 rounded-sm font-bold text-xs transition-all active:scale-95 border ${dm ? 'text-slate-300 border-slate-700 hover:bg-slate-800' : 'text-slate-600 border-slate-300 hover:bg-slate-100'}`}>ยกเลิก</button>
-          <button onClick={executeExport} className={`px-5 py-2 text-white rounded-sm font-bold text-xs flex items-center gap-2 transition-all active:scale-95 border ${dm ? 'bg-blue-600 hover:bg-blue-500 border-blue-700' : 'bg-[#00509E] hover:bg-[#003d7a] border-blue-800'}`}>
+          <button 
+            onClick={executeExport} 
+            disabled={!hasData}
+            className={`px-5 py-2 text-white rounded-sm font-bold text-xs flex items-center gap-2 transition-all active:scale-95 border disabled:opacity-50 disabled:cursor-not-allowed ${dm ? 'bg-blue-600 hover:bg-blue-500 border-blue-700' : 'bg-[#00509E] hover:bg-[#003d7a] border-blue-800'}`}>
             <FileSpreadsheet className="w-3.5 h-3.5" /> ดาวน์โหลด CSV
           </button>
-        </div>
-
-        {/* Toast */}
-        <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 text-white px-5 py-2.5 rounded-sm shadow-2xl transition-all duration-300 flex items-center gap-2.5 z-50 border ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'} ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-800 border-slate-700'}`}>
-          <CheckCircle className="w-5 h-5 text-emerald-400" />
-          <span className="font-bold text-sm">ดาวน์โหลดสำเร็จ!</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 // src/views/LedgerView.jsx
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   CalendarDays, ChevronLeft, ChevronRight,
   Filter, Inbox, Pencil, PlusCircle, Search, Trash2, X,
@@ -10,6 +10,30 @@ import { formatMoney, hexToRgb } from '../utils/formatters';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
+/* ── 1. เพิ่ม Component ป้องกันมือลั่น ── */
+function InlineConfirmDelete({ onDelete, isDarkMode }) {
+  const [confirming, setConfirming] = useState(false);
+  const timer = useRef(null);
+
+  const handleClick = () => {
+    if (confirming) { clearTimeout(timer.current); onDelete(); }
+    else { setConfirming(true); timer.current = setTimeout(() => setConfirming(false), 3000); }
+  };
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  return (
+    <button onClick={handleClick}
+      className={`rounded-sm font-bold transition-all active:scale-95 ${
+        confirming 
+          ? 'bg-red-500 text-white px-2 py-1 text-[10px] animate-pulse opacity-100' 
+          : `p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 ${isDarkMode ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`
+      }`} title="ลบ">
+      {confirming ? 'ยืนยัน?' : <Trash2 className="w-3.5 h-3.5" />}
+    </button>
+  );
+}
+
 export default function LedgerView({
   displayTransactions, isReadOnlyView, getFilterLabel, filterPeriod,
   searchQuery, setSearchQuery, handleOpenAddModal,
@@ -18,7 +42,7 @@ export default function LedgerView({
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
   availableDatesInPeriod, isDarkMode,
-  setFilterPeriod, rawAvailableMonths // ⭐️ รับ Props 2 ตัวนี้เพิ่มเข้ามา
+  setFilterPeriod, rawAvailableMonths 
 }) {
   const dm = isDarkMode;
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,9 +73,25 @@ export default function LedgerView({
 
   const clearFilters = () => { setSearchQuery(''); setAdvancedFilterCategory('ALL'); setAdvancedFilterGroup('ALL'); setAdvancedFilterDate('ALL'); };
 
-  const sumInc = useMemo(() => displayTransactions.filter(t => categories.find(c => c.name === t.category)?.type === 'income').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0), [displayTransactions, categories]);
-  const sumExp = useMemo(() => displayTransactions.filter(t => categories.find(c => c.name === t.category)?.type !== 'income').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0), [displayTransactions, categories]);
-  const net    = sumInc - sumExp;
+  /* ── 2. แก้ปัญหา Performance ── */
+  const catTypeMap = useMemo(() => {
+    const map = {};
+    categories.forEach(c => map[c.name] = c.type);
+    return map;
+  }, [categories]);
+
+  const { sumInc, sumExp } = useMemo(() => {
+    let inc = 0, exp = 0;
+    displayTransactions.forEach(t => {
+      const type = catTypeMap[t.category];
+      const amt = parseFloat(t.amount) || 0;
+      if (type === 'income') inc += amt;
+      else exp += amt;
+    });
+    return { sumInc: inc, sumExp: exp };
+  }, [displayTransactions, catTypeMap]);
+  
+  const net = sumInc - sumExp;
 
   /* ── shared tokens ── */
   const card    = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
@@ -88,13 +128,13 @@ export default function LedgerView({
   const isFilterActive = searchQuery || advancedFilterDate !== 'ALL' || advancedFilterGroup !== 'ALL' || advancedFilterCategory !== 'ALL';
 
   return (
-    <div className="flex flex-row gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-8">
-
+    <div className="flex flex-col xl:flex-row gap-4 items-start animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-8">
+      
       {/* ══════════════════════════════════════════════════════
-          SIDEBAR — sticky, scroll ภายในตัวเอง ไม่กิน layout
+          SIDEBAR — sticky บนจอใหญ่, เลื่อนปกติบนมือถือ
       ══════════════════════════════════════════════════════ */}
-      <div className="w-[280px] shrink-0 flex flex-col gap-3 sticky top-4"
-        style={{ maxHeight: 'calc(100vh - 5rem)', overflowY: 'auto', scrollbarWidth: 'thin' }}>
+      <div className="w-full xl:w-[280px] shrink-0 flex flex-col gap-3 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto"
+        style={{ scrollbarWidth: 'thin' }}>
 
         {/* ── Summary card ── */}
         <div className={card + ' p-4'}>
@@ -176,7 +216,7 @@ export default function LedgerView({
       {/* ══════════════════════════════════════════════════════
           MAIN TABLE AREA — flex-1, scroll ภายใน
       ══════════════════════════════════════════════════════ */}
-      <div className={`flex-1 min-w-0 flex flex-col border shadow-sm rounded-sm overflow-hidden transition-colors ${dm ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+      <div className={`flex-1 min-w-0 w-full flex flex-col border shadow-sm rounded-sm overflow-hidden transition-colors ${dm ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
         style={{ minHeight: 0 }}>
 
         {/* Table header bar */}
@@ -192,7 +232,7 @@ export default function LedgerView({
               <PlusCircle className="w-3.5 h-3.5" /> เพิ่มรายการ
             </button>
             {displayTransactions.length > 0 && (
-              <button onClick={() => handleDeleteMonth(filterPeriod)}
+              <button onClick={() => { if(window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }}
                 className={`text-xs font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-sm border shadow-sm transition-colors active:scale-95 shrink-0 ${dm ? 'text-red-400 bg-red-900/20 hover:bg-red-900/40 border-red-800/50' : 'text-red-600 bg-red-50 hover:bg-red-100 border-red-200'}`}>
                 <Trash2 className="w-3.5 h-3.5" /> ลบข้อมูลเดือนนี้
               </button>
@@ -214,10 +254,10 @@ export default function LedgerView({
           </div>
         ) : (
           <div className="flex flex-col flex-grow min-h-0">
-            {/* Table scroll container — ไม่ hardcode maxHeight, ใช้ flex layout */}
+            {/* Table scroll container */}
             <div className="overflow-auto flex-grow" style={{ scrollbarWidth: 'thin' }}>
               <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
-                <thead className={`sticky top-0 z-10 shadow-sm border-b-2 ${dm ? 'bg-slate-800/95 border-slate-700' : 'bg-slate-100/95 border-slate-300'}`}>
+                <thead className={`sticky top-0 z-10 shadow-sm border-b-2 ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-300'}`}>
                   <tr>
                     <th className={`px-4 py-2.5 font-bold w-[130px] ${dm ? 'text-slate-300' : 'text-slate-700'}`}>วันที่</th>
                     <th className={`px-4 py-2.5 font-bold w-[84px] text-center ${dm ? 'text-slate-300' : 'text-slate-700'}`}>สถานะ</th>
@@ -314,11 +354,8 @@ export default function LedgerView({
 
                         {/* Delete */}
                         <td className="px-2 py-2 text-center align-middle">
-                          <button onClick={() => handleDeleteTransaction(item.id)}
-                            className={`p-1.5 rounded-sm opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all ${dm ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
-                            title="ลบ">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {/* ใช้วิธียืนยันก่อนลบ */}
+                          <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} isDarkMode={dm} />
                         </td>
                       </tr>
                     );
