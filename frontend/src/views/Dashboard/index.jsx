@@ -40,7 +40,6 @@ export default function DashboardView({
         <KeyMetrics analytics={analytics} isDarkMode={dm} />
         <ExpenseProportion analytics={analytics} categories={categories} isDarkMode={dm} />
       </div>
-
       {/* ══════════════════════════════════════════════════════════
           ROW 2 — MAIN CHART (wide) + TOP X (narrow sidebar)
       ══════════════════════════════════════════════════════════ */}
@@ -58,6 +57,10 @@ export default function DashboardView({
           isDarkMode={dm} 
         />
         <TopTransactions 
+          transactions={transactions}
+          filterPeriod={filterPeriod}
+          dashboardCategory={dashboardCategory}
+          hideFixedExpenses={hideFixedExpenses}
           analytics={analytics} 
           categories={categories} 
           topXLimit={topXLimit} 
