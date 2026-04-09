@@ -146,30 +146,28 @@ export default function useTransactionData({
   }, [loadData]);
 
   const handleDeleteMonth = useCallback(async (period) => {
-    if (!period.match(/^\d{4}-\d{2}$/)) {
-      return alert('กรุณาเลือกรายเดือนเพื่อทำการลบข้อมูล');
-    }
-    if (!window.confirm(`🚨 ยืนยันการลบข้อมูลของเดือน ${getThaiMonth(period)} ทั้งหมดหรือไม่? (ไม่สามารถกู้คืนได้)`)) return;
+  if (!period.match(/^\d{4}-\d{2}$/)) return alert('...');
+  if (!window.confirm(`...`)) return;
 
-    setIsProcessing(true);
-    const itemsToDelete = transactions.filter(t => {
-      if (!t.date) return false;
-      const parts = t.date.split('/');
-      return parts.length === 3 && `${parts[2]}-${parts[1]}` === period;
-    });
+  setIsProcessing(true);
+  const itemsToDelete = transactions.filter(t => {
+    if (!t.date) return false;
+    const parts = t.date.split('/');
+    return parts.length === 3 && `${parts[2]}-${parts[1]}` === period;
+  });
 
-    try {
-      for (const item of itemsToDelete) {
-        await fetch(`${API_URL}/${item.id}`, { method: 'DELETE' });
-      }
-    } catch (err) {
-      console.error('Failed to delete month transactions:', err);
-    }
+  try {
+    await Promise.all(itemsToDelete.map(item => 
+      fetch(`${API_URL}/${item.id}`, { method: 'DELETE' })
+    ));
+  } catch (err) {
+    console.error('Batch delete failed:', err);
+  }
 
-    await loadData();
-    setIsProcessing(false);
-    return true; // ให้ App.jsx แสดง toast
-  }, [transactions, loadData]);
+  await loadData();
+  setIsProcessing(false);
+  return true;
+}, [transactions, loadData]);
 
   const handleDeleteAllData = useCallback(async ({ setShowToast }) => {
     if (!window.confirm('🚨 อันตราย: ยืนยันการลบข้อมูล "ทั้งหมด" (รายการบัญชี, ปฏิทิน และรีเซ็ตการตั้งค่ากลับเป็นค่าเริ่มต้น)?\nการกระทำนี้ไม่สามารถกู้คืนได้!')) return;

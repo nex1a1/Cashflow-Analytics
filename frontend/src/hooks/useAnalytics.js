@@ -16,6 +16,13 @@ export default function useAnalytics({
   isDarkMode,
 }) {
   const analytics = useMemo(() => {
+    // 🚀 สร้าง Category Map เพื่อให้ค้นหาเป็น O(1) แทน O(M)
+    const catMapLookup = categories.reduce((acc, cat) => {
+      acc[cat.name] = cat;
+      return acc;
+    }, {});
+    const defaultCat = { type: 'expense', cashflowGroup: 'variable', isFixed: false, color: '#64748B' };
+
     const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
     let totalExpense = 0, totalIncome = 0, weekendTotal = 0, weekdayTotal = 0;
     let foodTotal = 0, fixedTotal = 0, variableTotal = 0, rentTotal = 0, itTotal = 0, investTotal = 0;
@@ -25,8 +32,8 @@ export default function useAnalytics({
 
     filteredTx.forEach(item => {
       const amt = parseFloat(item.amount) || 0;
-      const catObj = categories.find(c => c.name === item.category)
-        || { type: 'expense', cashflowGroup: 'variable', isFixed: false, color: '#64748B' };
+      // 🚀 ใช้ Map ดึงข้อมูลแทนการวนลูปหา
+      const catObj = catMapLookup[item.category] || defaultCat;
       const isInc = catObj.type === 'income';
       const cGroup = catObj.cashflowGroup || 'variable';
       const isFixed = catObj.isFixed || false;
@@ -74,13 +81,13 @@ export default function useAnalytics({
     const savingsRate = totalIncome > 0 ? ((netCashflow / totalIncome) * 100).toFixed(1) : 0;
 
     const chartTx = filteredTx.filter(t => {
-      const catObj = categories.find(c => c.name === t.category) || { type: 'expense', isFixed: false };
+      const catObj = catMapLookup[t.category] || defaultCat;
       if (catObj.type === 'income') return false;
       if (hideFixedExpenses && catObj.isFixed) return false;
       return true;
     });
 
-    let catMap = {};
+    let catMapData = {};
     let dailyAllMap = {}, monthlyAllMap = {};
     let dailyCatMap = {}, monthlyCatMap = {};
     const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
@@ -91,7 +98,7 @@ export default function useAnalytics({
       const parts = item.date.split('/');
       const ym = parts.length === 3 ? `${parts[2]}-${parts[1]}` : null;
 
-      catMap[item.category] = (catMap[item.category] || 0) + amt;
+      catMapData[item.category] = (catMapData[item.category] || 0) + amt;
       dailyAllMap[item.date] = (dailyAllMap[item.date] || 0) + amt;
       if (ym) monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
 
@@ -105,7 +112,7 @@ export default function useAnalytics({
     });
 
     const chartTotal = chartTx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    const sortedCats = Object.entries(catMap)
+    const sortedCats = Object.entries(catMapData)
       .sort((a, b) => b[1] - a[1])
       .map(c => ({
         name: c[0], amount: c[1],
@@ -128,7 +135,7 @@ export default function useAnalytics({
       datasets: [{
         data: sortedCats.map(c => c.amount),
         backgroundColor: sortedCats.map(c => {
-          const catDef = categories.find(cat => cat.name === c.name);
+          const catDef = catMapLookup[c.name]; // 🚀 ใช้ Map
           return catDef?.color || '#64748B';
         }),
         borderWidth: 2,
@@ -222,7 +229,7 @@ export default function useAnalytics({
             tension: 0.3, pointRadius: isSingleMonthView ? 3 : 0, pointHitRadius: 10,
           });
         } else {
-          const catObj = categories.find(c => c.name === catName) || {};
+          const catObj = catMapLookup[catName] || {}; // 🚀 ใช้ Map
           const catColor = catObj.color || '#64748B';
           const rgb = hexToRgb(catColor);
           datasets.push({
@@ -249,13 +256,12 @@ export default function useAnalytics({
       else if (currentType) dayTypeCounts[currentType] = 1;
     });
 
-    // ⭐️ เพิ่มการคำนวณ Global Threshold (P90) เพื่อใช้เป็นเพดานสี Heatmap
     const globalDailySum = {};
     transactions.forEach(item => {
       if (!item.date) return;
       const amt = parseFloat(item.amount) || 0;
-      const catObj = categories.find(c => c.name === item.category);
-      const isExpense = catObj ? catObj.type === 'expense' : true; // คัดเฉพาะรายจ่าย
+      const catObj = catMapLookup[item.category]; // 🚀 ใช้ Map
+      const isExpense = catObj ? catObj.type === 'expense' : true;
       if (isExpense) {
         globalDailySum[item.date] = (globalDailySum[item.date] || 0) + amt;
       }
@@ -281,7 +287,7 @@ export default function useAnalytics({
       dayTypeCounts, datesInPeriod,
       weekendTotal, weekdayTotal, dayOfWeekMap,
       dailyCatMap, monthlyCatMap, dailyAllMap, monthlyAllMap, sortedMonthsKeys,
-      globalMaxThreshold // 👈 ส่งออกค่าเพดานไปให้ Component อื่นใช้
+      globalMaxThreshold
     };
 }, [transactions, filterPeriod, categories, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode]);
 

@@ -1,15 +1,13 @@
 // src/components/DayDetailModal.jsx
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { X, Trash2, Coins, Wallet, CheckCircle, Zap, Star } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../utils/formatters';
 
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-// 1. แยก TxRow ออกมาข้างนอก เพื่อป้องกัน Performance Drop จากการ Re-render ซ้ำซ้อน
-const TxRow = ({ tx, categories, dm, confirmDeleteId, onDeleteClick }) => {
-  const cat = categories.find(c => c.name === tx.category);
-  const isInc = cat?.type === 'income';
-  const color = cat?.color || '#94a3b8';
+const TxRow = memo(({ tx, catObj, dm, confirmDeleteId, onDeleteClick }) => {
+  const isInc = catObj?.type === 'income';
+  const color = catObj?.color || '#94a3b8';
   const isConfirming = confirmDeleteId === tx.id;
   
   const rowBg = `rgba(${hexToRgb(color)}, ${dm ? 0.06 : 0.04})`;
@@ -23,7 +21,7 @@ const TxRow = ({ tx, categories, dm, confirmDeleteId, onDeleteClick }) => {
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
         <p className="text-[10px] font-medium flex items-center gap-1 mt-0.5" style={{ color, filter: dm ? 'brightness(1.3)' : 'brightness(0.7)' }}>
-          {cat?.icon} {tx.category}
+          {catObj?.icon} {tx.category}
         </p>
       </div>
       <span className={`text-sm font-black shrink-0 ${isInc ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-red-400' : 'text-red-600')}`}>
@@ -35,12 +33,16 @@ const TxRow = ({ tx, categories, dm, confirmDeleteId, onDeleteClick }) => {
       </button>
     </div>
   );
-};
+}, (prev, next) => {
+  return prev.tx.id === next.tx.id && 
+         prev.tx.amount === next.tx.amount &&
+         prev.confirmDeleteId === next.confirmDeleteId &&
+         prev.dm === next.dm;
+});
 
-export default function DayDetailModal({ dateStr, transactions, categories, isDarkMode, onClose, onSave, onDelete }) {
+export default function DayDetailModal({ dateStr, transactions = [], categories = [], isDarkMode, onClose, onSave, onDelete }) {
   const dm = isDarkMode;
   
-  // 4. Date Parsing ที่ปลอดภัยขึ้น (กันพลาดกรณีไม่มีเลข 0 นำหน้า)
   const [ddStr, mmStr, yyyyStr] = dateStr.split('/');
   const d = parseInt(ddStr, 10);
   const m = parseInt(mmStr, 10);
@@ -61,7 +63,6 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [suggCatFilter, setSuggCatFilter]     = useState('ALL');
 
-  // 3. เพิ่มการรองรับปุ่ม ESC เพื่อปิด Modal
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -73,14 +74,19 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
   const txIds      = new Set(transactions.map(t => t.id));
   const pendingItems = localItems.filter(i => !txIds.has(i.id));
   const dayTx      = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
-  const expenses   = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'expense');
-  const income     = dayTx.filter(t => categories.find(c => c.name === t.category)?.type === 'income');
+  
+  const catMap = useMemo(() => {
+    return categories.reduce((acc, c) => { acc[c.name] = c; return acc; }, {});
+  }, [categories]);
+
+  const expenses   = dayTx.filter(t => catMap[t.category]?.type === 'expense');
+  const income     = dayTx.filter(t => catMap[t.category]?.type === 'income');
   const totalExp   = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
   const totalInc   = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
   const quickSuggestions = useMemo(() => {
     const typeTx = transactions.filter(t => {
-      const c = categories.find(cat => cat.name === t.category);
+      const c = catMap[t.category];
       if (c?.type !== formType) return false;
       if (suggCatFilter !== 'ALL' && t.category !== suggCatFilter) return false;
       return true;
@@ -100,7 +106,7 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
         const [category, description] = key.split('|');
         return { category, description, amount: String(amount), count };
       });
-  }, [transactions, categories, formType, suggCatFilter]);
+  }, [transactions, catMap, formType, suggCatFilter]);
 
   const applySuggestion = (s) => { setFormCat(s.category); setFormDesc(s.description || ''); setFormAmt(s.amount); };
   const switchType = (type) => { setFormType(type); setFormCat(type === 'expense' ? defaultExpenseCat : defaultIncomeCat); setSuggCatFilter('ALL'); };
@@ -115,19 +121,16 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
       date: dateStr, category: formCat,
       description: formDesc || formCat, amount: amt, dayNote: ''
     };
-    const catObj = categories.find(c => c.name === formCat);
+    const catObj = catMap[formCat];
     
-    // โชว์หลอกตาก่อน (Optimistic UI)
     setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);
     
     try {
       await onSave(newItem);
-      // ทำงานสำเร็จ ค่อยลบออกจาก localItems เพราะ Parent จะดัน props กลับมาให้เอง
       setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
       setFormDesc(''); setFormAmt('');
     } catch (err) {
       console.error('Save failed:', err);
-      // 2. แก้ปัญหา: เอาตัวที่โชว์หลอกตาออกทันทีถ้าเซฟพัง
       setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
       alert('⚠️ ไม่สามารถบันทึกข้อมูลได้\n\n' + (err.message || 'Unknown error'));
     } finally { setIsSaving(false); }
@@ -146,7 +149,18 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
     }
   };
 
-  /* ── 5. จัดระเบียบ Tailwind Tokens ทำให้ JSX คลีนขึ้น ── */
+  // ✅ แก้ไขตรงนี้เรียบร้อยครับ ดึงค่ามาจาก Map เฉยๆ
+  const renderList = (items) => items.map(tx => (
+    <TxRow 
+      key={tx.id} 
+      tx={tx} 
+      catObj={catMap[tx.category]} 
+      dm={dm} 
+      confirmDeleteId={confirmDeleteId} 
+      onDeleteClick={handleDelete} 
+    />
+  ));
+
   const tokens = {
     surface: dm ? 'bg-slate-900' : 'bg-white',
     surfaceAlt: dm ? 'bg-slate-800' : 'bg-slate-50',
@@ -165,7 +179,6 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
 
         {/* Left: transaction list + add form */}
         <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[50vh] md:h-auto`}>
-          {/* Date header */}
           <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0`}>
             <div>
               <h2 className={`text-lg font-black ${tokens.textPri}`}>{displayDate}</h2>
@@ -199,7 +212,7 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
                   <Wallet className="w-3.5 h-3.5" /> รายจ่าย
                 </p>
                 <div className="space-y-1.5">
-                  {expenses.map(tx => <TxRow key={tx.id} tx={tx} categories={categories} dm={dm} confirmDeleteId={confirmDeleteId} onDeleteClick={handleDelete} />)}
+                  {renderList(expenses)}
                 </div>
               </div>
             )}
@@ -209,7 +222,7 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
                   <Coins className="w-3.5 h-3.5" /> รายรับ
                 </p>
                 <div className="space-y-1.5">
-                  {income.map(tx => <TxRow key={tx.id} tx={tx} categories={categories} dm={dm} confirmDeleteId={confirmDeleteId} onDeleteClick={handleDelete} />)}
+                  {renderList(income)}
                 </div>
               </div>
             )}
@@ -261,7 +274,7 @@ export default function DayDetailModal({ dateStr, transactions, categories, isDa
             {quickSuggestions.length === 0 ? (
               <p className={`text-sm text-center py-8 ${tokens.textMuted}`}>ยังไม่มีข้อมูลในหมวดนี้</p>
             ) : quickSuggestions.map((s, idx) => {
-              const catObj = categories.find(c => c.name === s.category);
+              const catObj = catMap[s.category];
               return (
                 <button key={idx} onClick={() => applySuggestion(s)} className={tokens.suggBtn}>
                   <div className="flex items-center gap-2.5 overflow-hidden">
