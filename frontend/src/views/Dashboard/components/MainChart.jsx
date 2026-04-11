@@ -53,13 +53,12 @@ export default function MainChart({
         const catObj = categories.find(c => c.name === catName) || {};
         const catColor = catObj.color || '#64748B';
         
-        // 🚀 แก้บั๊ก: รองรับกรณี undefined อย่างปลอดภัย
         datasets.push({
           type: 'bar',
           label: catName,
           data: showMonthly
-            ? (analytics.sortedMonthsKeys || []).map(m => analytics.monthlyCatMap?.[catName]?.[m] || 0)
-            : (analytics.datesInPeriod || []).map(d => analytics.dailyCatMap?.[catName]?.[d] || 0),
+            ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catName]?.[m] || 0)
+            : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catName]?.[d] || 0),
           backgroundColor: catColor,
           borderColor: dm ? '#1e293b' : '#ffffff',
           borderWidth: 1,
@@ -117,6 +116,21 @@ export default function MainChart({
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
   }, [analytics, filterPeriod, chartGroupBy, chartViewType, showTrendLines, isSmoothLine, dashboardCategory, categories, hideFixedExpenses, dm]);
+
+  // หมวดหมู่ที่มีข้อมูลจริงในช่วงเวลาที่เลือก
+  const categoriesWithData = useMemo(() => {
+    if (!analytics) return new Set();
+    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
+    const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
+    const withData = new Set();
+    categories.filter(c => c.type === 'expense').forEach(c => {
+      const total = showMonthly
+        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[c.name]?.[m] || 0), 0)
+        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[c.name]?.[d] || 0), 0);
+      if (total > 0) withData.add(c.name);
+    });
+    return withData;
+  }, [analytics, filterPeriod, chartGroupBy, categories]);
 
   const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
@@ -205,7 +219,7 @@ export default function MainChart({
                 </div>
                 
                 <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ที่ใช้งาน (Multi-line)</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ (Multi-line)</span>
                   {(() => {
                     const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
                     const toggleCategory = (catName) => {
@@ -219,12 +233,8 @@ export default function MainChart({
                       }
                     };
 
-                    // 🚀 ฟังก์ชันดึงเฉพาะหมวดผันแปร "ที่มีข้อมูลในเดือนนี้"
                     const selectAllVariable = () => {
-                      const variableCats = analytics.sortedCats
-                        .map(sc => categories.find(c => c.name === sc.name))
-                        .filter(c => c && !c.isFixed)
-                        .map(c => c.name);
+                      const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
                       setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
                     };
 
@@ -238,23 +248,15 @@ export default function MainChart({
                             🔄 เทียบหมวดผันแปร
                           </button>
                         </div>
-                        
-                        {/* 🚀 ซ่อนหมวดหมู่ที่ไม่มีข้อมูลออกไปจากเมนูตัวกรอง */}
                         <div className="flex flex-wrap gap-1.5 mt-1">
-                          {analytics.sortedCats.length === 0 ? (
-                            <span className={`text-[10px] w-full text-center py-2 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ไม่มีรายการใช้จ่ายให้เปรียบเทียบในเดือนนี้</span>
-                          ) : (
-                            analytics.sortedCats.map(sc => {
-                              const c = categories.find(cat => cat.name === sc.name);
-                              if (!c) return null;
-                              const isActive = activeCats.includes(c.name);
-                              return (
-                                <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
-                                  <span className="opacity-90">{c.icon}</span> {c.name}
-                                </button>
-                              );
-                            })
-                          )}
+                          {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
+                            const isActive = activeCats.includes(c.name);
+                            return (
+                              <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
+                                <span className="opacity-90">{c.icon}</span> {c.name}
+                              </button>
+                            );
+                          })}
                         </div>
                       </>
                     );
@@ -283,7 +285,15 @@ export default function MainChart({
                  },
                  plugins: {
                    ...baseOptions.plugins,
-                   tooltip: { ...baseOptions.plugins?.tooltip, mode: 'index', intersect: false }
+                   tooltip: { 
+                     ...baseOptions.plugins?.tooltip, 
+                     mode: 'index', 
+                     intersect: false,
+                     // 🚀 กรองรายการที่มีค่าเป็น 0 ออกจาก Tooltip
+                     filter: function(tooltipItem) {
+                       return tooltipItem.raw > 0;
+                     }
+                   }
                  }
                };
             } else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') {
