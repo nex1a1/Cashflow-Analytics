@@ -51,7 +51,7 @@ export default function App() {
 
   const [dayTypes, setDayTypes] = useState({});
   const [dayTypeConfig, setDayTypeConfig] = useState(DEFAULT_DAY_TYPES);
-
+  const [cashflowGroups, setCashflowGroups] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportGuide, setShowImportGuide] = useState(false);
@@ -69,7 +69,6 @@ export default function App() {
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
 
-  // ⭐️ แก้ปัญหา Dark Mode ขอบจอขาว โดยยัดลงระดับ Body 
   useEffect(() => {
     localStorage.setItem('expense_dark_mode', isDarkMode);
     
@@ -125,7 +124,7 @@ export default function App() {
     handleDeleteTransaction,
     handleDeleteMonth,
     handleDeleteAllData,
-  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus });
+  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups });
 
   const {
     importPreview, setImportPreview,
@@ -167,6 +166,7 @@ export default function App() {
 
   const analytics = useAnalytics({
     transactions: validAnalyticsTxs, categories, filterPeriod,
+    cashflowGroups, 
     hideFixedExpenses, dashboardCategory, chartGroupBy,
     topXLimit, dayTypes, dayTypeConfig, isDarkMode,
   });
@@ -227,6 +227,7 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <DashboardView
               analytics={analytics} transactions={transactions}
+              cashflowGroups={cashflowGroups}
               filterPeriod={filterPeriod} getFilterLabel={getFilterLabel}
               hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
               dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
@@ -271,6 +272,8 @@ export default function App() {
           {activeTab === 'settings' && (
             <SettingsView
               categories={categories}
+              cashflowGroups={cashflowGroups}
+              setCashflowGroups={setCashflowGroups}
               handleAddCategory={handleAddCategory}
               handleCategoryChange={handleCategoryChange}
               handleDeleteCategory={handleDeleteCategory}

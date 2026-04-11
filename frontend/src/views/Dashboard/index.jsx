@@ -15,7 +15,7 @@ import CashflowTable from './components/CashflowTable';
 export default function DashboardView({
   transactions, categories, filterPeriod, getFilterLabel,
   hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
-  chartGroupBy, setChartGroupBy,
+  chartGroupBy, setChartGroupBy,cashflowGroups,
   analytics, dayTypeConfig, isDarkMode: dm, dayTypes, topXLimit, setTopXLimit,
 }) {
   
@@ -84,6 +84,7 @@ export default function DashboardView({
       ══════════════════════════════════════════════════════════ */}
       <CashflowTable 
         analytics={analytics} 
+        cashflowGroups={cashflowGroups}
         isDarkMode={dm} 
       />
 

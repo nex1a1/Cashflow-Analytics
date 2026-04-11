@@ -1,17 +1,12 @@
 // src/hooks/useTransactionData.js
-// ─────────────────────────────────────────────────────────────
-// รับผิดชอบทุกอย่างที่เกี่ยวกับ transactions + API
-// แยกออกจาก App.jsx เพื่อให้ App.jsx เหลือแค่ UI orchestration
-// ─────────────────────────────────────────────────────────────
 import { useState, useCallback } from 'react';
 import {
   API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
-  CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
+  CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY, CASHFLOW_GROUPS_KEY,
   OLD_PALETTE_MAP, DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from '../constants';
 import { parseDateStrToObj } from '../utils/dateHelpers';
 import { settingsService, calendarService } from '../services/api';
-import { getThaiMonth } from '../utils/formatters';
 
 const sortTransactions = (dataArr) =>
   [...dataArr].sort((a, b) => {
@@ -20,16 +15,27 @@ const sortTransactions = (dataArr) =>
     return String(a.id).localeCompare(String(b.id));
   });
 
+export const DEFAULT_CASHFLOW_GROUPS = [
+  { id: 'cg_salary', name: 'เงินเดือน', type: 'income', isDefault: true, order: 1 },
+  { id: 'cg_bonus', name: 'พิเศษ/โบนัส', type: 'income', isDefault: true, order: 2 },
+  { id: 'cg_rent', name: 'ค่าหอ/ที่พัก', type: 'expense', isDefault: true, order: 1 },
+  { id: 'cg_subs', name: 'รายเดือน/หนี้', type: 'expense', isDefault: true, order: 2 },
+  { id: 'cg_food', name: 'ค่ากิน', type: 'expense', isDefault: true, order: 3 },
+  { id: 'cg_invest', name: 'ลงทุน/ออม', type: 'expense', isDefault: true, order: 4 },
+  { id: 'cg_it', name: 'ไอที/คอมฯ', type: 'expense', isDefault: true, order: 5 },
+  { id: 'cg_variable', name: 'ผันแปรอื่นๆ', type: 'expense', isDefault: true, order: 6 },
+];
+
 export default function useTransactionData({
   setCategories,
   setDayTypes,
   setDayTypeConfig,
   setDbStatus,
+  setCashflowGroups // 🚀 รับ state เข้ามา
 }) {
   const [transactions, setTransactions] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // ─── Load all data from DB ───────────────────────────────
   const loadData = useCallback(async () => {
     try {
       const res = await fetch(API_URL);
@@ -38,7 +44,6 @@ export default function useTransactionData({
       setTransactions(sortTransactions(data));
       setDbStatus('Online (SQLite3)');
 
-      // Calendar
       try {
         const calRes = await fetch(CALENDAR_API_URL);
         if (calRes.ok) {
@@ -47,15 +52,16 @@ export default function useTransactionData({
           calData.forEach(row => { dbDayTypes[row.date] = row.type_id; });
           setDayTypes(dbDayTypes);
         }
-      } catch (calErr) {
-        console.error('Failed to load calendar data:', calErr);
-      }
+      } catch (calErr) { console.error('Failed to load calendar data:', calErr); }
 
-      // Settings (categories + dayTypeConfig)
       try {
         const setRes = await fetch(SETTINGS_API_URL);
         if (setRes.ok) {
           const dbSettings = await setRes.json();
+
+          // 🚀 โหลด Cashflow Groups (ถ้าไม่มีใช้ค่า Default)
+          const loadedGroups = dbSettings[CASHFLOW_GROUPS_KEY] || DEFAULT_CASHFLOW_GROUPS;
+          if (setCashflowGroups) setCashflowGroups(loadedGroups);
 
           if (dbSettings[CATEGORIES_KEY]) {
             let parsed = dbSettings[CATEGORIES_KEY].map(c => {
@@ -63,18 +69,23 @@ export default function useTransactionData({
               let cFixed = c.isFixed;
               let cColor = c.color || OLD_PALETTE_MAP[c.colorId] || '#64748B';
 
+              // 🚀 Auto-migrate กลุ่มแบบเก่า (string ธรรมดา) ให้เป็น cg_ prefix
+              if (cGroup && !cGroup.startsWith('cg_')) {
+                cGroup = `cg_${cGroup}`; 
+              }
+
               if (!cGroup) {
                 if (c.type === 'income') {
-                  cGroup = (c.name || '').includes('เงินเดือน') ? 'salary' : 'bonus';
+                  cGroup = (c.name || '').includes('เงินเดือน') ? 'cg_salary' : 'cg_bonus';
                 } else {
                   const n = c.name || '';
-                  if (n.match(/หอ|เช่า|คอนโด/))           cGroup = 'rent';
-                  else if (n.match(/รายเดือน|สมาชิก|หนี้/)) cGroup = 'subs';
-                  else if (n.match(/ลงทุน|ออม/))            cGroup = 'invest';
-                  else if (n.match(/อาหาร|กิน|เครื่องดื่ม/)) cGroup = 'food';
-                  else if (n.match(/คอม|ไอที|IT/i))         cGroup = 'it';
-                  else                                        cGroup = 'variable';
-                  cFixed = cGroup === 'rent' || cGroup === 'subs' || cGroup === 'invest' || n.match(/บ้าน|บัตร/);
+                  if (n.match(/หอ|เช่า|คอนโด/))           cGroup = 'cg_rent';
+                  else if (n.match(/รายเดือน|สมาชิก|หนี้/)) cGroup = 'cg_subs';
+                  else if (n.match(/ลงทุน|ออม/))            cGroup = 'cg_invest';
+                  else if (n.match(/อาหาร|กิน|เครื่องดื่ม/)) cGroup = 'cg_food';
+                  else if (n.match(/คอม|ไอที|IT/i))         cGroup = 'cg_it';
+                  else                                        cGroup = 'cg_variable';
+                  cFixed = cGroup === 'cg_rent' || cGroup === 'cg_subs' || cGroup === 'cg_invest' || n.match(/บ้าน|บัตร/);
                 }
               }
               return { ...c, type: c.type || 'expense', cashflowGroup: cGroup, isFixed: !!cFixed, color: cColor };
@@ -82,11 +93,6 @@ export default function useTransactionData({
 
             if (!parsed.find(c => c.name === 'เงินเดือน'))           parsed.unshift(DEFAULT_CATEGORIES[0]);
             if (!parsed.find(c => c.name === 'รายรับพิเศษ/โบนัส'))   parsed.unshift(DEFAULT_CATEGORIES[1]);
-            if (!parsed.find(c => c.name.includes('หักวงเงิน'))) {
-              const debtCat = DEFAULT_CATEGORIES.find(c => c.id === 'cat_default_debt');
-              if (debtCat) parsed.push(debtCat);
-            }
-
             setCategories(parsed);
           }
 
@@ -94,41 +100,23 @@ export default function useTransactionData({
             setDayTypeConfig(dbSettings[DAY_TYPE_CONFIG_KEY]);
           }
         }
-      } catch (setErr) {
-        console.error('Failed to load settings from DB:', setErr);
-      }
+      } catch (setErr) { console.error('Failed to load settings from DB:', setErr); }
 
     } catch (err) {
       setTransactions([]);
       setDbStatus('Offline (ไม่สามารถเชื่อมต่อ Database)');
     }
-  }, [setCategories, setDayTypes, setDayTypeConfig, setDbStatus]);
+  }, [setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups]);
 
-  // ─── Save transactions ────────────────────────────────────
   const saveToDb = useCallback(async (items) => {
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(items),
-      });
+      const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(items) });
       if (!res.ok) throw new Error('Network response was not ok');
-    } catch (err) {
-      console.error('Failed to save to DB:', err);
-    }
+    } catch (err) { console.error('Failed to save to DB:', err); }
     await loadData();
   }, [loadData]);
 
-  // ─── CRUD handlers ────────────────────────────────────────
-  const handleSaveTransaction = useCallback(async (item) => {
-    try {
-      await saveToDb([item]);
-    } catch (err) {
-      console.error('Failed to save transaction:', err);
-      throw err;
-    }
-  }, [saveToDb]);
-
+  const handleSaveTransaction = useCallback(async (item) => { await saveToDb([item]); }, [saveToDb]);
   const handleUpdateTransaction = useCallback((id, field, value) => {
     const item = transactions.find(t => t.id === id);
     if (item) saveToDb({ ...item, [field]: value });
@@ -136,75 +124,34 @@ export default function useTransactionData({
 
   const handleDeleteTransaction = useCallback(async (id) => {
     if (!window.confirm('ยืนยันการลบรายการนี้?')) return;
-    try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Network Error');
-    } catch (err) {
-      console.error('Failed to delete transaction:', err);
-    }
+    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
     await loadData();
   }, [loadData]);
 
   const handleDeleteMonth = useCallback(async (period) => {
-  if (!period.match(/^\d{4}-\d{2}$/)) return alert('...');
-  if (!window.confirm(`...`)) return;
-
-  setIsProcessing(true);
-  const itemsToDelete = transactions.filter(t => {
-    if (!t.date) return false;
-    const parts = t.date.split('/');
-    return parts.length === 3 && `${parts[2]}-${parts[1]}` === period;
-  });
-
-  try {
-    await Promise.all(itemsToDelete.map(item => 
-      fetch(`${API_URL}/${item.id}`, { method: 'DELETE' })
-    ));
-  } catch (err) {
-    console.error('Batch delete failed:', err);
-  }
-
-  await loadData();
-  setIsProcessing(false);
-  return true;
-}, [transactions, loadData]);
+    if (!period.match(/^\d{4}-\d{2}$/)) return;
+    if (!window.confirm('ยืนยันการลบเดือนนี้?')) return;
+    setIsProcessing(true);
+    const itemsToDelete = transactions.filter(t => t.date && t.date.includes(`/${period.split('-')[1]}/${period.split('-')[0]}`));
+    await Promise.all(itemsToDelete.map(item => fetch(`${API_URL}/${item.id}`, { method: 'DELETE' })));
+    await loadData();
+    setIsProcessing(false);
+  }, [transactions, loadData]);
 
   const handleDeleteAllData = useCallback(async ({ setShowToast }) => {
-    if (!window.confirm('🚨 อันตราย: ยืนยันการลบข้อมูล "ทั้งหมด" (รายการบัญชี, ปฏิทิน และรีเซ็ตการตั้งค่ากลับเป็นค่าเริ่มต้น)?\nการกระทำนี้ไม่สามารถกู้คืนได้!')) return;
-
+    if (!window.confirm('🚨 ยืนยันการลบข้อมูลทั้งหมด?')) return;
     setIsProcessing(true);
     try {
-      const res = await fetch(RESET_API_URL, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to reset database');
-
+      await fetch(RESET_API_URL, { method: 'DELETE' });
       await settingsService.save(CATEGORIES_KEY, DEFAULT_CATEGORIES);
       await settingsService.save(DAY_TYPE_CONFIG_KEY, DEFAULT_DAY_TYPES);
-
-      setTransactions([]);
-      setDayTypes({});
-      setCategories(DEFAULT_CATEGORIES);
-      setDayTypeConfig(DEFAULT_DAY_TYPES);
-
+      await settingsService.save(CASHFLOW_GROUPS_KEY, DEFAULT_CASHFLOW_GROUPS); // 🚀 Reset Groups
+      setTransactions([]); setDayTypes({}); setCategories(DEFAULT_CATEGORIES); setDayTypeConfig(DEFAULT_DAY_TYPES);
+      if(setCashflowGroups) setCashflowGroups(DEFAULT_CASHFLOW_GROUPS);
       setShowToast(true);
-      setTimeout(() => { setShowToast(false); window.location.reload(); }, 1500);
-    } catch (err) {
-      console.error('DB Reset failed', err);
-      alert('เกิดข้อผิดพลาดในการล้างข้อมูล: ' + err.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [setDayTypes, setCategories, setDayTypeConfig]);
+      setTimeout(() => { window.location.reload(); }, 1500);
+    } catch (err) { alert('Error: ' + err.message); } finally { setIsProcessing(false); }
+  }, [setDayTypes, setCategories, setDayTypeConfig, setCashflowGroups]);
 
-  return {
-    transactions,
-    isProcessing,
-    setIsProcessing,
-    loadData,
-    saveToDb,
-    handleSaveTransaction,
-    handleUpdateTransaction,
-    handleDeleteTransaction,
-    handleDeleteMonth,
-    handleDeleteAllData,
-  };
+  return { transactions, isProcessing, setIsProcessing, loadData, saveToDb, handleSaveTransaction, handleUpdateTransaction, handleDeleteTransaction, handleDeleteMonth, handleDeleteAllData };
 }

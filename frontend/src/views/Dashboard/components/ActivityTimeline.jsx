@@ -10,7 +10,6 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes, i
   const [viewMode, setViewMode] = useState('dayType');
   const dailyExpenses = analytics.dailyAllMap || {};
 
-  // ⭐️ ดึงค่า Threshold ที่คำนวณมาจาก Hook อย่างถูกต้อง (แก้ปัญหาบั๊กเพดานสี)
   const globalMaxThreshold = analytics.globalMaxThreshold || 100;
 
   const getExpenseLevel = (amount) => {
@@ -67,15 +66,18 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes, i
 
         <div className="flex items-center gap-3 flex-wrap">
           {viewMode === 'dayType' ? (
-            dayTypeConfig.map(dt => {
-              const count = analytics.dayTypeCounts[dt.id] || 0;
-              return (
-                <div key={dt.id} className="flex items-center gap-1.5 hidden sm:flex">
-                  <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: dt.color }} />
-                  <span className={muted}>{dt.label} <span className="opacity-75">({count})</span></span>
-                </div>
-              );
-            })
+            /* 🚀 LOGIC ใหม่: กรองเอาเฉพาะชนิดวันที่มีจำนวน > 0 มาแสดงผล */
+            dayTypeConfig
+              .filter(dt => (analytics.dayTypeCounts[dt.id] || 0) > 0)
+              .map(dt => {
+                const count = analytics.dayTypeCounts[dt.id];
+                return (
+                  <div key={dt.id} className="flex items-center gap-1.5 hidden sm:flex">
+                    <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: dt.color }} />
+                    <span className={muted}>{dt.label} <span className="opacity-75">({count})</span></span>
+                  </div>
+                );
+              })
           ) : (
             <div className="flex items-center gap-2">
               <div className="relative group/info cursor-help mr-1">

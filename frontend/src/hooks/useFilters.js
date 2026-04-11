@@ -96,18 +96,14 @@ export default function useFilters({ transactions, categories }) {
     if (advancedFilterGroup !== 'ALL') {
       filtered = filtered.filter(t => {
         const cat = categories.find(c => c.name === t.category)
-          ?? { type: 'expense', cashflowGroup: 'variable', isFixed: false };
+          ?? { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
         switch (advancedFilterGroup) {
           case 'INCOME':   return cat.type === 'income';
           case 'EXPENSE':  return cat.type === 'expense';
           case 'FIXED':    return cat.isFixed;
           case 'VARIABLE': return cat.type === 'expense' && !cat.isFixed;
-          case 'FOOD':     return cat.cashflowGroup === 'food';
-          case 'RENT':     return cat.cashflowGroup === 'rent';
-          case 'SUBS':     return cat.cashflowGroup === 'subs';
-          case 'IT':       return cat.cashflowGroup === 'it';
-          case 'INVEST':   return cat.cashflowGroup === 'invest';
-          default:         return true;
+          default:         
+            return cat.cashflowGroup === advancedFilterGroup;
         }
       });
     }

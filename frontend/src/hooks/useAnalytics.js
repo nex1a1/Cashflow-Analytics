@@ -6,6 +6,7 @@ import { getThaiMonth, hexToRgb, formatMoney } from '../utils/formatters';
 export default function useAnalytics({
   transactions,
   categories,
+  cashflowGroups = [], 
   filterPeriod,
   hideFixedExpenses,
   dashboardCategory = 'ALL', 
@@ -16,12 +17,8 @@ export default function useAnalytics({
   isDarkMode,
 }) {
   const analytics = useMemo(() => {
-    // 🚀 สร้าง Category Map เพื่อให้ค้นหาเป็น O(1) แทน O(M)
-    const catMapLookup = categories.reduce((acc, cat) => {
-      acc[cat.name] = cat;
-      return acc;
-    }, {});
-    const defaultCat = { type: 'expense', cashflowGroup: 'variable', isFixed: false, color: '#64748B' };
+    const catMapLookup = categories.reduce((acc, cat) => { acc[cat.name] = cat; return acc; }, {});
+    const defaultCat = { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false, color: '#64748B' };
 
     const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
     let totalExpense = 0, totalIncome = 0, weekendTotal = 0, weekdayTotal = 0;
@@ -32,10 +29,9 @@ export default function useAnalytics({
 
     filteredTx.forEach(item => {
       const amt = parseFloat(item.amount) || 0;
-      // 🚀 ใช้ Map ดึงข้อมูลแทนการวนลูปหา
       const catObj = catMapLookup[item.category] || defaultCat;
       const isInc = catObj.type === 'income';
-      const cGroup = catObj.cashflowGroup || 'variable';
+      const cGroup = catObj.cashflowGroup || (isInc ? 'cg_bonus' : 'cg_variable');
       const isFixed = catObj.isFixed || false;
 
       if (!item.date) return;
@@ -45,32 +41,29 @@ export default function useAnalytics({
       const ym = `${parts[2]}-${parts[1]}`;
       uniqueMonthsSet.add(ym);
 
-      if (!cashflowMap[ym]) cashflowMap[ym] = {
-        monthStr: ym, salary: 0, bonus: 0, rent: 0, food: 0,
-        invest: 0, it: 0, subs: 0, variable: 0, totalExp: 0, income: 0,
-      };
+      if (!cashflowMap[ym]) {
+        cashflowMap[ym] = { monthStr: ym, totalExp: 0, income: 0, groups: {} };
+        cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
+      }
+
+      cashflowMap[ym].groups[cGroup] = (cashflowMap[ym].groups[cGroup] || 0) + amt;
 
       if (isInc) {
         totalIncome += amt;
         cashflowMap[ym].income += amt;
         dayIncomeMap[item.date] = (dayIncomeMap[item.date] || 0) + amt;
-        if (cGroup === 'salary') cashflowMap[ym].salary += amt;
-        else cashflowMap[ym].bonus += amt;
       } else {
         totalExpense += amt;
         cashflowMap[ym].totalExp += amt;
         dayExpenseMap[item.date] = (dayExpenseMap[item.date] || 0) + amt;
         const dayOfWeek = parseDateStrToObj(item.date).getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) weekendTotal += amt;
-        else weekdayTotal += amt;
+        if (dayOfWeek === 0 || dayOfWeek === 6) weekendTotal += amt; else weekdayTotal += amt;
         dayOfWeekMap[dayOfWeek] += amt;
 
-        if (cGroup === 'rent')        { rentTotal += amt;   cashflowMap[ym].rent += amt; }
-        else if (cGroup === 'food')   { foodTotal += amt;   cashflowMap[ym].food += amt; }
-        else if (cGroup === 'it')     { itTotal += amt;     cashflowMap[ym].it += amt; }
-        else if (cGroup === 'invest') { investTotal += amt; cashflowMap[ym].invest += amt; }
-        else if (cGroup === 'subs')   { cashflowMap[ym].subs += amt; }
-        else                          { cashflowMap[ym].variable += amt; }
+        if (cGroup === 'cg_rent' || cGroup === 'rent')        rentTotal += amt;   
+        else if (cGroup === 'cg_food' || cGroup === 'food')   foodTotal += amt;   
+        else if (cGroup === 'cg_it' || cGroup === 'it')       itTotal += amt;     
+        else if (cGroup === 'cg_invest' || cGroup === 'invest') investTotal += amt; 
 
         if (isFixed) fixedTotal += amt; else variableTotal += amt;
       }
@@ -112,34 +105,20 @@ export default function useAnalytics({
     });
 
     const chartTotal = chartTx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    const sortedCats = Object.entries(catMapData)
-      .sort((a, b) => b[1] - a[1])
-      .map(c => ({
-        name: c[0], amount: c[1],
-        percentage: chartTotal > 0 ? ((c[1] / chartTotal) * 100).toFixed(1) : 0,
-        avgPerMonth: c[1] / numMonths,
-      }));
+    const sortedCats = Object.entries(catMapData).sort((a, b) => b[1] - a[1]).map(c => ({
+        name: c[0], amount: c[1], percentage: chartTotal > 0 ? ((c[1] / chartTotal) * 100).toFixed(1) : 0, avgPerMonth: c[1] / numMonths,
+    }));
 
     const datesInPeriodForAvg = generateDatesForPeriod(filterPeriod, transactions);
     const periodDays = datesInPeriodForAvg.length || 1;
     const dailyAvg = totalExpense / periodDays;
 
-    const foodDailyAvg = foodTotal / periodDays;
-    const foodPercentage = totalExpense > 0 ? ((foodTotal / totalExpense) * 100).toFixed(1) : 0;
-    const rentPercentage = totalIncome > 0 ? ((rentTotal / totalIncome) * 100).toFixed(1) : 0;
-    const fixedPercentage = totalExpense > 0 ? ((fixedTotal / totalExpense) * 100).toFixed(1) : 0;
-    const variablePercentage = totalExpense > 0 ? ((variableTotal / totalExpense) * 100).toFixed(1) : 0;
-
     const catChartData = {
       labels: sortedCats.map(c => c.name),
       datasets: [{
         data: sortedCats.map(c => c.amount),
-        backgroundColor: sortedCats.map(c => {
-          const catDef = catMapLookup[c.name]; // 🚀 ใช้ Map
-          return catDef?.color || '#64748B';
-        }),
-        borderWidth: 2,
-        borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+        backgroundColor: sortedCats.map(c => { return catMapLookup[c.name]?.color || '#64748B'; }),
+        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
       }],
     };
 
@@ -149,9 +128,10 @@ export default function useAnalytics({
     const sparklineIncome = [], sparklineExpense = [], sparklineNet = [];
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
 
+    const sortedMonthsKeys = Object.keys(cashflowMap).sort();
+
     if (!isSingleMonthView) {
-      const sortedMonths = Object.keys(cashflowMap).sort();
-      sortedMonths.forEach(m => {
+      sortedMonthsKeys.forEach(m => {
         sparklineIncome.push(cashflowMap[m].income);
         sparklineExpense.push(cashflowMap[m].totalExp);
         sparklineNet.push(cashflowMap[m].income - cashflowMap[m].totalExp);
@@ -165,7 +145,6 @@ export default function useAnalytics({
     }
 
     const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
-    const sortedMonthsKeys = Object.keys(cashflowMap).sort();
     
     const xLabels = showMonthly 
       ? sortedMonthsKeys.map(m => getThaiMonth(m))
@@ -229,7 +208,7 @@ export default function useAnalytics({
             tension: 0.3, pointRadius: isSingleMonthView ? 3 : 0, pointHitRadius: 10,
           });
         } else {
-          const catObj = catMapLookup[catName] || {}; // 🚀 ใช้ Map
+          const catObj = catMapLookup[catName] || {};
           const catColor = catObj.color || '#64748B';
           const rgb = hexToRgb(catColor);
           datasets.push({
@@ -260,7 +239,7 @@ export default function useAnalytics({
     transactions.forEach(item => {
       if (!item.date) return;
       const amt = parseFloat(item.amount) || 0;
-      const catObj = catMapLookup[item.category]; // 🚀 ใช้ Map
+      const catObj = catMapLookup[item.category];
       const isExpense = catObj ? catObj.type === 'expense' : true;
       if (isExpense) {
         globalDailySum[item.date] = (globalDailySum[item.date] || 0) + amt;
@@ -276,20 +255,25 @@ export default function useAnalytics({
       totalExpense, totalIncome, netCashflow, savingsRate, chartTotal, numMonths,
       sortedCats,
       topTransactions: [...chartTx].sort((a, b) => b.amount - a.amount).slice(0, topXLimit),
-      dailyAvg, uniqueDays: datesInPeriod.length,
+      dailyAvg, uniqueDays: datesInPeriodForAvg.length,
       catChartData, mainChartData, mainChartType,
-      foodTotal, foodDailyAvg, foodPercentage,
-      rentTotal, rentPercentage,
-      fixedTotal, variableTotal, fixedPercentage, variablePercentage,
+      foodTotal, foodDailyAvg: foodTotal/periodDays, foodPercentage: totalExpense > 0 ? ((foodTotal / totalExpense) * 100).toFixed(1) : 0,
+      rentTotal, rentPercentage: totalIncome > 0 ? ((rentTotal / totalIncome) * 100).toFixed(1) : 0,
+      fixedTotal, variableTotal, fixedPercentage: totalExpense > 0 ? ((fixedTotal / totalExpense) * 100).toFixed(1) : 0, variablePercentage: totalExpense > 0 ? ((variableTotal / totalExpense) * 100).toFixed(1) : 0,
       emergencyFundTarget: (totalExpense / numMonths) * 6,
-      sortedCashflow,
+      sortedCashflow, 
       sparklineIncome, sparklineExpense, sparklineNet,
-      dayTypeCounts, datesInPeriod,
       weekendTotal, weekdayTotal, dayOfWeekMap,
-      dailyCatMap, monthlyCatMap, dailyAllMap, monthlyAllMap, sortedMonthsKeys,
-      globalMaxThreshold
+      globalMaxThreshold,
+      // 🚀 ส่งออกตัวแปรสำหรับกราฟให้ครบถ้วน
+      datesInPeriod,
+      dayTypeCounts, 
+      dailyAllMap,
+      sortedMonthsKeys,
+      monthlyCatMap,
+      dailyCatMap
     };
-}, [transactions, filterPeriod, categories, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode]);
+}, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode]);
 
   return analytics;
 }

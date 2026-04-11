@@ -8,9 +8,7 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
   const handleCategoryChange = async (catId, field, value, transactions) => {
     const oldCat = categories.find(c => c.id === catId);
     if (!oldCat) return;
-    const updatedCats = categories.map(c =>
-      c.id === catId ? { ...c, [field]: value } : c
-    );
+    const updatedCats = categories.map(c => c.id === catId ? { ...c, [field]: value } : c);
     setCategories(updatedCats);
     await saveSettingToDb(CATEGORIES_KEY, updatedCats);
 
@@ -30,7 +28,7 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
       icon: isIncome ? '💰' : '📌',
       color: isIncome ? '#10B981' : '#64748B',
       type,
-      cashflowGroup: isIncome ? 'bonus' : 'variable',
+      cashflowGroup: isIncome ? 'cg_bonus' : 'cg_variable',
       isFixed: false,
     };
     const updated = [...categories, newCat];
@@ -56,22 +54,13 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
     if (index === -1) return;
     const dir = direction.toLowerCase();
     if (dir === 'up' && index > 0) {
-      [newCategories[index - 1], newCategories[index]] =
-        [newCategories[index], newCategories[index - 1]];
+      [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
     } else if (dir === 'down' && index < newCategories.length - 1) {
-      [newCategories[index + 1], newCategories[index]] =
-        [newCategories[index], newCategories[index + 1]];
+      [newCategories[index + 1], newCategories[index]] = [newCategories[index], newCategories[index + 1]];
     }
     setCategories(newCategories);
     await saveSettingToDb(CATEGORIES_KEY, newCategories);
   };
 
-  return {
-    categories,
-    setCategories,
-    handleCategoryChange,
-    handleAddCategory,
-    handleDeleteCategory,
-    handleMoveCategory,
-  };
+  return { categories, setCategories, handleCategoryChange, handleAddCategory, handleDeleteCategory, handleMoveCategory };
 }

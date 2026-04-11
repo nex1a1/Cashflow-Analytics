@@ -18,13 +18,11 @@ export default function MainChart({
 }) {
   const dm = isDarkMode;
   
-  // ⭐️ ย้าย State ที่ใช้เฉพาะกราฟมาไว้ที่นี่ทั้งหมด!
   const [chartViewType, setChartViewType] = useState('bar'); 
   const [showTrendLines, setShowTrendLines] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
   const [showCatMenu, setShowCatMenu] = useState(false); 
 
-  // ดักคลิกนอกกรอบเมนูตัวกรอง
   const filterMenuRef = useRef(null);
   useEffect(() => {
     if (!showCatMenu) return;
@@ -35,7 +33,6 @@ export default function MainChart({
     return () => document.removeEventListener('mousedown', handler);
   }, [showCatMenu]);
 
-  // ⭐️ ย้าย Logic การเตรียมข้อมูลกราฟมาไว้ที่นี่
   const displayChartData = useMemo(() => {
     if (!analytics.mainChartData) return null;
     
@@ -56,12 +53,13 @@ export default function MainChart({
         const catObj = categories.find(c => c.name === catName) || {};
         const catColor = catObj.color || '#64748B';
         
+        // 🚀 แก้บั๊ก: รองรับกรณี undefined อย่างปลอดภัย
         datasets.push({
           type: 'bar',
           label: catName,
           data: showMonthly
-            ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catName]?.[m] || 0)
-            : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catName]?.[d] || 0),
+            ? (analytics.sortedMonthsKeys || []).map(m => analytics.monthlyCatMap?.[catName]?.[m] || 0)
+            : (analytics.datesInPeriod || []).map(d => analytics.dailyCatMap?.[catName]?.[d] || 0),
           backgroundColor: catColor,
           borderColor: dm ? '#1e293b' : '#ffffff',
           borderWidth: 1,
@@ -120,7 +118,6 @@ export default function MainChart({
     return { ...analytics.mainChartData, datasets: processedDatasets };
   }, [analytics, filterPeriod, chartGroupBy, chartViewType, showTrendLines, isSmoothLine, dashboardCategory, categories, hideFixedExpenses, dm]);
 
-  // CSS Tokens
   const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
   const divider = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
@@ -144,7 +141,6 @@ export default function MainChart({
             </div>
           )}
 
-          {/* รูปแบบกราฟ */}
           <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
             <button onClick={() => setChartViewType('line')} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
               <TrendingUp className="w-3.5 h-3.5" /> เส้น
@@ -157,25 +153,19 @@ export default function MainChart({
             </button>
           </div>
 
-          {/* ปุ่มโค้ง/ตรง (โชว์เฉพาะกราฟเส้น) */}
           {chartViewType === 'line' && (
             <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
               <button onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${!isSmoothLine ? 'opacity-100' : 'opacity-60'}`}>
-                  <polyline points="3 17 9 10 14 15 21 6" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${!isSmoothLine ? 'opacity-100' : 'opacity-60'}`}><polyline points="3 17 9 10 14 15 21 6" /></svg>
                 เส้นตรง
               </button>
               <button onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${isSmoothLine ? 'opacity-100' : 'opacity-60'}`}>
-                  <path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-opacity ${isSmoothLine ? 'opacity-100' : 'opacity-60'}`}><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
                 เส้นโค้ง
               </button>
             </div>
           )}
 
-          {/* ปุ่มตัวกรอง (Filter Menu) */}
           <div className="relative" ref={filterMenuRef}>
             <button
               onClick={() => setShowCatMenu(!showCatMenu)}
@@ -189,7 +179,6 @@ export default function MainChart({
             {showCatMenu && (
               <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
                 <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                  {/* Toggle: แสดงเส้นเทรนด์ */}
                   <label className="flex items-center justify-between cursor-pointer group">
                     <div className="flex flex-col pr-3">
                       <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
@@ -202,7 +191,6 @@ export default function MainChart({
                     </div>
                   </label>
 
-                  {/* Toggle: ซ่อนรายจ่ายคงที่ */}
                   <label className="flex items-center justify-between cursor-pointer group">
                     <div className="flex flex-col pr-3">
                       <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed)</span>
@@ -217,7 +205,7 @@ export default function MainChart({
                 </div>
                 
                 <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ (Multi-line)</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่ที่ใช้งาน (Multi-line)</span>
                   {(() => {
                     const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
                     const toggleCategory = (catName) => {
@@ -231,8 +219,12 @@ export default function MainChart({
                       }
                     };
 
+                    // 🚀 ฟังก์ชันดึงเฉพาะหมวดผันแปร "ที่มีข้อมูลในเดือนนี้"
                     const selectAllVariable = () => {
-                      const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed).map(c => c.name);
+                      const variableCats = analytics.sortedCats
+                        .map(sc => categories.find(c => c.name === sc.name))
+                        .filter(c => c && !c.isFixed)
+                        .map(c => c.name);
                       setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
                     };
 
@@ -246,15 +238,23 @@ export default function MainChart({
                             🔄 เทียบหมวดผันแปร
                           </button>
                         </div>
+                        
+                        {/* 🚀 ซ่อนหมวดหมู่ที่ไม่มีข้อมูลออกไปจากเมนูตัวกรอง */}
                         <div className="flex flex-wrap gap-1.5 mt-1">
-                          {categories.filter(c => c.type === 'expense').map(c => {
-                            const isActive = activeCats.includes(c.name);
-                            return (
-                              <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
-                                <span className="opacity-90">{c.icon}</span> {c.name}
-                              </button>
-                            );
-                          })}
+                          {analytics.sortedCats.length === 0 ? (
+                            <span className={`text-[10px] w-full text-center py-2 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ไม่มีรายการใช้จ่ายให้เปรียบเทียบในเดือนนี้</span>
+                          ) : (
+                            analytics.sortedCats.map(sc => {
+                              const c = categories.find(cat => cat.name === sc.name);
+                              if (!c) return null;
+                              const isActive = activeCats.includes(c.name);
+                              return (
+                                <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
+                                  <span className="opacity-90">{c.icon}</span> {c.name}
+                                </button>
+                              );
+                            })
+                          )}
                         </div>
                       </>
                     );
