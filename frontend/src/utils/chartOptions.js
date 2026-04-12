@@ -35,16 +35,7 @@ export const getComboChartOptions = (isDarkMode) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        color:         isDarkMode ? '#cbd5e1' : '#475569',
-        padding:       16,
-        usePointStyle: true,
-        pointStyle:    'circle',
-        font:          { size: 12, weight: 'bold' },
-      },
-    },
+    legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
@@ -57,20 +48,11 @@ export const getComboChartOptions = (isDarkMode) => ({
 });
 
 // เพิ่ม showLegend parameter
-export const getBarChartOptions = (isDarkMode, showLegend = false) => ({
+export const getBarChartOptions = (isDarkMode) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { 
-        display: showLegend,
-        position: 'bottom',
-        labels: { 
-           color: isDarkMode ? '#cbd5e1' : '#475569', 
-           usePointStyle: true, 
-           boxWidth: 6,         // ลดขนาดจุดสี
-           font: { size: 10 }   // ลดขนาดตัวอักษร
-        }
-    },
+    legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
@@ -83,15 +65,11 @@ export const getBarChartOptions = (isDarkMode, showLegend = false) => ({
 });
 
 // เพิ่ม showLegend parameter
-export const getLineChartOptions = (isDarkMode, showLegend = false) => ({
+export const getLineChartOptions = (isDarkMode) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { 
-        display: showLegend,
-        position: 'bottom',
-        labels: { color: isDarkMode ? '#cbd5e1' : '#475569', usePointStyle: true, boxWidth: 8 }
-    },
+    legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
