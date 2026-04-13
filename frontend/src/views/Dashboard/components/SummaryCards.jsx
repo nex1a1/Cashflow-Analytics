@@ -7,9 +7,9 @@ import { formatMoney } from '../../../utils/formatters';
 
 // ─── Count-up Hook ───────────────────────────────────────────────────────────
 function useCountUp(target, duration = 900) {
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(target);
   const rafRef = useRef(null);
-  const prevTarget = useRef(null);
+  const prevTarget = useRef(target);
 
   useEffect(() => {
     if (prevTarget.current === target) return;

@@ -224,7 +224,7 @@ export default function App() {
         />
 
         <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
-          {activeTab === 'dashboard' && (
+        <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
             <DashboardView
               analytics={analytics} transactions={transactions}
               cashflowGroups={cashflowGroups}
@@ -236,7 +236,7 @@ export default function App() {
               categories={categories} dayTypeConfig={dayTypeConfig}
               isDarkMode={isDarkMode} dayTypes={dayTypes}
             />
-          )}
+          </div>
           {activeTab === 'calendar' && (
             <CalendarView
               transactions={transactions} filterPeriod={filterPeriod}
