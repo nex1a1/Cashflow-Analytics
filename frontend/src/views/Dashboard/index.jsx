@@ -5,7 +5,6 @@ import { Inbox } from 'lucide-react';
 
 // Components
 import SummaryCards from './components/SummaryCards';
-import KeyMetrics from './components/KeyMetrics';
 import ExpenseProportion from './components/ExpenseProportion';
 import MainChart from './components/MainChart';
 import TopTransactions from './components/TopTransactions';
@@ -33,11 +32,10 @@ export default function DashboardView({
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-10 flex flex-col gap-4">
 
       {/* ══════════════════════════════════════════════════════════
-          ROW 1 — SUMMARY BAR
+          ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
       ══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_250px_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,1.4fr)_260px_minmax(0,1.2fr)] gap-4 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_600px] gap-4 items-stretch">
         <SummaryCards analytics={analytics} isDarkMode={dm} />
-        <KeyMetrics analytics={analytics} isDarkMode={dm} />
         <ExpenseProportion analytics={analytics} categories={categories} isDarkMode={dm} />
       </div>
       {/* ══════════════════════════════════════════════════════════

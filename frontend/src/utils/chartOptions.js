@@ -24,7 +24,12 @@ const getScaleOptions = (isDarkMode, beginAtZero = false) => ({
     ticks: {
       color: isDarkMode ? '#94a3b8' : '#64748b',
       font: { size: 11 },
-      callback: (v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v),
+      callback: (v) => {
+        if (v >= 1000) {
+          return `${+(v / 1000).toFixed(1)}k`;
+        }
+        return v;
+      },
     },
     grid:   { color: isDarkMode ? '#1e293b' : '#f1f5f9', lineWidth: 1 },
     border: { dash: [4, 4], display: false },

@@ -1,94 +1,289 @@
 // src/views/Dashboard/components/SummaryCards.jsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Coins, Wallet, PiggyBank, Scale } from 'lucide-react';
+import { Coins, Wallet, PiggyBank, Flame, UtensilsCrossed, Home, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import Sparkline from '../../../components/ui/Sparkline';
 import { formatMoney } from '../../../utils/formatters';
 
+// ─── Count-up Hook ───────────────────────────────────────────────────────────
+function useCountUp(target, duration = 900) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef(null);
+  const prevTarget = useRef(null);
+
+  useEffect(() => {
+    if (prevTarget.current === target) return;
+    const start = prevTarget.current ?? 0;
+    prevTarget.current = target;
+
+    const startTime = performance.now();
+    const diff = target - start;
+
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setValue(start + diff * eased);
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration]);
+
+  return value;
+}
+
+// ─── Trend Badge ─────────────────────────────────────────────────────────────
+function TrendBadge({ current, previous, dm }) {
+  if (previous == null || previous === 0) return null;
+  const diff = current - previous;
+  const pct = Math.abs((diff / Math.abs(previous)) * 100);
+  const isUp = diff > 0;
+  const isFlat = pct < 0.5;
+
+  if (isFlat) return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${dm ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+      <Minus className="w-2.5 h-2.5" /> เท่าเดิม
+    </span>
+  );
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${isUp
+      ? (dm ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+      : (dm ? 'bg-red-500/20 text-red-400' : 'bg-red-50 text-red-500')
+    }`}>
+      {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+      {pct.toFixed(1)}%
+    </span>
+  );
+}
+
+// ─── Animated Money Display ───────────────────────────────────────────────────
+function AnimatedMoney({ value, className }) {
+  const animated = useCountUp(value);
+  return <span className={className}>{formatMoney(animated)}</span>;
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function SummaryCards({ analytics, isDarkMode }) {
   const dm = isDarkMode;
-  const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
 
   const datesInPeriod = analytics.datesInPeriod || [];
   const periodDays = Math.max(1, datesInPeriod.length);
   const avgIncome = analytics.totalIncome / periodDays;
   const avgExpense = analytics.totalExpense / periodDays;
 
+  const prevIncome  = analytics.prevTotalIncome  ?? null;
+  const prevExpense = analytics.prevTotalExpense  ?? null;
+  const prevNet     = analytics.prevNetCashflow   ?? null;
+
+  const isNegativeNet = analytics.netCashflow < 0;
+
   return (
-    <div className={`${card} p-4 flex flex-col justify-between gap-4 min-w-0`}>
-      <div className="grid grid-cols-3 gap-3 flex-1">
-        {/* รายรับ */}
-        <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${dm ? 'bg-gradient-to-br from-emerald-900/50 to-slate-900/80 border-emerald-800/50' : 'bg-gradient-to-br from-emerald-50/80 to-white border-emerald-200 shadow-sm'}`}>
-          <Coins className={`absolute -right-2 -bottom-2 w-20 h-20 -rotate-12 pointer-events-none ${dm ? 'text-emerald-400 opacity-[0.04]' : 'text-emerald-600 opacity-10'}`} />
-          <div className="relative z-10 flex flex-col gap-1">
-            <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
-              <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-emerald-500/20' : 'bg-emerald-100 text-emerald-700'}`}><Coins className="w-3.5 h-3.5" /></div>รายรับ
-            </span>
-            <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-emerald-300' : 'text-emerald-800'}`}>{formatMoney(analytics.totalIncome)}</span>
-            <span className={`text-[10px] font-semibold truncate ${dm ? 'text-emerald-500' : 'text-emerald-600/80'}`}>เฉลี่ย {formatMoney(avgIncome)}/วัน</span>
-          </div>
-          <div className="relative z-10 mt-3 flex justify-end">
-            <div className="opacity-90"><Sparkline data={analytics.sparklineIncome} color="#10B981" width={80} height={24} /></div>
+    <div className={`rounded-sm border shadow-sm w-full h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+
+      {/* ─── TOP ROW: MAIN SUMMARY ─── */}
+      <div className={`grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x flex-1 transition-colors duration-300 ${dm ? 'divide-slate-700 border-slate-700' : 'divide-slate-100 border-slate-100'}`}>
+
+        {/* Income */}
+        <div className={`relative overflow-hidden p-5 flex flex-col justify-between transition-colors ${dm ? 'hover:bg-slate-700/20' : 'hover:bg-slate-50/50'}`}>
+          <div className="relative z-10 flex justify-between items-start w-full gap-2">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`p-1.5 rounded text-emerald-500 ${dm ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}><Coins className="w-4 h-4" /></div>
+                <span className={`text-xs font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>รายรับรวม</span>
+              </div>
+              <AnimatedMoney
+                value={analytics.totalIncome}
+                className={`text-2xl xl:text-3xl font-black truncate ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}
+              />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <div className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เฉลี่ย {formatMoney(avgIncome)}/วัน</div>
+                <TrendBadge current={analytics.totalIncome} previous={prevIncome} dm={dm} />
+              </div>
+            </div>
+            {analytics.sparklineIncome && (
+              <div className="w-20 xl:w-24 h-10 opacity-80 mt-2 shrink-0">
+                <Sparkline data={analytics.sparklineIncome} color="#10B981" />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* รายจ่าย */}
-        <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${dm ? 'bg-gradient-to-br from-red-900/50 to-slate-900/80 border-red-800/50' : 'bg-gradient-to-br from-red-50/80 to-white border-red-200 shadow-sm'}`}>
-          <Wallet className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-12 pointer-events-none ${dm ? 'text-red-400 opacity-[0.04]' : 'text-red-600 opacity-10'}`} />
-          <div className="relative z-10 flex flex-col gap-1">
-            <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-700'}`}>
-              <div className={`p-1 rounded-md shrink-0 ${dm ? 'bg-red-500/20' : 'bg-red-100 text-red-700'}`}><Wallet className="w-3.5 h-3.5" /></div>รายจ่าย
-            </span>
-            <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${dm ? 'text-red-300' : 'text-red-800'}`}>{formatMoney(analytics.totalExpense)}</span>
-            <span className={`text-[10px] font-semibold truncate ${dm ? 'text-red-500' : 'text-red-600/80'}`}>เฉลี่ย {formatMoney(avgExpense)}/วัน</span>
-          </div>
-          <div className="relative z-10 mt-3 flex justify-end">
-            <div className="opacity-90"><Sparkline data={analytics.sparklineExpense} color="#EF4444" width={80} height={24} /></div>
+        {/* Expense */}
+        <div className={`relative overflow-hidden p-5 flex flex-col justify-between transition-colors ${dm ? 'hover:bg-slate-700/20' : 'hover:bg-slate-50/50'}`}>
+          <div className="relative z-10 flex justify-between items-start w-full gap-2">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`p-1.5 rounded text-red-500 ${dm ? 'bg-red-500/10' : 'bg-red-50'}`}><Wallet className="w-4 h-4" /></div>
+                <span className={`text-xs font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>รายจ่ายรวม</span>
+              </div>
+              <AnimatedMoney
+                value={analytics.totalExpense}
+                className={`text-2xl xl:text-3xl font-black truncate ${dm ? 'text-red-400' : 'text-red-600'}`}
+              />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <div className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เฉลี่ย {formatMoney(avgExpense)}/วัน</div>
+                <TrendBadge current={analytics.totalExpense} previous={prevExpense} dm={dm} />
+              </div>
+            </div>
+            {analytics.sparklineExpense && (
+              <div className="w-20 xl:w-24 h-10 opacity-80 mt-2 shrink-0">
+                <Sparkline data={analytics.sparklineExpense} color="#EF4444" />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* คงเหลือ */}
-        <div className={`relative overflow-hidden flex flex-col justify-between p-3.5 rounded-xl border transition-all ${analytics.netCashflow >= 0 ? (dm ? 'bg-gradient-to-br from-blue-900/50 to-slate-900/80 border-blue-800/50' : 'bg-gradient-to-br from-blue-50/80 to-white border-blue-200 shadow-sm') : (dm ? 'bg-gradient-to-br from-orange-900/50 to-slate-900/80 border-orange-800/50' : 'bg-gradient-to-br from-orange-50/80 to-white border-orange-200 shadow-sm')}`}>
-          <PiggyBank className={`absolute -right-2 -bottom-2 w-20 h-20 rotate-6 pointer-events-none ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400 opacity-[0.04]' : 'text-[#00509E] opacity-[0.08]') : (dm ? 'text-orange-400 opacity-[0.04]' : 'text-orange-600 opacity-[0.08]')}`} />
-          <div className="relative z-10 flex flex-col gap-1">
-            <span className={`text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}`}>
-              <div className={`p-1 rounded-md shrink-0 ${analytics.netCashflow >= 0 ? (dm ? 'bg-blue-500/20' : 'bg-blue-100 text-blue-700') : (dm ? 'bg-orange-500/20' : 'bg-orange-100 text-orange-700')}`}><PiggyBank className="w-3.5 h-3.5" /></div>คงเหลือ
-            </span>
-            <span className={`text-xl lg:text-2xl font-black mt-1 leading-none truncate ${analytics.netCashflow >= 0 ? (dm ? 'text-blue-300' : 'text-[#00509E]') : (dm ? 'text-orange-300' : 'text-orange-700')}`}>{formatMoney(analytics.netCashflow)}</span>
-          </div>
-          <div className="relative z-10 mt-3 flex flex-col gap-1">
-            <div className="flex justify-between items-center text-[10px] font-bold">
-              <span className={`whitespace-nowrap ${dm ? 'text-slate-400' : 'text-slate-500'}`}>สัดส่วนการออม</span>
-              <span className={analytics.netCashflow >= 0 ? (dm ? 'text-blue-400' : 'text-blue-700') : (dm ? 'text-orange-400' : 'text-orange-700')}>{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</span>
+        {/* Net — pulse/glow when negative */}
+        <div
+          className="relative overflow-hidden p-5 flex flex-col justify-between transition-all duration-500"
+          style={isNegativeNet ? { animation: 'pulseGlow 2s ease-in-out infinite' } : {}}
+        >
+          {isNegativeNet && (
+            <style>{`
+              @keyframes pulseGlow {
+                0%, 100% {
+                  box-shadow: inset 0 0 0px 0px rgba(249,115,22,0);
+                  background-color: transparent;
+                }
+                50% {
+                  box-shadow: inset 0 0 20px 4px ${dm ? 'rgba(249,115,22,0.13)' : 'rgba(249,115,22,0.07)'};
+                  background-color: ${dm ? 'rgba(249,115,22,0.07)' : 'rgba(249,115,22,0.04)'};
+                }
+              }
+            `}</style>
+          )}
+
+          <PiggyBank className={`absolute -right-4 -bottom-4 w-28 h-28 rotate-12 pointer-events-none transition-transform ${
+            isNegativeNet
+              ? (dm ? 'text-orange-500/15' : 'text-orange-500/8')
+              : (dm ? 'text-blue-500/10' : 'text-blue-500/5')
+          }`} />
+
+          <div className="relative z-10 flex flex-col gap-1.5 w-full">
+            <div className="flex justify-between items-center mb-1">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded ${
+                  isNegativeNet
+                    ? `text-orange-500 ${dm ? 'bg-orange-500/10' : 'bg-orange-50'}`
+                    : `text-blue-500 ${dm ? 'bg-blue-500/10' : 'bg-blue-50'}`
+                }`}>
+                  <PiggyBank className="w-4 h-4" />
+                </div>
+                <span className={`text-xs font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>คงเหลือ</span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                <TrendBadge current={analytics.netCashflow} previous={prevNet} dm={dm} />
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
+                  ออม {analytics.totalIncome > 0 ? analytics.savingsRate : 0}%
+                </span>
+              </div>
             </div>
-            <div className={`w-full h-1.5 rounded-full overflow-hidden ${dm ? 'bg-slate-900/80' : 'bg-slate-200'}`}>
-              <div className={`h-full rounded-full transition-all duration-1000 ${analytics.netCashflow >= 0 ? 'bg-blue-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(100, Math.max(0, analytics.totalIncome > 0 ? analytics.savingsRate : 0))}%` }} />
+            <AnimatedMoney
+              value={analytics.netCashflow}
+              className={`text-2xl xl:text-3xl font-black truncate ${
+                isNegativeNet
+                  ? (dm ? 'text-orange-400' : 'text-orange-600')
+                  : (dm ? 'text-blue-400' : 'text-[#00509E]')
+              }`}
+            />
+            <div className={`w-full h-1.5 mt-1 rounded-full overflow-hidden ${dm ? 'bg-slate-900' : 'bg-slate-100'}`}>
+              <div
+                className={`h-full transition-all duration-1000 ${isNegativeNet ? 'bg-orange-500' : 'bg-blue-500'}`}
+                style={{ width: `${Math.min(100, Math.max(0, analytics.totalIncome > 0 ? analytics.savingsRate : 0))}%` }}
+              />
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* แถบโครงสร้างรายจ่าย Fixed/Variable */}
-      <div className={`rounded-sm px-3 py-2 ${dm ? 'bg-slate-900/60' : 'bg-slate-50'}`}>
-        <div className="flex justify-between items-center mb-1.5 gap-2">
-          <span className={`text-[10px] font-bold whitespace-nowrap flex items-center gap-1 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-            <Scale className="w-3 h-3 text-purple-500" /> โครงสร้างรายจ่าย
-          </span>
-          <div className="flex gap-3 shrink-0">
-            <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-purple-400' : 'text-purple-600'}`}>คงที่ {analytics.fixedPercentage}%</span>
-            <span className={`text-[10px] font-bold whitespace-nowrap ${dm ? 'text-pink-400' : 'text-pink-600'}`}>ผันแปร {analytics.variablePercentage}%</span>
+      {/* ─── BOTTOM ROW: KEY METRICS ─── */}
+      <div className={`grid grid-cols-2 lg:grid-cols-4 ${dm ? 'bg-slate-800/40 border-t border-slate-700' : 'bg-slate-50/50 border-t border-slate-100'}`}>
+
+        {/* Burn Rate */}
+        <div className={`relative overflow-hidden p-4 flex flex-col gap-1.5 min-w-0 border-b lg:border-b-0 lg:border-r ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
+          <Flame className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-amber-500/10' : 'text-amber-500/5'}`} />
+          <div className="relative z-10 flex items-center gap-1.5 mb-0.5">
+            <Flame className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className={`text-[11px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เผาผลาญ/วัน</span>
+          </div>
+          <AnimatedMoney
+            value={analytics.dailyAvg}
+            className={`relative z-10 text-lg font-black truncate ${dm ? 'text-slate-200' : 'text-slate-700'}`}
+          />
+        </div>
+
+        {/* Food */}
+        <div className={`relative overflow-hidden p-4 flex flex-col gap-1.5 min-w-0 border-b lg:border-b-0 lg:border-r ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
+          <UtensilsCrossed className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-orange-500/10' : 'text-orange-500/5'}`} />
+          <div className="relative z-10 flex items-center justify-between gap-1.5 mb-0.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <UtensilsCrossed className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+              <span className={`text-[11px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ค่ากิน/วัน</span>
+            </div>
+            <span className={`text-[9px] font-bold shrink-0 ${dm ? 'text-orange-400/80' : 'text-orange-500/80'}`}>{analytics.foodPercentage}%</span>
+          </div>
+          <div className="relative z-10 flex flex-col gap-1.5">
+            <AnimatedMoney
+              value={analytics.foodDailyAvg}
+              className={`text-lg font-black truncate ${dm ? 'text-slate-200' : 'text-slate-700'}`}
+            />
+            <div className={`w-full h-1 rounded-full overflow-hidden ${dm ? 'bg-slate-900' : 'bg-slate-200'}`}>
+              <div className="h-full bg-orange-500 transition-all duration-1000" style={{ width: `${analytics.foodPercentage}%` }} />
+            </div>
           </div>
         </div>
-        <div className={`w-full rounded-sm h-2 flex overflow-hidden ${dm ? 'bg-slate-700' : 'bg-slate-200'}`}>
-          <div className="bg-purple-500 h-2 transition-all duration-500" style={{ width: `${analytics.fixedPercentage}%` }} />
-          <div className="bg-pink-400 h-2 transition-all duration-500" style={{ width: `${analytics.variablePercentage}%` }} />
+
+        {/* Rent */}
+        <div className={`relative overflow-hidden p-4 flex flex-col gap-1.5 min-w-0 border-r-0 lg:border-r ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
+          <Home className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-indigo-500/10' : 'text-indigo-500/5'}`} />
+          <div className="relative z-10 flex items-center justify-between gap-1.5 mb-0.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Home className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span className={`text-[11px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ค่าที่พัก</span>
+            </div>
+            <span className={`text-[9px] font-bold shrink-0 ${dm ? 'text-indigo-400/80' : 'text-indigo-500/80'}`}>{analytics.rentPercentage}%</span>
+          </div>
+          <div className="relative z-10 flex flex-col gap-1.5">
+            <AnimatedMoney
+              value={analytics.rentTotal}
+              className={`text-lg font-black truncate ${dm ? 'text-slate-200' : 'text-slate-700'}`}
+            />
+            <div className={`w-full h-1 rounded-full overflow-hidden ${dm ? 'bg-slate-900' : 'bg-slate-200'}`}>
+              <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${analytics.rentPercentage}%` }} />
+            </div>
+          </div>
         </div>
+
+        {/* Structure */}
+        <div className="relative overflow-hidden p-4 flex flex-col gap-1.5 min-w-0">
+          <Scale className={`absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none ${dm ? 'text-purple-500/10' : 'text-purple-500/5'}`} />
+          <div className="relative z-10 flex items-center gap-1.5 mb-0.5">
+            <Scale className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+            <span className={`text-[11px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>โครงสร้าง (คงที่/ผันแปร)</span>
+          </div>
+          <div className="relative z-10 flex flex-col justify-end flex-1 gap-1.5">
+            <div className="text-[10px] font-bold flex justify-between items-end">
+              <span className="text-purple-500 leading-none">{analytics.fixedPercentage}%</span>
+              <span className="text-pink-500 leading-none">{analytics.variablePercentage}%</span>
+            </div>
+            <div className={`w-full h-1.5 rounded-full overflow-hidden flex ${dm ? 'bg-slate-900' : 'bg-slate-200'}`}>
+              <div className="h-full bg-purple-500 transition-all duration-500" style={{ width: `${analytics.fixedPercentage}%` }} />
+              <div className="h-full bg-pink-400 transition-all duration-500" style={{ width: `${analytics.variablePercentage}%` }} />
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
 SummaryCards.propTypes = {
-  analytics: PropTypes.object.isRequired,
+  analytics:  PropTypes.object.isRequired,
   isDarkMode: PropTypes.bool.isRequired,
 };
