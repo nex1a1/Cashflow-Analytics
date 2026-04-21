@@ -262,6 +262,7 @@ export default function App() {
                 const ok = await handleDeleteMonth(period);
                 if (ok) showSuccess();
               }}
+              cashflowGroups={cashflowGroups}
               categories={categories}
               advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
               advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
