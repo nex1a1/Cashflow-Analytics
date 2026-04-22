@@ -157,6 +157,7 @@ export default function App() {
     advancedFilterDate,     setAdvancedFilterDate,
     availableDatesInPeriod,
     displayTransactions,
+    activeCashflowGroupIds,
   } = useFilters({ transactions, categories });
 
   // ── analytics (exclude debt category) ───────────────────────
@@ -268,6 +269,7 @@ export default function App() {
               advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
               advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
               availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode}
+              activeCashflowGroupIds={activeCashflowGroupIds}
             />
           )}
           {activeTab === 'settings' && (

@@ -81,6 +81,19 @@ export default function useFilters({ transactions, categories }) {
     return Array.from(dates).sort((a, b) => parseDateStrToObj(a) - parseDateStrToObj(b));
   }, [transactions, filterPeriod]);
 
+  // ── Cashflow group IDs ที่มีข้อมูลจริงใน period ปัจจุบัน ────
+  // ใช้ใน LedgerView เพื่อซ่อน option ที่ไม่มีรายการ
+  const activeCashflowGroupIds = useMemo(() => {
+    const ids = new Set();
+    transactions
+      .filter(t => isDateInFilter(t.date, filterPeriod))
+      .forEach(t => {
+        const cat = categories.find(c => c.name === t.category);
+        if (cat?.cashflowGroup) ids.add(cat.cashflowGroup);
+      });
+    return ids;
+  }, [transactions, filterPeriod, categories]);
+
   // ── displayTransactions: filtered list สำหรับ LedgerView ────
   const displayTransactions = useMemo(() => {
     let filtered = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
@@ -134,5 +147,6 @@ export default function useFilters({ transactions, categories }) {
     // computed
     availableDatesInPeriod,
     displayTransactions,
+    activeCashflowGroupIds,
   };
 }

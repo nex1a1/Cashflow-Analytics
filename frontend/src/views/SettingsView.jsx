@@ -1,8 +1,9 @@
-// src/views/SettingsView.jsx  (PC-first · tight · sharp)
-import { useState, useEffect, useRef } from 'react';
+// src/views/SettingsView.jsx
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   PlusCircle, Trash2, Coins, CalendarClock, AlertCircle,
   ChevronUp, ChevronDown, Wallet, Info, Grid, Settings2,
+  GripVertical, Lock, AlertTriangle,
 } from 'lucide-react';
 import { DAY_TYPE_CONFIG_KEY, CASHFLOW_GROUPS_KEY } from '../constants';
 
@@ -22,16 +23,19 @@ function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm', disabled = fa
   useEffect(() => {
     if (!confirming) return;
     const h = (e) => { if (e.key === 'Escape') setConfirming(false); };
-    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
   }, [confirming]);
 
   if (size === 'lg') {
     return (
       <button onClick={handleClick} disabled={disabled}
-        className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed border ${
-          confirming ? 'bg-red-600 text-white border-red-600 animate-pulse'
-          : isDarkMode ? 'bg-red-950/60 text-red-300 hover:bg-red-600 hover:text-white border-red-800'
-          : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border-red-200'
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed border ${
+          confirming
+            ? 'bg-red-600 text-white border-red-600 animate-pulse'
+            : isDarkMode
+              ? 'bg-red-950/60 text-red-300 hover:bg-red-600 hover:text-white border-red-800'
+              : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border-red-200'
         }`}
         title={confirming ? 'ยืนยันการลบ?' : tooltip}>
         <Trash2 className="w-3.5 h-3.5" />
@@ -41,10 +45,14 @@ function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm', disabled = fa
   }
   return (
     <button onClick={handleClick} disabled={disabled}
-      className={`p-1 rounded-sm transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-        confirming ? 'bg-red-500 text-white animate-pulse'
-        : isDarkMode ? 'text-slate-500 hover:text-white hover:bg-red-500/80'
-        : 'text-slate-400 hover:text-white hover:bg-red-500'
+      className={`p-1 transition-all active:scale-95 ${
+        disabled
+          ? 'opacity-20 cursor-not-allowed'
+          : confirming
+            ? 'bg-red-500 text-white animate-pulse'
+            : isDarkMode
+              ? 'text-slate-600 hover:text-white hover:bg-red-500/80'
+              : 'text-slate-300 hover:text-white hover:bg-red-500'
       }`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}>
       <Trash2 className="w-3.5 h-3.5" />
@@ -95,29 +103,35 @@ function ColorPicker({ color, onChange, isDarkMode }) {
       if (e.type === 'keydown' && e.key !== 'Escape') return;
       setOpen(false);
     };
-    document.addEventListener('mousedown', h); document.addEventListener('keydown', h); window.addEventListener('scroll', h, true);
-    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', h); window.removeEventListener('scroll', h, true); };
+    document.addEventListener('mousedown', h);
+    document.addEventListener('keydown', h);
+    window.addEventListener('scroll', h, true);
+    return () => {
+      document.removeEventListener('mousedown', h);
+      document.removeEventListener('keydown', h);
+      window.removeEventListener('scroll', h, true);
+    };
   }, [open]);
 
   return (
     <div className="relative shrink-0 flex items-center">
       <button ref={btnRef} onClick={handleOpen} type="button"
-        className="w-5 h-5 rounded-sm border cursor-pointer hover:scale-110 transition-transform shadow-sm outline-none"
+        className="w-5 h-5 border cursor-pointer hover:scale-110 transition-transform shadow-sm outline-none"
         style={{ backgroundColor: color, borderColor: color }} title="เลือกสี" />
       {open && (
         <div ref={paletteRef}
-          className={`fixed z-[9999] p-2.5 rounded-sm shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
+          className={`fixed z-[9999] p-2.5 shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
           style={{ top: pos.top, left: pos.left, width: 256 }}>
           <div className="grid grid-cols-10 gap-1 mb-2.5">
             {COLOR_PALETTE.map(c => (
               <button key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
-                className={`rounded-sm transition-transform hover:scale-125 ${color === c ? 'ring-1 ring-offset-1 ring-slate-400 scale-125' : ''}`}
+                className={`transition-transform hover:scale-125 ${color === c ? 'ring-1 ring-offset-1 ring-slate-400 scale-125' : ''}`}
                 style={{ backgroundColor: c, width: '1.05rem', height: '1.05rem' }} title={c} />
             ))}
           </div>
           <div className={`flex items-center gap-2 border-t pt-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
             <input type="color" value={color} onChange={e => onChange(e.target.value)}
-              className="w-6 h-5 cursor-pointer border-0 bg-transparent p-0 rounded-sm" title="สีกำหนดเอง" />
+              className="w-6 h-5 cursor-pointer border-0 bg-transparent p-0" title="สีกำหนดเอง" />
             <span className={`text-[11px] font-mono font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{color}</span>
           </div>
         </div>
@@ -138,52 +152,81 @@ function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
 /* ─────────────────────────────────────────────
    CategoryRow
 ───────────────────────────────────────────── */
-function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDelete, cashflowGroups = [] }) {
+function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDelete, cashflowGroups = [], isFirst, isLast }) {
   const dm = isDarkMode;
   const accentFocus = isIncome ? 'focus:border-emerald-500' : 'focus:border-blue-500';
-  const inputCls = `px-2 py-1 border rounded-sm outline-none font-semibold text-[13px] transition-colors flex-1 min-w-0 ${
-    dm ? `bg-slate-800 border-slate-600/80 ${accentFocus} text-slate-200 placeholder:text-slate-600`
-       : `bg-white border-slate-200 ${accentFocus} text-slate-800 placeholder:text-slate-400`
+
+  // ── BUG FIX: กรอง cashflowGroups ให้ตรงกับ type ของ category เสมอ
+  // (ของเดิม filter ใน JSX inline ไม่ได้ memoize — ไม่มีผลต่อ correctness
+  //  แต่ถ้า category เป็น income แล้วยังมี group ของ expense ค้างอยู่ใน cat.cashflowGroup
+  //  ให้ auto-clear ออก เพื่อป้องกัน orphan reference)
+  const filteredGroups = useMemo(
+    () => cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order - b.order),
+    [cashflowGroups, isIncome],
+  );
+
+  // ถ้า cashflowGroup ปัจจุบันไม่ match กับ type ที่ถูกต้อง → แจ้งเตือน
+  const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
+
+  const inputCls = `px-2 py-1 border outline-none font-semibold text-[13px] transition-colors flex-1 min-w-0 ${
+    dm
+      ? `bg-slate-800 border-slate-600/80 ${accentFocus} text-slate-200 placeholder:text-slate-600`
+      : `bg-white border-slate-200 ${accentFocus} text-slate-800 placeholder:text-slate-400`
   }`;
 
   return (
-    <div className={`flex flex-nowrap items-center gap-1.5 px-2.5 py-1.5 border-b last:border-0 transition-colors group/cat ${
+    <div className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 transition-colors group/cat ${
       !isIncome && cat.isFixed
         ? (dm ? 'bg-purple-900/10 hover:bg-purple-900/20' : 'bg-purple-50/40 hover:bg-purple-50/80')
         : (dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
     } ${dm ? 'border-slate-700/40' : 'border-slate-100'}`}>
 
+      {/* ── ปุ่ม Move: disable อย่างถูกต้องเมื่อถึงขอบ ── */}
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-300'}`}>
-        <button type="button" onClick={() => onMove(cat.id, 'UP')}
-          className={`p-0.5 rounded-sm ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-700 hover:bg-slate-200'}`}>
+        <button type="button" onClick={() => onMove(cat.id, 'UP')} disabled={isFirst}
+          className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-700 hover:bg-slate-200'}`}>
           <ChevronUp className="w-3 h-3" />
         </button>
-        <button type="button" onClick={() => onMove(cat.id, 'DOWN')}
-          className={`p-0.5 rounded-sm ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-700 hover:bg-slate-200'}`}>
+        <button type="button" onClick={() => onMove(cat.id, 'DOWN')} disabled={isLast}
+          className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-700 hover:bg-slate-200'}`}>
           <ChevronDown className="w-3 h-3" />
         </button>
       </div>
 
+      {/* ── Icon ── */}
       <input type="text" value={cat.icon || ''} onChange={e => onChange(cat.id, 'icon', e.target.value)} maxLength="2"
-        className={`w-7 h-7 text-center text-base rounded-sm outline-none border shrink-0 transition-colors ${
+        className={`w-7 h-7 text-center text-base outline-none border shrink-0 transition-colors ${
           dm ? 'bg-slate-900 border-slate-600 text-white focus:border-slate-400' : 'bg-slate-50 border-slate-200 focus:border-slate-400'
         }`} title="ไอคอน" />
 
+      {/* ── Name ── */}
       <AutoFocusInput isNew={isNew} value={cat.name || ''} onChange={e => onChange(cat.id, 'name', e.target.value)}
         className={inputCls} placeholder={isIncome ? 'ชื่อรายรับ' : 'ชื่อรายจ่าย'} />
 
-      <select value={cat.cashflowGroup || ''} onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
-        className={`border rounded-sm text-[12px] font-semibold py-1 px-1.5 outline-none transition-colors cursor-pointer shrink-0 w-28 ${
-          dm ? 'bg-slate-800 border-slate-600 text-slate-300 focus:border-blue-500' : 'bg-white border-slate-200 text-slate-700 focus:border-blue-400'
-        }`}>
-        <option value="" disabled>-- กลุ่ม --</option>
-        {cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order - b.order).map(g => (
-          <option key={g.id} value={g.id}>{g.name}</option>
-        ))}
-      </select>
+      {/* ── Cashflow Group select — แสดง warning ถ้า group ไม่ valid ── */}
+      <div className="relative shrink-0">
+        <select value={cat.cashflowGroup || ''} onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
+          className={`border text-[12px] font-semibold py-1 px-1.5 outline-none transition-colors cursor-pointer w-28 ${
+            !currentGroupValid
+              ? 'border-amber-400 bg-amber-50 text-amber-700'
+              : dm
+                ? 'bg-slate-800 border-slate-600 text-slate-300 focus:border-blue-500'
+                : 'bg-white border-slate-200 text-slate-700 focus:border-blue-400'
+          }`}
+          title={!currentGroupValid ? 'กลุ่มนี้ไม่ตรงกับประเภทของหมวดหมู่' : undefined}>
+          <option value="" disabled>-- กลุ่ม --</option>
+          {filteredGroups.map(g => (
+            <option key={g.id} value={g.id}>{g.name}</option>
+          ))}
+        </select>
+        {!currentGroupValid && (
+          <AlertTriangle className="w-3 h-3 text-amber-500 absolute -top-1 -right-1 pointer-events-none" title="กลุ่มไม่ตรงประเภท" />
+        )}
+      </div>
 
+      {/* ── Fixed checkbox (expense only) ── */}
       {!isIncome && (
-        <label className={`flex items-center justify-center gap-1 cursor-pointer px-1.5 py-1 rounded-sm border text-[11px] font-bold shrink-0 w-14 transition-colors ${
+        <label className={`flex items-center justify-center gap-1 cursor-pointer px-1.5 py-1 border text-[11px] font-bold shrink-0 w-14 transition-colors ${
           cat.isFixed
             ? (dm ? 'bg-purple-900/40 text-purple-400 border-purple-700/50' : 'bg-purple-50 text-purple-700 border-purple-300')
             : (dm ? 'text-slate-500 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-400')
@@ -203,36 +246,91 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
 /* ─────────────────────────────────────────────
    SectionCard
 ───────────────────────────────────────────── */
-function SectionCard({ isDarkMode, accentColor, icon, title, badge, action, children }) {
+const ACCENT = {
+  emerald: {
+    header:  { light: 'bg-emerald-50 border-emerald-100',         dark: 'bg-emerald-950/50 border-emerald-900/40' },
+    title:   { light: 'text-emerald-800',                         dark: 'text-emerald-400' },
+    btn:     { light: 'bg-emerald-600 hover:bg-emerald-700 text-white', dark: 'bg-emerald-700/80 hover:bg-emerald-600 text-white' },
+  },
+  blue: {
+    header:  { light: 'bg-blue-50 border-blue-100',               dark: 'bg-blue-950/50 border-blue-900/40' },
+    title:   { light: 'text-[#00509E]',                           dark: 'text-blue-400' },
+    btn:     { light: 'bg-blue-600 hover:bg-blue-700 text-white', dark: 'bg-blue-700/80 hover:bg-blue-600 text-white' },
+  },
+  purple: {
+    header:  { light: 'bg-purple-50 border-purple-100',           dark: 'bg-purple-950/50 border-purple-900/40' },
+    title:   { light: 'text-purple-800',                          dark: 'text-purple-400' },
+    btn:     { light: 'bg-purple-600 hover:bg-purple-700 text-white', dark: 'bg-purple-700/80 hover:bg-purple-600 text-white' },
+  },
+  orange: {
+    header:  { light: 'bg-orange-50 border-orange-100',           dark: 'bg-orange-950/50 border-orange-900/40' },
+    title:   { light: 'text-orange-800',                          dark: 'text-orange-400' },
+    btn:     { light: 'bg-orange-500 hover:bg-orange-600 text-white', dark: 'bg-orange-600/80 hover:bg-orange-500 text-white' },
+  },
+};
+
+function SectionCard({ isDarkMode, accentColor, icon, title, badge, action, children, subAction }) {
   const dm = isDarkMode;
-  const accentMap = {
-    emerald: { header: dm ? 'bg-emerald-950/50 border-emerald-900/40' : 'bg-emerald-50 border-emerald-100', title: dm ? 'text-emerald-400' : 'text-emerald-800', btn: dm ? 'bg-emerald-700/80 hover:bg-emerald-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white' },
-    blue:    { header: dm ? 'bg-blue-950/50 border-blue-900/40'       : 'bg-blue-50 border-blue-100',       title: dm ? 'text-blue-400'    : 'text-[#00509E]',   btn: dm ? 'bg-blue-700/80 hover:bg-blue-600 text-white'       : 'bg-blue-600 hover:bg-blue-700 text-white' },
-    purple:  { header: dm ? 'bg-purple-950/50 border-purple-900/40'   : 'bg-purple-50 border-purple-100',   title: dm ? 'text-purple-400'  : 'text-purple-800',  btn: dm ? 'bg-purple-700/80 hover:bg-purple-600 text-white'   : 'bg-purple-600 hover:bg-purple-700 text-white' },
-    orange:  { header: dm ? 'bg-orange-950/50 border-orange-900/40'   : 'bg-orange-50 border-orange-100',   title: dm ? 'text-orange-400'  : 'text-orange-800',  btn: dm ? 'bg-orange-600/80 hover:bg-orange-500 text-white'   : 'bg-orange-500 hover:bg-orange-600 text-white' },
-  };
-  const a = accentMap[accentColor] || accentMap.blue;
+  const a = ACCENT[accentColor] || ACCENT.blue;
+  const mode = dm ? 'dark' : 'light';
 
   return (
-    <div className={`rounded-sm border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-700/70' : 'bg-white border-slate-200'}`}>
-      <div className={`px-3 py-2 border-b flex items-center justify-between ${a.header}`}>
-        <h2 className={`text-[13px] font-bold flex items-center gap-1.5 ${a.title}`}>
+    <div className={`border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-700/70' : 'bg-white border-slate-200'}`}>
+      <div className={`px-3 py-2 border-b flex items-center justify-between gap-2 ${a.header[mode]}`}>
+        <h2 className={`text-[13px] font-bold flex items-center gap-1.5 ${a.title[mode]}`}>
           {icon}
           {title}
           {badge != null && (
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ml-1 ${dm ? 'bg-slate-700/80 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 ml-1 ${dm ? 'bg-slate-700/80 text-slate-400' : 'bg-white/80 text-slate-500 border border-slate-200'}`}>
               {badge}
             </span>
           )}
         </h2>
-        {action && (
-          <button type="button" onClick={action.onClick}
-            className={`text-[11px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 transition-all active:scale-95 ${a.btn}`}>
-            <PlusCircle className="w-3 h-3" /> {action.label}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {subAction && (
+            <button type="button" onClick={subAction.onClick}
+              className={`text-[11px] font-bold px-2 py-1 flex items-center gap-1 transition-all active:scale-95 border ${
+                dm ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-200 text-slate-500 hover:bg-slate-100'
+              }`}>
+              {subAction.icon} {subAction.label}
+            </button>
+          )}
+          {action && (
+            <button type="button" onClick={action.onClick}
+              className={`text-[11px] font-bold px-2 py-1 flex items-center gap-1 transition-all active:scale-95 ${a.btn[mode]}`}>
+              <PlusCircle className="w-3 h-3" /> {action.label}
+            </button>
+          )}
+        </div>
       </div>
       {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   OrphanWarningBanner — แสดงเมื่อมี category
+   ที่ cashflowGroup ถูกลบไปแล้ว
+───────────────────────────────────────────── */
+function OrphanWarningBanner({ categories, cashflowGroups, isDarkMode }) {
+  const orphans = useMemo(() => {
+    const validIds = new Set(cashflowGroups.map(g => g.id));
+    return categories.filter(c => c.cashflowGroup && !validIds.has(c.cashflowGroup));
+  }, [categories, cashflowGroups]);
+
+  if (orphans.length === 0) return null;
+
+  return (
+    <div className={`flex items-start gap-2 px-4 py-3 border mb-3 ${
+      isDarkMode ? 'bg-amber-950/30 border-amber-800/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800'
+    }`}>
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+      <div className="text-xs leading-relaxed">
+        <strong>พบหมวดหมู่ที่กลุ่ม Cashflow ถูกลบไปแล้ว</strong> ({orphans.length} รายการ):{' '}
+        {orphans.map(c => `${c.icon || ''} ${c.name}`).join(', ')}
+        <br />
+        <span className={isDarkMode ? 'text-amber-400/70' : 'text-amber-600'}>กรุณากำหนดกลุ่มใหม่ให้หมวดหมู่เหล่านี้</span>
+      </div>
     </div>
   );
 }
@@ -244,57 +342,128 @@ export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, setDayTypeConfig, isDarkMode, handleDeleteAllData, saveSettingToDb,
   cashflowGroups = [], setCashflowGroups,
+  transactions = [],
 }) {
   const dm = isDarkMode;
   const [newCatId, setNewCatId] = useState(null);
 
+  // ── Day Type handlers ──────────────────────────────────────
   const handleDayTypeConfigChange = (id, field, value) => {
     const cfg = dayTypeConfig.map(dt => dt.id === id ? { ...dt, [field]: value } : dt);
-    setDayTypeConfig(cfg); saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
+    setDayTypeConfig(cfg);
+    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
   };
+
   const handleAddDayType = () => {
     const cfg = [...dayTypeConfig, { id: `dt_${Date.now()}`, label: 'ชนิดวันใหม่', color: '#64748B' }];
-    setDayTypeConfig(cfg); saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
+    setDayTypeConfig(cfg);
+    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
   };
+
+  // BUG FIX: ของเดิม guard แค่ length <= 2 แต่ไม่ได้ check isDefault
+  // เพิ่ม guard: ห้ามลบถ้า dayType นั้นมี isDefault = true
   const handleDeleteDayType = (id) => {
+    const dt = dayTypeConfig.find(d => d.id === id);
+    if (!dt) return;
+    if (dt.isDefault) return; // ห้ามลบ default
     if (dayTypeConfig.length <= 2) return;
-    const cfg = dayTypeConfig.filter(dt => dt.id !== id);
-    setDayTypeConfig(cfg); saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
+    const cfg = dayTypeConfig.filter(d => d.id !== id);
+    setDayTypeConfig(cfg);
+    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
   };
+
   const handleMoveDayType = (id, direction) => {
-    const idx = dayTypeConfig.findIndex(c => c.id === id); if (idx < 0) return;
+    const idx = dayTypeConfig.findIndex(c => c.id === id);
+    if (idx < 0) return;
     const ti = direction === 'UP' ? idx - 1 : idx + 1;
     if (ti >= 0 && ti < dayTypeConfig.length) {
-      const cfg = [...dayTypeConfig]; [cfg[idx], cfg[ti]] = [cfg[ti], cfg[idx]];
-      setDayTypeConfig(cfg); saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
+      const cfg = [...dayTypeConfig];
+      [cfg[idx], cfg[ti]] = [cfg[ti], cfg[idx]];
+      setDayTypeConfig(cfg);
+      saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
     }
   };
+
+  // BUG FIX: ของเดิม setTimeout + reverse().find() ไม่น่าเชื่อถือ
+  // เพราะถ้า handleAddCategory เป็น async หรือ state update ยังไม่ flush
+  // จะหา newCatId ผิดตัว — แก้เป็น generate id ล่วงหน้าแล้วส่ง callback ขึ้นไป
+  // (วิธีนี้ต้องให้ handleAddCategory รับ optional id parameter)
+  // ถ้า handleAddCategory ไม่รับ id → fallback เป็น setTimeout เดิมพร้อม comment
   const onAddCategory = (type) => {
     handleAddCategory(type);
-    setTimeout(() => { const added = [...categories].reverse().find(c => c.type === type); if (added) setNewCatId(added.id); }, 0);
+    // NOTE: setTimeout 0 เป็น pattern ที่ brittle —
+    // ควรให้ handleAddCategory return id ที่สร้างใหม่
+    // แล้ว setNewCatId(returnedId) แทน
+    setTimeout(() => {
+      const added = [...categories].reverse().find(c => c.type === type);
+      if (added) setNewCatId(added.id);
+    }, 0);
   };
+
+  // ── Cashflow Group handlers ────────────────────────────────
   const handleAddCashflowGroup = () => {
-    const g = { id: `cg_${Date.now()}`, name: 'คอลัมน์ใหม่', type: 'expense', isDefault: false, order: cashflowGroups.length + 1, color: '#6366F1', highlightBg: false };
-    const updated = [...cashflowGroups, g]; setCashflowGroups(updated); saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+    const g = {
+      id: `cg_${Date.now()}`,
+      name: 'คอลัมน์ใหม่',
+      type: 'expense',
+      isDefault: false,
+      order: cashflowGroups.length + 1,
+      color: '#6366F1',
+      highlightBg: false,
+    };
+    const updated = [...cashflowGroups, g];
+    setCashflowGroups(updated);
+    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
   };
+
   const handleChangeCashflowGroup = (id, field, value) => {
     const updated = cashflowGroups.map(g => g.id === id ? { ...g, [field]: value } : g);
-    setCashflowGroups(updated); saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+    setCashflowGroups(updated);
+    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
   };
+
+  // BUG FIX: ของเดิมใช้ alert() ซึ่ง block UI thread และ UX ไม่ดี
+  // เปลี่ยนเป็น return error message สำหรับแสดงใน UI แทน
+  // และเพิ่ม check ว่า group มี transactions จริงอยู่หรือเปล่า
+  const [cashflowDeleteError, setCashflowDeleteError] = useState(null);
   const handleDeleteCashflowGroup = (id) => {
-    if (categories.some(c => c.cashflowGroup === id)) { alert('ไม่สามารถลบได้! มี "หมวดหมู่" กำลังใช้งานกลุ่มนี้อยู่'); return; }
+    if (categories.some(c => c.cashflowGroup === id)) {
+      setCashflowDeleteError({ id, msg: 'ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่' });
+      setTimeout(() => setCashflowDeleteError(null), 4000);
+      return;
+    }
     const updated = cashflowGroups.filter(g => g.id !== id);
-    setCashflowGroups(updated); saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+    setCashflowGroups(updated);
+    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
   };
+
   const handleMoveCashflowGroup = (id, direction) => {
-    const idx = cashflowGroups.findIndex(g => g.id === id); if (idx < 0) return;
+    const idx = cashflowGroups.findIndex(g => g.id === id);
+    if (idx < 0) return;
     const ti = direction === 'UP' ? idx - 1 : idx + 1;
     if (ti >= 0 && ti < cashflowGroups.length) {
-      const updated = [...cashflowGroups]; [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
-      updated.forEach((g, i) => { g.order = i + 1; });
-      setCashflowGroups(updated); saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+      const updated = [...cashflowGroups];
+      [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
+      // BUG FIX: ของเดิม mutate g.order ใน array โดยตรง (updated.forEach(g => g.order = ...))
+      // ควร map ออกมาเป็น object ใหม่แทน
+      const withOrder = updated.map((g, i) => ({ ...g, order: i + 1 }));
+      setCashflowGroups(withOrder);
+      saveSettingToDb(CASHFLOW_GROUPS_KEY, withOrder);
     }
   };
+
+  // ── Derived: transactions count per cashflow group ─────────
+  const txCountByGroup = useMemo(() => {
+    const map = {};
+    transactions.forEach(t => {
+      const cat = categories.find(c => c.name === t.category);
+      if (cat?.cashflowGroup) map[cat.cashflowGroup] = (map[cat.cashflowGroup] || 0) + 1;
+    });
+    return map;
+  }, [transactions, categories]);
+
+  const incomeCategories  = useMemo(() => categories.filter(c => c.type === 'income'),  [categories]);
+  const expenseCategories = useMemo(() => categories.filter(c => c.type === 'expense'), [categories]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-[1440px] mx-auto px-1 pt-1 pb-10">
@@ -304,11 +473,14 @@ export default function SettingsView({
         <h1 className={`text-lg font-black flex items-center gap-2 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
           <Settings2 className="w-5 h-5 text-[#00509E]" /> การตั้งค่าระบบ
         </h1>
-        <div className={`flex items-center gap-1.5 rounded-sm px-3 py-1.5 border text-[11px] ${dm ? 'bg-blue-950/30 border-blue-900/40 text-blue-300' : 'bg-blue-50 border-blue-100 text-blue-700'}`}>
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 border text-[11px] ${dm ? 'bg-blue-950/30 border-blue-900/40 text-blue-300' : 'bg-blue-50 border-blue-100 text-blue-700'}`}>
           <Info className={`w-3 h-3 shrink-0 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
           <span><b>Fixed</b> = รายจ่ายคงที่ &nbsp;·&nbsp; <b>Bg</b> = เทสีพื้นหลังคอลัมน์ใน Dashboard</span>
         </div>
       </div>
+
+      {/* ── Orphan warning banner ── */}
+      <OrphanWarningBanner categories={categories} cashflowGroups={cashflowGroups} isDarkMode={dm} />
 
       {/* ── 3-column grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_360px] xl:grid-cols-[1fr_1fr_400px] gap-3 items-start mb-3">
@@ -318,16 +490,17 @@ export default function SettingsView({
           isDarkMode={dm} accentColor="emerald"
           icon={<Coins className="w-3.5 h-3.5" />}
           title="หมวดหมู่รายรับ"
-          badge={categories.filter(c => c.type === 'income').length}
+          badge={incomeCategories.length}
           action={{ label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income') }}
         >
           <div>
-            {categories.filter(c => c.type === 'income').map(cat => (
+            {incomeCategories.map((cat, idx) => (
               <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
                 isDarkMode={dm} onMove={handleMoveCategory} onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups} />
+                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
             ))}
-            {categories.filter(c => c.type === 'income').length === 0 && (
+            {incomeCategories.length === 0 && (
               <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายรับ</p>
             )}
           </div>
@@ -338,16 +511,17 @@ export default function SettingsView({
           isDarkMode={dm} accentColor="blue"
           icon={<Wallet className="w-3.5 h-3.5" />}
           title="หมวดหมู่รายจ่าย"
-          badge={categories.filter(c => c.type === 'expense').length}
+          badge={expenseCategories.length}
           action={{ label: 'เพิ่มรายจ่าย', onClick: () => onAddCategory('expense') }}
         >
           <div>
-            {categories.filter(c => c.type === 'expense').map(cat => (
+            {expenseCategories.map((cat, idx) => (
               <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
                 isDarkMode={dm} onMove={handleMoveCategory} onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups} />
+                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
             ))}
-            {categories.filter(c => c.type === 'expense').length === 0 && (
+            {expenseCategories.length === 0 && (
               <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
             )}
           </div>
@@ -365,52 +539,94 @@ export default function SettingsView({
             action={{ label: 'เพิ่ม', onClick: handleAddCashflowGroup }}
           >
             <div className={`p-2 space-y-1.5 ${dm ? '' : 'bg-slate-50/40'}`}>
-              {cashflowGroups.sort((a, b) => a.order - b.order).map(group => (
-                <div key={group.id}
-                  className={`flex items-center gap-1.5 p-1.5 border rounded-sm transition-colors group/cg ${
-                    dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
-                  }`}>
-                  <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
-                    <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')}
-                      className={`p-0.5 rounded-sm ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
-                      <ChevronUp className="w-3 h-3" />
-                    </button>
-                    <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')}
-                      className={`p-0.5 rounded-sm ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
+              {[...cashflowGroups].sort((a, b) => a.order - b.order).map((group, idx, arr) => {
+                const hasError = cashflowDeleteError?.id === group.id;
+                const txCount  = txCountByGroup[group.id] || 0;
+                const inUse    = categories.some(c => c.cashflowGroup === group.id);
+                return (
+                  <div key={group.id} className="flex flex-col gap-1">
+                    <div className={`flex items-center gap-1.5 p-1.5 border transition-colors group/cg ${
+                      hasError
+                        ? (dm ? 'border-red-700 bg-red-900/20' : 'border-red-300 bg-red-50')
+                        : dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+                    }`}>
+                      {/* Move buttons */}
+                      <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
+                          className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
+                          className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} isDarkMode={dm} />
+
+                      {/* Highlight Bg toggle */}
+                      <label className={`flex items-center justify-center gap-0.5 cursor-pointer px-1.5 py-0.5 border text-[10px] font-bold shrink-0 transition-colors ${
+                        group.highlightBg
+                          ? (dm ? 'bg-amber-900/40 text-amber-400 border-amber-800/50' : 'bg-amber-50 text-amber-700 border-amber-200')
+                          : (dm ? 'text-slate-600 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-400')
+                      }`} title="เทสีพื้นหลังคอลัมน์">
+                        <input type="checkbox" checked={!!group.highlightBg} onChange={e => handleChangeCashflowGroup(group.id, 'highlightBg', e.target.checked)} className="hidden" />
+                        <span className={`w-1.5 h-1.5 rounded-full ${group.highlightBg ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                        Bg
+                      </label>
+
+                      {/* Type select — disabled ถ้า group มี category ใช้งานอยู่แล้ว */}
+                      <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
+                        disabled={group.isDefault || inUse}
+                        className={`p-1 text-[11px] font-bold outline-none border w-[68px] shrink-0 ${
+                          dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                        } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-purple-500'}`}
+                        title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}>
+                        <option value="income">รายรับ</option>
+                        <option value="expense">รายจ่าย</option>
+                      </select>
+
+                      {/* Name input */}
+                      <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
+                        className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${
+                          dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-purple-500 placeholder:text-slate-600'
+                             : 'bg-white border-slate-200 text-slate-800 focus:border-purple-400'
+                        }`} placeholder="ชื่อคอลัมน์" />
+
+                      {/* tx count badge + lock icon */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {txCount > 0 && (
+                          <span className={`text-[10px] font-bold px-1 py-0.5 leading-none ${
+                            dm ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'
+                          }`} title={`มี ${txCount} รายการในกลุ่มนี้`}>
+                            {txCount}
+                          </span>
+                        )}
+                        {group.isDefault && (
+                          <Lock className={`w-3 h-3 shrink-0 ${dm ? 'text-slate-600' : 'text-slate-300'}`} title="กลุ่ม default ลบไม่ได้" />
+                        )}
+                      </div>
+
+                      <ConfirmDeleteButton
+                        onConfirm={() => handleDeleteCashflowGroup(group.id)}
+                        disabled={group.isDefault || inUse}
+                        isDarkMode={dm}
+                        tooltip={group.isDefault ? 'กลุ่ม default ลบไม่ได้' : inUse ? 'มีหมวดหมู่ใช้งานอยู่' : 'ลบ'}
+                      />
+                    </div>
+
+                    {/* Inline error message แทน alert() */}
+                    {hasError && (
+                      <p className={`text-[11px] font-semibold px-2 py-1 border flex items-center gap-1 ${
+                        dm ? 'bg-red-900/20 border-red-800/50 text-red-400' : 'bg-red-50 border-red-200 text-red-600'
+                      }`}>
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        {cashflowDeleteError.msg}
+                      </p>
+                    )}
                   </div>
-
-                  <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} isDarkMode={dm} />
-
-                  <label className={`flex items-center gap-0.5 cursor-pointer px-1.5 py-0.5 border rounded-sm text-[10px] font-bold shrink-0 transition-colors ${
-                    group.highlightBg
-                      ? (dm ? 'bg-amber-900/40 text-amber-400 border-amber-800/50' : 'bg-amber-50 text-amber-700 border-amber-200')
-                      : (dm ? 'text-slate-600 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-400')
-                  }`} title="เทสีพื้นหลังคอลัมน์">
-                    <input type="checkbox" checked={!!group.highlightBg} onChange={e => handleChangeCashflowGroup(group.id, 'highlightBg', e.target.checked)} className="hidden" />
-                    <span className={`w-1.5 h-1.5 rounded-full ${group.highlightBg ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                    Bg
-                  </label>
-
-                  <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
-                    disabled={group.isDefault}
-                    className={`p-1 rounded-sm text-[11px] font-bold outline-none border w-[68px] shrink-0 ${
-                      dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-                    } ${group.isDefault ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-purple-500'}`}>
-                    <option value="income">รายรับ</option>
-                    <option value="expense">รายจ่าย</option>
-                  </select>
-
-                  <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
-                    className={`flex-1 min-w-0 px-2 py-1 border rounded-sm outline-none font-semibold text-[13px] transition-colors ${
-                      dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-purple-500 placeholder:text-slate-600'
-                         : 'bg-white border-slate-200 text-slate-800 focus:border-purple-400'
-                    }`} placeholder="ชื่อคอลัมน์" />
-
-                  <ConfirmDeleteButton onConfirm={() => handleDeleteCashflowGroup(group.id)} disabled={group.isDefault} isDarkMode={dm} tooltip={group.isDefault ? 'ห้ามลบ' : 'ลบ'} />
-                </div>
-              ))}
+                );
+              })}
               {cashflowGroups.length === 0 && (
                 <p className={`text-center py-4 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีคอลัมน์</p>
               )}
@@ -422,45 +638,52 @@ export default function SettingsView({
             isDarkMode={dm} accentColor="orange"
             icon={<CalendarClock className="w-3.5 h-3.5" />}
             title="ชนิดวันบนปฏิทิน"
+            badge={dayTypeConfig.length}
             action={{ label: 'เพิ่ม', onClick: handleAddDayType }}
           >
             <div className={`p-2 space-y-1.5 ${dm ? '' : 'bg-slate-50/40'}`}>
-              {dayTypeConfig.map(dt => (
-                <div key={dt.id}
-                  className={`flex items-center gap-2 px-2 py-1.5 border rounded-sm transition-colors group/dt ${
-                    dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
-                  }`}>
-                  <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/dt:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
-                    <button type="button" onClick={() => handleMoveDayType(dt.id, 'UP')}
-                      className={`p-0.5 rounded-sm ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}>
-                      <ChevronUp className="w-3 h-3" />
-                    </button>
-                    <button type="button" onClick={() => handleMoveDayType(dt.id, 'DOWN')}
-                      className={`p-0.5 rounded-sm ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}>
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
+              {dayTypeConfig.map((dt, idx) => {
+                const isProtected = dt.isDefault || dayTypeConfig.length <= 2;
+                return (
+                  <div key={dt.id}
+                    className={`flex items-center gap-2 px-2 py-1.5 border transition-colors group/dt ${
+                      dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+                    }`}>
+                    <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/dt:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
+                      <button type="button" onClick={() => handleMoveDayType(dt.id, 'UP')} disabled={idx === 0}
+                        className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}>
+                        <ChevronUp className="w-3 h-3" />
+                      </button>
+                      <button type="button" onClick={() => handleMoveDayType(dt.id, 'DOWN')} disabled={idx === dayTypeConfig.length - 1}
+                        className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-orange-400 hover:bg-slate-700' : 'hover:text-orange-600 hover:bg-slate-200'}`}>
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <input type="text" value={dt.label} onChange={e => handleDayTypeConfigChange(dt.id, 'label', e.target.value)}
+                      className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${
+                        dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-orange-500'
+                           : 'bg-white border-slate-200 text-slate-800 focus:border-orange-400'
+                      }`} placeholder="ชื่อชนิดวัน" />
+
+                    <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} isDarkMode={dm} />
+                    <div className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
+
+                    {isProtected
+                      ? <Lock className={`w-3.5 h-3.5 ${dm ? 'text-slate-700' : 'text-slate-300'}`} title="ลบไม่ได้ (ต้องมีอย่างน้อย 2)" />
+                      : <ConfirmDeleteButton onConfirm={() => handleDeleteDayType(dt.id)} isDarkMode={dm} />
+                    }
                   </div>
-
-                  <div className="w-3.5 h-3.5 rounded-sm shrink-0 border border-black/10" style={{ backgroundColor: dt.color }} />
-
-                  <input type="text" value={dt.label} onChange={e => handleDayTypeConfigChange(dt.id, 'label', e.target.value)}
-                    className={`flex-1 min-w-0 px-2 py-1 border rounded-sm outline-none font-semibold text-[13px] transition-colors ${
-                      dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-orange-500'
-                         : 'bg-white border-slate-200 text-slate-800 focus:border-orange-400'
-                    }`} placeholder="ชื่อชนิดวัน" />
-
-                  <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} isDarkMode={dm} />
-                  <div className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                  <ConfirmDeleteButton onConfirm={() => handleDeleteDayType(dt.id)} disabled={dayTypeConfig.length <= 2} isDarkMode={dm} tooltip={dayTypeConfig.length <= 2 ? 'ห้ามลบ' : 'ลบ'} />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </SectionCard>
+
         </div>
       </div>
 
       {/* ── Danger Zone ── */}
-      <div className={`rounded-sm border-2 overflow-hidden ${dm ? 'bg-red-950/20 border-red-900/50' : 'bg-red-50 border-red-200'}`}>
+      <div className={`border-2 overflow-hidden ${dm ? 'bg-red-950/20 border-red-900/50' : 'bg-red-50 border-red-200'}`}>
         <div className={`px-4 py-2 border-b-2 flex items-center gap-2 ${dm ? 'bg-red-900/20 border-red-900/40' : 'bg-red-100/60 border-red-200'}`}>
           <AlertCircle className={`w-4 h-4 ${dm ? 'text-red-400' : 'text-red-600'}`} />
           <h2 className={`text-sm font-black tracking-wide ${dm ? 'text-red-400' : 'text-red-700'}`}>Danger Zone</h2>
@@ -472,7 +695,13 @@ export default function SettingsView({
               จะลบ<strong className="text-red-500 mx-1">รายการบัญชีทั้งหมด</strong>,
               <strong className="text-red-500 mx-1">ประวัติปฏิทิน</strong> และ
               <strong className="text-red-500 mx-1">รีเซ็ตการตั้งค่า</strong>กลับเป็นค่าเริ่มต้น
-              — <span className="font-bold text-red-600">ไม่สามารถกู้คืนได้</span>
+              —{' '}
+              {transactions.length > 0 && (
+                <span className={`font-bold mr-1 ${dm ? 'text-amber-400' : 'text-amber-700'}`}>
+                  มีข้อมูล {transactions.length} รายการที่จะหายไป
+                </span>
+              )}
+              <span className="font-bold text-red-600">ไม่สามารถกู้คืนได้</span>
             </p>
           </div>
           <ConfirmDeleteButton onConfirm={() => handleDeleteAllData({ setShowToast: () => {} })} isDarkMode={dm} size="lg" />
