@@ -434,7 +434,8 @@ export default function LedgerView({
                       .filter(g => activeCashflowGroupIds.has(g.id))
                       .map(g => (
                         <option key={g.id} value={g.id}>
-                          {g.type === 'income' ? '🟢' : '🔴'} {g.name}
+                          {/* ✨ ดึง g.icon มาแสดง ถ้าไม่มีให้ใช้จุดสีเขียว/แดงแทน ✨ */}
+                          {g.icon ? g.icon : (g.type === 'income' ? '🟢' : '🔴')} {g.name}
                         </option>
                       ))}
                   </optgroup>
