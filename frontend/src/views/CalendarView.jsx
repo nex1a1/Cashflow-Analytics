@@ -8,6 +8,74 @@ import {
 import { formatMoney, hexToRgb } from '../utils/formatters';
 
 /**
+ * Skeleton สำหรับตอนโหลดข้อมูล
+ */
+function CalendarSkeleton({ isDarkMode }) {
+  const shimmer = isDarkMode ? 'bg-slate-700 animate-pulse' : 'bg-slate-200 animate-pulse';
+  const surface = isDarkMode ? 'bg-slate-900' : 'bg-white';
+  const surfaceAlt = isDarkMode ? 'bg-slate-800' : 'bg-slate-50';
+  const border = isDarkMode ? 'border-slate-700' : 'border-slate-200';
+  const gapColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-100';
+  const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+
+  return (
+    <div className="flex flex-col h-full pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
+      {/* Header skeleton */}
+      <div className={`${surface} rounded-sm border ${border} shadow-sm p-3 md:p-4`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`h-6 w-36 rounded-sm ${shimmer}`} />
+            <div className={`h-5 w-20 rounded-sm ${shimmer}`} />
+            <div className={`h-5 w-20 rounded-sm ${shimmer}`} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className={`h-7 w-7 rounded-sm ${shimmer}`} />
+            <div className={`h-7 w-24 rounded-sm ${shimmer}`} />
+            <div className={`h-7 w-7 rounded-sm ${shimmer}`} />
+          </div>
+        </div>
+      </div>
+
+      {/* Grid skeleton */}
+      <div className={`rounded-sm border ${border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
+        {/* Day labels */}
+        <div className={`grid grid-cols-7 ${surfaceAlt} border-b ${border}`}>
+          {DAYS_LABEL.map(label => (
+            <div key={label} className="py-2 flex justify-center">
+              <div className={`h-4 w-6 rounded-sm ${shimmer}`} />
+            </div>
+          ))}
+        </div>
+        {/* Day cells */}
+        <div className={`grid grid-cols-7 gap-[1px] ${gapColor} flex-1`}>
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div key={i} className={`min-h-[120px] 2xl:min-h-[140px] flex flex-col ${surfaceAlt}`}>
+              <div className={`flex items-center justify-between px-1.5 py-1 border-b ${border}`}>
+                <div className={`h-5 w-5 rounded-sm ${shimmer}`} />
+                <div className={`h-4 w-10 rounded-sm ${shimmer}`} />
+              </div>
+              <div className="flex flex-col gap-1.5 p-1.5 flex-grow">
+                {i % 3 === 0 && <div className={`h-3 w-14 rounded-sm ${shimmer}`} />}
+                {i % 4 === 0 && <div className={`h-3 w-16 rounded-sm ${shimmer}`} />}
+                {i % 5 === 0 && <div className={`h-3 w-12 rounded-sm ${shimmer}`} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer skeleton */}
+      <div className={`${surface} rounded-sm border ${border} shadow-sm p-2 px-3 flex gap-2 items-center`}>
+        <div className={`h-4 w-10 rounded-sm ${shimmer}`} />
+        <div className={`h-5 w-16 rounded-sm ${shimmer}`} />
+        <div className={`h-5 w-16 rounded-sm ${shimmer}`} />
+        <div className={`ml-auto h-5 w-12 rounded-sm ${shimmer}`} />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Helper สำหรับจัดฟอร์แมตตัวเลขให้รองรับทศนิยม 2 ตำแหน่ง (ไม่ปัดเศษ)
  */
 const formatValue = (val) => {
@@ -131,9 +199,12 @@ export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
   handleOpenAddModal, categories, isDarkMode, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
-  handleDeleteTransaction, onSaveTransaction, paymentMethods
+  handleDeleteTransaction, onSaveTransaction, paymentMethods,
+  isLoading,
 }) {
   const [selectedDate, setSelectedDate] = useState(null);
+
+  if (isLoading) return <CalendarSkeleton isDarkMode={isDarkMode} />;
 
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
@@ -206,7 +277,11 @@ export default function CalendarView({
   const hasNext = currentIndex > 0;
   const prevMonth = () => { if (hasPrev) setFilterPeriod(rawAvailableMonths[currentIndex + 1]); };
   const nextMonth = () => { if (hasNext) setFilterPeriod(rawAvailableMonths[currentIndex - 1]); };
-  const goToLatest = () => { if (rawAvailableMonths.length > 0) setFilterPeriod(rawAvailableMonths[0]); };
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    setFilterPeriod(currentMonthStr);
+  };
 
   const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const today = new Date();
@@ -224,7 +299,8 @@ export default function CalendarView({
   };
 
   if (isReadOnlyView) {
-    const latestMonth = rawAvailableMonths && rawAvailableMonths.length > 0 ? rawAvailableMonths[0] : null;
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 max-w-screen-2xl mx-auto w-full">
         <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
@@ -236,14 +312,12 @@ export default function CalendarView({
             ตอนนี้คุณกำลังดูข้อมูลแบบ <strong>{getFilterLabel(filterPeriod)}</strong><br/>
             ปฏิทินจะแสดงผลได้ดีที่สุดเมื่อดูเป็นรายเดือนครับ
           </p>
-          {latestMonth && (
-            <button 
-              onClick={() => setFilterPeriod(latestMonth)}
-              className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}
-            >
-              สลับไปดูเดือนล่าสุด ({getFilterLabel(latestMonth)})
-            </button>
-          )}
+          <button 
+            onClick={() => setFilterPeriod(currentMonthStr)}
+            className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}
+          >
+            สลับไปดูเดือนปัจจุบัน ({getFilterLabel(currentMonthStr)})
+          </button>
         </div>
       </div>
     );
@@ -282,7 +356,7 @@ export default function CalendarView({
             <button onClick={prevMonth} disabled={!hasPrev} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={goToLatest} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+            <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
               เดือนปัจจุบัน
             </button>
             <button onClick={nextMonth} disabled={!hasNext} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>

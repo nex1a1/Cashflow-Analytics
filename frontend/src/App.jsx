@@ -45,7 +45,7 @@ defaults.font.family = 'Tahoma, sans-serif';
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('expense_dark_mode') === 'true');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'dashboard');
   const [showToast, setShowToast] = useState(false);
   const [dbStatus, setDbStatus] = useState('กำลังตรวจสอบ...');
 
@@ -85,6 +85,10 @@ export default function App() {
     defaults.color = isDarkMode ? '#94a3b8' : '#475569';
     defaults.scale.grid.color = isDarkMode ? '#334155' : '#e2e8f0';
   }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   const saveSettingToDb = async (key, value) => {
     try { await settingsService.save(key, value); }
@@ -248,6 +252,7 @@ export default function App() {
               getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView}
               onSaveTransaction={handleSaveTransaction}
               handleDeleteTransaction={handleDeleteTransaction}
+              isLoading={isProcessing}
             />
           )}
           {activeTab === 'ledger' && (
@@ -313,7 +318,6 @@ export default function App() {
         getFilterLabel={getFilterLabel} initialPeriod={filterPeriod}
       />
 
-      {/* ⭐️ เปลี่ยนมาใช้ AppToast ของแท้ที่เราแก้มากับมือ */}
       <AppToast 
         toast={{ visible: showToast, message: 'ทำรายการสำเร็จ!', type: 'success' }} 
         isDarkMode={isDarkMode} 
