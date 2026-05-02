@@ -2,10 +2,11 @@ const db = require('../config/db');
 
 exports.getAllTransactions = (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM transactions ORDER BY date ASC').all();
+    const rows = db.prepare('SELECT * FROM transactions ORDER BY iso_date ASC, id ASC').all();
     res.json(rows.map(row => ({
       id:              row.id,
       date:            row.date,
+      isoDate:         row.iso_date,
       category:        row.category,
       description:     row.description,
       amount:          parseFloat(row.amount),
@@ -17,14 +18,21 @@ exports.getAllTransactions = (req, res) => {
   }
 };
 
+const convertToISO = (dateStr) => {
+  if (!dateStr || !dateStr.includes('/')) return dateStr;
+  const [d, m, y] = dateStr.split('/');
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+};
+
 exports.upsertTransactions = (req, res) => {
   const items = Array.isArray(req.body) ? req.body : [req.body];
   
   const upsert = db.prepare(`
-    INSERT INTO transactions (id, date, category, description, amount, day_note, payment_method_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (id, date, iso_date, category, description, amount, day_note, payment_method_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       date              = excluded.date,
+      iso_date          = excluded.iso_date,
       category          = excluded.category,
       description       = excluded.description,
       amount            = excluded.amount,
@@ -37,6 +45,7 @@ exports.upsertTransactions = (req, res) => {
       upsert.run(
         item.id, 
         item.date, 
+        item.isoDate || convertToISO(item.date),
         item.category, 
         item.description, 
         item.amount, 

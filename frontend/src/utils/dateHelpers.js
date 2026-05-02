@@ -1,7 +1,32 @@
 // src/utils/dateHelpers.js
 
+/**
+ * แปลง DD/MM/YYYY เป็น YYYY-MM-DD
+ */
+export const toISODate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('/')) return dateStr;
+  const [d, m, y] = dateStr.split('/');
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+};
+
+/**
+ * แปลง YYYY-MM-DD เป็น DD/MM/YYYY
+ */
+export const fromISODate = (isoStr) => {
+  if (!isoStr || typeof isoStr !== 'string' || !isoStr.includes('-')) return isoStr;
+  const [y, m, d] = isoStr.split('-');
+  return `${d}/${m}/${y}`;
+};
+
 export const parseDateStrToObj = (dateStr) => {
   if (!dateStr || typeof dateStr !== 'string') return new Date();
+  
+  // รองรับทั้ง YYYY-MM-DD และ DD/MM/YYYY
+  if (dateStr.includes('-')) {
+    const [y, m, d] = dateStr.split('-');
+    return new Date(y, parseInt(m) - 1, d);
+  }
+  
   const parts = dateStr.split('/');
   if (parts.length !== 3) return new Date();
   return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
@@ -10,7 +35,11 @@ export const parseDateStrToObj = (dateStr) => {
 export const isDateInFilter = (dateStr, filter) => {
   if (filter === 'ALL') return true;
   if (!dateStr) return false;
-  const parts = dateStr.split('/');
+  
+  // แปลงให้เป็น DD/MM/YYYY เพื่อใช้ Logic เดิมในการเปรียบเทียบ
+  const displayDate = dateStr.includes('-') ? fromISODate(dateStr) : dateStr;
+  
+  const parts = displayDate.split('/');
   if (parts.length !== 3) return false;
   const m = parseInt(parts[1], 10), y = parts[2];
   if (filter === y) return true;
@@ -31,10 +60,10 @@ export const isDateInFilter = (dateStr, filter) => {
 export const generateDatesForPeriod = (period, allTransactions) => {
     if (!allTransactions || allTransactions.length === 0) return [];
 
-    const filteredTx = allTransactions.filter(t => isDateInFilter(t.date, period));
+    const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
     if (filteredTx.length === 0) return [];
 
-    const txDates = filteredTx.map(t => parseDateStrToObj(t.date).getTime());
+    const txDates = filteredTx.map(t => parseDateStrToObj(t.isoDate || t.date).getTime());
     const minTxDate = new Date(Math.min(...txDates));
     const maxTxDate = new Date(Math.max(...txDates));
 

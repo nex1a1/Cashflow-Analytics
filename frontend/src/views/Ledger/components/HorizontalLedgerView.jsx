@@ -170,19 +170,19 @@ export default function HorizontalLedgerView({
         </div>
       )}
 
-      <div className="w-full custom-scrollbar" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+      <div className="w-full custom-scrollbar" style={{ maxHeight: 'calc(100vh - 220px)' }}>
         {/* 🔥 เปลี่ยนมาใช้ border-separate border-spacing-0 เพื่อแก้บั๊กมุมตาราง 100% 🔥 */}
         <table className="border-separate border-spacing-0 text-xs w-full table-fixed">
           <colgroup>
-            <col style={{ width: '65px' }} />
+            <col style={{ width: '60px' }} />
             {activeCategories.map(cat => <col key={cat.id} />)}
-            <col style={{ width: '85px' }} />
+            <col style={{ width: '80px' }} />
           </colgroup>
           
           <thead className="shadow-sm">
             <tr>
               {/* Top Left Corner */}
-              <th className={`sticky top-0 left-0 z-50 px-1 py-2 text-center font-black text-[10px] uppercase tracking-wider border-b border-r ${dm ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+              <th className={`sticky top-0 left-0 z-50 px-1 py-1.5 text-center font-black text-[10px] uppercase tracking-wider border-b border-r ${dm ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                 วันที่
               </th>
               
@@ -191,8 +191,8 @@ export default function HorizontalLedgerView({
                   key={cat.id} 
                   className={`sticky top-0 z-40 px-0.5 py-0 text-center font-bold border-b border-r transition-colors duration-200 overflow-hidden ${dm ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-200'} ${hoveredCat === cat.id ? (dm ? '!bg-slate-800' : '!bg-slate-100') : ''}`}
                 >
-                  <div className="mx-auto my-1.5 px-0.5 py-1.5 rounded-lg flex flex-col items-center gap-1 w-full" style={{ backgroundColor: `${cat.color}18` }}>
-                    <span className="text-base sm:text-lg leading-none drop-shadow-sm">{cat.icon}</span>
+                  <div className="mx-auto my-1 px-0.5 py-1 rounded-lg flex flex-col items-center gap-1 w-full" style={{ backgroundColor: `${cat.color}18` }}>
+                    <span className="text-base leading-none drop-shadow-sm">{cat.icon}</span>
                     <span className="text-[9px] font-black leading-tight text-center truncate w-full px-0.5" style={{ color: cat.color, filter: dm ? 'brightness(1.3)' : 'none' }} title={cat.name}>
                       {cat.name}
                     </span>
@@ -201,7 +201,7 @@ export default function HorizontalLedgerView({
               ))}
               
               {/* Top Right Corner */}
-              <th className={`sticky top-0 right-0 z-50 px-2 py-2 text-right font-black text-[10px] uppercase tracking-wider border-b border-l ${dm ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+              <th className={`sticky top-0 right-0 z-50 px-1 py-1.5 text-right font-black text-[10px] uppercase tracking-wider border-b border-l ${dm ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
                 รวม/วัน
               </th>
             </tr>
@@ -224,16 +224,16 @@ export default function HorizontalLedgerView({
                 <tr key={date} className={`group transition-colors duration-75 ${isRowHovered ? (dm ? 'bg-slate-800/80' : 'bg-blue-50/60') : ''}`}>
                   
                   {/* Left Column (Sticky) */}
-                  <td className={`sticky left-0 z-30 px-1 py-1 border-b border-r ${dm ? 'border-slate-700/60 bg-slate-900' : 'border-slate-200 bg-white'} ${isRowHovered ? (dm ? '!bg-slate-800' : '!bg-blue-50') : ''}`}>
+                  <td className={`sticky left-0 z-30 px-1 py-0.5 border-b border-r ${dm ? 'border-slate-700/60 bg-slate-900' : 'border-slate-200 bg-white'} ${isRowHovered ? (dm ? '!bg-slate-800' : '!bg-blue-50') : ''}`}>
                     <div 
-                      className="flex flex-col items-center justify-center leading-none rounded-[4px] px-1 py-1.5 gap-0.5"
+                      className="flex flex-col items-center justify-center leading-none rounded-[4px] px-1 py-1 gap-0.5"
                       style={{
                         backgroundColor: `rgba(${typeRgb}, ${dm ? 0.12 : 0.06})`,
                         border: `1px solid rgba(${typeRgb}, ${dm ? 0.3 : 0.2})`
                       }}
                     >
                       <div className="flex flex-col items-center">
-                        <span className="text-[12px] font-black tabular-nums leading-tight" style={{ color: typeColor, filter: dm ? 'brightness(1.3)' : 'brightness(0.8)' }}>
+                        <span className="text-[11px] font-black tabular-nums leading-tight" style={{ color: typeColor, filter: dm ? 'brightness(1.3)' : 'brightness(0.8)' }}>
                           {day}
                         </span>
                         <span className="text-[8px] font-bold mt-0.5" style={{ color: typeColor, filter: dm ? 'brightness(1.2)' : 'brightness(0.9)' }}>
@@ -255,7 +255,7 @@ export default function HorizontalLedgerView({
                     return (
                       <td
                         key={cat.id}
-                        className={`text-center py-1.5 px-0.5 border-b border-r transition-all duration-100 overflow-hidden ${dm ? 'border-slate-700/40 bg-slate-900' : 'border-slate-100 bg-white'} ${hasData ? 'cursor-pointer' : ''} ${isColHovered && !isCellHovered ? (dm ? '!bg-slate-800/40' : '!bg-slate-50/60') : ''} ${isRowHovered && !isCellHovered ? (dm ? '!bg-slate-800/80' : '!bg-blue-50/60') : ''}`}
+                        className={`text-center py-1 px-0.5 border-b border-r transition-all duration-100 overflow-hidden ${dm ? 'border-slate-700/40 bg-slate-900' : 'border-slate-100 bg-white'} ${hasData ? 'cursor-pointer' : ''} ${isColHovered && !isCellHovered ? (dm ? '!bg-slate-800/40' : '!bg-slate-50/60') : ''} ${isRowHovered && !isCellHovered ? (dm ? '!bg-slate-800/80' : '!bg-blue-50/60') : ''}`}
                         style={{ 
                           backgroundColor: hasData 
                             ? `rgba(${hexToRgb(cat.color)}, ${isCellHovered ? intensity + 0.15 : intensity})` 
@@ -268,17 +268,11 @@ export default function HorizontalLedgerView({
                       >
                         {hasData ? (
                           <div className="flex flex-col items-center justify-center gap-0.5 w-full">
-                            <span className="font-black tabular-nums text-[11px] sm:text-[12px] leading-none drop-shadow-sm truncate w-full px-0.5" style={{ color: cat.color, filter: dm ? 'brightness(1.5) saturate(1.2)' : 'brightness(0.6) saturate(1.5)' }}>
+                            <span className="font-black tabular-nums text-[10px] leading-none drop-shadow-sm truncate w-full px-0.5" style={{ color: cat.color, filter: dm ? 'brightness(1.5) saturate(1.2)' : 'brightness(0.6) saturate(1.5)' }}>
                               {cellSum >= 10000 ? `${(cellSum / 1000).toFixed(1)}k` : cellSum.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
                             </span>
-                            {items.length > 1 && (
-                              <span className={`text-[8px] font-black leading-none px-1 py-0.5 rounded-sm shadow-sm opacity-90 ${dm ? 'bg-slate-900/60 text-slate-300' : 'bg-white/80 text-slate-600'}`}>
-                                ×{items.length}
-                              </span>
-                            )}
                           </div>
                         ) : (
-                          // 🔥 เปลี่ยนไข่ปลาเป็นขีดบางๆ ลดสิ่งรบกวนสายตา 🔥
                           <span className={`text-[10px] select-none opacity-30 ${dm ? 'text-slate-600' : 'text-slate-300'}`}>-</span>
                         )}
                       </td>
@@ -286,7 +280,7 @@ export default function HorizontalLedgerView({
                   })}
 
                   {/* Right Column (Sticky - Total per Day) 🔥 ใส่ Tint บางๆ ให้แยกจากตารางชัดเจน */}
-                  <td className={`sticky right-0 z-30 px-2 py-1.5 text-right border-b border-l font-black tabular-nums text-[11px] sm:text-[12px] transition-colors duration-75 ${dm ? 'border-slate-700/60 text-red-400 bg-slate-900/95' : 'border-slate-200 text-red-600 bg-red-50/20'} ${isRowHovered ? (dm ? '!bg-slate-800' : '!bg-red-50/80') : ''}`}>
+                  <td className={`sticky right-0 z-30 px-1 py-1 text-right border-b border-l font-black tabular-nums text-[11px] transition-colors duration-75 ${dm ? 'border-slate-700/60 text-red-400 bg-slate-900/95' : 'border-slate-200 text-red-600 bg-red-50/20'} ${isRowHovered ? (dm ? '!bg-slate-800' : '!bg-red-50/80') : ''}`}>
                     {total > 0 ? `฿${total.toLocaleString('th-TH', { maximumFractionDigits: 0 })}` : ''}
                   </td>
                 </tr>
@@ -297,14 +291,14 @@ export default function HorizontalLedgerView({
           <tfoot>
             <tr>
               {/* Bottom Left Corner 🔥 ย้ายเส้นขอบขึ้นมาที่ td แทน tr ป้องกันเส้นขาด */}
-              <td className={`sticky bottom-0 left-0 z-50 px-2 py-3 text-center font-black text-[10px] uppercase tracking-wider border-t-2 border-r ${dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-300 text-slate-600'}`}>
+              <td className={`sticky bottom-0 left-0 z-50 px-1 py-2 text-center font-black text-[10px] uppercase tracking-wider border-t-2 border-r ${dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-300 text-slate-600'}`}>
                 รวม
               </td>
               
               {activeCategories.map(cat => (
                 <td 
                   key={cat.id} 
-                  className={`sticky bottom-0 z-40 text-center px-0.5 py-3 font-black tabular-nums text-[11px] sm:text-[12px] border-t-2 border-r transition-colors overflow-hidden ${dm ? 'bg-slate-900 border-slate-600' : 'bg-slate-50 border-slate-300'} ${hoveredCat === cat.id ? (dm ? '!bg-slate-800' : '!bg-white') : ''}`} 
+                  className={`sticky bottom-0 z-40 text-center px-0.5 py-2 font-black tabular-nums text-[11px] border-t-2 border-r transition-colors overflow-hidden ${dm ? 'bg-slate-900 border-slate-600' : 'bg-slate-50 border-slate-300'} ${hoveredCat === cat.id ? (dm ? '!bg-slate-800' : '!bg-white') : ''}`} 
                   style={{ color: cat.color, filter: dm ? 'brightness(1.4)' : 'brightness(0.8)' }}
                 >
                   <div className="truncate w-full px-0.5">
@@ -314,7 +308,7 @@ export default function HorizontalLedgerView({
               ))}
               
               {/* Bottom Right Corner */}
-              <td className={`sticky bottom-0 right-0 z-50 px-2 py-3 text-right font-black tabular-nums text-[12px] sm:text-[13px] border-t-2 border-l ${dm ? 'bg-slate-900 border-slate-600 text-red-400' : 'bg-slate-50 border-slate-300 text-red-700'}`}>
+              <td className={`sticky bottom-0 right-0 z-50 px-1 py-2 text-right font-black tabular-nums text-[11px] border-t-2 border-l ${dm ? 'bg-slate-900 border-slate-600 text-red-400' : 'bg-slate-50 border-slate-300 text-red-700'}`}>
                 ฿{grandTotal.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
               </td>
             </tr>

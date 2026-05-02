@@ -205,7 +205,7 @@ export default function App() {
       className={`min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`}
       style={{ fontFamily: 'Tahoma, sans-serif' }}
     >
-      <div className={`max-w-[98%] 2xl:max-w-screen-2xl w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl pb-6 flex-grow flex flex-col overflow-hidden relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl pb-6 flex-grow flex flex-col overflow-hidden relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
 
         <AppHeader
           isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}

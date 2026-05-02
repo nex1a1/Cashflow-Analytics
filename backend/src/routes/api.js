@@ -4,6 +4,7 @@ const router = express.Router();
 const transactionController = require('../controllers/transactionController');
 const calendarController = require('../controllers/calendarController');
 const settingController = require('../controllers/settingController');
+const backupController = require('../controllers/backupController');
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
@@ -18,6 +19,10 @@ router.post('/calendar', calendarController.upsertCalendar);
 // Settings
 router.get('/settings', settingController.getSettings);
 router.post('/settings', settingController.upsertSetting);
+
+// Backup
+router.post('/backup', backupController.performBackup);
+router.get('/backups', backupController.listBackups);
 
 // Reset
 router.delete('/reset-all', transactionController.resetAllData);

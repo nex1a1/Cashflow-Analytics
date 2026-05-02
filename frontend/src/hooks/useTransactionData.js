@@ -5,7 +5,7 @@ import {
   CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY, CASHFLOW_GROUPS_KEY,
   OLD_PALETTE_MAP, DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from '../constants';
-import { parseDateStrToObj } from '../utils/dateHelpers';
+import { parseDateStrToObj, toISODate, fromISODate } from '../utils/dateHelpers';
 import { settingsService, calendarService } from '../services/api';
 
 const sortTransactions = (dataArr) =>
@@ -116,10 +116,25 @@ export default function useTransactionData({
     await loadData();
   }, [loadData]);
 
-  const handleSaveTransaction = useCallback(async (item) => { await saveToDb([item]); }, [saveToDb]);
+  const handleSaveTransaction = useCallback(async (item) => { 
+    const finalItem = {
+      ...item,
+      isoDate: item.isoDate || (item.date.includes('-') ? item.date : toISODate(item.date)),
+      date: item.date.includes('-') ? fromISODate(item.date) : item.date
+    };
+    await saveToDb([finalItem]); 
+  }, [saveToDb]);
+
   const handleUpdateTransaction = useCallback((id, field, value) => {
     const item = transactions.find(t => t.id === id);
-    if (item) saveToDb({ ...item, [field]: value });
+    if (item) {
+      const updatedItem = { ...item, [field]: value };
+      if (field === 'date') {
+        updatedItem.isoDate = value.includes('-') ? value : toISODate(value);
+        updatedItem.date = value.includes('-') ? fromISODate(value) : value;
+      }
+      saveToDb(updatedItem);
+    }
   }, [transactions, saveToDb]);
 
   const handleDeleteTransaction = useCallback(async (id) => {
