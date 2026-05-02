@@ -34,7 +34,7 @@ export default function AppHeader({
   const showPeriodPicker = ['dashboard', 'analytics', 'ledger', 'calendar'].includes(activeTab);
 
   return (
-    <div className="flex flex-col relative z-40">
+    <div className="flex flex-col relative z-[60]">
       {/* ── Top Header (Logo & Global Actions) ── */}
       <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3 border-b transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
         

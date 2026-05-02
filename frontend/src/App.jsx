@@ -228,7 +228,7 @@ export default function App() {
           fileInputRef={fileInputRef}
         />
 
-        <div className={`p-6 relative flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
+        <div className={`p-6 relative z-0 flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
         <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
             <DashboardView
               analytics={analytics} transactions={transactions}

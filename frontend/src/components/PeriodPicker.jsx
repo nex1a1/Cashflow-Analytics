@@ -60,7 +60,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const itemHover  = dm ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700';
   const itemActive = dm ? 'bg-blue-900/40 text-blue-300 font-bold' : 'bg-blue-50 text-[#00509E] font-bold';
   const isActive   = (val) => filterPeriod === val;
-  const pillBase   = `flex-1 text-[10px] py-1 px-1.5 rounded-sm transition-colors font-medium`;
+  const pillBase   = `w-full text-[10px] py-1 px-0 rounded-sm transition-colors font-medium`;
   const pillActive = dm ? 'bg-slate-700 text-blue-400' : 'bg-white text-[#00509E] shadow-sm ring-1 ring-[#00509E]/20'; // เพิ่ม ring ให้เด่นขึ้นนิดนึง
   const pillIdle   = dm ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600';
 
@@ -84,7 +84,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
       {/* Dropdown */}
       {open && (
         // 4. เปลี่ยน style={{ width: 248 }} เป็น w-64 (256px) แทน ให้ตรงตามมาตรฐาน Tailwind
-        <div className={`absolute right-0 top-full mt-1.5 z-[300] rounded-sm border shadow-2xl overflow-hidden w-64 ${surface}`}>
+        <div className={`absolute right-0 top-full mt-1.5 z-[300] rounded-sm border shadow-2xl overflow-hidden w-72 ${surface}`}>
 
           {/* All Time */}
           <div className={`p-2 border-b ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -117,21 +117,23 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
                         {/* ครึ่งปี */}
                         {(data.halves.has(`${year}-H1`) || data.halves.has(`${year}-H2`)) && (
-                          <div className="flex gap-1 px-1 py-0.5">
+                          <div className="grid grid-cols-2 gap-1 px-1 py-0.5">
                             {data.halves.has(`${year}-H1`) && (
-                              <button onClick={() => select(`${year}-H1`)} className={`${pillBase} ${isActive(`${year}-H1`) ? pillActive : pillIdle}`}>H1</button>
+                              <button onClick={() => select(`${year}-H1`)} className={`${pillBase} text-center ${isActive(`${year}-H1`) ? pillActive : pillIdle}`}>H1</button>
                             )}
                             {data.halves.has(`${year}-H2`) && (
-                              <button onClick={() => select(`${year}-H2`)} className={`${pillBase} ${isActive(`${year}-H2`) ? pillActive : pillIdle}`}>H2</button>
+                              <button onClick={() => select(`${year}-H2`)} className={`${pillBase} text-center ${isActive(`${year}-H2`) ? pillActive : pillIdle}`}>H2</button>
                             )}
                           </div>
                         )}
 
                         {/* ไตรมาส */}
                         {[1,2,3,4].some(q => data.quarters.has(`${year}-Q${q}`)) && (
-                          <div className="flex gap-1 px-1 py-0.5">
-                            {[1,2,3,4].map(q => data.quarters.has(`${year}-Q${q}`) && (
-                              <button key={q} onClick={() => select(`${year}-Q${q}`)} className={`${pillBase} ${isActive(`${year}-Q${q}`) ? pillActive : pillIdle}`}>Q{q}</button>
+                          <div className="grid grid-cols-4 gap-1 px-1 py-0.5">
+                            {[1,2,3,4].map(q => data.quarters.has(`${year}-Q${q}`) ? (
+                              <button key={q} onClick={() => select(`${year}-Q${q}`)} className={`${pillBase} text-center ${isActive(`${year}-Q${q}`) ? pillActive : pillIdle}`}>Q{q}</button>
+                            ) : (
+                              <span key={q} />
                             ))}
                           </div>
                         )}

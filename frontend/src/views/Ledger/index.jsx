@@ -178,10 +178,12 @@ export default function LedgerView({
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setFilterOpen(v => !v)} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-colors ${filterOpen ? dm ? 'bg-blue-600/20 border-blue-600/40 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700' : dm ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'} ${isFilterActive ? (dm ? '!border-amber-500/50 !text-amber-400 !bg-amber-900/20' : '!border-amber-400 !text-amber-700 !bg-amber-50') : ''}`}>
-              <SlidersHorizontal className="w-3.5 h-3.5" /> ตัวกรอง
-              {isFilterActive && <span className={`w-1.5 h-1.5 rounded-full ${dm ? 'bg-amber-400' : 'bg-amber-500'}`} />}
-            </button>
+            {viewMode === 'list' && (
+              <button onClick={() => setFilterOpen(v => !v)} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-colors ${filterOpen ? dm ? 'bg-blue-600/20 border-blue-600/40 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700' : dm ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'} ${isFilterActive ? (dm ? '!border-amber-500/50 !text-amber-400 !bg-amber-900/20' : '!border-amber-400 !text-amber-700 !bg-amber-50') : ''}`}>
+                <SlidersHorizontal className="w-3.5 h-3.5" /> ตัวกรอง
+                {isFilterActive && <span className={`w-1.5 h-1.5 rounded-full ${dm ? 'bg-amber-400' : 'bg-amber-500'}`} />}
+              </button>
+            )}
 
             <div className={`flex items-center rounded-sm border overflow-hidden ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
               <button onClick={() => setViewMode('list')} title="มุมมองรายการ" className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'list' ? dm ? 'bg-slate-700 text-slate-100' : 'bg-slate-100 text-slate-700' : dm ? 'bg-slate-800 text-slate-500 hover:text-slate-300' : 'bg-white text-slate-400 hover:text-slate-600'}`}>
@@ -214,7 +216,7 @@ export default function LedgerView({
         </div>
 
         {/* Filters */}
-        {filterOpen && (
+        {filterOpen && viewMode === 'list' && (
           <FilterBar
             dm={dm} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
