@@ -24,7 +24,7 @@ import AppToast from './components/AppToast';
 import './styles/darkMode.css';
 import SettingsView from './views/SettingsView';
 import CalendarView from './views/CalendarView';
-import LedgerView from './views/LedgerView';
+import LedgerView from './views/Ledger/index';
 import DashboardView from './views/Dashboard/index';
 import BatchAddModal from './components/BatchAddModal';
 import ExportModal from './components/ExportModal';
@@ -275,6 +275,8 @@ export default function App() {
               advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
               availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode}
               activeCashflowGroupIds={activeCashflowGroupIds}
+              dayTypes={dayTypes}
+              dayTypeConfig={dayTypeConfig}
             />
           )}
           {activeTab === 'settings' && (

@@ -5,3 +5,27 @@
 body {
   font-family: 'Prompt', sans-serif;
 }
+/* Custom Scrollbar แบบใสๆ ทันสมัย และไม่มี Scroll แนวนอน */
+.custom-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden; /* ห้ามเกิด Scroll แนวนอนเด็ดขาด */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* ความกว้างของ Scrollbar แนวตั้ง */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.6);
+}
