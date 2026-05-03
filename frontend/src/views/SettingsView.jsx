@@ -3,14 +3,16 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   PlusCircle, Trash2, Coins, CalendarClock, AlertCircle,
   ChevronUp, ChevronDown, Wallet, Info, Grid, Settings2,
-  GripVertical, Lock, AlertTriangle,
+  Lock, AlertTriangle,
 } from 'lucide-react';
 import { DAY_TYPE_CONFIG_KEY, CASHFLOW_GROUPS_KEY } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 /* ─────────────────────────────────────────────
    ConfirmDeleteButton
 ───────────────────────────────────────────── */
-function ConfirmDeleteButton({ onConfirm, isDarkMode, size = 'sm', disabled = false, tooltip = 'ลบ' }) {
+function ConfirmDeleteButton({ onConfirm, size = 'sm', disabled = false, tooltip = 'ลบ' }) {
+  const { isDarkMode } = useTheme();
   const [confirming, setConfirming] = useState(false);
   const timer = useRef(null);
 
@@ -79,7 +81,8 @@ const COLOR_PALETTE = [
   '#64748B','#475569','#334155','#94A3B8','#1E293B',
 ];
 
-function ColorPicker({ color, onChange, isDarkMode }) {
+function ColorPicker({ color, onChange }) {
+  const { isDarkMode } = useTheme();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef(null);
@@ -152,20 +155,15 @@ function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
 /* ─────────────────────────────────────────────
    CategoryRow
 ───────────────────────────────────────────── */
-function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDelete, cashflowGroups = [], isFirst, isLast }) {
-  const dm = isDarkMode;
+function CategoryRow({ cat, isNew, isIncome, onMove, onChange, onDelete, cashflowGroups = [], isFirst, isLast }) {
+  const { isDarkMode: dm } = useTheme();
   const accentFocus = isIncome ? 'focus:border-emerald-500' : 'focus:border-blue-500';
 
-  // ── BUG FIX: กรอง cashflowGroups ให้ตรงกับ type ของ category เสมอ
-  // (ของเดิม filter ใน JSX inline ไม่ได้ memoize — ไม่มีผลต่อ correctness
-  //  แต่ถ้า category เป็น income แล้วยังมี group ของ expense ค้างอยู่ใน cat.cashflowGroup
-  //  ให้ auto-clear ออก เพื่อป้องกัน orphan reference)
   const filteredGroups = useMemo(
     () => cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order - b.order),
     [cashflowGroups, isIncome],
   );
 
-  // ถ้า cashflowGroup ปัจจุบันไม่ match กับ type ที่ถูกต้อง → แจ้งเตือน
   const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
 
   const inputCls = `px-2 py-1 border outline-none font-semibold text-[13px] transition-colors flex-1 min-w-0 ${
@@ -181,7 +179,6 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         : (dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
     } ${dm ? 'border-slate-700/40' : 'border-slate-100'}`}>
 
-      {/* ── ปุ่ม Move: disable อย่างถูกต้องเมื่อถึงขอบ ── */}
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-300'}`}>
         <button type="button" onClick={() => onMove(cat.id, 'UP')} disabled={isFirst}
           className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-slate-200 hover:bg-slate-700' : 'hover:text-slate-700 hover:bg-slate-200'}`}>
@@ -193,17 +190,14 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         </button>
       </div>
 
-      {/* ── Icon ── */}
       <input type="text" value={cat.icon || ''} onChange={e => onChange(cat.id, 'icon', e.target.value)} maxLength="2"
         className={`w-7 h-7 text-center text-base outline-none border shrink-0 transition-colors ${
           dm ? 'bg-slate-900 border-slate-600 text-white focus:border-slate-400' : 'bg-slate-50 border-slate-200 focus:border-slate-400'
         }`} title="ไอคอน" />
 
-      {/* ── Name ── */}
       <AutoFocusInput isNew={isNew} value={cat.name || ''} onChange={e => onChange(cat.id, 'name', e.target.value)}
         className={inputCls} placeholder={isIncome ? 'ชื่อรายรับ' : 'ชื่อรายจ่าย'} />
 
-      {/* ── Cashflow Group select — แสดง warning ถ้า group ไม่ valid ── */}
       <div className="relative shrink-0">
         <select value={cat.cashflowGroup || ''} onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
           className={`border text-[12px] font-semibold py-1 px-1.5 outline-none transition-colors cursor-pointer w-28 ${
@@ -224,7 +218,6 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         )}
       </div>
 
-      {/* ── Fixed checkbox (expense only) ── */}
       {!isIncome && (
         <label className={`flex items-center justify-center gap-1 cursor-pointer px-1.5 py-1 border text-[11px] font-bold shrink-0 w-14 transition-colors ${
           cat.isFixed
@@ -236,9 +229,9 @@ function CategoryRow({ cat, isNew, isDarkMode, isIncome, onMove, onChange, onDel
         </label>
       )}
 
-      <ColorPicker color={cat.color || '#64748B'} onChange={c => onChange(cat.id, 'color', c)} isDarkMode={dm} />
+      <ColorPicker color={cat.color || '#64748B'} onChange={c => onChange(cat.id, 'color', c)} />
       <div className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
-      <ConfirmDeleteButton onConfirm={() => onDelete(cat.id)} isDarkMode={dm} />
+      <ConfirmDeleteButton onConfirm={() => onDelete(cat.id)} />
     </div>
   );
 }
@@ -269,8 +262,8 @@ const ACCENT = {
   },
 };
 
-function SectionCard({ isDarkMode, accentColor, icon, title, badge, action, children, subAction }) {
-  const dm = isDarkMode;
+function SectionCard({ accentColor, icon, title, badge, action, children, subAction }) {
+  const { isDarkMode: dm } = useTheme();
   const a = ACCENT[accentColor] || ACCENT.blue;
   const mode = dm ? 'dark' : 'light';
 
@@ -309,10 +302,10 @@ function SectionCard({ isDarkMode, accentColor, icon, title, badge, action, chil
 }
 
 /* ─────────────────────────────────────────────
-   OrphanWarningBanner — แสดงเมื่อมี category
-   ที่ cashflowGroup ถูกลบไปแล้ว
+   OrphanWarningBanner
 ───────────────────────────────────────────── */
-function OrphanWarningBanner({ categories, cashflowGroups, isDarkMode }) {
+function OrphanWarningBanner({ categories, cashflowGroups }) {
+  const { isDarkMode } = useTheme();
   const orphans = useMemo(() => {
     const validIds = new Set(cashflowGroups.map(g => g.id));
     return categories.filter(c => c.cashflowGroup && !validIds.has(c.cashflowGroup));
@@ -340,14 +333,13 @@ function OrphanWarningBanner({ categories, cashflowGroups, isDarkMode }) {
 ───────────────────────────────────────────── */
 export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
-  dayTypeConfig, setDayTypeConfig, isDarkMode, handleDeleteAllData, saveSettingToDb,
+  dayTypeConfig, setDayTypeConfig, handleDeleteAllData, saveSettingToDb,
   cashflowGroups = [], setCashflowGroups,
   transactions = [],
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
 
-  // ── Day Type handlers ──────────────────────────────────────
   const handleDayTypeConfigChange = (id, field, value) => {
     const cfg = dayTypeConfig.map(dt => dt.id === id ? { ...dt, [field]: value } : dt);
     setDayTypeConfig(cfg);
@@ -360,12 +352,10 @@ export default function SettingsView({
     saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
   };
 
-  // BUG FIX: ของเดิม guard แค่ length <= 2 แต่ไม่ได้ check isDefault
-  // เพิ่ม guard: ห้ามลบถ้า dayType นั้นมี isDefault = true
   const handleDeleteDayType = (id) => {
     const dt = dayTypeConfig.find(d => d.id === id);
     if (!dt) return;
-    if (dt.isDefault) return; // ห้ามลบ default
+    if (dt.isDefault) return;
     if (dayTypeConfig.length <= 2) return;
     const cfg = dayTypeConfig.filter(d => d.id !== id);
     setDayTypeConfig(cfg);
@@ -384,23 +374,14 @@ export default function SettingsView({
     }
   };
 
-  // BUG FIX: ของเดิม setTimeout + reverse().find() ไม่น่าเชื่อถือ
-  // เพราะถ้า handleAddCategory เป็น async หรือ state update ยังไม่ flush
-  // จะหา newCatId ผิดตัว — แก้เป็น generate id ล่วงหน้าแล้วส่ง callback ขึ้นไป
-  // (วิธีนี้ต้องให้ handleAddCategory รับ optional id parameter)
-  // ถ้า handleAddCategory ไม่รับ id → fallback เป็น setTimeout เดิมพร้อม comment
   const onAddCategory = (type) => {
     handleAddCategory(type);
-    // NOTE: setTimeout 0 เป็น pattern ที่ brittle —
-    // ควรให้ handleAddCategory return id ที่สร้างใหม่
-    // แล้ว setNewCatId(returnedId) แทน
     setTimeout(() => {
       const added = [...categories].reverse().find(c => c.type === type);
       if (added) setNewCatId(added.id);
     }, 0);
   };
 
-  // ── Cashflow Group handlers ────────────────────────────────
   const handleAddCashflowGroup = () => {
     const g = {
       id: `cg_${Date.now()}`,
@@ -422,9 +403,6 @@ export default function SettingsView({
     saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
   };
 
-  // BUG FIX: ของเดิมใช้ alert() ซึ่ง block UI thread และ UX ไม่ดี
-  // เปลี่ยนเป็น return error message สำหรับแสดงใน UI แทน
-  // และเพิ่ม check ว่า group มี transactions จริงอยู่หรือเปล่า
   const [cashflowDeleteError, setCashflowDeleteError] = useState(null);
   const handleDeleteCashflowGroup = (id) => {
     if (categories.some(c => c.cashflowGroup === id)) {
@@ -444,15 +422,12 @@ export default function SettingsView({
     if (ti >= 0 && ti < cashflowGroups.length) {
       const updated = [...cashflowGroups];
       [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
-      // BUG FIX: ของเดิม mutate g.order ใน array โดยตรง (updated.forEach(g => g.order = ...))
-      // ควร map ออกมาเป็น object ใหม่แทน
       const withOrder = updated.map((g, i) => ({ ...g, order: i + 1 }));
       setCashflowGroups(withOrder);
       saveSettingToDb(CASHFLOW_GROUPS_KEY, withOrder);
     }
   };
 
-  // ── Derived: transactions count per cashflow group ─────────
   const txCountByGroup = useMemo(() => {
     const map = {};
     transactions.forEach(t => {
@@ -466,9 +441,8 @@ export default function SettingsView({
   const expenseCategories = useMemo(() => categories.filter(c => c.type === 'expense'), [categories]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-[1440px] mx-auto px-1 pt-1 pb-10">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">
 
-      {/* ── Page Header ── */}
       <div className="flex items-center justify-between mb-3 gap-4">
         <h1 className={`text-lg font-black flex items-center gap-2 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
           <Settings2 className="w-5 h-5 text-[#00509E]" /> การตั้งค่าระบบ
@@ -479,15 +453,12 @@ export default function SettingsView({
         </div>
       </div>
 
-      {/* ── Orphan warning banner ── */}
-      <OrphanWarningBanner categories={categories} cashflowGroups={cashflowGroups} isDarkMode={dm} />
+      <OrphanWarningBanner categories={categories} cashflowGroups={cashflowGroups} />
 
-      {/* ── 3-column grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_360px] xl:grid-cols-[1fr_1fr_400px] gap-3 items-start mb-3">
 
-        {/* Col 1: รายรับ */}
         <SectionCard
-          isDarkMode={dm} accentColor="emerald"
+          accentColor="emerald"
           icon={<Coins className="w-3.5 h-3.5" />}
           title="หมวดหมู่รายรับ"
           badge={incomeCategories.length}
@@ -496,7 +467,7 @@ export default function SettingsView({
           <div>
             {incomeCategories.map((cat, idx) => (
               <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
-                isDarkMode={dm} onMove={handleMoveCategory} onChange={handleCategoryChange}
+                onMove={handleMoveCategory} onChange={handleCategoryChange}
                 onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
                 isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
             ))}
@@ -506,9 +477,8 @@ export default function SettingsView({
           </div>
         </SectionCard>
 
-        {/* Col 2: รายจ่าย */}
         <SectionCard
-          isDarkMode={dm} accentColor="blue"
+          accentColor="blue"
           icon={<Wallet className="w-3.5 h-3.5" />}
           title="หมวดหมู่รายจ่าย"
           badge={expenseCategories.length}
@@ -517,7 +487,7 @@ export default function SettingsView({
           <div>
             {expenseCategories.map((cat, idx) => (
               <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
-                isDarkMode={dm} onMove={handleMoveCategory} onChange={handleCategoryChange}
+                onMove={handleMoveCategory} onChange={handleCategoryChange}
                 onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
                 isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
             ))}
@@ -527,12 +497,10 @@ export default function SettingsView({
           </div>
         </SectionCard>
 
-        {/* Col 3: System settings stacked */}
         <div className="flex flex-col gap-3">
 
-          {/* Cashflow Groups */}
           <SectionCard
-            isDarkMode={dm} accentColor="purple"
+            accentColor="purple"
             icon={<Grid className="w-3.5 h-3.5" />}
             title="คอลัมน์ Cashflow"
             badge={cashflowGroups.length}
@@ -550,7 +518,6 @@ export default function SettingsView({
                         ? (dm ? 'border-red-700 bg-red-900/20' : 'border-red-300 bg-red-50')
                         : dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
                     }`}>
-                      {/* Move buttons */}
                       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
                         <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
                           className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
@@ -562,15 +529,13 @@ export default function SettingsView({
                         </button>
                       </div>
 
-                      <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} isDarkMode={dm} />
+                      <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} />
 
-                      {/* ✨ เพิ่มช่องใส่ Icon/Emoji ตรงนี้ ✨ */}
                       <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength="2"
                         className={`w-7 h-7 text-center text-base outline-none border shrink-0 transition-colors ${
                           dm ? 'bg-slate-900 border-slate-600 text-white focus:border-slate-400' : 'bg-slate-50 border-slate-200 focus:border-slate-400'
                         }`} title="ไอคอน" placeholder="✨" />
 
-                      {/* Highlight Bg toggle */}
                       <label className={`flex items-center justify-center gap-0.5 cursor-pointer px-1.5 py-0.5 border text-[10px] font-bold shrink-0 transition-colors ${
                         group.highlightBg
                           ? (dm ? 'bg-amber-900/40 text-amber-400 border-amber-800/50' : 'bg-amber-50 text-amber-700 border-amber-200')
@@ -581,7 +546,6 @@ export default function SettingsView({
                         Bg
                       </label>
 
-                      {/* Type select */}
                       <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
                         disabled={group.isDefault || inUse}
                         className={`p-1 text-[11px] font-bold outline-none border w-[68px] shrink-0 ${
@@ -592,14 +556,12 @@ export default function SettingsView({
                         <option value="expense">รายจ่าย</option>
                       </select>
 
-                      {/* Name input (โค้ดเดิมของคุณ) */}
                       <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
                         className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${
                           dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-purple-500 placeholder:text-slate-600'
                              : 'bg-white border-slate-200 text-slate-800 focus:border-purple-400'
                         }`} placeholder="ชื่อคอลัมน์" />
 
-                      {/* 🔧 1. ช่องตัวเลข (จองพื้นที่ไว้ 36px เผื่อเลข 3-4 หลัก) */}
                       <div className="flex items-center justify-end w-[36px] shrink-0">
                         {txCount > 0 && (
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 leading-none rounded-sm ${
@@ -610,7 +572,6 @@ export default function SettingsView({
                         )}
                       </div>
 
-                      {/* 🔧 2. ช่องปุ่มแอคชั่น (เลือกว่าจะแสดง Lock หรือ ถังขยะ) จองพื้นที่ 28px */}
                       <div className="flex items-center justify-center w-[28px] shrink-0">
                         {group.isDefault ? (
                           <Lock className={`w-3.5 h-3.5 ${dm ? 'text-slate-600' : 'text-slate-400'}`} title="กลุ่ม Default ลบไม่ได้" />
@@ -618,14 +579,12 @@ export default function SettingsView({
                           <ConfirmDeleteButton
                             onConfirm={() => handleDeleteCashflowGroup(group.id)}
                             disabled={inUse}
-                            isDarkMode={dm}
                             tooltip={inUse ? 'ลบไม่ได้ มีหมวดหมู่ใช้งานอยู่' : 'ลบกลุ่มนี้'}
                           />
                         )}
                       </div>
                     </div>
 
-                    {/* Inline error message แทน alert() */}
                     {hasError && (
                       <p className={`text-[11px] font-semibold px-2 py-1 border flex items-center gap-1 ${
                         dm ? 'bg-red-900/20 border-red-800/50 text-red-400' : 'bg-red-50 border-red-200 text-red-600'
@@ -643,9 +602,8 @@ export default function SettingsView({
             </div>
           </SectionCard>
 
-          {/* Day Types */}
           <SectionCard
-            isDarkMode={dm} accentColor="orange"
+            accentColor="orange"
             icon={<CalendarClock className="w-3.5 h-3.5" />}
             title="ชนิดวันบนปฏิทิน"
             badge={dayTypeConfig.length}
@@ -676,12 +634,12 @@ export default function SettingsView({
                            : 'bg-white border-slate-200 text-slate-800 focus:border-orange-400'
                       }`} placeholder="ชื่อชนิดวัน" />
 
-                    <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} isDarkMode={dm} />
+                    <ColorPicker color={dt.color} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} />
                     <div className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
                     {isProtected
                       ? <Lock className={`w-3.5 h-3.5 ${dm ? 'text-slate-700' : 'text-slate-300'}`} title="ลบไม่ได้ (ต้องมีอย่างน้อย 2)" />
-                      : <ConfirmDeleteButton onConfirm={() => handleDeleteDayType(dt.id)} isDarkMode={dm} />
+                      : <ConfirmDeleteButton onConfirm={() => handleDeleteDayType(dt.id)} />
                     }
                   </div>
                 );
@@ -692,7 +650,6 @@ export default function SettingsView({
         </div>
       </div>
 
-      {/* ── Danger Zone ── */}
       <div className={`border-2 overflow-hidden ${dm ? 'bg-red-950/20 border-red-900/50' : 'bg-red-50 border-red-200'}`}>
         <div className={`px-4 py-2 border-b-2 flex items-center gap-2 ${dm ? 'bg-red-900/20 border-red-900/40' : 'bg-red-100/60 border-red-200'}`}>
           <AlertCircle className={`w-4 h-4 ${dm ? 'text-red-400' : 'text-red-600'}`} />
@@ -714,7 +671,7 @@ export default function SettingsView({
               <span className="font-bold text-red-600">ไม่สามารถกู้คืนได้</span>
             </p>
           </div>
-          <ConfirmDeleteButton onConfirm={() => handleDeleteAllData({ setShowToast: () => {} })} isDarkMode={dm} size="lg" />
+          <ConfirmDeleteButton onConfirm={() => handleDeleteAllData({ setShowToast: () => {} })} size="lg" />
         </div>
       </div>
 

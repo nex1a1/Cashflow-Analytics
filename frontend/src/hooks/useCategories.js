@@ -1,9 +1,11 @@
 // src/hooks/useCategories.js
 import { useState } from 'react';
 import { CATEGORIES_KEY } from '../constants';
+import { useToast } from '../context/ToastContext';
 
 export default function useCategories(initialCategories, saveSettingToDb, saveToDb) {
   const [categories, setCategories] = useState(initialCategories);
+  const { showToast } = useToast();
 
   const handleCategoryChange = async (catId, field, value, transactions) => {
     const oldCat = categories.find(c => c.id === catId);
@@ -40,7 +42,7 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
     const catToDelete = categories.find(c => c.id === id);
     if (!catToDelete) return;
     if (transactions.some(t => t.category === catToDelete.name)) {
-      alert('ไม่สามารถลบหมวดหมู่ที่มีรายการบัญชีใช้งานอยู่ได้');
+      showToast('ไม่สามารถลบหมวดหมู่ที่มีรายการบัญชีใช้งานอยู่ได้', 'error');
       return;
     }
     const updated = categories.filter(c => c.id !== id);

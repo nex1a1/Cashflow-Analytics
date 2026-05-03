@@ -4,6 +4,7 @@ import {
   TrendingUp, TrendingDown, Wallet, Inbox, FileSpreadsheet 
 } from 'lucide-react';
 import { formatMoney } from '../../utils/formatters'; // เช็ค Path
+import { useTheme } from '../../context/ThemeContext';
 
 // นำเข้า Components ที่แยกออกมา
 import StatCard from './components/StatCard';
@@ -18,14 +19,15 @@ export default function LedgerView({
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
-  availableDatesInPeriod, isDarkMode,
+  availableDatesInPeriod,
+  allDatesInPeriod,
   setFilterPeriod, rawAvailableMonths,
   cashflowGroups = [],
   activeCashflowGroupIds = new Set(),
   dayTypes = {},
   dayTypeConfig = [],
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
   const [filterOpen, setFilterOpen] = useState(true);
@@ -167,7 +169,7 @@ export default function LedgerView({
   }
 
   return (
-    <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 max-w-screen-2xl mx-auto w-full pb-8">
+    <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 w-full pb-8">
       <div className="flex flex-col gap-3 mb-4">
         {/* Top Header Actions */}
         <div className="flex items-center justify-between gap-4">
@@ -210,15 +212,15 @@ export default function LedgerView({
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <StatCard dm={dm} icon={<TrendingUp className="w-4 h-4 text-emerald-500" />} label="รายรับรวม" value={formatMoney(sumInc)} color={{ bg: dm ? 'bg-emerald-900/30' : 'bg-emerald-50', text: dm ? 'text-emerald-400' : 'text-emerald-600' }} />
-          <StatCard dm={dm} icon={<TrendingDown className="w-4 h-4 text-red-500" />} label="รายจ่ายรวม" value={formatMoney(sumExp)} color={{ bg: dm ? 'bg-red-900/30' : 'bg-red-50', text: dm ? 'text-red-400' : 'text-red-600' }} />
-          <StatCard dm={dm} icon={<Wallet className={`w-4 h-4 ${net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-500')}`} />} label="คงเหลือสุทธิ" value={formatMoney(net)} color={{ bg: net >= 0 ? (dm ? 'bg-blue-900/30' : 'bg-blue-50') : (dm ? 'bg-orange-900/30' : 'bg-orange-50'), text: net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600') }} />
+          <StatCard icon={<TrendingUp className="w-4 h-4 text-emerald-500" />} label="รายรับรวม" value={formatMoney(sumInc)} color={{ bg: dm ? 'bg-emerald-900/30' : 'bg-emerald-50', text: dm ? 'text-emerald-400' : 'text-emerald-600' }} />
+          <StatCard icon={<TrendingDown className="w-4 h-4 text-red-500" />} label="รายจ่ายรวม" value={formatMoney(sumExp)} color={{ bg: dm ? 'bg-red-900/30' : 'bg-red-50', text: dm ? 'text-red-400' : 'text-red-600' }} />
+          <StatCard icon={<Wallet className={`w-4 h-4 ${net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-500')}`} />} label="คงเหลือสุทธิ" value={formatMoney(net)} color={{ bg: net >= 0 ? (dm ? 'bg-blue-900/30' : 'bg-blue-50') : (dm ? 'bg-orange-900/30' : 'bg-orange-50'), text: net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600') }} />
         </div>
 
         {/* Filters */}
         {filterOpen && viewMode === 'list' && (
           <FilterBar
-            dm={dm} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
             advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
             advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
@@ -245,13 +247,14 @@ export default function LedgerView({
         ) : viewMode === 'horizontal' ? (
           <HorizontalLedgerView
             displayTransactions={displayTransactions} categories={categories}
-            isDarkMode={dm} formatMoney={formatMoney}
+            formatMoney={formatMoney}
             dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
+            allDates={allDatesInPeriod}
           />
         ) : (
           <LedgerTable
             currentData={currentData} sortedTransactions={sortedTransactions}
-            categories={categories} dm={dm} sortConfig={sortConfig}
+            categories={categories} sortConfig={sortConfig}
             handleSort={handleSort} isDateSorted={isDateSorted}
             dateBands={dateBands} handleUpdateTransaction={handleUpdateTransaction}
             handleDeleteTransaction={handleDeleteTransaction} handleOpenAddModal={handleOpenAddModal}

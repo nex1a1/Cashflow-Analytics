@@ -7,6 +7,8 @@ import {
 import AnimatedNumber from './ui/AnimatedNumber';
 import { formatMoney, hexToRgb } from '../utils/formatters';
 import DatePicker from './ui/DatePicker';
+import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 
 // Helper: คืนค่า YYYY-MM-DD ตามเวลาเครื่อง Local (แก้บั๊ก Timezone)
 const getLocalDateString = (dateObj = new Date()) => {
@@ -18,10 +20,11 @@ const getLocalDateString = (dateObj = new Date()) => {
 
 export default function BatchAddModal({
   isOpen, onClose, onSaveBatch,
-  categories, transactions, isDarkMode,
+  categories, transactions,
   defaultDate, defaultType, defaultCategory
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
+  const { showToast } = useToast();
   const [pendingItems, setPendingItems]   = useState([]);
   const [isProcessing, setIsProcessing]  = useState(false);
   const [suggCatFilter, setSuggCatFilter] = useState('ALL');
@@ -132,7 +135,7 @@ export default function BatchAddModal({
       onClose();
     } catch (err) {
       console.error(err);
-      alert('⚠️ เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message);
+      showToast('⚠️ เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message, 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -182,7 +185,7 @@ export default function BatchAddModal({
             <div className="flex gap-3 mb-4">
               <div className="flex-1">
                 <label className={tokens.label}>วันที่</label>
-                <DatePicker value={addForm.date} onChange={(v) => setAddForm({ ...addForm, date: v })} isDarkMode={dm} required />
+                <DatePicker value={addForm.date} onChange={(v) => setAddForm({ ...addForm, date: v })} required />
               </div>
               <div className="flex-1">
                 <label className={tokens.label}>จำนวนเงิน ฿</label>
@@ -288,7 +291,7 @@ export default function BatchAddModal({
                               <span className="shrink-0">{item._catObj?.icon}</span>
                               <span className="truncate">{item.category}</span>
                             </span>
-                            <span className={`text-[9px] font-bold px-1 py-0.5 rounded-sm border flex items-center gap-0.5 shrink-0 ${dm ? 'text-slate-300 border-slate-700 bg-slate-800/80' : 'text-slate-500 border-slate-200 bg-slate-100'}`}>
+                            <span className={`text-[9px] font-bold px-1 py-0.5 rounded-sm border flex items-center gap-0.5 shrink-0 ${dm ? 'text-slate-300 border-slate-700 bg-slate-800/80' : 'text-slate-50 border-slate-200 bg-slate-100'}`}>
                               <CalendarDays className="w-2.5 h-2.5" /> {item.date}
                             </span>
                           </div>

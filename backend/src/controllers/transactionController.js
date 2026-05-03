@@ -1,93 +1,62 @@
-const db = require('../config/db');
+const transactionService = require('../services/transactionService');
+const { upsertTransactionSchema } = require('../validations/transactionValidation');
 
 exports.getAllTransactions = (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM transactions ORDER BY iso_date ASC, id ASC').all();
+    const rows = transactionService.getAll();
     res.json(rows.map(row => ({
-      id:              row.id,
-      date:            row.date,
-      isoDate:         row.iso_date,
-      category:        row.category,
-      description:     row.description,
-      amount:          parseFloat(row.amount),
-      dayNote:         row.day_note,
-      paymentMethodId: row.payment_method_id || null, 
+      id:          row.id,
+      date:        row.date,
+      category:    row.category,
+      description: row.description,
+      amount:      row.amount,
+      dayNote:     row.day_note
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-const convertToISO = (dateStr) => {
-  if (!dateStr || !dateStr.includes('/')) return dateStr;
-  const [d, m, y] = dateStr.split('/');
-  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-};
-
 exports.upsertTransactions = (req, res) => {
-  const items = Array.isArray(req.body) ? req.body : [req.body];
-  
-  const upsert = db.prepare(`
-    INSERT INTO transactions (id, date, iso_date, category, description, amount, day_note, payment_method_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      date              = excluded.date,
-      iso_date          = excluded.iso_date,
-      category          = excluded.category,
-      description       = excluded.description,
-      amount            = excluded.amount,
-      day_note          = excluded.day_note,
-      payment_method_id = excluded.payment_method_id
-  `);
-
-  const runAll = db.transaction((rows) => {
-    for (const item of rows) {
-      upsert.run(
-        item.id, 
-        item.date, 
-        item.isoDate || convertToISO(item.date),
-        item.category, 
-        item.description, 
-        item.amount, 
-        item.dayNote || '',
-        item.paymentMethodId || null
-      );
-    }
-  });
-
   try {
-    runAll(items);
+    const validatedData = upsertTransactionSchema.parse(req.body);
+    const items = Array.isArray(validatedData) ? validatedData : [validatedData];
+
+    // Use upsertMany for atomic transaction
+    transactionService.upsertMany(items);
+
     res.json({ success: true, count: items.length });
   } catch (err) {
+    if (err.name === 'ZodError') {
+      return res.status(400).json({ error: 'Validation failed', details: err.errors });
+    }
     res.status(500).json({ error: err.message });
   }
 };
 
-exports.deleteTransactionById = (req, res) => {
+exports.deleteTransaction = (req, res) => {
+  const { id } = req.params;
   try {
-    db.prepare('DELETE FROM transactions WHERE id = ?').run(req.params.id);
+    transactionService.delete(id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-exports.deleteAllTransactions = (req, res) => {
+exports.deleteMonth = (req, res) => {
+  const { isoMonth } = req.params; // Expecting YYYY-MM
   try {
-    db.prepare('DELETE FROM transactions').run();
-    res.json({ success: true });
+    transactionService.deleteByMonth(isoMonth);
+    res.json({ success: true, message: `Deleted data for ${isoMonth}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 exports.resetAllData = (req, res) => {
-  const resetAll = db.transaction(() => {
-    db.prepare('DELETE FROM transactions').run();
-    db.prepare('DELETE FROM calendar_days').run();
-  });
   try {
-    resetAll();
+    transactionService.deleteAll();
     res.json({ success: true, message: 'All data cleared successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

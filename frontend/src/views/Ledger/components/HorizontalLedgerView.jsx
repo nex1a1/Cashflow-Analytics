@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Inbox } from 'lucide-react';
 import { hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function HorizontalLedgerView({
-  displayTransactions, categories, isDarkMode, formatMoney, dayTypes = {}, dayTypeConfig = []
+  displayTransactions, categories, formatMoney, dayTypes = {}, dayTypeConfig = [], allDates = []
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   const [tooltip, setTooltip] = useState(null);
   const tooltipRef = useRef(null);
   const [hoveredDate, setHoveredDate] = useState(null);
@@ -22,13 +23,18 @@ export default function HorizontalLedgerView({
     return categories.filter(c => c.type === 'expense' && usedCatNames.has(c.name));
   }, [categories, expenseTransactions]);
 
-  const activeDates = useMemo(() => {
-    const dates = [...new Set(expenseTransactions.map(t => t.date))];
-    return dates.sort((a, b) => {
-      const parse = d => d.split('/').reverse().join('');
-      return parse(a) - parse(b);
-    });
-  }, [expenseTransactions]);
+  // 🚀 FIXED: ใช้วันที่ทั้งหมดใน period แทนการดึงจาก transactions อย่างเดียว
+  const sortedDates = useMemo(() => {
+    // ถ้าไม่มี allDates (เช่น กรณี error) ให้ fallback ไปใช้ active dates จากรายการที่มี
+    if (!allDates || allDates.length === 0) {
+      const dates = [...new Set(expenseTransactions.map(t => t.date))];
+      return dates.sort((a, b) => {
+        const parse = d => d.split('/').reverse().join('');
+        return parse(a) - parse(b);
+      });
+    }
+    return allDates;
+  }, [allDates, expenseTransactions]);
 
   const cellMap = useMemo(() => {
     const map = {};
@@ -42,13 +48,13 @@ export default function HorizontalLedgerView({
 
   const dailyTotal = useMemo(() => {
     const totals = {};
-    activeDates.forEach(date => {
+    sortedDates.forEach(date => {
       totals[date] = expenseTransactions
         .filter(t => t.date === date)
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     });
     return totals;
-  }, [activeDates, expenseTransactions]);
+  }, [sortedDates, expenseTransactions]);
 
   const categoryTotal = useMemo(() => {
     const totals = {};
@@ -66,7 +72,7 @@ export default function HorizontalLedgerView({
 
   const maxCellValue = useMemo(() => {
     let max = 0;
-    activeDates.forEach(date => {
+    sortedDates.forEach(date => {
       activeCategories.forEach(cat => {
         const items = cellMap[date]?.[cat.name] || [];
         const sum = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
@@ -74,7 +80,7 @@ export default function HorizontalLedgerView({
       });
     });
     return max || 1;
-  }, [activeDates, activeCategories, cellMap]);
+  }, [sortedDates, activeCategories, cellMap]);
 
   const handleCellHover = (e, date, catId, cat, items) => {
     setHoveredDate(date);
@@ -130,12 +136,11 @@ export default function HorizontalLedgerView({
   const bgHead  = dm ? '#0d1424' : '#f8fafc';
   const bgFoot  = dm ? '#0d1424' : '#f1f5f9';
 
-  /* row height: 31px — comfortable density with heat bar */
   const ROW_H = '31px';
 
 
   return (
-    <div className="relative" style={{ fontFamily: "'DM Mono', 'IBM Plex Mono', 'Fira Code', monospace" }}>
+    <div className="relative">
 
       {/* ── Tooltip ── */}
       {tooltip && (
@@ -185,10 +190,10 @@ export default function HorizontalLedgerView({
                   borderBottom: i < tooltip.items.length - 1
                     ? `1px solid ${dm ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none',
                 }}>
-                  <p style={{ margin: 0, fontSize: 11, color: dm ? '#cbd5e1' : '#475569', flex: 1, lineHeight: 1.4, fontFamily: 'inherit' }}>
+                  <p style={{ margin: 0, fontSize: 11, color: dm ? '#cbd5e1' : '#475569', flex: 1, lineHeight: 1.4 }}>
                     {item.description || <span style={{ opacity: 0.4, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
                   </p>
-                  <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
                     ฿{(parseFloat(item.amount) || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
                   </p>
                 </div>
@@ -207,7 +212,7 @@ export default function HorizontalLedgerView({
                 <p style={{ margin: 0, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: dm ? '#64748b' : '#94a3b8' }}>
                   รวม {tooltip.items.length} รายการ
                 </p>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', fontFamily: 'inherit' }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
                   ฿{tooltip.items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
                 </p>
               </div>
@@ -223,14 +228,15 @@ export default function HorizontalLedgerView({
           style={{
           borderCollapse: 'separate',
           borderSpacing: 0,
-          width: '100%',
+          width: 'max-content',
+          minWidth: '100%',
           tableLayout: 'fixed',
           fontSize: 12,
         }}>
           <colgroup>
-            <col style={{ width: 48 }} />
-            {activeCategories.map(cat => <col key={cat.id} />)}
-            <col style={{ width: 100 }} />
+            <col style={{ width: 60 }} />
+            {activeCategories.map(cat => <col key={cat.id} style={{ width: 90 }} />)}
+            <col style={{ width: 120 }} />
           </colgroup>
 
           {/* ── HEAD ── */}
@@ -263,9 +269,8 @@ export default function HorizontalLedgerView({
                   borderRight: `1px solid ${border}`,
                   padding: '2px 1px',
                   transition: 'background 0.1s, border-color 0.1s',
-                  overflow: 'visible', // Allow content to pop out
+                  overflow: 'visible',
                 }}>
-                  {/* Pop-out Container */}
                   <div 
                     onMouseEnter={() => setHoveredCat(cat.id)}
                     style={{
@@ -275,23 +280,17 @@ export default function HorizontalLedgerView({
                       gap: 2,
                       padding: '5px 2px 6px',
                       borderRadius: 8,
-                      background: hoveredCat === cat.id ? `${cat.color}25` : `${cat.color}16`,
-                      transform: hoveredCat === cat.id ? 'scale(1.15) translateY(2px)' : 'scale(1)',
-                      boxShadow: hoveredCat === cat.id ? `0 10px 25px -5px ${cat.color}40, 0 8px 10px -6px rgba(0,0,0,0.1)` : 'none',
-                      transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      background: hoveredCat === cat.id ? `${cat.color}28` : `${cat.color}16`,
+                      boxShadow: hoveredCat === cat.id ? `0 0 0 1.5px ${cat.color}60, 0 4px 16px -4px ${cat.color}40` : 'none',
+                      transition: 'background 0.15s ease, box-shadow 0.15s ease',
                       position: 'relative',
-                      zIndex: hoveredCat === cat.id ? 100 : 1,
+                      zIndex: 1,
                       cursor: 'default',
                       width: '94%',
                       margin: '0 auto',
                     }}
                   >
-                    <span style={{ 
-                      fontSize: 18, 
-                      lineHeight: 1,
-                      transform: hoveredCat === cat.id ? 'scale(1.1)' : 'scale(1)',
-                      transition: 'transform 0.2s ease'
-                    }}>{cat.icon}</span>
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>{cat.icon}</span>
                     <span style={{
                       fontSize: 10,
                       fontWeight: 900,
@@ -299,9 +298,9 @@ export default function HorizontalLedgerView({
                       filter: dm ? 'brightness(1.4)' : 'brightness(0.75)',
                       lineHeight: 1.1,
                       maxWidth: '100%',
-                      overflow: hoveredCat === cat.id ? 'visible' : 'hidden',
+                      overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: hoveredCat === cat.id ? 'normal' : 'nowrap',
+                      whiteSpace: 'nowrap',
                       display: 'block',
                       textAlign: 'center',
                       letterSpacing: '-0.01em',
@@ -311,7 +310,6 @@ export default function HorizontalLedgerView({
                 </th>
               ))}
 
-              {/* top-right */}
               <th style={{
                 position: 'sticky', top: 0, right: 0, zIndex: 50,
                 background: bgHead,
@@ -329,8 +327,8 @@ export default function HorizontalLedgerView({
           </thead>
 
           {/* ── BODY ── */}
-          <tbody onMouseLeave={handleCellLeave}>
-            {activeDates.map((date, rowIdx) => {
+          <tbody>
+            {sortedDates.map((date, rowIdx) => {
               const { day, dayName, isWeekend } = formatDate(date);
               const total = dailyTotal[date] || 0;
 
@@ -353,7 +351,6 @@ export default function HorizontalLedgerView({
                   onMouseLeave={handleCellLeave}
                 >
 
-                  {/* date cell */}
                   <td style={{
                     position: 'sticky', left: 0, zIndex: 30,
                     background: isRowHovered ? (dm ? '#1a2035' : '#eef0ff') : bgBase,
@@ -363,8 +360,9 @@ export default function HorizontalLedgerView({
                     transition: 'background 0.08s',
                   }}>
                     {(() => {
-                      // sparkline: fill width = daily total / max daily total
-                      const sparkPct = grandTotal > 0 ? Math.max(4, Math.round((total / Math.max(...Object.values(dailyTotal))) * 100)) : 0;
+                      const dailyValues = Object.values(dailyTotal);
+                      const maxDaily = dailyValues.length > 0 ? Math.max(...dailyValues) : 1;
+                      const sparkPct = grandTotal > 0 ? Math.max(4, Math.round((total / maxDaily) * 100)) : 0;
                       return (
                         <div style={{
                           position: 'relative',
@@ -377,7 +375,6 @@ export default function HorizontalLedgerView({
                           overflow: 'hidden',
                           background: `rgba(${typeRgb}, ${dm ? 0.08 : 0.04})`,
                         }}>
-                          {/* sparkline fill */}
                           <div style={{
                             position: 'absolute',
                             left: 0,
@@ -388,7 +385,6 @@ export default function HorizontalLedgerView({
                             borderRadius: '3px 0 0 3px',
                             transition: 'width 0.3s ease, background 0.15s',
                           }} />
-                          {/* text on top */}
                           <span style={{
                             fontSize: 12,
                             fontWeight: 800,
@@ -412,7 +408,6 @@ export default function HorizontalLedgerView({
                     })()}
                   </td>
 
-                  {/* heatmap cells */}
                   {activeCategories.map(cat => {
                     const items    = cellMap[date]?.[cat.name] || [];
                     const cellSum  = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
@@ -432,7 +427,6 @@ export default function HorizontalLedgerView({
                       cellBg = rowBg;
                     }
 
-                    /* bar width proportional to intensity */
                     const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
 
                     return (
@@ -471,7 +465,6 @@ export default function HorizontalLedgerView({
                             transition: 'background 0.1s',
                             padding: '0 5px',
                           }}>
-                            {/* count badge — positioned top-center carefully to avoid overlap */}
                             {items.length > 1 && (
                               <span style={{
                                 position: 'absolute',
@@ -494,7 +487,6 @@ export default function HorizontalLedgerView({
                               </span>
                             )}
 
-                            {/* Accounting-style layout: Symbol size matches number size */}
                             {(() => {
                               const dynamicSize = 14 + Math.round(intensity * 4);
                               return (
@@ -512,13 +504,11 @@ export default function HorizontalLedgerView({
                                     fontWeight: 700,
                                     color: cat.color,
                                     filter: dm ? 'brightness(1.5)' : 'brightness(0.6)',
-                                    fontFamily: "'JetBrains Mono', monospace",
                                   }}>฿</span>
                                   <span style={{
                                     fontSize: `${dynamicSize}px`,
                                     fontWeight: intensity > 0.6 ? 900 : intensity > 0.3 ? 700 : 600,
                                     fontVariantNumeric: 'tabular-nums',
-                                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                                     color: cat.color,
                                     filter: dm ? 'brightness(1.8) saturate(1.2)' : 'brightness(0.35) saturate(1.8)',
                                     lineHeight: 1,
@@ -534,7 +524,6 @@ export default function HorizontalLedgerView({
                                 </div>
                               );
                             })()}
-                            {/* heat bar — bottom strip */}
                             <div style={{
                               position: 'absolute',
                               bottom: 0,
@@ -554,7 +543,6 @@ export default function HorizontalLedgerView({
                     );
                   })}
 
-                  {/* daily total */}
                   <td style={{
                     position: 'sticky', right: 0, zIndex: 30,
                     background: isRowHovered
@@ -573,12 +561,11 @@ export default function HorizontalLedgerView({
                         alignItems: 'baseline',
                         width: '100%',
                       }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: dm ? '#f87171' : '#dc2626', opacity: 0.6, fontFamily: "'JetBrains Mono', monospace" }}>฿</span>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: dm ? '#f87171' : '#dc2626', opacity: 0.6 }}>฿</span>
                         <span style={{
                           fontSize: '15px',
                           fontWeight: 900,
                           fontVariantNumeric: 'tabular-nums',
-                          fontFamily: "'JetBrains Mono', monospace",
                           letterSpacing: '-0.02em',
                           color: dm ? '#f87171' : '#dc2626',
                         }}>
@@ -592,7 +579,6 @@ export default function HorizontalLedgerView({
             })}
           </tbody>
 
-          {/* ── FOOT ── */}
           <tfoot>
             <tr>
               <td style={{
@@ -626,13 +612,13 @@ export default function HorizontalLedgerView({
                       justifyContent: 'space-between',
                       alignItems: 'baseline',
                       width: '100%',
+                      whiteSpace: 'nowrap',
                     }}>
-                      <span style={{ fontSize: '15px', fontWeight: 800, color: cat.color, opacity: 0.7, fontFamily: "'JetBrains Mono', monospace" }}>฿</span>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: cat.color, opacity: 0.7 }}>฿</span>
                       <span style={{
                         fontSize: '15px',
-                        fontWeight: 1000,
+                        fontWeight: 900,
                         fontVariantNumeric: 'tabular-nums',
-                        fontFamily: "'JetBrains Mono', monospace",
                         color: cat.color,
                         filter: dm ? 'brightness(1.4)' : 'brightness(0.75)',
                       }}>
@@ -657,12 +643,11 @@ export default function HorizontalLedgerView({
                   alignItems: 'baseline',
                   width: '100%',
                 }}>
-                  <span style={{ fontSize: '17px', fontWeight: 900, color: dm ? '#f87171' : '#dc2626', opacity: 0.8, fontFamily: "'JetBrains Mono', monospace" }}>฿</span>
+                  <span style={{ fontSize: '17px', fontWeight: 900, color: dm ? '#f87171' : '#dc2626', opacity: 0.8 }}>฿</span>
                   <span style={{
                     fontSize: '17px',
-                    fontWeight: 1000,
+                    fontWeight: 900,
                     fontVariantNumeric: 'tabular-nums',
-                    fontFamily: "'JetBrains Mono', monospace",
                     color: dm ? '#f87171' : '#dc2626',
                   }}>
                     {grandTotal.toLocaleString('th-TH', { maximumFractionDigits: 0 })}

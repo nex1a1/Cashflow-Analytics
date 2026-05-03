@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { isDateInFilter } from '../../../utils/dateHelpers';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function TopTransactions({
   transactions,
@@ -13,10 +14,9 @@ export default function TopTransactions({
   analytics, 
   categories, 
   topXLimit, 
-  setTopXLimit, 
-  isDarkMode
+  setTopXLimit
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   
   const card = `rounded-sm border shadow-sm transition-colors h-full ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
@@ -147,5 +147,4 @@ TopTransactions.propTypes = {
   categories: PropTypes.array.isRequired,
   topXLimit: PropTypes.number.isRequired,
   setTopXLimit: PropTypes.func.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

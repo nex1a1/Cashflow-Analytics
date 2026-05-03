@@ -2,8 +2,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-export default function AppToast({ toast, isDarkMode }) {
+export default function AppToast({ toast }) {
+  const { isDarkMode } = useTheme();
   const isError = toast.type === 'error';
   
   return (
@@ -16,7 +18,7 @@ export default function AppToast({ toast, isDarkMode }) {
         ${toast.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}
         ${isError 
           ? 'bg-red-600 border-red-700' 
-          : (isDarkMode ? 'bg-emerald-700/90 border-emerald-800' : 'bg-emerald-600 border-emerald-700') /* 🎨 เปลี่ยนเป็นสีเขียวเพื่อให้ดูรู้ทันทีว่าสำเร็จ */}
+          : (isDarkMode ? 'bg-emerald-700/90 border-emerald-800' : 'bg-emerald-600 border-emerald-700')} /* 🎨 เปลี่ยนเป็นสีเขียวเพื่อให้ดูรู้ทันทีว่าสำเร็จ */
       `}
     >
       {isError
@@ -33,5 +35,4 @@ AppToast.propTypes = {
     message:  PropTypes.string.isRequired,
     type:     PropTypes.oneOf(['success', 'error']).isRequired,
   }).isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

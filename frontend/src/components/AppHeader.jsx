@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import AnimatedNumber from './ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
+import { useTheme } from '../context/ThemeContext';
 
 const TABS = [
   { id: 'dashboard', label: 'เจาะลึกวิเคราะห์', icon: BarChart3 },
@@ -17,7 +18,6 @@ const TABS = [
 ];
 
 export default function AppHeader({
-  isDarkMode, setIsDarkMode,
   dbStatus, transactionCount,
   activeTab, setActiveTab,
   filterPeriod, setFilterPeriod,
@@ -30,6 +30,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }) {
+  const { isDarkMode, toggleTheme } = useTheme();
   const dm = isDarkMode;
   const showPeriodPicker = ['dashboard', 'analytics', 'ledger', 'calendar'].includes(activeTab);
 
@@ -71,7 +72,7 @@ export default function AppHeader({
           {/* Utility Tools */}
           <div className={`flex items-center gap-1 p-1 rounded-sm border shadow-sm ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
             <button
-              onClick={() => setIsDarkMode(d => !d)}
+              onClick={toggleTheme}
               className={`p-1.5 rounded-sm transition-colors ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`}
               title="สลับโหมดมืด/สว่าง"
             >
@@ -146,7 +147,6 @@ export default function AppHeader({
               filterPeriod={filterPeriod}
               setFilterPeriod={setFilterPeriod}
               groupedOptions={groupedOptions}
-              isDarkMode={dm}
             />
           </div>
         )}
@@ -156,8 +156,6 @@ export default function AppHeader({
 }
 
 AppHeader.propTypes = {
-  isDarkMode:         PropTypes.bool.isRequired,
-  setIsDarkMode:      PropTypes.func.isRequired,
   dbStatus:           PropTypes.string.isRequired,
   transactionCount:   PropTypes.number.isRequired,
   activeTab:          PropTypes.string.isRequired,

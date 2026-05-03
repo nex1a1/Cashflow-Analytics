@@ -1,19 +1,6 @@
 // src/hooks/useFilters.js
-// ─────────────────────────────────────────────────────────────
-// รับผิดชอบ filter state ทั้งหมดและ computed values ที่ derive
-// มาจาก transactions + filterPeriod
-//
-// สิ่งที่แยกออกจาก App.jsx:
-//   - filterPeriod state + auto-set effect
-//   - searchQuery, advancedFilter* states
-//   - groupedOptions       (period picker options)
-//   - rawAvailableMonths   (list เดือนที่มีข้อมูล)
-//   - isReadOnlyView       (derived boolean)
-//   - availableDatesInPeriod
-//   - displayTransactions  (filtered list สำหรับ LedgerView)
-// ─────────────────────────────────────────────────────────────
 import { useState, useEffect, useMemo } from 'react';
-import { isDateInFilter, parseDateStrToObj } from '../utils/dateHelpers';
+import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
 
 export default function useFilters({ transactions, categories }) {
   // ── Period ───────────────────────────────────────────────────
@@ -81,6 +68,11 @@ export default function useFilters({ transactions, categories }) {
     return Array.from(dates).sort((a, b) => parseDateStrToObj(a) - parseDateStrToObj(b));
   }, [transactions, filterPeriod]);
 
+  // ── All Dates ใน period (ใช้ใน Horizontal Ledger เพื่อโชว์วันที่ไม่มีรายการ) ──
+  const allDatesInPeriod = useMemo(() => {
+    return generateDatesForPeriod(filterPeriod, transactions);
+  }, [transactions, filterPeriod]);
+
   // ── Cashflow group IDs ที่มีข้อมูลจริงใน period ปัจจุบัน ────
   // ใช้ใน LedgerView เพื่อซ่อน option ที่ไม่มีรายการ
   const activeCashflowGroupIds = useMemo(() => {
@@ -146,6 +138,7 @@ export default function useFilters({ transactions, categories }) {
     advancedFilterDate,     setAdvancedFilterDate,
     // computed
     availableDatesInPeriod,
+    allDatesInPeriod,
     displayTransactions,
     activeCashflowGroupIds,
   };

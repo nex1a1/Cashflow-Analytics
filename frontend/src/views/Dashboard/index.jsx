@@ -2,6 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 // Components
 import SummaryCards from './components/SummaryCards';
@@ -15,8 +16,9 @@ export default function DashboardView({
   transactions, categories, filterPeriod, getFilterLabel,
   hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
   chartGroupBy, setChartGroupBy,cashflowGroups,
-  analytics, dayTypeConfig, isDarkMode: dm, dayTypes, topXLimit, setTopXLimit,
+  analytics, dayTypeConfig, dayTypes, topXLimit, setTopXLimit,
 }) {
+  const { isDarkMode: dm } = useTheme();
   
   // Empty State (ยังไม่มีข้อมูล)
   if (transactions.length === 0) {
@@ -29,14 +31,14 @@ export default function DashboardView({
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full pb-10 flex flex-col gap-4">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
 
       {/* ══════════════════════════════════════════════════════════
           ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
       ══════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_600px] gap-4 items-stretch">
-        <SummaryCards analytics={analytics} isDarkMode={dm} />
-        <ExpenseProportion analytics={analytics} categories={categories} isDarkMode={dm} />
+        <SummaryCards analytics={analytics} />
+        <ExpenseProportion analytics={analytics} categories={categories} />
       </div>
       {/* ══════════════════════════════════════════════════════════
           ROW 2 — MAIN CHART (wide) + TOP X (narrow sidebar)
@@ -52,7 +54,6 @@ export default function DashboardView({
           setDashboardCategory={setDashboardCategory}
           chartGroupBy={chartGroupBy} 
           setChartGroupBy={setChartGroupBy}
-          isDarkMode={dm} 
         />
         <TopTransactions 
           transactions={transactions}
@@ -63,7 +64,6 @@ export default function DashboardView({
           categories={categories} 
           topXLimit={topXLimit} 
           setTopXLimit={setTopXLimit} 
-          isDarkMode={dm} 
         />
       </div>
 
@@ -74,7 +74,6 @@ export default function DashboardView({
         analytics={analytics} 
         dayTypeConfig={dayTypeConfig} 
         dayTypes={dayTypes} 
-        isDarkMode={dm} 
       />
 
       {/* ══════════════════════════════════════════════════════════
@@ -83,7 +82,6 @@ export default function DashboardView({
       <CashflowTable 
         analytics={analytics} 
         cashflowGroups={cashflowGroups}
-        isDarkMode={dm} 
       />
 
     </div>
@@ -106,5 +104,4 @@ DashboardView.propTypes = {
   analytics:            PropTypes.object.isRequired,
   dayTypeConfig:        PropTypes.array.isRequired,
   dayTypes:             PropTypes.object.isRequired,
-  isDarkMode:           PropTypes.bool.isRequired,
 };

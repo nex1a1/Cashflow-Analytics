@@ -2,10 +2,13 @@
 import { useState, useMemo, useEffect, memo } from 'react';
 import { X, Trash2, Coins, Wallet, CheckCircle, Zap, Star } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../utils/formatters';
+import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-const TxRow = memo(({ tx, catObj, dm, confirmDeleteId, onDeleteClick }) => {
+const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
+  const { isDarkMode: dm } = useTheme();
   const isInc = catObj?.type === 'income';
   const color = catObj?.color || '#94a3b8';
   const isConfirming = confirmDeleteId === tx.id;
@@ -36,12 +39,12 @@ const TxRow = memo(({ tx, catObj, dm, confirmDeleteId, onDeleteClick }) => {
 }, (prev, next) => {
   return prev.tx.id === next.tx.id && 
          prev.tx.amount === next.tx.amount &&
-         prev.confirmDeleteId === next.confirmDeleteId &&
-         prev.dm === next.dm;
+         prev.confirmDeleteId === next.confirmDeleteId;
 });
 
-export default function DayDetailModal({ dateStr, transactions = [], categories = [], isDarkMode, onClose, onSave, onDelete }) {
-  const dm = isDarkMode;
+export default function DayDetailModal({ dateStr, transactions = [], categories = [], onClose, onSave, onDelete }) {
+  const { isDarkMode: dm } = useTheme();
+  const { showToast } = useToast();
   
   const [ddStr, mmStr, yyyyStr] = dateStr.split('/');
   const d = parseInt(ddStr, 10);
@@ -132,7 +135,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
     } catch (err) {
       console.error('Save failed:', err);
       setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
-      alert('⚠️ ไม่สามารถบันทึกข้อมูลได้\n\n' + (err.message || 'Unknown error'));
+      showToast('⚠️ ไม่สามารถบันทึกข้อมูลได้: ' + (err.message || 'Unknown error'), 'error');
     } finally { setIsSaving(false); }
   };
 
@@ -149,13 +152,11 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
     }
   };
 
-  // ✅ แก้ไขตรงนี้เรียบร้อยครับ ดึงค่ามาจาก Map เฉยๆ
   const renderList = (items) => items.map(tx => (
     <TxRow 
       key={tx.id} 
       tx={tx} 
       catObj={catMap[tx.category]} 
-      dm={dm} 
       confirmDeleteId={confirmDeleteId} 
       onDeleteClick={handleDelete} 
     />
@@ -177,7 +178,6 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
       <div className={`${tokens.surface} rounded-sm shadow-2xl w-full max-w-4xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border ${tokens.border} overflow-hidden`}
         style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
-        {/* Left: transaction list + add form */}
         <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[50vh] md:h-auto`}>
           <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0`}>
             <div>
@@ -201,7 +201,6 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
             </button>
           </div>
 
-          {/* Tx list */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5" style={{ scrollbarWidth: 'thin' }}>
             {dayTx.length === 0 && (
               <p className={`text-sm text-center py-8 ${tokens.textMuted}`}>ยังไม่มีรายการ — เพิ่มข้อมูลด้านล่างเลยครับ</p>
@@ -228,7 +227,6 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
             )}
           </div>
 
-          {/* Add form */}
           <div className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
             <div className={`flex p-0.5 rounded-sm border ${dm ? 'bg-slate-900 border-slate-700' : 'bg-slate-200/60 border-slate-200'}`}>
               <button onClick={() => switchType('expense')} className={`flex-1 py-1.5 text-xs font-bold rounded-sm transition-all ${formType === 'expense' ? (dm ? 'bg-slate-700 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm') : tokens.textMuted}`}>รายจ่าย</button>
@@ -248,7 +246,6 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
           </div>
         </div>
 
-        {/* Right: Quick Suggestions */}
         <div className={`flex flex-col w-full md:w-2/5 ${tokens.surfaceAlt} h-[40vh] md:h-auto`}>
           <div className={`flex items-center justify-between px-5 py-4 border-b ${tokens.border} shrink-0`}>
             <div>

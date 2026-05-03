@@ -1,12 +1,9 @@
 // src/hooks/useImportCSV.js
-// ─────────────────────────────────────────────────────────────
-// รับผิดชอบทุกอย่างที่เกี่ยวกับการ import CSV
-// แยกออกจาก App.jsx (~150 บรรทัด)
-// ─────────────────────────────────────────────────────────────
 import { useState, useRef, useCallback } from 'react';
 import { CALENDAR_API_URL, CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY } from '../constants';
 import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
 import { settingsService } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 export default function useImportCSV({
   categories,
@@ -19,13 +16,14 @@ export default function useImportCSV({
 }) {
   const [importPreview, setImportPreview] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { showToast } = useToast();
   const fileInputRef = useRef(null);
 
   const processCSVText = useCallback(async (rawText) => {
     try {
       const rawTrimmed = rawText.trim();
       if (!rawTrimmed) {
-        alert('ไม่พบข้อมูล');
+        showToast('ไม่พบข้อมูล', 'error');
         setIsProcessing(false);
         return;
       }
@@ -79,7 +77,7 @@ export default function useImportCSV({
 
       const parsedRows = parseCSV(rawTrimmed);
       if (parsedRows.length < 2) {
-        alert('ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด');
+        showToast('ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด', 'error');
         setIsProcessing(false);
         return;
       }
@@ -157,15 +155,15 @@ export default function useImportCSV({
       if (newList.length > 0) {
         setImportPreview({ items: newList, updatedDayTypeConfig, updatedCategories, isConfigChanged, isCategoryChanged, newDayTypes });
       } else {
-        alert('ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง');
+        showToast('ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + err.message);
+      showToast('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + err.message, 'error');
     } finally {
       setIsProcessing(false);
     }
-  }, [categories, dayTypes, dayTypeConfig]);
+  }, [categories, dayTypes, dayTypeConfig, showToast]);
 
   const confirmImport = useCallback(async ({ onSuccess }) => {
     if (!importPreview) return;
@@ -196,13 +194,14 @@ export default function useImportCSV({
       }
 
       setImportPreview(null);
+      showToast(`นำเข้าข้อมูล ${items.length} รายการสำเร็จ`, 'success');
       onSuccess?.();
     } catch (err) {
-      alert('เกิดข้อผิดพลาด: ' + err.message);
+      showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
     } finally {
       setIsProcessing(false);
     }
-  }, [importPreview, saveToDb, setDayTypes, setDayTypeConfig, setCategories]);
+  }, [importPreview, saveToDb, setDayTypes, setDayTypeConfig, setCategories, showToast]);
 
   const handleFileUpload = useCallback((e) => {
     const file = e.target.files[0];
@@ -213,9 +212,9 @@ export default function useImportCSV({
       await processCSVText(evt.target.result);
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
-    reader.onerror = () => { alert('เกิดข้อผิดพลาดในการอ่านไฟล์'); setIsProcessing(false); };
+    reader.onerror = () => { showToast('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error'); setIsProcessing(false); };
     reader.readAsText(file);
-  }, [processCSVText]);
+  }, [processCSVText, showToast]);
 
   return {
     importPreview,

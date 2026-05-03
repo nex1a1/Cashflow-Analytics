@@ -6,11 +6,13 @@ import {
   ChevronLeft, ChevronRight, PlusCircle,
 } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../utils/formatters';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * Skeleton สำหรับตอนโหลดข้อมูล
  */
-function CalendarSkeleton({ isDarkMode }) {
+function CalendarSkeleton() {
+  const { isDarkMode } = useTheme();
   const shimmer = isDarkMode ? 'bg-slate-700 animate-pulse' : 'bg-slate-200 animate-pulse';
   const surface = isDarkMode ? 'bg-slate-900' : 'bg-white';
   const surfaceAlt = isDarkMode ? 'bg-slate-800' : 'bg-slate-50';
@@ -89,9 +91,10 @@ const formatValue = (val) => {
  * Component ย่อยสำหรับช่องแต่ละวันในปฏิทิน
  */
 function CalendarDayCell({ 
-  day, data, dateStr, isToday, isWeekend, isDarkMode, 
+  day, data, dateStr, isToday, isWeekend, 
   dayTypeConfig, dayTypes, handleDayTypeChange, onSelectDate 
 }) {
+  const { isDarkMode } = useTheme();
   const dow = new Date(dateStr.split('/').reverse().join('-')).getDay();
   const defType = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
   const curType = dayTypes[dateStr] || defType;
@@ -197,14 +200,15 @@ function CalendarDayCell({
 
 export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
-  handleOpenAddModal, categories, isDarkMode, dayTypes,
+  handleOpenAddModal, categories, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction, paymentMethods,
   isLoading,
 }) {
+  const { isDarkMode } = useTheme();
   const [selectedDate, setSelectedDate] = useState(null);
 
-  if (isLoading) return <CalendarSkeleton isDarkMode={isDarkMode} />;
+  if (isLoading) return <CalendarSkeleton />;
 
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
@@ -324,7 +328,7 @@ export default function CalendarView({
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 space-y-3 w-full">
       {/* Header */}
       <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-3 md:p-4`}>
         <div className="flex items-center justify-between gap-4">
@@ -394,7 +398,6 @@ export default function CalendarView({
                 dateStr={dateStr}
                 isToday={isToday}
                 isWeekend={isWeekend}
-                isDarkMode={isDarkMode}
                 dayTypeConfig={dayTypeConfig}
                 dayTypes={dayTypes}
                 handleDayTypeChange={handleDayTypeChange}
@@ -436,7 +439,6 @@ export default function CalendarView({
           dateStr={selectedDate}
           transactions={transactions}
           categories={categories}
-          isDarkMode={isDarkMode}
           onClose={() => setSelectedDate(null)}
           onSave={async (item) => { await onSaveTransaction(item); }}
           onDelete={(id) => { handleDeleteTransaction(id); }}

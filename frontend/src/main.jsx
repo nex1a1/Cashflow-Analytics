@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, 
@@ -14,10 +16,14 @@ ChartJS.register(
   LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler
 );
 
-defaults.font.family = 'Tahoma, sans-serif';
+defaults.font.family = "'Inter', 'IBM Plex Sans Thai Looped', sans-serif";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <ToastProvider>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </ToastProvider>
   </React.StrictMode>
 );

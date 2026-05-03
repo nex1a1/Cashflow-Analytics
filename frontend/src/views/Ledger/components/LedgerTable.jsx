@@ -4,16 +4,18 @@ import EditableInput from '../../../components/ui/EditableInput'; // เช็�
 import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
 import { hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
 export default function LedgerTable({
-  currentData, sortedTransactions, categories, dm, 
+  currentData, sortedTransactions, categories, 
   sortConfig, handleSort, isDateSorted, dateBands,
   handleUpdateTransaction, handleDeleteTransaction, handleOpenAddModal,
   pageInc, pageExp, formatMoney,
   currentPage, totalPages, setCurrentPage
 }) {
+  const { isDarkMode: dm } = useTheme();
   const SortHeader = ({ label, sortKey, className = '', align = 'left' }) => {
     const isActive = sortConfig.key === sortKey;
     return (
@@ -98,7 +100,7 @@ export default function LedgerTable({
                     <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-sm py-1.5 px-2 text-right text-sm font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-slate-800/80 hover:border-slate-600/80 ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/70' : 'text-slate-200 focus:border-red-600/70') : 'hover:bg-white hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
                   </td>
                   <td className="px-2 py-2 text-center align-middle">
-                    <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} isDarkMode={dm} />
+                    <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} />
                   </td>
                 </tr>
               );

@@ -5,9 +5,10 @@ import { Doughnut } from 'react-chartjs-2';
 import { PieChart } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { getDoughnutChartOptions } from '../../../utils/chartOptions';
+import { useTheme } from '../../../context/ThemeContext';
 
-export default function ExpenseProportion({ analytics, categories, isDarkMode }) {
-  const dm = isDarkMode;
+export default function ExpenseProportion({ analytics, categories }) {
+  const { isDarkMode: dm } = useTheme();
   const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   
   const catCount = analytics.sortedCats.length;
@@ -79,5 +80,4 @@ export default function ExpenseProportion({ analytics, categories, isDarkMode })
 ExpenseProportion.propTypes = {
   analytics: PropTypes.object.isRequired,
   categories: PropTypes.array.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

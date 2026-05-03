@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Coins, Wallet, PiggyBank, Flame, UtensilsCrossed, Home, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import Sparkline from '../../../components/ui/Sparkline';
 import { formatMoney } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 // ─── Count-up Hook ───────────────────────────────────────────────────────────
 function useCountUp(target, duration = 900) {
@@ -36,7 +37,8 @@ function useCountUp(target, duration = 900) {
 }
 
 // ─── Trend Badge ─────────────────────────────────────────────────────────────
-function TrendBadge({ current, previous, dm }) {
+function TrendBadge({ current, previous }) {
+  const { isDarkMode: dm } = useTheme();
   if (previous == null || previous === 0) return null;
   const diff = current - previous;
   const pct = Math.abs((diff / Math.abs(previous)) * 100);
@@ -67,8 +69,8 @@ function AnimatedMoney({ value, className }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function SummaryCards({ analytics, isDarkMode }) {
-  const dm = isDarkMode;
+export default function SummaryCards({ analytics }) {
+  const { isDarkMode: dm } = useTheme();
 
   const datesInPeriod = analytics.datesInPeriod || [];
   const periodDays = Math.max(1, datesInPeriod.length);
@@ -101,7 +103,7 @@ export default function SummaryCards({ analytics, isDarkMode }) {
               />
               <div className="flex items-center gap-1.5 flex-wrap">
                 <div className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เฉลี่ย {formatMoney(avgIncome)}/วัน</div>
-                <TrendBadge current={analytics.totalIncome} previous={prevIncome} dm={dm} />
+                <TrendBadge current={analytics.totalIncome} previous={prevIncome} />
               </div>
             </div>
             {analytics.sparklineIncome && (
@@ -126,7 +128,7 @@ export default function SummaryCards({ analytics, isDarkMode }) {
               />
               <div className="flex items-center gap-1.5 flex-wrap">
                 <div className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เฉลี่ย {formatMoney(avgExpense)}/วัน</div>
-                <TrendBadge current={analytics.totalExpense} previous={prevExpense} dm={dm} />
+                <TrendBadge current={analytics.totalExpense} previous={prevExpense} />
               </div>
             </div>
             {analytics.sparklineExpense && (
@@ -176,7 +178,7 @@ export default function SummaryCards({ analytics, isDarkMode }) {
                 <span className={`text-xs font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>คงเหลือ</span>
               </div>
               <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                <TrendBadge current={analytics.netCashflow} previous={prevNet} dm={dm} />
+                <TrendBadge current={analytics.netCashflow} previous={prevNet} />
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${dm ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
                   ออม {analytics.totalIncome > 0 ? analytics.savingsRate : 0}%
                 </span>
@@ -285,5 +287,4 @@ export default function SummaryCards({ analytics, isDarkMode }) {
 
 SummaryCards.propTypes = {
   analytics:  PropTypes.object.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

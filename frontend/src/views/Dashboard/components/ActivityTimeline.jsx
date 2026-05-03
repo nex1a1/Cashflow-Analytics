@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { CalendarClock, Flame, CalendarDays, Info } from 'lucide-react';
+import { useTheme } from '../../../context/ThemeContext';
 
-export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes, isDarkMode }) {
-  const dm = isDarkMode;
+export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes }) {
+  const { isDarkMode: dm } = useTheme();
   const datesInPeriod = analytics.datesInPeriod || [];
   
   const [viewMode, setViewMode] = useState('dayType');
@@ -200,5 +201,4 @@ ActivityTimeline.propTypes = {
   analytics: PropTypes.object.isRequired,
   dayTypeConfig: PropTypes.array.isRequired,
   dayTypes: PropTypes.object.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

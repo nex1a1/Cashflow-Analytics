@@ -1,11 +1,6 @@
-// src/App.jsx  (refactored)
-// ─────────────────────────────────────────────────────────────
-// App.jsx ทำหน้าที่เป็น "orchestrator" เท่านั้น:
-//   - เชื่อม hooks เข้าหากัน
-//   - render layout หลัก + views
-//   - ไม่มี business logic / API call อยู่ในนี้โดยตรง
-// ─────────────────────────────────────────────────────────────
+// src/App.jsx  (fixed initialization and context)
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
@@ -22,6 +17,8 @@ import useFilters from './hooks/useFilters';
 import AppHeader from './components/AppHeader';
 import AppToast from './components/AppToast';
 import './styles/darkMode.css';
+import { useTheme } from './context/ThemeContext';
+import { useToast } from './context/ToastContext';
 import SettingsView from './views/SettingsView';
 import CalendarView from './views/CalendarView';
 import LedgerView from './views/Ledger/index';
@@ -41,12 +38,11 @@ ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement, LineElement,
   LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler,
 );
-defaults.font.family = 'Tahoma, sans-serif';
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('expense_dark_mode') === 'true');
+  const { isDarkMode, setIsDarkMode } = useTheme();
+  const { showToast: triggerToast, toast } = useToast();
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'dashboard');
-  const [showToast, setShowToast] = useState(false);
   const [dbStatus, setDbStatus] = useState('กำลังตรวจสอบ...');
 
   const [dayTypes, setDayTypes] = useState({});
@@ -69,31 +65,62 @@ export default function App() {
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
 
-  useEffect(() => {
-    localStorage.setItem('expense_dark_mode', isDarkMode);
-    
-    if (isDarkMode) {
-      document.body.style.backgroundColor = '#020617'; // bg-slate-950
-      document.body.style.color = '#f1f5f9';
-      document.documentElement.classList.add('dark');
-    } else {
-      document.body.style.backgroundColor = '#f1f5f9'; // bg-slate-100
-      document.body.style.color = '#1e293b';
-      document.documentElement.classList.remove('dark');
-    }
+  // 1. Hooks (ประกาศก่อนใช้)
+  const {
+    categories, setCategories,
+    handleCategoryChange: _handleCategoryChange,
+    handleAddCategory,
+    handleDeleteCategory: _handleDeleteCategory,
+    handleMoveCategory,
+  } = useCategories(DEFAULT_CATEGORIES, saveSettingToDb);
 
+  const {
+    transactions, isProcessing: isTxProcessing,
+    setIsProcessing: setTxProcessing,
+    loadData, saveToDb,
+    handleSaveTransaction,
+    handleUpdateTransaction,
+    handleDeleteTransaction,
+    handleDeleteMonth,
+    handleDeleteAllData,
+  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups });
+
+  const {
+    filterPeriod, setFilterPeriod,
+    groupedOptions, rawAvailableMonths, isReadOnlyView,
+    searchQuery,            setSearchQuery,
+    advancedFilterCategory, setAdvancedFilterCategory,
+    advancedFilterGroup,    setAdvancedFilterGroup,
+    advancedFilterDate,     setAdvancedFilterDate,
+    availableDatesInPeriod,
+    allDatesInPeriod,
+    displayTransactions,
+    activeCashflowGroupIds,
+  } = useFilters({ transactions, categories });
+
+  // ── Dynamic Document Title (🚀 FIXED) ──
+  useEffect(() => {
+    const periodLabel = getFilterLabel(filterPeriod);
+    const tabLabels = { dashboard: 'Analysis', calendar: 'Calendar', ledger: 'Database', settings: 'Settings' };
+    const tabLabel = tabLabels[activeTab] || 'Home';
+    document.title = `${periodLabel} | ${tabLabel} - Cashflow Analytics`;
+  }, [filterPeriod, activeTab]);
+
+  useEffect(() => {
     defaults.color = isDarkMode ? '#94a3b8' : '#475569';
     defaults.scale.grid.color = isDarkMode ? '#334155' : '#e2e8f0';
+    defaults.font.family = "'Inter', 'IBM Plex Sans Thai Looped', sans-serif";
   }, [isDarkMode]);
 
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab);
   }, [activeTab]);
 
-  const saveSettingToDb = async (key, value) => {
+  // Helper functions
+  async function saveSettingToDb(key, value) {
     try { await settingsService.save(key, value); }
     catch (err) { console.error(`Failed to save ${key} to DB:`, err); }
-  };
+  }
 
   const handleDayTypeChange = async (dateStr, type) => {
     setDayTypes(prev => ({ ...prev, [dateStr]: type }));
@@ -106,29 +133,10 @@ export default function App() {
     saveSettingToDb(DAY_TYPE_CONFIG_KEY, newConfig);
   };
 
-  const {
-    categories, setCategories,
-    handleCategoryChange: _handleCategoryChange,
-    handleAddCategory,
-    handleDeleteCategory: _handleDeleteCategory,
-    handleMoveCategory,
-  } = useCategories(DEFAULT_CATEGORIES, saveSettingToDb);
-
   const handleCategoryChange = (catId, field, value) =>
     _handleCategoryChange(catId, field, value, transactions);
   const handleDeleteCategory = (id) =>
     _handleDeleteCategory(id, transactions);
-
-  const {
-    transactions, isProcessing: isTxProcessing,
-    setIsProcessing: setTxProcessing,
-    loadData, saveToDb,
-    handleSaveTransaction,
-    handleUpdateTransaction,
-    handleDeleteTransaction,
-    handleDeleteMonth,
-    handleDeleteAllData,
-  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups });
 
   const {
     importPreview, setImportPreview,
@@ -146,25 +154,8 @@ export default function App() {
 
   useEffect(() => { loadData(); }, []);
 
-  const showSuccess = () => {
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
-  };
+  const showSuccess = () => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
 
-  // ── useFilters: filter state + all computed values ───────────
-  const {
-    filterPeriod, setFilterPeriod,
-    groupedOptions, rawAvailableMonths, isReadOnlyView,
-    searchQuery,            setSearchQuery,
-    advancedFilterCategory, setAdvancedFilterCategory,
-    advancedFilterGroup,    setAdvancedFilterGroup,
-    advancedFilterDate,     setAdvancedFilterDate,
-    availableDatesInPeriod,
-    displayTransactions,
-    activeCashflowGroupIds,
-  } = useFilters({ transactions, categories });
-
-  // ── analytics (exclude debt category) ───────────────────────
   const validAnalyticsTxs = useMemo(() =>
     transactions.filter(t => categories.find(c => c.name === t.category)?.cashflowGroup !== 'debt'),
   [transactions, categories]);
@@ -194,21 +185,28 @@ export default function App() {
       showSuccess();
     } catch (err) {
       console.error(err);
-      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message);
+      triggerToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message, 'error');
     } finally {
       setTxProcessing(false);
     }
   };
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 10 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -10 }
+  };
+
+  const pageTransition = { type: 'tween', ease: 'anticipate', duration: 0.3 };
+
   return (
     <div
       className={`min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`}
-      style={{ fontFamily: 'Tahoma, sans-serif' }}
+      style={{ fontFamily: "'Inter', 'IBM Plex Sans Thai Looped', sans-serif" }}
     >
-      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl pb-6 flex-grow flex flex-col overflow-hidden relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`} style={{ scrollbarGutter: 'stable' }}>
 
         <AppHeader
-          isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}
           dbStatus={dbStatus} transactionCount={transactions.length}
           activeTab={activeTab} setActiveTab={setActiveTab}
           filterPeriod={filterPeriod} setFilterPeriod={setFilterPeriod}
@@ -228,102 +226,109 @@ export default function App() {
           fileInputRef={fileInputRef}
         />
 
-        <div className={`p-6 relative z-0 flex-grow overflow-y-auto custom-scrollbar transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
-        <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
-            <DashboardView
-              analytics={analytics} transactions={transactions}
-              cashflowGroups={cashflowGroups}
-              filterPeriod={filterPeriod} getFilterLabel={getFilterLabel}
-              hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
-              dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
-              chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
-              topXLimit={topXLimit} setTopXLimit={setTopXLimit}
-              categories={categories} dayTypeConfig={dayTypeConfig}
-              isDarkMode={isDarkMode} dayTypes={dayTypes}
-            />
-          </div>
-          {activeTab === 'calendar' && (
-            <CalendarView
-              transactions={transactions} filterPeriod={filterPeriod}
-              setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
-              handleOpenAddModal={handleOpenAddModal} categories={categories}
-              isDarkMode={isDarkMode} dayTypes={dayTypes}
-              handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig}
-              getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView}
-              onSaveTransaction={handleSaveTransaction}
-              handleDeleteTransaction={handleDeleteTransaction}
-              isLoading={isProcessing}
-            />
-          )}
-          {activeTab === 'ledger' && (
-            <LedgerView
-              displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView}
-              setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
-              getFilterLabel={getFilterLabel} filterPeriod={filterPeriod}
-              searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-              handleOpenAddModal={handleOpenAddModal}
-              handleUpdateTransaction={handleUpdateTransaction}
-              handleDeleteTransaction={handleDeleteTransaction}
-              handleDeleteMonth={async (period) => {
-                const ok = await handleDeleteMonth(period);
-                if (ok) showSuccess();
-              }}
-              cashflowGroups={cashflowGroups}
-              categories={categories}
-              advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
-              advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
-              advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
-              availableDatesInPeriod={availableDatesInPeriod} isDarkMode={isDarkMode}
-              activeCashflowGroupIds={activeCashflowGroupIds}
-              dayTypes={dayTypes}
-              dayTypeConfig={dayTypeConfig}
-            />
-          )}
-          {activeTab === 'settings' && (
-            <SettingsView
-              categories={categories}
-              cashflowGroups={cashflowGroups}
-              setCashflowGroups={setCashflowGroups}
-              handleAddCategory={handleAddCategory}
-              handleCategoryChange={handleCategoryChange}
-              handleDeleteCategory={handleDeleteCategory}
-              handleMoveCategory={handleMoveCategory}
-              dayTypeConfig={dayTypeConfig}
-              setDayTypeConfig={handleUpdateDayTypeConfig}
-              isDarkMode={isDarkMode}
-              handleDeleteAllData={() => handleDeleteAllData({ setShowToast })}
-              saveSettingToDb={saveSettingToDb}
-              transactions={transactions}
-            />
-          )}
+        <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' && (
+              <motion.div key="dashboard" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                <DashboardView
+                  analytics={analytics} transactions={transactions}
+                  cashflowGroups={cashflowGroups}
+                  filterPeriod={filterPeriod} getFilterLabel={getFilterLabel}
+                  hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
+                  dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
+                  chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
+                  topXLimit={topXLimit} setTopXLimit={setTopXLimit}
+                  categories={categories} dayTypeConfig={dayTypeConfig}
+                  dayTypes={dayTypes}
+                />
+              </motion.div>
+            )}
+            {activeTab === 'calendar' && (
+              <motion.div key="calendar" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                <CalendarView
+                  transactions={transactions} filterPeriod={filterPeriod}
+                  setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
+                  handleOpenAddModal={handleOpenAddModal} categories={categories}
+                  dayTypes={dayTypes}
+                  handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig}
+                  getFilterLabel={getFilterLabel} isReadOnlyView={isReadOnlyView}
+                  onSaveTransaction={handleSaveTransaction}
+                  handleDeleteTransaction={handleDeleteTransaction}
+                  isLoading={isProcessing}
+                />
+              </motion.div>
+            )}
+            {activeTab === 'ledger' && (
+              <motion.div key="ledger" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                <LedgerView
+                  displayTransactions={displayTransactions} isReadOnlyView={isReadOnlyView}
+                  setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
+                  getFilterLabel={getFilterLabel} filterPeriod={filterPeriod}
+                  searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                  handleOpenAddModal={handleOpenAddModal}
+                  handleUpdateTransaction={handleUpdateTransaction}
+                  handleDeleteTransaction={handleDeleteTransaction}
+                  handleDeleteMonth={async (period) => {
+                    const ok = await handleDeleteMonth(period);
+                    if (ok) showSuccess();
+                  }}
+                  cashflowGroups={cashflowGroups}
+                  categories={categories}
+                  advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
+                  advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
+                  advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
+                  availableDatesInPeriod={availableDatesInPeriod}
+                  allDatesInPeriod={allDatesInPeriod}
+                  activeCashflowGroupIds={activeCashflowGroupIds}
+                  dayTypes={dayTypes}
+                  dayTypeConfig={dayTypeConfig}
+                />
+              </motion.div>
+            )}
+            {activeTab === 'settings' && (
+              <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
+                <SettingsView
+                  categories={categories}
+                  cashflowGroups={cashflowGroups}
+                  setCashflowGroups={setCashflowGroups}
+                  handleAddCategory={handleAddCategory}
+                  handleCategoryChange={handleCategoryChange}
+                  handleDeleteCategory={handleDeleteCategory}
+                  handleMoveCategory={handleMoveCategory}
+                  dayTypeConfig={dayTypeConfig}
+                  setDayTypeConfig={handleUpdateDayTypeConfig}
+                  handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
+                  saveSettingToDb={saveSettingToDb}
+                  transactions={transactions}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       <BatchAddModal
         isOpen={showAddModal} onClose={() => setShowAddModal(false)}
         onSaveBatch={handleSaveBatch} categories={categories}
-        transactions={transactions} isDarkMode={isDarkMode}
+        transactions={transactions}
         defaultDate={addForm.date} defaultType={addForm.type}
         defaultCategory={addForm.category}
       />
       <ImportPreviewModal
         importPreview={importPreview} setImportPreview={setImportPreview}
         confirmImport={() => confirmImport({ onSuccess: () => { showSuccess(); setActiveTab('ledger'); } })}
-        isProcessing={isCsvProcessing} isDarkMode={isDarkMode} categories={categories}
+        isProcessing={isCsvProcessing} categories={categories}
       />
-      <ImportGuideModal isOpen={showImportGuide} onClose={() => setShowImportGuide(false)} isDarkMode={isDarkMode} />
+      <ImportGuideModal isOpen={showImportGuide} onClose={() => setShowImportGuide(false)} />
       <ExportModal
         isOpen={showExportModal} onClose={() => setShowExportModal(false)}
         transactions={transactions} categories={categories}
         dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
-        isDarkMode={isDarkMode} groupedOptions={groupedOptions}
+        groupedOptions={groupedOptions}
         getFilterLabel={getFilterLabel} initialPeriod={filterPeriod}
       />
 
-      <AppToast 
-        toast={{ visible: showToast, message: 'ทำรายการสำเร็จ!', type: 'success' }} 
-        isDarkMode={isDarkMode} 
-      />
+      <AppToast toast={toast} />
     </div>
   );
 }

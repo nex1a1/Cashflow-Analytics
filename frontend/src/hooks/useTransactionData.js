@@ -6,7 +6,8 @@ import {
   OLD_PALETTE_MAP, DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from '../constants';
 import { parseDateStrToObj, toISODate, fromISODate } from '../utils/dateHelpers';
-import { settingsService, calendarService } from '../services/api';
+import { settingsService } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 const sortTransactions = (dataArr) =>
   [...dataArr].sort((a, b) => {
@@ -35,6 +36,7 @@ export default function useTransactionData({
 }) {
   const [transactions, setTransactions] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { showToast } = useToast();
 
   const loadData = useCallback(async () => {
     try {
@@ -147,13 +149,18 @@ export default function useTransactionData({
     if (!period.match(/^\d{4}-\d{2}$/)) return;
     if (!window.confirm('ยืนยันการลบเดือนนี้?')) return;
     setIsProcessing(true);
-    const itemsToDelete = transactions.filter(t => t.date && t.date.includes(`/${period.split('-')[1]}/${period.split('-')[0]}`));
-    await Promise.all(itemsToDelete.map(item => fetch(`${API_URL}/${item.id}`, { method: 'DELETE' })));
-    await loadData();
-    setIsProcessing(false);
-  }, [transactions, loadData]);
+    try {
+      const itemsToDelete = transactions.filter(t => t.date && t.date.includes(`/${period.split('-')[1]}/${period.split('-')[0]}`));
+      await Promise.all(itemsToDelete.map(item => fetch(`${API_URL}/${item.id}`, { method: 'DELETE' })));
+      await loadData();
+    } catch (err) {
+      showToast('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [transactions, loadData, showToast]);
 
-  const handleDeleteAllData = useCallback(async ({ setShowToast }) => {
+  const handleDeleteAllData = useCallback(async ({ setShowToast: _setShowToast }) => {
     if (!window.confirm('🚨 ยืนยันการลบข้อมูลทั้งหมด?')) return;
     setIsProcessing(true);
     try {
@@ -163,10 +170,14 @@ export default function useTransactionData({
       await settingsService.save(CASHFLOW_GROUPS_KEY, DEFAULT_CASHFLOW_GROUPS); // 🚀 Reset Groups
       setTransactions([]); setDayTypes({}); setCategories(DEFAULT_CATEGORIES); setDayTypeConfig(DEFAULT_DAY_TYPES);
       if(setCashflowGroups) setCashflowGroups(DEFAULT_CASHFLOW_GROUPS);
-      setShowToast(true);
+      showToast('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว', 'success');
       setTimeout(() => { window.location.reload(); }, 1500);
-    } catch (err) { alert('Error: ' + err.message); } finally { setIsProcessing(false); }
-  }, [setDayTypes, setCategories, setDayTypeConfig, setCashflowGroups]);
+    } catch (err) { 
+      showToast('Error: ' + err.message, 'error'); 
+    } finally { 
+      setIsProcessing(false); 
+    }
+  }, [setDayTypes, setCategories, setDayTypeConfig, setCashflowGroups, showToast]);
 
   return { transactions, isProcessing, setIsProcessing, loadData, saveToDb, handleSaveTransaction, handleUpdateTransaction, handleDeleteTransaction, handleDeleteMonth, handleDeleteAllData };
 }

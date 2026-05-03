@@ -1,30 +1,29 @@
-const db = require('../config/db');
+const calendarService = require('../services/calendarService');
 
-exports.getCalendar = (req, res) => {
-  try {
-    res.json(db.prepare('SELECT date, type_id, iso_date FROM calendar_days').all());
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+exports.getAllCalendarDays = (req, res) => {
+    try {
+        const rows = calendarService.getAll();
+        const data = {};
+        rows.forEach(row => {
+            data[row.date_str] = row.type;
+        });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
-const convertToISO = (dateStr) => {
-  if (!dateStr || !dateStr.includes('/')) return dateStr;
-  const [d, m, y] = dateStr.split('/');
-  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-};
+exports.upsertCalendarDay = (req, res) => {
+    const { dateStr, type } = req.body;
+    
+    if (!dateStr || !type) {
+        return res.status(400).json({ error: 'Missing dateStr or type' });
+    }
 
-exports.upsertCalendar = (req, res) => {
-  const { date, type_id, isoDate } = req.body;
-  try {
-    db.prepare(`
-      INSERT INTO calendar_days (date, type_id, iso_date) VALUES (?, ?, ?)
-      ON CONFLICT(date) DO UPDATE SET 
-        type_id = excluded.type_id,
-        iso_date = excluded.iso_date
-    `).run(date, type_id, isoDate || convertToISO(date));
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        calendarService.upsert(dateStr, type);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };

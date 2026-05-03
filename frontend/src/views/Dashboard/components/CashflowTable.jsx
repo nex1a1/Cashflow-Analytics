@@ -3,11 +3,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FileSpreadsheet } from 'lucide-react';
 import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
-export default function CashflowTable({ analytics, cashflowGroups = [], isDarkMode }) {
-  const dm = isDarkMode;
+export default function CashflowTable({ analytics, cashflowGroups = [] }) {
+  const { isDarkMode: dm } = useTheme();
   const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
-
   if (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0) return null;
 
   const activeIncomeGroups = cashflowGroups
@@ -148,5 +148,4 @@ export default function CashflowTable({ analytics, cashflowGroups = [], isDarkMo
 CashflowTable.propTypes = {
   analytics: PropTypes.object.isRequired,
   cashflowGroups: PropTypes.array.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

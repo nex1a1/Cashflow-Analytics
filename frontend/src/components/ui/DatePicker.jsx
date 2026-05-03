@@ -1,6 +1,7 @@
 // src/components/ui/DatePicker.jsx
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const THAI_MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -27,18 +28,17 @@ function formatDisplay(v) {
   return `${d} ${THAI_MONTHS[m - 1]} ${y}`;
 }
 
-export default function DatePicker({ value, onChange, isDarkMode, required }) {
+export default function DatePicker({ value, onChange, required }) {
+  const { isDarkMode } = useTheme();
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value));
   
-  // 1. ใช้ Ref ตัวเดียวคลุมทั้ง Input และ Dropdown เพื่อแก้ปัญหา ID ซ้ำกัน
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (value) setViewDate(parseValue(value));
   }, [value]);
 
-  // 2. จัดการคลิกนอกกรอบโดยใช้ containerRef (สะอาดและปลอดภัยกว่า)
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -50,7 +50,6 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // 3. เพิ่มการปิดด้วย ESC
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === 'Escape' && open) setOpen(false); };
     window.addEventListener('keydown', handleEsc);
@@ -102,9 +101,7 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
   const hoverDay  = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-blue-50';
 
   return (
-    // คลุมด้วย relative เพื่อเป็นจุดอ้างอิงให้ Popup
     <div ref={containerRef} className="relative w-full">
-      {/* Trigger button */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -118,14 +115,9 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
         <Calendar className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
       </button>
 
-      {/* Calendar dropdown 
-        4. เปลี่ยนจาก fixed ลอยๆ มาเป็น absolute 
-        (เกาะติดกับ input เสมอ ไม่หลุดจอตอน scroll)
-      */}
       {open && (
         <div className={`absolute top-[calc(100%+6px)] left-0 z-[200] rounded-sm border shadow-2xl p-3 w-72 ${surface} ${border}`}>
 
-          {/* Month nav */}
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={prevMonth}
               className={`p-1.5 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
@@ -140,7 +132,6 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
             </button>
           </div>
 
-          {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {DAY_LABELS.map((l, i) => (
               <div key={l} className={`text-center text-[11px] font-bold py-1 ${i === 0 || i === 6 ? (isDarkMode ? 'text-red-400' : 'text-red-500') : textMuted}`}>
@@ -149,7 +140,6 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
             ))}
           </div>
 
-          {/* Day grid */}
           <div className="grid grid-cols-7 gap-y-0.5">
             {blanks.map((_, i) => <div key={`b${i}`} />)}
             {days.map(d => {
@@ -176,7 +166,6 @@ export default function DatePicker({ value, onChange, isDarkMode, required }) {
             })}
           </div>
 
-          {/* Footer */}
           <div className={`flex justify-between mt-3 pt-2.5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
             <button type="button" onClick={() => { onChange(''); setOpen(false); }}
               className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>

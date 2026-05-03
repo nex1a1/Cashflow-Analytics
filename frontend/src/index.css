@@ -3,7 +3,24 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Prompt', sans-serif;
+  font-family: 'Inter', 'IBM Plex Sans Thai Looped', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+  letter-spacing: -0.011em; /* Inter looks better with slight negative tracking */
+  
+  /* จองพื้นที่ Scrollbar ไว้เสมอเพื่อป้องกันหน้าขยับไปมา */
+  scrollbar-gutter: stable;
+}
+
+/* ทำให้ตัวเลขในตารางหรือ Summary Card ตรงกัน */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
 }
 /* Custom Scrollbar แบบใสๆ ทันสมัย และไม่มี Scroll แนวนอน */
 .custom-scrollbar {
@@ -11,6 +28,9 @@ body {
   overflow-x: hidden; /* ห้ามเกิด Scroll แนวนอนเด็ดขาด */
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  
+  /* เพิ่มตรงนี้ด้วยสำหรับ Chrome/Edge/Safari รุ่นใหม่ๆ */
+  scrollbar-gutter: stable;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

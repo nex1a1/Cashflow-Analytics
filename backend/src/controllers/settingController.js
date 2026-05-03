@@ -1,27 +1,32 @@
-const db = require('../config/db');
+const settingService = require('../services/settingService');
+const { upsertSettingSchema } = require('../validations/settingValidation');
 
-exports.getSettings = (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM settings').all();
-    const settings = {};
-    rows.forEach(row => {
-      settings[row.setting_key] = JSON.parse(row.setting_value);
-    });
-    res.json(settings);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+exports.getAllSettings = (req, res) => {
+    try {
+        const rows = settingService.getAll();
+        const settings = {};
+        rows.forEach(row => {
+            try {
+                settings[row.key] = JSON.parse(row.value);
+            } catch (e) {
+                settings[row.key] = row.value;
+            }
+        });
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 exports.upsertSetting = (req, res) => {
-  const { key, value } = req.body;
-  try {
-    db.prepare(`
-      INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)
-      ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value
-    `).run(key, JSON.stringify(value));
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const { key, value } = upsertSettingSchema.parse(req.body);
+        settingService.upsert(key, value);
+        res.json({ success: true });
+    } catch (err) {
+        if (err.name === 'ZodError') {
+            return res.status(400).json({ error: 'Validation failed', details: err.errors });
+        }
+        res.status(500).json({ error: err.message });
+    }
 };

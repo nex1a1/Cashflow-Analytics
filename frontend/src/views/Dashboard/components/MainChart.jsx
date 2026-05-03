@@ -8,15 +8,15 @@ import {
   getBarChartOptions,
   getLineChartOptions,
 } from '../../../utils/chartOptions';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function MainChart({
   analytics, categories, filterPeriod,
   hideFixedExpenses, setHideFixedExpenses,
   dashboardCategory, setDashboardCategory,
-  chartGroupBy, setChartGroupBy,
-  isDarkMode
+  chartGroupBy, setChartGroupBy
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   const [chartViewType, setChartViewType] = useState('bar');
   const [isBreakdown, setIsBreakdown] = useState(false);
   const [showTrendLines, setShowTrendLines] = useState(false);
@@ -411,5 +411,4 @@ MainChart.propTypes = {
   setDashboardCategory: PropTypes.func.isRequired,
   chartGroupBy: PropTypes.string.isRequired,
   setChartGroupBy: PropTypes.func.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };

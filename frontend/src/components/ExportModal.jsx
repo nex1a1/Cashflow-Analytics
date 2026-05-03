@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Download, X, AlertCircle, ClipboardList, FileSpreadsheet, CheckCircle } from 'lucide-react';
 import PeriodPicker from './PeriodPicker';
 import { isDateInFilter } from '../utils/dateHelpers';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ExportModal({
   isOpen, onClose, transactions, categories, dayTypes, dayTypeConfig,
-  isDarkMode, groupedOptions, getFilterLabel, initialPeriod
+  groupedOptions, getFilterLabel, initialPeriod
 }) {
-  const dm = isDarkMode;
+  const { isDarkMode: dm } = useTheme();
   const [exportPeriod, setExportPeriod] = useState(initialPeriod || 'ALL');
   const [exportFormat, setExportFormat] = useState('long');
 
@@ -94,7 +95,7 @@ export default function ExportModal({
           {/* Period selector */}
           <div className={`border rounded-sm p-4 flex flex-col h-full ${dm ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-white'}`}>
             <label className={`block text-xs font-bold mb-3 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>ช่วงเวลา</label>
-            <PeriodPicker filterPeriod={exportPeriod} setFilterPeriod={setExportPeriod} groupedOptions={groupedOptions} isDarkMode={dm} />
+            <PeriodPicker filterPeriod={exportPeriod} setFilterPeriod={setExportPeriod} groupedOptions={groupedOptions} />
             <p className={`text-[10px] mt-3 leading-relaxed ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
               *แนะนำให้ส่งออกแบบ <strong className={dm ? 'text-slate-400' : 'text-slate-500'}>รายเดือน</strong> เพื่อให้ตาราง Wide Format แยกยอดรายวันได้สมบูรณ์
             </p>
