@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const { initSchema } = require('./src/models/schema');
-const { migrateDates } = require('./src/models/migration');
 const apiRoutes = require('./src/routes/api');
 const { performBackup } = require('./src/controllers/backupController');
 
@@ -11,9 +10,8 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Initialize Database Schema & Run Migrations
+// Initialize Database Schema
 initSchema();
-migrateDates();
 
 // Auto-backup on startup (optional but recommended)
 console.log('📦 Initializing auto-backup...');

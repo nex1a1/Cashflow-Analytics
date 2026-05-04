@@ -20,12 +20,21 @@ export default function useFilters({ transactions, categories }) {
     const yearsMap = {};
     transactions.forEach(t => {
       if (!t.date) return;
-      const parts = t.date.split('/');
-      if (parts.length !== 3) return;
-      const m = parseInt(parts[1], 10);
-      const y = parts[2];
+      let y, m;
+      if (t.date.includes('-')) {
+        [y, m] = t.date.split('-');
+        m = parseInt(m, 10);
+      } else if (t.date.includes('/')) {
+        const parts = t.date.split('/');
+        if (parts.length !== 3) return;
+        m = parseInt(parts[1], 10);
+        y = parts[2];
+      } else {
+        return;
+      }
+      
       if (!yearsMap[y]) yearsMap[y] = { months: new Set(), quarters: new Set(), halves: new Set() };
-      yearsMap[y].months.add(`${y}-${parts[1]}`);
+      yearsMap[y].months.add(`${y}-${String(m).padStart(2, '0')}`);
       if (m >= 1  && m <= 3)  yearsMap[y].quarters.add(`${y}-Q1`);
       if (m >= 4  && m <= 6)  yearsMap[y].quarters.add(`${y}-Q2`);
       if (m >= 7  && m <= 9)  yearsMap[y].quarters.add(`${y}-Q3`);
@@ -38,13 +47,18 @@ export default function useFilters({ transactions, categories }) {
 
   // ── เดือนที่มีข้อมูล (ใช้ใน CalendarView + auto-set period) ──
   const rawAvailableMonths = useMemo(() => {
-    const m = new Set();
+    const months = new Set();
     transactions.forEach(t => {
       if (!t.date) return;
-      const p = t.date.split('/');
-      if (p.length === 3) m.add(`${p[2]}-${p[1]}`);
+      if (t.date.includes('-')) {
+        const [y, m] = t.date.split('-');
+        months.add(`${y}-${m}`);
+      } else if (t.date.includes('/')) {
+        const p = t.date.split('/');
+        if (p.length === 3) months.add(`${p[2]}-${p[1]}`);
+      }
     });
-    return Array.from(m).sort().reverse();
+    return Array.from(months).sort().reverse();
   }, [transactions]);
 
   // auto-set เดือนล่าสุดเมื่อโหลดข้อมูลครั้งแรก

@@ -5,6 +5,9 @@ const transactionController = require('../controllers/transactionController');
 const calendarController = require('../controllers/calendarController');
 const settingController = require('../controllers/settingController');
 const backupController = require('../controllers/backupController');
+const categoryController = require('../controllers/categoryController');
+const groupController = require('../controllers/groupController');
+const dayTypeController = require('../controllers/dayTypeController');
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
@@ -15,6 +18,21 @@ router.delete('/transactions/month/:isoMonth', transactionController.deleteMonth
 // Calendar
 router.get('/calendar', calendarController.getAllCalendarDays);
 router.post('/calendar', calendarController.upsertCalendarDay);
+
+// Day Types
+router.get('/day-types', dayTypeController.getAllDayTypes);
+router.post('/day-types', dayTypeController.upsertDayType);
+router.delete('/day-types/:id', dayTypeController.deleteDayType);
+
+// Categories
+router.get('/categories', categoryController.getAllCategories);
+router.post('/categories', categoryController.upsertCategory);
+router.delete('/categories/:id', categoryController.deleteCategory);
+
+// Groups
+router.get('/groups', groupController.getAllGroups);
+router.post('/groups', groupController.upsertGroup);
+router.delete('/groups/:id', groupController.deleteGroup);
 
 // Settings
 router.get('/settings', settingController.getAllSettings);

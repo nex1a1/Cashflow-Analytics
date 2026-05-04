@@ -125,8 +125,8 @@ export default function BatchAddModal({
     setIsProcessing(true);
     try {
       const batchTime = Date.now();
-      const finalItems = pendingItems.map((item, idx) => ({
-        id: `tx_${batchTime}_${idx}`,
+      const finalItems = pendingItems.map((item) => ({
+        id: crypto.randomUUID(),
         date: item.date, category: item.category,
         description: item.description, amount: item.amount, dayNote: item.dayNote
       }));

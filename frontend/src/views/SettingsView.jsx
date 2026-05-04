@@ -335,6 +335,7 @@ export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, setDayTypeConfig, handleDeleteAllData, saveSettingToDb,
   cashflowGroups = [], setCashflowGroups,
+  handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],
 }) {
   const { isDarkMode: dm } = useTheme();
@@ -347,7 +348,7 @@ export default function SettingsView({
   };
 
   const handleAddDayType = () => {
-    const cfg = [...dayTypeConfig, { id: `dt_${Date.now()}`, label: 'ชนิดวันใหม่', color: '#64748B' }];
+    const cfg = [...dayTypeConfig, { id: crypto.randomUUID(), label: 'ชนิดวันใหม่', color: '#64748B' }];
     setDayTypeConfig(cfg);
     saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
   };
@@ -382,37 +383,21 @@ export default function SettingsView({
     }, 0);
   };
 
-  const handleAddCashflowGroup = () => {
-    const g = {
-      id: `cg_${Date.now()}`,
-      name: 'คอลัมน์ใหม่',
-      type: 'expense',
-      isDefault: false,
-      order: cashflowGroups.length + 1,
-      color: '#6366F1',
-      highlightBg: false,
-    };
-    const updated = [...cashflowGroups, g];
-    setCashflowGroups(updated);
-    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
-  };
-
   const handleChangeCashflowGroup = (id, field, value) => {
-    const updated = cashflowGroups.map(g => g.id === id ? { ...g, [field]: value } : g);
-    setCashflowGroups(updated);
-    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+    const group = cashflowGroups.find(g => g.id === id);
+    if (group) {
+      handleUpdateCashflowGroup({ ...group, [field]: value });
+    }
   };
 
   const [cashflowDeleteError, setCashflowDeleteError] = useState(null);
-  const handleDeleteCashflowGroup = (id) => {
+  const handleDeleteGroup = (id) => {
     if (categories.some(c => c.cashflowGroup === id)) {
       setCashflowDeleteError({ id, msg: 'ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่' });
       setTimeout(() => setCashflowDeleteError(null), 4000);
       return;
     }
-    const updated = cashflowGroups.filter(g => g.id !== id);
-    setCashflowGroups(updated);
-    saveSettingToDb(CASHFLOW_GROUPS_KEY, updated);
+    handleDeleteCashflowGroup(id);
   };
 
   const handleMoveCashflowGroup = (id, direction) => {
@@ -422,16 +407,14 @@ export default function SettingsView({
     if (ti >= 0 && ti < cashflowGroups.length) {
       const updated = [...cashflowGroups];
       [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
-      const withOrder = updated.map((g, i) => ({ ...g, order: i + 1 }));
-      setCashflowGroups(withOrder);
-      saveSettingToDb(CASHFLOW_GROUPS_KEY, withOrder);
+      setCashflowGroups(updated);
     }
   };
 
   const txCountByGroup = useMemo(() => {
     const map = {};
     transactions.forEach(t => {
-      const cat = categories.find(c => c.name === t.category);
+      const cat = categories.find(c => c.id === t.category_id || c.name === t.category);
       if (cat?.cashflowGroup) map[cat.cashflowGroup] = (map[cat.cashflowGroup] || 0) + 1;
     });
     return map;
@@ -577,7 +560,7 @@ export default function SettingsView({
                           <Lock className={`w-3.5 h-3.5 ${dm ? 'text-slate-600' : 'text-slate-400'}`} title="กลุ่ม Default ลบไม่ได้" />
                         ) : (
                           <ConfirmDeleteButton
-                            onConfirm={() => handleDeleteCashflowGroup(group.id)}
+                            onConfirm={() => handleDeleteGroup(group.id)}
                             disabled={inUse}
                             tooltip={inUse ? 'ลบไม่ได้ มีหมวดหมู่ใช้งานอยู่' : 'ลบกลุ่มนี้'}
                           />

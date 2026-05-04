@@ -46,7 +46,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   const { isDarkMode: dm } = useTheme();
   const { showToast } = useToast();
   
-  const [ddStr, mmStr, yyyyStr] = dateStr.split('/');
+  const [yyyyStr, mmStr, ddStr] = dateStr.split('-');
   const d = parseInt(ddStr, 10);
   const m = parseInt(mmStr, 10);
   const y = parseInt(yyyyStr, 10);
@@ -120,7 +120,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
     setIsSaving(true);
     
     const newItem = {
-      id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: crypto.randomUUID(),
       date: dateStr, category: formCat,
       description: formDesc || formCat, amount: amt, dayNote: ''
     };

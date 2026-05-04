@@ -12,8 +12,9 @@ if (!fs.existsSync(dbDir)) {
 
 const db = new Database(DB_PATH);
 
-// เปิด WAL mode และ Foreign Keys
-db.pragma('journal_mode = WAL');
+// ปรับแต่ง SQLite เพื่อความเสถียรบน Docker/Windows
+// ปิด WAL mode เพราะอาจมีปัญหาเรื่อง Shared Memory (SHM) บน Bind Mount
+db.pragma('journal_mode = DELETE'); 
 db.pragma('foreign_keys = ON');
 
 console.log('✅ SQLite database connected at', DB_PATH);

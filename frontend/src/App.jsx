@@ -5,7 +5,7 @@ import {
   CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
 } from './constants';
-import { settingsService, calendarService } from './services/api';
+import { settingsService, calendarService, categoryService, groupService } from './services/api';
 import { getFilterLabel } from './utils/formatters';
 import { defaults } from 'chart.js';
 
@@ -72,7 +72,9 @@ export default function App() {
     handleAddCategory,
     handleDeleteCategory: _handleDeleteCategory,
     handleMoveCategory,
-  } = useCategories(DEFAULT_CATEGORIES, saveSettingToDb);
+    loadCategories,
+    loadGroups,
+  } = useCategories(DEFAULT_CATEGORIES, saveSettingToDb, null, setCashflowGroups);
 
   const {
     transactions, isProcessing: isTxProcessing,
@@ -137,6 +139,48 @@ export default function App() {
     _handleCategoryChange(catId, field, value, transactions);
   const handleDeleteCategory = (id) =>
     _handleDeleteCategory(id, transactions);
+
+  const handleUpdateCashflowGroup = async (group) => {
+    try {
+      await groupService.save(group);
+      await loadGroups();
+      triggerToast('อัปเดตกลุ่มสำเร็จ', 'success');
+    } catch (err) {
+      triggerToast('ไม่สามารถอัปเดตกลุ่มได้: ' + err.message, 'error');
+    }
+  };
+
+  const handleAddCashflowGroup = async () => {
+    const g = {
+      name: 'คอลัมน์ใหม่',
+      type: 'expense',
+      order_index: cashflowGroups.length + 1,
+      color: '#6366F1',
+      icon: '✨'
+    };
+    try {
+      await groupService.save(g);
+      await loadGroups();
+      triggerToast('เพิ่มกลุ่มสำเร็จ', 'success');
+    } catch (err) {
+      triggerToast('ไม่สามารถเพิ่มกลุ่มได้: ' + err.message, 'error');
+    }
+  };
+
+  const handleDeleteCashflowGroup = async (id) => {
+    if (categories.some(c => c.cashflowGroup === id)) {
+      triggerToast('ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่', 'error');
+      return;
+    }
+    if (!window.confirm('ยืนยันการลบกลุ่มนี้?')) return;
+    try {
+      await groupService.deleteById(id);
+      await loadGroups();
+      triggerToast('ลบกลุ่มสำเร็จ', 'success');
+    } catch (err) {
+      triggerToast('ไม่สามารถลบกลุ่มได้: ' + err.message, 'error');
+    }
+  };
 
   const {
     importPreview, setImportPreview,
@@ -295,6 +339,9 @@ export default function App() {
                   handleCategoryChange={handleCategoryChange}
                   handleDeleteCategory={handleDeleteCategory}
                   handleMoveCategory={handleMoveCategory}
+                  handleAddCashflowGroup={handleAddCashflowGroup}
+                  handleUpdateCashflowGroup={handleUpdateCashflowGroup}
+                  handleDeleteCashflowGroup={handleDeleteCashflowGroup}
                   dayTypeConfig={dayTypeConfig}
                   setDayTypeConfig={handleUpdateDayTypeConfig}
                   handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}

@@ -231,12 +231,12 @@ export default function CalendarView({
       dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
     }
 
-    const targetMonthYear = `${(m + 1).toString().padStart(2, '0')}/${y}`;
+    const targetMonthYear = `${y}-${(m + 1).toString().padStart(2, '0')}`;
 
     transactions.forEach(t => {
-      if (!t.date || !t.date.endsWith(targetMonthYear)) return;
+      if (!t.date || !t.date.startsWith(targetMonthYear)) return;
 
-      const txD = parseInt(t.date.split('/')[0], 10);
+      const txD = parseInt(t.date.split('-')[2], 10);
       if (dayData[txD]) {
         const catObj = categories.find(c => c.name === t.category);
         const amt = parseFloat(t.amount) || 0;
@@ -386,7 +386,7 @@ export default function CalendarView({
           ))}
 
           {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
-            const dateStr = `${d.toString().padStart(2, '0')}/${(m + 1).toString().padStart(2, '0')}/${y}`;
+            const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
             const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
             const isWeekend = WEEKEND_IDX.includes(new Date(y, m, d).getDay());
 

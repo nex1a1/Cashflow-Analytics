@@ -40,10 +40,15 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
     const isFixed = catObj.isFixed || false;
 
     if (!item.date) return;
-    const parts = item.date.split('/');
-    if (parts.length !== 3) return;
+    let y, m, d;
+    if (item.date.includes('-')) {
+      [y, m, d] = item.date.split('-');
+    } else {
+      [d, m, y] = item.date.split('/');
+    }
+    if (!y || !m || !d) return;
 
-    const ym = `${parts[2]}-${parts[1]}`;
+    const ym = `${y}-${m.padStart(2, '0')}`;
     uniqueMonthsSet.add(ym);
 
     if (!cashflowMap[ym]) {
@@ -107,8 +112,13 @@ export const calculateCategoryStats = (transactions, categories, filterPeriod, d
   chartTx.forEach(item => {
     if (!item.date) return;
     const amt = parseFloat(item.amount) || 0;
-    const parts = item.date.split('/');
-    const ym = parts.length === 3 ? `${parts[2]}-${parts[1]}` : null;
+    let y, m, d;
+    if (item.date.includes('-')) {
+      [y, m, d] = item.date.split('-');
+    } else {
+      [d, m, y] = item.date.split('/');
+    }
+    const ym = (y && m) ? `${y}-${m.padStart(2, '0')}` : null;
 
     stats.catMapData[item.category] = (stats.catMapData[item.category] || 0) + amt;
     stats.dailyAllMap[item.date] = (stats.dailyAllMap[item.date] || 0) + amt;
@@ -143,8 +153,14 @@ export const generateMainChartData = ({
   const xLabels = showMonthly 
     ? sortedMonthsKeys.map(m => getThaiMonth(m))
     : isSingleMonthView 
-      ? datesInPeriod.map(d => `วันที่ ${d.split('/')[0]}`)
-      : datesInPeriod.map(d => `${d.split('/')[0]}/${d.split('/')[1]}`);
+      ? datesInPeriod.map(d => {
+          const parts = d.split('-');
+          return parts.length === 3 ? `วันที่ ${parts[2]}` : d;
+        })
+      : datesInPeriod.map(d => {
+          const parts = d.split('-');
+          return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+        });
 
   let chartType = 'line';
   let chartData = null;
@@ -228,8 +244,13 @@ export const calculateDayTypeCounts = (datesInPeriod, dayTypes, dayTypeConfig) =
   dayTypeConfig.forEach(dt => { dayTypeCounts[dt.id] = 0; });
   
   datesInPeriod.forEach(dateStr => {
-    const [d, m, currY] = dateStr.split('/');
-    const dayOfWeek = new Date(currY, parseInt(m) - 1, d).getDay();
+    let y, m, d;
+    if (dateStr.includes('-')) {
+      [y, m, d] = dateStr.split('-');
+    } else {
+      [d, m, y] = dateStr.split('/');
+    }
+    const dayOfWeek = new Date(y, parseInt(m) - 1, d).getDay();
     const defaultType = (dayOfWeek === 0 || dayOfWeek === 6)
       ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id)
       : dayTypeConfig[0]?.id;

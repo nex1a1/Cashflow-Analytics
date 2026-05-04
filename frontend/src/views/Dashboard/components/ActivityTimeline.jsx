@@ -125,7 +125,7 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
                 const mo = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
                 
                 datesInPeriod.forEach((ds, i) => {
-                  const [d, m, y] = ds.split('/');
+                  const [y, m, d] = ds.split('-');
                   const dow = new Date(y, +m - 1, d).getDay();
                   if (d === '01' || i === 0) monthLabel = `${mo[+m - 1]} ${y.slice(2)}`;
                   cur[dow] = ds;
@@ -149,7 +149,7 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
                     {wk.days.map((ds, di) => {
                       if (!ds) return <div key={`e-${wi}-${di}`} className="w-3.5 h-3.5 bg-transparent" />;
                       
-                      const [d, m, y] = ds.split('/');
+                      const [y, m, d] = ds.split('-');
                       const dow = new Date(y, +m - 1, d).getDay();
                       const today = +d === new Date().getDate() && +m - 1 === new Date().getMonth() && +y === new Date().getFullYear();
                       const disp = `${['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][dow]} ${+d} ${mo[+m - 1]} ${y.slice(2)}`;

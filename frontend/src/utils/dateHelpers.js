@@ -113,7 +113,7 @@ export const generateDatesForPeriod = (period, allTransactions) => {
         const d = String(curr.getDate()).padStart(2, '0');
         const m = String(curr.getMonth() + 1).padStart(2, '0');
         const y = curr.getFullYear();
-        dateArray.push(`${d}/${m}/${y}`);
+        dateArray.push(`${y}-${m}-${d}`);
         curr.setDate(curr.getDate() + 1);
         sanityCheck++;
     }

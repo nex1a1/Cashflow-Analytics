@@ -8,9 +8,10 @@ exports.getAllTransactions = (req, res) => {
       id:          row.id,
       date:        row.date,
       category:    row.category,
+      category_id: row.category_id,
       description: row.description,
-      amount:      row.amount,
-      dayNote:     row.day_note
+      amount:      row.amount / 100, // Convert Satang to Baht
+      group_type:  row.group_type
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -22,7 +23,6 @@ exports.upsertTransactions = (req, res) => {
     const validatedData = upsertTransactionSchema.parse(req.body);
     const items = Array.isArray(validatedData) ? validatedData : [validatedData];
 
-    // Use upsertMany for atomic transaction
     transactionService.upsertMany(items);
 
     res.json({ success: true, count: items.length });

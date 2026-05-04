@@ -104,18 +104,27 @@ export default function HorizontalLedgerView({
   const DAY_NAMES = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
   const formatDate = (dateStr) => {
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
-    const dayNum   = parseInt(parts[0], 10);
-    const monthIdx = parseInt(parts[1], 10) - 1;
-    let yearNum    = parseInt(parts[2], 10);
+    let dayNum, monthIdx, yearNum;
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
+      yearNum  = parseInt(parts[0], 10);
+      monthIdx = parseInt(parts[1], 10) - 1;
+      dayNum   = parseInt(parts[2], 10);
+    } else {
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
+      dayNum   = parseInt(parts[0], 10);
+      monthIdx = parseInt(parts[1], 10) - 1;
+      yearNum  = parseInt(parts[2], 10);
+    }
     if (yearNum > 2500) yearNum -= 543;
-    const dateObj  = new Date(yearNum, monthIdx, dayNum);
-    const dow      = dateObj.getDay();
+    const dateObj = new Date(yearNum, monthIdx, dayNum);
+    const dow     = dateObj.getDay();
     return { day: dayNum, month: THAI_MONTHS_SHORT[monthIdx] || '', dayName: DAY_NAMES[dow], isWeekend: dow === 0 || dow === 6 };
   };
 
-  const fmtCell = (v) => v.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const fmtCell = (v) => v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   if (expenseTransactions.length === 0) {
     return (
@@ -194,7 +203,7 @@ export default function HorizontalLedgerView({
                     {item.description || <span style={{ opacity: 0.4, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
                   </p>
                   <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                    ฿{(parseFloat(item.amount) || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                    ฿{(parseFloat(item.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               ))}
@@ -213,7 +222,7 @@ export default function HorizontalLedgerView({
                   รวม {tooltip.items.length} รายการ
                 </p>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: dm ? '#f87171' : '#dc2626', fontVariantNumeric: 'tabular-nums' }}>
-                  ฿{tooltip.items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                  ฿{tooltip.items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             )}
@@ -385,24 +394,33 @@ export default function HorizontalLedgerView({
                             borderRadius: '3px 0 0 3px',
                             transition: 'width 0.3s ease, background 0.15s',
                           }} />
-                          <span style={{
-                            fontSize: 12,
-                            fontWeight: 800,
-                            color: typeColor,
-                            filter: dm ? 'brightness(1.3)' : 'brightness(0.7)',
-                            lineHeight: 1,
-                            fontVariantNumeric: 'tabular-nums',
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'baseline',
+                            justifyContent: 'center',
+                            gap: 3,
                             position: 'relative', zIndex: 1,
-                          }}>{day}</span>
-                          <span style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: typeColor,
-                            filter: dm ? 'brightness(1.1)' : 'brightness(0.85)',
-                            opacity: 0.7,
-                            lineHeight: 1,
-                            position: 'relative', zIndex: 1,
-                          }}>{dayName}</span>
+                          }}>
+                            <span style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: typeColor,
+                              filter: dm ? 'brightness(1.2)' : 'brightness(0.7)',
+                              opacity: 0.75,
+                              lineHeight: 1,
+                              letterSpacing: '0.01em',
+                            }}>{dayName}.</span>
+                            <span style={{
+                              fontSize: 13,
+                              fontWeight: 900,
+                              color: typeColor,
+                              filter: dm ? 'brightness(1.4)' : 'brightness(0.65)',
+                              lineHeight: 1,
+                              fontVariantNumeric: 'tabular-nums',
+                              letterSpacing: '-0.02em',
+                            }}>{day}</span>
+                          </div>
                         </div>
                       );
                     })()}
@@ -488,35 +506,43 @@ export default function HorizontalLedgerView({
                             )}
 
                             {(() => {
-                              const dynamicSize = 14 + Math.round(intensity * 4);
+                              const sz = Math.min(11, 9 + Math.round(intensity * 2));
                               return (
                                 <div style={{
                                   display: 'flex',
-                                  justifyContent: 'space-between',
+                                  flexDirection: 'row',
                                   alignItems: 'baseline',
+                                  justifyContent: 'center',
                                   width: '100%',
-                                  gap: 2,
+                                  gap: 1,
                                   marginTop: items.length > 1 ? '4px' : '0',
+                                  overflow: 'hidden',
+                                  padding: '0 3px',
                                 }}>
                                   <span style={{ 
-                                    fontSize: `${dynamicSize}px`, 
-                                    opacity: 0.6, 
+                                    fontSize: `${sz - 2}px`, 
+                                    opacity: 0.55, 
                                     fontWeight: 700,
                                     color: cat.color,
                                     filter: dm ? 'brightness(1.5)' : 'brightness(0.6)',
+                                    lineHeight: 1,
+                                    flexShrink: 0,
                                   }}>฿</span>
                                   <span style={{
-                                    fontSize: `${dynamicSize}px`,
+                                    fontSize: `${sz}px`,
                                     fontWeight: intensity > 0.6 ? 900 : intensity > 0.3 ? 700 : 600,
                                     fontVariantNumeric: 'tabular-nums',
                                     color: cat.color,
                                     filter: dm ? 'brightness(1.8) saturate(1.2)' : 'brightness(0.35) saturate(1.8)',
                                     lineHeight: 1,
                                     whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    minWidth: 0,
                                     textShadow: intensity > 0.4 
                                       ? `0 1px 2px ${dm ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'}` 
                                       : 'none',
-                                    transform: isCellHovered ? 'scale(1.06)' : 'scale(1)',
+                                    transform: isCellHovered ? 'scale(1.04)' : 'scale(1)',
                                     transition: 'all 0.15s ease',
                                   }}>
                                     {fmtCell(cellSum)}
@@ -650,7 +676,7 @@ export default function HorizontalLedgerView({
                     fontVariantNumeric: 'tabular-nums',
                     color: dm ? '#f87171' : '#dc2626',
                   }}>
-                    {grandTotal.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                    {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </td>

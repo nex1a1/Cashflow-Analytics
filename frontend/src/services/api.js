@@ -1,5 +1,9 @@
 import { API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL } from '../constants';
 
+const CATEGORIES_API_URL = API_URL.replace('/transactions', '/categories');
+const GROUPS_API_URL = API_URL.replace('/transactions', '/groups');
+const DAY_TYPES_API_URL = API_URL.replace('/transactions', '/day-types');
+
 const handleResponse = async (response) => {
     if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Network response was not ok' }));
@@ -22,11 +26,21 @@ export const transactionService = {
 
 export const calendarService = {
     getAll: () => fetch(CALENDAR_API_URL).then(handleResponse),
-    save: (date, type_id) => fetch(CALENDAR_API_URL, {
+    save: (date, type_id, note = '') => fetch(CALENDAR_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, type_id })
+        body: JSON.stringify({ date, type_id, note })
     }).then(handleResponse)
+};
+
+export const dayTypeService = {
+    getAll: () => fetch(DAY_TYPES_API_URL).then(handleResponse),
+    save: (dayType) => fetch(DAY_TYPES_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dayType)
+    }).then(handleResponse),
+    deleteById: (id) => fetch(`${DAY_TYPES_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse)
 };
 
 export const settingsService = {
@@ -36,4 +50,24 @@ export const settingsService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value })
     }).then(handleResponse)
+};
+
+export const categoryService = {
+    getAll: () => fetch(CATEGORIES_API_URL).then(handleResponse),
+    save: (category) => fetch(CATEGORIES_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(category)
+    }).then(handleResponse),
+    deleteById: (id) => fetch(`${CATEGORIES_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse)
+};
+
+export const groupService = {
+    getAll: () => fetch(GROUPS_API_URL).then(handleResponse),
+    save: (group) => fetch(GROUPS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(group)
+    }).then(handleResponse),
+    deleteById: (id) => fetch(`${GROUPS_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse)
 };

@@ -61,7 +61,7 @@ export default function useImportCSV({
         if (!found) {
           const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
           found = {
-            id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            id: crypto.randomUUID(),
             name,
             icon: '📌',
             color: isIncome ? '#10B981' : '#64748B',
@@ -113,7 +113,7 @@ export default function useImportCSV({
           const amount = cleanNumber(amtStr);
           if (amount !== 0) {
             newList.push({
-              id: `csv_${batchId}_${i}`,
+              id: crypto.randomUUID(),
               date: dateStr,
               category: finalCatName,
               description: desc || finalCatName,
@@ -141,7 +141,7 @@ export default function useImportCSV({
             const finalCatName = autoCat !== 'อื่นๆ' ? autoCat : getOrCreateCategory(catName, 'รายจ่าย');
 
             newList.push({
-              id: `csv_${batchId}_${i}_${j}`,
+              id: crypto.randomUUID(),
               date: dateStr,
               category: finalCatName,
               description,

@@ -2,10 +2,11 @@ const { z } = require('zod');
 
 const transactionSchema = z.object({
   id: z.string().min(1),
-  date: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Date must be in DD/MM/YYYY format'),
-  category: z.string().min(1),
+  date: z.string(), // Allow both DD/MM/YYYY and YYYY-MM-DD
+  category: z.string().optional(),
+  category_id: z.number().optional(),
   description: z.string().optional().default(''),
-  amount: z.number().positive(),
+  amount: z.number(),
   dayNote: z.string().optional().default(''),
 });
 

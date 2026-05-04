@@ -86,8 +86,8 @@ export default function LedgerTable({
                   <td className="px-3 py-2 align-middle">
                     <div className="relative w-full flex items-center rounded-sm border transition-all duration-150 focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color)}, ${dm ? 0.12 : 0.04})`, borderColor: `rgba(${hexToRgb(catObj?.color)}, ${dm ? 0.3 : 0.2})` }}>
                       <div className="absolute left-2.5 w-2 h-2 rounded pointer-events-none" style={{ backgroundColor: catObj?.color || '#cbd5e1' }} />
-                      <select value={item.category} onChange={e => handleUpdateTransaction(item.id, 'category', e.target.value)} className="w-full bg-transparent outline-none appearance-none pl-6 pr-7 py-1.5 font-bold border-none text-xs cursor-pointer" style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8em', color: catObj?.color || (dm ? '#e2e8f0' : '#475569'), filter: dm ? 'brightness(1.3)' : 'none' }}>
-                        {categories.filter(c => c.type === catObj?.type).map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                      <select value={item.category_id} onChange={e => handleUpdateTransaction(item.id, 'category_id', Number(e.target.value))} className="w-full bg-transparent outline-none appearance-none pl-6 pr-7 py-1.5 font-bold border-none text-xs cursor-pointer" style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8em', color: catObj?.color || (dm ? '#e2e8f0' : '#475569'), filter: dm ? 'brightness(1.3)' : 'none' }}>
+                        {categories.filter(c => c.type === catObj?.type).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
                       </select>
                     </div>
                   </td>
