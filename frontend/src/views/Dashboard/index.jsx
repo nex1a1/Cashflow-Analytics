@@ -82,6 +82,7 @@ export default function DashboardView({
       <CashflowTable 
         analytics={analytics} 
         cashflowGroups={cashflowGroups}
+        categories={categories}
       />
 
     </div>

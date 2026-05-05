@@ -92,7 +92,8 @@ const formatValue = (val) => {
  */
 function CalendarDayCell({ 
   day, data, dateStr, isToday, isWeekend, 
-  dayTypeConfig, dayTypes, handleDayTypeChange, onSelectDate 
+  dayTypeConfig, dayTypes, handleDayTypeChange, onSelectDate,
+  onShowPreview, onHidePreview, onMovePreview
 }) {
   const { isDarkMode } = useTheme();
   const dow = new Date(dateStr.split('/').reverse().join('-')).getDay();
@@ -105,6 +106,10 @@ function CalendarDayCell({
     if (isWeekend && !(data.inc > 0 || data.exp > 0)) return isDarkMode ? 'bg-slate-800/80' : 'bg-slate-50';
     return isDarkMode ? 'bg-slate-800' : 'bg-white';
   }, [isToday, isWeekend, data, isDarkMode]);
+
+  const hiddenExpItems = data.items.slice(4);
+  const hiddenIncItems = data.incItems?.slice(1) || [];
+  const hasHidden = hiddenExpItems.length > 0 || hiddenIncItems.length > 0;
 
   return (
     <div className={`min-h-[120px] 2xl:min-h-[140px] flex flex-col relative group transition-colors duration-150 ${cellBg}`}>
@@ -187,10 +192,10 @@ function CalendarDayCell({
           );
         })}
 
-        {(data.items.length > 4 || data.incItems?.length > 1) && (
+        {hasHidden && (
           <div className="mt-auto pt-1 flex justify-between">
-             {data.items.length > 4 && <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>+{data.items.length - 4} จ่าย</span>}
-             {data.incItems?.length > 1 && <span className={`text-[11px] font-bold text-right flex-1 ${isDarkMode ? 'text-emerald-700' : 'text-emerald-400'}`}>+{data.incItems.length - 1} รับ</span>}
+             {hiddenExpItems.length > 0 && <span className={`text-[11px] font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>+{hiddenExpItems.length} จ่าย</span>}
+             {hiddenIncItems.length > 0 && <span className={`text-[11px] font-bold text-right flex-1 ${isDarkMode ? 'text-emerald-700' : 'text-emerald-400'}`}>+{hiddenIncItems.length} รับ</span>}
           </div>
         )}
       </div>
@@ -266,7 +271,7 @@ export default function CalendarView({
     dayTypeConfig.forEach(dt => { counts[dt.id] = 0; });
     
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${d.toString().padStart(2, '0')}/${(m + 1).toString().padStart(2, '0')}/${y}`;
+      const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
       const dow = new Date(y, m, d).getDay();
       const isWeekend = dow === 0 || dow === 6;
       const def = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;

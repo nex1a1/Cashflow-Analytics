@@ -119,6 +119,7 @@ export default function useTransactionData({
     const item = transactions.find(t => t.id === id);
     if (item) {
       const updatedItem = { ...item, [field]: value };
+      /*console.log("🔥 ข้อมูลที่กำลังจะส่งไป Backend:", updatedItem);*/
       saveToDb(updatedItem);
     }
   }, [transactions, saveToDb]);

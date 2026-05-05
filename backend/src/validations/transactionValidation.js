@@ -1,14 +1,15 @@
 const { z } = require('zod');
 
 const transactionSchema = z.object({
-  id: z.string().min(1),
-  date: z.string(), // Allow both DD/MM/YYYY and YYYY-MM-DD
-  category: z.string().optional(),
-  category_id: z.number().optional(),
-  description: z.string().optional().default(''),
-  amount: z.number(),
-  dayNote: z.string().optional().default(''),
-});
+  id: z.coerce.string().min(1),
+  date: z.string(), 
+  category: z.string().nullable().optional(),
+  category_id: z.string().nullable().optional(), 
+  description: z.string().nullable().optional().default(''),
+  amount: z.coerce.number(),
+  dayNote: z.string().nullable().optional().default(''),
+  group_type: z.string().nullable().optional(), 
+}).passthrough();
 
 const upsertTransactionSchema = z.union([
   transactionSchema,

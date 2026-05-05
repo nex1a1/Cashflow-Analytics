@@ -36,7 +36,13 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
     const amt = parseFloat(item.amount) || 0;
     const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
     const isInc = catObj.type === 'income';
-    const cGroup = catObj.cashflowGroup || (isInc ? 'cg_bonus' : 'cg_variable');
+    const cGroupId = catObj.cashflowGroup;
+    
+    // Find the actual group object to get its name/alias
+    const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+    const groupName = (groupObj.name || '').toLowerCase();
+    
+    const cGroup = cGroupId || (isInc ? 'cg_bonus' : 'cg_variable');
     const isFixed = catObj.isFixed || false;
 
     if (!item.date) return;
@@ -75,10 +81,10 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
       
       totals.dayOfWeekMap[dayOfWeek] += amt;
 
-      if (cGroup === 'cg_rent' || cGroup === 'rent') totals.rent += amt;   
-      else if (cGroup === 'cg_food' || cGroup === 'food') totals.food += amt;   
-      else if (cGroup === 'cg_it' || cGroup === 'it') totals.it += amt;     
-      else if (cGroup === 'cg_invest' || cGroup === 'invest') totals.invest += amt; 
+      if (cGroup === 'cg_rent' || cGroup === 'rent' || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent')) totals.rent += amt;   
+      else if (cGroup === 'cg_food' || cGroup === 'food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) totals.food += amt;   
+      else if (cGroup === 'cg_it' || cGroup === 'it' || groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it')) totals.it += amt;     
+      else if (cGroup === 'cg_invest' || cGroup === 'invest' || groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest')) totals.invest += amt; 
 
       if (isFixed) totals.fixed += amt; 
       else totals.variable += amt;
