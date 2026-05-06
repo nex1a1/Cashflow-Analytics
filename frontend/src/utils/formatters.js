@@ -19,6 +19,17 @@ export const getThaiMonth = (yearMonth) => {
 export const getFilterLabel = (period) => {
   if (period === 'ALL') return 'ดูภาพรวมทั้งหมด (All Time)';
   if (period.match(/^\d{4}$/)) return `ปี ${period}`;
+  
+  if (period.includes(',')) {
+    const count = period.split(',').length;
+    return `เลือกเฉพาะเจาะจง (${count} เดือน)`;
+  }
+
+  if (period.includes('_')) {
+    const [start, end] = period.split('_');
+    return `${getThaiMonth(start)} - ${getThaiMonth(end)}`;
+  }
+
   if (period.includes('-')) {
     const [y, type] = period.split('-');
     if (type === 'H1') return `ครึ่งปีแรก (H1/${y})`;

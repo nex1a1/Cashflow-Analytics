@@ -36,12 +36,24 @@ export const isDateInFilter = (dateStr, filter) => {
   if (filter === 'ALL') return true;
   if (!dateStr) return false;
   
-  // แปลงให้เป็น DD/MM/YYYY เพื่อใช้ Logic เดิมในการเปรียบเทียบ
   const displayDate = dateStr.includes('-') ? fromISODate(dateStr) : dateStr;
-  
   const parts = displayDate.split('/');
   if (parts.length !== 3) return false;
   const m = parseInt(parts[1], 10), y = parts[2];
+  const currentDate = `${y}-${String(m).padStart(2, '0')}`;
+
+  // Support Multi-select: YYYY-MM,YYYY-MM,...
+  if (filter.includes(',')) {
+    const months = filter.split(',');
+    return months.includes(currentDate);
+  }
+
+  // Support Custom Range: YYYY-MM_YYYY-MM
+  if (filter.includes('_')) {
+    const [start, end] = filter.split('_');
+    return currentDate >= start && currentDate <= end;
+  }
+
   if (filter === y) return true;
   if (filter.includes('-')) {
     const [fy, fType] = filter.split('-');
@@ -59,6 +71,26 @@ export const isDateInFilter = (dateStr, filter) => {
 
 export const generateDatesForPeriod = (period, allTransactions) => {
     if (!allTransactions || allTransactions.length === 0) return [];
+
+    // Support Multi-select: handle as special case to avoid range logic issues
+    if (period.includes(',')) {
+        const months = period.split(',');
+        let dateArray = [];
+        months.sort().forEach(mStr => {
+            const [y, m] = mStr.split('-');
+            const start = new Date(y, parseInt(m) - 1, 1);
+            const end = new Date(y, parseInt(m), 0);
+            let curr = new Date(start);
+            while (curr <= end) {
+                const d = String(curr.getDate()).padStart(2, '0');
+                const mo = String(curr.getMonth() + 1).padStart(2, '0');
+                const yr = curr.getFullYear();
+                dateArray.push(`${yr}-${mo}-${d}`);
+                curr.setDate(curr.getDate() + 1);
+            }
+        });
+        return dateArray;
+    }
 
     const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
     if (filteredTx.length === 0) return [];
@@ -92,6 +124,12 @@ export const generateDatesForPeriod = (period, allTransactions) => {
         const [y, m] = period.split('-');
         start = new Date(y, parseInt(m) - 1, 1);
         end = new Date(y, parseInt(m), 0); 
+    } else if (period.includes('_')) {
+        const [startMonth, endMonth] = period.split('_');
+        const [sy, sm] = startMonth.split('-');
+        const [ey, em] = endMonth.split('-');
+        start = new Date(sy, parseInt(sm) - 1, 1);
+        end = new Date(ey, parseInt(em), 0);
     } else {
         return [];
     }

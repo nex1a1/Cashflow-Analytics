@@ -250,7 +250,7 @@ export default function SummaryCards({ analytics }) {
             value={analytics.dailyAvg}
             className={`relative z-10 text-lg font-black truncate ${dm ? 'text-slate-200' : 'text-slate-700'}`}
           />
-          {analytics.isSingleMonthView && (
+          {analytics.showForecasting && (
             <div className={`relative z-10 text-[9px] mt-auto font-medium ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
               (เฉลี่ยเต็มเดือน: {formatMoney(analytics.fullMonthDailyAvg)})
             </div>
