@@ -10,7 +10,15 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new Database(DB_PATH);
+// เพิ่ม Logging ลงใน Docker เพื่อให้ Debug ง่ายขึ้น (กรองเฉพาะการเขียน/อัปเดต)
+const db = new Database(DB_PATH, {
+    verbose: (msg) => {
+        // สนใจเฉพาะคำสั่งที่มีการเปลี่ยนแปลงข้อมูล (ลดความรกของ Log จากคำสั่ง SELECT)
+        if (/^(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)/i.test(msg.trim())) {
+            console.log(`[DB MUTATION] ${msg}`);
+        }
+    }
+});
 
 // ปรับแต่ง SQLite เพื่อความเสถียรบน Docker/Windows
 // ปิด WAL mode เพราะอาจมีปัญหาเรื่อง Shared Memory (SHM) บน Bind Mount

@@ -21,6 +21,7 @@ export default function MainChart({
   const [isBreakdown, setIsBreakdown] = useState(false);
   const [showTrendLines, setShowTrendLines] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
+  const [isCumulative, setIsCumulative] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
 
   const filterMenuRef = useRef(null);
@@ -54,6 +55,12 @@ export default function MainChart({
     const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
     const xLabels = analytics.mainChartData.labels;
 
+    // Helper: make dataset data cumulative
+    const makeCumulative = (dataArr) => {
+      let sum = 0;
+      return dataArr.map(val => { sum += (val || 0); return sum; });
+    };
+
     // ── โหมดแจกแจง (แท่งซ้อน หรือ หลายเส้น) ──────────────────────────────
     if (isBreakdown) {
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
@@ -64,9 +71,11 @@ export default function MainChart({
       const datasets = catsToRender.map(catName => {
         const catObj = categories.find(c => c.name === catName) || {};
         const catColor = catObj.color || '#64748B';
-        const data = showMonthly
+        let data = showMonthly
           ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catName]?.[m] || 0)
           : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catName]?.[d] || 0);
+          
+        if (isCumulative) data = makeCumulative(data);
 
         if (chartViewType === 'line') {
           // แจกแจง + เส้น → หลายเส้นแยกหมวด
@@ -99,7 +108,7 @@ export default function MainChart({
       });
 
       // เส้นเทรนด์ (เฉพาะโหมดไม่ใช่ monthly)
-      if (showTrendLines && !showMonthly && chartViewType !== 'line') {
+      if (showTrendLines && !showMonthly && chartViewType !== 'line' && !isCumulative) {
         const mtdDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยสะสม'));
         const avgDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยทั้งเดือน'));
         if (mtdDataset) datasets.push({ ...mtdDataset, type: 'line', tension: isSmoothLine ? 0.4 : 0, borderWidth: 4 });
@@ -114,12 +123,23 @@ export default function MainChart({
     if (analytics.mainChartType === 'combo' && !showTrendLines) {
       filteredDatasets = filteredDatasets.filter(ds => ds.type !== 'line' || ds.label === 'Cashflow');
     }
+    
+    if (isCumulative) {
+       // Only keep base datasets, remove MTD/Avg trendlines because they don't make sense cumulatively
+       filteredDatasets = filteredDatasets.filter(ds => !(ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน'))));
+    }
 
     const processedDatasets = filteredDatasets.map(ds => {
       const isTrendLine = ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน') || ds.label === 'Cashflow');
-      if (isTrendLine) {
+      
+      let finalData = ds.data;
+      if (isCumulative && !isTrendLine && ds.label !== 'Cashflow') {
+         finalData = makeCumulative(ds.data);
+      }
+      
+      if (isTrendLine && !isCumulative) {
         return {
-          ...ds, type: 'line', tension: isSmoothLine ? 0.4 : 0,
+          ...ds, data: finalData, type: 'line', tension: isSmoothLine ? 0.4 : 0,
           borderWidth: ds.label.includes('เฉลี่ยทั้งเดือน') ? 2 : 4,
         };
       }
@@ -139,7 +159,7 @@ export default function MainChart({
       }
 
       return {
-        ...ds, type: newType, tension: isSmoothLine ? 0.4 : 0,
+        ...ds, data: finalData, type: newType, tension: isSmoothLine ? 0.4 : 0,
         backgroundColor: chartViewType === 'line' ? ds.backgroundColor : bgColor,
         borderColor, borderWidth: bWidth, borderRadius: 4,
         pointRadius: chartViewType === 'line' ? 4 : 0,
@@ -149,7 +169,7 @@ export default function MainChart({
     });
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm]);
 
   // Legend: กรองเฉพาะ dataset ที่มีข้อมูลจริง
   const legendDatasets = useMemo(() => {
@@ -253,9 +273,21 @@ export default function MainChart({
                       <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูแนวโน้มค่าเฉลี่ยสะสมเทียบกับต้นเดือน</span>
                     </div>
                     <div className="relative flex items-center shrink-0">
-                      <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} />
-                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                      <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} disabled={isCumulative} />
+                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')} ${isCumulative ? 'opacity-50' : ''}`} />
                       <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
+                    </div>
+                  </label>
+
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div className="flex flex-col pr-3">
+                      <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-purple-400' : 'text-slate-800 group-hover:text-purple-600'}`}>กราฟสะสม (Pacing Curve)</span>
+                      <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูความเร็วในการจ่ายแบบสะสมทีละวัน</span>
+                    </div>
+                    <div className="relative flex items-center shrink-0">
+                      <input type="checkbox" className="sr-only" checked={isCumulative} onChange={() => { setIsCumulative(!isCumulative); if(!isCumulative) setShowTrendLines(false); }} />
+                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isCumulative ? (dm ? 'bg-purple-500' : 'bg-purple-600') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                      <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isCumulative ? 'translate-x-4' : ''}`} />
                     </div>
                   </label>
 

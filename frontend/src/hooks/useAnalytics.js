@@ -120,7 +120,77 @@ export default function useAnalytics({
       ? (globalValues[Math.floor(globalValues.length * 0.9)] || globalValues[globalValues.length - 1])
       : 100;
 
+    // 8. Forecasting & Run Rate & Adjusted Daily Averages
+    let projectedExpense = 0;
+    let safeToSpend = 0;
+    let showForecasting = false;
+    let adjustedDailyAvg = dailyAvg;
+    let adjustedFoodDailyAvg = totals.food / periodDays;
+    
+    if (isSingleMonthView && datesInPeriod.length > 0) {
+      const parts = filterPeriod.split('-');
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]) - 1;
+      
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === y && today.getMonth() === m;
+      
+      if (isCurrentMonth) {
+        showForecasting = true;
+        const lastDayOfMonth = new Date(y, m + 1, 0).getDate();
+        const currentDay = Math.max(1, Math.min(today.getDate(), lastDayOfMonth));
+        const remainingDays = Math.max(1, lastDayOfMonth - currentDay); 
+        
+        const todayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        let expenseUpToToday = 0;
+        let variableUpToToday = 0;
+        let foodUpToToday = 0;
+        
+        transactions.forEach(item => {
+          if (!item.date || !item.date.startsWith(filterPeriod)) return;
+          if (item.date <= todayStr) {
+            const amt = parseFloat(item.amount) || 0;
+            const catObj = catMapLookup[item.category];
+            const isExpense = catObj ? catObj.type === 'expense' : true;
+            
+            if (isExpense) {
+              expenseUpToToday += amt;
+              const isFixed = catObj ? catObj.isFixed : false;
+              if (!isFixed) variableUpToToday += amt;
+              
+              const cGroupId = catObj ? catObj.cashflowGroup : null;
+              const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+              const groupName = (groupObj.name || '').toLowerCase();
+              const cGroup = cGroupId || 'cg_variable';
+              
+              if (cGroup === 'cg_food' || cGroup === 'food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) {
+                foodUpToToday += amt;
+              }
+            }
+          }
+        });
+
+        // 1. ปรับค่าเฉลี่ยรายวัน ให้หารด้วยวันที่ผ่านมาถึงวันนี้
+        adjustedDailyAvg = expenseUpToToday / currentDay;
+        adjustedFoodDailyAvg = foodUpToToday / currentDay;
+
+        // 2. Projected Expense: ค่าคงที่ทั้งหมด + ค่าผันแปรถึงวันนี้ + (อัตราผันแปรต่อวัน * วันที่เหลือ)
+        const variableRunRate = variableUpToToday / currentDay;
+        projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
+        
+        // 3. Safe to spend: (รายรับทั้งหมด - คงที่ทั้งหมด - ผันแปรที่ใช้ไปแล้ว) / วันที่เหลือให้ใช้
+        const remainingBudget = totals.income - totals.fixed - variableUpToToday;
+        const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
+        safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
+      }
+    }
+
     return {
+      isSingleMonthView,
+      showForecasting,
+      projectedExpense,
+      safeToSpend,
       totalExpense: totals.expense, 
       totalIncome: totals.income, 
       netCashflow, 
@@ -129,13 +199,15 @@ export default function useAnalytics({
       numMonths,
       sortedCats,
       topTransactions: [...chartTx].sort((a, b) => b.amount - a.amount).slice(0, topXLimit),
-      dailyAvg, 
+      dailyAvg: adjustedDailyAvg,
+      fullMonthDailyAvg: dailyAvg,
       uniqueDays: datesInPeriod.length,
       catChartData, 
       mainChartData, 
       mainChartType,
       foodTotal: totals.food, 
-      foodDailyAvg: totals.food / periodDays, 
+      foodDailyAvg: adjustedFoodDailyAvg,  
+      fullMonthFoodAvg: totals.food / periodDays,
       foodPercentage: totals.expense > 0 ? ((totals.food / totals.expense) * 100).toFixed(1) : 0,
       rentTotal: totals.rent, 
       rentPercentage: totals.income > 0 ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,

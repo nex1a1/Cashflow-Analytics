@@ -250,31 +250,33 @@ export default function CashflowTable({ analytics, cashflowGroups = [], categori
               );
             })}
           </tbody>
-          <tfoot className={`font-bold border-t-2 ${dm ? 'bg-slate-900 border-slate-600 text-slate-200' : 'bg-slate-800 border-slate-900 text-white'}`}>
-            <tr>
-              <td className={`px-3 py-2.5 text-center sticky left-0 z-10 bg-inherit border-r border-transparent ${dm ? 'text-blue-300' : 'text-blue-200'}`}>รวมทั้งหมด</td>
-              
-              {activeIncomeGroups.map((g, idx) => (
-                <td key={g.id} className={`px-3 py-2.5 ${idx === activeIncomeGroups.length - 1 ? dividerCls : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669'), backgroundColor: getHighlightBg(g) }}>
-                  {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
-                </td>
-              ))}
-              {activeExpenseGroups.map(g => (
-                <td key={g.id} className="px-3 py-2.5" style={{ color: g.color || (dm ? '#cbd5e1' : '#334155'), backgroundColor: getHighlightBg(g) }}>
-                  {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
-                </td>
-              ))}
+          {analytics.numMonths > 1 && (
+            <tfoot className={`font-bold border-t-2 ${dm ? 'bg-slate-900 border-slate-600 text-slate-200' : 'bg-slate-800 border-slate-900 text-white'}`}>
+              <tr>
+                <td className={`px-3 py-2.5 text-center sticky left-0 z-10 bg-inherit border-r border-transparent ${dm ? 'text-blue-300' : 'text-blue-200'}`}>รวมทั้งหมด</td>
+                
+                {activeIncomeGroups.map((g, idx) => (
+                  <td key={g.id} className={`px-3 py-2.5 ${idx === activeIncomeGroups.length - 1 ? dividerCls : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669'), backgroundColor: getHighlightBg(g) }}>
+                    {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
+                  </td>
+                ))}
+                {activeExpenseGroups.map(g => (
+                  <td key={g.id} className="px-3 py-2.5" style={{ color: g.color || (dm ? '#cbd5e1' : '#334155'), backgroundColor: getHighlightBg(g) }}>
+                    {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
+                  </td>
+                ))}
 
-              <td className={`px-3 py-2.5 border-l-2 ${dm ? 'text-red-400 border-slate-600' : 'text-red-400 border-slate-700'}`}>{formatMoney(analytics.totalExpense)}</td>
-              <td className={`px-3 py-2.5 ${dm ? 'text-blue-400' : 'text-blue-300'}`}>{formatMoney(analytics.netCashflow)}</td>
-              <td className={`px-3 py-2.5 text-center ${analytics.savingsRate < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
-              </td>
-              <td className={`px-3 py-2.5 text-center ${analytics.totalIncome > 0 && (analytics.totalExpense / analytics.totalIncome * 100) > 100 ? 'text-red-400' : (dm ? 'text-orange-400' : 'text-orange-500')}`}>
-                {analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}
-              </td>
-            </tr>
-          </tfoot>
+                <td className={`px-3 py-2.5 border-l-2 ${dm ? 'text-red-400 border-slate-600' : 'text-red-400 border-slate-700'}`}>{formatMoney(analytics.totalExpense)}</td>
+                <td className={`px-3 py-2.5 ${dm ? 'text-blue-400' : 'text-blue-300'}`}>{formatMoney(analytics.netCashflow)}</td>
+                <td className={`px-3 py-2.5 text-center ${analytics.savingsRate < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
+                </td>
+                <td className={`px-3 py-2.5 text-center ${analytics.totalIncome > 0 && (analytics.totalExpense / analytics.totalIncome * 100) > 100 ? 'text-red-400' : (dm ? 'text-orange-400' : 'text-orange-500')}`}>
+                  {analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

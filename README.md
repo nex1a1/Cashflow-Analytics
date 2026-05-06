@@ -1,108 +1,95 @@
-# 📊 Cashflow Analytics PRO
+# Cashflow Analytics 💰📊
 
-> **Personal Finance Tracker ระดับ Advanced** — เน้นการวิเคราะห์กระแสเงินสด (Cashflow) ตัดความซับซ้อนของระบบบัญชีแบบเดิมทิ้ง เพื่อให้คุณเห็นภาพรวมสุขภาพทางการเงินที่แท้จริง พร้อม Dashboard เชิงลึก, Activity Graph และระบบ Smart CSV Import
+Cashflow Analytics เป็น Web Application สำหรับบันทึกและวิเคราะห์กระแสเงินสด (รายรับ-รายจ่าย) ส่วนบุคคลหรือธุรกิจขนาดเล็ก ถูกออกแบบมาให้ใช้งานง่าย รวดเร็ว และสามารถปรับแต่งหมวดหมู่ได้ตามความต้องการ มาพร้อมกับมุมมองการวิเคราะห์ที่หลากหลาย ทั้งแบบกราฟ, ปฏิทิน และตารางข้อมูล (Project นี้ Vibe Code 100%)
 
-[![Vibe Coded](https://img.shields.io/badge/Vibe-Coded-blueviolet?style=for-the-badge)](https://github.com/nex1a/Cashflow-Analytics)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite)](https://sqlite.org/)
+## ✨ ฟีเจอร์หลัก (Key Features)
 
----
+- 📊 **Dashboard (หน้าวิเคราะห์):** สรุปภาพรวมทางการเงินรายเดือน/ปี พร้อมกราฟและสถิติที่เข้าใจง่าย (Chart.js)
+- 📅 **Calendar View (หน้าปฏิทิน):** ดูภาพรวมรายวัน สามารถกำหนดประเภทวัน (เช่น วันทำงาน, วันหยุด, ลาป่วย, OT) และเพิ่มรายการได้ทันที
+- 🗄️ **Ledger (หน้าฐานข้อมูล):** ดูรายการบัญชีทั้งหมดในรูปแบบตาราง (Data Grid) ค้นหา กรองข้อมูลขั้นสูง และแก้ไขรายการได้สะดวก
+- ⚙️ **Settings (หน้าตั้งค่า):** 
+  - จัดการ **คอลัมน์ Cashflow** (จัดกลุ่มรายรับ/รายจ่ายหลัก)
+  - จัดการ **หมวดหมู่** (Categories) แยกสี ไอคอน และสามารถกำหนดเป็น "รายจ่ายคงที่" (Fixed Expense) ได้
+  - จัดการ **ชนิดวันบนปฏิทิน** (Day Types) เช่น เพิ่มวันลา หรือปรับแต่งสี
+  - ฟีเจอร์ **ล้างข้อมูลทั้งหมด** (Factory Reset)
+- 📤 **Import & Export:** รองรับการนำเข้าข้อมูลผ่านไฟล์ CSV และ Export ข้อมูลออกไปใช้งานต่อ
+- 🎨 **UI/UX:** รองรับ Dark Mode เต็มรูปแบบ, มี Animation นุ่มนวล (Framer Motion), และปรับแต่งสีสันได้
 
-## ✨ 100% Vibe Coded Project
+## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
 
-โปรเจกต์นี้คือผลงานจากการใช้แนวคิด **Vibe Coding** — การสร้างแอปพลิเคชันระดับ Production-ready โดยที่ผู้พัฒนาเน้นการสื่อสารความต้องการและวิสัยทัศน์ (Vibe) ให้ AI (Google Gemini & Claude) เป็นผู้ลงมือเขียนโค้ดและจัดการสถาปัตยกรรมทั้งหมด
+### Frontend (ฝั่งผู้ใช้งาน)
+- **Framework:** React 18 (รันด้วย Vite เพื่อความรวดเร็ว)
+- **Styling:** Tailwind CSS
+- **Icons:** Lucide React
+- **Charts:** Chart.js / react-chartjs-2
+- **Animations:** Framer Motion
 
-**💡 บทบาทในการพัฒนา:**
-- **Human (Product Owner):** ออกแบบ User Experience, กำหนด Logic ทางการเงิน (เช่น การเน้น Cashflow แทนการทำ Double-entry bookkeeping), รีวิวคุณภาพโค้ด และปรับจูน UI ให้ใช้งานง่ายที่สุด
-- **AI (Developer):** รับ Requirement มาเปลี่ยนเป็น Full-stack Code (React/Node.js), ออกแบบ Schema ของ SQLite, จัดการ State Management ที่ซับซ้อน และสร้าง UI Components ที่ตอบสนองได้รวดเร็ว
+### Backend (ฝั่งเซิร์ฟเวอร์ & API)
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Database:** SQLite3 (ใช้แพ็กเกจ `better-sqlite3` เพื่อประสิทธิภาพสูงบนระบบ Local)
+- **Validation:** Zod (สำหรับการตรวจสอบข้อมูล API)
 
----
+### Infrastructure
+- **Docker:** ใช้ Docker Compose ในการแพ็กเกจและรันทั้ง Frontend และ Backend ให้ทำงานประสานกันอย่างราบรื่น
 
-## 🚀 Key Features
+## 🚀 การติดตั้งและรันโปรเจกต์ (Installation & Running)
 
-### 📈 Dashboard & Activity Heatmap
-- **Financial Analytics:** สรุปรายรับ-รายจ่ายสุทธิ, อัตราการออม (Savings Rate) และเงินคงเหลือ
-- **Burn Rate Monitoring:** ติดตามอัตราการใช้จ่ายต่อวัน และสัดส่วนค่าใช้จ่ายสำคัญ (เช่น ค่าอาหาร, ที่พัก)
-- **Activity Graph:** ไทม์ไลน์กิจกรรมสไตล์ GitHub ที่รวมข้อมูลกระแสเงินสดและประเภทวัน (ทำงาน/หยุด) ไว้ในที่เดียว ช่วยให้เห็น Pattern การใช้เงินสัมพันธ์กับไลฟ์สไตล์
+โปรเจกต์นี้ถูกตั้งค่าให้รันผ่าน Docker เพื่อความง่ายในการติดตั้ง โดยไม่ต้องตั้งค่า Environment บนเครื่องหลัก
 
-### 🧺 Smart Batch Add & Suggestions
-- **Basket System:** เพิ่มรายการได้ทีละหลายรายการ (Batch) แล้วบันทึกรวดเดียว ช่วยประหยัดเวลา
-- **Quick Suggestions:** ระบบจดจำประวัติเก่า เพื่อแนะนำรายการที่ใช้บ่อย ให้คุณบันทึกได้ใน 1 คลิก
+### สิ่งที่ต้องมี
+- [Docker](https://www.docker.com/) และ [Docker Compose](https://docs.docker.com/compose/)
 
-### 📅 Advanced Calendar & Day Settings
-- **Holistic View:** ปฏิทินที่แยกโซนข้อมูลชัดเจน เห็นยอดสรุปรายวันและประเภทของวัน
-- **Day Categorization:** กำหนดประเภทวัน (Work, Holiday, Sick, Leave) เพื่อนำไปวิเคราะห์ผลกระทบต่อกระแสเงินสด
+### ขั้นตอนการรัน
+1. Clone หรือเปิดโปรเจกต์นี้ใน Terminal
+2. รันคำสั่งด้านล่างเพื่อเริ่มการทำงาน:
+   ```bash
+   docker-compose up -d
+   ```
+3. รอจนกว่า Container จะทำการสร้างและรันเสร็จ (ครั้งแรกอาจใช้เวลาโหลด Dependency เล็กน้อย)
+4. เปิดเบราว์เซอร์ไปที่:
+   - **Frontend:** [http://localhost:5173](http://localhost:5173)
+   - **Backend API:** [http://localhost:3000](http://localhost:3000) (ไม่จำเป็นต้องเปิดตรงๆ)
 
-### 📋 Clean Ledger (สมุดบัญชี)
-- **Inline Editing:** แก้ไขข้อมูลได้โดยตรงจากตาราง ไม่ต้องเปิดหน้าใหม่
-- **Powerful Filters:** ระบบกรองข้อมูลขั้นสูง กรองตามช่วงเวลา, หมวดหมู่, หรือกลุ่ม Cashflow (Income/Expense/Fixed/Debt)
-
-### 📥 Smart CSV Import & Export
-- **Auto-Mapping:** ระบบจับคู่หมวดหมู่อัตโนมัติจากประวัติเดิมเมื่อนำเข้า CSV
-- **Import Preview:** ตรวจสอบและแก้ไขข้อมูลก่อนนำเข้า Database จริง
-- **Data Portability:** รองรับการ Export ข้อมูลทั้งหมดออกมาเป็นไฟล์ CSV เพื่อนำไปใช้งานต่อ
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Frontend** | React 18 (Vite), Tailwind CSS, Chart.js, Lucide Icons |
-| **Backend** | Node.js (Express) |
-| **Database** | **SQLite3** (via better-sqlite3) |
-| **Infrastructure**| Docker & Docker Compose |
-
----
-
-## 📂 Project Structure
-
-```text
-.
-├── backend/
-│   ├── data/                 # SQLite Database Volume
-│   └── src/
-│       ├── config/           # Database Connection
-│       ├── controllers/      # Business Logic
-│       ├── models/           # DB Schema & Initialization
-│       └── routes/           # API Endpoints
-└── frontend/
-    └── src/
-        ├── components/       # UI & Modals (BatchAdd, Export, Import)
-        ├── hooks/            # Custom React Hooks (Analytics, Filters, CSV)
-        ├── services/         # API Service Layer
-        ├── views/            # Page Components (Dashboard, Calendar, Ledger, Settings)
-        └── utils/            # Formatters & Helpers
+### การหยุดการทำงาน
+```bash
+docker-compose down
 ```
 
----
+## 📁 โครงสร้างโฟลเดอร์ (Directory Structure)
 
-## 🐳 Getting Started (Docker)
+```text
+Cashflow-Analytics/
+├── backend/                  # โค้ดฝั่ง Node.js API และ Database
+│   ├── data/                 # ที่เก็บไฟล์ฐานข้อมูล cashflow.db (ออโต้เมานท์ผ่าน Docker)
+│   ├── src/
+│   │   ├── config/           # การตั้งค่าต่างๆ เช่น db.js
+│   │   ├── controllers/      # ควบคุม Logic ของ API แต่ละส่วน
+│   │   ├── models/           # สร้างและจัดการ Schema ฐานข้อมูล
+│   │   ├── routes/           # กำหนดเส้นทาง (Routes) ของ API
+│   │   └── services/         # จัดการการดึง/บันทึกข้อมูล Database
+│   ├── server.js             # ไฟล์หลักในการเริ่มการทำงานของ Express
+│   └── package.json          
+├── frontend/                 # โค้ดฝั่ง React + Vite
+│   ├── src/
+│   │   ├── components/       # UI Components ย่อยๆ
+│   │   ├── constants/        # ค่าคงที่ (Constants) และ Default Config
+│   │   ├── context/          # React Context (Theme, Toast)
+│   │   ├── hooks/            # Custom React Hooks
+│   │   ├── services/         # API Service (ดึงข้อมูลจาก Backend)
+│   │   ├── styles/           # CSS พิเศษ
+│   │   ├── utils/            # ฟังก์ชันตัวช่วย (Helpers)
+│   │   └── views/            # หน้าจอหลัก (Dashboard, Calendar, Ledger, Settings)
+│   ├── index.html
+│   └── package.json
+├── docker-compose.yml        # ตั้งค่าการรันโปรเจกต์ผ่าน Docker
+└── .gitignore                # จัดการไฟล์ที่ไม่ต้องการนำขึ้น Git (มีโฟลเดอร์ debug_scripts/)
+```
 
-**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+## 🐞 การ Debug (สำหรับนักพัฒนา)
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/nex1a/Cashflow-Analytics.git
-   cd Cashflow-Analytics
-   ```
-
-2. **Spin up with Docker Compose**
-   ```bash
-   docker compose up -d
-   ```
-
-3. **Access the Application**
-   - **Web Interface:** [http://localhost:5173](http://localhost:5173)
-   - **Backend API:** [http://localhost:3000/api](http://localhost:3000/api)
-
----
-
-## 🌓 Dark / Light Mode
-รองรับการเปลี่ยนโหมดสีแบบ Real-time ซึ่งครอบคลุมทุกส่วนของแอปพลิเคชัน รวมถึง Chart และ Activity Graph เพื่อความสบายตาในการใช้งานทุกสภาพแสง
-
----
-
-## 📝 License
-This project is for educational and personal use. Created with ❤️ and AI.
+- **ดู Log ฐานข้อมูล:** ตัว Backend มีการตั้งค่าเปิด Log สำหรับติดตามคำสั่งที่มีการแก้ไขข้อมูล (`INSERT`, `UPDATE`, `DELETE`) คุณสามารถดูได้ผ่าน Docker logs:
+  ```bash
+  docker logs --tail 50 -f expense_api
+  ```
+- **สคริปต์ทดสอบ:** ไฟล์สคริปต์ที่ใช้สำหรับทดสอบ API และทดสอบเขียน Database ต่างๆ จะถูกแยกเก็บไว้ในโฟลเดอร์ `debug_scripts/` (โฟลเดอร์นี้ถูกตั้ง ignore ไว้ไม่ให้นำขึ้น Git)

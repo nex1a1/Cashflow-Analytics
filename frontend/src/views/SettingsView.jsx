@@ -333,47 +333,14 @@ function OrphanWarningBanner({ categories, cashflowGroups }) {
 ───────────────────────────────────────────── */
 export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
-  dayTypeConfig, setDayTypeConfig, handleDeleteAllData, saveSettingToDb,
+  dayTypeConfig, handleDayTypeConfigChange, handleDeleteAllData, saveSettingToDb,
   cashflowGroups = [], setCashflowGroups,
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],
+  handleAddDayType, handleDeleteDayType, handleMoveDayType
 }) {
   const { isDarkMode: dm } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
-
-  const handleDayTypeConfigChange = (id, field, value) => {
-    const cfg = dayTypeConfig.map(dt => dt.id === id ? { ...dt, [field]: value } : dt);
-    setDayTypeConfig(cfg);
-    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
-  };
-
-  const handleAddDayType = () => {
-    const cfg = [...dayTypeConfig, { id: crypto.randomUUID(), label: 'ชนิดวันใหม่', color: '#64748B' }];
-    setDayTypeConfig(cfg);
-    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
-  };
-
-  const handleDeleteDayType = (id) => {
-    const dt = dayTypeConfig.find(d => d.id === id);
-    if (!dt) return;
-    if (dt.isDefault) return;
-    if (dayTypeConfig.length <= 2) return;
-    const cfg = dayTypeConfig.filter(d => d.id !== id);
-    setDayTypeConfig(cfg);
-    saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
-  };
-
-  const handleMoveDayType = (id, direction) => {
-    const idx = dayTypeConfig.findIndex(c => c.id === id);
-    if (idx < 0) return;
-    const ti = direction === 'UP' ? idx - 1 : idx + 1;
-    if (ti >= 0 && ti < dayTypeConfig.length) {
-      const cfg = [...dayTypeConfig];
-      [cfg[idx], cfg[ti]] = [cfg[ti], cfg[idx]];
-      setDayTypeConfig(cfg);
-      saveSettingToDb(DAY_TYPE_CONFIG_KEY, cfg);
-    }
-  };
 
   const onAddCategory = (type) => {
     handleAddCategory(type);
@@ -400,14 +367,26 @@ export default function SettingsView({
     handleDeleteCashflowGroup(id);
   };
 
-  const handleMoveCashflowGroup = (id, direction) => {
+  const handleMoveCashflowGroup = async (id, direction) => {
     const idx = cashflowGroups.findIndex(g => g.id === id);
     if (idx < 0) return;
     const ti = direction === 'UP' ? idx - 1 : idx + 1;
     if (ti >= 0 && ti < cashflowGroups.length) {
       const updated = [...cashflowGroups];
       [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
-      setCashflowGroups(updated);
+      
+      // Update order_index for all groups based on their new position
+      const finalUpdated = updated.map((g, i) => ({ ...g, order_index: i + 1 }));
+      setCashflowGroups(finalUpdated);
+
+      // Save the updated groups to the database
+      try {
+        for (const group of finalUpdated) {
+          await handleUpdateCashflowGroup(group);
+        }
+      } catch (err) {
+        console.error('Failed to save groups order:', err);
+      }
     }
   };
 

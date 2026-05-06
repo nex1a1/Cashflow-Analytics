@@ -7,21 +7,23 @@ const initSchema = () => {
   // 1. สร้างตารางพื้นฐาน (กรณีเริ่มจากศูนย์)
   db.exec(`
     CREATE TABLE IF NOT EXISTS cashflow_groups (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'savings')),
       order_index INTEGER DEFAULT 0,
       color TEXT,
-      icon TEXT
+      icon TEXT,
+      highlight_bg INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       icon TEXT,
       color TEXT,
       is_fixed INTEGER DEFAULT 0,
-      cashflow_group_id INTEGER NOT NULL,
+      order_index INTEGER DEFAULT 0,
+      cashflow_group_id TEXT NOT NULL,
       FOREIGN KEY (cashflow_group_id) REFERENCES cashflow_groups(id)
     );
 
@@ -93,12 +95,24 @@ const verifyTableColumns = () => {
     } catch (e) {}
   }
 
+  // --- Categories ---
+  const catInfo = db.prepare("PRAGMA table_info(categories)").all();
+  const catCols = catInfo.map(c => c.name);
+  if (catCols.length > 0 && !catCols.includes('order_index')) {
+    db.exec("ALTER TABLE categories ADD COLUMN order_index INTEGER DEFAULT 0");
+    console.log('🔹 Forced: Added column order_index to categories');
+  }
+
   // --- Cashflow Groups ---
   const groupInfo = db.prepare("PRAGMA table_info(cashflow_groups)").all();
   const groupCols = groupInfo.map(c => c.name);
   if (groupCols.length > 0 && !groupCols.includes('order_index')) {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN order_index INTEGER DEFAULT 0");
     console.log('🔹 Forced: Added column order_index to cashflow_groups');
+  }
+  if (groupCols.length > 0 && !groupCols.includes('highlight_bg')) {
+    db.exec("ALTER TABLE cashflow_groups ADD COLUMN highlight_bg INTEGER DEFAULT 0");
+    console.log('🔹 Forced: Added column highlight_bg to cashflow_groups');
   }
 
   // --- Day Types ---
@@ -107,6 +121,10 @@ const verifyTableColumns = () => {
   if (dayTypeCols.length > 0 && !dayTypeCols.includes('name')) {
     db.exec("ALTER TABLE day_types ADD COLUMN name TEXT DEFAULT ''");
     console.log('🔹 Forced: Added column name to day_types');
+  }
+  if (dayTypeCols.length > 0 && !dayTypeCols.includes('order_index')) {
+    db.exec("ALTER TABLE day_types ADD COLUMN order_index INTEGER DEFAULT 0");
+    console.log('🔹 Forced: Added column order_index to day_types');
   }
 
   // --- Calendar Days ---

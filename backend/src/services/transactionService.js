@@ -68,12 +68,15 @@ class TransactionService {
 
         // Category mapping
         let categoryId = tx.category_id;
-        if (!categoryId && tx.category) {
-          categoryId = this.getCategoryIdByName(tx.category);
+        // หากไม่มี category_id (เป็น null/undefined) ค่อยไปหาจากชื่อ category
+        if (categoryId === undefined || categoryId === null || categoryId === '') {
+          if (tx.category) {
+            categoryId = this.getCategoryIdByName(tx.category);
+          }
         }
 
         if (!categoryId) {
-          throw new Error(`Category not found or could not be created for: ${tx.category}`);
+          throw new Error(`Category not found or could not be created for: ${tx.category || 'Unknown'}`);
         }
 
         stmt.run(

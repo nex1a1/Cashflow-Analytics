@@ -81,36 +81,63 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
     const catToDelete = categories.find(c => c.id === id);
     if (!catToDelete) return;
     
-    // Check if any transaction uses this category (by name or ID)
+    // 1. ตรวจสอบรายการที่ "ยังไม่ถูกลบ" (Active transactions)
     if (transactions.some(t => t.category_id === id || t.category === catToDelete.name)) {
-      showToast('ไม่สามารถลบหมวดหมู่ที่มีรายการบัญชีใช้งานอยู่ได้', 'error');
+      showToast('ไม่สามารถลบได้: มีรายการบัญชีที่กำลังใช้งานหมวดหมู่นี้อยู่ กรุณาลบรายการเหล่านั้นก่อน', 'error');
       return;
     }
 
-    if (!window.confirm(`ยืนยันการลบหมวดหมู่ "${catToDelete.name}"?`)) return;
+    if (!window.confirm(`ยืนยันการลบหมวดหมู่ "${catToDelete.name}"?\n(หากมีรายการที่เคยลบไปแล้วในถังขยะที่อ้างอิงหมวดหมู่นี้ รายการเหล่านั้นจะถูกลบถาวร)`)) return;
 
     try {
+      // แจ้ง Backend ให้จัดการลบรายการที่ค้างอยู่ในถังขยะ (is_deleted=1) ก่อนลบ Category
       await categoryService.deleteById(id);
       await loadCategories();
       showToast('ลบหมวดหมู่สำเร็จ', 'success');
     } catch (err) {
-      showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
+      if (err.message.includes('FOREIGN KEY')) {
+        showToast('ลบไม่สำเร็จ: ยังมีข้อมูลเก่าอ้างอิงหมวดหมู่นี้อยู่', 'error');
+      } else {
+        showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
+      }
     }
   };
 
   const handleMoveCategory = async (id, direction) => {
-    // Current implementation doesn't support order in categories table yet
-    // but we can keep it in UI for now
-    const newCategories = [...categories];
-    const index = newCategories.findIndex(c => c.id === id);
+    const index = categories.findIndex(c => c.id === id);
     if (index === -1) return;
+    
+    const newCategories = [...categories];
     const dir = direction.toLowerCase();
-    if (dir === 'up' && index > 0) {
-      [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
-    } else if (dir === 'down' && index < newCategories.length - 1) {
-      [newCategories[index + 1], newCategories[index]] = [newCategories[index], newCategories[index + 1]];
+    let targetIndex = -1;
+    
+    if (dir === 'up' && index > 0) targetIndex = index - 1;
+    else if (dir === 'down' && index < newCategories.length - 1) targetIndex = index + 1;
+    
+    if (targetIndex !== -1) {
+      [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
+      
+      // Update order_index for all categories
+      const updatedWithOrder = newCategories.map((c, i) => ({
+        ...c,
+        order_index: i + 1,
+        // Map back to backend fields
+        is_fixed: c.isFixed ? 1 : 0,
+        cashflow_group_id: c.cashflowGroup
+      }));
+      
+      setCategories(newCategories); // Optimistic UI update
+
+      try {
+        // Save all updated categories
+        for (const cat of updatedWithOrder) {
+          await categoryService.save(cat);
+        }
+        await loadCategories();
+      } catch (err) {
+        showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');
+      }
     }
-    setCategories(newCategories);
   };
 
   return { 

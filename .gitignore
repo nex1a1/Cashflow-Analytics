@@ -28,3 +28,9 @@ yarn-error.log*
 
 # Docker
 .docker/
+
+# Debug and Test Scripts
+debug_scripts/
+
+# Logs
+SKILL.md

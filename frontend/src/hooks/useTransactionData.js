@@ -103,13 +103,17 @@ export default function useTransactionData({
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify(Array.isArray(items) ? items : [items]) 
       });
-      if (!res.ok) throw new Error('Network response was not ok');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Network response was not ok');
+      }
     } catch (err) { 
       console.error('Failed to save to DB:', err);
+      showToast('ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
       throw err;
     }
     await loadData();
-  }, [loadData]);
+  }, [loadData, showToast]);
 
   const handleSaveTransaction = useCallback(async (item) => { 
     await saveToDb([item]); 
@@ -119,6 +123,10 @@ export default function useTransactionData({
     const item = transactions.find(t => t.id === id);
     if (item) {
       const updatedItem = { ...item, [field]: value };
+      // หากมีการอัปเดต category_id ให้ล้างค่า category (ชื่อ) เพื่อให้ Backend ใช้ ID เป็นหลัก
+      if (field === 'category_id') {
+        updatedItem.category = null;
+      }
       /*console.log("🔥 ข้อมูลที่กำลังจะส่งไป Backend:", updatedItem);*/
       saveToDb(updatedItem);
     }

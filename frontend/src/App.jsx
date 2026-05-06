@@ -5,8 +5,9 @@ import {
   CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
 } from './constants';
-import { settingsService, calendarService, categoryService, groupService } from './services/api';
+import { settingsService, calendarService, categoryService, groupService, dayTypeService } from './services/api';
 import { getFilterLabel } from './utils/formatters';
+import { toISODate } from './utils/dateHelpers';
 import { defaults } from 'chart.js';
 
 import useCategories from './hooks/useCategories';
@@ -130,9 +131,67 @@ export default function App() {
     catch (err) { console.error('Failed to save day type to DB:', err); }
   };
 
-  const handleUpdateDayTypeConfig = (newConfig) => {
-    setDayTypeConfig(newConfig);
-    saveSettingToDb(DAY_TYPE_CONFIG_KEY, newConfig);
+  const handleDayTypeConfigChange = async (id, field, value) => {
+    const dt = dayTypeConfig.find(d => d.id === id);
+    if (!dt) return;
+    const updatedDt = { ...dt, [field]: value };
+    const newConfig = dayTypeConfig.map(d => d.id === id ? updatedDt : d);
+    setDayTypeConfig(newConfig); // Optimistic UI update
+    
+    try {
+      await dayTypeService.save(updatedDt);
+    } catch (err) {
+      triggerToast('อัปเดตชนิดวันไม่สำเร็จ: ' + err.message, 'error');
+    }
+  };
+
+  const handleAddDayType = async () => {
+    const newDt = { 
+      id: crypto.randomUUID(), 
+      label: 'ชนิดวันใหม่', 
+      color: '#64748B', 
+      name: '',
+      order_index: dayTypeConfig.length + 1
+    };
+    try {
+      await dayTypeService.save(newDt);
+      setDayTypeConfig([...dayTypeConfig, newDt]);
+      triggerToast('เพิ่มชนิดวันสำเร็จ', 'success');
+    } catch (err) {
+      triggerToast('ไม่สามารถเพิ่มชนิดวันได้: ' + err.message, 'error');
+    }
+  };
+
+  const handleDeleteDayType = async (id) => {
+    if (!window.confirm('ยืนยันการลบชนิดวันนี้?')) return;
+    try {
+      await dayTypeService.deleteById(id);
+      setDayTypeConfig(dayTypeConfig.filter(d => d.id !== id));
+      triggerToast('ลบชนิดวันสำเร็จ', 'success');
+    } catch (err) {
+      triggerToast('ไม่สามารถลบชนิดวันได้: ' + err.message, 'error');
+    }
+  };
+
+  const handleMoveDayType = async (id, direction) => {
+    const idx = dayTypeConfig.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const ti = direction === 'UP' ? idx - 1 : idx + 1;
+    if (ti >= 0 && ti < dayTypeConfig.length) {
+      const cfg = [...dayTypeConfig];
+      [cfg[idx], cfg[ti]] = [cfg[ti], cfg[idx]];
+      
+      const updatedConfig = cfg.map((dt, i) => ({ ...dt, order_index: i + 1 }));
+      setDayTypeConfig(updatedConfig);
+      
+      try {
+        for (const dt of updatedConfig) {
+          await dayTypeService.save(dt);
+        }
+      } catch (err) {
+        triggerToast('ไม่สามารถบันทึกลำดับได้: ' + err.message, 'error');
+      }
+    }
   };
 
   const handleCategoryChange = (catId, field, value) =>
@@ -152,11 +211,13 @@ export default function App() {
 
   const handleAddCashflowGroup = async () => {
     const g = {
+      id: crypto.randomUUID(),
       name: 'คอลัมน์ใหม่',
       type: 'expense',
       order_index: cashflowGroups.length + 1,
       color: '#6366F1',
-      icon: '✨'
+      icon: '✨',
+      highlightBg: false
     };
     try {
       await groupService.save(g);
@@ -212,9 +273,7 @@ export default function App() {
   });
 
   const handleOpenAddModal = (dateStr, type) => {
-    const parts = dateStr.split('/');
-    let formattedDate = new Date().toISOString().split('T')[0];
-    if (parts.length === 3) formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    const formattedDate = dateStr ? toISODate(dateStr) : new Date().toISOString().split('T')[0];
     setAddForm(prev => ({
       ...prev, date: formattedDate, type,
       category: categories.find(c => c.type === type)?.name || '',
@@ -343,7 +402,10 @@ export default function App() {
                   handleUpdateCashflowGroup={handleUpdateCashflowGroup}
                   handleDeleteCashflowGroup={handleDeleteCashflowGroup}
                   dayTypeConfig={dayTypeConfig}
-                  setDayTypeConfig={handleUpdateDayTypeConfig}
+                  handleDayTypeConfigChange={handleDayTypeConfigChange}
+                  handleAddDayType={handleAddDayType}
+                  handleDeleteDayType={handleDeleteDayType}
+                  handleMoveDayType={handleMoveDayType}
                   handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
                   saveSettingToDb={saveSettingToDb}
                   transactions={transactions}

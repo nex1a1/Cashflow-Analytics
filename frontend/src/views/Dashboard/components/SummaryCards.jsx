@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Coins, Wallet, PiggyBank, Flame, UtensilsCrossed, Home, Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Coins, Wallet, PiggyBank, Flame, UtensilsCrossed, Home, Scale, TrendingUp, TrendingDown, Minus, PartyPopper, ShieldCheck } from 'lucide-react';
 import Sparkline from '../../../components/ui/Sparkline';
 import { formatMoney } from '../../../utils/formatters';
 import { useTheme } from '../../../context/ThemeContext';
@@ -203,6 +203,39 @@ export default function SummaryCards({ analytics }) {
 
       </div>
 
+      {/* ─── FORECASTING ROW (Current Month Only) ─── */}
+      {analytics.showForecasting && (
+        <div className={`grid grid-cols-2 divide-x ${dm ? 'bg-slate-800/80 border-t border-slate-700 divide-slate-700' : 'bg-blue-50/30 border-t border-slate-100 divide-slate-100'}`}>
+          <div className="p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp className={`w-3.5 h-3.5 ${dm ? 'text-indigo-400' : 'text-indigo-600'}`} />
+              <span className={`text-[11px] font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>คาดการณ์รายจ่ายสิ้นเดือน (Projected)</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <AnimatedMoney value={analytics.projectedExpense} className={`text-xl font-black ${dm ? 'text-slate-100' : 'text-slate-800'}`} />
+              <span className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>จากอัตราเผาผลาญปัจจุบัน</span>
+            </div>
+            <div className={`w-full h-1 mt-1 rounded-full overflow-hidden ${dm ? 'bg-slate-900' : 'bg-slate-200'}`}>
+              <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${Math.min(100, (analytics.totalExpense / (analytics.projectedExpense || 1)) * 100)}%` }} />
+            </div>
+          </div>
+          
+          <div className="p-4 flex flex-col gap-1 relative overflow-hidden">
+            <div className="flex items-center gap-1.5 mb-1 relative z-10">
+              <Scale className={`w-3.5 h-3.5 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
+              <span className={`text-[11px] font-bold ${dm ? 'text-slate-300' : 'text-slate-600'}`}>Safe-to-Spend (ใช้ได้อีก/วัน)</span>
+            </div>
+            <div className="flex items-baseline gap-2 relative z-10">
+              <AnimatedMoney value={analytics.safeToSpend} className={`text-xl font-black ${analytics.safeToSpend <= 0 ? 'text-red-500' : (dm ? 'text-emerald-400' : 'text-emerald-600')}`} />
+              <span className={`text-[10px] font-medium ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เพื่องบไม่ติดลบ</span>
+            </div>
+            {analytics.safeToSpend <= 0 && (
+              <div className={`absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l ${dm ? 'from-red-500/20' : 'from-red-500/10'} to-transparent pointer-events-none`} />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ─── BOTTOM ROW: KEY METRICS ─── */}
       <div className={`grid grid-cols-2 lg:grid-cols-4 ${dm ? 'bg-slate-800/40 border-t border-slate-700' : 'bg-slate-50/50 border-t border-slate-100'}`}>
 
@@ -217,6 +250,11 @@ export default function SummaryCards({ analytics }) {
             value={analytics.dailyAvg}
             className={`relative z-10 text-lg font-black truncate ${dm ? 'text-slate-200' : 'text-slate-700'}`}
           />
+          {analytics.isSingleMonthView && (
+            <div className={`relative z-10 text-[9px] mt-auto font-medium ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+              (เฉลี่ยเต็มเดือน: {formatMoney(analytics.fullMonthDailyAvg)})
+            </div>
+          )}
         </div>
 
         {/* Food */}
