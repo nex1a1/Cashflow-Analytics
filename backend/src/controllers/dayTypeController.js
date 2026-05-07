@@ -1,4 +1,5 @@
 const dayTypeService = require('../services/dayTypeService');
+const { dayTypeSchema } = require('../validations/dayTypeValidation');
 
 exports.getAllDayTypes = (req, res) => {
   try {
@@ -11,9 +12,13 @@ exports.getAllDayTypes = (req, res) => {
 
 exports.upsertDayType = (req, res) => {
   try {
-    dayTypeService.upsert(req.body);
+    const validatedData = dayTypeSchema.parse(req.body);
+    dayTypeService.upsert(validatedData);
     res.json({ success: true });
   } catch (err) {
+    if (err.name === 'ZodError') {
+      return res.status(400).json({ error: 'Validation Error', details: err.errors });
+    }
     res.status(500).json({ error: err.message });
   }
 };

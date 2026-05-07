@@ -17,11 +17,11 @@ export default function SettingsView({
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
-  enableSmartInsights, setEnableSmartInsights
+  enableSmartInsights, setEnableSmartInsights, triggerToast
 }) {
   const { isDarkMode: dm } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
-
+  
   const onAddCategory = (type) => {
     handleAddCategory(type);
     setTimeout(() => {

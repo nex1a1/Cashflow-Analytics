@@ -1,4 +1,5 @@
 const calendarService = require('../services/calendarService');
+const { calendarDaySchema } = require('../validations/calendarValidation');
 
 exports.getAllCalendarDays = (req, res) => {
     try {
@@ -18,16 +19,14 @@ exports.getAllCalendarDays = (req, res) => {
 };
 
 exports.upsertCalendarDay = (req, res) => {
-    const { date, type_id, note } = req.body;
-    
-    if (!date || type_id === undefined) {
-        return res.status(400).json({ error: 'Missing date or type_id' });
-    }
-
     try {
-        calendarService.upsert(date, type_id, note);
+        const validatedData = calendarDaySchema.parse(req.body);
+        calendarService.upsert(validatedData.date, validatedData.type_id, validatedData.note);
         res.json({ success: true });
     } catch (err) {
+        if (err.name === 'ZodError') {
+            return res.status(400).json({ error: 'Validation Error', details: err.errors });
+        }
         console.error('❌ Error in upsertCalendarDay:', err);
         res.status(500).json({ error: err.message });
     }

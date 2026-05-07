@@ -15,7 +15,8 @@ services:
     environment:
       - PORT=3000
       - DB_PATH=/app/data/cashflow.db
-    command: sh -c "npm install --no-audit --no-fund && npm start"
+      - TZ=Asia/Bangkok
+    command: sh -c "apk add --no-cache tzdata && npm install --no-audit --no-fund && npm start"
 
   # 2. Frontend (React + Vite)
   frontend:
@@ -29,7 +30,8 @@ services:
       - "5173:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true
-    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host"
+      - TZ=Asia/Bangkok
+    command: sh -c "apk add --no-cache tzdata && npm install --no-audit --no-fund && npm run dev -- --host"
 
 volumes:
   backend_node_modules:

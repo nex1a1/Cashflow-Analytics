@@ -21,7 +21,7 @@ import './styles/darkMode.css';
 import { useTheme } from './context/ThemeContext';
 import { useToast } from './context/ToastContext';
 import SettingsView from './views/Settings';
-import CalendarView from './views/CalendarView';
+import CalendarView from './views/Calendar';
 import LedgerView from './views/Ledger/index';
 import DashboardView from './views/Dashboard/index';
 import BatchAddModal from './components/BatchAddModal';
@@ -420,6 +420,7 @@ export default function App() {
                   transactions={transactions}
                   enableSmartInsights={enableSmartInsights}
                   setEnableSmartInsights={setEnableSmartInsights}
+                  triggerToast={triggerToast}
                 />
               </motion.div>
             )}

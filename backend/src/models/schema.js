@@ -54,19 +54,6 @@ const initSchema = () => {
       FOREIGN KEY (category_id) REFERENCES categories(id)
     );
 
-    CREATE TABLE IF NOT EXISTS recurring_configs (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      amount INTEGER NOT NULL CHECK(amount >= 0),
-      category_id TEXT NOT NULL,
-      due_day INTEGER NOT NULL CHECK(due_day >= 1 AND due_day <= 31),
-      note TEXT,
-      is_active INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (category_id) REFERENCES categories(id)
-    );
-
     CREATE TABLE IF NOT EXISTS settings (
       key   TEXT PRIMARY KEY,
       value TEXT
