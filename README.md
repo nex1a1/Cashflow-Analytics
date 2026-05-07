@@ -17,21 +17,25 @@ Cashflow Analytics เป็น Web Application สำหรับบันท�
 
 ## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
 
-### Frontend (ฝั่งผู้ใช้งาน)
-- **Framework:** React 18 (รันด้วย Vite เพื่อความรวดเร็ว)
-- **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **Charts:** Chart.js / react-chartjs-2
-- **Animations:** Framer Motion
+### 💻 Frontend (Client-side)
+- **Core:** `React v18.2.0` (รันบน `Vite v5.0.8`)
+- **Styling:** `Tailwind CSS v3.4.1`, `PostCSS`, `Autoprefixer`
+- **Charts:** `Chart.js v4.4.1` และ `react-chartjs-2 v5.2.0`
+- **Icons:** `Lucide React v0.312.0`
+- **Animations:** `Framer Motion v12.38.0`
+- **Context Management:** React Context API (Theme & Toast)
 
-### Backend (ฝั่งเซิร์ฟเวอร์ & API)
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** SQLite3 (ใช้แพ็กเกจ `better-sqlite3` เพื่อประสิทธิภาพสูงบนระบบ Local)
-- **Validation:** Zod (สำหรับการตรวจสอบข้อมูล API)
+### 🖥️ Backend (Server-side)
+- **Runtime:** `Node.js v20 (LTS)` (Alpine-based Docker Image)
+- **Framework:** `Express.js v4.18.2`
+- **Database:** `better-sqlite3 v12.9.0` (SQLite3 with synchronous/high-performance binding)
+- **Validation:** `Zod v4.4.2` (Schema declaration and type safety)
+- **Middleware:** `CORS v2.8.5`
 
-### Infrastructure
-- **Docker:** ใช้ Docker Compose ในการแพ็กเกจและรันทั้ง Frontend และ Backend ให้ทำงานประสานกันอย่างราบรื่น
+### 🐳 Infrastructure
+- **Containerization:** `Docker v20.x+` & `Docker Compose v3.8`
+- **OS Support:** Alpine Linux (Lightweight containers)
+- **Timezone:** Asia/Bangkok (Configured at OS and DB level)
 
 ## 🚀 การติดตั้งและรันโปรเจกต์ (Installation & Running)
 
@@ -49,7 +53,7 @@ Cashflow Analytics เป็น Web Application สำหรับบันท�
 3. รอจนกว่า Container จะทำการสร้างและรันเสร็จ (ครั้งแรกอาจใช้เวลาโหลด Dependency เล็กน้อย)
 4. เปิดเบราว์เซอร์ไปที่:
    - **Frontend:** [http://localhost:5173](http://localhost:5173)
-   - **Backend API:** [http://localhost:3000](http://localhost:3000) (ไม่จำเป็นต้องเปิดตรงๆ)
+   - **Backend API:** [http://localhost:3000](http://localhost:3000)
 
 ### การหยุดการทำงาน
 ```bash
@@ -60,36 +64,36 @@ docker-compose down
 
 ```text
 Cashflow-Analytics/
-├── backend/                  # โค้ดฝั่ง Node.js API และ Database
-│   ├── data/                 # ที่เก็บไฟล์ฐานข้อมูล cashflow.db (ออโต้เมานท์ผ่าน Docker)
+├── backend/                  # Node.js API + SQLite
+│   ├── data/                 # SQLite Database (cashflow.db)
 │   ├── src/
-│   │   ├── config/           # การตั้งค่าต่างๆ เช่น db.js
-│   │   ├── controllers/      # ควบคุม Logic ของ API แต่ละส่วน
-│   │   ├── models/           # สร้างและจัดการ Schema ฐานข้อมูล
-│   │   ├── routes/           # กำหนดเส้นทาง (Routes) ของ API
-│   │   └── services/         # จัดการการดึง/บันทึกข้อมูล Database
-│   ├── server.js             # ไฟล์หลักในการเริ่มการทำงานของ Express
+│   │   ├── config/           # DB Configuration (better-sqlite3)
+│   │   ├── controllers/      # Request handling logic
+│   │   ├── models/           # DB Schema & Seeding
+│   │   ├── routes/           # API Routing (api.js)
+│   │   ├── services/         # Business logic & DB queries
+│   │   └── validations/      # Zod validation schemas
+│   ├── server.js             # Entry point
 │   └── package.json          
-├── frontend/                 # โค้ดฝั่ง React + Vite
+├── frontend/                 # React + Vite
 │   ├── src/
-│   │   ├── components/       # UI Components ย่อยๆ
-│   │   ├── constants/        # ค่าคงที่ (Constants) และ Default Config
-│   │   ├── context/          # React Context (Theme, Toast)
-│   │   ├── hooks/            # Custom React Hooks
-│   │   ├── services/         # API Service (ดึงข้อมูลจาก Backend)
-│   │   ├── styles/           # CSS พิเศษ
-│   │   ├── utils/            # ฟังก์ชันตัวช่วย (Helpers)
-│   │   └── views/            # หน้าจอหลัก (Dashboard, Calendar, Ledger, Settings)
+│   │   ├── components/       # UI Components & Modals
+│   │   ├── hooks/            # Custom Hooks (Data & Analytics)
+│   │   ├── services/         # Frontend API Clients
+│   │   ├── utils/            # Formatters & Analytics Helpers
+│   │   └── views/            # Main Pages (Dashboard, Ledger, etc.)
 │   ├── index.html
 │   └── package.json
-├── docker-compose.yml        # ตั้งค่าการรันโปรเจกต์ผ่าน Docker
-└── .gitignore                # จัดการไฟล์ที่ไม่ต้องการนำขึ้น Git (มีโฟลเดอร์ debug_scripts/)
+└── docker-compose.yml        # Multi-container orchestration
 ```
 
 ## 🐞 การ Debug (สำหรับนักพัฒนา)
 
-- **ดู Log ฐานข้อมูล:** ตัว Backend มีการตั้งค่าเปิด Log สำหรับติดตามคำสั่งที่มีการแก้ไขข้อมูล (`INSERT`, `UPDATE`, `DELETE`) คุณสามารถดูได้ผ่าน Docker logs:
+- **ดู Log API:**
   ```bash
-  docker logs --tail 50 -f expense_api
+  docker logs -f expense_api
   ```
-- **สคริปต์ทดสอบ:** ไฟล์สคริปต์ที่ใช้สำหรับทดสอบ API และทดสอบเขียน Database ต่างๆ จะถูกแยกเก็บไว้ในโฟลเดอร์ `debug_scripts/` (โฟลเดอร์นี้ถูกตั้ง ignore ไว้ไม่ให้นำขึ้น Git)
+- **เข้าถึงฐานข้อมูลใน Container:**
+  ```bash
+  docker exec -it expense_api sh -c "sqlite3 /app/data/cashflow.db"
+  ```
