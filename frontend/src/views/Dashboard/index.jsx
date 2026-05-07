@@ -5,6 +5,7 @@ import { Inbox } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 // Components
+import SmartInsightHeader from './components/SmartInsightHeader';
 import SummaryCards from './components/SummaryCards';
 import ExpenseProportion from './components/ExpenseProportion';
 import MainChart from './components/MainChart';
@@ -17,6 +18,7 @@ export default function DashboardView({
   hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
   chartGroupBy, setChartGroupBy,cashflowGroups,
   analytics, dayTypeConfig, dayTypes, topXLimit, setTopXLimit,
+  enableSmartInsights
 }) {
   const { isDarkMode: dm } = useTheme();
   
@@ -32,6 +34,11 @@ export default function DashboardView({
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
+
+      {/* ══════════════════════════════════════════════════════════
+          SMART INSIGHTS HEADER
+      ══════════════════════════════════════════════════════════ */}
+      {enableSmartInsights && <SmartInsightHeader insights={analytics?.smartInsights} />}
 
       {/* ══════════════════════════════════════════════════════════
           ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION

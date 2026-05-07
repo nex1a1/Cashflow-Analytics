@@ -337,7 +337,8 @@ export default function SettingsView({
   cashflowGroups = [], setCashflowGroups,
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],
-  handleAddDayType, handleDeleteDayType, handleMoveDayType
+  handleAddDayType, handleDeleteDayType, handleMoveDayType,
+  enableSmartInsights, setEnableSmartInsights
 }) {
   const { isDarkMode: dm } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
@@ -417,49 +418,53 @@ export default function SettingsView({
 
       <OrphanWarningBanner categories={categories} cashflowGroups={cashflowGroups} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_360px] xl:grid-cols-[1fr_1fr_400px] gap-3 items-start mb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.2fr_1fr] gap-4 items-start mb-4">
 
-        <SectionCard
-          accentColor="emerald"
-          icon={<Coins className="w-3.5 h-3.5" />}
-          title="หมวดหมู่รายรับ"
-          badge={incomeCategories.length}
-          action={{ label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income') }}
-        >
-          <div>
-            {incomeCategories.map((cat, idx) => (
-              <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
-                onMove={handleMoveCategory} onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
-                isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
-            ))}
-            {incomeCategories.length === 0 && (
-              <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายรับ</p>
-            )}
-          </div>
-        </SectionCard>
+        {/* ── LEFT COLUMN: Categories ── */}
+        <div className="flex flex-col gap-4">
+          <SectionCard
+            accentColor="blue"
+            icon={<Wallet className="w-3.5 h-3.5" />}
+            title="หมวดหมู่รายจ่าย"
+            badge={expenseCategories.length}
+            action={{ label: 'เพิ่มรายจ่าย', onClick: () => onAddCategory('expense') }}
+          >
+            <div>
+              {expenseCategories.map((cat, idx) => (
+                <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
+                  onMove={handleMoveCategory} onChange={handleCategoryChange}
+                  onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                  isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
+              ))}
+              {expenseCategories.length === 0 && (
+                <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
+              )}
+            </div>
+          </SectionCard>
 
-        <SectionCard
-          accentColor="blue"
-          icon={<Wallet className="w-3.5 h-3.5" />}
-          title="หมวดหมู่รายจ่าย"
-          badge={expenseCategories.length}
-          action={{ label: 'เพิ่มรายจ่าย', onClick: () => onAddCategory('expense') }}
-        >
-          <div>
-            {expenseCategories.map((cat, idx) => (
-              <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
-                onMove={handleMoveCategory} onChange={handleCategoryChange}
-                onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
-                isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
-            ))}
-            {expenseCategories.length === 0 && (
-              <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
-            )}
-          </div>
-        </SectionCard>
+          <SectionCard
+            accentColor="emerald"
+            icon={<Coins className="w-3.5 h-3.5" />}
+            title="หมวดหมู่รายรับ"
+            badge={incomeCategories.length}
+            action={{ label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income') }}
+          >
+            <div>
+              {incomeCategories.map((cat, idx) => (
+                <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
+                  onMove={handleMoveCategory} onChange={handleCategoryChange}
+                  onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                  isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
+              ))}
+              {incomeCategories.length === 0 && (
+                <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายรับ</p>
+              )}
+            </div>
+          </SectionCard>
+        </div>
 
-        <div className="flex flex-col gap-3">
+        {/* ── RIGHT COLUMN: Structure, Settings & Danger Zone ── */}
+        <div className="flex flex-col gap-4">
 
           <SectionCard
             accentColor="purple"
@@ -609,6 +614,26 @@ export default function SettingsView({
             </div>
           </SectionCard>
 
+        </div>
+      </div>
+
+      <div className={`border-2 overflow-hidden mb-4 ${dm ? 'bg-slate-900 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`px-4 py-2 border-b-2 flex items-center gap-2 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100/60 border-slate-200'}`}>
+          <Settings2 className={`w-4 h-4 ${dm ? 'text-slate-400' : 'text-slate-600'}`} />
+          <h2 className={`text-sm font-black tracking-wide ${dm ? 'text-slate-300' : 'text-slate-700'}`}>ตั้งค่าขั้นสูง (Advanced Options)</h2>
+        </div>
+        <div className={`px-5 py-3 flex flex-col items-start gap-2 ${dm ? '' : 'bg-white/60'}`}>
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input type="checkbox" checked={enableSmartInsights} onChange={e => setEnableSmartInsights(e.target.checked)} className="sr-only peer" />
+              <div className={`w-9 h-5 rounded-full transition-colors ${enableSmartInsights ? (dm ? 'bg-blue-600' : 'bg-blue-500') : (dm ? 'bg-slate-700' : 'bg-slate-300')}`}></div>
+              <div className={`absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4`}></div>
+            </div>
+            <div>
+              <p className={`text-[13px] font-bold ${dm ? 'text-slate-200' : 'text-slate-800'}`}>เปิดการแจ้งเตือนอัจฉริยะ (Smart Insights)</p>
+              <p className={`text-[11px] ${dm ? 'text-slate-400' : 'text-slate-500'}`}>แสดงแถบแจ้งเตือนวิเคราะห์พฤติกรรมการใช้จ่ายที่ด้านบนของ Dashboard</p>
+            </div>
+          </label>
         </div>
       </div>
 

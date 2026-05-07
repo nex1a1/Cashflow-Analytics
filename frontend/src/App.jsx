@@ -65,6 +65,14 @@ export default function App() {
   const [dashboardCategory, setDashboardCategory] = useState(['ALL']);
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
+  const [enableSmartInsights, setEnableSmartInsights] = useState(() => {
+    const saved = localStorage.getItem('enableSmartInsights');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('enableSmartInsights', JSON.stringify(enableSmartInsights));
+  }, [enableSmartInsights]);
 
   // 1. Hooks (ประกาศก่อนใช้)
   const {
@@ -269,7 +277,7 @@ export default function App() {
     transactions: validAnalyticsTxs, categories, filterPeriod,
     cashflowGroups, 
     hideFixedExpenses, dashboardCategory, chartGroupBy,
-    topXLimit, dayTypes, dayTypeConfig, isDarkMode,
+    topXLimit, dayTypes, dayTypeConfig, isDarkMode
   });
 
   const handleOpenAddModal = (dateStr, type) => {
@@ -343,6 +351,7 @@ export default function App() {
                   topXLimit={topXLimit} setTopXLimit={setTopXLimit}
                   categories={categories} dayTypeConfig={dayTypeConfig}
                   dayTypes={dayTypes}
+                  enableSmartInsights={enableSmartInsights}
                 />
               </motion.div>
             )}
@@ -409,6 +418,8 @@ export default function App() {
                   handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
                   saveSettingToDb={saveSettingToDb}
                   transactions={transactions}
+                  enableSmartInsights={enableSmartInsights}
+                  setEnableSmartInsights={setEnableSmartInsights}
                 />
               </motion.div>
             )}
