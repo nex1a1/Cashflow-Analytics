@@ -20,7 +20,7 @@ import AppToast from './components/AppToast';
 import './styles/darkMode.css';
 import { useTheme } from './context/ThemeContext';
 import { useToast } from './context/ToastContext';
-import SettingsView from './views/SettingsView';
+import SettingsView from './views/Settings';
 import CalendarView from './views/CalendarView';
 import LedgerView from './views/Ledger/index';
 import DashboardView from './views/Dashboard/index';
