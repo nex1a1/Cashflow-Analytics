@@ -124,11 +124,14 @@ export default function BatchAddModal({
     if (pendingItems.length === 0) return;
     setIsProcessing(true);
     try {
-      const batchTime = Date.now();
       const finalItems = pendingItems.map((item) => ({
         id: crypto.randomUUID(),
-        date: item.date, category: item.category,
-        description: item.description, amount: item.amount, dayNote: item.dayNote
+        date: item.date, 
+        category: item.category,
+        category_id: item._catObj?.id, // Send category_id if available
+        description: item.description, 
+        amount: item.amount, 
+        dayNote: item.dayNote
       }));
       await onSaveBatch(finalItems);
       setPendingItems([]);

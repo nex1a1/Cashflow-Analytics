@@ -32,5 +32,6 @@ yarn-error.log*
 # Debug and Test Scripts
 debug_scripts/
 
-# Logs
+# AI Enchancer
+GEMINI.md
 SKILL.md

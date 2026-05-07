@@ -27,30 +27,31 @@ const initSchema = () => {
       FOREIGN KEY (cashflow_group_id) REFERENCES cashflow_groups(id)
     );
 
+    CREATE TABLE IF NOT EXISTS day_types (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      label TEXT NOT NULL,
+      color TEXT,
+      order_index INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS calendar_days (
+      date TEXT PRIMARY KEY,
+      day_type_id TEXT NOT NULL,
+      note TEXT,
+      FOREIGN KEY (day_type_id) REFERENCES day_types(id)
+    );
+
     CREATE TABLE IF NOT EXISTS transactions (
       id TEXT PRIMARY KEY,
       date TEXT NOT NULL,
       description TEXT,
       amount INTEGER NOT NULL CHECK(amount >= 0),
-      category_id INTEGER NOT NULL,
+      category_id TEXT NOT NULL,
       is_deleted INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS day_types (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      label TEXT NOT NULL,
-      color TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS calendar_days (
-      date TEXT PRIMARY KEY,
-      day_type_id INTEGER NOT NULL,
-      note TEXT,
-      FOREIGN KEY (day_type_id) REFERENCES day_types(id)
     );
 
     CREATE TABLE IF NOT EXISTS settings (
@@ -137,7 +138,9 @@ const verifyTableColumns = () => {
 };
 
 const seedInitialData = () => {
-  // --- Seed Day Types (ตามรายการที่คุณต้องการ) ---
+  const crypto = require('crypto');
+
+  // --- Seed Day Types ---
   const requestedDayTypes = [
     { name: 'workday',    label: 'ทำงาน',         color: '#3B82F6' },
     { name: 'holiday',    label: 'วันหยุด',        color: '#EF4444' },
@@ -151,23 +154,23 @@ const seedInitialData = () => {
     { name: 'company_act', label: 'กิจกรรม บ.',      color: '#6366F1' }
   ];
 
-  const insertDayType = db.prepare("INSERT INTO day_types (name, label, color) VALUES (?, ?, ?)");
+  const insertDayType = db.prepare("INSERT INTO day_types (id, name, label, color, order_index) VALUES (?, ?, ?, ?, ?)");
   
-  for (const dt of requestedDayTypes) {
+  requestedDayTypes.forEach((dt, idx) => {
     const exists = db.prepare("SELECT id FROM day_types WHERE label = ?").get(dt.label);
     if (!exists) {
-      insertDayType.run(dt.name, dt.label, dt.color);
+      insertDayType.run(crypto.randomUUID(), dt.name, dt.label, dt.color, idx + 1);
       console.log(`🌱 Seeded day type: ${dt.label}`);
     }
-  }
+  });
 
   // --- Seed Cashflow Groups ---
   const groupsCount = db.prepare("SELECT COUNT(*) as count FROM cashflow_groups").get().count;
   if (groupsCount === 0) {
-    const insertGroup = db.prepare("INSERT INTO cashflow_groups (name, type, order_index, color, icon) VALUES (?, ?, ?, ?, ?)");
-    insertGroup.run('รายได้หลัก', 'income', 1, '#10B981', '💰');
-    insertGroup.run('รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
-    insertGroup.run('รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
+    const insertGroup = db.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?)");
+    insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
   }
 };
 

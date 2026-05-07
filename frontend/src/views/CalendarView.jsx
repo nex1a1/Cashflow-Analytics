@@ -96,8 +96,11 @@ function CalendarDayCell({
   onShowPreview, onHidePreview, onMovePreview
 }) {
   const { isDarkMode } = useTheme();
-  const dow = new Date(dateStr.split('/').reverse().join('-')).getDay();
-  const defType = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+  const defType = useMemo(() => {
+    // workday = index 0, holiday = index 1 (based on our seed/order_index)
+    return isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+  }, [isWeekend, dayTypeConfig]);
+
   const curType = dayTypes[dateStr] || defType;
   const typeConf = dayTypeConfig.find(dt => dt.id === curType) || dayTypeConfig[0];
 

@@ -31,9 +31,10 @@ class TransactionService {
       // Find a default group (first one available)
       const defaultGroup = db.prepare("SELECT id FROM cashflow_groups LIMIT 1").get();
       if (defaultGroup) {
-        const result = db.prepare("INSERT INTO categories (name, cashflow_group_id) VALUES (?, ?)")
-          .run(name, defaultGroup.id);
-        return result.lastInsertRowid;
+        const id = require('crypto').randomUUID();
+        db.prepare("INSERT INTO categories (id, name, cashflow_group_id) VALUES (?, ?, ?)")
+          .run(id, name, defaultGroup.id);
+        return id;
       }
       return null;
     }

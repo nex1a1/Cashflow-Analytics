@@ -119,12 +119,16 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
     if (!amt || amt <= 0 || !formCat) return;
     setIsSaving(true);
     
+    const catObj = catMap[formCat];
     const newItem = {
       id: crypto.randomUUID(),
-      date: dateStr, category: formCat,
-      description: formDesc || formCat, amount: amt, dayNote: ''
+      date: dateStr, 
+      category: formCat,
+      category_id: catObj?.id, // Include category_id
+      description: formDesc || formCat, 
+      amount: amt, 
+      dayNote: ''
     };
-    const catObj = catMap[formCat];
     
     setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);
     

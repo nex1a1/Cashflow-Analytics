@@ -18,7 +18,8 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
         color: c.color,
         isFixed: !!c.is_fixed,
         cashflowGroup: c.cashflow_group_id,
-        type: c.group_type
+        type: c.group_type,
+        order_index: c.order_index || 0
       }));
       setCategories(mapped);
     } catch (err) { console.error('Failed to reload categories:', err); }
@@ -40,7 +41,8 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
       [field]: value,
       // Map frontend names back to backend names if necessary
       is_fixed: field === 'isFixed' ? (value ? 1 : 0) : (cat.isFixed ? 1 : 0),
-      cashflow_group_id: field === 'cashflowGroup' ? value : cat.cashflowGroup
+      cashflow_group_id: field === 'cashflowGroup' ? value : cat.cashflowGroup,
+      order_index: cat.order_index
     };
 
     try {
@@ -60,6 +62,11 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
       const groups = await groupService.getAll();
       const defaultGroup = groups.find(g => g.type === type) || groups[0];
       
+      // Get max order_index to put new category at the end
+      const maxOrder = categories.length > 0 
+        ? Math.max(...categories.map(c => c.order_index || 0)) 
+        : 0;
+
       const newCat = {
         id: crypto.randomUUID(),
         name: isIncome ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
@@ -67,6 +74,7 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
         color: isIncome ? '#10B981' : '#64748B',
         is_fixed: 0,
         cashflow_group_id: defaultGroup ? defaultGroup.id : 1,
+        order_index: maxOrder + 1
       };
       
       await categoryService.save(newCat);
@@ -104,35 +112,48 @@ export default function useCategories(initialCategories, saveSettingToDb, saveTo
   };
 
   const handleMoveCategory = async (id, direction) => {
-    const index = categories.findIndex(c => c.id === id);
+    const targetCat = categories.find(c => c.id === id);
+    if (!targetCat) return;
+
+    // Filter categories by type to move within same group
+    const sameTypeCategories = categories
+      .filter(c => c.type === targetCat.type)
+      .sort((a, b) => a.order_index - b.order_index);
+    
+    const index = sameTypeCategories.findIndex(c => c.id === id);
     if (index === -1) return;
     
-    const newCategories = [...categories];
     const dir = direction.toLowerCase();
-    let targetIndex = -1;
+    let swapIndex = -1;
     
-    if (dir === 'up' && index > 0) targetIndex = index - 1;
-    else if (dir === 'down' && index < newCategories.length - 1) targetIndex = index + 1;
+    if (dir === 'up' && index > 0) swapIndex = index - 1;
+    else if (dir === 'down' && index < sameTypeCategories.length - 1) swapIndex = index + 1;
     
-    if (targetIndex !== -1) {
-      [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
+    if (swapIndex !== -1) {
+      const otherCat = sameTypeCategories[swapIndex];
       
-      // Update order_index for all categories
-      const updatedWithOrder = newCategories.map((c, i) => ({
+      // Swap order_index
+      const tempOrder = targetCat.order_index;
+      const updatedTarget = { ...targetCat, order_index: otherCat.order_index };
+      const updatedOther = { ...otherCat, order_index: tempOrder };
+
+      // Ensure they don't have the same order_index if they were both 0
+      if (updatedTarget.order_index === updatedOther.order_index) {
+        updatedTarget.order_index = index + 1;
+        updatedOther.order_index = swapIndex + 1;
+      }
+
+      // Map back to backend fields
+      const toBackend = (c) => ({
         ...c,
-        order_index: i + 1,
-        // Map back to backend fields
         is_fixed: c.isFixed ? 1 : 0,
-        cashflow_group_id: c.cashflowGroup
-      }));
-      
-      setCategories(newCategories); // Optimistic UI update
+        cashflow_group_id: c.cashflowGroup,
+        order_index: c.order_index
+      });
 
       try {
-        // Save all updated categories
-        for (const cat of updatedWithOrder) {
-          await categoryService.save(cat);
-        }
+        await categoryService.save(toBackend(updatedTarget));
+        await categoryService.save(toBackend(updatedOther));
         await loadCategories();
       } catch (err) {
         showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');

@@ -30,12 +30,12 @@ export default function CashflowTable({ analytics, cashflowGroups = [], categori
 
   const activeIncomeGroups = cashflowGroups
     .filter(g => g.type === 'income')
-    .sort((a,b) => a.order - b.order)
+    .sort((a,b) => a.order_index - b.order_index)
     .filter(g => analytics.sortedCashflow.some(row => (row.groups[g.id] || 0) > 0));
 
   const activeExpenseGroups = cashflowGroups
     .filter(g => g.type === 'expense')
-    .sort((a,b) => a.order - b.order)
+    .sort((a,b) => a.order_index - b.order_index)
     .filter(g => analytics.sortedCashflow.some(row => (row.groups[g.id] || 0) > 0));
 
   // 🚀 เส้นแบ่งสี Slate ตามโหมดมืด/สว่าง

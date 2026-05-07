@@ -160,7 +160,7 @@ function CategoryRow({ cat, isNew, isIncome, onMove, onChange, onDelete, cashflo
   const accentFocus = isIncome ? 'focus:border-emerald-500' : 'focus:border-blue-500';
 
   const filteredGroups = useMemo(
-    () => cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order - b.order),
+    () => cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order_index - b.order_index),
     [cashflowGroups, isIncome],
   );
 
@@ -469,7 +469,7 @@ export default function SettingsView({
             action={{ label: 'เพิ่ม', onClick: handleAddCashflowGroup }}
           >
             <div className={`p-2 space-y-1.5 ${dm ? '' : 'bg-slate-50/40'}`}>
-              {[...cashflowGroups].sort((a, b) => a.order - b.order).map((group, idx, arr) => {
+              {[...cashflowGroups].sort((a, b) => a.order_index - b.order_index).map((group, idx, arr) => {
                 const hasError = cashflowDeleteError?.id === group.id;
                 const txCount  = txCountByGroup[group.id] || 0;
                 const inUse    = categories.some(c => c.cashflowGroup === group.id);

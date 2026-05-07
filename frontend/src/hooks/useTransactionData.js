@@ -57,7 +57,8 @@ export default function useTransactionData({
             color: c.color,
             isFixed: !!c.is_fixed,
             cashflowGroup: c.cashflow_group_id,
-            type: c.group_type
+            type: c.group_type,
+            order_index: c.order_index || 0
           }));
           setCategories(mapped);
         }
@@ -71,7 +72,8 @@ export default function useTransactionData({
             id: dt.id,
             label: dt.label,
             color: dt.color,
-            name: dt.name
+            name: dt.name,
+            order_index: dt.order_index || 0
           })));
         }
       } catch (err) { console.error('Failed to load day types master data:', err); }
