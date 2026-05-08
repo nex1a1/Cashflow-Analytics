@@ -77,8 +77,13 @@ export default function SettingsView({
     return map;
   }, [transactions, categories]);
 
-  const incomeCategories  = useMemo(() => categories.filter(c => c.type === 'income'),  [categories]);
-  const expenseCategories = useMemo(() => categories.filter(c => c.type === 'expense'), [categories]);
+  const incomeCategories = useMemo(() => 
+    [...categories].filter(c => c.type === 'income').sort((a, b) => a.order_index - b.order_index), 
+  [categories]);
+
+  const expenseCategories = useMemo(() => 
+    [...categories].filter(c => c.type === 'expense').sort((a, b) => a.order_index - b.order_index), 
+  [categories]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">

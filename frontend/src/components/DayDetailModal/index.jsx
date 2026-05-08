@@ -1,0 +1,189 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+import { formatMoney } from '../../utils/formatters';
+import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
+import DailyForm from './DailyForm';
+import QuickSuggest from './QuickSuggest';
+import TransactionList from './TransactionList';
+
+const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+export default function DayDetailModal({ dateStr, transactions = [], categories = [], onClose, onSave, onDelete }) {
+  const { isDarkMode: dm } = useTheme();
+  const { showToast } = useToast();
+  
+  const [yyyyStr, mmStr, ddStr] = dateStr.split('-');
+  const d = parseInt(ddStr, 10);
+  const m = parseInt(mmStr, 10);
+  const y = parseInt(yyyyStr, 10);
+  const dateObj = new Date(y, m - 1, d);
+  const dayOfWeek = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dateObj.getDay()];
+  const displayDate = `${d} ${THAI_MONTHS[m - 1]} ${y}`;
+
+  const defaultExpenseCatId = categories.find(c => c.type === 'expense')?.id || '';
+
+  const [localItems, setLocalItems]           = useState([]);
+  const [isSaving, setIsSaving]               = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [suggCatFilter, setSuggCatFilter]     = useState('ALL');
+  const [currentFormType, setCurrentFormType] = useState('expense');
+
+  const formMethodsRef = useRef(null);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        formMethodsRef.current?.setValue('type', 'expense');
+        const firstCat = categories.find(c => c.type === 'expense');
+        formMethodsRef.current?.setValue('categoryId', firstCat?.id || '');
+      }
+      if (e.altKey && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        formMethodsRef.current?.setValue('type', 'income');
+        const firstCat = categories.find(c => c.type === 'income');
+        formMethodsRef.current?.setValue('categoryId', firstCat?.id || '');
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose, categories]);
+
+  const txIds      = new Set(transactions.map(t => t.id));
+  const pendingItems = localItems.filter(i => !txIds.has(i.id));
+  const dayTx      = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
+
+  const catMap = useMemo(() => {
+    return categories.reduce((acc, c) => { 
+      acc[c.id] = c; 
+      acc[c.name] = c; // Fallback
+      return acc; 
+    }, {});
+  }, [categories]);
+
+  const expenses   = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
+  const income     = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
+  const totalExp   = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+  const totalInc   = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+
+  const applySuggestion = (s) => {
+    if (formMethodsRef.current) {
+      const { setValue, setFocus } = formMethodsRef.current;
+      setValue('categoryId', s.categoryId);
+      setValue('description', s.description || '');
+      setValue('amount', Number(s.amount), { shouldValidate: true });
+      setTimeout(() => setFocus('amount'), 10);
+    }
+  };
+
+  const handleSave = async (data) => {
+    setIsSaving(true);
+
+    const catObj = catMap[data.categoryId];
+    const targetCatName = catObj?.name || 'อื่นๆ';
+    const newItem = {
+      id: crypto.randomUUID(),
+      date: dateStr, 
+      category: targetCatName,
+      category_id: data.categoryId, 
+      description: data.description || targetCatName, 
+      amount: data.amount, 
+      dayNote: ''
+    };
+
+    setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);
+
+    try {
+      await onSave(newItem);
+      setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
+    } catch (err) {
+      console.error('Save failed:', err);
+      setLocalItems(prev => prev.filter(i => i.id !== newItem.id));
+      showToast('⚠️ ไม่สามารถบันทึกข้อมูลได้: ' + (err.message || 'Unknown error'), 'error');
+    } finally { 
+      setIsSaving(false); 
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (confirmDeleteId === id) {
+      if (localItems.some(i => i.id === id)) setLocalItems(prev => prev.filter(i => i.id !== id));
+      else onDelete(id);
+      setConfirmDeleteId(null);
+    } else {
+      setConfirmDeleteId(id);
+      setTimeout(() => setConfirmDeleteId(c => c === id ? null : c), 3000);
+    }
+  };
+
+  const tokens = {
+    surface: dm ? 'bg-slate-900' : 'bg-white',
+    border: dm ? 'border-slate-700' : 'border-slate-200',
+    textPri: dm ? 'text-slate-100' : 'text-slate-800',
+    textMuted: dm ? 'text-slate-400' : 'text-slate-500',
+    closeBtn: `p-1.5 rounded-sm transition-colors absolute top-4 right-4 z-10 ${dm ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`,
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className={`${tokens.surface} rounded-sm shadow-2xl w-full max-w-4xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border ${tokens.border} overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
+
+        <button onClick={onClose} className={tokens.closeBtn}>
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0`}>
+          <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0 pr-12`}>
+            <div>
+              <h2 className={`text-lg font-black ${tokens.textPri}`}>{displayDate}</h2>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <span className={`text-xs font-medium ${tokens.textMuted}`}>วัน{dayOfWeek}</span>
+                {totalExp > 0 && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${dm ? 'bg-red-900/40 text-red-400' : 'bg-red-50 text-red-600'}`}>
+                    ▼ {formatMoney(totalExp)} ฿
+                  </span>
+                )}
+                {totalInc > 0 && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${dm ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                    ▲ {formatMoney(totalInc)} ฿
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <TransactionList 
+            dayTx={dayTx}
+            catMap={catMap}
+            confirmDeleteId={confirmDeleteId}
+            handleDelete={handleDelete}
+          />
+
+          <DailyForm 
+            onSubmitItem={handleSave}
+            categories={categories}
+            defaultType="expense"
+            defaultCategoryId={defaultExpenseCatId}
+            isProcessing={isSaving}
+            externalFormSetter={(methods) => { formMethodsRef.current = methods; }}
+            onTypeChange={setCurrentFormType}
+          />
+        </div>
+
+        <QuickSuggest 
+          transactions={transactions}
+          categories={categories}
+          catMap={catMap}
+          formType={currentFormType}
+          suggCatFilter={suggCatFilter}
+          setSuggCatFilter={setSuggCatFilter}
+          onApplySuggestion={applySuggestion}
+          isProcessing={isSaving}
+        />
+
+      </div>
+    </div>
+  );
+}

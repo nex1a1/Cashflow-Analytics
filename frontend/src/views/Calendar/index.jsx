@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import DayDetailModal from '../../components/DayDetailModal.jsx';
+import DayDetailModal from '../../components/DayDetailModal/index';
 import { CalendarDays, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { hexToRgb } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';

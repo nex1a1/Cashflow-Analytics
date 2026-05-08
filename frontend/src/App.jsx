@@ -24,7 +24,7 @@ import SettingsView from './views/Settings';
 import CalendarView from './views/Calendar';
 import LedgerView from './views/Ledger/index';
 import DashboardView from './views/Dashboard/index';
-import BatchAddModal from './components/BatchAddModal';
+import BatchAddModal from './components/BatchAddModal/index';
 import ExportModal from './components/ExportModal';
 import ImportGuideModal from './components/ImportGuideModal';
 import ImportPreviewModal from './components/ImportPreviewModal';

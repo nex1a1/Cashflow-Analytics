@@ -19,6 +19,9 @@ export default function CategoryRow({ cat, isNew, isIncome, onMove, onChange, on
     [cashflowGroups, isIncome],
   );
 
+  const group = useMemo(() => cashflowGroups.find(g => g.id === cat.cashflowGroup), [cashflowGroups, cat.cashflowGroup]);
+  const groupColor = group?.color || (dm ? '#334155' : '#cbd5e1');
+
   const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
 
   const inputCls = `px-2 py-1 border outline-none font-semibold text-[13px] transition-colors flex-1 min-w-0 ${
@@ -28,11 +31,11 @@ export default function CategoryRow({ cat, isNew, isIncome, onMove, onChange, on
   }`;
 
   return (
-    <div className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 transition-colors group/cat ${
+    <div style={{ borderLeftColor: groupColor, borderLeftWidth: '4px' }} className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 transition-colors group/cat ${
       !isIncome && cat.isFixed
         ? (dm ? 'bg-purple-900/10 hover:bg-purple-900/20' : 'bg-purple-50/40 hover:bg-purple-50/80')
         : (dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
-    } ${dm ? 'border-slate-700/40' : 'border-slate-100'}`}>
+    } ${dm ? 'border-slate-700/60' : 'border-slate-200/70'}`}>
 
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-300'}`}>
         <button type="button" onClick={() => onMove(cat.id, 'UP')} disabled={isFirst}
