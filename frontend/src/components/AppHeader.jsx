@@ -6,8 +6,10 @@ import {
   FileSpreadsheet, Settings, CalendarPlus, Zap,
   Moon, Sun, Calendar as CalendarIcon, HelpCircle
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import AnimatedNumber from './ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
+import Tooltip from './ui/Tooltip';
 import { useTheme } from '../context/ThemeContext';
 
 const TABS = [
@@ -16,13 +18,11 @@ const TABS = [
   { id: 'ledger',    label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'settings',  label: 'ตั้งค่าระบบ',       icon: Settings },
 ];
-
 export default function AppHeader({
   dbStatus, transactionCount,
   activeTab, setActiveTab,
   filterPeriod, setFilterPeriod,
   groupedOptions,
-  categories,
   isProcessing,
   onClickAddQuick,
   onClickExport,
@@ -131,9 +131,13 @@ export default function AppHeader({
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} /> {label}
-                {/* Active Indicator Line */}
+                {/* Active Indicator Line - 🪄 Magic Motion sliding effect */}
                 {isActive && (
-                  <div className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-t-sm ${dm ? 'bg-blue-400' : 'bg-[#00509E]'}`} />
+                  <motion.div 
+                    layoutId="activeTabIndicator"
+                    className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-sm ${dm ? 'bg-blue-400' : 'bg-[#00509E]'}`} 
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
                 )}
               </button>
             );
@@ -166,7 +170,6 @@ AppHeader.propTypes = {
     yearsMap:    PropTypes.object.isRequired,
     sortedYears: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
-  categories:         PropTypes.array.isRequired,
   isProcessing:       PropTypes.bool.isRequired,
   onClickAddQuick:    PropTypes.func.isRequired,
   onClickExport:      PropTypes.func.isRequired,
