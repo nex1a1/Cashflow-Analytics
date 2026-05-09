@@ -1,10 +1,9 @@
 // src/hooks/useCategories.js
 import { useState, useCallback } from 'react';
-import { CATEGORIES_KEY } from '../constants';
 import { useToast } from '../context/ToastContext';
 import { categoryService, groupService } from '../services/api';
 
-export default function useCategories(initialCategories, saveSettingToDb, saveToDb, setCashflowGroups) {
+export default function useCategories(initialCategories, setCashflowGroups) {
   const [categories, setCategories] = useState(initialCategories);
   const { showToast } = useToast();
 

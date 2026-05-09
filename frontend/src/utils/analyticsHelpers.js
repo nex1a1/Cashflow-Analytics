@@ -6,7 +6,11 @@ import { getThaiMonth, hexToRgb, formatMoney } from './formatters';
  * Creates a map of category names to category objects for fast lookup.
  */
 export const createCategoryMap = (categories) => 
-  categories.reduce((acc, cat) => { acc[cat.name] = cat; return acc; }, {});
+  categories.reduce((acc, cat) => { 
+    acc[cat.name] = cat; 
+    acc[cat.id] = cat; 
+    return acc; 
+  }, {});
 
 /**
  * Groups and aggregates transaction data into a cashflow map by month.
@@ -21,6 +25,7 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
   let totals = {
     income: 0,
     expense: 0,
+    savings: 0, // Added dedicated savings total
     weekend: 0,
     weekday: 0,
     food: 0,
@@ -35,14 +40,17 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
   filteredTx.forEach(item => {
     const amt = parseFloat(item.amount) || 0;
     const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
-    const isInc = catObj.type === 'income';
-    const cGroupId = catObj.cashflowGroup;
     
-    // Find the actual group object to get its name/alias
+    // Determine type from catMap or lookup group
+    const cGroupId = catObj.cashflowGroup;
     const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+    const groupType = groupObj.type || catObj.type || 'expense'; 
     const groupName = (groupObj.name || '').toLowerCase();
     
-    const cGroup = cGroupId || (isInc ? 'cg_bonus' : 'cg_variable');
+    const isInc = groupType === 'income';
+    const isSav = groupType === 'savings';
+    
+    const cGroup = cGroupId || (isInc ? 'cg_bonus' : (isSav ? 'cg_savings' : 'cg_variable'));
     const isFixed = catObj.isFixed || false;
 
     if (!item.date) return;
@@ -58,7 +66,7 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
     uniqueMonthsSet.add(ym);
 
     if (!cashflowMap[ym]) {
-      cashflowMap[ym] = { monthStr: ym, totalExp: 0, income: 0, groups: {} };
+      cashflowMap[ym] = { monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} };
       cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
     }
 
@@ -68,6 +76,10 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
       totals.income += amt;
       cashflowMap[ym].income += amt;
       dayIncomeMap[item.date] = (dayIncomeMap[item.date] || 0) + amt;
+    } else if (isSav) {
+      totals.savings += amt;
+      cashflowMap[ym].totalSav += amt;
+      // We don't track savings in dayExpenseMap to keep 'liquidity' separate
     } else {
       totals.expense += amt;
       cashflowMap[ym].totalExp += amt;
@@ -100,24 +112,27 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
 export const calculateCategoryStats = (transactions, categories, filterPeriod, dashboardCategory, hideFixedExpenses, catMap) => {
   const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
   const chartTx = filteredTx.filter(t => {
-    const catObj = catMap[t.category] || { type: 'expense' };
+    // Priority: use category_id if available, fallback to category name lookup
+    const catObj = catMap[t.category_id] || catMap[t.category] || { type: 'expense' };
     if (catObj.type === 'income') return false;
     if (hideFixedExpenses && catObj.isFixed) return false;
     return true;
   });
 
   const stats = {
-    catMapData: {},
+    catMapData: {}, // Keyed by category_id
     dailyAllMap: {},
     monthlyAllMap: {},
-    dailyCatMap: {},
-    monthlyCatMap: {},
+    dailyCatMap: {}, // Keyed by category_id
+    monthlyCatMap: {}, // Keyed by category_id
     chartTotal: 0
   };
 
   chartTx.forEach(item => {
     if (!item.date) return;
     const amt = parseFloat(item.amount) || 0;
+    const catId = item.category_id || (catMap[item.category]?.id) || 'unknown';
+
     let y, m, d;
     if (item.date.includes('-')) {
       [y, m, d] = item.date.split('-');
@@ -126,16 +141,16 @@ export const calculateCategoryStats = (transactions, categories, filterPeriod, d
     }
     const ym = (y && m) ? `${y}-${m.padStart(2, '0')}` : null;
 
-    stats.catMapData[item.category] = (stats.catMapData[item.category] || 0) + amt;
+    stats.catMapData[catId] = (stats.catMapData[catId] || 0) + amt;
     stats.dailyAllMap[item.date] = (stats.dailyAllMap[item.date] || 0) + amt;
     if (ym) stats.monthlyAllMap[ym] = (stats.monthlyAllMap[ym] || 0) + amt;
 
-    if (!stats.dailyCatMap[item.category]) stats.dailyCatMap[item.category] = {};
-    stats.dailyCatMap[item.category][item.date] = (stats.dailyCatMap[item.category][item.date] || 0) + amt;
+    if (!stats.dailyCatMap[catId]) stats.dailyCatMap[catId] = {};
+    stats.dailyCatMap[catId][item.date] = (stats.dailyCatMap[catId][item.date] || 0) + amt;
 
     if (ym) {
-      if (!stats.monthlyCatMap[item.category]) stats.monthlyCatMap[item.category] = {};
-      stats.monthlyCatMap[item.category][ym] = (stats.monthlyCatMap[item.category][ym] || 0) + amt;
+      if (!stats.monthlyCatMap[catId]) stats.monthlyCatMap[catId] = {};
+      stats.monthlyCatMap[catId][ym] = (stats.monthlyCatMap[catId][ym] || 0) + amt;
     }
     stats.chartTotal += amt;
   });
@@ -226,11 +241,12 @@ export const generateMainChartData = ({
         });
       } else {
         const catObj = catMap[catName] || {};
+        const catId = catObj.id || catName; // Use ID if available, fallback to name
         const catColor = catObj.color || '#64748B';
         const rgb = hexToRgb(catColor);
         datasets.push({
           label: catName, 
-          data: showMonthly ? sortedMonthsKeys.map(m => monthlyCatMap[catName]?.[m] || 0) : datesInPeriod.map(d => dailyCatMap[catName]?.[d] || 0),
+          data: showMonthly ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0) : datesInPeriod.map(d => dailyCatMap[catId]?.[d] || 0),
           borderColor: catColor, backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent', borderWidth: 2, fill: activeCats.length === 1,
           tension: 0.3, pointRadius: isSingleMonthView || showMonthly ? 3 : 0, pointHitRadius: 10,
         });

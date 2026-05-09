@@ -1,8 +1,7 @@
 // src/hooks/useImportCSV.js
 import { useState, useRef, useCallback } from 'react';
-import { CALENDAR_API_URL, CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY } from '../constants';
+import { CALENDAR_API_URL } from '../constants';
 import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
-import { settingsService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 export default function useImportCSV({
@@ -186,11 +185,9 @@ export default function useImportCSV({
 
       if (isConfigChanged) {
         setDayTypeConfig(updatedDayTypeConfig);
-        await settingsService.save(DAY_TYPE_CONFIG_KEY, updatedDayTypeConfig);
       }
       if (isCategoryChanged) {
         setCategories(updatedCategories);
-        await settingsService.save(CATEGORIES_KEY, updatedCategories);
       }
 
       setImportPreview(null);

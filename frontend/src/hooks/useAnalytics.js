@@ -37,9 +37,37 @@ export default function useAnalytics({
       filteredTx 
     } = generateCashflowMap(transactions, filterPeriod, catMapLookup, cashflowGroups);
 
+    // --- Previous Period Calculation for Trends ---
+    let prevTotals = { income: 0, expense: 0, net: 0 };
+    if (filterPeriod !== 'ALL') {
+      const datesInCurrent = generateDatesForPeriod(filterPeriod, transactions);
+      if (datesInCurrent.length > 0) {
+        const firstDate = new Date(datesInCurrent[0]);
+        const lastDate = new Date(datesInCurrent[datesInCurrent.length - 1]);
+        const durationMs = lastDate.getTime() - firstDate.getTime() + (24 * 60 * 60 * 1000);
+        
+        const prevEnd = new Date(firstDate.getTime() - (24 * 60 * 60 * 1000));
+        const prevStart = new Date(prevEnd.getTime() - durationMs + (24 * 60 * 60 * 1000));
+        
+        const startStr = prevStart.toISOString().split('T')[0];
+        const endStr = prevEnd.toISOString().split('T')[0];
+        
+        transactions.forEach(t => {
+          if (t.date >= startStr && t.date <= endStr) {
+            const amt = parseFloat(t.amount) || 0;
+            const catObj = catMapLookup[t.category_id] || catMapLookup[t.category] || { type: 'expense' };
+            if (catObj.type === 'income') prevTotals.income += amt;
+            else prevTotals.expense += amt;
+          }
+        });
+        prevTotals.net = prevTotals.income - prevTotals.expense;
+      }
+    }
+
     const netCashflow = totals.income - totals.expense;
+    const actualSavings = (totals.savings || 0) + Math.max(0, netCashflow); 
     const numMonths = uniqueMonthsSet.size || 1;
-    const savingsRate = totals.income > 0 ? ((netCashflow / totals.income) * 100).toFixed(1) : 0;
+    const savingsRate = totals.income > 0 ? ((actualSavings / totals.income) * 100).toFixed(1) : 0;
 
     // 3. Category & Chart Stats
     const { 
@@ -54,12 +82,18 @@ export default function useAnalytics({
 
     const sortedCats = Object.entries(catMapData)
       .sort((a, b) => b[1] - a[1])
-      .map(c => ({
-        name: c[0], 
-        amount: c[1], 
-        percentage: chartTotal > 0 ? ((c[1] / chartTotal) * 100).toFixed(1) : 0, 
-        avgPerMonth: c[1] / numMonths,
-      }));
+      .map(([catId, amount]) => {
+        const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
+        return {
+          id: catId,
+          name: catObj.name,
+          amount: amount,
+          percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
+          avgPerMonth: amount / numMonths,
+          icon: catObj.icon,
+          color: catObj.color || '#64748B'
+        };
+      });
 
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
     const periodDays = datesInPeriod.length || 1;
@@ -69,7 +103,7 @@ export default function useAnalytics({
       labels: sortedCats.map(c => c.name),
       datasets: [{
         data: sortedCats.map(c => c.amount),
-        backgroundColor: sortedCats.map(c => catMapLookup[c.name]?.color || '#64748B'),
+        backgroundColor: sortedCats.map(c => c.color),
         borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
       }],
     };
@@ -255,8 +289,11 @@ export default function useAnalytics({
       projectedExpense,
       safeToSpend,
       smartInsights,
+      prevTotals, // Added previous period totals
       totalExpense: totals.expense, 
       totalIncome: totals.income, 
+      totalSavings: totals.savings || 0,
+      actualSavings,
       netCashflow, 
       savingsRate, 
       chartTotal, 
@@ -289,6 +326,7 @@ export default function useAnalytics({
       dayOfWeekMap: totals.dayOfWeekMap,
       globalMaxThreshold,
       datesInPeriod,
+      filterPeriod,
       dayTypeCounts, 
       dailyAllMap,
       sortedMonthsKeys,

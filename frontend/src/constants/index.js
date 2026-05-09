@@ -4,10 +4,6 @@ export const API_URL = 'http://localhost:3000/api/transactions';
 export const CALENDAR_API_URL = 'http://localhost:3000/api/calendar';
 export const RESET_API_URL = 'http://localhost:3000/api/reset-all';
 export const SETTINGS_API_URL = 'http://localhost:3000/api/settings';
-export const CATEGORIES_KEY = 'expense_custom_categories_v2';
-export const DAY_TYPES_KEY = 'expense_day_types';
-export const DAY_TYPE_CONFIG_KEY = 'expense_day_type_config';
-export const CASHFLOW_GROUPS_KEY = 'budget_cashflow_groups';
 
 export const OLD_PALETTE_MAP = {
   'slate': '#64748B', 'red': '#EF4444', 'orange': '#F97316', 'amber': '#F59E0B',

@@ -9,6 +9,13 @@ import {
   getLineChartOptions,
 } from '../../../utils/chartOptions';
 import { useTheme } from '../../../context/ThemeContext';
+import { formatMoney } from '../../../utils/formatters';
+
+// --- Helpers (Moved outside to prevent re-creation) ---
+const makeCumulative = (dataArr) => {
+  let sum = 0;
+  return dataArr.map(val => { sum += (val || 0); return sum; });
+};
 
 export default function MainChart({
   analytics, categories, filterPeriod,
@@ -34,6 +41,7 @@ export default function MainChart({
     return () => document.removeEventListener('mousedown', handler);
   }, [showCatMenu]);
 
+  // Performance: Optimized dependency array and logic
   const categoriesWithData = useMemo(() => {
     if (!analytics) return new Set();
     const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
@@ -41,13 +49,14 @@ export default function MainChart({
     const withData = new Set();
     categories.filter(c => c.type === 'expense').forEach(c => {
       const total = showMonthly
-        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[c.name]?.[m] || 0), 0)
-        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[c.name]?.[d] || 0), 0);
+        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[c.id]?.[m] || 0), 0)
+        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[c.id]?.[d] || 0), 0);
       if (total > 0) withData.add(c.name);
     });
     return withData;
   }, [analytics, filterPeriod, chartGroupBy, categories]);
 
+  // Performance: Heavy data processing kept in useMemo
   const displayChartData = useMemo(() => {
     if (!analytics.mainChartData) return null;
 
@@ -55,30 +64,27 @@ export default function MainChart({
     const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
     const xLabels = analytics.mainChartData.labels;
 
-    // Helper: make dataset data cumulative
-    const makeCumulative = (dataArr) => {
-      let sum = 0;
-      return dataArr.map(val => { sum += (val || 0); return sum; });
-    };
-
     // ── โหมดแจกแจง (แท่งซ้อน หรือ หลายเส้น) ──────────────────────────────
     if (isBreakdown) {
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+      
+      // Map names to actual category objects to get their IDs
       let catsToRender = activeCats.includes('ALL')
-        ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed)).map(c => c.name)
-        : activeCats.filter(n => categoriesWithData.has(n));
+        ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed))
+        : categories.filter(c => activeCats.includes(c.name) && categoriesWithData.has(c.name));
 
-      const datasets = catsToRender.map(catName => {
-        const catObj = categories.find(c => c.name === catName) || {};
+      const datasets = catsToRender.map(catObj => {
+        const catName = catObj.name;
+        const catId = catObj.id;
         const catColor = catObj.color || '#64748B';
+        
         let data = showMonthly
-          ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catName]?.[m] || 0)
-          : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catName]?.[d] || 0);
+          ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catId]?.[m] || 0)
+          : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catId]?.[d] || 0);
           
         if (isCumulative) data = makeCumulative(data);
 
         if (chartViewType === 'line') {
-          // แจกแจง + เส้น → หลายเส้นแยกหมวด
           return {
             type: 'line',
             label: catName,
@@ -94,7 +100,6 @@ export default function MainChart({
             fill: false,
           };
         } else {
-          // แจกแจง + แท่ง → stacked bar
           return {
             type: 'bar',
             label: catName,
@@ -107,7 +112,6 @@ export default function MainChart({
         }
       });
 
-      // เส้นเทรนด์ (เฉพาะโหมดไม่ใช่ monthly)
       if (showTrendLines && !showMonthly && chartViewType !== 'line' && !isCumulative) {
         const mtdDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยสะสม'));
         const avgDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยทั้งเดือน'));
@@ -125,7 +129,6 @@ export default function MainChart({
     }
     
     if (isCumulative) {
-       // Only keep base datasets, remove MTD/Avg trendlines because they don't make sense cumulatively
        filteredDatasets = filteredDatasets.filter(ds => !(ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน'))));
     }
 
@@ -171,13 +174,48 @@ export default function MainChart({
     return { ...analytics.mainChartData, datasets: processedDatasets };
   }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm]);
 
-  // Legend: กรองเฉพาะ dataset ที่มีข้อมูลจริง
+  // Performance: Memoize options selection
+  const options = useMemo(() => {
+    let baseOptions;
+    const isStacked = isBreakdown && chartViewType === 'bar';
+    
+    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm);
+    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm);
+    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm);
+    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm);
+    else baseOptions = getBarChartOptions(dm);
+
+    return {
+      ...baseOptions,
+      scales: {
+        ...baseOptions.scales,
+        x: { ...baseOptions.scales?.x, stacked: isStacked },
+        y: { ...baseOptions.scales?.y, stacked: isStacked },
+      },
+      plugins: {
+        ...baseOptions.plugins,
+        tooltip: {
+          ...baseOptions.plugins?.tooltip,
+          mode: 'index',
+          intersect: false,
+          filter: (tooltipItem) => tooltipItem.raw > 0,
+          callbacks: {
+            ...baseOptions.plugins?.tooltip?.callbacks,
+            footer: (tooltipItems) => {
+              if (!isBreakdown || tooltipItems.length <= 1) return null;
+              const sum = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+              return `รวม: ${formatMoney(sum)} ฿`;
+            }
+          }
+        },
+      },
+    };
+  }, [isBreakdown, chartViewType, dm, analytics.mainChartType]);
+
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];
     return displayChartData.datasets.filter(ds => {
-      // เส้นพิเศษ (trend, cashflow) ไม่ต้องแสดงใน custom legend นี้
       if (ds.label?.includes('เฉลี่ย') || ds.label === 'Cashflow') return false;
-      // ต้องมีข้อมูลอย่างน้อย 1 จุด
       return ds.data?.some(v => v > 0);
     });
   }, [displayChartData]);
@@ -186,7 +224,6 @@ export default function MainChart({
   const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
   const divider = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
 
-  // ป้ายกำกับปุ่มแจกแจง: แสดงให้ชัดว่า active อยู่กับ mode ไหน
   const breakdownLabel = isBreakdown
     ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓')
     : 'แจกแจง';
@@ -210,7 +247,6 @@ export default function MainChart({
             </div>
           )}
 
-          {/* ── กลุ่มปุ่มหลัก: เส้น / แท่ง ── */}
           <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
             <button
               onClick={() => setChartViewType('line')}
@@ -226,7 +262,6 @@ export default function MainChart({
             </button>
           </div>
 
-          {/* ── ปุ่มแจกแจง: toggle อิสระ ── */}
           <button
             onClick={() => setIsBreakdown(prev => !prev)}
             title={chartViewType === 'line' ? 'แยกเส้นแต่ละหมวดหมู่' : 'ซ้อนแท่งแยกหมวดหมู่'}
@@ -239,7 +274,6 @@ export default function MainChart({
             <Layers className="w-3.5 h-3.5" /> {breakdownLabel}
           </button>
 
-          {/* ── เส้นตรง/โค้ง (เฉพาะโหมด line) ── */}
           {chartViewType === 'line' && (
             <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
               <button onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
@@ -253,7 +287,6 @@ export default function MainChart({
             </div>
           )}
 
-          {/* ── ตัวกรองแสดงผล ── */}
           <div className="relative" ref={filterMenuRef}>
             <button
               onClick={() => setShowCatMenu(!showCatMenu)}
@@ -334,7 +367,7 @@ export default function MainChart({
                             🔄 เลือกผันแปรทั้งหมด
                           </button>
                         </div>
-                        <div className="flex flex-wrap gap-1.5 mt-1">
+                        <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                           {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
                             const isActive = activeCats.includes(c.name);
                             return (
@@ -354,62 +387,12 @@ export default function MainChart({
         </div>
       </div>
 
-      {/* ── กราฟ ── */}
       <div className="relative w-full flex-1 min-h-[350px]">
         <div className="absolute inset-0">
-          {(() => {
-            const hasMultipleDatasets = displayChartData?.datasets?.length > 1;
-            let optionsToUse;
-
-            if (isBreakdown && chartViewType === 'bar') {
-              // stacked bar
-              const baseOptions = getBarChartOptions(dm);
-              optionsToUse = {
-                ...baseOptions,
-                scales: {
-                  ...baseOptions.scales,
-                  x: { ...baseOptions.scales?.x, stacked: true },
-                  y: { ...baseOptions.scales?.y, stacked: true },
-                },
-                plugins: {
-                  ...baseOptions.plugins,
-                  tooltip: {
-                    ...baseOptions.plugins?.tooltip,
-                    mode: 'index',
-                    intersect: false,
-                    filter: (tooltipItem) => tooltipItem.raw > 0,
-                  },
-                },
-              };
-            } else if (isBreakdown && chartViewType === 'line') {
-              // multi-line breakdown — กรอง tooltip ค่า 0 ออก
-              const lineBase = getLineChartOptions(dm);
-              optionsToUse = {
-                ...lineBase,
-                plugins: {
-                  ...lineBase.plugins,
-                  tooltip: {
-                    ...lineBase.plugins?.tooltip,
-                    mode: 'index',
-                    intersect: false,
-                    filter: (tooltipItem) => tooltipItem.raw > 0,
-                  },
-                },
-              };
-            } else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') {
-              optionsToUse = { ...getComboChartOptions(dm) };
-            } else if (chartViewType === 'line') {
-              optionsToUse = { ...getLineChartOptions(dm) };
-            } else {
-              optionsToUse = { ...getBarChartOptions(dm) };
-            }
-
-            return <Chart type="bar" data={displayChartData} options={{ ...optionsToUse, maintainAspectRatio: false }} />;
-          })()}
+          <Chart type="bar" data={displayChartData} options={options} />
         </div>
       </div>
 
-      {/* ── Legend: แสดงเฉพาะหมวดที่มีข้อมูล ── */}
       {legendDatasets.length > 0 && (
         <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
           {legendDatasets.map((ds, i) => (

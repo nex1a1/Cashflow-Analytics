@@ -12,7 +12,7 @@ import DangerZone from './components/DangerZone';
 
 export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
-  dayTypeConfig, handleDayTypeConfigChange, handleDeleteAllData, saveSettingToDb,
+  dayTypeConfig, handleDayTypeConfigChange, handleDeleteAllData,
   cashflowGroups = [], setCashflowGroups,
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],

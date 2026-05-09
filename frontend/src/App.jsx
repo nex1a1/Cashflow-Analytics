@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
 } from './constants';
 import { settingsService, calendarService, categoryService, groupService, dayTypeService } from './services/api';
@@ -83,7 +82,7 @@ export default function App() {
     handleMoveCategory,
     loadCategories,
     loadGroups,
-  } = useCategories(DEFAULT_CATEGORIES, saveSettingToDb, null, setCashflowGroups);
+  } = useCategories(DEFAULT_CATEGORIES, setCashflowGroups);
 
   const {
     transactions, isProcessing: isTxProcessing,
@@ -126,12 +125,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab);
   }, [activeTab]);
-
-  // Helper functions
-  async function saveSettingToDb(key, value) {
-    try { await settingsService.save(key, value); }
-    catch (err) { console.error(`Failed to save ${key} to DB:`, err); }
-  }
 
   const handleDayTypeChange = async (dateStr, type) => {
     setDayTypes(prev => ({ ...prev, [dateStr]: type }));
@@ -416,7 +409,6 @@ export default function App() {
                   handleDeleteDayType={handleDeleteDayType}
                   handleMoveDayType={handleMoveDayType}
                   handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
-                  saveSettingToDb={saveSettingToDb}
                   transactions={transactions}
                   enableSmartInsights={enableSmartInsights}
                   setEnableSmartInsights={setEnableSmartInsights}

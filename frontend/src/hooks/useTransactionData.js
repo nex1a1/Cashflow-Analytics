@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react';
 import {
   API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
-  CATEGORIES_KEY, DAY_TYPE_CONFIG_KEY, CASHFLOW_GROUPS_KEY,
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from '../constants';
 import { parseDateStrToObj, toISODate, fromISODate } from '../utils/dateHelpers';
