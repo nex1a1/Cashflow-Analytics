@@ -24,6 +24,8 @@ export const transactionService = {
         }
         return fetch(url).then(handleResponse);
     },
+    getPeriods: () => fetch(`${API_URL}/periods`).then(handleResponse),
+    getFrequentItems: () => fetch(`${API_URL}/frequent`).then(handleResponse),
     save: (items) => fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

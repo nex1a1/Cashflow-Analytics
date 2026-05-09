@@ -63,3 +63,21 @@ exports.resetAllData = (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getAvailablePeriods = (req, res) => {
+  try {
+    const periods = transactionService.getAvailablePeriods();
+    res.json(periods);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getFrequentItems = (req, res) => {
+  try {
+    const items = transactionService.getFrequentItems();
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

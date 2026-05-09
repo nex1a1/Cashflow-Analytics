@@ -108,18 +108,32 @@ export default function useAnalytics({
     } = calculateCategoryStats(transactions, categories, filterPeriod, dashboardCategory, hideFixedExpenses, catMapLookup);
 
     const sortedCats = useBackendTotals && summaryData.categories 
-      ? summaryData.categories.map(c => ({
-          id: c.id,
-          name: c.name,
-          icon: c.icon || '📦',
-          color: c.color || '#64748B',
-          amount: c.amount,
-          type: c.type,
-          percentage: summaryData.summary.expense > 0 && c.type === 'expense' 
-            ? ((c.amount / summaryData.summary.expense) * 100).toFixed(1) 
-            : 0,
-          avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
-        }))
+      ? summaryData.categories
+          .filter(c => {
+            if (c.type !== 'expense') return false;
+            
+            const catMeta = catMapLookup[c.id] || { isFixed: false };
+            if (hideFixedExpenses && catMeta.isFixed) return false;
+            
+            if (dashboardCategory !== 'ALL') {
+              if (dashboardCategory === 'FIXED' && !catMeta.isFixed) return false;
+              if (dashboardCategory === 'VARIABLE' && catMeta.isFixed) return false;
+            }
+            return true;
+          })
+          .map(c => {
+            const catMeta = catMapLookup[c.id] || { isFixed: false };
+            return {
+              id: c.id,
+              name: c.name,
+              icon: c.icon || '📦',
+              color: c.color || '#64748B',
+              amount: c.amount,
+              type: c.type,
+              percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
+              avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
+            };
+          })
       : Object.entries(catMapData)
         .sort((a, b) => b[1] - a[1])
         .map(([catId, amount]) => {

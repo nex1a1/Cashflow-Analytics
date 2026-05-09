@@ -18,17 +18,15 @@ export default function CalendarView({
   handleOpenAddModal, categories, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction, paymentMethods,
-  isLoading,
+  isLoading, frequentItems = []
 }) {
   const { isDarkMode } = useTheme();
   const [selectedDate, setSelectedDate] = useState(null);
 
-  if (isLoading) return <CalendarSkeleton />;
-
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
-      const [y, m] = filterPeriod.split('-');
-      return new Date(parseInt(y), parseInt(m) - 1, 1);
+      const [yearStr, monthStr] = filterPeriod.split('-');
+      return new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
     }
     return new Date();
   }, [filterPeriod]);
@@ -90,6 +88,8 @@ export default function CalendarView({
     }
     return counts;
   }, [dayTypes, daysInMonth, m, y, dayTypeConfig]);
+
+  if (isLoading) return <CalendarSkeleton />;
 
   const currentIndex = rawAvailableMonths.indexOf(filterPeriod);
   const hasPrev = currentIndex < rawAvailableMonths.length - 1;
@@ -258,6 +258,7 @@ export default function CalendarView({
           onSave={async (item) => { await onSaveTransaction(item); }}
           onDelete={(id) => { handleDeleteTransaction(id); }}
           paymentMethods={paymentMethods}
+          frequentItems={frequentItems}
         />
       )}
     </div>

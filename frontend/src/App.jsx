@@ -68,6 +68,7 @@ export default function App() {
     const saved = localStorage.getItem('enableSmartInsights');
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [isFetchingData, setIsFetchingData] = useState(true);
 
   useEffect(() => {
     localStorage.setItem('enableSmartInsights', JSON.stringify(enableSmartInsights));
@@ -85,7 +86,7 @@ export default function App() {
   } = useCategories(DEFAULT_CATEGORIES, setCashflowGroups);
 
   const {
-    transactions, summaryData, isProcessing: isTxProcessing,
+    transactions, summaryData, masterPeriods, frequentItems, isProcessing: isTxProcessing,
     setIsProcessing: setTxProcessing,
     loadData, loadAnalytics, bootstrap, saveToDb,
     handleSaveTransaction,
@@ -102,11 +103,17 @@ export default function App() {
     advancedFilterCategory, setAdvancedFilterCategory,
     advancedFilterGroup,    setAdvancedFilterGroup,
     advancedFilterDate,     setAdvancedFilterDate,
+    typeFilter,             setTypeFilter,
+    minAmount,              setMinAmount,
+    maxAmount,              setMaxAmount,
+    dayTypeFilter,          setDayTypeFilter,
     availableDatesInPeriod,
     allDatesInPeriod,
     displayTransactions,
     activeCashflowGroupIds,
-  } = useFilters({ transactions, categories });
+    isFilterActive,
+    clearFilters,
+  } = useFilters({ transactions, categories, masterPeriods });
 
   // ── Dynamic Document Title (🚀 FIXED) ──
   useEffect(() => {
@@ -256,11 +263,12 @@ export default function App() {
     setCategories, saveToDb,
   });
 
-  const isProcessing = isTxProcessing || isCsvProcessing;
+  const isProcessing = isTxProcessing || isCsvProcessing || isFetchingData;
 
   // 3. Load Data based on period (High Performance Dual-Loading)
   useEffect(() => {
     const triggerLoads = async () => {
+      setIsFetchingData(true);
       // 1. Always bootstrap master data once
       await bootstrap();
 
@@ -274,6 +282,7 @@ export default function App() {
         loadAnalytics(startDate, endDate),
         loadData(startDate, endDate)
       ]);
+      setIsFetchingData(false);
     };
     triggerLoads();
   }, [filterPeriod, bootstrap, loadData, loadAnalytics]);
@@ -379,6 +388,7 @@ export default function App() {
                   onSaveTransaction={handleSaveTransaction}
                   handleDeleteTransaction={handleDeleteTransaction}
                   isLoading={isProcessing}
+                  frequentItems={frequentItems}
                 />
               </motion.div>
             )}
@@ -401,11 +411,18 @@ export default function App() {
                   advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
                   advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
                   advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
+                  typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                  minAmount={minAmount} setMinAmount={setMinAmount}
+                  maxAmount={maxAmount} setMaxAmount={setMaxAmount}
+                  dayTypeFilter={dayTypeFilter} setDayTypeFilter={setDayTypeFilter}
                   availableDatesInPeriod={availableDatesInPeriod}
                   allDatesInPeriod={allDatesInPeriod}
                   activeCashflowGroupIds={activeCashflowGroupIds}
+                  isFilterActive={isFilterActive}
+                  clearFilters={clearFilters}
                   dayTypes={dayTypes}
                   dayTypeConfig={dayTypeConfig}
+                  isLoading={isProcessing}
                 />
               </motion.div>
             )}
@@ -442,7 +459,7 @@ export default function App() {
       <BatchAddModal
         isOpen={showAddModal} onClose={() => setShowAddModal(false)}
         onSaveBatch={handleSaveBatch} categories={categories}
-        transactions={transactions}
+        transactions={transactions} frequentItems={frequentItems}
         defaultDate={addForm.date} defaultType={addForm.type}
         defaultCategory={addForm.category}
       />

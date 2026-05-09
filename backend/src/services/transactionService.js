@@ -122,6 +122,46 @@ class TransactionService {
       // Settings might still be needed for other things
     })();
   }
+
+  /**
+   * Returns a distinct list of YYYY-MM where transactions exist
+   */
+  getAvailablePeriods() {
+    const rows = db.prepare(`
+      SELECT DISTINCT strftime('%Y-%m', date) as period 
+      FROM transactions 
+      WHERE is_deleted = 0 
+      ORDER BY period DESC
+    `).all();
+    return rows.map(r => r.period);
+  }
+
+  /**
+   * Returns aggregated frequent transactions for all-time suggestions
+   */
+  getFrequentItems() {
+    const rows = db.prepare(`
+      SELECT 
+        t.category_id, 
+        c.name as category_name,
+        t.description, 
+        t.amount, 
+        COUNT(*) as count
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      WHERE t.is_deleted = 0
+      GROUP BY t.category_id, t.description, t.amount
+      ORDER BY count DESC, t.amount DESC
+    `).all();
+    
+    return rows.map(row => ({
+      categoryId: row.category_id,
+      categoryName: row.category_name,
+      description: row.description || '',
+      amount: row.amount / 100, // Convert Satang to Baht
+      count: row.count
+    }));
+  }
 }
 
 module.exports = new TransactionService();

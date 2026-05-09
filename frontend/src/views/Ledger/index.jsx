@@ -19,6 +19,10 @@ export default function LedgerView({
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
+  typeFilter, setTypeFilter,
+  minAmount, setMinAmount,
+  maxAmount, setMaxAmount,
+  dayTypeFilter, setDayTypeFilter,
   availableDatesInPeriod,
   allDatesInPeriod,
   setFilterPeriod, rawAvailableMonths,
@@ -26,6 +30,9 @@ export default function LedgerView({
   activeCashflowGroupIds = new Set(),
   dayTypes = {},
   dayTypeConfig = [],
+  isFilterActive,
+  clearFilters,
+  isLoading
 }) {
   const { isDarkMode: dm } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,15 +107,8 @@ export default function LedgerView({
     return bands;
   }, [sortedTransactions]);
 
-  useEffect(() => { setCurrentPage(1); }, [filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, sortConfig]);
+  useEffect(() => { setCurrentPage(1); }, [filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, minAmount, maxAmount, dayTypeFilter, sortConfig]);
   useEffect(() => { if (pages.length > 0 && currentPage > pages.length) setCurrentPage(pages.length); }, [pages.length, currentPage]);
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setAdvancedFilterCategory('ALL');
-    setAdvancedFilterGroup('ALL');
-    setAdvancedFilterDate('ALL');
-  };
 
   const catTypeMap = useMemo(() => {
     const map = {};
@@ -130,7 +130,6 @@ export default function LedgerView({
 
   const totalPages = pages.length || 1;
   const currentData = pages[currentPage - 1] || [];
-  const isFilterActive = searchQuery || advancedFilterDate !== 'ALL' || advancedFilterGroup !== 'ALL' || advancedFilterCategory !== 'ALL';
 
   const { pageInc, pageExp } = useMemo(() => {
     let inc = 0, exp = 0;
@@ -201,6 +200,10 @@ export default function LedgerView({
             advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
             advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
             advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
+            typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+            minAmount={minAmount} setMinAmount={setMinAmount}
+            maxAmount={maxAmount} setMaxAmount={setMaxAmount}
+            dayTypeFilter={dayTypeFilter} setDayTypeFilter={setDayTypeFilter}
             availableDatesInPeriod={availableDatesInPeriod} cashflowGroups={cashflowGroups}
             activeCashflowGroupIds={activeCashflowGroupIds} categories={categories}
             clearFilters={clearFilters} isFilterActive={isFilterActive}
@@ -209,8 +212,17 @@ export default function LedgerView({
       </div>
 
       {/* Table Area */}
-      <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors ${dm ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-200'}`}>
-        {displayTransactions.length === 0 ? (
+      <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors min-h-[400px] relative ${dm ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-200'}`}>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-10 backdrop-blur-sm" style={{ backgroundColor: dm ? 'rgba(15, 23, 42, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
+            <div className={`w-12 h-12 mb-4 rounded-full animate-bounce flex items-center justify-center ${dm ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#00509E]'}`}>
+              <LayoutList className="w-6 h-6 animate-pulse" />
+            </div>
+            <p className={`text-sm font-bold animate-pulse ${dm ? 'text-slate-400' : 'text-slate-500'}`}>กำลังโหลดข้อมูล...</p>
+          </div>
+        ) : null}
+        
+        {displayTransactions.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 px-4">
             <Inbox className={`w-14 h-14 mb-4 ${dm ? 'text-slate-700' : 'text-slate-200'}`} />
             <p className={`text-base font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ไม่พบรายการบัญชี</p>

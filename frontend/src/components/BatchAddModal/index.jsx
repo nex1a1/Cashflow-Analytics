@@ -10,7 +10,8 @@ import CartList from './CartList';
 export default function BatchAddModal({
   isOpen, onClose, onSaveBatch,
   categories, transactions,
-  defaultDate, defaultType, defaultCategory
+  defaultDate, defaultType, defaultCategory,
+  frequentItems = [] // Added frequentItems prop
 }) {
   const { isDarkMode: dm } = useTheme();
   const { showToast } = useToast();
@@ -171,6 +172,7 @@ export default function BatchAddModal({
             setSuggCatFilter={setSuggCatFilter}
             onApplySuggestion={applyAddFormSuggestion}
             isProcessing={isProcessing}
+            frequentItems={frequentItems}
           />
 
           <CartList

@@ -9,7 +9,7 @@ import TransactionList from './TransactionList';
 
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-export default function DayDetailModal({ dateStr, transactions = [], categories = [], onClose, onSave, onDelete }) {
+export default function DayDetailModal({ dateStr, transactions = [], categories = [], onClose, onSave, onDelete, frequentItems = [] }) {
   const { isDarkMode: dm } = useTheme();
   const { showToast } = useToast();
   
@@ -181,6 +181,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
           setSuggCatFilter={setSuggCatFilter}
           onApplySuggestion={applySuggestion}
           isProcessing={isSaving}
+          frequentItems={frequentItems}
         />
 
       </div>

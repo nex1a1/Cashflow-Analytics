@@ -197,6 +197,11 @@ export const getPeriodDateRange = (period) => {
         return { startDate: null, endDate: null };
     }
 
-    const toStr = (d) => d.toISOString().split('T')[0];
+    const toStr = (d) => {
+        const yr = d.getFullYear();
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        const da = String(d.getDate()).padStart(2, '0');
+        return `${yr}-${mo}-${da}`;
+    };
     return { startDate: toStr(start), endDate: toStr(end) };
 };

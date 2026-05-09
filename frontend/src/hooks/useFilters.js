@@ -1,40 +1,55 @@
 // src/hooks/useFilters.js
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
 
-export default function useFilters({ transactions, categories }) {
+export default function useFilters({ transactions, categories, masterPeriods = [] }) {
   // ── Period ───────────────────────────────────────────────────
   const [filterPeriod, setFilterPeriod] = useState('ALL');
 
   // ── Advanced filters (LedgerView) ───────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [advancedFilterCategory, setAdvancedFilterCategory] = useState('ALL');
   const [advancedFilterGroup, setAdvancedFilterGroup] = useState('ALL');
   const [advancedFilterDate, setAdvancedFilterDate] = useState('ALL');
+  
+  // NEW filters
+  const [typeFilter, setTypeFilter] = useState('ALL'); // ALL, INCOME, EXPENSE
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  const [dayTypeFilter, setDayTypeFilter] = useState('ALL'); // ALL, WEEKDAY, WEEKEND
 
-  // reset วันที่เมื่อเปลี่ยน period
-  useEffect(() => { setAdvancedFilterDate('ALL'); }, [filterPeriod]);
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
-  // ── Period picker options ────────────────────────────────────
+  // reset filters when period changes
+  useEffect(() => { 
+    setAdvancedFilterDate('ALL'); 
+  }, [filterPeriod]);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setAdvancedFilterCategory('ALL');
+    setAdvancedFilterGroup('ALL');
+    setAdvancedFilterDate('ALL');
+    setTypeFilter('ALL');
+    setMinAmount('');
+    setMaxAmount('');
+    setDayTypeFilter('ALL');
+  };
+
+  // ── Period picker options (Using Master List from DB) ────────
   const groupedOptions = useMemo(() => {
     const yearsMap = {};
-    transactions.forEach(t => {
-      if (!t.date) return;
-      let y, m;
-      if (t.date.includes('-')) {
-        [y, m] = t.date.split('-');
-        m = parseInt(m, 10);
-      } else if (t.date.includes('/')) {
-        const parts = t.date.split('/');
-        if (parts.length !== 3) return;
-        m = parseInt(parts[1], 10);
-        y = parts[2];
-      } else {
-        return;
-      }
+    masterPeriods.forEach(periodStr => { // periodStr is YYYY-MM
+      const [y, mStr] = periodStr.split('-');
+      const m = parseInt(mStr, 10);
       
       if (!yearsMap[y]) yearsMap[y] = { months: new Set(), quarters: new Set(), halves: new Set() };
-      yearsMap[y].months.add(`${y}-${String(m).padStart(2, '0')}`);
+      yearsMap[y].months.add(periodStr);
       if (m >= 1  && m <= 3)  yearsMap[y].quarters.add(`${y}-Q1`);
       if (m >= 4  && m <= 6)  yearsMap[y].quarters.add(`${y}-Q2`);
       if (m >= 7  && m <= 9)  yearsMap[y].quarters.add(`${y}-Q3`);
@@ -43,30 +58,22 @@ export default function useFilters({ transactions, categories }) {
       if (m >= 7  && m <= 12) yearsMap[y].halves.add(`${y}-H2`);
     });
     return { yearsMap, sortedYears: Object.keys(yearsMap).sort().reverse() };
-  }, [transactions]);
+  }, [masterPeriods]);
 
-  // ── เดือนที่มีข้อมูล (ใช้ใน CalendarView + auto-set period) ──
+  // ── เดือนที่มีข้อมูล (Master List) ──
   const rawAvailableMonths = useMemo(() => {
-    const months = new Set();
-    transactions.forEach(t => {
-      if (!t.date) return;
-      if (t.date.includes('-')) {
-        const [y, m] = t.date.split('-');
-        months.add(`${y}-${m}`);
-      } else if (t.date.includes('/')) {
-        const p = t.date.split('/');
-        if (p.length === 3) months.add(`${p[2]}-${p[1]}`);
-      }
-    });
-    return Array.from(months).sort().reverse();
-  }, [transactions]);
+    return [...masterPeriods].sort().reverse();
+  }, [masterPeriods]);
+
+  const hasAutoSet = useRef(false);
 
   // auto-set เดือนล่าสุดเมื่อโหลดข้อมูลครั้งแรก
   useEffect(() => {
-    if (filterPeriod === 'ALL' && rawAvailableMonths.length > 0) {
+    if (!hasAutoSet.current && filterPeriod === 'ALL' && rawAvailableMonths.length > 0) {
       setFilterPeriod(rawAvailableMonths[0]);
+      hasAutoSet.current = true;
     }
-  }, [rawAvailableMonths]);
+  }, [rawAvailableMonths, filterPeriod]);
 
   // ── Derived booleans ─────────────────────────────────────────
   // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → Enforced only in components that require single-month context (like Calendar)
@@ -94,7 +101,7 @@ export default function useFilters({ transactions, categories }) {
     transactions
       .filter(t => isDateInFilter(t.date, filterPeriod))
       .forEach(t => {
-        const cat = categories.find(c => c.name === t.category);
+        const cat = categories.find(c => c.id === t.category_id) || categories.find(c => c.name === t.category);
         if (cat?.cashflowGroup) ids.add(cat.cashflowGroup);
       });
     return ids;
@@ -104,39 +111,76 @@ export default function useFilters({ transactions, categories }) {
   const displayTransactions = useMemo(() => {
     let filtered = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
 
+    // Helper: Find accurate category object even during optimistic updates
+    const getCat = (t) => categories.find(c => c.id === t.category_id) || categories.find(c => c.name === t.category);
+
+    // 1. Type Filter (Income/Expense/Savings)
+    if (typeFilter !== 'ALL') {
+      filtered = filtered.filter(t => {
+        const cat = getCat(t);
+        if (typeFilter === 'INCOME') return cat?.type === 'income';
+        if (typeFilter === 'EXPENSE') return cat?.type === 'expense';
+        if (typeFilter === 'SAVINGS') return cat?.type === 'savings';
+        return true;
+      });
+    }
+
+    // 2. Date Filter
     if (advancedFilterDate !== 'ALL') {
       filtered = filtered.filter(t => t.date === advancedFilterDate);
     }
 
+    // 3. Category Filter
     if (advancedFilterCategory !== 'ALL') {
-      filtered = filtered.filter(t => t.category === advancedFilterCategory);
-    }
-
-    if (advancedFilterGroup !== 'ALL') {
       filtered = filtered.filter(t => {
-        const cat = categories.find(c => c.name === t.category)
-          ?? { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
-        switch (advancedFilterGroup) {
-          case 'INCOME':   return cat.type === 'income';
-          case 'EXPENSE':  return cat.type === 'expense';
-          case 'FIXED':    return cat.isFixed;
-          case 'VARIABLE': return cat.type === 'expense' && !cat.isFixed;
-          default:         
-            return cat.cashflowGroup === advancedFilterGroup;
-        }
+        const cat = getCat(t);
+        return (cat?.name || t.category) === advancedFilterCategory;
       });
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(t =>
-        (t.description || '').toLowerCase().includes(q) ||
-        (t.category    || '').toLowerCase().includes(q),
-      );
+    // 4. Group Filter (Strictly Custom Group IDs)
+    if (advancedFilterGroup !== 'ALL') {
+      filtered = filtered.filter(t => {
+        const cat = getCat(t);
+        return cat?.cashflowGroup === advancedFilterGroup;
+      });
+    }
+
+    // 5. Amount Range Filter
+    const min = parseFloat(minAmount);
+    const max = parseFloat(maxAmount);
+    if (!isNaN(min)) filtered = filtered.filter(t => Math.abs(t.amount) >= min);
+    if (!isNaN(max)) filtered = filtered.filter(t => Math.abs(t.amount) <= max);
+
+    // 6. Day Type (Weekend/Weekday) Filter
+    if (dayTypeFilter !== 'ALL') {
+      filtered = filtered.filter(t => {
+        const day = new Date(t.date).getDay();
+        const isWeekend = (day === 0 || day === 6);
+        return dayTypeFilter === 'WEEKEND' ? isWeekend : !isWeekend;
+      });
+    }
+
+    // 7. Debounced Search (Description & Category)
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(t => {
+        const catName = getCat(t)?.name || t.category || '';
+        return (t.description || '').toLowerCase().includes(q) || catName.toLowerCase().includes(q);
+      });
     }
 
     return filtered;
-  }, [transactions, filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, categories]);
+  }, [transactions, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, minAmount, maxAmount, dayTypeFilter, categories]);
+
+  const isFilterActive = searchQuery || 
+    advancedFilterDate !== 'ALL' || 
+    advancedFilterGroup !== 'ALL' || 
+    advancedFilterCategory !== 'ALL' || 
+    typeFilter !== 'ALL' || 
+    minAmount || 
+    maxAmount || 
+    dayTypeFilter !== 'ALL';
 
   return {
     // period
@@ -150,10 +194,16 @@ export default function useFilters({ transactions, categories }) {
     advancedFilterCategory, setAdvancedFilterCategory,
     advancedFilterGroup,    setAdvancedFilterGroup,
     advancedFilterDate,     setAdvancedFilterDate,
+    typeFilter,             setTypeFilter,
+    minAmount,              setMinAmount,
+    maxAmount,              setMaxAmount,
+    dayTypeFilter,          setDayTypeFilter,
     // computed
     availableDatesInPeriod,
     allDatesInPeriod,
     displayTransactions,
     activeCashflowGroupIds,
+    isFilterActive,
+    clearFilters
   };
 }

@@ -12,6 +12,8 @@ const analyticsController = require('../controllers/analyticsController');
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions/periods', transactionController.getAvailablePeriods);
+router.get('/transactions/frequent', transactionController.getFrequentItems);
 router.post('/transactions', transactionController.upsertTransactions);
 router.delete('/transactions/:id', transactionController.deleteTransaction);
 router.delete('/transactions/month/:isoMonth', transactionController.deleteMonth);
