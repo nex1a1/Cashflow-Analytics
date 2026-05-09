@@ -59,7 +59,7 @@ export default function useAnalytics({
                 income: m.income, 
                 totalExp: m.expense, 
                 totalSav: m.savings, 
-                groups: {} // Groups aggregation would need more backend work, fallback to local for now if needed
+                groups: m.groups || {} 
             };
         });
     }

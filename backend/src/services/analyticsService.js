@@ -75,9 +75,10 @@ class AnalyticsService {
   }
 
   /**
-   * Get monthly aggregated data.
+   * Get monthly aggregated data including group breakdown.
    */
   getMonthlyAggregation(startDate, endDate) {
+    // 1. Get monthly totals
     let query = `
       SELECT 
         strftime('%Y-%m', t.date) as month,
@@ -98,16 +99,49 @@ class AnalyticsService {
       query += ` AND t.date <= ?`;
       params.push(endDate);
     }
-
     query += ` GROUP BY month ORDER BY month ASC`;
-
     const rows = db.prepare(query).all(...params);
-    return rows.map(row => ({
-      month: row.month,
-      income: (row.income || 0) / 100,
-      expense: (row.expense || 0) / 100,
-      savings: (row.savings || 0) / 100
-    }));
+
+    // 2. Get monthly group breakdown
+    let groupQuery = `
+      SELECT 
+        strftime('%Y-%m', t.date) as month,
+        cg.id as group_id,
+        SUM(t.amount) as amount
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      WHERE t.is_deleted = 0
+    `;
+    const groupParams = [];
+    if (startDate) {
+      groupQuery += ` AND t.date >= ?`;
+      groupParams.push(startDate);
+    }
+    if (endDate) {
+      groupQuery += ` AND t.date <= ?`;
+      groupParams.push(endDate);
+    }
+    groupQuery += ` GROUP BY month, group_id`;
+    const groupRows = db.prepare(groupQuery).all(...groupParams);
+
+    // Map group amounts into the main rows
+    const result = rows.map(row => {
+      const groups = {};
+      groupRows.filter(g => g.month === row.month).forEach(g => {
+        groups[g.group_id] = g.amount / 100;
+      });
+      
+      return {
+        month: row.month,
+        income: (row.income || 0) / 100,
+        expense: (row.expense || 0) / 100,
+        savings: (row.savings || 0) / 100,
+        groups: groups
+      };
+    });
+
+    return result;
   }
 }
 
