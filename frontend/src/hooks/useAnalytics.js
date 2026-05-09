@@ -22,20 +22,47 @@ export default function useAnalytics({
   dayTypes,
   dayTypeConfig,
   isDarkMode,
+  summaryData // Added from useTransactionData
 }) {
   const analytics = useMemo(() => {
     // 1. Setup Maps
     const catMapLookup = createCategoryMap(categories);
 
     // 2. Base Cashflow & Totals Calculation
+    // PERFORMANCE optimization: If we have summaryData from the backend, use it for base totals
+    const useBackendTotals = !!summaryData;
+
     const { 
-      cashflowMap, 
+      cashflowMap: localCashflowMap, 
       dayIncomeMap, 
       dayExpenseMap, 
       uniqueMonthsSet, 
-      totals, 
+      totals: localTotals, 
       filteredTx 
     } = generateCashflowMap(transactions, filterPeriod, catMapLookup, cashflowGroups);
+
+    // Summary Data Mapping (if available)
+    const totals = useBackendTotals ? {
+      income: summaryData.summary.income,
+      expense: summaryData.summary.expense,
+      savings: summaryData.summary.savings,
+      // Fallback for sub-metrics that backend doesn't aggregate yet
+      ...localTotals 
+    } : localTotals;
+
+    // Map monthly aggregate data to the format used by the chart
+    const cashflowMap = useBackendTotals ? {} : localCashflowMap;
+    if (useBackendTotals && summaryData.monthly) {
+        summaryData.monthly.forEach(m => {
+            cashflowMap[m.month] = { 
+                monthStr: m.month, 
+                income: m.income, 
+                totalExp: m.expense, 
+                totalSav: m.savings, 
+                groups: {} // Groups aggregation would need more backend work, fallback to local for now if needed
+            };
+        });
+    }
 
     // --- Previous Period Calculation for Trends ---
     let prevTotals = { income: 0, expense: 0, net: 0 };
@@ -80,20 +107,33 @@ export default function useAnalytics({
       chartTx 
     } = calculateCategoryStats(transactions, categories, filterPeriod, dashboardCategory, hideFixedExpenses, catMapLookup);
 
-    const sortedCats = Object.entries(catMapData)
-      .sort((a, b) => b[1] - a[1])
-      .map(([catId, amount]) => {
-        const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
-        return {
-          id: catId,
-          name: catObj.name,
-          amount: amount,
-          percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
-          avgPerMonth: amount / numMonths,
-          icon: catObj.icon,
-          color: catObj.color || '#64748B'
-        };
-      });
+    const sortedCats = useBackendTotals && summaryData.categories 
+      ? summaryData.categories.map(c => ({
+          id: c.id,
+          name: c.name,
+          icon: c.icon || '📦',
+          color: c.color || '#64748B',
+          amount: c.amount,
+          type: c.type,
+          percentage: summaryData.summary.expense > 0 && c.type === 'expense' 
+            ? ((c.amount / summaryData.summary.expense) * 100).toFixed(1) 
+            : 0,
+          avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
+        }))
+      : Object.entries(catMapData)
+        .sort((a, b) => b[1] - a[1])
+        .map(([catId, amount]) => {
+          const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
+          return {
+            id: catId,
+            name: catObj.name,
+            amount: amount,
+            percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
+            avgPerMonth: amount / numMonths,
+            icon: catObj.icon,
+            color: catObj.color || '#64748B'
+          };
+        });
 
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
     const periodDays = datesInPeriod.length || 1;
@@ -120,7 +160,13 @@ export default function useAnalytics({
     const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
     const sparklineIncome = [], sparklineExpense = [], sparklineNet = [];
 
-    if (!isSingleMonthView) {
+    if (useBackendTotals && summaryData.monthly) {
+        summaryData.monthly.forEach(m => {
+            sparklineIncome.push(m.income);
+            sparklineExpense.push(m.expense);
+            sparklineNet.push(m.income - m.expense);
+        });
+    } else if (!isSingleMonthView) {
       sortedMonthsKeys.forEach(m => {
         sparklineIncome.push(cashflowMap[m].income);
         sparklineExpense.push(cashflowMap[m].totalExp);
@@ -333,7 +379,7 @@ export default function useAnalytics({
       monthlyCatMap,
       dailyCatMap
     };
-  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode]);
+  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
 
   return analytics;
 }

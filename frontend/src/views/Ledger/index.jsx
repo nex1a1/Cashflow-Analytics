@@ -145,29 +145,6 @@ export default function LedgerView({
 
   const isDateSorted = !sortConfig.key || sortConfig.key === 'date';
 
-  if (isReadOnlyView) {
-    const latestMonth = rawAvailableMonths?.length > 0 ? rawAvailableMonths[0] : null;
-    return (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 max-w-screen-2xl mx-auto w-full">
-        <div className={`flex flex-col items-center justify-center py-28 rounded border-2 border-dashed transition-colors ${dm ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <div className={`p-5 rounded mb-5 ${dm ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-            <FileSpreadsheet className={`w-12 h-12 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-          </div>
-          <p className={`text-xl font-black mb-2 ${dm ? 'text-slate-200' : 'text-slate-700'}`}>รายการเดินบัญชีรองรับเฉพาะรายเดือน</p>
-          <p className={`text-sm px-6 text-center max-w-md leading-relaxed mb-8 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-            ตอนนี้คุณกำลังดูข้อมูลแบบ <strong>{getFilterLabel(filterPeriod)}</strong><br />
-            หากต้องการแก้ไขข้อมูลหรือดูรายการเดินบัญชีแบบละเอียด กรุณาเลือกช่วงเวลาเป็น "รายเดือน"
-          </p>
-          {latestMonth && setFilterPeriod && (
-            <button onClick={() => setFilterPeriod(latestMonth)} className={`px-6 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${dm ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}>
-              สลับไปดูเดือนล่าสุด ({getFilterLabel(latestMonth)})
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 w-full pb-8">
       <div className="flex flex-col gap-3 mb-4">

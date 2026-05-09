@@ -8,6 +8,7 @@ const backupController = require('../controllers/backupController');
 const categoryController = require('../controllers/categoryController');
 const groupController = require('../controllers/groupController');
 const dayTypeController = require('../controllers/dayTypeController');
+const analyticsController = require('../controllers/analyticsController');
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
@@ -37,6 +38,9 @@ router.delete('/groups/:id', groupController.deleteGroup);
 // Settings
 router.get('/settings', settingController.getAllSettings);
 router.post('/settings', settingController.upsertSetting);
+
+// Analytics
+router.get('/analytics', analyticsController.getDashboardAnalytics);
 
 // Backup
 router.post('/backup', backupController.performBackup);

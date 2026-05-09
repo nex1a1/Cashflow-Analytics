@@ -3,6 +3,7 @@ import { API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL } from '../c
 const CATEGORIES_API_URL = API_URL.replace('/transactions', '/categories');
 const GROUPS_API_URL = API_URL.replace('/transactions', '/groups');
 const DAY_TYPES_API_URL = API_URL.replace('/transactions', '/day-types');
+const ANALYTICS_API_URL = API_URL.replace('/transactions', '/analytics');
 
 const handleResponse = async (response) => {
     if (!response.ok) {
@@ -13,7 +14,16 @@ const handleResponse = async (response) => {
 };
 
 export const transactionService = {
-    getAll: () => fetch(API_URL).then(handleResponse),
+    getAll: (startDate, endDate) => {
+        let url = API_URL;
+        if (startDate || endDate) {
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            url += `?${params.toString()}`;
+        }
+        return fetch(url).then(handleResponse);
+    },
     save: (items) => fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -22,6 +32,19 @@ export const transactionService = {
     deleteById: (id) => fetch(`${API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse),
     deleteAll: () => fetch(API_URL, { method: 'DELETE' }).then(handleResponse),
     resetAll: () => fetch(RESET_API_URL, { method: 'DELETE' }).then(handleResponse)
+};
+
+export const analyticsService = {
+    getDashboardData: (startDate, endDate) => {
+        let url = ANALYTICS_API_URL;
+        if (startDate || endDate) {
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            url += `?${params.toString()}`;
+        }
+        return fetch(url).then(handleResponse);
+    }
 };
 
 export const calendarService = {

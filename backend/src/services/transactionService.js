@@ -1,8 +1,8 @@
 const db = require('../config/db');
 
 class TransactionService {
-  getAll() {
-    return db.prepare(`
+  getAll(startDate, endDate) {
+    let query = `
       SELECT 
         t.id, 
         t.date, 
@@ -17,8 +17,21 @@ class TransactionService {
       JOIN categories c ON t.category_id = c.id
       JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
       WHERE t.is_deleted = 0
-      ORDER BY t.date ASC, t.created_at ASC
-    `).all();
+    `;
+    const params = [];
+
+    if (startDate) {
+      query += ` AND t.date >= ?`;
+      params.push(startDate);
+    }
+    if (endDate) {
+      query += ` AND t.date <= ?`;
+      params.push(endDate);
+    }
+
+    query += ` ORDER BY t.date ASC, t.created_at ASC`;
+
+    return db.prepare(query).all(...params);
   }
 
   /**

@@ -69,7 +69,7 @@ export default function useFilters({ transactions, categories }) {
   }, [rawAvailableMonths]);
 
   // ── Derived booleans ─────────────────────────────────────────
-  // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → LedgerView read-only
+  // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → Enforced only in components that require single-month context (like Calendar)
   const isReadOnlyView = !filterPeriod.match(/^\d{4}-\d{2}$/);
 
   // ── Dates ที่มีใน period ปัจจุบัน (ใช้ใน LedgerView filter) ──

@@ -6,7 +6,7 @@ import {
 } from './constants';
 import { settingsService, calendarService, categoryService, groupService, dayTypeService } from './services/api';
 import { getFilterLabel } from './utils/formatters';
-import { toISODate } from './utils/dateHelpers';
+import { toISODate, getPeriodDateRange } from './utils/dateHelpers';
 import { defaults } from 'chart.js';
 
 import useCategories from './hooks/useCategories';
@@ -85,9 +85,9 @@ export default function App() {
   } = useCategories(DEFAULT_CATEGORIES, setCashflowGroups);
 
   const {
-    transactions, isProcessing: isTxProcessing,
+    transactions, summaryData, isProcessing: isTxProcessing,
     setIsProcessing: setTxProcessing,
-    loadData, saveToDb,
+    loadData, loadAnalytics, bootstrap, saveToDb,
     handleSaveTransaction,
     handleUpdateTransaction,
     handleDeleteTransaction,
@@ -258,7 +258,25 @@ export default function App() {
 
   const isProcessing = isTxProcessing || isCsvProcessing;
 
-  useEffect(() => { loadData(); }, []);
+  // 3. Load Data based on period (High Performance Dual-Loading)
+  useEffect(() => {
+    const triggerLoads = async () => {
+      // 1. Always bootstrap master data once
+      await bootstrap();
+
+      // 2. Resolve date range from current filter
+      const { startDate, endDate } = getPeriodDateRange(filterPeriod);
+
+      // 3. Parallel load: 
+      // - Summary (Aggregated) for charts
+      // - Transactions (Windowed) for Ledger
+      await Promise.all([
+        loadAnalytics(startDate, endDate),
+        loadData(startDate, endDate)
+      ]);
+    };
+    triggerLoads();
+  }, [filterPeriod, bootstrap, loadData, loadAnalytics]);
 
   const showSuccess = () => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
 
@@ -270,7 +288,8 @@ export default function App() {
     transactions: validAnalyticsTxs, categories, filterPeriod,
     cashflowGroups, 
     hideFixedExpenses, dashboardCategory, chartGroupBy,
-    topXLimit, dayTypes, dayTypeConfig, isDarkMode
+    topXLimit, dayTypes, dayTypeConfig, isDarkMode,
+    summaryData
   });
 
   const handleOpenAddModal = (dateStr, type) => {

@@ -5,7 +5,7 @@ import {
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
 } from '../constants';
 import { parseDateStrToObj, toISODate, fromISODate } from '../utils/dateHelpers';
-import { settingsService, categoryService, groupService, dayTypeService } from '../services/api';
+import { settingsService, categoryService, groupService, dayTypeService, transactionService, analyticsService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 const sortTransactions = (dataArr) =>
@@ -23,98 +23,87 @@ export default function useTransactionData({
   setCashflowGroups
 }) {
   const [transactions, setTransactions] = useState([]);
+  const [summaryData, setSummaryData] = useState(null); // Aggregated analytics from backend
   const [isProcessing, setIsProcessing] = useState(false);
   const { showToast } = useToast();
 
-  const loadData = useCallback(async () => {
+  /**
+   * Loads raw transactions for a specific window
+   */
+  const loadData = useCallback(async (startDate, endDate) => {
     try {
       setDbStatus('กำลังโหลด...');
-      
-      // 1. Load Transactions
-      const txRes = await fetch(API_URL);
-      if (!txRes.ok) throw new Error('Network error transactions');
-      const txData = await txRes.json();
+      const txData = await transactionService.getAll(startDate, endDate);
       setTransactions(sortTransactions(txData));
       setDbStatus('Online (SQLite3)');
-
-      // 2. Load Groups from DB
-      try {
-        const groups = await groupService.getAll();
-        if (groups && groups.length > 0) {
-          setCashflowGroups(groups);
-        }
-      } catch (err) { console.error('Failed to load groups:', err); }
-
-      // 3. Load Categories from DB
-      try {
-        const categories = await categoryService.getAll();
-        if (categories && categories.length > 0) {
-          const mapped = categories.map(c => ({
-            id: c.id,
-            name: c.name,
-            icon: c.icon,
-            color: c.color,
-            isFixed: !!c.is_fixed,
-            cashflowGroup: c.cashflow_group_id,
-            type: c.group_type,
-            order_index: c.order_index || 0
-          }));
-          setCategories(mapped);
-        }
-      } catch (err) { console.error('Failed to load categories:', err); }
-
-      // 4. Load Day Type Master Data (Configuration)
-      try {
-        const dtData = await dayTypeService.getAll();
-        if (dtData && dtData.length > 0) {
-          setDayTypeConfig(dtData.map(dt => ({
-            id: dt.id,
-            label: dt.label,
-            color: dt.color,
-            name: dt.name,
-            order_index: dt.order_index || 0
-          })));
-        }
-      } catch (err) { console.error('Failed to load day types master data:', err); }
-
-      // 5. Load Calendar usage data
-      try {
-        const calRes = await fetch(CALENDAR_API_URL);
-        if (calRes.ok) {
-          const calData = await calRes.json();
-          const dbDayTypesUsage = {};
-          calData.forEach(row => { 
-            dbDayTypesUsage[row.date] = row.type_id; 
-          });
-          setDayTypes(dbDayTypesUsage);
-        }
-      } catch (calErr) { console.error('Failed to load calendar usage data:', calErr); }
-
     } catch (err) {
       console.error(err);
       setTransactions([]);
-      setDbStatus('Offline (ไม่สามารถเชื่อมต่อ Database)');
+      setDbStatus('Offline (Database Error)');
     }
-  }, [setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups]);
+  }, [setDbStatus]);
+
+  /**
+   * Loads aggregated analytics summary for a window
+   */
+  const loadAnalytics = useCallback(async (startDate, endDate) => {
+    try {
+      const data = await analyticsService.getDashboardData(startDate, endDate);
+      setSummaryData(data);
+    } catch (err) {
+      console.error('Failed to load analytics:', err);
+    }
+  }, []);
+
+  /**
+   * Initial bootstrap of master data
+   */
+  const bootstrap = useCallback(async () => {
+    try {
+      // 1. Groups
+      try {
+        const groups = await groupService.getAll();
+        if (groups?.length) setCashflowGroups(groups);
+      } catch (err) { console.error('Groups load failed'); }
+
+      // 2. Categories
+      try {
+        const categories = await categoryService.getAll();
+        if (categories?.length) {
+          setCategories(categories.map(c => ({
+            id: c.id, name: c.name, icon: c.icon, color: c.color,
+            isFixed: !!c.is_fixed, cashflowGroup: c.cashflow_group_id,
+            type: c.group_type, order_index: c.order_index || 0
+          })));
+        }
+      } catch (err) { console.error('Categories load failed'); }
+
+      // 3. Day Types
+      try {
+        const dtData = await dayTypeService.getAll();
+        if (dtData?.length) setDayTypeConfig(dtData);
+      } catch (err) { console.error('DayTypes load failed'); }
+
+      // 4. Calendar Usage
+      try {
+        const calData = await calendarService.getAll();
+        const usage = {};
+        calData.forEach(row => { usage[row.date] = row.type_id; });
+        setDayTypes(usage);
+      } catch (err) { console.error('Calendar load failed'); }
+
+    } catch (err) { console.error('Bootstrap failed', err); }
+  }, [setCategories, setDayTypes, setDayTypeConfig, setCashflowGroups]);
 
   const saveToDb = useCallback(async (items) => {
     try {
-      const res = await fetch(API_URL, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(Array.isArray(items) ? items : [items]) 
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Network response was not ok');
-      }
+      const res = await transactionService.save(items);
+      return res;
     } catch (err) { 
-      console.error('Failed to save to DB:', err);
-      showToast('ไม่สามารถบันทึกข้อมูลได้: ' + err.message, 'error');
+      showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
       throw err;
     }
-    await loadData();
-  }, [loadData, showToast]);
+  }, [showToast]);
 
   const handleSaveTransaction = useCallback(async (item) => { 
     await saveToDb([item]); 
@@ -173,5 +162,19 @@ export default function useTransactionData({
     }
   }, [showToast]);
 
-  return { transactions, isProcessing, setIsProcessing, loadData, saveToDb, handleSaveTransaction, handleUpdateTransaction, handleDeleteTransaction, handleDeleteMonth, handleDeleteAllData };
+  return { 
+    transactions, 
+    summaryData, 
+    isProcessing, 
+    setIsProcessing, 
+    loadData, 
+    loadAnalytics,
+    bootstrap,
+    saveToDb, 
+    handleSaveTransaction, 
+    handleUpdateTransaction, 
+    handleDeleteTransaction, 
+    handleDeleteMonth, 
+    handleDeleteAllData 
+  };
 }

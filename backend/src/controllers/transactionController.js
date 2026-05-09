@@ -2,8 +2,9 @@ const transactionService = require('../services/transactionService');
 const { upsertTransactionSchema } = require('../validations/transactionValidation');
 
 exports.getAllTransactions = (req, res) => {
+  const { startDate, endDate } = req.query;
   try {
-    const rows = transactionService.getAll();
+    const rows = transactionService.getAll(startDate, endDate);
     res.json(rows.map(row => ({
       id:          row.id,
       date:        row.date,

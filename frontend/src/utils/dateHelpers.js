@@ -147,7 +147,9 @@ export const generateDatesForPeriod = (period, allTransactions) => {
     const dateArray = [];
     let curr = new Date(start);
     let sanityCheck = 0;
-    while (curr <= end && sanityCheck < 5000) {
+    // Increased cap to 10 years (3650 days) for 'ALL' view
+    const MAX_DAYS = 365 * 10; 
+    while (curr <= end && sanityCheck < MAX_DAYS) {
         const d = String(curr.getDate()).padStart(2, '0');
         const m = String(curr.getMonth() + 1).padStart(2, '0');
         const y = curr.getFullYear();
@@ -156,4 +158,45 @@ export const generateDatesForPeriod = (period, allTransactions) => {
         sanityCheck++;
     }
     return dateArray;
+};
+
+/**
+ * Returns { startDate, endDate } in YYYY-MM-DD format for a given period string.
+ */
+export const getPeriodDateRange = (period) => {
+    if (period === 'ALL') return { startDate: null, endDate: null };
+    
+    let start, end;
+    if (period.match(/^\d{4}$/)) {
+        start = new Date(period, 0, 1);
+        end = new Date(period, 11, 31);
+    } else if (period.match(/^\d{4}-H1$/)) {
+        const y = period.split('-')[0];
+        start = new Date(y, 0, 1);
+        end = new Date(y, 5, 30);
+    } else if (period.match(/^\d{4}-H2$/)) {
+        const y = period.split('-')[0];
+        start = new Date(y, 6, 1);
+        end = new Date(y, 11, 31);
+    } else if (period.match(/^\d{4}-Q(\d)$/)) {
+        const [y, qStr] = period.split('-Q');
+        const q = parseInt(qStr);
+        start = new Date(y, (q - 1) * 3, 1);
+        end = new Date(y, q * 3, 0); 
+    } else if (period.match(/^\d{4}-\d{2}$/)) {
+        const [y, m] = period.split('-');
+        start = new Date(y, parseInt(m) - 1, 1);
+        end = new Date(y, parseInt(m), 0); 
+    } else if (period.includes('_')) {
+        const [startMonth, endMonth] = period.split('_');
+        const [sy, sm] = startMonth.split('-');
+        const [ey, em] = endMonth.split('-');
+        start = new Date(sy, parseInt(sm) - 1, 1);
+        end = new Date(ey, parseInt(em), 0);
+    } else {
+        return { startDate: null, endDate: null };
+    }
+
+    const toStr = (d) => d.toISOString().split('T')[0];
+    return { startDate: toStr(start), endDate: toStr(end) };
 };
