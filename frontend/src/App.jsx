@@ -115,13 +115,13 @@ export default function App() {
     clearFilters,
   } = useFilters({ transactions, categories, masterPeriods });
 
-  // ── Dynamic Document Title (🚀 FIXED) ──
   useEffect(() => {
     const periodLabel = getFilterLabel(filterPeriod);
     const tabLabels = { dashboard: 'Analysis', calendar: 'Calendar', ledger: 'Database', settings: 'Settings' };
     const tabLabel = tabLabels[activeTab] || 'Home';
-    document.title = `${periodLabel} | ${tabLabel} - Cashflow Analytics`;
+    document.title = `${periodLabel} | ${tabLabel} - Cashflow Shark`;
   }, [filterPeriod, activeTab]);
+
 
   useEffect(() => {
     defaults.color = isDarkMode ? '#94a3b8' : '#475569';

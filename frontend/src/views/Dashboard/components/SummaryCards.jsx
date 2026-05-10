@@ -112,8 +112,8 @@ export default function SummaryCards({ analytics }) {
               <div className={`p-1 rounded-md ${dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}><Coins className="w-3 h-3" /></div>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>รายรับรวม</span>
             </div>
-            <div className="truncate">
-              <AnimatedMoney value={totalIncome} className={`text-xl 2xl:text-2xl font-black leading-none ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
+            <div className="flex items-baseline">
+              <AnimatedMoney value={totalIncome} className={`text-xl 2xl:text-2xl font-black whitespace-nowrap ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
             </div>
           </div>
           {sparklineIncome && (
@@ -123,7 +123,7 @@ export default function SummaryCards({ analytics }) {
           )}
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
             <TrendBadge current={totalIncome} previous={prevTotals?.income} />
-            <span className={`text-[8px] font-bold opacity-40 uppercase tracking-tighter`}>Avg {formatMoney(avgIncome)}/วัน</span>
+            <span className={`text-[8px] font-bold opacity-40 uppercase tracking-tighter whitespace-nowrap`}>Avg {formatMoney(avgIncome)}/วัน</span>
           </div>
         </div>
 
@@ -134,8 +134,8 @@ export default function SummaryCards({ analytics }) {
               <div className={`p-1 rounded-md ${dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600'}`}><Wallet className="w-3 h-3" /></div>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>รายจ่ายรวม</span>
             </div>
-            <div className="truncate">
-              <AnimatedMoney value={totalExpense} className={`text-xl 2xl:text-2xl font-black leading-none ${dm ? 'text-rose-400' : 'text-rose-600'}`} />
+            <div className="flex items-baseline">
+              <AnimatedMoney value={totalExpense} className={`text-xl 2xl:text-2xl font-black whitespace-nowrap ${dm ? 'text-rose-400' : 'text-rose-600'}`} />
             </div>
           </div>
           {sparklineExpense && (
@@ -145,7 +145,7 @@ export default function SummaryCards({ analytics }) {
           )}
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
             <TrendBadge current={totalExpense} previous={prevTotals?.expense} inverse />
-            <span className={`text-[8px] font-bold opacity-40 uppercase tracking-tighter`}>Avg {formatMoney(totalExpense / periodDays)}/วัน</span>
+            <span className={`text-[8px] font-bold opacity-40 uppercase tracking-tighter whitespace-nowrap`}>Avg {formatMoney(totalExpense / periodDays)}/วัน</span>
           </div>
         </div>
 
@@ -156,12 +156,12 @@ export default function SummaryCards({ analytics }) {
               <div className={`p-1 rounded-md ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}><PiggyBank className="w-3 h-3" /></div>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เงินออมเป้าหมาย</span>
             </div>
-            <div className="truncate">
-              <AnimatedMoney value={explicitSavings} className={`text-xl 2xl:text-2xl font-black leading-none ${dm ? 'text-blue-400' : 'text-blue-600'}`} />
+            <div className="flex items-baseline">
+              <AnimatedMoney value={explicitSavings} className={`text-xl 2xl:text-2xl font-black whitespace-nowrap ${dm ? 'text-blue-400' : 'text-blue-600'}`} />
             </div>
           </div>
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
-             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'} whitespace-nowrap`}>
                 แยกเก็บรายหมวดหมู่
              </span>
           </div>
@@ -174,12 +174,12 @@ export default function SummaryCards({ analytics }) {
               <div className={`p-1 rounded-md ${dm ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}><TrendingUp className="w-3 h-3" /></div>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ความมั่งคั่งสุทธิ</span>
             </div>
-            <div className="truncate">
-              <AnimatedMoney value={actualSavings} className={`text-xl 2xl:text-2xl font-black leading-none ${actualSavings >= 0 ? (dm ? 'text-amber-400' : 'text-amber-600') : 'text-rose-500'}`} />
+            <div className="flex items-baseline">
+              <AnimatedMoney value={actualSavings} className={`text-xl 2xl:text-2xl font-black whitespace-nowrap ${actualSavings >= 0 ? (dm ? 'text-amber-400' : 'text-amber-600') : 'text-rose-500'}`} />
             </div>
           </div>
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
-             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${actualSavings >= 0 ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')}`}>
+             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${actualSavings >= 0 ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')} whitespace-nowrap`}>
                 {actualSavings >= 0 ? 'Surplus (ส่วนเกิน)' : 'Deficit (ติดลบ)'}
              </span>
           </div>
@@ -194,8 +194,8 @@ export default function SummaryCards({ analytics }) {
                 <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ประสิทธิภาพการออม</span>
               </div>
             </div>
-            <div className="truncate">
-               <span className={`text-xl 2xl:text-2xl font-black leading-none ${savingsRate >= 20 ? 'text-emerald-500' : (dm ? 'text-blue-400' : 'text-blue-700')}`}>
+            <div className="flex items-baseline">
+               <span className={`text-xl 2xl:text-2xl font-black whitespace-nowrap ${savingsRate >= 20 ? 'text-emerald-500' : (dm ? 'text-blue-400' : 'text-blue-700')}`}>
                  {savingsRate}%
                </span>
             </div>

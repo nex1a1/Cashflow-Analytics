@@ -8,6 +8,15 @@
 
 ---
 
+## 🦈 Branding & Spirit
+
+The **Shark** is our core identity. Why? Because sharks are symbols of **unstoppable determination**.
+*   **Constant Motion:** Just like a shark must swim to survive, we believe in the continuous tracking and management of financial health.
+*   **Goal-Focused:** Sharks never lose sight of their target. This application is built for users who are determined to hunt down their financial goals and achieve absolute freedom.
+*   **Minimalist Precision:** Our custom SVG outline logo represents the sharp, clinical precision needed for elite financial intelligence.
+
+---
+
 ## 🎯 Project Philosophy
 
 Unlike generic mobile-first trackers, this application is built for the **Power User**.

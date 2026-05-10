@@ -2,11 +2,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  BarChart3, ClipboardList, Download, Database,
+  BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
   Moon, Sun, Calendar as CalendarIcon, HelpCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import sharkBlack from '../logo/shark-black.svg';
+import sharkWhite from '../logo/shark-white.svg';
 import AnimatedNumber from './ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
 import Tooltip from './ui/Tooltip';
@@ -41,8 +43,16 @@ export default function AppHeader({
         
         {/* Left: Logo & Status */}
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-sm shadow-sm border bg-gradient-to-br transition-all shrink-0 ${dm ? 'from-[#00509E] to-blue-800 border-blue-700' : 'from-[#00509E] to-[#003d7a] border-[#003d7a]'}`}>
-            <Database className="w-5 h-5 text-white" />
+          <div className={`p-1.5 rounded-sm shadow-sm border transition-all shrink-0 ${
+            dm 
+              ? 'bg-gradient-to-br from-[#00509E] to-blue-800 border-blue-700' 
+              : 'bg-gradient-to-br from-sky-50 to-blue-100 border-blue-200'
+          }`}>
+            <img 
+              src={dm ? sharkWhite : sharkBlack} 
+              alt="Shark Logo" 
+              className="w-6 h-6 object-contain" 
+            />
           </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
