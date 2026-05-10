@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
-  TrendingUp, TrendingDown, Wallet, Inbox, FileSpreadsheet 
+  TrendingUp, TrendingDown, Wallet, Inbox, FileSpreadsheet
 } from 'lucide-react';
 import { formatMoney } from '../../utils/formatters'; // เช็ค Path
 import { useTheme } from '../../context/ThemeContext';
@@ -128,6 +128,23 @@ export default function LedgerView({
   }, [displayTransactions, catTypeMap]);
   const net = sumInc - sumExp;
 
+  // Calculate Monthly Average if period is long
+  const uniqueMonths = useMemo(() => {
+    const months = new Set();
+    displayTransactions.forEach(t => {
+      const parts = t.date.split('/');
+      if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
+    });
+    return months.size;
+  }, [displayTransactions]);
+
+  const getSubValue = (total) => {
+    if (uniqueMonths > 1) {
+      return `เฉลี่ย ${formatMoney(total / uniqueMonths)} / เดือน`;
+    }
+    return null;
+  };
+
   const totalPages = pages.length || 1;
   const currentData = pages[currentPage - 1] || [];
 
@@ -186,11 +203,29 @@ export default function LedgerView({
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <StatCard icon={<TrendingUp className="w-4 h-4 text-emerald-500" />} label="รายรับรวม" value={formatMoney(sumInc)} color={{ bg: dm ? 'bg-emerald-900/30' : 'bg-emerald-50', text: dm ? 'text-emerald-400' : 'text-emerald-600' }} />
-          <StatCard icon={<TrendingDown className="w-4 h-4 text-red-500" />} label="รายจ่ายรวม" value={formatMoney(sumExp)} color={{ bg: dm ? 'bg-red-900/30' : 'bg-red-50', text: dm ? 'text-red-400' : 'text-red-600' }} />
-          <StatCard icon={<Wallet className={`w-4 h-4 ${net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-500')}`} />} label="คงเหลือสุทธิ" value={formatMoney(net)} color={{ bg: net >= 0 ? (dm ? 'bg-blue-900/30' : 'bg-blue-50') : (dm ? 'bg-orange-900/30' : 'bg-orange-50'), text: net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600') }} />
+        {/* Stats Area (Vitals) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <StatCard 
+            icon={<TrendingUp />} 
+            label="รายรับรวม" 
+            value={formatMoney(sumInc)} 
+            subValue={getSubValue(sumInc)}
+            color={{ bg: dm ? 'bg-emerald-900/30' : 'bg-emerald-50', text: dm ? 'text-emerald-400' : 'text-emerald-600' }} 
+          />
+          <StatCard 
+            icon={<TrendingDown />} 
+            label="รายจ่ายรวม" 
+            value={formatMoney(sumExp)} 
+            subValue={getSubValue(sumExp)}
+            color={{ bg: dm ? 'bg-red-900/30' : 'bg-red-50', text: dm ? 'text-red-400' : 'text-red-600' }} 
+          />
+          <StatCard 
+            icon={<Wallet />} 
+            label="คงเหลือสุทธิ" 
+            value={formatMoney(net)} 
+            subValue={getSubValue(net)}
+            color={{ bg: net >= 0 ? (dm ? 'bg-blue-900/30' : 'bg-blue-50') : (dm ? 'bg-orange-900/30' : 'bg-orange-50'), text: net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600') }} 
+          />
         </div>
 
         {/* Filters */}

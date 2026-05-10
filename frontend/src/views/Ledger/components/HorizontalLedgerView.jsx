@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Inbox } from 'lucide-react';
+import { Inbox, Home } from 'lucide-react';
 import { hexToRgb } from '../../../utils/formatters';
 import { useTheme } from '../../../context/ThemeContext';
+import StatCard from './StatCard';
 
 export default function HorizontalLedgerView({
   displayTransactions, categories, formatMoney, dayTypes = {}, dayTypeConfig = [], allDates = []
@@ -12,15 +13,39 @@ export default function HorizontalLedgerView({
   const [hoveredDate, setHoveredDate] = useState(null);
   const [hoveredCat, setHoveredCat] = useState(null);
 
-  const expenseTransactions = useMemo(() =>
-    displayTransactions.filter(t => {
+  const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าหอพัก'];
+
+  const { expenseTransactions, sumRent, uniqueMonths } = useMemo(() => {
+    let rent = 0;
+    const months = new Set();
+    const expense = displayTransactions.filter(t => {
+      const parts = t.date.split('/');
+      if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
+
+      if (EXCLUDED_HEATMAP_CATEGORIES.includes(t.category)) {
+        rent += (parseFloat(t.amount) || 0);
+        return false;
+      }
       const cat = categories.find(c => c.name === t.category);
       return cat?.type === 'expense';
-    }), [displayTransactions, categories]);
+    });
+    return { expenseTransactions: expense, sumRent: rent, uniqueMonths: months.size };
+  }, [displayTransactions, categories]);
+
+  const subValueRent = useMemo(() => {
+    if (uniqueMonths > 1 && sumRent > 0) {
+      return `เฉลี่ย ${formatMoney(sumRent / uniqueMonths)} / เดือน`;
+    }
+    return sumRent > 0 ? 'รายจ่ายคงที่ (Fixed Cost)' : null;
+  }, [uniqueMonths, sumRent, formatMoney]);
 
   const activeCategories = useMemo(() => {
     const usedCatNames = new Set(expenseTransactions.map(t => t.category));
-    return categories.filter(c => c.type === 'expense' && usedCatNames.has(c.name));
+    return categories.filter(c => 
+      c.type === 'expense' && 
+      usedCatNames.has(c.name) &&
+      !EXCLUDED_HEATMAP_CATEGORIES.includes(c.name)
+    );
   }, [categories, expenseTransactions]);
 
   const sortedDates = useMemo(() => {
@@ -151,6 +176,22 @@ export default function HorizontalLedgerView({
 
   return (
     <div className="relative">
+      
+      {/* ── Top Bar: Pinned Fixed Stats ── */}
+      {sumRent > 0 && (
+        <div className="flex justify-end mb-4 px-1">
+          <div className="w-full sm:w-80">
+            <StatCard 
+              variant="compact"
+              icon={<Home className="w-4 h-4 text-blue-500" />} 
+              label="ค่าเช่า/ค่าหอพัก" 
+              value={formatMoney(sumRent)} 
+              subValue={subValueRent}
+              color={{ bg: dm ? 'bg-blue-900/30' : 'bg-blue-50', text: dm ? 'text-blue-400' : 'text-blue-600' }} 
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── Tooltip ── */}
       {tooltip && (
