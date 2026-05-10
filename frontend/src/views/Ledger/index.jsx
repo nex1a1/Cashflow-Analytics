@@ -56,7 +56,8 @@ export default function LedgerView({
     isDateSorted
   } = useLedgerData(displayTransactions, filterPeriod, searchQuery, {
     advancedFilterCategory, advancedFilterGroup, advancedFilterDate,
-    typeFilter, minAmount, maxAmount, dayTypeFilter
+    typeFilter, minAmount, maxAmount, dayTypeFilter,
+    categories, cashflowGroups // Pass these in for order_index lookup
   });
 
   // ─── Logic: Aggregation & Stats ───

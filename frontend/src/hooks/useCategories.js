@@ -31,31 +31,39 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     } catch (err) { console.error('Failed to reload groups:', err); }
   }, [setCashflowGroups]);
 
-  const handleCategoryChange = async (catId, field, value, transactions) => {
+  const handleCategoryChange = async (catId, field, value) => {
+    // 1. Update local state immediately for smooth UI
+    setCategories(prev => prev.map(c => {
+      if (c.id !== catId) return c;
+      return { ...c, [field]: value };
+    }));
+
+    // 2. Prepare data for backend
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     
-    const updatedCat = { 
-      ...cat, 
-      [field]: value,
-      // Map frontend names back to backend names if necessary
+    const toSave = {
+      id: cat.id,
+      name: field === 'name' ? value : cat.name,
+      icon: field === 'icon' ? value : cat.icon,
+      color: field === 'color' ? value : cat.color,
       is_fixed: field === 'isFixed' ? (value ? 1 : 0) : (cat.isFixed ? 1 : 0),
       cashflow_group_id: field === 'cashflowGroup' ? value : cat.cashflowGroup,
       order_index: cat.order_index
     };
 
+    // 3. Only save if name is not empty to avoid 400 errors
+    if (!toSave.name || toSave.name.trim() === '') return;
+
     try {
-      await categoryService.save(updatedCat);
-      await loadCategories();
-      showToast('อัปเดตหมวดหมู่สำเร็จ', 'success');
+      await categoryService.save(toSave);
+      // We don't call loadCategories() here to prevent the UI from jumping while typing
     } catch (err) {
-      showToast('ไม่สามารถอัปเดตหมวดหมู่ได้: ' + err.message, 'error');
+      console.error('Failed to save category:', err);
     }
   };
 
   const handleAddCategory = async (type) => {
-    const isIncome = type === 'income';
-    
     try {
       const groups = await groupService.getAll();
       const defaultGroup = groups.find(g => g.type === type) || groups[0];
@@ -65,25 +73,26 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         return;
       }
 
-      // Get max order_index WITHIN this type
       const sameTypeCategories = categories.filter(c => c.type === type);
       const maxOrder = sameTypeCategories.length > 0 
         ? Math.max(...sameTypeCategories.map(c => c.order_index || 0)) 
         : 0;
 
-      const newCat = {
-        id: crypto.randomUUID(),
-        name: isIncome ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
-        icon: isIncome ? '💰' : '📌',
-        color: isIncome ? '#10B981' : '#64748B',
+      const newId = crypto.randomUUID();
+      const newCatBackend = {
+        id: newId,
+        name: type === 'income' ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
+        icon: type === 'income' ? '💰' : '📌',
+        color: type === 'income' ? '#10B981' : '#64748B',
         is_fixed: 0,
         cashflow_group_id: defaultGroup.id,
         order_index: maxOrder + 1
       };
       
-      await categoryService.save(newCat);
-      await loadCategories();
+      await categoryService.save(newCatBackend);
+      await loadCategories(); // Reload to get the correct group_type from server
       showToast('เพิ่มหมวดหมู่สำเร็จ', 'success');
+      return newId; // Return ID so the view can focus it
     } catch (err) {
       showToast('ไม่สามารถเพิ่มหมวดหมู่ได้: ' + err.message, 'error');
     }

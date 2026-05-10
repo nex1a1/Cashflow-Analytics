@@ -68,20 +68,25 @@ const ModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
 
 const DayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }) => {
   const muted = `text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`;
+  const totalDays = Object.values(dayTypeCounts).reduce((acc, count) => acc + count, 0);
   
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {dayTypeConfig
         .filter(dt => (dayTypeCounts[dt.id] || 0) > 0)
-        .map(dt => (
-          <div key={dt.id} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
-            <span className={muted}>
-              {dt.label} 
-              <span className="opacity-70 text-[10px] ml-1">({dayTypeCounts[dt.id]})</span>
-            </span>
-          </div>
-        ))}
+        .map(dt => {
+          const count = dayTypeCounts[dt.id];
+          const percentage = totalDays > 0 ? ((count / totalDays) * 100).toFixed(2) : '0.00';
+          return (
+            <div key={dt.id} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
+              <span className={muted}>
+                {dt.label} 
+                <span className="opacity-70 text-[10px] ml-1">({count} วัน / {percentage}%)</span>
+              </span>
+            </div>
+          );
+        })}
     </div>
   );
 };
@@ -257,7 +262,7 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
   return (
     <div className={`${cardStyles} p-4`}>
       {/* Header & Controls */}
-      <div className={`flex items-center justify-between ${dividerStyles} gap-4 flex-wrap relative z-20`}>
+      <div className={`flex items-center justify-between ${dividerStyles} gap-4 relative z-20`}>
         <div className="flex items-center gap-4 flex-wrap">
           <h3 className={headerTextStyles}>
             <CalendarClock className={`w-4 h-4 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
@@ -265,31 +270,32 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
           </h3>
           <ModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
         </div>
+      </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={viewMode}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {viewMode === 'dayType' ? (
-                <DayTypeLegend 
-                  dayTypeConfig={dayTypeConfig} 
-                  dayTypeCounts={analytics.dayTypeCounts} 
-                  isDarkMode={dm} 
-                />
-              ) : (
-                <HeatmapLegend 
-                  globalMaxThreshold={globalMaxThreshold} 
-                  isDarkMode={dm} 
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+      {/* Legend Row (New Line) */}
+      <div className="mb-4 flex justify-end">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            transition={{ duration: 0.2 }}
+          >
+            {viewMode === 'dayType' ? (
+              <DayTypeLegend 
+                dayTypeConfig={dayTypeConfig} 
+                dayTypeCounts={analytics.dayTypeCounts} 
+                isDarkMode={dm} 
+              />
+            ) : (
+              <HeatmapLegend 
+                globalMaxThreshold={globalMaxThreshold} 
+                isDarkMode={dm} 
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Timeline Grid */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, PlusCircle } from 'lucide-react';
+import { Pencil, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
@@ -106,28 +106,60 @@ export default function LedgerTable({
               );
             })}
           </tbody>
-          <tfoot className={`sticky bottom-0 z-20 border-t-2 ${dm ? 'bg-slate-800/95 border-slate-700 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'}`}>
-            <tr>
-              <td colSpan="3" className={`px-4 py-3 text-xs font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
-                รวม {currentData.length} รายการในหน้านี้
-              </td>
-              <td className="px-4 py-3" />
-              <td className="px-3 py-3 text-right">
-                <div className="flex flex-col items-end gap-0.5">
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายรับ</span>
-                    <span className="text-sm font-black tabular-nums text-emerald-500">{formatMoney(pageInc)}</span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายจ่าย</span>
-                    <span className="text-sm font-black tabular-nums text-red-500">{formatMoney(pageExp)}</span>
-                  </div>
-                </div>
-              </td>
-              <td />
-            </tr>
-          </tfoot>
         </table>
+      </div>
+
+      {/* Master Footer Bar (Dedicated Bottom Line) */}
+      <div className={`flex items-center justify-between px-4 py-3 border-t-2 z-30 ${
+        dm ? 'bg-slate-900/95 border-slate-700 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'
+      }`}>
+        {/* Left: Record Count */}
+        <div className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+          หน้า {currentPage} • รวม {currentData.length} รายการ
+        </div>
+
+        {/* Center: Pagination Controls */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`flex items-center gap-1 px-2 py-1 rounded-sm border transition-all text-[10px] font-black uppercase tracking-widest ${
+              currentPage === 1
+                ? 'opacity-20 cursor-not-allowed'
+                : dm ? 'hover:bg-slate-800 border-slate-600 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
+            }`}
+          >
+            <ChevronLeft className="w-3 h-3" /> ก่อนหน้า
+          </button>
+          
+          <div className={`text-[11px] font-black tabular-nums ${dm ? 'text-blue-400' : 'text-[#00509E]'}`}>
+            {currentPage} / {totalPages}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`flex items-center gap-1 px-2 py-1 rounded-sm border transition-all text-[10px] font-black uppercase tracking-widest ${
+              currentPage === totalPages
+                ? 'opacity-20 cursor-not-allowed'
+                : dm ? 'hover:bg-slate-800 border-slate-600 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
+            }`}
+          >
+            ถัดไป <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Right: Page Totals */}
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-end">
+            <span className={`text-[9px] font-bold uppercase tracking-tighter ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายรับในหน้านี้</span>
+            <span className="text-[13px] font-black tabular-nums text-emerald-500">{formatMoney(pageInc)}</span>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className={`text-[9px] font-bold uppercase tracking-tighter ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายจ่ายในหน้านี้</span>
+            <span className="text-[13px] font-black tabular-nums text-red-500">{formatMoney(pageExp)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

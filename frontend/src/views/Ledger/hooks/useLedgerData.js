@@ -2,7 +2,20 @@ import { useMemo, useState, useEffect } from 'react';
 
 export function useLedgerData(displayTransactions, filterPeriod, searchQuery, filters = {}) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  // Map for fast lookup of order_index
+  const catOrderMap = useMemo(() => {
+    const map = {};
+    (filters.categories || []).forEach(c => { map[c.id] = c.order_index || 0; });
+    return map;
+  }, [filters.categories]);
+
+  const groupOrderMap = useMemo(() => {
+    const map = {};
+    (filters.cashflowGroups || []).forEach(g => { map[g.id] = g.order_index || 0; });
+    return map;
+  }, [filters.cashflowGroups]);
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -12,24 +25,46 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
   };
 
   const sortedTransactions = useMemo(() => {
-    if (!sortConfig.key) return displayTransactions;
     return [...displayTransactions].sort((a, b) => {
-      let valA, valB;
+      // 1. Primary Sort: Manual Selection or Date (Default)
       if (sortConfig.key === 'amount') {
-        valA = parseFloat(a.amount) || 0;
-        valB = parseFloat(b.amount) || 0;
+        const valA = parseFloat(a.amount) || 0;
+        const valB = parseFloat(b.amount) || 0;
+        if (valA !== valB) return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
       } else if (sortConfig.key === 'category') {
-        valA = a.category || '';
-        valB = b.category || '';
-      } else if (sortConfig.key === 'date') {
-        valA = a.date.split('/').reverse().join('');
-        valB = b.date.split('/').reverse().join('');
+        const valA = a.category || '';
+        const valB = b.category || '';
+        if (valA !== valB) {
+          const res = valA.localeCompare(valB);
+          return sortConfig.direction === 'asc' ? res : -res;
+        }
+      } else {
+        // Default Primary Sort: Date (YYYYMMDD) - Ascending (1 to 31)
+        const valA = a.date.split('/').reverse().join('');
+        const valB = b.date.split('/').reverse().join('');
+        if (valA !== valB) {
+          const res = valA.localeCompare(valB);
+          const dir = (sortConfig.key === 'date') ? sortConfig.direction : 'asc';
+          return dir === 'asc' ? res : -res;
+        }
       }
-      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
+
+      // 2. Secondary Sort: Group Order Index (from Settings)
+      const groupAOrder = groupOrderMap[a.cashflow_group_id] ?? 999;
+      const groupBOrder = groupOrderMap[b.cashflow_group_id] ?? 999;
+      if (groupAOrder !== groupBOrder) return groupAOrder - groupBOrder;
+
+      // 3. Tertiary Sort: Category Order Index (from Settings)
+      const catAOrder = catOrderMap[a.category_id] ?? 999;
+      const catBOrder = catOrderMap[b.category_id] ?? 999;
+      if (catAOrder !== catBOrder) return catAOrder - catBOrder;
+
+      // 4. Final Tie-breaker: Amount (Highest to Lowest)
+      const amtA = parseFloat(a.amount) || 0;
+      const amtB = parseFloat(b.amount) || 0;
+      return amtB - amtA;
     });
-  }, [displayTransactions, sortConfig]);
+  }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap]);
 
   const pages = useMemo(() => {
     const result = [];
