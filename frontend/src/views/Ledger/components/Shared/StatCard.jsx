@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../../../context/ThemeContext';
+import { useTheme } from '../../../../context/ThemeContext';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function StatCard({ 
@@ -16,26 +16,26 @@ export default function StatCard({
   // COMPACT VARIANT (Horizontal - Used in Heatmap/Pinned areas)
   if (variant === 'compact') {
     return (
-      <div className={`group flex items-center gap-3 px-3 py-1.5 rounded-sm border transition-all duration-300 ${
+      <div className={`group flex items-center gap-2 px-3 py-1.5 rounded-sm border transition-all duration-300 ${
         dm 
-          ? 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/60' 
-          : 'bg-white border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300'
-      }`}>
+          ? 'bg-slate-900/40 hover:bg-slate-800/60' 
+          : 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300'
+      }`} style={{ borderColor: color.border || undefined }}>
         <div className={`p-1.5 rounded-sm ${color.bg} shrink-0 transition-transform group-hover:scale-110`}>
           {icon}
         </div>
-        <div className="flex flex-1 items-center justify-between gap-4 min-w-0">
-          <div className="min-w-0">
+        <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
+          <div className="min-w-0 flex-1">
             <p className={`text-[10px] font-black uppercase tracking-widest truncate ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
               {label}
             </p>
             {subValue && (
-              <p className={`text-[9px] font-bold opacity-60 truncate ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-[8px] font-bold opacity-60 truncate leading-tight ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
                 {subValue}
               </p>
             )}
           </div>
-          <p className={`text-sm font-black tabular-nums tracking-tight ${color.text}`}>
+          <p className={`text-sm font-black tabular-nums tracking-tight shrink-0 ${color.text}`}>
             {value}
           </p>
         </div>

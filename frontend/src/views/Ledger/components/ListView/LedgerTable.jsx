@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pencil, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import EditableInput from '../../../components/ui/EditableInput'; // เช็ค Path ด้วยนะครับว่าตรงมั้ย
+import { Pencil, PlusCircle } from 'lucide-react';
+import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
-import { hexToRgb } from '../../../utils/formatters';
-import { useTheme } from '../../../context/ThemeContext';
+import { hexToRgb } from '../../../../utils/formatters';
+import { useTheme } from '../../../../context/ThemeContext';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
@@ -39,7 +39,7 @@ export default function LedgerTable({
 
   return (
     <div className="flex flex-col w-full">
-      <div className="overflow-auto" style={{ scrollbarWidth: 'thin' }}>
+      <div className="overflow-auto no-scrollbar" style={{ scrollbarWidth: 'thin' }}>
         <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
           <thead className={`sticky top-0 z-20 border-b ${dm ? 'bg-slate-800/95 border-slate-700 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'}`}>
             <tr>
@@ -113,50 +113,21 @@ export default function LedgerTable({
               </td>
               <td className="px-4 py-3" />
               <td className="px-3 py-3 text-right">
-                <div className="flex flex-col items-end gap-0.5 leading-none">
-                  {pageInc > 0 && <span className={`text-[11px] font-bold tabular-nums ${dm ? 'text-emerald-500' : 'text-emerald-600'}`}>+{formatMoney(pageInc)}</span>}
-                  {pageExp > 0 && <span className={`text-[11px] font-bold tabular-nums ${dm ? 'text-red-400' : 'text-red-600'}`}>-{formatMoney(pageExp)}</span>}
-                  <span className={`text-sm font-black mt-1 pt-1 border-t tabular-nums ${dm ? 'border-slate-700' : 'border-slate-300'} ${pageInc - pageExp >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600')}`}>
-                    {formatMoney(pageInc - pageExp)}
-                  </span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายรับ</span>
+                    <span className="text-sm font-black tabular-nums text-emerald-500">{formatMoney(pageInc)}</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>รายจ่าย</span>
+                    <span className="text-sm font-black tabular-nums text-red-500">{formatMoney(pageExp)}</span>
+                  </div>
                 </div>
               </td>
               <td />
             </tr>
           </tfoot>
         </table>
-      </div>
-
-      {/* Pagination Bar */}
-      <div className={`px-5 py-3 border-t flex items-center justify-between shrink-0 ${dm ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-100'}`}>
-        <span className={`text-xs font-semibold ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
-          แสดง <span className={`font-black ${dm ? 'text-slate-400' : 'text-slate-600'}`}>{currentData.length}</span> จากทั้งหมด <span className={`font-black ${dm ? 'text-slate-400' : 'text-slate-600'}`}>{sortedTransactions.length}</span> รายการ
-        </span>
-        {totalPages > 1 && (
-          <div className="flex items-center gap-3">
-            <span className={`text-xs font-bold ${dm ? 'text-slate-500' : 'text-slate-500'}`}>
-              หน้า {currentPage} / {totalPages}
-            </span>
-            <div className="flex gap-1">
-              <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className={`p-1.5 border rounded-sm disabled:opacity-30 transition-all active:scale-95 text-xs font-bold ${dm ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>«</button>
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`p-1.5 border rounded-sm disabled:opacity-30 transition-all active:scale-95 ${dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}><ChevronLeft className="w-3.5 h-3.5" /></button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let page;
-                if (totalPages <= 5) page = i + 1;
-                else if (currentPage <= 3) page = i + 1;
-                else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
-                else page = currentPage - 2 + i;
-                return (
-                  <button key={page} onClick={() => setCurrentPage(page)} className={`min-w-[30px] h-[30px] px-1 border rounded-sm text-xs font-bold transition-all active:scale-95 ${page === currentPage ? (dm ? 'bg-blue-600 border-blue-600 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
-                    {page}
-                  </button>
-                );
-              })}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={`p-1.5 border rounded-sm disabled:opacity-30 transition-all active:scale-95 ${dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}><ChevronRight className="w-3.5 h-3.5" /></button>
-              <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className={`p-1.5 border rounded-sm disabled:opacity-30 transition-all active:scale-95 text-xs font-bold ${dm ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>»</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

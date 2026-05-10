@@ -1,16 +1,22 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
-  TrendingUp, TrendingDown, Wallet, Inbox, FileSpreadsheet
+  TrendingUp, TrendingDown, Wallet, Inbox
 } from 'lucide-react';
-import { formatMoney } from '../../utils/formatters'; // เช็ค Path
+import { formatMoney } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';
 
-// นำเข้า Components ที่แยกออกมา
-import StatCard from './components/StatCard';
-import FilterBar from './components/FilterBar';
-import LedgerTable from './components/LedgerTable';
-import HorizontalLedgerView from './components/HorizontalLedgerView';
+// Shared Components
+import StatCard from './components/Shared/StatCard';
+import FilterBar from './components/Shared/FilterBar';
+
+// View Components
+import LedgerTable from './components/ListView/LedgerTable';
+import HorizontalLedgerView from './components/HorizontalView/HorizontalLedgerView';
+
+// Custom Hooks
+import { useLedgerData } from './hooks/useLedgerData';
+import { useLedgerStats } from './hooks/useLedgerStats.jsx';
 
 export default function LedgerView({
   displayTransactions, isReadOnlyView, getFilterLabel, filterPeriod,
@@ -35,119 +41,38 @@ export default function LedgerView({
   isLoading
 }) {
   const { isDarkMode: dm } = useTheme();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
   const [filterOpen, setFilterOpen] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
 
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc',
-    }));
-  };
+  // ─── Logic: Data Orchestration ───
+  const {
+    sortedTransactions,
+    pages,
+    currentPage,
+    setCurrentPage,
+    sortConfig,
+    handleSort,
+    dateBands,
+    isDateSorted
+  } = useLedgerData(displayTransactions, filterPeriod, searchQuery, {
+    advancedFilterCategory, advancedFilterGroup, advancedFilterDate,
+    typeFilter, minAmount, maxAmount, dayTypeFilter
+  });
 
-  const sortedTransactions = useMemo(() => {
-    if (!sortConfig.key) return displayTransactions;
-    return [...displayTransactions].sort((a, b) => {
-      let valA, valB;
-      if (sortConfig.key === 'amount') {
-        valA = parseFloat(a.amount) || 0;
-        valB = parseFloat(b.amount) || 0;
-      } else if (sortConfig.key === 'category') {
-        valA = a.category || '';
-        valB = b.category || '';
-      } else if (sortConfig.key === 'date') {
-        valA = a.date.split('/').reverse().join('');
-        valB = b.date.split('/').reverse().join('');
-      }
-      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [displayTransactions, sortConfig]);
-
-  const pages = useMemo(() => {
-    const result = [];
-    let curPage = [];
-    const TARGET = 50;
-    const groups = [];
-    let curGroup = [], curDate = null;
-
-    if (sortConfig.key && sortConfig.key !== 'date') {
-      for (let i = 0; i < sortedTransactions.length; i += TARGET) {
-        result.push(sortedTransactions.slice(i, i + TARGET));
-      }
-      return result;
-    }
-
-    sortedTransactions.forEach(t => {
-      if (t.date !== curDate) {
-        if (curGroup.length > 0) groups.push(curGroup);
-        curGroup = [t]; curDate = t.date;
-      } else curGroup.push(t);
-    });
-    if (curGroup.length > 0) groups.push(curGroup);
-    groups.forEach(grp => {
-      if (curPage.length + grp.length > TARGET && curPage.length > 0) { result.push(curPage); curPage = [...grp]; }
-      else curPage.push(...grp);
-    });
-    if (curPage.length > 0) result.push(curPage);
-    return result;
-  }, [sortedTransactions, sortConfig]);
-
-  const dateBands = useMemo(() => {
-    const bands = {};
-    let currentBand = 0;
-    let lastDate = null;
-    sortedTransactions.forEach(t => {
-      if (t.date !== lastDate) { currentBand = 1 - currentBand; lastDate = t.date; }
-      bands[t.id] = currentBand;
-    });
-    return bands;
-  }, [sortedTransactions]);
-
-  useEffect(() => { setCurrentPage(1); }, [filterPeriod, searchQuery, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, minAmount, maxAmount, dayTypeFilter, sortConfig]);
-  useEffect(() => { if (pages.length > 0 && currentPage > pages.length) setCurrentPage(pages.length); }, [pages.length, currentPage]);
-
-  const catTypeMap = useMemo(() => {
-    const map = {};
-    categories.forEach(c => map[c.name] = c.type);
-    return map;
-  }, [categories]);
-
-  const { sumInc, sumExp } = useMemo(() => {
-    let inc = 0, exp = 0;
-    displayTransactions.forEach(t => {
-      const type = catTypeMap[t.category];
-      const amt = parseFloat(t.amount) || 0;
-      if (type === 'income') inc += amt;
-      else exp += amt;
-    });
-    return { sumInc: inc, sumExp: exp };
-  }, [displayTransactions, catTypeMap]);
-  const net = sumInc - sumExp;
-
-  // Calculate Monthly Average if period is long
-  const uniqueMonths = useMemo(() => {
-    const months = new Set();
-    displayTransactions.forEach(t => {
-      const parts = t.date.split('/');
-      if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
-    });
-    return months.size;
-  }, [displayTransactions]);
-
-  const getSubValue = (total) => {
-    if (uniqueMonths > 1) {
-      return `เฉลี่ย ${formatMoney(total / uniqueMonths)} / เดือน`;
-    }
-    return null;
-  };
+  // ─── Logic: Aggregation & Stats ───
+  const {
+    sumInc,
+    sumExp,
+    net,
+    activeGroupCards,
+    getSubValue,
+    catTypeMap
+  } = useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm);
 
   const totalPages = pages.length || 1;
   const currentData = pages[currentPage - 1] || [];
 
+  // Page-specific summaries
   const { pageInc, pageExp } = useMemo(() => {
     let inc = 0, exp = 0;
     currentData.forEach(t => {
@@ -158,8 +83,6 @@ export default function LedgerView({
     });
     return { pageInc: inc, pageExp: exp };
   }, [currentData, catTypeMap]);
-
-  const isDateSorted = !sortConfig.key || sortConfig.key === 'date';
 
   return (
     <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 w-full pb-8">
@@ -227,6 +150,13 @@ export default function LedgerView({
             color={{ bg: net >= 0 ? (dm ? 'bg-blue-900/30' : 'bg-blue-50') : (dm ? 'bg-orange-900/30' : 'bg-orange-50'), text: net >= 0 ? (dm ? 'text-blue-400' : 'text-[#00509E]') : (dm ? 'text-orange-400' : 'text-orange-600') }} 
           />
         </div>
+
+        {/* Group Breakdown Area (Visible in all view modes) */}
+        {activeGroupCards.length > 0 && (
+          <div className="flex items-center gap-3 overflow-x-auto pb-1 px-1 no-scrollbar scroll-smooth">
+            {activeGroupCards}
+          </div>
+        )}
 
         {/* Filters */}
         {filterOpen && viewMode === 'list' && (
