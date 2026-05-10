@@ -43,7 +43,7 @@ export default function DashboardView({
       {/* ══════════════════════════════════════════════════════════
           ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
       ══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_600px] gap-4 items-stretch">
+      <div className="flex flex-col gap-4 w-full">
         <SummaryCards analytics={analytics} />
         <ExpenseProportion analytics={analytics} categories={categories} />
       </div>

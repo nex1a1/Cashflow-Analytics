@@ -7,7 +7,7 @@ import { formatMoney } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';
 
 // Shared Components
-import StatCard from './components/Shared/StatCard';
+import StatCard from '../../components/shared/StatCard';
 import FilterBar from './components/Shared/FilterBar';
 
 // View Components

@@ -8,51 +8,38 @@ import { getDoughnutChartOptions } from '../../../utils/chartOptions';
 import { useTheme } from '../../../context/ThemeContext';
 
 /**
- * Sub-component for individual category row (Tight & High-Density)
+ * Sub-component for individual category cell (Table-like HUD)
  */
-const CatItem = ({ cat, dm, idx, isCompact = false }) => (
-  <div className="flex flex-col min-w-0 group cursor-default">
-    {/* บรรทัดบน: ไอคอนและชื่อหมวดหมู่ */}
-    <div className="flex justify-between items-baseline gap-2 mb-0.5">
+const CatItem = ({ cat, dm, idx }) => (
+  <div className={`flex flex-col min-w-0 p-2 group cursor-default h-full ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80' : 'bg-white hover:bg-slate-50'} transition-colors`}>
+    <div className="flex justify-between items-start gap-1 mb-1">
       <span 
-        className={`${isCompact ? 'text-[10px]' : 'text-xs'} font-bold flex items-center gap-1.5 ${dm ? 'text-slate-300' : 'text-slate-600'} min-w-0`} 
+        className="text-[10px] font-black truncate flex items-center gap-1 min-w-0" 
+        style={{ color: dm ? '#94a3b8' : '#64748b' }}
         title={cat.name}
       >
-        <span className="shrink-0 opacity-80 leading-none group-hover:scale-110 transition-transform">{cat.icon}</span>
-        <span className="truncate group-hover:text-blue-500 transition-colors">{cat.name}</span>
+        <span className="shrink-0 leading-none group-hover:scale-110 transition-transform" style={{ color: cat.color }}>{cat.icon}</span>
+        <span className="truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{cat.name}</span>
       </span>
-      {/* ถ้าไม่ใช่ Compact (คือ Top 4) ให้โชว์ตัวเลขข้างบน */}
-      {!isCompact && (
-        <div className="flex items-baseline justify-end gap-3 shrink-0">
-          <span className="text-[10px] font-bold tabular-nums" style={{ color: cat.color }}>{cat.percentage}%</span>
-          <span className={`text-[11px] font-black tabular-nums text-right w-[65px] ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
-            {formatMoney(cat.amount)}
-          </span>
-        </div>
-      )}
+      <span className="text-sm font-black tabular-nums shrink-0 leading-none" style={{ color: cat.color }}>{cat.percentage}%</span>
     </div>
     
-    {/* บรรทัดล่าง: เส้น Progress Bar และ ตัวเลข (ถ้าเป็นโหมด Compact) */}
-    <div className="flex items-center gap-2">
-      <div className={`flex-1 rounded-full h-[3px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
+    <div className="mt-auto flex flex-col gap-1">
+      <div className="flex justify-between items-baseline">
+        <p className={`text-[11px] font-black tabular-nums ${dm ? 'text-slate-200' : 'text-slate-900'}`}>
+          {formatMoney(cat.amount).split('.')[0]}
+        </p>
+      </div>
+      <div className={`w-full rounded-full h-[2px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
         <div 
-          className="h-full rounded-full transition-all duration-1000" 
+          className="h-full transition-all duration-1000" 
           style={{ 
             width: `${cat.percentage}%`, 
             backgroundColor: cat.color, 
-            opacity: Math.max(0.45, 1 - idx * 0.05) 
+            opacity: 0.8
           }} 
         />
       </div>
-      {/* ถ้าเป็น Compact ให้โชว์ตัวเลข % และ ยอดเงิน ข้างๆ เส้น Bar แทนเพื่อประหยัดที่ */}
-      {isCompact && (
-        <div className="flex items-baseline gap-1.5 shrink-0">
-          <span className="text-[9px] font-bold tabular-nums" style={{ color: cat.color }}>{cat.percentage}%</span>
-          <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-700'}`}>
-            {formatMoney(cat.amount)}
-          </span>
-        </div>
-      )}
     </div>
   </div>
 );
@@ -66,7 +53,7 @@ export default function ExpenseProportion({ analytics }) {
     const baseOptions = getDoughnutChartOptions(dm);
     return {
       ...baseOptions,
-      cutout: '80%', 
+      cutout: '85%', 
       plugins: {
         ...baseOptions.plugins,
         tooltip: { enabled: false }
@@ -74,62 +61,60 @@ export default function ExpenseProportion({ analytics }) {
     };
   }, [dm]);
   
-  const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col h-full overflow-hidden ${
-    dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+  const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
+    dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'
   }`;
 
   if (catCount === 0) {
     return (
-      <div className={`${cardClass} p-6 items-center justify-center text-center opacity-60`}>
-        <Inbox className="w-8 h-8 mb-2 opacity-20" />
-        <p className="text-sm font-medium">ไม่มีข้อมูลค่าใช้จ่าย</p>
+      <div className={`${cardClass} p-10 items-center justify-center text-center opacity-60`}>
+        <Inbox className="w-10 h-10 mb-2 opacity-20" />
+        <p className="text-sm font-bold uppercase tracking-widest">No Expense Data</p>
       </div>
     );
   }
 
-  const topCats = sortedCats.slice(0, 4);
-  const remainingCats = sortedCats.slice(4);
-
   return (
     <div className={cardClass}>
-      <div className={`px-3 py-2 border-b flex items-center justify-between ${dm ? 'border-slate-700 bg-slate-800/80' : 'border-slate-100 bg-slate-50/50'}`}>
-        <div className="flex items-center gap-2">
-          <PieChart className={`w-3.5 h-3.5 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-          <span className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+      {/* ─── HEADER (Ultra Tighter) ─── */}
+      <div className={`px-3 py-1 border-b flex items-center justify-between ${dm ? 'bg-slate-800/90 border-slate-700/50' : 'bg-slate-50 border-slate-100'}`}>
+        <div className="flex items-center gap-1.5">
+          <PieChart className={`w-3 h-3 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
+          <span className={`text-[9px] font-black uppercase tracking-widest ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
             สัดส่วนรายจ่าย (Proportions)
           </span>
         </div>
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>
-          {catCount} หมวด
+        <span className={`text-[9px] font-black px-1.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>
+          {catCount} Categories
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
+      {/* ─── MONOLITHIC CONTENT ─── */}
+      <div className="flex flex-row items-stretch">
         
-        <div className="flex gap-5 items-center shrink-0">
-          <div className="relative w-[90px] h-[90px] shrink-0">
+        {/* LEFT: CHART ANCHOR (No Padding) */}
+        <div className={`shrink-0 flex flex-col items-center justify-center p-4 border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
+          <div className="relative w-[100px] h-[100px]">
             <Doughnut data={catChartData} options={options} />
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className={`text-xs font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>{formatMoney(totalExpense).split('.')[0]}</span>
+               <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Total</span>
+               <span className={`text-[11px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
+                 {formatMoney(totalExpense).split('.')[0]}
+               </span>
             </div>
-          </div>
-          
-          <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0 py-0.5">
-            {topCats.map((cat, idx) => (
-              <CatItem key={cat.id || idx} cat={cat} dm={dm} idx={idx} />
-            ))}
           </div>
         </div>
 
-        {remainingCats.length > 0 && (
-          <div className={`pt-2 border-t border-dashed ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-              {remainingCats.map((cat, idx) => (
-                <CatItem key={cat.id || idx} cat={cat} dm={dm} idx={idx + 4} isCompact={true} />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* RIGHT: TABLE-GRID HUD */}
+        <div className="flex-1 grid grid-cols-5 gap-[1px] bg-slate-700/20">
+           {sortedCats.map((cat, idx) => (
+             <CatItem key={cat.id || idx} cat={cat} dm={dm} idx={idx} />
+           ))}
+           {/* Fill empty cells to maintain grid borders if needed */}
+           {[...Array((5 - (catCount % 5)) % 5)].map((_, i) => (
+             <div key={`empty-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+           ))}
+        </div>
 
       </div>
     </div>

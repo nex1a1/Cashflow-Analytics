@@ -142,6 +142,7 @@ export default function MainLayout({ controller }) {
                   handleOpenAddModal={handleOpenAddModal} categories={categories}
                   dayTypes={dayTypes}
                   handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig}
+                  getFilterLabel={getFilterLabel}
                   isReadOnlyView={isReadOnlyView}
                   onSaveTransaction={handleSaveTransaction}
                   handleDeleteTransaction={handleDeleteTransaction}
@@ -233,6 +234,7 @@ export default function MainLayout({ controller }) {
         transactions={transactions} categories={categories}
         dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
         groupedOptions={groupedOptions}
+        getFilterLabel={getFilterLabel}
         initialPeriod={filterPeriod}
       />
 

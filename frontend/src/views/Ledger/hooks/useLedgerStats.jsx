@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
-import StatCard from '../components/Shared/StatCard';
+import StatCard from '../../../components/shared/StatCard';
 
 export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm) {
   const catTypeMap = useMemo(() => {

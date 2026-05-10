@@ -135,7 +135,7 @@ export function useAppController() {
     };
     const tabLabel = tabLabels[activeTab] || 'Home';
     const periodLabel = getFilterLabel(filterPeriod);
-    document.title = `🦈 CS | ${tabLabel} [${periodLabel}]`;
+    document.title = `CS | ${tabLabel} [${periodLabel}]`;
   }, [activeTab, filterPeriod]);
 
   // ─── HANDLERS ───

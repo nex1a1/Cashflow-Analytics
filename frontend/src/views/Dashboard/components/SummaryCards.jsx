@@ -2,17 +2,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { 
-  Flame, UtensilsCrossed, Home, 
-  Scale, TrendingUp, Target, 
-  Zap, Activity, ShieldCheck, 
-  Anchor, Crosshair, Navigation, Ship,
-  Wallet // เพิ่ม Wallet icon
+  Activity, ShieldCheck, Anchor, Crosshair, 
+  Navigation, Wallet, TrendingUp, Target, Scale, UtensilsCrossed, Zap
 } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { useTheme } from '../../../context/ThemeContext';
 import sharkLogo from '../../../assets/images/shark-white.svg';
 import sharkBlack from '../../../assets/images/shark-black.svg';
-import StatCard from '../../Ledger/components/Shared/StatCard';
+import StatCard from '../../../components/shared/StatCard.jsx';
 
 // ─── Count-up Hook ────────────────────────────────────────────────────────────
 function useCountUp(target, duration = 800) {
@@ -41,195 +38,192 @@ function useCountUp(target, duration = 800) {
   return value;
 }
 
+// ─── Animated Money ───────────────────────────────────────────────────────────
 function AnimatedMoney({ value, className }) {
   const animated = useCountUp(value);
   return <span className={className}>{formatMoney(animated)}</span>;
 }
 
+// ─── Section Header (Zero Bottom Padding) ─────────────────────────────────────
 const SectionHeader = ({ icon: Icon, title, dm }) => (
-  <div className={`px-3 py-1.5 flex items-center gap-2 ${dm ? 'bg-slate-800/90 border-b border-slate-700/50' : 'bg-slate-50 border-b border-slate-200'}`}>
-    <Icon className={`w-3.5 h-3.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
-    <span className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+  <div className={`px-2.5 py-0.5 flex items-center gap-1.5 ${dm ? 'bg-slate-800 border-b border-slate-700/50' : 'bg-slate-50 border-b border-slate-200'}`}>
+    <Icon className={`w-3 h-3 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
+    <span className={`text-[11px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
       {title}
     </span>
   </div>
 );
 
-const MetricBox = ({ children, dm, className = '' }) => (
-  <div className={`p-2 flex flex-col justify-between rounded-sm border transition-all ${dm ? 'bg-slate-800/30 border-slate-700/40 hover:bg-slate-800/50' : 'bg-white border-slate-200/60 hover:bg-slate-50'} ${className}`}>
-    {children}
-  </div>
-);
-
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function SummaryCards({ analytics }) {
   const { isDarkMode: dm } = useTheme();
+
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
-    dailyAvg, foodDailyAvg, foodPercentage, rentTotal, rentPercentage,
-    fixedPercentage, variablePercentage, fixedTotal, variableTotal,
+    dailyAvg, foodPercentage, fixedTotal, variableTotal,
     showForecasting, projectedExpense, safeToSpend, datesInPeriod
   } = analytics;
 
-  // ─── Calculations ───
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
-  const commitmentRatio = totalIncome > 0 ? ((fixedTotal / totalIncome) * 100).toFixed(1) : 0;
-  const lifestyleVelocity = totalIncome > 0 ? ((variableTotal / totalIncome) * 100).toFixed(1) : 0;
-  
-  // Averages per day
   const avgIncomePerDay = totalIncome / periodDays;
   const avgExpensePerDay = totalExpense / periodDays;
   const avgFixedPerDay = fixedTotal / periodDays;
   const avgVariablePerDay = variableTotal / periodDays;
   const dailyVictory = netCashflow / periodDays;
 
+  const vitalsConfig = [
+    {
+      id: 'income',
+      icon: <div className="w-4 h-4 flex items-center justify-center"><img src={dm ? sharkLogo : sharkBlack} alt="" className="w-full h-full object-contain" /></div>,
+      label: "รายรับรวม",
+      value: <AnimatedMoney value={totalIncome} />,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>เฉลี่ย ฿{formatMoney(avgIncomePerDay)}/วัน</span>,
+      color: { bg: dm ? 'bg-blue-900/30' : 'bg-blue-50', text: dm ? 'text-blue-400' : 'text-blue-600' }
+    },
+    {
+      id: 'expense',
+      icon: <Wallet />,
+      label: "รายจ่ายรวม",
+      value: <AnimatedMoney value={totalExpense} />,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-orange-400' : 'text-orange-600'}`}>เฉลี่ย ฿{formatMoney(avgExpensePerDay)}/วัน</span>,
+      color: { bg: dm ? 'bg-orange-900/30' : 'bg-orange-50', text: dm ? 'text-orange-400' : 'text-orange-600' }
+    },
+    {
+      id: 'fixed',
+      icon: <Anchor />,
+      label: "รายจ่ายคงที่",
+      value: <AnimatedMoney value={fixedTotal} />,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-purple-400' : 'text-purple-600'}`}>เฉลี่ย ฿{formatMoney(avgFixedPerDay)}/วัน</span>,
+      color: { bg: dm ? 'bg-purple-900/30' : 'bg-purple-50', text: dm ? 'text-purple-400' : 'text-purple-600' }
+    },
+    {
+      id: 'variable',
+      icon: <Crosshair />,
+      label: "รายจ่ายผันแปร",
+      value: <AnimatedMoney value={variableTotal} />,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-rose-400' : 'text-rose-600'}`}>เฉลี่ย ฿{formatMoney(avgVariablePerDay)}/วัน</span>,
+      color: { bg: dm ? 'bg-rose-900/30' : 'bg-rose-50', text: dm ? 'text-rose-400' : 'text-rose-600' }
+    },
+    {
+      id: 'cashflow',
+      icon: <Navigation />,
+      label: "กระแสเงินสด",
+      value: <AnimatedMoney value={netCashflow} />,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 ${netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{netCashflow >= 0 ? 'Surplus' : 'Deficit'}</span>,
+      color: { 
+        bg: netCashflow >= 0 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-rose-900/30' : 'bg-rose-50'),
+        text: netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')
+      }
+    },
+    {
+      id: 'savings',
+      icon: <ShieldCheck />,
+      label: "ประสิทธิภาพ",
+      value: `${savingsRate}%`,
+      subValueJSX: <span className={`text-[9px] font-medium opacity-80 ${savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')}`}>Grade ${savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>,
+      color: { 
+        bg: savingsRate >= 20 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-blue-900/30' : 'bg-blue-50'),
+        text: savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')
+      }
+    }
+  ];
+
   return (
-    <div className={`w-full flex flex-col gap-2`}>
+    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
       
-      {/* SECTION 1: VITALS (5-Column Grid - Unified Architecture) */}
-      <SectionHeader icon={Activity} title="ภาพรวมสถานะการเงิน (Vitals)" dm={dm} />
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-2 p-2 border-b">
-        
-        <StatCard 
-          icon={<div className="w-4 h-4 flex items-center justify-center"><img src={dm ? sharkLogo : sharkBlack} alt="" className="w-full h-full object-contain" /></div>}
-          label="รายรับรวม"
-          value={<AnimatedMoney value={totalIncome} />}
-          subValue={`เฉลี่ย ฿${formatMoney(avgIncomePerDay).split('.')[0]}/วัน`}
-          color={{ bg: dm ? 'bg-blue-900/30' : 'bg-blue-50', text: dm ? 'text-blue-400' : 'text-blue-600' }}
-        />
-
-        <StatCard 
-          icon={<Anchor />}
-          label="รายจ่ายคงที่"
-          value={<AnimatedMoney value={fixedTotal} />}
-          subValue={`เฉลี่ย ฿${formatMoney(avgFixedPerDay).split('.')[0]}/วัน`}
-          color={{ bg: dm ? 'bg-purple-900/30' : 'bg-purple-50', text: dm ? 'text-purple-400' : 'text-purple-600' }}
-        />
-
-        <StatCard 
-          icon={<Crosshair />}
-          label="รายจ่ายผันแปร"
-          value={<AnimatedMoney value={variableTotal} />}
-          subValue={`เฉลี่ย ฿${formatMoney(avgVariablePerDay).split('.')[0]}/วัน`}
-          color={{ bg: dm ? 'bg-rose-900/30' : 'bg-rose-50', text: dm ? 'text-rose-400' : 'text-rose-600' }}
-        />
-
-        <StatCard 
-          icon={<Navigation />}
-          label="กระแสเงินสด"
-          value={<AnimatedMoney value={netCashflow} />}
-          subValue={netCashflow >= 0 ? 'Surplus (บวก)' : 'Deficit (ติดลบ)'}
-          color={{ 
-            bg: netCashflow >= 0 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-rose-900/30' : 'bg-rose-50'),
-            text: netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')
-          }}
-        />
-
-        <StatCard 
-          icon={<ShieldCheck />}
-          label="ประสิทธิภาพ"
-          value={`${savingsRate}%`}
-          subValue={`Grade ${savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}`}
-          color={{ 
-            bg: savingsRate >= 20 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-blue-900/30' : 'bg-blue-50'),
-            text: savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')
-          }}
-        />
-      </div>
-
-      {/* SECTION 2: STRATEGIC & FORECAST */}
-      <div className={`grid ${showForecasting ? 'grid-cols-[1.2fr_0.8fr]' : 'grid-cols-1'} gap-2`}>
-        <div className={`rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
-          <SectionHeader icon={Target} title="วิเคราะห์สัดส่วน (Ratios)" dm={dm} />
-          <div className="grid grid-cols-3 gap-2 p-2">
-            <MetricBox dm={dm}>
-              <span className="text-[10px] font-bold opacity-70 mb-1">ภาระค่าใช้จ่าย</span>
-              <div className="flex items-center justify-between gap-2">
-                <span className={`text-lg font-black ${dm ? 'text-purple-400' : 'text-purple-600'}`}>{commitmentRatio}%</span>
-                <div className={`flex-1 h-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-100'} overflow-hidden`}>
-                  <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, commitmentRatio)}%` }} />
-                </div>
-              </div>
-            </MetricBox>
-            <MetricBox dm={dm}>
-              <span className="text-[10px] font-bold opacity-70 mb-1">สัดส่วนผันแปร</span>
-              <div className="flex items-center justify-between gap-2">
-                <span className={`text-lg font-black ${dm ? 'text-rose-400' : 'text-rose-600'}`}>{lifestyleVelocity}%</span>
-                <div className={`flex-1 h-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-100'} overflow-hidden`}>
-                  <div className="h-full bg-rose-500" style={{ width: `${Math.min(100, lifestyleVelocity)}%` }} />
-                </div>
-              </div>
-            </MetricBox>
-            <MetricBox dm={dm}>
-              <span className="text-[10px] font-bold opacity-70 mb-1">เงินเหลือเฉลี่ย/วัน</span>
-              <span className={`text-lg font-black ${dailyVictory >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {formatMoney(dailyVictory)}
-              </span>
-            </MetricBox>
-          </div>
-        </div>
-
-        {showForecasting && (
-          <div className={`rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
-            <SectionHeader icon={TrendingUp} title="คาดการณ์ (Forecast)" dm={dm} />
-            <div className="grid grid-cols-2 gap-2 p-2">
-              <MetricBox dm={dm}>
-                <span className="text-[10px] font-bold opacity-70 mb-1">พยากรณ์รายจ่าย</span>
-                <div className="text-base font-black"><AnimatedMoney value={projectedExpense} /></div>
-              </MetricBox>
-              <MetricBox dm={dm} className={safeToSpend <= 300 ? 'bg-rose-500/5 border-rose-500/20' : ''}>
-                <span className="text-[10px] font-bold opacity-70 mb-1">งบที่ใช้ได้</span>
-                <div className={`text-base font-black ${safeToSpend <= 300 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                  <AnimatedMoney value={safeToSpend} />
-                </div>
-              </MetricBox>
+      {/* SECTION 1: FINANCIAL VITALS */}
+      <div className="flex flex-col border-b border-dashed border-slate-700/40">
+        <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
+        <div className="grid grid-cols-6 gap-[1px] bg-slate-700/20 p-[1px]">
+          {vitalsConfig.map(card => (
+            <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-white'}>
+              <StatCard 
+                icon={card.icon}
+                label={card.label}
+                value={card.value}
+                subValueJSX={card.subValueJSX} 
+                color={card.color}
+              />
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* SECTION 3: CATEGORY KPIs */}
-      <div className={`rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
-        <SectionHeader icon={Scale} title="ตัวชี้วัดหมวดหมู่ (Category KPIs)" dm={dm} />
-        <div className="grid grid-cols-4 gap-2 p-2">
-          <MetricBox dm={dm}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold opacity-70">จ่ายเฉลี่ย/วัน</span>
-              <Flame className="w-5 h-5 text-amber-500 opacity-90" />
-            </div>
-            <div className="text-base font-black"><AnimatedMoney value={dailyAvg} /></div>
-          </MetricBox>
-          <MetricBox dm={dm}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold opacity-70">ค่าอาหาร/วัน</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-black text-orange-500 bg-orange-500/10 px-1 rounded">{foodPercentage}%</span>
-                <UtensilsCrossed className="w-4 h-4 text-orange-500 opacity-90" />
-              </div>
-            </div>
-            <div className="text-base font-black"><AnimatedMoney value={foodDailyAvg} /></div>
-          </MetricBox>
-          <MetricBox dm={dm}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold opacity-70">ค่าที่พักอาศัย</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-black text-indigo-500 bg-indigo-500/10 px-1 rounded">{rentPercentage}%</span>
-                <Home className="w-4 h-4 text-indigo-500 opacity-90" />
-              </div>
-            </div>
-            <div className="text-base font-black"><AnimatedMoney value={rentTotal} /></div>
-          </MetricBox>
-          <MetricBox dm={dm}>
-            <div className="flex justify-between text-[9px] font-black uppercase mb-1.5">
-              <span className="text-purple-500">คงที่ {fixedPercentage}%</span>
-              <span className="text-pink-500">ผันแปร {variablePercentage}%</span>
-            </div>
-            <div className={`w-full h-1.5 rounded-full overflow-hidden flex ${dm ? 'bg-slate-700' : 'bg-slate-100'}`}>
-              <div className="h-full bg-purple-500" style={{ width: `${fixedPercentage}%` }} />
-              <div className="h-full bg-pink-500" style={{ width: `${variablePercentage}%` }} />
-            </div>
-          </MetricBox>
+          ))}
         </div>
       </div>
+
+      {/* SECTION 2: STRATEGIC & KEY METRICS (Monolithic Row) */}
+      <div className="grid grid-cols-12 items-stretch">
+         
+         {/* Strategic Analysis */}
+         <div className="col-span-7 flex flex-col border-r border-dashed border-slate-700/40">
+            <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์" dm={dm} />
+            <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-purple-400/70' : 'text-purple-600/70'}`}>Commitment Ratio</span>
+                  <div className="mt-auto">
+                    <div className={`text-lg font-black ${dm ? 'text-purple-400' : 'text-purple-600'}`}>{((fixedTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
+                       <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, (fixedTotal / totalIncome) * 100)}%` }} />
+                    </div>
+                  </div>
+               </div>
+
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-rose-400/70' : 'text-rose-600/70'}`}>Lifestyle Velocity</span>
+                  <div className="mt-auto">
+                    <div className={`text-lg font-black ${dm ? 'text-rose-400' : 'text-rose-600'}`}>{((variableTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
+                       <div className="h-full bg-rose-500" style={{ width: `${Math.min(100, (variableTotal / totalIncome) * 100)}%` }} />
+                    </div>
+                  </div>
+               </div>
+
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dailyVictory >= 0 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Net Surplus / Day</span>
+                  <span className={`text-lg font-black mt-auto tabular-nums ${dailyVictory >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{formatMoney(dailyVictory)}</span>
+               </div>
+            </div>
+         </div>
+
+         {/* Key Metrics */}
+         <div className="col-span-5 flex flex-col">
+            <SectionHeader icon={Scale} title="ข้อมูลสำคัญ" dm={dm} />
+            <div className="grid grid-cols-2 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>สัดส่วนค่าอาหาร</span>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>
+                    <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />
+                  </div>
+               </div>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-slate-400/70' : 'text-slate-500/70'}`}>รายจ่ายเฉลี่ย/วัน</span>
+                  <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>{formatMoney(dailyAvg)}</span>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      {/* SECTION 3: FORECAST (Attached Strip) */}
+      {showForecasting && (
+        <div className="flex flex-col border-t border-dashed border-slate-700/40">
+          <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน" dm={dm} />
+          <div className="grid grid-cols-2 gap-[1px] bg-slate-700/20 p-[1px]">
+            <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-[#1e1b4b]/40' : 'bg-indigo-50/30'}`}>
+              <div>
+                <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-600'}`}>Projected Expense</span>
+                <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900'}`}><AnimatedMoney value={projectedExpense} /></div>
+              </div>
+              <TrendingUp size={58} className="text-indigo-400 opacity-30" />
+            </div>
+            <div className={`p-2 rounded-none flex items-center justify-between ${safeToSpend > 300 ? (dm ? 'bg-emerald-500/5' : 'bg-emerald-50/30') : (dm ? 'bg-rose-500/5' : 'bg-rose-50/30')}`}>
+              <div>
+                <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Safe to Spend</span>
+                <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? 'text-emerald-500' : 'text-rose-500'}`}><AnimatedMoney value={safeToSpend} /></div>
+              </div>
+              <Zap size={57} className={`${safeToSpend > 300 ? 'text-emerald-400' : 'text-rose-400'} opacity-30`} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -241,12 +235,9 @@ SummaryCards.propTypes = {
     netCashflow: PropTypes.number.isRequired,
     savingsRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     dailyAvg: PropTypes.number,
-    foodDailyAvg: PropTypes.number,
     foodPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    rentTotal: PropTypes.number,
-    rentPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    fixedPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    variablePercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    fixedTotal: PropTypes.number,
+    variableTotal: PropTypes.number,
     showForecasting: PropTypes.bool,
     projectedExpense: PropTypes.number,
     safeToSpend: PropTypes.number,
