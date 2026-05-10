@@ -1,4 +1,4 @@
-# 🌟 Cashflow Analytics: Elite Financial Intelligence
+# 🌟 Cashflow Analytics:
 
 [![Platform](https://img.shields.io/badge/Platform-Desktop--Only-blue?style=for-the-badge)](https://github.com/)
 [![Tech Stack](https://img.shields.io/badge/Stack-React_|_Node_|_SQLite-61DAFB?style=for-the-badge)](https://github.com/)
