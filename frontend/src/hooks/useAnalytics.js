@@ -197,13 +197,13 @@ export default function useAnalytics({
             chartTotal += amt;
             chartTx.push(t);
           }
-
-          // Per-Category Time Breakdown
-          if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
-          dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
-          if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
-          monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
         }
+
+        // Per-Category Time Breakdown (Track for BOTH Income and Expense)
+        if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
+        dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
+        if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
+        monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
 
         // Weekend/Weekday Logic
         if (isExp) {

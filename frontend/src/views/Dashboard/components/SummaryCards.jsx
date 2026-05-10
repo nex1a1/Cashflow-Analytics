@@ -60,7 +60,7 @@ export default function SummaryCards({ analytics }) {
 
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
-    dailyAvg, foodPercentage, fixedTotal, variableTotal,
+    dailyAvg, foodPercentage, foodDailyAvg, fixedTotal, variableTotal,
     showForecasting, projectedExpense, safeToSpend, datesInPeriod
   } = analytics;
 
@@ -186,13 +186,17 @@ export default function SummaryCards({ analytics }) {
          {/* Key Metrics */}
          <div className="col-span-5 flex flex-col">
             <SectionHeader icon={Scale} title="ข้อมูลสำคัญ" dm={dm} />
-            <div className="grid grid-cols-2 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
+            <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
                <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>สัดส่วนค่าอาหาร</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>
                     <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />
                   </div>
+               </div>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>กินเฉลี่ย/วัน</span>
+                  <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(foodDailyAvg)}</span>
                </div>
                <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-slate-400/70' : 'text-slate-500/70'}`}>รายจ่ายเฉลี่ย/วัน</span>
@@ -236,6 +240,7 @@ SummaryCards.propTypes = {
     savingsRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     dailyAvg: PropTypes.number,
     foodPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    foodDailyAvg: PropTypes.number,
     fixedTotal: PropTypes.number,
     variableTotal: PropTypes.number,
     showForecasting: PropTypes.bool,
