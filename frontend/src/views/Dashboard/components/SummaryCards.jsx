@@ -82,7 +82,7 @@ export default function SummaryCards({ analytics }) {
   const { isDarkMode: dm } = useTheme();
 
   const {
-    totalIncome, totalExpense, totalSavings, actualSavings, netCashflow, savingsRate, prevTotals,
+    totalIncome, totalExpense, totalSavings, actualSavings, explicitSavings, netCashflow, savingsRate, prevTotals,
     dailyAvg, foodDailyAvg, foodPercentage, rentTotal, rentPercentage,
     fixedPercentage, variablePercentage, fixedTotal, variableTotal,
     showForecasting, projectedExpense, safeToSpend, isSingleMonthView,
@@ -92,10 +92,10 @@ export default function SummaryCards({ analytics }) {
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
   const avgIncome = totalIncome / periodDays;
   const avgFixed = (fixedTotal || 0) / periodDays;
-  const isNegativeNet = netCashflow < 0;
+  const isNegativeNet = actualSavings < 0;
 
   // Comparison Logic for Middle Row
-  const netDiff = prevTotals ? netCashflow - prevTotals.net : 0;
+  const netDiff = prevTotals ? actualSavings - prevTotals.net : 0;
   const isNetBetter = netDiff > 0;
 
   return (
@@ -103,7 +103,7 @@ export default function SummaryCards({ analytics }) {
       
       {/* ─── SECTION 1: CORE VITALS (Top Row) ─── */}
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก (Core Vitals)" dm={dm} />
-      <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 divide-y md:divide-y-0 md:divide-x border-b transition-colors ${dm ? 'divide-slate-700 border-slate-700' : 'divide-slate-100 border-slate-100'}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 divide-y md:divide-y-0 md:divide-x border-b transition-colors ${dm ? 'divide-slate-700 border-slate-700' : 'divide-slate-100 border-slate-100'}`}>
         
         {/* Income Card */}
         <div className="p-4 flex flex-col justify-between relative overflow-hidden group">
@@ -149,7 +149,25 @@ export default function SummaryCards({ analytics }) {
           </div>
         </div>
 
-        {/* Net Worth Delta (Replacing Savings/Investment) */}
+        {/* Savings Card (Target Savings) */}
+        <div className="p-4 flex flex-col justify-between relative overflow-hidden group">
+          <div className="relative z-10 min-w-0 pr-10">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className={`p-1 rounded-md ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}><PiggyBank className="w-3 h-3" /></div>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เงินออมเป้าหมาย</span>
+            </div>
+            <div className="truncate">
+              <AnimatedMoney value={explicitSavings} className={`text-xl 2xl:text-2xl font-black leading-none ${dm ? 'text-blue-400' : 'text-blue-600'}`} />
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 mt-2 relative z-10">
+             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                แยกเก็บรายหมวดหมู่
+             </span>
+          </div>
+        </div>
+
+        {/* Net Worth Delta (Actual Savings) */}
         <div className="p-4 flex flex-col justify-between relative overflow-hidden group">
           <div className="relative z-10 min-w-0 pr-10">
             <div className="flex items-center gap-1.5 mb-1.5">
@@ -157,17 +175,17 @@ export default function SummaryCards({ analytics }) {
               <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ความมั่งคั่งสุทธิ</span>
             </div>
             <div className="truncate">
-              <AnimatedMoney value={netCashflow} className={`text-xl 2xl:text-2xl font-black leading-none ${netCashflow >= 0 ? (dm ? 'text-amber-400' : 'text-amber-600') : 'text-rose-500'}`} />
+              <AnimatedMoney value={actualSavings} className={`text-xl 2xl:text-2xl font-black leading-none ${actualSavings >= 0 ? (dm ? 'text-amber-400' : 'text-amber-600') : 'text-rose-500'}`} />
             </div>
           </div>
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
-             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${dm ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
-                {netCashflow >= 0 ? 'เงินส่วนเกินสะสม' : 'เงินติดลบสะสม'}
+             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${actualSavings >= 0 ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')}`}>
+                {actualSavings >= 0 ? 'Surplus (ส่วนเกิน)' : 'Deficit (ติดลบ)'}
              </span>
           </div>
         </div>
 
-        {/* Financial Discipline Card (Formerly Net Balance) */}
+        {/* Financial Discipline Card */}
         <div className={`p-4 flex flex-col justify-between relative overflow-hidden ${isNegativeNet ? (dm ? 'bg-rose-500/[0.03]' : 'bg-rose-50/50') : ''}`}>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-1.5 gap-1.5">
@@ -183,7 +201,7 @@ export default function SummaryCards({ analytics }) {
             </div>
           </div>
           <div className="relative z-10 flex items-center gap-1.5 mt-2">
-             <span className={`flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full ${savingsRate >= 20 ? (dm ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (dm ? 'bg-amber-500/10 text-amber-500' : 'bg-amber-50 text-amber-600')}`}>
+             <span className={`flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full ${savingsRate >= 20 ? (dm ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (savingsRate > 0 ? (dm ? 'bg-amber-500/10 text-amber-500' : 'bg-amber-50 text-amber-600') : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600'))}`}>
                 เกรด {savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}
              </span>
           </div>

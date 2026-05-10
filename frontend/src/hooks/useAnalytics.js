@@ -1,11 +1,9 @@
 // src/hooks/useAnalytics.js
 import { useMemo } from 'react';
-import { generateDatesForPeriod } from '../utils/dateHelpers';
+import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj, toISODate } from '../utils/dateHelpers';
 import { hexToRgb, formatMoney } from '../utils/formatters';
 import { 
   createCategoryMap, 
-  generateCashflowMap, 
-  calculateCategoryStats, 
   generateMainChartData, 
   calculateDayTypeCounts 
 } from '../utils/analyticsHelpers';
@@ -27,131 +25,247 @@ export default function useAnalytics({
   const analytics = useMemo(() => {
     // 1. Setup Maps
     const catMapLookup = createCategoryMap(categories);
-
-    // 2. Base Cashflow & Totals Calculation
-    // PERFORMANCE optimization: If we have summaryData from the backend, use it for base totals
     const useBackendTotals = !!summaryData;
 
-    const { 
-      cashflowMap: localCashflowMap, 
-      dayIncomeMap, 
-      dayExpenseMap, 
-      uniqueMonthsSet, 
-      totals: localTotals, 
-      filteredTx 
-    } = generateCashflowMap(transactions, filterPeriod, catMapLookup, cashflowGroups);
+    // 2. Variables for Aggregation
+    let totals = {
+      income: 0, expense: 0, savings: 0,
+      fixed: 0, variable: 0, food: 0, rent: 0,
+      weekend: 0, weekday: 0,
+      dayOfWeekMap: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+    };
 
-    // Summary Data Mapping (if available)
-    const totals = useBackendTotals ? {
-      income: summaryData.summary.income,
-      expense: summaryData.summary.expense,
-      savings: summaryData.summary.savings,
-      // Fallback for sub-metrics that backend doesn't aggregate yet
-      ...localTotals 
-    } : localTotals;
+    let dayIncomeMap = {}, dayExpenseMap = {};
+    let uniqueMonthsSet = new Set();
+    let cashflowMap = {};
+    let catMapData = {}; // Keyed by category_id
+    let dailyAllMap = {}, monthlyAllMap = {};
+    let dailyCatMap = {}, monthlyCatMap = {}; // Keyed by [catId][date/month]
+    let chartTotal = 0;
+    let chartTx = [];
+    let globalDailySum = {};
+    let prevTotals = { income: 0, expense: 0, net: 0 };
 
-    // Map monthly aggregate data to the format used by the chart
-    const cashflowMap = useBackendTotals ? {} : localCashflowMap;
-    if (useBackendTotals && summaryData.monthly) {
-        summaryData.monthly.forEach(m => {
-            cashflowMap[m.month] = { 
-                monthStr: m.month, 
-                income: m.income, 
-                totalExp: m.expense, 
-                totalSav: m.savings, 
-                groups: m.groups || {} 
-            };
-        });
+    // --- Time Window Setup ---
+    const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
+    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
+    
+    // Trend Range Setup
+    let startPrev = null, endPrev = null;
+    if (filterPeriod !== 'ALL' && datesInPeriod.length > 0) {
+      const firstDate = new Date(datesInPeriod[0]);
+      const lastDate = new Date(datesInPeriod[datesInPeriod.length - 1]);
+      const durationMs = lastDate.getTime() - firstDate.getTime() + (24 * 60 * 60 * 1000);
+      const prevEnd = new Date(firstDate.getTime() - (24 * 60 * 60 * 1000));
+      const prevStart = new Date(prevEnd.getTime() - durationMs + (24 * 60 * 60 * 1000));
+      startPrev = prevStart.toISOString().split('T')[0];
+      endPrev = prevEnd.toISOString().split('T')[0];
     }
 
-    // --- Previous Period Calculation for Trends ---
-    let prevTotals = { income: 0, expense: 0, net: 0 };
-    if (filterPeriod !== 'ALL') {
-      const datesInCurrent = generateDatesForPeriod(filterPeriod, transactions);
-      if (datesInCurrent.length > 0) {
-        const firstDate = new Date(datesInCurrent[0]);
-        const lastDate = new Date(datesInCurrent[datesInCurrent.length - 1]);
-        const durationMs = lastDate.getTime() - firstDate.getTime() + (24 * 60 * 60 * 1000);
-        
-        const prevEnd = new Date(firstDate.getTime() - (24 * 60 * 60 * 1000));
-        const prevStart = new Date(prevEnd.getTime() - durationMs + (24 * 60 * 60 * 1000));
-        
-        const startStr = prevStart.toISOString().split('T')[0];
-        const endStr = prevEnd.toISOString().split('T')[0];
-        
-        transactions.forEach(t => {
-          if (t.date >= startStr && t.date <= endStr) {
-            const amt = parseFloat(t.amount) || 0;
-            const catObj = catMapLookup[t.category_id] || catMapLookup[t.category] || { type: 'expense' };
-            if (catObj.type === 'income') prevTotals.income += amt;
-            else prevTotals.expense += amt;
-          }
-        });
-        prevTotals.net = prevTotals.income - prevTotals.expense;
+    // Current Month / Forecasting Setup
+    let todayStr = '', filterYear = 0, filterMonth = 0, isCurrentMonth = false;
+    if (isSingleMonthView) {
+      const parts = filterPeriod.split('-');
+      filterYear = parseInt(parts[0]);
+      filterMonth = parseInt(parts[1]) - 1;
+      const today = new Date();
+      isCurrentMonth = today.getFullYear() === filterYear && today.getMonth() === filterMonth;
+      todayStr = today.toISOString().split('T')[0];
+    }
+
+    // Variables for Forecasting
+    let expenseUpToToday = 0, variableUpToToday = 0, foodUpToToday = 0;
+
+    // ─── SINGLE PASS AGGREGATION ──────────────────────────────────────────────
+    transactions.forEach(t => {
+      const isoDate = toISODate(t.date);
+      if (!isoDate) return;
+
+      const amt = parseFloat(t.amount) || 0;
+      const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
+      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
+      
+      const cGroupId = catObj.cashflowGroup;
+      const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+      const groupType = groupObj.type || catObj.type || 'expense';
+      const groupName = (groupObj.name || '').toLowerCase();
+      
+      const isInc = groupType === 'income';
+      const isSav = groupType === 'savings';
+      const isExp = !isInc && !isSav;
+      const isFixed = catObj.isFixed || false;
+
+      // a) Global Stats (for Heatmap)
+      if (isExp) {
+        globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
       }
+
+      // b) Trend Calculation (Previous Period)
+      if (startPrev && isoDate >= startPrev && isoDate <= endPrev) {
+        if (isInc) prevTotals.income += amt;
+        else if (isExp) prevTotals.expense += amt;
+      }
+
+      // c) Main Period Filter
+      if (isDateInFilter(isoDate, filterPeriod)) {
+        // Month Key
+        const ym = isoDate.substring(0, 7);
+        uniqueMonthsSet.add(ym);
+
+        // Initialize cashflowMap for the month if it doesn't exist
+        if (!cashflowMap[ym]) {
+          cashflowMap[ym] = { 
+            monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
+          };
+          cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
+        }
+
+        const cGroup = cGroupId || (isInc ? 'cg_bonus' : (isSav ? 'cg_savings' : 'cg_variable'));
+        if (cashflowMap[ym].groups[cGroup] !== undefined) {
+          cashflowMap[ym].groups[cGroup] += amt;
+        }
+
+        // Totals
+        if (isInc) {
+          totals.income += amt;
+          cashflowMap[ym].income += amt;
+          dayIncomeMap[isoDate] = (dayIncomeMap[isoDate] || 0) + amt;
+        } else if (isSav) {
+          totals.savings += amt;
+          cashflowMap[ym].totalSav += amt;
+        } else {
+          totals.expense += amt;
+          cashflowMap[ym].totalExp += amt;
+          dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
+          
+          if (isFixed) totals.fixed += amt;
+          else totals.variable += amt;
+
+          // Semantic Grouping
+          if (cGroupId === 'cg_rent' || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent')) totals.rent += amt;
+          else if (cGroupId === 'cg_food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) totals.food += amt;
+
+          // Per-Category Breakdown (Always count for local sortedCats calculation)
+          catMapData[catId] = (catMapData[catId] || 0) + amt;
+
+          // Daily/Monthly Breakdown for Charts & Specific Analytics
+          const passFixedFilter = !hideFixedExpenses || !isFixed;
+          
+          let passCategoryFilter = false;
+          const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+          
+          if (activeFilters.includes('ALL')) {
+            passCategoryFilter = true;
+          } else if (activeFilters.includes('FIXED') && isFixed) {
+            passCategoryFilter = true;
+          } else if (activeFilters.includes('VARIABLE') && !isFixed) {
+            passCategoryFilter = true;
+          } else if (activeFilters.includes(catId)) {
+            passCategoryFilter = true;
+          }
+
+          if (passFixedFilter && passCategoryFilter) {
+            dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
+            monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
+            chartTotal += amt;
+            chartTx.push(t);
+          }
+
+          // Per-Category Time Breakdown
+          if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
+          dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
+          if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
+          monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
+        }
+
+        // Weekend/Weekday Logic
+        if (isExp) {
+          const dateObj = parseDateStrToObj(isoDate);
+          const dow = dateObj.getDay();
+          totals.dayOfWeekMap[dow] += amt;
+          if (dow === 0 || dow === 6) totals.weekend += amt;
+          else totals.weekday += amt;
+        }
+
+        // Forecasting Logic (Accumulate up to today)
+        if (isCurrentMonth && isoDate <= todayStr && isExp) {
+          expenseUpToToday += amt;
+          if (!isFixed) variableUpToToday += amt;
+          if (cGroupId === 'cg_food' || groupName.includes('อาหาร')) foodUpToToday += amt;
+        }
+      }
+    });
+
+    prevTotals.net = prevTotals.income - prevTotals.expense;
+
+    // ─── POST-LOOP OPTIMIZATION (Use Backend Data if available) ────────────────
+    if (useBackendTotals && summaryData.summary) {
+      totals.income = summaryData.summary.income;
+      totals.expense = summaryData.summary.expense;
+      totals.savings = summaryData.summary.savings;
     }
 
     const netCashflow = totals.income - totals.expense;
-    const actualSavings = (totals.savings || 0) + Math.max(0, netCashflow); 
+    const actualSavings = netCashflow;
+    const explicitSavings = totals.savings || 0;
     const numMonths = uniqueMonthsSet.size || 1;
     const savingsRate = totals.income > 0 ? ((actualSavings / totals.income) * 100).toFixed(1) : 0;
 
-    // 3. Category & Chart Stats
-    const { 
-      catMapData, 
-      dailyAllMap, 
-      monthlyAllMap, 
-      dailyCatMap, 
-      monthlyCatMap, 
-      chartTotal, 
-      chartTx 
-    } = calculateCategoryStats(transactions, categories, filterPeriod, dashboardCategory, hideFixedExpenses, catMapLookup);
-
+    // ─── CATEGORY BREAKDOWN ───────────────────────────────────────────────────
+    const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+    
     const sortedCats = useBackendTotals && summaryData.categories 
       ? summaryData.categories
           .filter(c => {
             if (c.type !== 'expense') return false;
-            
             const catMeta = catMapLookup[c.id] || { isFixed: false };
             if (hideFixedExpenses && catMeta.isFixed) return false;
             
-            if (dashboardCategory !== 'ALL') {
-              if (dashboardCategory === 'FIXED' && !catMeta.isFixed) return false;
-              if (dashboardCategory === 'VARIABLE' && catMeta.isFixed) return false;
-            }
-            return true;
+            if (activeFilters.includes('ALL')) return true;
+            if (activeFilters.includes('FIXED') && catMeta.isFixed) return true;
+            if (activeFilters.includes('VARIABLE') && !catMeta.isFixed) return true;
+            return activeFilters.includes(c.id);
           })
-          .map(c => {
-            const catMeta = catMapLookup[c.id] || { isFixed: false };
-            return {
-              id: c.id,
-              name: c.name,
-              icon: c.icon || '📦',
-              color: c.color || '#64748B',
-              amount: c.amount,
-              type: c.type,
-              percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
-              avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
-            };
-          })
+          .map(c => ({
+            ...c,
+            percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
+            avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
+          }))
       : Object.entries(catMapData)
-        .sort((a, b) => b[1] - a[1])
-        .map(([catId, amount]) => {
-          const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
-          return {
-            id: catId,
-            name: catObj.name,
-            amount: amount,
-            percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
-            avgPerMonth: amount / numMonths,
-            icon: catObj.icon,
-            color: catObj.color || '#64748B'
-          };
-        });
+          .filter(([catId]) => {
+            const catObj = catMapLookup[catId] || { isFixed: false };
+            if (hideFixedExpenses && catObj.isFixed) return false;
+            
+            if (activeFilters.includes('ALL')) return true;
+            if (activeFilters.includes('FIXED') && catObj.isFixed) return true;
+            if (activeFilters.includes('VARIABLE') && !catObj.isFixed) return true;
+            return activeFilters.includes(catId);
+          })
+          .sort((a, b) => b[1] - a[1])
+          .map(([catId, amount]) => {
+            const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
+            return {
+              id: catId,
+              name: catObj.name,
+              amount: amount,
+              percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
+              avgPerMonth: amount / numMonths,
+              icon: catObj.icon,
+              color: catObj.color || '#64748B'
+            };
+          });
 
-    const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
-    const periodDays = datesInPeriod.length || 1;
-    const dailyAvg = totals.expense / periodDays;
+    // ─── CHART DATA & SORTED CASHFLOW ────────────────────────────────────────
+    if (useBackendTotals && summaryData.monthly) {
+      summaryData.monthly.forEach(m => {
+        cashflowMap[m.month] = { 
+          monthStr: m.month, income: m.income, totalExp: m.expense, totalSav: m.savings, groups: m.groups || {} 
+        };
+      });
+    }
+
+    const sortedCashflow = Object.values(cashflowMap).sort((a, b) => a.monthStr.localeCompare(b.monthStr));
+    const sortedMonthsKeys = sortedCashflow.map(c => c.monthStr);
 
     const catChartData = {
       labels: sortedCats.map(c => c.name),
@@ -162,236 +276,92 @@ export default function useAnalytics({
       }],
     };
 
-    // 4. Main Chart Data Generation
-    const sortedMonthsKeys = Object.keys(cashflowMap).sort();
     const { chartData: mainChartData, chartType: mainChartType } = generateMainChartData({
       chartGroupBy, filterPeriod, sortedMonthsKeys, cashflowMap, 
       datesInPeriod, dailyAllMap, hideFixedExpenses, isDarkMode,
       dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap: catMapLookup
     });
 
-    // 5. Sparklines
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
+    // ─── SPARKLINES ───────────────────────────────────────────────────────────
     const sparklineIncome = [], sparklineExpense = [], sparklineNet = [];
-
-    if (useBackendTotals && summaryData.monthly) {
-        summaryData.monthly.forEach(m => {
-            sparklineIncome.push(m.income);
-            sparklineExpense.push(m.expense);
-            sparklineNet.push(m.income - m.expense);
-        });
-    } else if (!isSingleMonthView) {
+    if (useBackendTotals && summaryData.monthly && !isSingleMonthView) {
+      summaryData.monthly.forEach(m => {
+        sparklineIncome.push(m.income);
+        sparklineExpense.push(m.expense);
+        sparklineNet.push(m.income - m.expense);
+      });
+    } else if (isSingleMonthView) {
+      datesInPeriod.forEach(d => {
+        sparklineIncome.push(dayIncomeMap[d] || 0);
+        sparklineExpense.push(dayExpenseMap[d] || 0);
+        sparklineNet.push((dayIncomeMap[d] || 0) - (dayExpenseMap[d] || 0));
+      });
+    } else {
       sortedMonthsKeys.forEach(m => {
         sparklineIncome.push(cashflowMap[m].income);
         sparklineExpense.push(cashflowMap[m].totalExp);
         sparklineNet.push(cashflowMap[m].income - cashflowMap[m].totalExp);
       });
-    } else {
-      datesInPeriod.forEach(dateKey => {
-        sparklineIncome.push(dayIncomeMap[dateKey] || 0);
-        sparklineExpense.push(dayExpenseMap[dateKey] || 0);
-        sparklineNet.push((dayIncomeMap[dateKey] || 0) - (dayExpenseMap[dateKey] || 0));
-      });
     }
 
-    // 6. Day Type Distribution
-    const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes, dayTypeConfig);
+    // ─── FORECASTING ─────────────────────────────────────────────────────────
+    let projectedExpense = 0, safeToSpend = 0, showForecasting = false;
+    let periodDays = datesInPeriod.length || 1;
+    let adjustedDailyAvg = totals.expense / periodDays;
+    let adjustedFoodDailyAvg = totals.food / periodDays;
 
-    // 7. Global Threshold for Activity Heatmap
-    const globalDailySum = {};
-    transactions.forEach(item => {
-      if (!item.date) return;
-      const amt = parseFloat(item.amount) || 0;
-      const catObj = catMapLookup[item.category];
-      const isExpense = catObj ? catObj.type === 'expense' : true;
-      if (isExpense) {
-        globalDailySum[item.date] = (globalDailySum[item.date] || 0) + amt;
-      }
-    });
-    
+    if (isCurrentMonth && datesInPeriod.length > 0) {
+      showForecasting = true;
+      const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
+      const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
+      const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
+      
+      adjustedDailyAvg = expenseUpToToday / currentDay;
+      adjustedFoodDailyAvg = foodUpToToday / currentDay;
+      
+      const variableRunRate = variableUpToToday / currentDay;
+      projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
+      
+      const remainingBudget = totals.income - totals.fixed - variableUpToToday;
+      const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
+      safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
+    }
+
+    // ─── GLOBAL HEATMAP THRESHOLD ─────────────────────────────────────────────
     const globalValues = Object.values(globalDailySum).filter(v => v > 0).sort((a, b) => a - b);
     const globalMaxThreshold = globalValues.length > 0
       ? (globalValues[Math.floor(globalValues.length * 0.9)] || globalValues[globalValues.length - 1])
       : 100;
 
-    // 8. Forecasting & Run Rate & Adjusted Daily Averages
-    let projectedExpense = 0;
-    let safeToSpend = 0;
-    let showForecasting = false;
-    let adjustedDailyAvg = dailyAvg;
-    let adjustedFoodDailyAvg = totals.food / periodDays;
-    let currentDay = periodDays;
-    
-    if (isSingleMonthView && datesInPeriod.length > 0) {
-      const parts = filterPeriod.split('-');
-      const y = parseInt(parts[0]);
-      const m = parseInt(parts[1]) - 1;
-      
-      const today = new Date();
-      const isCurrentMonth = today.getFullYear() === y && today.getMonth() === m;
-      
-      if (isCurrentMonth) {
-        showForecasting = true;
-        const lastDayOfMonth = new Date(y, m + 1, 0).getDate();
-        currentDay = Math.max(1, Math.min(today.getDate(), lastDayOfMonth));
-        const remainingDays = Math.max(1, lastDayOfMonth - currentDay); 
-        
-        const todayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
-        let expenseUpToToday = 0;
-        let variableUpToToday = 0;
-        let foodUpToToday = 0;
-        
-        transactions.forEach(item => {
-          if (!item.date || !item.date.startsWith(filterPeriod)) return;
-          if (item.date <= todayStr) {
-            const amt = parseFloat(item.amount) || 0;
-            const catObj = catMapLookup[item.category];
-            const isExpense = catObj ? catObj.type === 'expense' : true;
-            
-            if (isExpense) {
-              expenseUpToToday += amt;
-              const isFixed = catObj ? catObj.isFixed : false;
-              if (!isFixed) variableUpToToday += amt;
-              
-              const cGroupId = catObj ? catObj.cashflowGroup : null;
-              const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
-              const groupName = (groupObj.name || '').toLowerCase();
-              const cGroup = cGroupId || 'cg_variable';
-              
-              if (cGroup === 'cg_food' || cGroup === 'food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) {
-                foodUpToToday += amt;
-              }
-            }
-          }
-        });
+    // ─── DAY TYPE DISTRIBUTION ───────────────────────────────────────────────
+    const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes, dayTypeConfig);
 
-        // 1. ปรับค่าเฉลี่ยรายวัน ให้หารด้วยวันที่ผ่านมาถึงวันนี้
-        adjustedDailyAvg = expenseUpToToday / currentDay;
-        adjustedFoodDailyAvg = foodUpToToday / currentDay;
-
-        // 2. Projected Expense: ค่าคงที่ทั้งหมด + ค่าผันแปรถึงวันนี้ + (อัตราผันแปรต่อวัน * วันที่เหลือ)
-        const variableRunRate = variableUpToToday / currentDay;
-        projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
-        
-        // 3. Safe to spend: (รายรับทั้งหมด - คงที่ทั้งหมด - ผันแปรที่ใช้ไปแล้ว) / วันที่เหลือให้ใช้
-        const remainingBudget = totals.income - totals.fixed - variableUpToToday;
-        const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
-        safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
-      }
-    }
-
-    // 9. Smart Insights & Anomalies (CPA-Level Advice)
+    // ─── SMART INSIGHTS ──────────────────────────────────────────────────────
     const smartInsights = [];
-    
-    // 1. Liquidity & Savings Analysis
     if (totals.income > 0) {
-      if (totals.expense > totals.income) {
-        smartInsights.push({ type: 'error', icon: '🚨', message: `สภาพคล่องติดลบ: คุณดึงเงินเก็บมาใช้แล้ว ${formatMoney(totals.expense - totals.income)} บาท แนะนำให้เบรกรายจ่ายผันแปรทันที` });
-      } else if (savingsRate >= 20) {
-        smartInsights.push({ type: 'success', icon: '🏆', message: `วินัยการเงินยอดเยี่ยม: คุณออมเงินได้ ${savingsRate}% (เกินเกณฑ์มาตรฐาน 20%) รักษาระดับนี้ไว้เพื่ออิสรภาพทางการเงิน` });
-      } else if (savingsRate < 10) {
-        smartInsights.push({ type: 'warning', icon: '⚠️', message: `สัดส่วนการออมต่ำ: คุณออมได้เพียง ${savingsRate}% แนะนำให้หักเงินออมก่อนใช้จ่าย (Pay Yourself First) อย่างน้อย 10%` });
-      }
-    }
-
-    // 2. Fixed Obligation Ratio (ภาระคงที่เทียบกับรายได้)
-    if (totals.income > 0) {
-      const fixedRatio = (totals.fixed / totals.income) * 100;
-      if (fixedRatio > 50) {
-        smartInsights.push({ type: 'warning', icon: '⚖️', message: `ความเสี่ยงเชิงโครงสร้าง: ภาระค่าใช้จ่ายคงที่ของคุณสูงถึง ${fixedRatio.toFixed(1)}% ของรายได้ ทำให้ความยืดหยุ่นทางการเงินต่ำ` });
-      }
-    }
-
-    // 3. Burn Rate & Pacing (Current Month Only)
-    if (showForecasting && projectedExpense > totals.income && totals.income > 0) {
-      smartInsights.push({ type: 'error', icon: '🔥', message: `อัตราการเผาผลาญ (Burn Rate) สูงเกินไป: หากใช้จ่ายด้วยความเร็วเท่าเดิม สิ้นเดือนนี้คุณจะติดลบ ${formatMoney(projectedExpense - totals.income)} บาท` });
-    } else if (showForecasting && safeToSpend > 0 && safeToSpend < 300) {
-       smartInsights.push({ type: 'warning', icon: '⏳', message: `งบตึงตัว: คุณมี Safe-to-Spend เหลือเพียง ${formatMoney(safeToSpend)} บาท/วัน ควรหลีกเลี่ยงการสร้างหนี้ก้อนใหม่ในเดือนนี้` });
-    }
-
-    // 4. Weekend Lifestyle Trap
-    if (totals.expense > 0) {
-      const weekendRatio = (totals.weekend / totals.expense) * 100;
-      // วันหยุดมีแค่ 2 วันจาก 7 วัน (ประมาณ 28%) ถ้าใช้จ่ายวันหยุดเกิน 40% ถือว่าเยอะ
-      if (weekendRatio > 40) {
-         smartInsights.push({ type: 'info', icon: '🏝️', message: `ข้อสังเกต: รายจ่ายช่วงวันหยุดของคุณสูงถึง ${weekendRatio.toFixed(1)}% ของทั้งหมด ระวังกับดัก Weekend Lifestyle (การให้รางวัลตัวเองมากเกินไป)` });
-      }
-    }
-
-    // 5. Cost Driver Analysis (Top Category)
-    if (sortedCats.length > 0 && sortedCats[0].amount > 0) {
-      const topCat = sortedCats[0];
-      if (topCat.percentage > 30) {
-        smartInsights.push({ type: 'anomaly', icon: '📊', message: `Cost Driver: ค่าใช้จ่ายส่วนใหญ่จมไปกับ '${topCat.name}' (${topCat.percentage}%) หากต้องการลดรายจ่าย ให้เริ่มประเมินจากหมวดหมู่นี้ก่อน` });
-      }
-    }
-
-    // 6. Emergency Fund Reminder (Show occasionally if viewing ALL or multiple months)
-    if (!isSingleMonthView && totals.expense > 0 && numMonths >= 3) {
-       const target = (totals.expense / numMonths) * 6;
-       smartInsights.push({ type: 'info', icon: '🛡️', message: `เป้าหมายความมั่นคง: จากค่าเฉลี่ยการใช้จ่าย คุณควรมีเงินสำรองฉุกเฉินก้อนแรกที่ ${formatMoney(target)} บาท (สำหรับ 6 เดือน)` });
-    }
-
-    // 8. Zero-Expense Days
-    if (isSingleMonthView && datesInPeriod.length > 0) {
-      const daysWithExpense = new Set(chartTx.map(t => t.date)).size;
-      const passedDays = showForecasting ? currentDay : periodDays;
-      const zeroDays = passedDays - daysWithExpense;
-      if (zeroDays >= 3) {
-         smartInsights.push({ type: 'success', icon: '🌟', message: `วินัยการคุมเงิน: เดือนนี้คุณมีวันที่ "ไม่ใช้เงินเลย" (Zero-Expense Day) ถึง ${zeroDays} วัน ถือว่าทำได้ดีมาก!` });
-      }
+      if (totals.expense > totals.income) smartInsights.push({ type: 'error', icon: '🚨', message: `สภาพคล่องติดลบ: คุณดึงเงินเก็บมาใช้แล้ว ${formatMoney(totals.expense - totals.income)} บาท` });
+      else if (savingsRate >= 20) smartInsights.push({ type: 'success', icon: '🏆', message: `วินัยการเงินยอดเยี่ยม: คุณออมเงินได้ ${savingsRate}%` });
+      else if (savingsRate < 10) smartInsights.push({ type: 'warning', icon: '⚠️', message: `สัดส่วนการออมต่ำ: คุณออมได้เพียง ${savingsRate}%` });
     }
 
     return {
-      isSingleMonthView,
-      showForecasting,
-      projectedExpense,
-      safeToSpend,
-      smartInsights,
-      prevTotals, // Added previous period totals
-      totalExpense: totals.expense, 
-      totalIncome: totals.income, 
-      totalSavings: totals.savings || 0,
-      actualSavings,
-      netCashflow, 
-      savingsRate, 
-      chartTotal, 
-      numMonths,
-      sortedCats,
+      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, smartInsights,
+      prevTotals, totalExpense: totals.expense, totalIncome: totals.income,
+      totalSavings: totals.savings || 0, actualSavings, explicitSavings,
+      netCashflow, savingsRate, chartTotal, numMonths, sortedCats,
       topTransactions: [...chartTx].sort((a, b) => b.amount - a.amount).slice(0, topXLimit),
       dailyAvg: adjustedDailyAvg,
-      fullMonthDailyAvg: dailyAvg,
-      uniqueDays: datesInPeriod.length,
-      catChartData, 
-      mainChartData, 
-      mainChartType,
-      foodTotal: totals.food, 
-      foodDailyAvg: adjustedFoodDailyAvg,  
-      fullMonthFoodAvg: totals.food / periodDays,
+      foodTotal: totals.food, foodDailyAvg: adjustedFoodDailyAvg,
       foodPercentage: totals.expense > 0 ? ((totals.food / totals.expense) * 100).toFixed(1) : 0,
-      rentTotal: totals.rent, 
-      rentPercentage: totals.income > 0 ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,
-      fixedTotal: totals.fixed, 
-      variableTotal: totals.variable, 
-      fixedPercentage: totals.expense > 0 ? ((totals.fixed / totals.expense) * 100).toFixed(1) : 0, 
+      rentTotal: totals.rent, rentPercentage: totals.income > 0 ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,
+      fixedTotal: totals.fixed, variableTotal: totals.variable,
+      fixedPercentage: totals.expense > 0 ? ((totals.fixed / totals.expense) * 100).toFixed(1) : 0,
       variablePercentage: totals.expense > 0 ? ((totals.variable / totals.expense) * 100).toFixed(1) : 0,
-      emergencyFundTarget: (totals.expense / numMonths) * 6,
-      sortedCashflow: Object.values(cashflowMap).sort((a, b) => a.monthStr.localeCompare(b.monthStr)), 
-      sparklineIncome, 
-      sparklineExpense, 
-      sparklineNet,
-      weekendTotal: totals.weekend, 
-      weekdayTotal: totals.weekday, 
-      dayOfWeekMap: totals.dayOfWeekMap,
-      globalMaxThreshold,
-      datesInPeriod,
-      filterPeriod,
-      dayTypeCounts, 
-      dailyAllMap,
-      sortedMonthsKeys,
-      monthlyCatMap,
-      dailyCatMap
+      sparklineIncome, sparklineExpense, sparklineNet,
+      weekendTotal: totals.weekend, weekdayTotal: totals.weekday,
+      globalMaxThreshold, datesInPeriod, filterPeriod, dayTypeCounts,
+      dailyAllMap, sortedMonthsKeys, monthlyCatMap, dailyCatMap,
+      catChartData, mainChartData, mainChartType, sortedCashflow
     };
   }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
 
