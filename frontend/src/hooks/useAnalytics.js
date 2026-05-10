@@ -27,6 +27,30 @@ export default function useAnalytics({
     const catMapLookup = createCategoryMap(categories);
     const useBackendTotals = !!summaryData;
 
+    // 1b. Dynamic Group Resolution (Handle UUIDs)
+    const incomeGroups = cashflowGroups?.filter(g => g.type === 'income') || [];
+    const savingsGroups = cashflowGroups?.filter(g => g.type === 'savings') || [];
+    const expenseGroups = cashflowGroups?.filter(g => g.type === 'expense') || [];
+
+    // Fallback IDs for categorizing uncategorized items
+    const fallbackIncId = incomeGroups[0]?.id || 'cg_bonus';
+    const fallbackSavId = savingsGroups[0]?.id || 'cg_savings';
+    const fallbackExpId = expenseGroups[0]?.id || 'cg_variable';
+
+    const foodGroup = cashflowGroups?.find(g => 
+      (g.name || '').toLowerCase().includes('อาหาร') || 
+      (g.name || '').toLowerCase().includes('food') ||
+      (g.name || '').toLowerCase().includes('กิน')
+    );
+    const rentGroup = cashflowGroups?.find(g => 
+      (g.name || '').toLowerCase().includes('หอ') || 
+      (g.name || '').toLowerCase().includes('ที่พัก') || 
+      (g.name || '').toLowerCase().includes('rent') ||
+      (g.name || '').toLowerCase().includes('เช่า')
+    );
+    const foodGroupId = foodGroup?.id;
+    const rentGroupId = rentGroup?.id;
+
     // 2. Variables for Aggregation
     let totals = {
       income: 0, expense: 0, savings: 0,
@@ -83,7 +107,7 @@ export default function useAnalytics({
 
       const amt = parseFloat(t.amount) || 0;
       const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
-      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
+      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: fallbackExpId, isFixed: false };
       
       const cGroupId = catObj.cashflowGroup;
       const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
@@ -120,10 +144,13 @@ export default function useAnalytics({
           cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
         }
 
-        const cGroup = cGroupId || (isInc ? 'cg_bonus' : (isSav ? 'cg_savings' : 'cg_variable'));
+        const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
         if (cashflowMap[ym].groups[cGroup] !== undefined) {
           cashflowMap[ym].groups[cGroup] += amt;
         }
+
+        const isFood = cGroupId === foodGroupId || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
+        const isRent = cGroupId === rentGroupId || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
 
         // Totals
         if (isInc) {
@@ -142,8 +169,8 @@ export default function useAnalytics({
           else totals.variable += amt;
 
           // Semantic Grouping
-          if (cGroupId === 'cg_rent' || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent')) totals.rent += amt;
-          else if (cGroupId === 'cg_food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) totals.food += amt;
+          if (isRent) totals.rent += amt;
+          else if (isFood) totals.food += amt;
 
           // Per-Category Breakdown (Always count for local sortedCats calculation)
           catMapData[catId] = (catMapData[catId] || 0) + amt;
@@ -191,7 +218,7 @@ export default function useAnalytics({
         if (isCurrentMonth && isoDate <= todayStr && isExp) {
           expenseUpToToday += amt;
           if (!isFixed) variableUpToToday += amt;
-          if (cGroupId === 'cg_food' || groupName.includes('อาหาร')) foodUpToToday += amt;
+          if (isFood) foodUpToToday += amt;
         }
       }
     });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ClipboardList, Inbox, Trash2, CalendarDays } from 'lucide-react';
-import { formatMoney, hexToRgb } from '../../utils/formatters';
-import { useTheme } from '../../context/ThemeContext';
+import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function CartList({
   pendingItems,

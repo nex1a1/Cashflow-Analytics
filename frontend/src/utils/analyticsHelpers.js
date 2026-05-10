@@ -39,10 +39,10 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
 
   filteredTx.forEach(item => {
     const amt = parseFloat(item.amount) || 0;
-    const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: 'cg_variable', isFixed: false };
+    const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, isFixed: false };
     
     // Determine type from catMap or lookup group
-    const cGroupId = catObj.cashflowGroup;
+    const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
     const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
     const groupType = groupObj.type || catObj.type || 'expense'; 
     const groupName = (groupObj.name || '').toLowerCase();
@@ -50,7 +50,12 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
     const isInc = groupType === 'income';
     const isSav = groupType === 'savings';
     
-    const cGroup = cGroupId || (isInc ? 'cg_bonus' : (isSav ? 'cg_savings' : 'cg_variable'));
+    // UUID-safe fallbacks based on group type
+    const fallbackIncId = cashflowGroups?.find(g => g.type === 'income')?.id || 'cg_bonus';
+    const fallbackSavId = cashflowGroups?.find(g => g.type === 'savings')?.id || 'cg_savings';
+    const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
+
+    const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
     const isFixed = catObj.isFixed || false;
 
     if (!item.date) return;
@@ -70,7 +75,9 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
       cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
     }
 
-    cashflowMap[ym].groups[cGroup] = (cashflowMap[ym].groups[cGroup] || 0) + amt;
+    if (cashflowMap[ym].groups[cGroup] !== undefined) {
+      cashflowMap[ym].groups[cGroup] += amt;
+    }
 
     if (isInc) {
       totals.income += amt;
@@ -79,7 +86,6 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
     } else if (isSav) {
       totals.savings += amt;
       cashflowMap[ym].totalSav += amt;
-      // We don't track savings in dayExpenseMap to keep 'liquidity' separate
     } else {
       totals.expense += amt;
       cashflowMap[ym].totalExp += amt;
@@ -93,10 +99,15 @@ export const generateCashflowMap = (transactions, filterPeriod, catMap, cashflow
       
       totals.dayOfWeekMap[dayOfWeek] += amt;
 
-      if (cGroup === 'cg_rent' || cGroup === 'rent' || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent')) totals.rent += amt;   
-      else if (cGroup === 'cg_food' || cGroup === 'food' || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food')) totals.food += amt;   
-      else if (cGroup === 'cg_it' || cGroup === 'it' || groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it')) totals.it += amt;     
-      else if (cGroup === 'cg_invest' || cGroup === 'invest' || groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest')) totals.invest += amt; 
+      const isRent = groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
+      const isFood = groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
+      const isIT   = groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it');
+      const isInv  = groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest');
+
+      if (isRent) totals.rent += amt;   
+      else if (isFood) totals.food += amt;   
+      else if (isIT) totals.it += amt;     
+      else if (isInv) totals.invest += amt; 
 
       if (isFixed) totals.fixed += amt; 
       else totals.variable += amt;

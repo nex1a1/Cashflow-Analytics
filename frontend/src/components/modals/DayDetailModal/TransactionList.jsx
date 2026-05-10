@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
-import { formatMoney, hexToRgb } from '../../utils/formatters';
-import { useTheme } from '../../context/ThemeContext';
+import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
   const { isDarkMode: dm } = useTheme();

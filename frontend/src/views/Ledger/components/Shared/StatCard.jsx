@@ -26,11 +26,11 @@ export default function StatCard({
         </div>
         <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
           <div className="min-w-0 flex-1">
-            <p className={`text-[10px] font-black uppercase tracking-widest truncate ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`text-[10px] font-black uppercase tracking-widest truncate ${color.text} filter brightness-90`}>
               {label}
             </p>
             {subValue && (
-              <p className={`text-[8px] font-bold opacity-60 truncate leading-tight ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-[8px] font-black truncate leading-tight opacity-70 ${color.text} filter brightness-75`}>
                 {subValue}
               </p>
             )}
@@ -55,20 +55,20 @@ export default function StatCard({
         {React.cloneElement(icon, { size: 80 })}
       </div>
 
-      <div className="relative z-10 flex items-start gap-3">
-        <div className={`p-2.5 rounded-sm ${color.bg} transition-transform group-hover:scale-105`}>
+      <div className="relative z-10 flex items-start gap-2">
+        <div className={`p-2 rounded-sm ${color.bg} transition-transform group-hover:scale-105 shrink-0`}>
           {React.cloneElement(icon, { size: 18 })}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-2 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+        <div className="flex-1 min-w-0 pr-1">
+          <p className={`text-[10px] font-black uppercase tracking-wider leading-none mb-1.5 truncate ${color.text} filter brightness-90`}>
             {label}
           </p>
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <p className={`text-xl 2xl:text-2xl font-black leading-none tabular-nums tracking-tight ${color.text}`}>
+          <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+            <div className={`text-lg xl:text-xl 2xl:text-2xl font-black leading-none tabular-nums tracking-tight truncate max-w-full ${color.text}`}>
               {value}
-            </p>
+            </div>
             {trend && (
-              <div className={`flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+              <div className={`flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full mt-0.5 shrink-0 ${
                 trend.isGood 
                   ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
                   : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
@@ -79,7 +79,7 @@ export default function StatCard({
             )}
           </div>
           {subValue && (
-            <p className={`mt-2 text-[10px] font-bold tracking-wide opacity-50 ${dm ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`mt-1.5 text-[9px] font-black tracking-wide truncate ${color.text} filter brightness-75 opacity-60`}>
               {subValue}
             </p>
           )}

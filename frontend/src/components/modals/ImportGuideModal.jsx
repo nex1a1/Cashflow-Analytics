@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { X, Copy, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '../context/ToastContext';
-import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const GuideSection = ({ dm, icon, title, subtitle, headers, rows, features, copyText, headerColorCls }) => {
   const { showToast } = useToast();

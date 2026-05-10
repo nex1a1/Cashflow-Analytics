@@ -12,22 +12,26 @@ export const OLD_PALETTE_MAP = {
   'gundam-red': '#D81A21', 'gundam-gold': '#F4B800', 'income-green': '#059669'
 };
 
+/**
+ * DEFAULT_CATEGORIES now use null for cashflowGroup to signify that
+ * they should be resolved dynamically against the database groups.
+ */
 export const DEFAULT_CATEGORIES = [
-  { id: 'inc1', name: "เงินเดือน", icon: "💰", color: '#059669', type: 'income', cashflowGroup: 'salary' },
-  { id: 'inc2', name: "รายรับพิเศษ/โบนัส", icon: "🎁", color: '#10B981', type: 'income', cashflowGroup: 'bonus' },
-  { id: 'c1', name: "อาหารและเครื่องดื่ม", icon: "🍜", color: '#F97316', type: 'expense', cashflowGroup: 'food', isFixed: false },
-  { id: 'c13', name: "ค่าเช่า/ค่าหอพัก", icon: "🏢", color: '#3B82F6', type: 'expense', cashflowGroup: 'rent', isFixed: true },
-  { id: 'c2', name: "ซุปเปอร์มาร์เก็ต/ห้าง", icon: "🛒", color: '#14B8A6', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c3', name: "ช้อปปิ้งออนไลน์", icon: "📦", color: '#8B5CF6', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c4', name: "บริการรายเดือน", icon: "💳", color: '#6366F1', type: 'expense', cashflowGroup: 'subs', isFixed: true },
-  { id: 'c5', name: "การเดินทาง", icon: "🚗", color: '#64748B', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "🏠", color: '#F59E0B', type: 'expense', cashflowGroup: 'variable', isFixed: true },
-  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "💻", color: '#00509E', type: 'expense', cashflowGroup: 'it', isFixed: false },
-  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "📈", color: '#10B981', type: 'expense', cashflowGroup: 'invest', isFixed: true },
-  { id: 'c9', name: "บันเทิงและสันทนาการ", icon: "🎬", color: '#EC4899', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c10', name: "สุขภาพและความงาม", icon: "💊", color: '#F43F5E', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c11', name: "ครอบครัวและสัตว์เลี้ยง", icon: "🐶", color: '#F4B800', type: 'expense', cashflowGroup: 'variable', isFixed: false },
-  { id: 'c12', name: "อื่นๆ", icon: "📌", color: '#64748B', type: 'expense', cashflowGroup: 'variable', isFixed: false }
+  { id: 'inc1', name: "เงินเดือน", icon: "💰", color: '#059669', type: 'income', cashflowGroup: null },
+  { id: 'inc2', name: "รายรับพิเศษ/โบนัส", icon: "🎁", color: '#10B981', type: 'income', cashflowGroup: null },
+  { id: 'c1', name: "อาหารและเครื่องดื่ม", icon: "🍜", color: '#F97316', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c13', name: "ค่าเช่า/ค่าหอพัก", icon: "🏢", color: '#3B82F6', type: 'expense', cashflowGroup: null, isFixed: true },
+  { id: 'c2', name: "ซุปเปอร์มาร์เก็ต/ห้าง", icon: "🛒", color: '#14B8A6', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c3', name: "ช้อปปิ้งออนไลน์", icon: "📦", color: '#8B5CF6', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c4', name: "บริการรายเดือน", icon: "💳", color: '#6366F1', type: 'expense', cashflowGroup: null, isFixed: true },
+  { id: 'c5', name: "การเดินทาง", icon: "🚗", color: '#64748B', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "🏠", color: '#F59E0B', type: 'expense', cashflowGroup: null, isFixed: true },
+  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "💻", color: '#00509E', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "📈", color: '#10B981', type: 'expense', cashflowGroup: null, isFixed: true },
+  { id: 'c9', name: "บันเทิงและสันทนาการ", icon: "🎬", color: '#EC4899', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c10', name: "สุขภาพและความงาม", icon: "💊", color: '#F43F5E', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c11', name: "ครอบครัวและสัตว์เลี้ยง", icon: "🐶", color: '#F4B800', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c12', name: "อื่นๆ", icon: "📌", color: '#64748B', type: 'expense', cashflowGroup: null, isFixed: false }
 ];
 
 export const DEFAULT_DAY_TYPES = [

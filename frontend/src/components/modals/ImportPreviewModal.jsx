@@ -1,7 +1,7 @@
 // src/components/ImportPreviewModal.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ImportPreviewModal({ importPreview, setImportPreview, confirmImport, isProcessing, categories }) {
   const { isDarkMode: dm } = useTheme();

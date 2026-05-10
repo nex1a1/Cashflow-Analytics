@@ -3,7 +3,7 @@ import { CheckCircle, Zap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 const dailyAddSchema = z.object({
   type: z.enum(['income', 'expense']),

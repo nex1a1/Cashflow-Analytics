@@ -3,8 +3,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
-import { useToast } from '../context/ToastContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function AppToast({ toast }) {
   const { isDarkMode } = useTheme();

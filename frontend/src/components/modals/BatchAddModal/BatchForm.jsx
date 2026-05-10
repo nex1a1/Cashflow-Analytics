@@ -3,8 +3,8 @@ import { PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import DatePicker from '../ui/DatePicker';
-import { useTheme } from '../../context/ThemeContext';
+import DatePicker from '../../ui/DatePicker';
+import { useTheme } from '../../../context/ThemeContext';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();

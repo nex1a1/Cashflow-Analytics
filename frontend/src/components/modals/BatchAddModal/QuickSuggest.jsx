@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Star } from 'lucide-react';
-import { hexToRgb } from '../../utils/formatters';
-import { useTheme } from '../../context/ThemeContext';
+import { hexToRgb } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function QuickSuggest({
   transactions,
@@ -39,7 +39,7 @@ export default function QuickSuggest({
   };
 
   return (
-    <div className={`w-full md:w-2/5 p-5 flex flex-col min-h-0 ${dm ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
+    <div className={`w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${dm ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
       <h4 className={`shrink-0 font-bold text-sm flex items-center gap-2 mb-3 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> Quick Suggestions
       </h4>
