@@ -1,50 +1,20 @@
 // src/views/Dashboard/components/SummaryCards.jsx
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import { 
-  Activity, ShieldCheck, Anchor, Crosshair, 
-  Navigation, Wallet, TrendingUp, Target, Scale, UtensilsCrossed, Zap
+  Activity, Wallet, Anchor, Crosshair, Navigation, ShieldCheck,
+  Target, Scale, UtensilsCrossed,
+  TrendingUp, Zap 
 } from 'lucide-react';
+import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney } from '../../../utils/formatters';
-import { useTheme } from '../../../context/ThemeContext';
 import sharkLogo from '../../../assets/images/shark-white.svg';
 import sharkBlack from '../../../assets/images/shark-black.svg';
 import StatCard from '../../../components/shared/StatCard.jsx';
+import AnimatedNumber from '../../../components/ui/AnimatedNumber.jsx';
 
-// ─── Count-up Hook ────────────────────────────────────────────────────────────
-function useCountUp(target, duration = 800) {
-  const [value, setValue] = useState(target);
-  const rafRef = useRef(null);
-  const prevTarget = useRef(target);
-
-  useEffect(() => {
-    const start = prevTarget.current ?? 0;
-    if (start === target) return;
-    prevTarget.current = target;
-    const startTime = performance.now();
-    const diff = target - start;
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 4);
-      setValue(start + diff * eased);
-      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, duration]);
-
-  return value;
-}
-
-// ─── Animated Money ───────────────────────────────────────────────────────────
-function AnimatedMoney({ value, className }) {
-  const animated = useCountUp(value);
-  return <span className={className}>{formatMoney(animated)}</span>;
-}
-
-// ─── Section Header (Zero Bottom Padding) ─────────────────────────────────────
+/**
+ * Shared Header for Summary Sections
+ */
 const SectionHeader = ({ icon: Icon, title, dm }) => (
   <div className={`px-2.5 py-0.5 flex items-center gap-1.5 ${dm ? 'bg-slate-800 border-b border-slate-700/50' : 'bg-slate-50 border-b border-slate-200'}`}>
     <Icon className={`w-3 h-3 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
@@ -54,14 +24,13 @@ const SectionHeader = ({ icon: Icon, title, dm }) => (
   </div>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function SummaryCards({ analytics }) {
-  const { isDarkMode: dm } = useTheme();
-
+/**
+ * SECTION 1: FINANCIAL VITALS (Income, Expense, Cashflow, Savings)
+ */
+const SummaryVitals = ({ analytics, dm }) => {
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
-    dailyAvg, foodPercentage, foodDailyAvg, fixedTotal, variableTotal,
-    showForecasting, projectedExpense, safeToSpend, datesInPeriod
+    fixedTotal, variableTotal, datesInPeriod
   } = analytics;
 
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
@@ -69,14 +38,13 @@ export default function SummaryCards({ analytics }) {
   const avgExpensePerDay = totalExpense / periodDays;
   const avgFixedPerDay = fixedTotal / periodDays;
   const avgVariablePerDay = variableTotal / periodDays;
-  const dailyVictory = netCashflow / periodDays;
 
   const vitalsConfig = [
     {
       id: 'income',
       icon: <div className="w-4 h-4 flex items-center justify-center"><img src={dm ? sharkLogo : sharkBlack} alt="" className="w-full h-full object-contain" /></div>,
       label: "รายรับรวม",
-      value: <AnimatedMoney value={totalIncome} />,
+      value: <AnimatedNumber value={totalIncome} />,
       subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>เฉลี่ย ฿{formatMoney(avgIncomePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-blue-900/30' : 'bg-blue-50', text: dm ? 'text-blue-400' : 'text-blue-600' }
     },
@@ -84,7 +52,7 @@ export default function SummaryCards({ analytics }) {
       id: 'expense',
       icon: <Wallet />,
       label: "รายจ่ายรวม",
-      value: <AnimatedMoney value={totalExpense} />,
+      value: <AnimatedNumber value={totalExpense} />,
       subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-orange-400' : 'text-orange-600'}`}>เฉลี่ย ฿{formatMoney(avgExpensePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-orange-900/30' : 'bg-orange-50', text: dm ? 'text-orange-400' : 'text-orange-600' }
     },
@@ -92,7 +60,7 @@ export default function SummaryCards({ analytics }) {
       id: 'fixed',
       icon: <Anchor />,
       label: "รายจ่ายคงที่",
-      value: <AnimatedMoney value={fixedTotal} />,
+      value: <AnimatedNumber value={fixedTotal} />,
       subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-purple-400' : 'text-purple-600'}`}>เฉลี่ย ฿{formatMoney(avgFixedPerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-purple-900/30' : 'bg-purple-50', text: dm ? 'text-purple-400' : 'text-purple-600' }
     },
@@ -100,7 +68,7 @@ export default function SummaryCards({ analytics }) {
       id: 'variable',
       icon: <Crosshair />,
       label: "รายจ่ายผันแปร",
-      value: <AnimatedMoney value={variableTotal} />,
+      value: <AnimatedNumber value={variableTotal} />,
       subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-rose-400' : 'text-rose-600'}`}>เฉลี่ย ฿{formatMoney(avgVariablePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-rose-900/30' : 'bg-rose-50', text: dm ? 'text-rose-400' : 'text-rose-600' }
     },
@@ -108,7 +76,7 @@ export default function SummaryCards({ analytics }) {
       id: 'cashflow',
       icon: <Navigation />,
       label: "กระแสเงินสด",
-      value: <AnimatedMoney value={netCashflow} />,
+      value: <AnimatedNumber value={netCashflow} />,
       subValueJSX: <span className={`text-[9px] font-medium opacity-80 ${netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{netCashflow >= 0 ? 'Surplus' : 'Deficit'}</span>,
       color: { 
         bg: netCashflow >= 0 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-rose-900/30' : 'bg-rose-50'),
@@ -129,29 +97,40 @@ export default function SummaryCards({ analytics }) {
   ];
 
   return (
-    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
-      
-      {/* SECTION 1: FINANCIAL VITALS */}
-      <div className="flex flex-col border-b border-dashed border-slate-700/40">
-        <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
-        <div className="grid grid-cols-6 gap-[1px] bg-slate-700/20 p-[1px]">
-          {vitalsConfig.map(card => (
-            <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-white'}>
-              <StatCard 
-                icon={card.icon}
-                label={card.label}
-                value={card.value}
-                subValueJSX={card.subValueJSX} 
-                color={card.color}
-              />
-            </div>
-          ))}
-        </div>
+    <div className="flex flex-col border-b border-dashed border-slate-700/40">
+      <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
+      <div className="grid grid-cols-6 gap-[1px] bg-slate-700/20 p-[1px]">
+        {vitalsConfig.map(card => (
+          <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-white'}>
+            <StatCard 
+              icon={card.icon}
+              label={card.label}
+              value={card.value}
+              subValueJSX={card.subValueJSX} 
+              color={card.color}
+            />
+          </div>
+        ))}
       </div>
+    </div>
+  );
+};
 
-      {/* SECTION 2: STRATEGIC & KEY METRICS (Monolithic Row) */}
-      <div className="grid grid-cols-12 items-stretch">
-         
+/**
+ * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
+ */
+const SummaryStrategic = ({ analytics, dm }) => {
+  const {
+    totalIncome, netCashflow,
+    dailyAvg, foodPercentage, foodDailyAvg, fixedTotal, variableTotal,
+    datesInPeriod
+  } = analytics;
+
+  const periodDays = Math.max(1, datesInPeriod?.length || 1);
+  const dailyVictory = netCashflow / periodDays;
+
+  return (
+    <div className="grid grid-cols-12 items-stretch">
          {/* Strategic Analysis */}
          <div className="col-span-7 flex flex-col border-r border-dashed border-slate-700/40">
             <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์" dm={dm} />
@@ -204,48 +183,56 @@ export default function SummaryCards({ analytics }) {
                </div>
             </div>
          </div>
-      </div>
+    </div>
+  );
+};
 
-      {/* SECTION 3: FORECAST (Attached Strip) */}
-      {showForecasting && (
-        <div className="flex flex-col border-t border-dashed border-slate-700/40">
-          <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน" dm={dm} />
-          <div className="grid grid-cols-2 gap-[1px] bg-slate-700/20 p-[1px]">
-            <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-[#1e1b4b]/40' : 'bg-indigo-50/30'}`}>
-              <div>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-600'}`}>Projected Expense</span>
-                <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900'}`}><AnimatedMoney value={projectedExpense} /></div>
-              </div>
-              <TrendingUp size={58} className="text-indigo-400 opacity-30" />
-            </div>
-            <div className={`p-2 rounded-none flex items-center justify-between ${safeToSpend > 300 ? (dm ? 'bg-emerald-500/5' : 'bg-emerald-50/30') : (dm ? 'bg-rose-500/5' : 'bg-rose-50/30')}`}>
-              <div>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Safe to Spend</span>
-                <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? 'text-emerald-500' : 'text-rose-500'}`}><AnimatedMoney value={safeToSpend} /></div>
-              </div>
-              <Zap size={57} className={`${safeToSpend > 300 ? 'text-emerald-400' : 'text-rose-400'} opacity-30`} />
-            </div>
+/**
+ * SECTION 3: FORECAST (Optional strip for month-end projections)
+ */
+const SummaryForecasting = ({ analytics, dm }) => {
+  const {
+    showForecasting, projectedExpense, safeToSpend
+  } = analytics;
+
+  if (!showForecasting) return null;
+
+  return (
+    <div className="flex flex-col border-t border-dashed border-slate-700/40">
+      <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน" dm={dm} />
+      <div className="grid grid-cols-2 gap-[1px] bg-slate-700/20 p-[1px]">
+        <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-[#1e1b4b]/40' : 'bg-indigo-50/30'}`}>
+          <div>
+            <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-600'}`}>Projected Expense</span>
+            <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900'}`}><AnimatedNumber value={projectedExpense} /></div>
           </div>
+          <TrendingUp size={58} className="text-indigo-400 opacity-30" />
         </div>
-      )}
+        <div className={`p-2 rounded-none flex items-center justify-between ${safeToSpend > 300 ? (dm ? 'bg-emerald-500/5' : 'bg-emerald-50/30') : (dm ? 'bg-rose-500/5' : 'bg-rose-50/30')}`}>
+          <div>
+            <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Safe to Spend</span>
+            <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? 'text-emerald-500' : 'text-rose-500'}`}><AnimatedNumber value={safeToSpend} /></div>
+          </div>
+          <Zap size={57} className={`${safeToSpend > 300 ? 'text-emerald-400' : 'text-rose-400'} opacity-30`} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * SummaryCards - The mission control center for financial vitals.
+ */
+export default function SummaryCards() {
+  const { analytics, dm } = useDashboardContext();
+
+  if (!analytics) return null;
+
+  return (
+    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
+      <SummaryVitals analytics={analytics} dm={dm} />
+      <SummaryStrategic analytics={analytics} dm={dm} />
+      <SummaryForecasting analytics={analytics} dm={dm} />
     </div>
   );
 }
-
-SummaryCards.propTypes = {
-  analytics: PropTypes.shape({
-    totalIncome: PropTypes.number.isRequired,
-    totalExpense: PropTypes.number.isRequired,
-    netCashflow: PropTypes.number.isRequired,
-    savingsRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-    dailyAvg: PropTypes.number,
-    foodPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    foodDailyAvg: PropTypes.number,
-    fixedTotal: PropTypes.number,
-    variableTotal: PropTypes.number,
-    showForecasting: PropTypes.bool,
-    projectedExpense: PropTypes.number,
-    safeToSpend: PropTypes.number,
-    datesInPeriod: PropTypes.array,
-  }).isRequired,
-};

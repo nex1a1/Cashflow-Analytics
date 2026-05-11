@@ -5,7 +5,7 @@ import { Doughnut } from 'react-chartjs-2';
 import { PieChart, Inbox } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { getDoughnutChartOptions } from '../../../utils/chartOptions';
-import { useTheme } from '../../../context/ThemeContext';
+import { useDashboardContext } from '../context/DashboardContext';
 
 /**
  * Sub-component for individual category cell (Table-like HUD)
@@ -44,8 +44,8 @@ const CatItem = ({ cat, dm, idx }) => (
   </div>
 );
 
-export default function ExpenseProportion({ analytics }) {
-  const { isDarkMode: dm } = useTheme();
+export default function ExpenseProportion() {
+  const { analytics, dm } = useDashboardContext();
   const { sortedCats = [], catChartData = { labels: [], datasets: [] }, totalExpense = 0 } = analytics;
   const catCount = sortedCats.length;
 
@@ -120,11 +120,3 @@ export default function ExpenseProportion({ analytics }) {
     </div>
   );
 }
-
-ExpenseProportion.propTypes = {
-  analytics: PropTypes.shape({
-    sortedCats: PropTypes.array.isRequired,
-    catChartData: PropTypes.object.isRequired,
-    totalExpense: PropTypes.number,
-  }).isRequired,
-};

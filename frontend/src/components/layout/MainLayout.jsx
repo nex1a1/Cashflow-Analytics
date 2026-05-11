@@ -225,7 +225,13 @@ export default function MainLayout({ controller }) {
       />
       <ImportPreviewModal
         importPreview={importPreview} setImportPreview={setImportPreview}
-        confirmImport={() => confirmImport({ onSuccess: () => { showSuccess(); setActiveTab('ledger'); } })}
+        confirmImport={() => confirmImport({ 
+          onSuccess: () => { 
+            refreshData();
+            showSuccess(); 
+            setActiveTab('ledger'); 
+          } 
+        })}
         isProcessing={controller.isCsvProcessing} categories={categories}
       />
       <ImportGuideModal isOpen={showImportGuide} onClose={() => setShowImportGuide(false)} />

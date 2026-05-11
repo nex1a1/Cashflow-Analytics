@@ -72,6 +72,7 @@ export function useAppController() {
     handleDeleteTransaction,
     handleDeleteMonth,
     handleDeleteAllData,
+    refreshData,
   } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups });
 
   const {
@@ -227,6 +228,7 @@ export function useAppController() {
     setTxProcessing(true);
     try {
       await saveToDb(finalItems);
+      await refreshData();
       triggerToast('ทำรายการสำเร็จ!', 'success');
     } catch (err) {
       console.error(err);
@@ -311,6 +313,7 @@ export function useAppController() {
     handleSaveBatch,
     handleFileUpload,
     confirmImport,
+    refreshData,
     triggerToast,
     toast
   };

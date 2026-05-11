@@ -1,11 +1,10 @@
 // src/views/Dashboard/components/TopTransactions.jsx
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatMoney } from '../../../utils/formatters';
 import { isDateInFilter } from '../../../utils/dateHelpers';
-import { useTheme } from '../../../context/ThemeContext';
+import { useDashboardContext } from '../context/DashboardContext';
 
 // --- Sub-components ---
 
@@ -107,16 +106,17 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
 // --- Main Component ---
 
-export default function TopTransactions({
-  transactions,
-  filterPeriod,
-  dashboardCategory,
-  hideFixedExpenses,
-  categories, 
-  topXLimit, 
-  setTopXLimit
-}) {
-  const { isDarkMode: dm } = useTheme();
+export default function TopTransactions() {
+  const { 
+    transactions, 
+    filterPeriod, 
+    dashboardCategory, 
+    hideFixedExpenses, 
+    categories, 
+    topXLimit, 
+    setTopXLimit,
+    dm 
+  } = useDashboardContext();
   
   const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const headerStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
@@ -226,13 +226,3 @@ export default function TopTransactions({
     </div>
   );
 }
-
-TopTransactions.propTypes = {
-  transactions: PropTypes.array,
-  filterPeriod: PropTypes.string,
-  dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
-  hideFixedExpenses: PropTypes.bool,
-  categories: PropTypes.array.isRequired,
-  topXLimit: PropTypes.number.isRequired,
-  setTopXLimit: PropTypes.func.isRequired,
-};

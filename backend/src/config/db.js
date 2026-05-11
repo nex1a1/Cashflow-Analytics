@@ -20,9 +20,10 @@ const db = new Database(DB_PATH, {
     }
 });
 
-// ปรับแต่ง SQLite เพื่อความเสถียรบน Docker/Windows
-// ปิด WAL mode เพราะอาจมีปัญหาเรื่อง Shared Memory (SHM) บน Bind Mount
-db.pragma('journal_mode = DELETE'); 
+// ปรับแต่ง SQLite เพื่อความเสถียรและความเร็ว
+db.pragma('journal_mode = WAL'); 
+db.pragma('synchronous = NORMAL');
+db.pragma('busy_timeout = 5000');
 db.pragma('foreign_keys = ON');
 
 console.log('✅ SQLite database connected at', DB_PATH);

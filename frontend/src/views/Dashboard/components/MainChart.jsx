@@ -1,36 +1,254 @@
 // src/views/Dashboard/components/MainChart.jsx
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Chart } from 'react-chartjs-2';
-import { TrendingUp, BarChart, Layers, Filter, ChevronDown } from 'lucide-react';
-import {
-  getComboChartOptions,
-  getBarChartOptions,
-  getLineChartOptions,
-} from '../../../utils/chartOptions';
-import { useTheme } from '../../../context/ThemeContext';
-import { formatMoney } from '../../../utils/formatters';
+import { 
+  Layers, TrendingUp, BarChart, Network, 
+  Filter, ChevronDown 
+} from 'lucide-react';
 
-// --- Helpers (Moved outside to prevent re-creation) ---
-const makeCumulative = (dataArr) => {
-  let sum = 0;
-  return dataArr.map(val => { sum += (val || 0); return sum; });
+import { useDashboardContext } from '../context/DashboardContext';
+import { useSankeyEngine } from '../hooks/useSankeyEngine';
+import { useChartDataEngine } from '../hooks/useChartDataEngine';
+import { useChartOptions } from '../hooks/useChartOptions';
+
+/**
+ * INTERNAL COMPONENT: MainChartHeader
+ */
+const MainChartHeader = ({
+  chartViewType, setChartViewType,
+  chartGroupBy, setChartGroupBy,
+  sankeySortMode, setSankeySortMode,
+  setIsBreakdown, filterPeriod, dm,
+  mainChartType, mainChartData, showTrendLines
+}) => {
+  const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
+
+  return (
+    <div className={`flex items-center justify-between gap-3 border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'} flex-wrap relative z-20`}>
+      <h3 className={cardHd}>
+        {chartViewType === 'sankey' ? (
+          <Network className={`w-4 h-4 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
+        ) : (
+          <TrendingUp className={`w-4 h-4 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
+        )}
+        {chartViewType === 'sankey' ? 'โครงสร้างกระแสเงินสด (Sankey Flow)' : 
+         mainChartType === 'combo' && mainChartData?.datasets?.some(ds => ds.label?.includes('เฉลี่ยสะสม')) && showTrendLines
+          ? 'เทรนด์รายจ่ายรายวัน (MTD Average)'
+          : mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสด'
+          : mainChartType === 'bar' ? 'เทรนด์เปรียบเทียบ' : 'รายจ่ายรายวัน'}
+      </h3>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {chartViewType !== 'sankey' && !filterPeriod.match(/^\d{4}-\d{2}$/) && (
+          <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
+            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
+          </div>
+        )}
+
+        <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+          <button
+            onClick={() => { setChartViewType('line'); setIsBreakdown(false); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> เส้น
+          </button>
+          <button
+            onClick={() => setChartViewType('bar')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+          >
+            <BarChart className="w-3.5 h-3.5" /> แท่ง
+          </button>
+          <button
+            onClick={() => { setChartViewType('sankey'); setIsBreakdown(false); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'sankey' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+          >
+            <Network className="w-3.5 h-3.5" /> Sankey
+          </button>
+        </div>
+
+        {chartViewType === 'sankey' && (
+          <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+            <button 
+              onClick={() => setSankeySortMode('value')} 
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${sankeySortMode === 'value' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            >
+              เรียงตามยอดเงิน
+            </button>
+            <button 
+              onClick={() => setSankeySortMode('index')} 
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${sankeySortMode === 'index' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            >
+              เรียงตามลำดับ (Settings)
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
-export default function MainChart({
-  analytics, categories, filterPeriod,
+/**
+ * INTERNAL COMPONENT: MainChartFilterMenu
+ */
+const MainChartFilterMenu = ({
+  dm, showCatMenu, setShowCatMenu, filterMenuRef,
+  showTrendLines, setShowTrendLines,
+  isCumulative, setIsCumulative,
   hideFixedExpenses, setHideFixedExpenses,
   dashboardCategory, setDashboardCategory,
-  chartGroupBy, setChartGroupBy
-}) {
-  const { isDarkMode: dm } = useTheme();
-  const [chartViewType, setChartViewType] = useState('bar');
+  categories, categoriesWithData
+}) => {
+  return (
+    <div className="relative" ref={filterMenuRef}>
+      <button
+        onClick={() => setShowCatMenu(!showCatMenu)}
+        className={`px-3 py-1.5 border rounded-md shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
+      >
+        <Filter className="w-3.5 h-3.5" />
+        ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>{dashboardCategory.length}</span> : ''}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCatMenu ? 'rotate-180' : ''}`} />
+      </button>
+
+      {showCatMenu && (
+        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
+          <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div className="flex flex-col pr-3">
+                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
+                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูแนวโน้มค่าเฉลี่ยสะสมเทียบกับต้นเดือน</span>
+              </div>
+              <div className="relative flex items-center shrink-0">
+                <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} disabled={isCumulative} />
+                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')} ${isCumulative ? 'opacity-50' : ''}`} />
+                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
+              </div>
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div className="flex flex-col pr-3">
+                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-purple-400' : 'text-slate-800 group-hover:text-purple-600'}`}>กราฟสะสม (Pacing Curve)</span>
+                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูความเร็วในการจ่ายแบบสะสมทีละวัน</span>
+              </div>
+              <div className="relative flex items-center shrink-0">
+                <input type="checkbox" className="sr-only" checked={isCumulative} onChange={() => { setIsCumulative(!isCumulative); if(!isCumulative) setShowTrendLines(false); }} />
+                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isCumulative ? (dm ? 'bg-purple-500' : 'bg-purple-600') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isCumulative ? 'translate-x-4' : ''}`} />
+              </div>
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div className="flex flex-col pr-3">
+                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed)</span>
+                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟ</span>
+              </div>
+              <div className="relative flex items-center shrink-0">
+                <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
+                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${hideFixedExpenses ? (dm ? 'bg-blue-500' : 'bg-[#00509E]') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${hideFixedExpenses ? 'translate-x-4' : ''}`} />
+              </div>
+            </label>
+          </div>
+
+          <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่</span>
+            {(() => {
+              const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+              const toggleCategory = (catName) => {
+                if (catName === 'ALL') { setDashboardCategory(['ALL']); }
+                else {
+                  let newCats = activeCats.filter(c => c !== 'ALL');
+                  if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
+                  else newCats.push(catName);
+                  if (newCats.length === 0) newCats = ['ALL'];
+                  setDashboardCategory(newCats);
+                }
+              };
+              const selectAllVariable = () => {
+                const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
+                setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
+              };
+
+              return (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => setDashboardCategory(['ALL'])} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
+                      📊 ทั้งหมด (รวม)
+                    </button>
+                    <button onClick={selectAllVariable} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}>
+                      🔄 เลือกผันแปรทั้งหมด
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                    {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
+                      const isActive = activeCats.includes(c.name);
+                      return (
+                        <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
+                          <span className="opacity-90">{c.icon}</span> {c.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * INTERNAL COMPONENT: MainChartLegend
+ */
+const MainChartLegend = ({ legendDatasets, dm }) => {
+  if (legendDatasets.length === 0) return null;
+
+  return (
+    <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
+      {legendDatasets.map((ds, i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          <span
+            className="inline-block rounded-sm shrink-0"
+            style={{
+              width: ds.type === 'line' ? 16 : 10,
+              height: ds.type === 'line' ? 3 : 10,
+              backgroundColor: ds.type === 'line'
+                ? (ds.borderColor || ds.backgroundColor)
+                : (ds.backgroundColor || ds.borderColor),
+            }}
+          />
+          <span className={`text-[10px] font-medium leading-none ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{ds.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/**
+ * MainChart - The central analytical engine for visual cashflow tracking.
+ */
+export default function MainChart() {
+  const { 
+    analytics, categories, filterPeriod, 
+    hideFixedExpenses, setHideFixedExpenses,
+    dashboardCategory, setDashboardCategory,
+    chartGroupBy, setChartGroupBy,
+    dm
+  } = useDashboardContext();
+  
+  // UI State
+  const [chartViewType, setChartViewType] = useState('bar'); 
+  const [sankeySortMode, setSankeySortMode] = useState('value');
   const [isBreakdown, setIsBreakdown] = useState(false);
   const [showTrendLines, setShowTrendLines] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
   const [isCumulative, setIsCumulative] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
 
+  // Filter Menu Click-Outside Logic
   const filterMenuRef = useRef(null);
   useEffect(() => {
     if (!showCatMenu) return;
@@ -41,389 +259,73 @@ export default function MainChart({
     return () => document.removeEventListener('mousedown', handler);
   }, [showCatMenu]);
 
-  // Performance: Optimized dependency array and logic
-  const categoriesWithData = useMemo(() => {
-    if (!analytics) return new Set();
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
-    const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
-    const withData = new Set();
-    categories.filter(c => c.type === 'expense').forEach(c => {
-      const total = showMonthly
-        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[c.id]?.[m] || 0), 0)
-        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[c.id]?.[d] || 0), 0);
-      if (total > 0) withData.add(c.name);
-    });
-    return withData;
-  }, [analytics, filterPeriod, chartGroupBy, categories]);
-
-  // Performance: Heavy data processing kept in useMemo
-  const displayChartData = useMemo(() => {
-    if (!analytics.mainChartData) return null;
-
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
-    const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
-    const xLabels = analytics.mainChartData.labels;
-
-    // ── โหมดแจกแจง (แท่งซ้อน หรือ หลายเส้น) ──────────────────────────────
-    if (isBreakdown) {
-      const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-      
-      // Map names to actual category objects to get their IDs
-      let catsToRender = activeCats.includes('ALL')
-        ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed))
-        : categories.filter(c => activeCats.includes(c.name) && categoriesWithData.has(c.name));
-
-      const datasets = catsToRender.map(catObj => {
-        const catName = catObj.name;
-        const catId = catObj.id;
-        const catColor = catObj.color || '#64748B';
-        
-        let data = showMonthly
-          ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catId]?.[m] || 0)
-          : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catId]?.[d] || 0);
-          
-        if (isCumulative) data = makeCumulative(data);
-
-        if (chartViewType === 'line') {
-          return {
-            type: 'line',
-            label: catName,
-            data,
-            borderColor: catColor,
-            backgroundColor: catColor + '33',
-            borderWidth: 2.5,
-            tension: isSmoothLine ? 0.4 : 0,
-            pointRadius: 3,
-            pointBackgroundColor: catColor,
-            pointBorderWidth: 2,
-            pointBorderColor: dm ? '#1e293b' : '#ffffff',
-            fill: false,
-          };
-        } else {
-          return {
-            type: 'bar',
-            label: catName,
-            data,
-            backgroundColor: catColor,
-            borderColor: dm ? '#1e293b' : '#ffffff',
-            borderWidth: 1,
-            borderRadius: 0,
-          };
-        }
-      });
-
-      if (showTrendLines && !showMonthly && chartViewType !== 'line' && !isCumulative) {
-        const mtdDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยสะสม'));
-        const avgDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยทั้งเดือน'));
-        if (mtdDataset) datasets.push({ ...mtdDataset, type: 'line', tension: isSmoothLine ? 0.4 : 0, borderWidth: 4 });
-        if (avgDataset) datasets.push({ ...avgDataset, type: 'line', borderWidth: 2 });
-      }
-
-      return { labels: xLabels, datasets };
-    }
-
-    // ── โหมดปกติ (ไม่แจกแจง) ────────────────────────────────────────────────
-    let filteredDatasets = [...analytics.mainChartData.datasets];
-    if (analytics.mainChartType === 'combo' && !showTrendLines) {
-      filteredDatasets = filteredDatasets.filter(ds => ds.type !== 'line' || ds.label === 'Cashflow');
-    }
-    
-    if (isCumulative) {
-       filteredDatasets = filteredDatasets.filter(ds => !(ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน'))));
-    }
-
-    const processedDatasets = filteredDatasets.map(ds => {
-      const isTrendLine = ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน') || ds.label === 'Cashflow');
-      
-      let finalData = ds.data;
-      if (isCumulative && !isTrendLine && ds.label !== 'Cashflow') {
-         finalData = makeCumulative(ds.data);
-      }
-      
-      if (isTrendLine && !isCumulative) {
-        return {
-          ...ds, data: finalData, type: 'line', tension: isSmoothLine ? 0.4 : 0,
-          borderWidth: ds.label.includes('เฉลี่ยทั้งเดือน') ? 2 : 4,
-        };
-      }
-
-      const newType = chartViewType === 'line' ? 'line' : 'bar';
-      let bgColor = ds.backgroundColor;
-      let borderColor = ds.borderColor || ds.backgroundColor;
-
-      if (chartViewType === 'bar') {
-        if (ds.borderColor && !ds.backgroundColor?.includes('0.6')) bgColor = ds.borderColor;
-        else if (ds.backgroundColor?.includes('rgba')) bgColor = borderColor;
-      }
-
-      let bWidth = 0;
-      if (chartViewType === 'line') {
-        bWidth = (Array.isArray(dashboardCategory) && dashboardCategory.length > 1 && !dashboardCategory.includes('ALL')) ? 3 : 4;
-      }
-
-      return {
-        ...ds, data: finalData, type: newType, tension: isSmoothLine ? 0.4 : 0,
-        backgroundColor: chartViewType === 'line' ? ds.backgroundColor : bgColor,
-        borderColor, borderWidth: bWidth, borderRadius: 4,
-        pointRadius: chartViewType === 'line' ? 4 : 0,
-        pointBackgroundColor: borderColor,
-        pointBorderWidth: 2, pointBorderColor: dm ? '#1e293b' : '#ffffff',
-      };
-    });
-
-    return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm]);
-
-  // Performance: Memoize options selection
-  const options = useMemo(() => {
-    let baseOptions;
-    const isStacked = isBreakdown && chartViewType === 'bar';
-    
-    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm);
-    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm);
-    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm);
-    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm);
-    else baseOptions = getBarChartOptions(dm);
-
-    return {
-      ...baseOptions,
-      scales: {
-        ...baseOptions.scales,
-        x: { ...baseOptions.scales?.x, stacked: isStacked },
-        y: { ...baseOptions.scales?.y, stacked: isStacked },
-      },
-      plugins: {
-        ...baseOptions.plugins,
-        tooltip: {
-          ...baseOptions.plugins?.tooltip,
-          mode: 'index',
-          intersect: false,
-          filter: (tooltipItem) => tooltipItem.raw > 0,
-          callbacks: {
-            ...baseOptions.plugins?.tooltip?.callbacks,
-            footer: (tooltipItems) => {
-              if (!isBreakdown || tooltipItems.length <= 1) return null;
-              const sum = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
-              return `รวม: ${formatMoney(sum)} ฿`;
-            }
-          }
-        },
-      },
-    };
-  }, [isBreakdown, chartViewType, dm, analytics.mainChartType]);
-
-  const legendDatasets = useMemo(() => {
-    if (!displayChartData?.datasets) return [];
-    return displayChartData.datasets.filter(ds => {
-      if (ds.label?.includes('เฉลี่ย') || ds.label === 'Cashflow') return false;
-      return ds.data?.some(v => v > 0);
-    });
-  }, [displayChartData]);
+  // The Logic Engines
+  const sankeyData = useSankeyEngine({ chartViewType, sankeySortMode });
+  const { displayChartData, legendDatasets, categoriesWithData } = useChartDataEngine({
+    chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData
+  });
+  const options = useChartOptions({ chartViewType, isBreakdown });
 
   const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
-  const cardHd = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
-  const divider = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
-
-  const breakdownLabel = isBreakdown
-    ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓')
-    : 'แจกแจง';
+  const breakdownLabel = isBreakdown ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓') : 'แจกแจง';
 
   return (
     <div className={`${card} p-5 min-h-0`}>
-      <div className={`flex items-center justify-between gap-3 ${divider} flex-wrap relative z-20`}>
-        <h3 className={cardHd}>
-          <TrendingUp className={`w-4 h-4 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-          {analytics.mainChartType === 'combo' && analytics.mainChartData?.datasets?.some(ds => ds.label?.includes('เฉลี่ยสะสม')) && showTrendLines
-            ? 'เทรนด์รายจ่ายรายวัน (MTD Average)'
-            : analytics.mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสด'
-            : analytics.mainChartType === 'bar' ? 'เทรนด์เปรียบเทียบ' : 'รายจ่ายรายวัน'}
-        </h3>
+      <MainChartHeader 
+        chartViewType={chartViewType} setChartViewType={setChartViewType}
+        chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
+        sankeySortMode={sankeySortMode} setSankeySortMode={setSankeySortMode}
+        setIsBreakdown={setIsBreakdown} filterPeriod={filterPeriod} dm={dm}
+        mainChartType={analytics.mainChartType} mainChartData={analytics.mainChartData}
+        showTrendLines={showTrendLines}
+      />
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {!filterPeriod.match(/^\d{4}-\d{2}$/) && (
-            <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-              <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
-              <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
-            </div>
-          )}
-
-          <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+      <div className="flex items-center justify-end gap-2 mb-3 relative z-10">
+        {chartViewType !== 'sankey' && (
+          <>
             <button
-              onClick={() => setChartViewType('line')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+              onClick={() => setIsBreakdown(prev => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md border shadow-sm transition-all ${
+                isBreakdown
+                  ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white')
+                  : (dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
+              }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" /> เส้น
-            </button>
-            <button
-              onClick={() => setChartViewType('bar')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
-            >
-              <BarChart className="w-3.5 h-3.5" /> แท่ง
-            </button>
-          </div>
-
-          <button
-            onClick={() => setIsBreakdown(prev => !prev)}
-            title={chartViewType === 'line' ? 'แยกเส้นแต่ละหมวดหมู่' : 'ซ้อนแท่งแยกหมวดหมู่'}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md border shadow-sm transition-all ${
-              isBreakdown
-                ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white')
-                : (dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" /> {breakdownLabel}
-          </button>
-
-          {chartViewType === 'line' && (
-            <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-              <button onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
-                เส้นตรง
-              </button>
-              <button onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
-                เส้นโค้ง
-              </button>
-            </div>
-          )}
-
-          <div className="relative" ref={filterMenuRef}>
-            <button
-              onClick={() => setShowCatMenu(!showCatMenu)}
-              className={`px-3 py-1.5 border rounded-md shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
-            >
-              <Filter className="w-3.5 h-3.5" />
-              ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>{dashboardCategory.length}</span> : ''}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCatMenu ? 'rotate-180' : ''}`} />
+              <Layers className="w-3.5 h-3.5" /> {breakdownLabel}
             </button>
 
-            {showCatMenu && (
-              <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
-                <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                  <label className="flex items-center justify-between cursor-pointer group">
-                    <div className="flex flex-col pr-3">
-                      <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
-                      <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูแนวโน้มค่าเฉลี่ยสะสมเทียบกับต้นเดือน</span>
-                    </div>
-                    <div className="relative flex items-center shrink-0">
-                      <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} disabled={isCumulative} />
-                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')} ${isCumulative ? 'opacity-50' : ''}`} />
-                      <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
-                    </div>
-                  </label>
-
-                  <label className="flex items-center justify-between cursor-pointer group">
-                    <div className="flex flex-col pr-3">
-                      <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-purple-400' : 'text-slate-800 group-hover:text-purple-600'}`}>กราฟสะสม (Pacing Curve)</span>
-                      <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูความเร็วในการจ่ายแบบสะสมทีละวัน</span>
-                    </div>
-                    <div className="relative flex items-center shrink-0">
-                      <input type="checkbox" className="sr-only" checked={isCumulative} onChange={() => { setIsCumulative(!isCumulative); if(!isCumulative) setShowTrendLines(false); }} />
-                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isCumulative ? (dm ? 'bg-purple-500' : 'bg-purple-600') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                      <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isCumulative ? 'translate-x-4' : ''}`} />
-                    </div>
-                  </label>
-
-                  <label className="flex items-center justify-between cursor-pointer group">
-                    <div className="flex flex-col pr-3">
-                      <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed)</span>
-                      <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟ</span>
-                    </div>
-                    <div className="relative flex items-center shrink-0">
-                      <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
-                      <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${hideFixedExpenses ? (dm ? 'bg-blue-500' : 'bg-[#00509E]') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                      <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${hideFixedExpenses ? 'translate-x-4' : ''}`} />
-                    </div>
-                  </label>
-                </div>
-
-                <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่</span>
-                  {(() => {
-                    const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-                    const toggleCategory = (catName) => {
-                      if (catName === 'ALL') { setDashboardCategory(['ALL']); }
-                      else {
-                        let newCats = activeCats.filter(c => c !== 'ALL');
-                        if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
-                        else newCats.push(catName);
-                        if (newCats.length === 0) newCats = ['ALL'];
-                        setDashboardCategory(newCats);
-                      }
-                    };
-
-                    const selectAllVariable = () => {
-                      const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
-                      setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
-                    };
-
-                    return (
-                      <>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => setDashboardCategory(['ALL'])} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
-                            📊 ทั้งหมด (รวม)
-                          </button>
-                          <button onClick={selectAllVariable} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}>
-                            🔄 เลือกผันแปรทั้งหมด
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                          {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
-                            const isActive = activeCats.includes(c.name);
-                            return (
-                              <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
-                                <span className="opacity-90">{c.icon}</span> {c.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
+            {chartViewType === 'line' && (
+              <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                <button onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
+                  เส้นตรง
+                </button>
+                <button onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
+                  เส้นโค้ง
+                </button>
               </div>
             )}
-          </div>
-        </div>
+
+            <MainChartFilterMenu 
+              dm={dm} showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
+              showTrendLines={showTrendLines} setShowTrendLines={setShowTrendLines}
+              isCumulative={isCumulative} setIsCumulative={setIsCumulative}
+              hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
+              dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
+              categories={categories} categoriesWithData={categoriesWithData}
+            />
+          </>
+        )}
       </div>
 
       <div className="relative w-full flex-1 min-h-[350px]">
         <div className="absolute inset-0">
-          <Chart type="bar" data={displayChartData} options={options} />
+          <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar'} data={displayChartData} options={options} />
         </div>
       </div>
 
-      {legendDatasets.length > 0 && (
-        <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
-          {legendDatasets.map((ds, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <span
-                className="inline-block rounded-sm shrink-0"
-                style={{
-                  width: ds.type === 'line' ? 16 : 10,
-                  height: ds.type === 'line' ? 3 : 10,
-                  backgroundColor: ds.type === 'line'
-                    ? (ds.borderColor || ds.backgroundColor)
-                    : (ds.backgroundColor || ds.borderColor),
-                }}
-              />
-              <span className={`text-[10px] font-medium leading-none ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{ds.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <MainChartLegend legendDatasets={legendDatasets} dm={dm} />
     </div>
   );
 }
-
-MainChart.propTypes = {
-  analytics: PropTypes.object.isRequired,
-  categories: PropTypes.array.isRequired,
-  filterPeriod: PropTypes.string.isRequired,
-  hideFixedExpenses: PropTypes.bool.isRequired,
-  setHideFixedExpenses: PropTypes.func.isRequired,
-  dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]).isRequired,
-  setDashboardCategory: PropTypes.func.isRequired,
-  chartGroupBy: PropTypes.string.isRequired,
-  setChartGroupBy: PropTypes.func.isRequired,
-};

@@ -212,6 +212,7 @@ export default function useTransactionData({
     handleUpdateTransaction, 
     handleDeleteTransaction, 
     handleDeleteMonth, 
-    handleDeleteAllData 
+    handleDeleteAllData,
+    refreshData
   };
 }

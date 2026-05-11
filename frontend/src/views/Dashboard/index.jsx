@@ -3,6 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { DashboardProvider } from './context/DashboardContext';
 
 // Components
 import SmartInsightHeader from './components/SmartInsightHeader';
@@ -13,14 +14,9 @@ import TopTransactions from './components/TopTransactions';
 import ActivityTimeline from './components/ActivityTimeline';
 import CashflowTable from './components/CashflowTable';
 
-export default function DashboardView({
-  transactions, categories, filterPeriod, getFilterLabel,
-  hideFixedExpenses, setHideFixedExpenses, dashboardCategory, setDashboardCategory,
-  chartGroupBy, setChartGroupBy,cashflowGroups,
-  analytics, dayTypeConfig, dayTypes, topXLimit, setTopXLimit,
-  enableSmartInsights
-}) {
+export default function DashboardView(props) {
   const { isDarkMode: dm } = useTheme();
+  const { transactions, analytics, enableSmartInsights } = props;
   
   // Empty State (ยังไม่มีข้อมูล)
   if (transactions.length === 0) {
@@ -33,66 +29,41 @@ export default function DashboardView({
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
+    <DashboardProvider value={props}>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
 
-      {/* ══════════════════════════════════════════════════════════
-          SMART INSIGHTS HEADER
-      ══════════════════════════════════════════════════════════ */}
-      {enableSmartInsights && <SmartInsightHeader insights={analytics?.smartInsights} />}
+        {/* ══════════════════════════════════════════════════════════
+            SMART INSIGHTS HEADER
+        ══════════════════════════════════════════════════════════ */}
+        {enableSmartInsights && <SmartInsightHeader insights={analytics?.smartInsights} />}
 
-      {/* ══════════════════════════════════════════════════════════
-          ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
-      ══════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col gap-4 w-full">
-        <SummaryCards analytics={analytics} />
-        <ExpenseProportion analytics={analytics} categories={categories} />
+        {/* ══════════════════════════════════════════════════════════
+            ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
+        ══════════════════════════════════════════════════════════ */}
+        <div className="flex flex-col gap-4 w-full">
+          <SummaryCards />
+          <ExpenseProportion />
+        </div>
+        {/* ══════════════════════════════════════════════════════════
+            ROW 2 — MAIN CHART (wide) + TOP X (narrow sidebar)
+        ══════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-stretch">
+          <MainChart />
+          <TopTransactions />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════
+            ROW 3 — ACTIVITY TIMELINE
+        ══════════════════════════════════════════════════════════ */}
+        <ActivityTimeline />
+
+        {/* ══════════════════════════════════════════════════════════
+            ROW 4 — CASHFLOW TABLE
+        ══════════════════════════════════════════════════════════ */}
+        <CashflowTable />
+
       </div>
-      {/* ══════════════════════════════════════════════════════════
-          ROW 2 — MAIN CHART (wide) + TOP X (narrow sidebar)
-      ══════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-stretch">
-        <MainChart 
-          analytics={analytics} 
-          categories={categories} 
-          filterPeriod={filterPeriod}
-          hideFixedExpenses={hideFixedExpenses} 
-          setHideFixedExpenses={setHideFixedExpenses}
-          dashboardCategory={dashboardCategory} 
-          setDashboardCategory={setDashboardCategory}
-          chartGroupBy={chartGroupBy} 
-          setChartGroupBy={setChartGroupBy}
-        />
-        <TopTransactions 
-          transactions={transactions}
-          filterPeriod={filterPeriod}
-          dashboardCategory={dashboardCategory}
-          hideFixedExpenses={hideFixedExpenses}
-          analytics={analytics} 
-          categories={categories} 
-          topXLimit={topXLimit} 
-          setTopXLimit={setTopXLimit} 
-        />
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════
-          ROW 3 — ACTIVITY TIMELINE
-      ══════════════════════════════════════════════════════════ */}
-      <ActivityTimeline 
-        analytics={analytics} 
-        dayTypeConfig={dayTypeConfig} 
-        dayTypes={dayTypes} 
-      />
-
-      {/* ══════════════════════════════════════════════════════════
-          ROW 4 — CASHFLOW TABLE
-      ══════════════════════════════════════════════════════════ */}
-      <CashflowTable 
-        analytics={analytics} 
-        cashflowGroups={cashflowGroups}
-        categories={categories}
-      />
-
-    </div>
+    </DashboardProvider>
   );
 }
 

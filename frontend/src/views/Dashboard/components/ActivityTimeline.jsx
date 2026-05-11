@@ -1,10 +1,11 @@
 // src/views/Dashboard/components/ActivityTimeline.jsx
 import React, { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import PropTypes from 'prop-types';
-import { CalendarClock, Flame, CalendarDays, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../../../context/ThemeContext';
+import { 
+  CalendarClock, CalendarDays, Flame, Info 
+} from 'lucide-react';
+import { useDashboardContext } from '../context/DashboardContext';
 
 // --- Constants ---
 const MONTH_LABELS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -31,9 +32,10 @@ const getHeatmapColor = (level, isDarkMode) => {
   return shades[level - 1] || shades[0];
 };
 
-// --- Sub-components ---
-
-const ModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
+/**
+ * INTERNAL COMPONENT: TimelineModeToggle
+ */
+const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   const modeButtons = [
     { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: isDarkMode ? 'text-blue-400' : 'text-[#00509E]' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: isDarkMode ? 'text-orange-400' : 'text-orange-600' }
@@ -66,7 +68,10 @@ const ModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   );
 };
 
-const DayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }) => {
+/**
+ * INTERNAL COMPONENT: TimelineDayTypeLegend
+ */
+const TimelineDayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }) => {
   const muted = `text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`;
   const totalDays = Object.values(dayTypeCounts).reduce((acc, count) => acc + count, 0);
   
@@ -91,7 +96,10 @@ const DayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }) => {
   );
 };
 
-const HeatmapLegend = ({ globalMaxThreshold, isDarkMode }) => {
+/**
+ * INTERNAL COMPONENT: TimelineHeatmapLegend
+ */
+const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }) => {
   return (
     <div className="flex items-center gap-2">
       <div className="relative group/info cursor-help mr-1">
@@ -129,6 +137,9 @@ const HeatmapLegend = ({ globalMaxThreshold, isDarkMode }) => {
   );
 };
 
+/**
+ * INTERNAL COMPONENT: TimelineTooltip
+ */
 const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode, isDarkMode }) => {
   return createPortal(
     <AnimatePresence>
@@ -174,10 +185,11 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
   );
 };
 
-// --- Main Component ---
-
-export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes }) {
-  const { isDarkMode: dm } = useTheme();
+/**
+ * Main Activity Timeline Component
+ */
+export default function ActivityTimeline() {
+  const { analytics, dayTypeConfig, dayTypes, dm } = useDashboardContext();
   const [viewMode, setViewMode] = useState('dayType');
   
   const [tooltip, setTooltip] = useState({
@@ -257,7 +269,7 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
   const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
   const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
 
-  if (Object.keys(analytics.dayTypeCounts || {}).length === 0) return null;
+  if (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0) return null;
 
   return (
     <div className={`${cardStyles} p-4`}>
@@ -268,7 +280,7 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
             <CalendarClock className={`w-4 h-4 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
             ไทม์ไลน์กิจกรรม
           </h3>
-          <ModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
+          <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
         </div>
       </div>
 
@@ -283,13 +295,13 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
             transition={{ duration: 0.2 }}
           >
             {viewMode === 'dayType' ? (
-              <DayTypeLegend 
+              <TimelineDayTypeLegend 
                 dayTypeConfig={dayTypeConfig} 
                 dayTypeCounts={analytics.dayTypeCounts} 
                 isDarkMode={dm} 
               />
             ) : (
-              <HeatmapLegend 
+              <TimelineHeatmapLegend 
                 globalMaxThreshold={globalMaxThreshold} 
                 isDarkMode={dm} 
               />
@@ -383,14 +395,3 @@ export default function ActivityTimeline({ analytics, dayTypeConfig, dayTypes })
     </div>
   );
 }
-
-ActivityTimeline.propTypes = {
-  analytics: PropTypes.shape({
-    datesInPeriod: PropTypes.array,
-    dailyAllMap: PropTypes.object,
-    globalMaxThreshold: PropTypes.number,
-    dayTypeCounts: PropTypes.object,
-  }).isRequired,
-  dayTypeConfig: PropTypes.array.isRequired,
-  dayTypes: PropTypes.object.isRequired,
-};
