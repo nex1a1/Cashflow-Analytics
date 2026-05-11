@@ -33,5 +33,5 @@ yarn-error.log*
 debug_scripts/
 
 # AI Enchancer
-# GEMINI.md
-# SKILL.md
+GEMINI.md
+SKILL.md
