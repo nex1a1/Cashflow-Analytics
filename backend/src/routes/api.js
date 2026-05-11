@@ -12,8 +12,10 @@ const analyticsController = require('../controllers/analyticsController');
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions/search', transactionController.searchTransactions);
 router.get('/transactions/periods', transactionController.getAvailablePeriods);
 router.get('/transactions/frequent', transactionController.getFrequentItems);
+router.post('/transactions/predict', transactionController.predictCategories);
 router.post('/transactions', transactionController.upsertTransactions);
 router.delete('/transactions/:id', transactionController.deleteTransaction);
 router.delete('/transactions/month/:isoMonth', transactionController.deleteMonth);
@@ -43,6 +45,7 @@ router.post('/settings', settingController.upsertSetting);
 
 // Analytics
 router.get('/analytics', analyticsController.getDashboardAnalytics);
+router.get('/analytics/sankey', analyticsController.getSankeyFlow);
 
 // Backup
 router.post('/backup', backupController.performBackup);

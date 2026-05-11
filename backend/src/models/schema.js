@@ -58,6 +58,83 @@ const initSchema = () => {
       key   TEXT PRIMARY KEY,
       value TEXT
     );
+
+    -- 1.1 Virtual Table for Full-Text Search (Shark Search)
+    CREATE VIRTUAL TABLE IF NOT EXISTS transactions_fts USING fts5(
+      id UNINDEXED,
+      description,
+      content='transactions',
+      content_rowid='id'
+    );
+
+    -- 1.2 Triggers for Automated Metadata (updated_at)
+    CREATE TRIGGER IF NOT EXISTS trg_transactions_updated_at 
+    AFTER UPDATE ON transactions
+    FOR EACH ROW
+    BEGIN
+      UPDATE transactions SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
+    END;
+
+    -- 1.3 Triggers for Search Index Sync
+    CREATE TRIGGER IF NOT EXISTS trg_transactions_ai AFTER INSERT ON transactions BEGIN
+      INSERT INTO transactions_fts(rowid, id, description) VALUES (new.rowid, new.id, new.description);
+    END;
+    CREATE TRIGGER IF NOT EXISTS trg_transactions_ad AFTER DELETE ON transactions BEGIN
+      INSERT INTO transactions_fts(transactions_fts, rowid, id, description) VALUES('delete', old.rowid, old.id, old.description);
+    END;
+    CREATE TRIGGER IF NOT EXISTS trg_transactions_au AFTER UPDATE ON transactions BEGIN
+      INSERT INTO transactions_fts(transactions_fts, rowid, id, description) VALUES('delete', old.rowid, old.id, old.description);
+      INSERT INTO transactions_fts(rowid, id, description) VALUES (new.rowid, new.id, new.description);
+    END;
+
+    -- 2. Analytical Views (The Brain)
+    
+    -- 2.1 Monthly Summary View
+    CREATE VIEW IF NOT EXISTS v_monthly_summary AS
+    SELECT 
+      strftime('%Y-%m', t.date) as month,
+      SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income_satang,
+      SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense_satang,
+      SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings_satang
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+    WHERE t.is_deleted = 0
+    GROUP BY month;
+
+    -- 2.2 Daily Burn & Work-Life Correlation View
+    CREATE VIEW IF NOT EXISTS v_daily_burn AS
+    SELECT 
+      t.date,
+      strftime('%Y-%m', t.date) as month,
+      SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as daily_expense_satang,
+      cd.day_type_id,
+      dt.name as day_type_name,
+      dt.label as day_type_label
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+    LEFT JOIN calendar_days cd ON t.date = cd.date
+    LEFT JOIN day_types dt ON cd.day_type_id = dt.id
+    WHERE t.is_deleted = 0
+    GROUP BY t.date;
+
+    -- 2.3 Category Monthly Breakdown View
+    CREATE VIEW IF NOT EXISTS v_category_monthly AS
+    SELECT 
+      strftime('%Y-%m', t.date) as month,
+      c.id as category_id,
+      c.name as category_name,
+      c.icon as category_icon,
+      c.color as category_color,
+      cg.id as group_id,
+      cg.type as group_type,
+      SUM(t.amount) as amount_satang
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+    WHERE t.is_deleted = 0
+    GROUP BY month, c.id;
   `);
 
   // 2. ตรวจสอบและอัปเดต Column แบบบังคับ (กรณีตารางมีอยู่แล้วแต่โครงสร้างเก่า)

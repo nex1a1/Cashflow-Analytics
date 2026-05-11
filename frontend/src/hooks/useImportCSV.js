@@ -1,6 +1,5 @@
-// src/hooks/useImportCSV.js
 import { useState, useRef, useCallback } from 'react';
-import { CALENDAR_API_URL } from '../constants';
+import { CALENDAR_API_URL, PREDICT_API_URL } from '../constants';
 import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
 import { useToast } from '../context/ToastContext';
 
@@ -27,8 +26,49 @@ export default function useImportCSV({
         return;
       }
 
+      const parsedRows = parseCSV(rawTrimmed);
+      if (parsedRows.length < 2) {
+        showToast('ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด', 'error');
+        setIsProcessing(false);
+        return;
+      }
+
+      // 1. Collect all descriptions to predict categories from backend
+      const headers = parsedRows[0];
+      const isCsvLong = headers.length >= 4 && (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
+      
+      const uniqueDescriptions = new Set();
+      for (let i = 1; i < parsedRows.length; i++) {
+        const row = parsedRows[i];
+        if (row.length < 2) continue;
+        
+        let desc = '';
+        if (isCsvLong) {
+          // Date, [DayType], [Type], Category, Description, Amount
+          if (headers[1] === 'ชนิดวัน' && row.length >= 6) desc = row[4];
+          else if (headers[1] === 'ประเภท' && row.length >= 5) desc = row[3];
+          else desc = row[2];
+        } else {
+          // Wide Format: Date, Cat1, Cat2..., Notes
+          desc = row[row.length - 1]; // Notes
+        }
+        if (desc) uniqueDescriptions.add(desc);
+      }
+
+      // 2. Fetch Predictions from Shark Brain (Backend)
+      let predictions = {};
+      try {
+        const res = await fetch(PREDICT_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descriptions: Array.from(uniqueDescriptions) }),
+        });
+        if (res.ok) predictions = await res.json();
+      } catch (e) {
+        console.warn('Shark Brain Prediction failed, falling back to local logic:', e);
+      }
+
       let newList = [];
-      let batchId = Date.now();
       let newDayTypes = { ...dayTypes };
       let updatedDayTypeConfig = [...dayTypeConfig];
       let updatedCategories = [...categories];
@@ -74,20 +114,9 @@ export default function useImportCSV({
         return found.name;
       };
 
-      const parsedRows = parseCSV(rawTrimmed);
-      if (parsedRows.length < 2) {
-        showToast('ข้อมูลไม่ถูกต้อง หรือมีน้อยกว่า 2 บรรทัด', 'error');
-        setIsProcessing(false);
-        return;
-      }
-
-      const headers = parsedRows[0];
       const dateColIndex = 0;
       const noteColIndex = headers.length - 1;
       const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
-      const isCsvLong =
-        headers.length >= 4 &&
-        (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
 
       for (let i = 1; i < parsedRows.length; i++) {
         const row = parsedRows[i];
@@ -106,6 +135,11 @@ export default function useImportCSV({
             typeStr = row[1]; catName = row[2]; desc = row[3]; amtStr = row[4];
           } else {
             catName = row[1]; desc = row[2]; amtStr = row[3];
+          }
+
+          // Use Prediction if category is generic or missing
+          if ((!catName || catName === 'อื่นๆ') && predictions[desc]) {
+            catName = predictions[desc].name;
           }
 
           const finalCatName = getOrCreateCategory(catName, typeStr);
@@ -134,10 +168,10 @@ export default function useImportCSV({
             let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
             let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
             let description = note?.trim() ? `${catName} · ${note.trim()}` : catName;
-            if (!note && catName === 'อื่นๆ') description = catName;
-
-            const autoCat = autoCategorize(catName, catName, updatedCategories);
-            const finalCatName = autoCat !== 'อื่นๆ' ? autoCat : getOrCreateCategory(catName, 'รายจ่าย');
+            
+            // Intelligence Sync: Try backend prediction first for Wide Format too
+            const predicted = predictions[description] || predictions[note?.trim()];
+            const finalCatName = predicted ? getOrCreateCategory(predicted.name, 'รายจ่าย') : autoCategorize(description, catName, updatedCategories);
 
             newList.push({
               id: crypto.randomUUID(),

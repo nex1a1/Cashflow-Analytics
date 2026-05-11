@@ -1,4 +1,5 @@
 const transactionService = require('../services/transactionService');
+const db = require('../config/db');
 const { upsertTransactionSchema } = require('../validations/transactionValidation');
 
 exports.getAllTransactions = (req, res) => {
@@ -73,10 +74,52 @@ exports.getAvailablePeriods = (req, res) => {
   }
 };
 
+exports.searchTransactions = (req, res) => {
+  const { q } = req.query;
+  try {
+    const rows = transactionService.search(q);
+    res.json(rows.map(row => ({
+      id:          row.id,
+      date:        row.date,
+      category:    row.category,
+      category_id: row.category_id,
+      description: row.description,
+      amount:      row.amount / 100, // Convert Satang to Baht
+      group_type:  row.group_type
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.getFrequentItems = (req, res) => {
   try {
     const items = transactionService.getFrequentItems();
     res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.predictCategories = (req, res) => {
+  const { descriptions } = req.body;
+  if (!Array.isArray(descriptions)) {
+    return res.status(400).json({ error: 'descriptions must be an array' });
+  }
+
+  try {
+    const predictions = {};
+    for (const desc of descriptions) {
+      const categoryId = transactionService.suggestCategory(desc);
+      if (categoryId) {
+        // Find category details
+        const cat = db.prepare("SELECT name, id FROM categories WHERE id = ?").get(categoryId);
+        predictions[desc] = cat ? { id: cat.id, name: cat.name } : null;
+      } else {
+        predictions[desc] = null;
+      }
+    }
+    res.json(predictions);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

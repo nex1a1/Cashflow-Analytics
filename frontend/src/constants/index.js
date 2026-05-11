@@ -1,6 +1,7 @@
 // src/constants/index.js
 
 export const API_URL = 'http://localhost:3000/api/transactions';
+export const PREDICT_API_URL = 'http://localhost:3000/api/transactions/predict';
 export const CALENDAR_API_URL = 'http://localhost:3000/api/calendar';
 export const RESET_API_URL = 'http://localhost:3000/api/reset-all';
 export const SETTINGS_API_URL = 'http://localhost:3000/api/settings';

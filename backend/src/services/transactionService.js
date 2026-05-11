@@ -54,6 +54,47 @@ class TransactionService {
     return cat.id;
   }
 
+  /**
+   * AI-Lite: Suggest category based on description keywords or historical matches
+   */
+  suggestCategory(description) {
+    if (!description) return null;
+    const desc = description.toLowerCase();
+
+    // 1. Keyword Mapping (The "Shark" Rules)
+    const rules = [
+      { keywords: ['7-eleven', 'เซเว่น', 'cj express', 'lotus', 'big c', 'mart'], category: '🛒 สินค้าทั่วไป' },
+      { keywords: ['grab', 'foodpanda', 'lineman', 'shopeefood', 'กิน', 'food', 'อาหาร', 'ข้าว', 'เตี๋ยว', 'ตำ'], category: '🍔 อาหารและเครื่องดื่ม' },
+      { keywords: ['bts', 'mrt', 'grab taxi', 'bolt', 'เติมน้ำมัน', 'ptt', 'shell', 'caltex', 'บางจาก'], category: '🚗 การเดินทาง' },
+      { keywords: ['ais', 'true', 'dtac', 'netflix', 'spotify', 'youtube', 'internet', 'เน็ต'], category: '🌐 บริการดิจิทัล' },
+      { keywords: ['หอ', 'คอนโด', 'ไฟฟ้า', 'ประปา', 'ค่าส่วนกลาง', 'rent'], category: '🏠 ที่พักอาศัย' }
+    ];
+
+    for (const rule of rules) {
+      if (rule.keywords.some(k => desc.includes(k))) {
+        return this.getCategoryIdByName(rule.category);
+      }
+    }
+
+    // 2. Historical Match (Exact description match from past transactions)
+    const history = db.prepare(`
+      SELECT category_id FROM transactions 
+      WHERE LOWER(description) = ? AND is_deleted = 0 
+      LIMIT 1
+    `).get(desc);
+
+    if (history) return history.category_id;
+
+    // 3. Fuzzy Historical Match (Similar description)
+    const fuzzy = db.prepare(`
+      SELECT category_id FROM transactions 
+      WHERE description LIKE ? AND is_deleted = 0 
+      ORDER BY created_at DESC LIMIT 1
+    `).get(`%${description.split(' ')[0]}%`);
+
+    return fuzzy ? fuzzy.category_id : null;
+  }
+
   upsertMany(transactions) {
     const stmt = db.prepare(`
       INSERT INTO transactions (id, date, description, amount, category_id, updated_at)
@@ -80,21 +121,35 @@ class TransactionService {
         // Assume input is Baht (float)
         const amountSatang = Math.round(tx.amount * 100);
 
-        // Category mapping
+        // Category mapping logic (Elite "Data Looting")
         let categoryId = tx.category_id;
-        // หากไม่มี category_id (เป็น null/undefined) ค่อยไปหาจากชื่อ category
-        if (categoryId === undefined || categoryId === null || categoryId === '') {
+        
+        // หากไม่มี category_id ค่อยไปหา/เดา
+        if (!categoryId || categoryId === '') {
+          // 1. ลองหาจากชื่อหมวดหมู่ที่ส่งมา (ถ้ามี)
           if (tx.category) {
             categoryId = this.getCategoryIdByName(tx.category);
+          }
+          
+          // 2. หากยังไม่มี หรือหาไม่เจอ ให้ "เดา" จาก Description
+          if (!categoryId) {
+            categoryId = this.suggestCategory(tx.description);
           }
         }
 
         if (!categoryId) {
-          throw new Error(`Category not found or could not be created for: ${tx.category || 'Unknown'}`);
+          // Fallback สุดท้าย: ใช้หมวดหมู่ "เบ็ดเตล็ด" หรือหมวดหมู่แรกสุด
+          const fallback = db.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get()
+                        || db.prepare("SELECT id FROM categories LIMIT 1").get();
+          categoryId = fallback?.id;
+        }
+
+        if (!categoryId) {
+          throw new Error(`Critical Error: No category available even after fallback for: ${tx.description}`);
         }
 
         stmt.run(
-          tx.id,
+          tx.id || require('crypto').randomUUID(),
           date,
           tx.description || '',
           amountSatang,
@@ -134,6 +189,36 @@ class TransactionService {
       ORDER BY period DESC
     `).all();
     return rows.map(r => r.period);
+  }
+
+  /**
+   * Search transactions using Full-Text Search (FTS5)
+   */
+  search(query) {
+    if (!query) return [];
+    
+    // Check if FTS index is empty but transactions exist (need first-time sync)
+    const ftsCount = db.prepare("SELECT COUNT(*) as count FROM transactions_fts").get().count;
+    const txCount = db.prepare("SELECT COUNT(*) as count FROM transactions WHERE is_deleted = 0").get().count;
+    
+    if (ftsCount === 0 && txCount > 0) {
+      console.log('🔄 Rebuilding Search Index (FTS5)...');
+      db.exec("INSERT INTO transactions_fts(rowid, id, description) SELECT rowid, id, description FROM transactions WHERE is_deleted = 0");
+    }
+
+    const rows = db.prepare(`
+      SELECT 
+        t.id, t.date, t.description, t.amount, t.category_id,
+        c.name as category, cg.type as group_type
+      FROM transactions_fts f
+      JOIN transactions t ON f.rowid = t.rowid
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      WHERE transactions_fts MATCH ? AND t.is_deleted = 0
+      ORDER BY rank
+    `).all(query);
+
+    return rows;
   }
 
   /**

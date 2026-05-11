@@ -12,40 +12,45 @@ const performBackup = async (req, res) => {
             fs.mkdirSync(BACKUP_DIR, { recursive: true });
         }
 
-        const dbPath = db.name; // better-sqlite3 เก็บ path ไว้ใน .name
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const backupFileName = `cashflow_backup_${timestamp}.db`;
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const now = new Date();
+        const dayName = days[now.getDay()];
+        
+        // Pro Rotation: backup-Mon.db, backup-Tue.db, etc.
+        const backupFileName = `backup-${dayName}.db`;
         const backupPath = path.join(BACKUP_DIR, backupFileName);
 
         // ใช้คำสั่ง backup ของ better-sqlite3 (แนะนำเพราะปลอดภัยต่อ WAL mode)
+        // หมายเหตุ: .backup() ของ better-sqlite3 คืนค่าเป็น Promise
         await db.backup(backupPath);
 
-        // ลบ backup เก่าๆ เก็บไว้แค่ 5 อันล่าสุด
-        const files = fs.readdirSync(BACKUP_DIR)
-            .filter(f => f.startsWith('cashflow_backup_'))
-            .map(f => ({
-                name: f,
-                time: fs.statSync(path.join(BACKUP_DIR, f)).mtime.getTime()
-            }))
-            .sort((a, b) => b.time - a.time);
-
-        if (files.length > 5) {
-            files.slice(5).forEach(f => {
-                fs.unlinkSync(path.join(BACKUP_DIR, f.name));
-            });
+        // Also keep one timestamped "Master" backup per month
+        const monthStr = now.toISOString().substring(0, 7);
+        const masterFileName = `master-${monthStr}.db`;
+        const masterPath = path.join(BACKUP_DIR, masterFileName);
+        
+        if (!fs.existsSync(masterPath)) {
+            await db.backup(masterPath);
+            console.log(`📦 Master backup created for ${monthStr}`);
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Backup completed successfully',
-            filename: backupFileName
-        });
+        console.log(`📡 Backup successful: ${backupFileName}`);
+
+        if (res && res.status) {
+            res.status(200).json({
+                success: true,
+                message: 'Backup completed successfully',
+                filename: backupFileName
+            });
+        }
     } catch (error) {
         console.error('Backup Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Backup failed: ' + error.message
-        });
+        if (res && res.status) {
+            res.status(500).json({
+                success: false,
+                message: 'Backup failed: ' + error.message
+            });
+        }
     }
 };
 
