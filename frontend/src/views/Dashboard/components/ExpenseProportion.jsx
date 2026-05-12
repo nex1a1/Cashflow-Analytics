@@ -11,7 +11,10 @@ import { useDashboardContext } from '../context/DashboardContext';
  * Sub-component for individual category cell (Table-like HUD)
  */
 const CatItem = ({ cat, dm, idx }) => (
-  <div className={`flex flex-col min-w-0 p-2 group cursor-default h-full ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80' : 'bg-white hover:bg-slate-50'} transition-colors`}>
+  <div 
+    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-white hover:bg-slate-50 border-slate-100'} transition-all`}
+    style={{ borderLeftColor: cat.color }}
+  >
     <div className="flex justify-between items-start gap-1 mb-1">
       <span 
         className="text-[10px] font-black truncate flex items-center gap-1 min-w-0" 
@@ -26,17 +29,17 @@ const CatItem = ({ cat, dm, idx }) => (
     
     <div className="mt-auto flex flex-col gap-1">
       <div className="flex justify-between items-baseline">
-        <p className={`text-[11px] font-black tabular-nums ${dm ? 'text-slate-200' : 'text-slate-900'}`}>
+        <p className={`text-[11px] font-bold tabular-nums ${dm ? 'text-slate-200' : 'text-slate-900'}`}>
           {formatMoney(cat.amount).split('.')[0]}
         </p>
       </div>
-      <div className={`w-full rounded-full h-[2px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
+      <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
         <div 
           className="h-full transition-all duration-1000" 
           style={{ 
             width: `${cat.percentage}%`, 
             backgroundColor: cat.color, 
-            opacity: 0.8
+            opacity: 0.9
           }} 
         />
       </div>
@@ -53,7 +56,7 @@ export default function ExpenseProportion() {
     const baseOptions = getDoughnutChartOptions(dm);
     return {
       ...baseOptions,
-      cutout: '85%', 
+      cutout: '75%', 
       plugins: {
         ...baseOptions.plugins,
         tooltip: { enabled: false }
