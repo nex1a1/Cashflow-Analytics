@@ -115,7 +115,8 @@ export default function TopTransactions() {
     categories, 
     topXLimit, 
     setTopXLimit,
-    dm 
+    dm,
+    showSkeleton
   } = useDashboardContext();
   
   const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
@@ -124,15 +125,9 @@ export default function TopTransactions() {
 
   const { displayTransactions, maxAmount } = useMemo(() => {
     if (!transactions || transactions.length === 0) return { displayTransactions: [], maxAmount: 0 };
-
+    // ... rest of useMemo logic unchanged
     let filtered = [...transactions];
-
-    // 1. Filter by Period
-    if (filterPeriod) {
-      filtered = filtered.filter(tx => isDateInFilter(tx.date, filterPeriod));
-    }
-
-    // 2. Filter only Expenses
+    if (filterPeriod) filtered = filtered.filter(tx => isDateInFilter(tx.date, filterPeriod));
     filtered = filtered.filter(tx => {
       if (tx.group_type) return tx.group_type === 'expense';
       if (tx.type === 'expense') return true;
@@ -140,27 +135,21 @@ export default function TopTransactions() {
       const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
       return catDef ? catDef.type === 'expense' : (tx.amount < 0);
     });
-
-    // 3. Filter Fixed
     if (hideFixedExpenses) {
       filtered = filtered.filter(tx => {
         const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
         return catDef ? !catDef.isFixed : true;
       });
     }
-
-    // 4. Dashboard Category Filter
     if (dashboardCategory) {
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
       if (!activeCats.includes('ALL')) {
         filtered = filtered.filter(tx => activeCats.includes(tx.category_id) || activeCats.includes(tx.category));
       }
     }
-
     filtered.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     const results = filtered.slice(0, topXLimit || 7);
     const max = results.length > 0 ? Math.abs(results[0].amount) : 0;
-
     return { displayTransactions: results, maxAmount: max };
   }, [transactions, categories, hideFixedExpenses, dashboardCategory, topXLimit, filterPeriod]);
 
@@ -174,6 +163,7 @@ export default function TopTransactions() {
             <select
               value={topXLimit} 
               onChange={(e) => setTopXLimit(Number(e.target.value))}
+              disabled={showSkeleton}
               className={`pl-2 pr-6 py-0.5 text-xs font-black rounded-sm border outline-none cursor-pointer appearance-none transition-colors ${
                 dm 
                   ? 'bg-slate-900 border-slate-700 text-white hover:border-slate-500' 
@@ -189,39 +179,47 @@ export default function TopTransactions() {
       </div>
       
       <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-[300px]">
-        <AnimatePresence mode="popLayout">
-          {displayTransactions.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {displayTransactions.map((tx, idx) => {
-                const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
-                return (
-                  <TransactionItem 
-                    key={tx.id} 
-                    tx={tx} 
-                    index={idx} 
-                    catDef={catDef} 
-                    isDarkMode={dm} 
-                    maxAmount={maxAmount}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="h-full flex flex-col items-center justify-center text-center py-10"
-            >
-              <div className={`p-4 rounded-full mb-3 ${dm ? 'bg-slate-700/30' : 'bg-slate-100'}`}>
-                <AlertCircle className={`w-8 h-8 opacity-20 ${dm ? 'text-slate-400' : 'text-slate-500'}`} />
+        {showSkeleton ? (
+          <div className="flex flex-col gap-2">
+            {[...Array(topXLimit || 7)].map((_, i) => (
+              <div key={i} className={`h-16 w-full rounded-sm border animate-pulse ${dm ? 'bg-slate-900/40 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`} />
+            ))}
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {displayTransactions.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {displayTransactions.map((tx, idx) => {
+                  const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
+                  return (
+                    <TransactionItem 
+                      key={tx.id} 
+                      tx={tx} 
+                      index={idx} 
+                      catDef={catDef} 
+                      isDarkMode={dm} 
+                      maxAmount={maxAmount}
+                    />
+                  );
+                })}
               </div>
-              <p className={`text-sm font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-                ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
-              </p>
-              <p className="text-[10px] mt-1 opacity-40">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-full flex flex-col items-center justify-center text-center py-10"
+              >
+                <div className={`p-4 rounded-full mb-3 ${dm ? 'bg-slate-700/30' : 'bg-slate-100'}`}>
+                  <AlertCircle className={`w-8 h-8 opacity-20 ${dm ? 'text-slate-400' : 'text-slate-500'}`} />
+                </div>
+                <p className={`text-sm font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                  ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
+                </p>
+                <p className="text-[10px] mt-1 opacity-40">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
     </div>
   );

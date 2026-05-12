@@ -1,13 +1,14 @@
+import { memo } from 'react';
 import { ChevronUp, ChevronDown, Lock, CalendarClock } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 
-export default function DayTypesCard({
+const DayTypesCard = memo(({
   dayTypeConfig, handleAddDayType, handleMoveDayType,
   handleDayTypeConfigChange, handleDeleteDayType
-}) {
+}) => {
   const { isDarkMode: dm } = useTheme();
 
   return (
@@ -56,4 +57,6 @@ export default function DayTypesCard({
       </div>
     </SectionCard>
   );
-}
+});
+
+export default DayTypesCard;

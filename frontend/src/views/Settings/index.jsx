@@ -85,6 +85,16 @@ export default function SettingsView({
     [...categories].filter(c => c.type === 'expense').sort((a, b) => a.order_index - b.order_index), 
   [categories]);
 
+  const incomeGroups = useMemo(() => 
+    cashflowGroups.filter(g => g.type === 'income').sort((a, b) => a.order_index - b.order_index),
+    [cashflowGroups]
+  );
+
+  const expenseGroups = useMemo(() => 
+    cashflowGroups.filter(g => g.type === 'expense').sort((a, b) => a.order_index - b.order_index),
+    [cashflowGroups]
+  );
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">
 
@@ -116,6 +126,7 @@ export default function SettingsView({
                 <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
                   onMove={handleMoveCategory} onChange={handleCategoryChange}
                   onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                  filteredGroups={expenseGroups}
                   isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
               ))}
               {expenseCategories.length === 0 && (
@@ -136,6 +147,7 @@ export default function SettingsView({
                 <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
                   onMove={handleMoveCategory} onChange={handleCategoryChange}
                   onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                  filteredGroups={incomeGroups}
                   isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
               ))}
               {incomeCategories.length === 0 && (

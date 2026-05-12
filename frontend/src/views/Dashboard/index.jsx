@@ -1,9 +1,10 @@
 // src/views/Dashboard/index.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { DashboardProvider } from './context/DashboardContext';
+import DashboardSkeleton from './components/DashboardSkeleton';
 
 // Components
 import SmartInsightHeader from './components/SmartInsightHeader';
@@ -16,10 +17,27 @@ import CashflowTable from './components/CashflowTable';
 
 export default function DashboardView(props) {
   const { isDarkMode: dm } = useTheme();
-  const { transactions, analytics, enableSmartInsights } = props;
+  const { transactions, analytics, enableSmartInsights, isLoading } = props;
   
-  // Empty State (ยังไม่มีข้อมูล)
-  if (transactions.length === 0) {
+  // ── Logic: Smooth Loading Transition ───────────────────────
+  const [showSkeleton, setShowSkeleton] = useState(isLoading);
+
+  useEffect(() => {
+    if (isLoading) {
+      setShowSkeleton(true);
+    } else {
+      const timer = setTimeout(() => setShowSkeleton(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  // Case 1: Initial Boot (No data object at all) -> Full Page Skeleton
+  if (showSkeleton && !analytics) {
+    return <DashboardSkeleton />;
+  }
+
+  // Case 2: Truly Empty State (Not loading and no transactions)
+  if (transactions.length === 0 && !showSkeleton) {
     return (
       <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
         <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />
@@ -29,7 +47,7 @@ export default function DashboardView(props) {
   }
 
   return (
-    <DashboardProvider value={props}>
+    <DashboardProvider value={{ ...props, showSkeleton }}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
 
         {/* ══════════════════════════════════════════════════════════
@@ -81,6 +99,7 @@ DashboardView.propTypes = {
   topXLimit:            PropTypes.number.isRequired,
   setTopXLimit:         PropTypes.func.isRequired,
   analytics:            PropTypes.object.isRequired,
+  isLoading:            PropTypes.bool.isRequired,
   dayTypeConfig:        PropTypes.array.isRequired,
   dayTypes:             PropTypes.object.isRequired,
 };

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
 import { CalendarDays, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { hexToRgb } from '../../utils/formatters';
@@ -22,6 +22,19 @@ export default function CalendarView({
 }) {
   const { isDarkMode } = useTheme();
   const [selectedDate, setSelectedDate] = useState(null);
+  
+  // ── Logic: Smooth Loading Transition ───────────────────────
+  const [showSkeleton, setShowSkeleton] = useState(isLoading);
+
+  useEffect(() => {
+    if (isLoading) {
+      setShowSkeleton(true);
+    } else {
+      // Add a tiny delay to prevent the "flash" on ultra-fast local transitions
+      const timer = setTimeout(() => setShowSkeleton(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
@@ -89,13 +102,14 @@ export default function CalendarView({
     return counts;
   }, [dayTypes, daysInMonth, m, y, dayTypeConfig]);
 
-  if (isLoading) return <CalendarSkeleton />;
-
-  const currentIndex = rawAvailableMonths.indexOf(filterPeriod);
-  const hasPrev = currentIndex < rawAvailableMonths.length - 1;
-  const hasNext = currentIndex > 0;
-  const prevMonth = () => { if (hasPrev) setFilterPeriod(rawAvailableMonths[currentIndex + 1]); };
-  const nextMonth = () => { if (hasNext) setFilterPeriod(rawAvailableMonths[currentIndex - 1]); };
+  const prevMonth = () => {
+    const d = new Date(y, m - 1, 1);
+    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+  };
+  const nextMonth = () => {
+    const d = new Date(y, m + 1, 1);
+    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+  };
   const goToCurrentMonth = () => {
     const now = new Date();
     const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
@@ -117,11 +131,20 @@ export default function CalendarView({
     gapColor: isDarkMode ? 'bg-slate-700' : 'bg-slate-100',
   };
 
-  if (isReadOnlyView) {
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    return (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 max-w-screen-2xl mx-auto w-full">
+  // ── Unified Render ──────────────────────────────────────────
+  
+  // 1. Calculate current month string for the "Switch" button
+  const now = new Date();
+  const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+
+  // 2. Decide what the "Main Content" is
+  let content = null;
+
+  if (showSkeleton) {
+    content = <CalendarSkeleton />;
+  } else if (isReadOnlyView) {
+    content = (
+      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full">
         <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
           <div className={`p-4 rounded-sm mb-4 ${styles.surfaceAlt}`}>
             <CalendarDays className={`w-12 h-12 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
@@ -132,7 +155,7 @@ export default function CalendarView({
             ปฏิทินจะแสดงผลได้ดีที่สุดเมื่อดูเป็นรายเดือนครับ
           </p>
           <button 
-            onClick={() => setFilterPeriod(currentMonthStr)}
+            onClick={goToCurrentMonth}
             className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-[#00509E] hover:bg-blue-800 text-white'}`}
           >
             สลับไปดูเดือนปัจจุบัน ({getFilterLabel(currentMonthStr)})
@@ -140,114 +163,120 @@ export default function CalendarView({
         </div>
       </div>
     );
+  } else {
+    content = (
+      <div className="flex flex-col h-full space-y-3 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Header */}
+        <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-3 md:p-4`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <h2 className={`text-xl font-black flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                <CalendarIcon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
+                {thaiMonths[m]} {y}
+              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                {monthInc > 0 && (
+                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                    ▲ {formatValue(monthInc)} ฿
+                  </span>
+                )}
+                {monthExp > 0 && (
+                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                    ▼ {formatValue(monthExp)} ฿
+                  </span>
+                )}
+                {(monthInc > 0 || monthExp > 0) && (
+                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-900/40 text-blue-400 border-blue-800/50' : 'bg-blue-50 text-[#00509E] border-blue-200') : (isDarkMode ? 'bg-orange-900/40 text-orange-400 border-orange-800/50' : 'bg-orange-50 text-orange-600 border-orange-200')}`}>
+                    คงเหลือ {formatValue(monthNet)} ฿
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button onClick={prevMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+                เดือนปัจจุบัน
+              </button>
+              <button onClick={nextMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className={`rounded-sm border ${styles.border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
+          <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border}`}>
+            {DAYS_LABEL.map((label, i) => (
+              <div key={label} className={`py-2 text-center text-[15px] font-bold tracking-wide ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : styles.textMuted}`}>
+                {label}
+              </div>
+            ))}
+          </div>
+
+          <div className={`grid grid-cols-7 gap-[1px] ${styles.gapColor} flex-1`}>
+            {Array(firstDayOfMonth).fill(null).map((_, i) => (
+              <div key={`blank-${i}`} className={`min-h-[120px] 2xl:min-h-[140px] ${styles.surfaceAlt}`} />
+            ))}
+
+            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
+              const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+              const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
+              const isWeekend = WEEKEND_IDX.includes(new Date(y, m, d).getDay());
+
+              return (
+                <CalendarDayCell
+                  key={d}
+                  day={d}
+                  data={calendarData[d]}
+                  dateStr={dateStr}
+                  isToday={isToday}
+                  isWeekend={isWeekend}
+                  dayTypeConfig={dayTypeConfig}
+                  dayTypes={dayTypes}
+                  handleDayTypeChange={handleDayTypeChange}
+                  onSelectDate={setSelectedDate}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Summary Footer */}
+        <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-2 px-3 flex flex-wrap gap-2 items-center`}>
+          <span className={`text-[13px] font-bold mr-1 ${styles.textMuted}`}>สรุป:</span>
+          {dayTypeConfig.map(dt => {
+            const count = dayTypeCounts[dt.id] || 0;
+            if (count === 0) return null;
+            return (
+              <div
+                key={dt.id}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-bold"
+                style={{
+                  backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
+                  borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.3 : 0.2})`,
+                  color: dt.color,
+                }}
+              >
+                <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: dt.color }} />
+                <span>{dt.label} ({count})</span>
+              </div>
+            );
+          })}
+          <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+            {daysInMonth} วัน
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6 space-y-3 w-full">
-      {/* Header */}
-      <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-3 md:p-4`}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h2 className={`text-xl font-black flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-              <CalendarIcon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
-              {thaiMonths[m]} {y}
-            </h2>
-            <div className="flex items-center gap-2 flex-wrap">
-              {monthInc > 0 && (
-                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                  ▲ {formatValue(monthInc)} ฿
-                </span>
-              )}
-              {monthExp > 0 && (
-                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                  ▼ {formatValue(monthExp)} ฿
-                </span>
-              )}
-              {(monthInc > 0 || monthExp > 0) && (
-                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-900/40 text-blue-400 border-blue-800/50' : 'bg-blue-50 text-[#00509E] border-blue-200') : (isDarkMode ? 'bg-orange-900/40 text-orange-400 border-orange-800/50' : 'bg-orange-50 text-orange-600 border-orange-200')}`}>
-                  คงเหลือ {formatValue(monthNet)} ฿
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button onClick={prevMonth} disabled={!hasPrev} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              เดือนปัจจุบัน
-            </button>
-            <button onClick={nextMonth} disabled={!hasNext} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar Grid */}
-      <div className={`rounded-sm border ${styles.border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
-        <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border}`}>
-          {DAYS_LABEL.map((label, i) => (
-            <div key={label} className={`py-2 text-center text-[15px] font-bold tracking-wide ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : styles.textMuted}`}>
-              {label}
-            </div>
-          ))}
-        </div>
-
-        <div className={`grid grid-cols-7 gap-[1px] ${styles.gapColor} flex-1`}>
-          {Array(firstDayOfMonth).fill(null).map((_, i) => (
-            <div key={`blank-${i}`} className={`min-h-[120px] 2xl:min-h-[140px] ${styles.surfaceAlt}`} />
-          ))}
-
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
-            const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-            const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
-            const isWeekend = WEEKEND_IDX.includes(new Date(y, m, d).getDay());
-
-            return (
-              <CalendarDayCell
-                key={d}
-                day={d}
-                data={calendarData[d]}
-                dateStr={dateStr}
-                isToday={isToday}
-                isWeekend={isWeekend}
-                dayTypeConfig={dayTypeConfig}
-                dayTypes={dayTypes}
-                handleDayTypeChange={handleDayTypeChange}
-                onSelectDate={setSelectedDate}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Summary Footer */}
-      <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-2 px-3 flex flex-wrap gap-2 items-center`}>
-        <span className={`text-[13px] font-bold mr-1 ${styles.textMuted}`}>สรุป:</span>
-        {dayTypeConfig.map(dt => {
-          const count = dayTypeCounts[dt.id] || 0;
-          if (count === 0) return null;
-          return (
-            <div
-              key={dt.id}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-bold"
-              style={{
-                backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
-                borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.3 : 0.2})`,
-                color: dt.color,
-              }}
-            >
-              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: dt.color }} />
-              <span>{dt.label} ({count})</span>
-            </div>
-          );
-        })}
-        <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-          {daysInMonth} วัน
-        </div>
-      </div>
+    <div className="flex flex-col h-full pb-6 w-full min-h-[600px]">
+      {content}
 
       {selectedDate && (
         <DayDetailModal

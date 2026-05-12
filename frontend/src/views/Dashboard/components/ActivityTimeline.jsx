@@ -189,7 +189,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
  * Main Activity Timeline Component
  */
 export default function ActivityTimeline() {
-  const { analytics, dayTypeConfig, dayTypes, dm } = useDashboardContext();
+  const { analytics, dayTypeConfig, dayTypes, dm, showSkeleton } = useDashboardContext();
   const [viewMode, setViewMode] = useState('dayType');
   
   const [tooltip, setTooltip] = useState({
@@ -207,21 +207,16 @@ export default function ActivityTimeline() {
 
   const weeks = useMemo(() => {
     if (datesInPeriod.length === 0) return [];
+    // ... rest of useMemo unchanged
     const result = [];
     let currentWeek = Array(7).fill(null);
     let monthLabel = null;
-
     datesInPeriod.forEach((dateStr, index) => {
       const [y, m, d] = dateStr.split('-');
       const dateObj = new Date(y, +m - 1, d);
       const dayOfWeek = dateObj.getDay();
-
-      if (d === '01' || index === 0) {
-        monthLabel = `${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
-      }
-
+      if (d === '01' || index === 0) monthLabel = `${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
       currentWeek[dayOfWeek] = dateStr;
-
       if (dayOfWeek === 6 || index === datesInPeriod.length - 1) {
         result.push({ days: [...currentWeek], monthLabel });
         currentWeek = Array(7).fill(null);
@@ -232,36 +227,24 @@ export default function ActivityTimeline() {
   }, [datesInPeriod]);
 
   const getDayDetails = useCallback((dateStr) => {
+    // ... rest of logic unchanged
     const [y, m, d] = dateStr.split('-');
     const dateObj = new Date(y, +m - 1, d);
     const dayOfWeek = dateObj.getDay();
-    
     const displayStr = `${DAY_LABELS[dayOfWeek]} ${+d} ${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
-    
     const defaultDayType = (dayOfWeek === 0 || dayOfWeek === 6) 
       ? (dayTypeConfig.find(t => t.name === 'holiday') || dayTypeConfig[1] || dayTypeConfig[0])
       : (dayTypeConfig.find(t => t.name === 'workday') || dayTypeConfig[0]);
-    
     const dayType = dayTypeConfig.find(t => t.id === dayTypes[dateStr]) || defaultDayType;
     const amount = dailyExpenses[dateStr] || 0;
-    
     return { displayStr, dayType, amount, dayOfWeek };
   }, [dayTypeConfig, dayTypes, dailyExpenses]);
 
   const handleMouseEnter = (e, dateStr) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const { displayStr, dayType, amount } = getDayDetails(dateStr);
-
-    setTooltip({
-      active: true,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-      dateDisplay: displayStr,
-      dayType,
-      amount
-    });
+    setTooltip({ active: true, x: rect.left + rect.width / 2, y: rect.top, dateDisplay: displayStr, dayType, amount });
   };
-
   const handleMouseLeave = () => setTooltip(prev => ({ ...prev, active: false }));
 
   // Styles
@@ -269,7 +252,7 @@ export default function ActivityTimeline() {
   const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
   const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
 
-  if (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0) return null;
+  if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
 
   return (
     <div className={`${cardStyles} p-4`}>
@@ -285,34 +268,42 @@ export default function ActivityTimeline() {
       </div>
 
       {/* Legend Row (New Line) */}
-      <div className="mb-4 flex justify-end">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            transition={{ duration: 0.2 }}
-          >
-            {viewMode === 'dayType' ? (
-              <TimelineDayTypeLegend 
-                dayTypeConfig={dayTypeConfig} 
-                dayTypeCounts={analytics.dayTypeCounts} 
-                isDarkMode={dm} 
-              />
-            ) : (
-              <TimelineHeatmapLegend 
-                globalMaxThreshold={globalMaxThreshold} 
-                isDarkMode={dm} 
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+      <div className="mb-4 flex justify-end min-h-[20px]">
+        {showSkeleton ? (
+          <div className={`h-4 w-48 rounded-sm animate-pulse ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={viewMode}
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              {viewMode === 'dayType' ? (
+                <TimelineDayTypeLegend 
+                  dayTypeConfig={dayTypeConfig} 
+                  dayTypeCounts={analytics.dayTypeCounts} 
+                  isDarkMode={dm} 
+                />
+              ) : (
+                <TimelineHeatmapLegend 
+                  globalMaxThreshold={globalMaxThreshold} 
+                  isDarkMode={dm} 
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
 
       {/* Timeline Grid */}
       <div className={`border rounded-sm relative z-10 ${dm ? 'bg-slate-900/40 border-slate-700' : 'bg-slate-50/50 border-slate-200'}`}>
-        {datesInPeriod.length === 0 ? (
+        {showSkeleton ? (
+          <div className="py-12 px-3">
+             <div className={`h-24 w-full rounded-md animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-100/80'}`} />
+          </div>
+        ) : datesInPeriod.length === 0 ? (
           <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
         ) : (
           <div className="overflow-x-auto pb-4 pt-10 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>

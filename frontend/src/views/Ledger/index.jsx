@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
   TrendingUp, TrendingDown, Wallet, Inbox
@@ -43,6 +43,18 @@ export default function LedgerView({
   const { isDarkMode: dm } = useTheme();
   const [filterOpen, setFilterOpen] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
+
+  // ── Logic: Smooth Loading Transition ───────────────────────
+  const [showSkeleton, setShowSkeleton] = useState(isLoading);
+
+  useEffect(() => {
+    if (isLoading) {
+      setShowSkeleton(true);
+    } else {
+      const timer = setTimeout(() => setShowSkeleton(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   // ─── Logic: Data Orchestration ───
   const {
@@ -179,7 +191,7 @@ export default function LedgerView({
 
       {/* Table Area */}
       <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors min-h-[400px] relative ${dm ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-200'}`}>
-        {isLoading ? (
+        {showSkeleton ? (
           <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-10 backdrop-blur-sm" style={{ backgroundColor: dm ? 'rgba(15, 23, 42, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
             <div className={`w-12 h-12 mb-4 rounded-full animate-bounce flex items-center justify-center ${dm ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#00509E]'}`}>
               <LayoutList className="w-6 h-6 animate-pulse" />
@@ -188,7 +200,7 @@ export default function LedgerView({
           </div>
         ) : null}
         
-        {displayTransactions.length === 0 && !isLoading ? (
+        {displayTransactions.length === 0 && !showSkeleton ? (
           <div className="flex flex-col items-center justify-center py-24 px-4">
             <Inbox className={`w-14 h-14 mb-4 ${dm ? 'text-slate-700' : 'text-slate-200'}`} />
             <p className={`text-base font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ไม่พบรายการบัญชี</p>

@@ -31,7 +31,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     } catch (err) { console.error('Failed to reload groups:', err); }
   }, [setCashflowGroups]);
 
-  const handleCategoryChange = async (catId, field, value) => {
+  const handleCategoryChange = useCallback(async (catId, field, value) => {
     // 1. Update local state immediately for smooth UI
     setCategories(prev => prev.map(c => {
       if (c.id !== catId) return c;
@@ -39,31 +39,29 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     }));
 
     // 2. Prepare data for backend
-    const cat = categories.find(c => c.id === catId);
-    if (!cat) return;
-    
-    const toSave = {
-      id: cat.id,
-      name: field === 'name' ? value : cat.name,
-      icon: field === 'icon' ? value : cat.icon,
-      color: field === 'color' ? value : cat.color,
-      is_fixed: field === 'isFixed' ? (value ? 1 : 0) : (cat.isFixed ? 1 : 0),
-      cashflow_group_id: field === 'cashflowGroup' ? value : cat.cashflowGroup,
-      order_index: cat.order_index
-    };
+    setCategories(prev => {
+      const cat = prev.find(c => c.id === catId);
+      if (!cat) return prev;
+      
+      const toSave = {
+        id: cat.id,
+        name: cat.name,
+        icon: cat.icon,
+        color: cat.color,
+        is_fixed: cat.isFixed ? 1 : 0,
+        cashflow_group_id: cat.cashflowGroup,
+        order_index: cat.order_index
+      };
 
-    // 3. Only save if name is not empty to avoid 400 errors
-    if (!toSave.name || toSave.name.trim() === '') return;
+      // 3. Only save if name is not empty to avoid 400 errors
+      if (toSave.name && toSave.name.trim() !== '') {
+        categoryService.save(toSave).catch(err => console.error('Failed to save category:', err));
+      }
+      return prev;
+    });
+  }, []);
 
-    try {
-      await categoryService.save(toSave);
-      // We don't call loadCategories() here to prevent the UI from jumping while typing
-    } catch (err) {
-      console.error('Failed to save category:', err);
-    }
-  };
-
-  const handleAddCategory = async (type) => {
+  const handleAddCategory = useCallback(async (type) => {
     try {
       const groups = await groupService.getAll();
       const defaultGroup = groups.find(g => g.type === type) || groups[0];
@@ -96,9 +94,9 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     } catch (err) {
       showToast('ไม่สามารถเพิ่มหมวดหมู่ได้: ' + err.message, 'error');
     }
-  };
+  }, [categories, loadCategories, showToast]);
 
-  const handleDeleteCategory = async (id, transactions) => {
+  const handleDeleteCategory = useCallback(async (id, transactions) => {
     const catToDelete = categories.find(c => c.id === id);
     if (!catToDelete) return;
     
@@ -120,9 +118,9 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
       }
     }
-  };
+  }, [categories, loadCategories, showToast]);
 
-  const handleMoveCategory = async (id, direction) => {
+  const handleMoveCategory = useCallback(async (id, direction) => {
     const targetCat = categories.find(c => c.id === id);
     if (!targetCat) return;
 
@@ -161,7 +159,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');
       }
     }
-  };
+  }, [categories, loadCategories, showToast]);
 
   return { 
     categories, setCategories, 

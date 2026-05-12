@@ -236,7 +236,8 @@ export default function MainChart() {
     hideFixedExpenses, setHideFixedExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
-    dm
+    dm,
+    showSkeleton
   } = useDashboardContext();
   
   // UI State
@@ -285,6 +286,7 @@ export default function MainChart() {
           <>
             <button
               onClick={() => setIsBreakdown(prev => !prev)}
+              disabled={showSkeleton}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md border shadow-sm transition-all ${
                 isBreakdown
                   ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white')
@@ -296,11 +298,11 @@ export default function MainChart() {
 
             {chartViewType === 'line' && (
               <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                <button onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
                   เส้นตรง
                 </button>
-                <button onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
                   เส้นโค้ง
                 </button>
@@ -320,9 +322,13 @@ export default function MainChart() {
       </div>
 
       <div className="relative w-full flex-1 min-h-[350px]">
-        <div className="absolute inset-0">
-          <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar'} data={displayChartData} options={options} />
-        </div>
+        {showSkeleton ? (
+          <div className={`absolute inset-0 rounded-md animate-pulse ${dm ? 'bg-slate-900/40' : 'bg-slate-50'}`} />
+        ) : (
+          <div className="absolute inset-0">
+            <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar'} data={displayChartData} options={options} />
+          </div>
+        )}
       </div>
 
       <MainChartLegend legendDatasets={legendDatasets} dm={dm} />

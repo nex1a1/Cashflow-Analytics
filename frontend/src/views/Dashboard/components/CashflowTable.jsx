@@ -251,7 +251,7 @@ const CashflowTableFooter = ({
  * CashflowTable - A high-density spreadsheet view of monthly financial data.
  */
 export default function CashflowTable() {
-  const { analytics, cashflowGroups = [], categories = [], dm } = useDashboardContext();
+  const { analytics, cashflowGroups = [], categories = [], dm, showSkeleton } = useDashboardContext();
   const [expandedGroups, setExpandedGroups] = useState(new Set());
 
   const toggleGroup = useCallback((groupId) => {
@@ -263,24 +263,24 @@ export default function CashflowTable() {
     });
   }, []);
 
-  if (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0) return null;
+  const getActiveCatsForGroup = useCallback((groupId) => {
+    const allCatsInGroup = categories.filter(c => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
+    return allCatsInGroup.filter(c => {
+      return analytics?.sortedCashflow?.some(row => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0);
+    });
+  }, [categories, analytics]);
+
+  if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0)) return null;
 
   const activeIncomeGroups = cashflowGroups
     .filter(g => g.type === 'income')
     .sort((a,b) => a.order_index - b.order_index)
-    .filter(g => analytics.sortedCashflow.some(row => (row.groups[g.id] || 0) > 0));
+    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
   const activeExpenseGroups = cashflowGroups
     .filter(g => g.type === 'expense')
     .sort((a,b) => a.order_index - b.order_index)
-    .filter(g => analytics.sortedCashflow.some(row => (row.groups[g.id] || 0) > 0));
-
-  const getActiveCatsForGroup = useCallback((groupId) => {
-    const allCatsInGroup = categories.filter(c => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
-    return allCatsInGroup.filter(c => {
-      return analytics.sortedCashflow.some(row => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0);
-    });
-  }, [categories, analytics]);
+    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
   const thinBorder = dm ? 'border-slate-700' : 'border-slate-200';
   const boxBorder = dm ? 'border-slate-500' : 'border-slate-400';
@@ -302,15 +302,21 @@ export default function CashflowTable() {
       </div>
       
       <div className="overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <table className="w-full text-right text-[13px] whitespace-nowrap">
-          <CashflowTableHeader {...segmentProps} />
-          <tbody className={`divide-y ${dm ? 'divide-slate-700/40' : 'divide-slate-100'}`}>
-            {analytics.sortedCashflow.map((row) => (
-              <CashflowTableRow key={row.monthStr} row={row} {...segmentProps} />
-            ))}
-          </tbody>
-          <CashflowTableFooter {...segmentProps} />
-        </table>
+        {showSkeleton ? (
+          <div className="p-8">
+            <div className={`h-40 w-full rounded-sm animate-pulse ${dm ? 'bg-slate-900/40' : 'bg-slate-50'}`} />
+          </div>
+        ) : (
+          <table className="w-full text-right text-[13px] whitespace-nowrap">
+            <CashflowTableHeader {...segmentProps} />
+            <tbody className={`divide-y ${dm ? 'divide-slate-700/40' : 'divide-slate-100'}`}>
+              {analytics.sortedCashflow.map((row) => (
+                <CashflowTableRow key={row.monthStr} row={row} {...segmentProps} />
+              ))}
+            </tbody>
+            <CashflowTableFooter {...segmentProps} />
+          </table>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
-// src/components/AppHeader.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   BarChart3, ClipboardList, Download,
@@ -20,6 +19,7 @@ const TABS = [
   { id: 'ledger',    label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'settings',  label: 'ตั้งค่าระบบ',       icon: Settings },
 ];
+
 export default function AppHeader({
   dbStatus, transactionCount,
   activeTab, setActiveTab,
@@ -35,6 +35,18 @@ export default function AppHeader({
   const { isDarkMode, toggleTheme } = useTheme();
   const dm = isDarkMode;
   const showPeriodPicker = ['dashboard', 'analytics', 'ledger', 'calendar'].includes(activeTab);
+
+  // ── Logic: Smooth Processing Transition ───────────────────
+  const [showProcessing, setShowProcessing] = useState(isProcessing);
+
+  useEffect(() => {
+    if (isProcessing) {
+      setShowProcessing(true);
+    } else {
+      const timer = setTimeout(() => setShowProcessing(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isProcessing]);
 
   return (
     <div className="flex flex-col relative z-[60]">
@@ -99,10 +111,10 @@ export default function AppHeader({
               <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Export</span>
             </button>
             
-            <label className={`cursor-pointer flex items-center gap-1.5 text-[11px] font-bold px-2 py-1.5 rounded-sm transition-all ${isProcessing ? 'opacity-50 pointer-events-none' : ''} ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`} title="นำเข้าข้อมูลจากไฟล์ CSV">
-              {isProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse text-amber-500" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />}
-              <span className="hidden sm:inline">{isProcessing ? 'กำลังประมวลผล...' : 'Import'}</span>
-              <input type="file" accept=".csv" className="hidden" onChange={onFileUpload} disabled={isProcessing} ref={fileInputRef} />
+            <label className={`cursor-pointer flex items-center gap-1.5 text-[11px] font-bold px-2 py-1.5 rounded-sm transition-all ${showProcessing ? 'opacity-50 pointer-events-none' : ''} ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`} title="นำเข้าข้อมูลจากไฟล์ CSV">
+              {showProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse text-amber-500" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />}
+              <span className="hidden sm:inline">{showProcessing ? 'กำลังประมวลผล...' : 'Import'}</span>
+              <input type="file" accept=".csv" className="hidden" onChange={onFileUpload} disabled={showProcessing} ref={fileInputRef} />
             </label>
             
             {/* เปลี่ยนจากปุ่ม ? ธรรมดาเป็น HelpCircle ให้ดูพรีเมียมขึ้น */}

@@ -13,6 +13,13 @@ import StatCard from '../../../components/shared/StatCard.jsx';
 import AnimatedNumber from '../../../components/ui/AnimatedNumber.jsx';
 
 /**
+ * Shared Shimmer for Hybrid Loading
+ */
+const Shimmer = ({ className, dm }) => (
+  <div className={`rounded-sm animate-pulse ${dm ? 'bg-slate-700' : 'bg-slate-200'} ${className}`} />
+);
+
+/**
  * Shared Header for Summary Sections
  */
 const SectionHeader = ({ icon: Icon, title, dm }) => (
@@ -27,7 +34,7 @@ const SectionHeader = ({ icon: Icon, title, dm }) => (
 /**
  * SECTION 1: FINANCIAL VITALS (Income, Expense, Cashflow, Savings)
  */
-const SummaryVitals = ({ analytics, dm }) => {
+const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
     fixedTotal, variableTotal, datesInPeriod
@@ -44,40 +51,40 @@ const SummaryVitals = ({ analytics, dm }) => {
       id: 'income',
       icon: <div className="w-4 h-4 flex items-center justify-center"><img src={dm ? sharkLogo : sharkBlack} alt="" className="w-full h-full object-contain" /></div>,
       label: "รายรับรวม",
-      value: <AnimatedNumber value={totalIncome} />,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>เฉลี่ย ฿{formatMoney(avgIncomePerDay)}/วัน</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={totalIncome} />,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-24" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>เฉลี่ย ฿{formatMoney(avgIncomePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-blue-900/30' : 'bg-blue-50', text: dm ? 'text-blue-400' : 'text-blue-600' }
     },
     {
       id: 'expense',
       icon: <Wallet />,
       label: "รายจ่ายรวม",
-      value: <AnimatedNumber value={totalExpense} />,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-orange-400' : 'text-orange-600'}`}>เฉลี่ย ฿{formatMoney(avgExpensePerDay)}/วัน</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={totalExpense} />,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-24" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-orange-400' : 'text-orange-600'}`}>เฉลี่ย ฿{formatMoney(avgExpensePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-orange-900/30' : 'bg-orange-50', text: dm ? 'text-orange-400' : 'text-orange-600' }
     },
     {
       id: 'fixed',
       icon: <Anchor />,
       label: "รายจ่ายคงที่",
-      value: <AnimatedNumber value={fixedTotal} />,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-purple-400' : 'text-purple-600'}`}>เฉลี่ย ฿{formatMoney(avgFixedPerDay)}/วัน</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={fixedTotal} />,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-24" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-purple-400' : 'text-purple-600'}`}>เฉลี่ย ฿{formatMoney(avgFixedPerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-purple-900/30' : 'bg-purple-50', text: dm ? 'text-purple-400' : 'text-purple-600' }
     },
     {
       id: 'variable',
       icon: <Crosshair />,
       label: "รายจ่ายผันแปร",
-      value: <AnimatedNumber value={variableTotal} />,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-rose-400' : 'text-rose-600'}`}>เฉลี่ย ฿{formatMoney(avgVariablePerDay)}/วัน</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={variableTotal} />,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-24" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-rose-400' : 'text-rose-600'}`}>เฉลี่ย ฿{formatMoney(avgVariablePerDay)}/วัน</span>,
       color: { bg: dm ? 'bg-rose-900/30' : 'bg-rose-50', text: dm ? 'text-rose-400' : 'text-rose-600' }
     },
     {
       id: 'cashflow',
       icon: <Navigation />,
       label: "กระแสเงินสด",
-      value: <AnimatedNumber value={netCashflow} />,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 ${netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{netCashflow >= 0 ? 'Surplus' : 'Deficit'}</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={netCashflow} />,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-12" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 ${netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{netCashflow >= 0 ? 'Surplus' : 'Deficit'}</span>,
       color: { 
         bg: netCashflow >= 0 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-rose-900/30' : 'bg-rose-50'),
         text: netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')
@@ -87,8 +94,8 @@ const SummaryVitals = ({ analytics, dm }) => {
       id: 'savings',
       icon: <ShieldCheck />,
       label: "ประสิทธิภาพ",
-      value: `${savingsRate}%`,
-      subValueJSX: <span className={`text-[9px] font-medium opacity-80 ${savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')}`}>Grade ${savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>,
+      value: showSkeleton ? <Shimmer className="h-6 w-12 my-1" dm={dm} /> : `${savingsRate}%`,
+      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-16" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 ${savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')}`}>Grade ${savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>,
       color: { 
         bg: savingsRate >= 20 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-blue-900/30' : 'bg-blue-50'),
         text: savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')
@@ -119,7 +126,7 @@ const SummaryVitals = ({ analytics, dm }) => {
 /**
  * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
  */
-const SummaryStrategic = ({ analytics, dm }) => {
+const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
   const {
     totalIncome, netCashflow,
     dailyAvg, foodPercentage, foodDailyAvg, fixedTotal, variableTotal,
@@ -138,9 +145,13 @@ const SummaryStrategic = ({ analytics, dm }) => {
                <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-purple-400/70' : 'text-purple-600/70'}`}>Commitment Ratio</span>
                   <div className="mt-auto">
-                    <div className={`text-lg font-black ${dm ? 'text-purple-400' : 'text-purple-600'}`}>{((fixedTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    {showSkeleton ? (
+                      <Shimmer className="h-6 w-16 my-1" dm={dm} />
+                    ) : (
+                      <div className={`text-lg font-black ${dm ? 'text-purple-400' : 'text-purple-600'}`}>{((fixedTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    )}
                     <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
-                       <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, (fixedTotal / totalIncome) * 100)}%` }} />
+                       <div className={`h-full ${showSkeleton ? 'bg-slate-500 animate-pulse' : 'bg-purple-500'}`} style={{ width: showSkeleton ? '50%' : `${Math.min(100, (fixedTotal / totalIncome) * 100)}%` }} />
                     </div>
                   </div>
                </div>
@@ -148,16 +159,24 @@ const SummaryStrategic = ({ analytics, dm }) => {
                <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-rose-400/70' : 'text-rose-600/70'}`}>Lifestyle Velocity</span>
                   <div className="mt-auto">
-                    <div className={`text-lg font-black ${dm ? 'text-rose-400' : 'text-rose-600'}`}>{((variableTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    {showSkeleton ? (
+                      <Shimmer className="h-6 w-16 my-1" dm={dm} />
+                    ) : (
+                      <div className={`text-lg font-black ${dm ? 'text-rose-400' : 'text-rose-600'}`}>{((variableTotal / totalIncome) * 100).toFixed(1)}%</div>
+                    )}
                     <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
-                       <div className="h-full bg-rose-500" style={{ width: `${Math.min(100, (variableTotal / totalIncome) * 100)}%` }} />
+                       <div className={`h-full ${showSkeleton ? 'bg-slate-500 animate-pulse' : 'bg-rose-500'}`} style={{ width: showSkeleton ? '50%' : `${Math.min(100, (variableTotal / totalIncome) * 100)}%` }} />
                     </div>
                   </div>
                </div>
 
                <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dailyVictory >= 0 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Net Surplus / Day</span>
-                  <span className={`text-lg font-black mt-auto tabular-nums ${dailyVictory >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{formatMoney(dailyVictory)}</span>
+                  {showSkeleton ? (
+                    <Shimmer className="h-6 w-20 mt-auto" dm={dm} />
+                  ) : (
+                    <span className={`text-lg font-black mt-auto tabular-nums ${dailyVictory >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{formatMoney(dailyVictory)}</span>
+                  )}
                </div>
             </div>
          </div>
@@ -169,17 +188,17 @@ const SummaryStrategic = ({ analytics, dm }) => {
                <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>สัดส่วนค่าอาหาร</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
-                    <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>
-                    <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />
+                    {showSkeleton ? <Shimmer className="h-6 w-12" dm={dm} /> : <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>}
+                    {!showSkeleton && <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />}
                   </div>
                </div>
                <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>กินเฉลี่ย/วัน</span>
-                  <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(foodDailyAvg)}</span>
+                  {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(foodDailyAvg)}</span>}
                </div>
                <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-slate-400/70' : 'text-slate-500/70'}`}>รายจ่ายเฉลี่ย/วัน</span>
-                  <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>{formatMoney(dailyAvg)}</span>
+                  {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>{formatMoney(dailyAvg)}</span>}
                </div>
             </div>
          </div>
@@ -190,7 +209,7 @@ const SummaryStrategic = ({ analytics, dm }) => {
 /**
  * SECTION 3: FORECAST (Optional strip for month-end projections)
  */
-const SummaryForecasting = ({ analytics, dm }) => {
+const SummaryForecasting = ({ analytics, dm, showSkeleton }) => {
   const {
     showForecasting, projectedExpense, safeToSpend
   } = analytics;
@@ -204,14 +223,14 @@ const SummaryForecasting = ({ analytics, dm }) => {
         <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-[#1e1b4b]/40' : 'bg-indigo-50/30'}`}>
           <div>
             <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-600'}`}>Projected Expense</span>
-            <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900'}`}><AnimatedNumber value={projectedExpense} /></div>
+            {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900'}`}><AnimatedNumber value={projectedExpense} /></div>}
           </div>
           <TrendingUp size={58} className="text-indigo-400 opacity-30" />
         </div>
         <div className={`p-2 rounded-none flex items-center justify-between ${safeToSpend > 300 ? (dm ? 'bg-emerald-500/5' : 'bg-emerald-50/30') : (dm ? 'bg-rose-500/5' : 'bg-rose-50/30')}`}>
           <div>
             <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Safe to Spend</span>
-            <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? 'text-emerald-500' : 'text-rose-500'}`}><AnimatedNumber value={safeToSpend} /></div>
+            {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? 'text-emerald-500' : 'text-rose-500'}`}><AnimatedNumber value={safeToSpend} /></div>}
           </div>
           <Zap size={57} className={`${safeToSpend > 300 ? 'text-emerald-400' : 'text-rose-400'} opacity-30`} />
         </div>
@@ -224,15 +243,15 @@ const SummaryForecasting = ({ analytics, dm }) => {
  * SummaryCards - The mission control center for financial vitals.
  */
 export default function SummaryCards() {
-  const { analytics, dm } = useDashboardContext();
+  const { analytics, dm, showSkeleton } = useDashboardContext();
 
   if (!analytics) return null;
 
   return (
     <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
-      <SummaryVitals analytics={analytics} dm={dm} />
-      <SummaryStrategic analytics={analytics} dm={dm} />
-      <SummaryForecasting analytics={analytics} dm={dm} />
+      <SummaryVitals analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
+      <SummaryStrategic analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
+      <SummaryForecasting analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
     </div>
   );
 }

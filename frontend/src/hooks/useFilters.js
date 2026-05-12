@@ -4,7 +4,10 @@ import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../ut
 
 export default function useFilters({ transactions, categories, masterPeriods = [] }) {
   // ── Period ───────────────────────────────────────────────────
-  const [filterPeriod, setFilterPeriod] = useState('ALL');
+  const [filterPeriod, setFilterPeriod] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+  });
 
   // ── Advanced filters (LedgerView) ───────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,16 +67,6 @@ export default function useFilters({ transactions, categories, masterPeriods = [
   const rawAvailableMonths = useMemo(() => {
     return [...masterPeriods].sort().reverse();
   }, [masterPeriods]);
-
-  const hasAutoSet = useRef(false);
-
-  // auto-set เดือนล่าสุดเมื่อโหลดข้อมูลครั้งแรก
-  useEffect(() => {
-    if (!hasAutoSet.current && filterPeriod === 'ALL' && rawAvailableMonths.length > 0) {
-      setFilterPeriod(rawAvailableMonths[0]);
-      hasAutoSet.current = true;
-    }
-  }, [rawAvailableMonths, filterPeriod]);
 
   // ── Derived booleans ─────────────────────────────────────────
   // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → Enforced only in components that require single-month context (like Calendar)

@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
@@ -10,16 +10,11 @@ function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
   return <input ref={ref} type="text" value={value} onChange={onChange} className={className} placeholder={placeholder} />;
 }
 
-export default function CategoryRow({ cat, isNew, isIncome, onMove, onChange, onDelete, cashflowGroups = [], isFirst, isLast }) {
+const CategoryRow = memo(({ cat, isNew, isIncome, onMove, onChange, onDelete, filteredGroups = [], cashflowGroups = [], isFirst, isLast }) => {
   const { isDarkMode: dm } = useTheme();
   const accentFocus = isIncome ? 'focus:border-emerald-500' : 'focus:border-blue-500';
 
-  const filteredGroups = useMemo(
-    () => cashflowGroups.filter(g => g.type === (isIncome ? 'income' : 'expense')).sort((a, b) => a.order_index - b.order_index),
-    [cashflowGroups, isIncome],
-  );
-
-  const group = useMemo(() => cashflowGroups.find(g => g.id === cat.cashflowGroup), [cashflowGroups, cat.cashflowGroup]);
+  const group = cashflowGroups.find(g => g.id === cat.cashflowGroup);
   const groupColor = group?.color || (dm ? '#334155' : '#cbd5e1');
 
   const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
@@ -31,7 +26,7 @@ export default function CategoryRow({ cat, isNew, isIncome, onMove, onChange, on
   }`;
 
   return (
-    <div style={{ borderLeftColor: groupColor, borderLeftWidth: '4px' }} className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 transition-colors group/cat ${
+    <div style={{ borderLeftColor: groupColor, borderLeftWidth: '4px' }} className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 group/cat ${
       !isIncome && cat.isFixed
         ? (dm ? 'bg-purple-900/10 hover:bg-purple-900/20' : 'bg-purple-50/40 hover:bg-purple-50/80')
         : (dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
@@ -92,4 +87,6 @@ export default function CategoryRow({ cat, isNew, isIncome, onMove, onChange, on
       <ConfirmDeleteButton onConfirm={() => onDelete(cat.id)} />
     </div>
   );
-}
+});
+
+export default CategoryRow;

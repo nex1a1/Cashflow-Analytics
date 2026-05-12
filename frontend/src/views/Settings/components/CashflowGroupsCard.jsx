@@ -1,14 +1,15 @@
+import { memo } from 'react';
 import { ChevronUp, ChevronDown, Lock, AlertTriangle, Grid } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 
-export default function CashflowGroupsCard({
+const CashflowGroupsCard = memo(({
   cashflowGroups, handleAddCashflowGroup, handleMoveCashflowGroup,
   handleChangeCashflowGroup, handleDeleteGroup, cashflowDeleteError,
   txCountByGroup, categories
-}) {
+}) => {
   const { isDarkMode: dm } = useTheme();
 
   return (
@@ -115,4 +116,6 @@ export default function CashflowGroupsCard({
       </div>
     </SectionCard>
   );
-}
+});
+
+export default CashflowGroupsCard;

@@ -131,6 +131,7 @@ export default function MainLayout({ controller }) {
                   categories={categories} dayTypeConfig={dayTypeConfig}
                   dayTypes={dayTypes}
                   enableSmartInsights={enableSmartInsights}
+                  isLoading={isProcessing}
                 />
               </motion.div>
             )}

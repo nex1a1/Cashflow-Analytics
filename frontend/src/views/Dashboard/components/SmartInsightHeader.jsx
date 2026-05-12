@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 
+import { useDashboardContext } from '../context/DashboardContext';
+
 export default function SmartInsightHeader({ insights }) {
-  const { isDarkMode: dm } = useTheme();
+  const { isDarkMode: dm, showSkeleton } = useDashboardContext();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -55,19 +57,23 @@ export default function SmartInsightHeader({ insights }) {
         <Sparkles className={`w-3.5 h-3.5 shrink-0 ${getTextColor(currentInsight.type)}`} />
         
         <div className="relative flex items-center justify-start flex-1 w-full sm:min-w-[400px] sm:max-w-[700px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentIndex}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -10, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`m-0 flex-1 whitespace-normal leading-snug ${dm ? 'text-slate-300' : 'text-slate-600'}`}
-            >
-              <span className="mr-1">{currentInsight.icon}</span>
-              {currentInsight.message}
-            </motion.div>
-          </AnimatePresence>
+          {showSkeleton ? (
+            <div className={`h-3 w-4/5 rounded-sm animate-pulse ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -10, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`m-0 flex-1 whitespace-normal leading-snug ${dm ? 'text-slate-300' : 'text-slate-600'}`}
+              >
+                <span className="mr-1">{currentInsight.icon}</span>
+                {currentInsight.message}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
 
         <div className={`flex items-center gap-0.5 ml-2 pl-2 border-l shrink-0 self-stretch ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
