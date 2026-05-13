@@ -88,7 +88,7 @@ export default function ExpenseProportion() {
           </span>
         </div>
         <span className={`text-[9px] font-black px-1.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>
-          {showSkeleton ? '...' : `${catCount} Categories`}
+          {showSkeleton ? '...' : `${catCount} หมวดหมู่`}
         </span>
       </div>
 
@@ -112,12 +112,12 @@ export default function ExpenseProportion() {
         <div className="flex flex-row items-stretch">
           
           {/* LEFT: CHART ANCHOR (No Padding) */}
-          <div className={`shrink-0 flex flex-col items-center justify-center p-4 border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
-            <div className="relative w-[100px] h-[100px]">
+          <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
+            <div className="relative w-[140px] h-[140px]">
               <Doughnut data={catChartData} options={options} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                  <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Total</span>
-                 <span className={`text-[11px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
+                 <span className={`text-[12px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
                    {formatMoney(totalExpense).split('.')[0]}
                  </span>
               </div>

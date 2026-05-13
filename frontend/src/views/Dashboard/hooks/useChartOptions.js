@@ -7,7 +7,7 @@ import {
 import { formatMoney } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 
-export function useChartOptions({ chartViewType, isBreakdown }) {
+export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
   const { analytics, dm } = useDashboardContext();
 
   return useMemo(() => {
@@ -63,19 +63,24 @@ export function useChartOptions({ chartViewType, isBreakdown }) {
     }
     
     let baseOptions;
+    const yType = isLogScale ? 'logarithmic' : 'linear';
     const isStacked = isBreakdown && chartViewType === 'bar';
-    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm);
-    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm);
-    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm);
-    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm);
-    else baseOptions = getBarChartOptions(dm);
+    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm, yType);
+    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType);
+    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm, yType);
+    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType);
+    else baseOptions = getBarChartOptions(dm, yType);
 
     return {
       ...baseOptions,
       scales: {
         ...baseOptions.scales,
         x: { ...baseOptions.scales?.x, stacked: isStacked },
-        y: { ...baseOptions.scales?.y, stacked: isStacked },
+        y: { 
+          ...baseOptions.scales?.y, 
+          stacked: isStacked,
+          ...(isLogScale && { min: 1 })
+        },
       },
       plugins: {
         ...baseOptions.plugins,
@@ -94,5 +99,5 @@ export function useChartOptions({ chartViewType, isBreakdown }) {
         },
       },
     };
-  }, [isBreakdown, chartViewType, dm, analytics?.mainChartType, analytics]);
+  }, [isBreakdown, chartViewType, dm, analytics?.mainChartType, analytics, isLogScale]);
 }

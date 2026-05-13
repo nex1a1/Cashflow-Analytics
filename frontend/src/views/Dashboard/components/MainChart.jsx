@@ -96,6 +96,7 @@ const MainChartFilterMenu = ({
   dm, showCatMenu, setShowCatMenu, filterMenuRef,
   showTrendLines, setShowTrendLines,
   isCumulative, setIsCumulative,
+  isLogScale, setIsLogScale,
   hideFixedExpenses, setHideFixedExpenses,
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
@@ -135,6 +136,18 @@ const MainChartFilterMenu = ({
                 <input type="checkbox" className="sr-only" checked={isCumulative} onChange={() => { setIsCumulative(!isCumulative); if(!isCumulative) setShowTrendLines(false); }} />
                 <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isCumulative ? (dm ? 'bg-purple-500' : 'bg-purple-600') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
                 <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isCumulative ? 'translate-x-4' : ''}`} />
+              </div>
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer group">
+              <div className="flex flex-col pr-3">
+                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-emerald-400' : 'text-slate-800 group-hover:text-emerald-600'}`}>สเกลลอการิทึม (Log Scale)</span>
+                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เน้นดูสัดส่วนการเติบโต/ความแตกต่าง</span>
+              </div>
+              <div className="relative flex items-center shrink-0">
+                <input type="checkbox" className="sr-only" checked={isLogScale} onChange={() => setIsLogScale(!isLogScale)} />
+                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isLogScale ? 'bg-emerald-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
+                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isLogScale ? 'translate-x-4' : ''}`} />
               </div>
             </label>
 
@@ -247,6 +260,7 @@ export default function MainChart() {
   const [showTrendLines, setShowTrendLines] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
   const [isCumulative, setIsCumulative] = useState(false);
+  const [isLogScale, setIsLogScale] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
 
   // Filter Menu Click-Outside Logic
@@ -265,7 +279,7 @@ export default function MainChart() {
   const { displayChartData, legendDatasets, categoriesWithData } = useChartDataEngine({
     chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData
   });
-  const options = useChartOptions({ chartViewType, isBreakdown });
+  const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
   const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
   const breakdownLabel = isBreakdown ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓') : 'แจกแจง';
@@ -281,9 +295,45 @@ export default function MainChart() {
         showTrendLines={showTrendLines}
       />
 
-      <div className="flex items-center justify-end gap-2 mb-3 relative z-10">
+      <div className="flex items-center justify-end gap-2 mb-3 relative z-10 flex-wrap">
         {chartViewType !== 'sankey' && (
           <>
+            {/* Status Badges Row */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {showTrendLines && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                  dm ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'
+                }`}>
+                  <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                  TREND ON
+                </div>
+              )}
+              {isCumulative && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                  dm ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'bg-purple-50 border-purple-200 text-purple-700'
+                }`}>
+                  <div className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" />
+                  PACING ON
+                </div>
+              )}
+              {isLogScale && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                  dm ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                }`}>
+                  <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                  LOGARITHM ON
+                </div>
+              )}
+              {hideFixedExpenses && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                  dm ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'
+                }`}>
+                  <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                  FIXED HIDDEN
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setIsBreakdown(prev => !prev)}
               disabled={showSkeleton}
@@ -313,6 +363,7 @@ export default function MainChart() {
               dm={dm} showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
               showTrendLines={showTrendLines} setShowTrendLines={setShowTrendLines}
               isCumulative={isCumulative} setIsCumulative={setIsCumulative}
+              isLogScale={isLogScale} setIsLogScale={setIsLogScale}
               hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
               dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
               categories={categories} categoriesWithData={categoriesWithData}

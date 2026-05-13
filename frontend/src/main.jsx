@@ -6,13 +6,13 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, 
+  Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, 
   LineElement, Title, Tooltip, Legend, ArcElement, Filler, defaults, 
   LineController, BarController
 } from 'chart.js';
 
 ChartJS.register(
-  CategoryScale, LinearScale, BarElement, PointElement, LineElement, 
+  CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, 
   LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler
 );
 
