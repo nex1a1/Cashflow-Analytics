@@ -30,7 +30,7 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
   const mode = dm ? 'dark' : 'light';
 
   return (
-    <div className={`border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-700/70' : 'bg-white border-slate-200'}`}>
+    <div className={`border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-700/70' : 'bg-slate-50 border-slate-200'}`}>
       <div className={`px-3 py-2 border-b flex items-center justify-between gap-2 ${a.header[mode]}`}>
         <h2 className={`text-[13px] font-bold flex items-center gap-1.5 ${a.title[mode]}`}>
           {icon}

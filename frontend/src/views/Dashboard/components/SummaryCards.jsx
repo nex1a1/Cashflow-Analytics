@@ -23,7 +23,7 @@ const Shimmer = ({ className, dm }) => (
  * Shared Header for Summary Sections
  */
 const SectionHeader = ({ icon: Icon, title, dm }) => (
-  <div className={`px-2.5 py-0.5 flex items-center gap-1.5 ${dm ? 'bg-slate-800 border-b border-slate-700/50' : 'bg-slate-50 border-b border-slate-200'}`}>
+  <div className={`px-2.5 py-0.5 flex items-center gap-1.5 ${dm ? 'bg-slate-800 border-b border-slate-700/50' : 'bg-slate-100 border-b border-slate-200'}`}>
     <Icon className={`w-3 h-3 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
     <span className={`text-[11px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
       {title}
@@ -108,7 +108,7 @@ const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
       <div className="grid grid-cols-6 gap-[1px] bg-slate-700/20 p-[1px]">
         {vitalsConfig.map(card => (
-          <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-white'}>
+          <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-slate-50'}>
             <StatCard 
               icon={card.icon}
               label={card.label}
@@ -142,7 +142,7 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
          <div className="col-span-7 flex flex-col border-r border-dashed border-slate-700/40">
             <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์" dm={dm} />
             <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-purple-400/70' : 'text-purple-600/70'}`}>Commitment Ratio</span>
                   <div className="mt-auto">
                     {showSkeleton ? (
@@ -156,7 +156,7 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
                   </div>
                </div>
 
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-rose-400/70' : 'text-rose-600/70'}`}>Lifestyle Velocity</span>
                   <div className="mt-auto">
                     {showSkeleton ? (
@@ -170,7 +170,7 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
                   </div>
                </div>
 
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dailyVictory >= 0 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>Net Surplus / Day</span>
                   {showSkeleton ? (
                     <Shimmer className="h-6 w-20 mt-auto" dm={dm} />
@@ -185,18 +185,18 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
          <div className="col-span-5 flex flex-col">
             <SectionHeader icon={Scale} title="ข้อมูลสำคัญ" dm={dm} />
             <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>สัดส่วนค่าอาหาร</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     {showSkeleton ? <Shimmer className="h-6 w-12" dm={dm} /> : <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>}
                     {!showSkeleton && <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />}
                   </div>
                </div>
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>กินเฉลี่ย/วัน</span>
                   {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(foodDailyAvg)}</span>}
                </div>
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-white'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-slate-400/70' : 'text-slate-500/70'}`}>รายจ่ายเฉลี่ย/วัน</span>
                   {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>{formatMoney(dailyAvg)}</span>}
                </div>
@@ -248,7 +248,7 @@ export default function SummaryCards() {
   if (!analytics) return null;
 
   return (
-    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'}`}>
+    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
       <SummaryVitals analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
       <SummaryStrategic analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
       <SummaryForecasting analytics={analytics} dm={dm} showSkeleton={showSkeleton} />

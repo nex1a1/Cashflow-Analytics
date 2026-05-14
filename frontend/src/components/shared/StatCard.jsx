@@ -19,7 +19,7 @@ export default function StatCard({
       <div className={`group flex items-center gap-2 px-3 py-1.5 rounded-sm border transition-all duration-300 ${
         dm 
           ? 'bg-slate-900/40 hover:bg-slate-800/60' 
-          : 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300'
+          : 'bg-slate-50 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300'
       }`} style={{ borderColor: color.border || undefined }}>
         <div className={`p-1.5 rounded-sm ${color.bg} shrink-0 transition-transform group-hover:scale-110`}>
           {icon}
@@ -48,7 +48,7 @@ export default function StatCard({
     <div className={`relative overflow-hidden flex flex-col p-4 rounded-sm border transition-all duration-300 group ${
       dm 
         ? 'bg-slate-800/80 border-slate-700 hover:bg-slate-800 hover:border-slate-600' 
-        : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'
+        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
     }`}>
       {/* Background Icon Glow */}
       <div className={`absolute -right-2 -bottom-2 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 ${color.text}`}>

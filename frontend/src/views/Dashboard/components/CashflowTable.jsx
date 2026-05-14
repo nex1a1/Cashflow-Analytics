@@ -133,7 +133,7 @@ const CashflowTableRow = ({
 
   return (
     <tr className="group hover:bg-slate-400/5 transition-colors">
-      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-r ${thinBorder} transition-colors ${dm ? 'text-blue-300 bg-slate-800' : 'text-[#00509E] bg-white'}`}>{getThaiMonth(row.monthStr)}</td>
+      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-r ${thinBorder} transition-colors ${dm ? 'text-blue-300 bg-slate-800' : 'text-[#00509E] bg-slate-50'}`}>{getThaiMonth(row.monthStr)}</td>
       
       {activeIncomeGroups.map((g, idx) => {
         const isExpanded = expandedGroups.has(g.id);
@@ -285,7 +285,7 @@ export default function CashflowTable() {
   const thinBorder = dm ? 'border-slate-700' : 'border-slate-200';
   const boxBorder = dm ? 'border-slate-500' : 'border-slate-400';
   const boundaryBorder = dm ? 'border-r-2 !border-r-slate-500' : 'border-r-2 !border-r-slate-300';
-  const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
+  const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
 
   const segmentProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
@@ -294,7 +294,7 @@ export default function CashflowTable() {
 
   return (
     <div className={`${card} overflow-hidden`}>
-      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'}`}>
+      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center gap-2">
           <FileSpreadsheet className={`w-4 h-4 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
           <h3 className={`font-bold text-sm ${dm ? 'text-slate-200' : 'text-slate-800'}`}>ตารางสรุปกระแสเงินสด</h3>

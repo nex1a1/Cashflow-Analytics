@@ -25,7 +25,11 @@ const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear') => (
       maxRotation: 0,
       autoSkip: true,
     },
-    grid:   { display: false },
+    grid: {
+      display: true,
+      color: isDarkMode ? 'rgba(148, 163, 184, 0.05)' : 'rgba(100, 116, 139, 0.05)',
+      drawTicks: false,
+    },
     border: { display: false },
   },
   y: {
@@ -35,15 +39,20 @@ const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear') => (
     ticks: {
       color: isDarkMode ? '#94a3b8' : '#64748b',
       font: { size: 10, weight: '500' },
-      padding: 4,
+      padding: 8,
       maxTicksLimit: 12,
       callback: (v) => formatTickValue(v),
     },
     grid: { 
-      color: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', 
-      lineWidth: 1 
+      color: isDarkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(100, 116, 139, 0.12)', 
+      lineWidth: 1,
+      drawTicks: false,
     },
-    border: { dash: [4, 4], display: false },
+    border: { 
+      display: true, 
+      color: isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+      dash: [4, 4] 
+    },
   },
 });
 

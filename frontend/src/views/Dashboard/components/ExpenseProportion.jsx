@@ -12,7 +12,7 @@ import { useDashboardContext } from '../context/DashboardContext';
  */
 const CatItem = ({ cat, dm, idx }) => (
   <div 
-    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-white hover:bg-slate-50 border-slate-100'} transition-all`}
+    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
     style={{ borderLeftColor: cat.color }}
   >
     <div className="flex justify-between items-start gap-1 mb-1">
@@ -65,7 +65,7 @@ export default function ExpenseProportion() {
   }, [dm]);
   
   const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
-    dm ? 'bg-[#111827] border-slate-700/50' : 'bg-white border-slate-200'
+    dm ? 'bg-[#111827] border-slate-700/50' : 'bg-slate-50 border-slate-200'
   }`;
 
   if (catCount === 0 && !showSkeleton) {
@@ -100,7 +100,7 @@ export default function ExpenseProportion() {
           </div>
           <div className="flex-1 grid grid-cols-5 gap-[1px] bg-slate-700/20">
              {[...Array(5)].map((_, i) => (
-               <div key={i} className={`p-2 animate-pulse ${dm ? 'bg-slate-800/40' : 'bg-white'}`}>
+               <div key={i} className={`p-2 animate-pulse ${dm ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
                   <div className={`h-2 w-12 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
                   <div className={`h-4 w-16 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
                   <div className={`h-1 w-full rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />

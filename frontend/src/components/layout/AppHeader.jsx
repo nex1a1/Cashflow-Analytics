@@ -51,7 +51,7 @@ export default function AppHeader({
   return (
     <div className="flex flex-col relative z-[60]">
       {/* ── Top Header (Logo & Global Actions) ── */}
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3 border-b transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3 border-b transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         
         {/* Left: Logo & Status */}
         <div className="flex items-center gap-3">
@@ -138,7 +138,7 @@ export default function AppHeader({
       </div>
 
       {/* ── Sub Header (Tab Navigation & Context Actions) ── */}
-      <div className={`sticky top-0 z-30 flex flex-col md:flex-row justify-between items-center px-4 md:px-6 border-b transition-colors backdrop-blur-md ${dm ? 'bg-slate-900/90 border-slate-800 shadow-sm' : 'bg-white/90 border-slate-200 shadow-sm'}`}>
+      <div className={`sticky top-0 z-30 flex flex-col md:flex-row justify-between items-center px-4 md:px-6 border-b transition-colors backdrop-blur-md ${dm ? 'bg-slate-900/90 border-slate-800 shadow-sm' : 'bg-slate-50/90 border-slate-200 shadow-sm'}`}>
         <div className="flex w-full md:w-auto overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;

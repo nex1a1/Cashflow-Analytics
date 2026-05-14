@@ -113,7 +113,7 @@ const MainChartFilterMenu = ({
       </button>
 
       {showCatMenu && (
-        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-200 shadow-slate-300/50'}`}>
+        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-slate-50 border-slate-200 shadow-slate-300/50'}`}>
           <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
             <label className="flex items-center justify-between cursor-pointer group">
               <div className="flex flex-col pr-3">
@@ -281,7 +281,7 @@ export default function MainChart() {
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
-  const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`;
+  const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
   const breakdownLabel = isBreakdown ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓') : 'แจกแจง';
 
   return (

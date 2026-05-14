@@ -90,10 +90,10 @@ export default function MainLayout({ controller }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col ${isDarkMode ? 'dark-mode' : ''}`}
+      className={`min-h-screen flex flex-col transition-colors duration-300 ${isDarkMode ? 'dark-mode bg-slate-950' : 'bg-slate-100'}`}
       style={{ fontFamily: "'Inter', 'IBM Plex Sans Thai Looped', sans-serif" }}
     >
-      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`} style={{ scrollbarGutter: 'stable' }}>
+      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#00509E] shadow-xl rounded-xl flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`} style={{ scrollbarGutter: 'stable' }}>
 
         <AppHeader
           dbStatus={dbStatus} transactionCount={transactions.length}
@@ -115,7 +115,7 @@ export default function MainLayout({ controller }) {
           fileInputRef={fileInputRef}
         />
 
-        <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50/50'}`}>
+        <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100/60'}`}>
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>

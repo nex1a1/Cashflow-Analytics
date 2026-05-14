@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Settings2, Info, Coins, Wallet } from 'lucide-react';
+import { Settings2, Info, Coins, Wallet, Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
@@ -19,7 +19,7 @@ export default function SettingsView({
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
   enableSmartInsights, setEnableSmartInsights, triggerToast
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const { isDarkMode: dm, toggleTheme } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
   
   const onAddCategory = (type) => {
@@ -159,6 +159,29 @@ export default function SettingsView({
 
         {/* ── RIGHT COLUMN: Structure, Settings & Danger Zone ── */}
         <div className="flex flex-col gap-4">
+          <SectionCard
+            accentColor="orange"
+            icon={<Monitor className="w-3.5 h-3.5" />}
+            title="ธีมและการแสดงผล"
+          >
+            <div className="p-4 flex flex-col gap-4">
+              <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex flex-col pr-3">
+                  <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>โหมดมืด (Dark Mode)</span>
+                  <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>สลับระหว่างโหมดกลางวันและกลางคืน</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {dm ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                  <div className="relative flex items-center shrink-0" onClick={toggleTheme}>
+                    <input type="checkbox" className="sr-only" checked={dm} readOnly />
+                    <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${dm ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                    <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${dm ? 'translate-x-4' : ''}`} />
+                  </div>
+                </div>
+              </label>
+            </div>
+          </SectionCard>
+
           <CashflowGroupsCard 
             cashflowGroups={cashflowGroups}
             handleAddCashflowGroup={handleAddCashflowGroup}
