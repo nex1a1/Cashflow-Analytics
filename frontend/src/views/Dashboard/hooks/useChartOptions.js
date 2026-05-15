@@ -8,11 +8,17 @@ import { formatMoney } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 
 export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
-  const { analytics, dm } = useDashboardContext();
+  const { analytics, dm, filterPeriod } = useDashboardContext();
 
   return useMemo(() => {
     if (!analytics) return {};
     
+    // Check if the current period is a single month (e.g., "2024-03")
+    // If it is, we don't want to skip days on the X-axis.
+    // If it's a longer period (H1, Q1, YYYY, all), we enable autoSkip.
+    const isSingleMonth = /^\d{4}-\d{2}$/.test(filterPeriod);
+    const autoSkip = !isSingleMonth;
+
     if (chartViewType === 'sankey') {
       return {
         responsive: true, maintainAspectRatio: false, color: dm ? '#FFFFFF' : '#1e293b',
@@ -65,11 +71,11 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
     let baseOptions;
     const yType = isLogScale ? 'logarithmic' : 'linear';
     const isStacked = isBreakdown && chartViewType === 'bar';
-    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm, yType);
-    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType);
-    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm, yType);
-    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType);
-    else baseOptions = getBarChartOptions(dm, yType);
+    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm, yType, autoSkip);
+    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType, autoSkip);
+    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm, yType, autoSkip);
+    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType, autoSkip);
+    else baseOptions = getBarChartOptions(dm, yType, autoSkip);
 
     return {
       ...baseOptions,

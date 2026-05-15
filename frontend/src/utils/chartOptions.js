@@ -17,13 +17,15 @@ const formatTickValue = (v) => {
   return v.toLocaleString();
 };
 
-const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear') => ({
+const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear', autoSkip = true) => ({
   x: {
     ticks: {
       color: isDarkMode ? '#94a3b8' : '#64748b',
-      font: { size: 11 },
-      maxRotation: 0,
-      autoSkip: true,
+      font: { size: 9 },
+      maxRotation: 90,
+      minRotation: 0,
+      autoSkip: autoSkip,
+      autoSkipPadding: 15,
     },
     grid: {
       display: true,
@@ -56,7 +58,7 @@ const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear') => (
   },
 });
 
-export const getComboChartOptions = (isDarkMode, yType = 'linear') => ({
+export const getComboChartOptions = (isDarkMode, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
@@ -72,11 +74,11 @@ export const getComboChartOptions = (isDarkMode, yType = 'linear') => ({
   barPercentage: 0.6,
   categoryPercentage: 0.8,
   animation: { duration: 800, easing: 'easeInOutQuart' },
-  scales: getScaleOptions(isDarkMode, false, yType),
+  scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
 // เพิ่ม showLegend parameter
-export const getBarChartOptions = (isDarkMode, yType = 'linear') => ({
+export const getBarChartOptions = (isDarkMode, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
@@ -92,11 +94,11 @@ export const getBarChartOptions = (isDarkMode, yType = 'linear') => ({
   barPercentage: 0.6,
   categoryPercentage: 0.8,
   animation: { duration: 800, easing: 'easeInOutQuart' },
-  scales: getScaleOptions(isDarkMode, false, yType),
+  scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
 // เพิ่ม showLegend parameter
-export const getLineChartOptions = (isDarkMode, yType = 'linear') => ({
+export const getLineChartOptions = (isDarkMode, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
@@ -109,7 +111,7 @@ export const getLineChartOptions = (isDarkMode, yType = 'linear') => ({
     },
   },
   animation: { duration: 800, easing: 'easeInOutQuart' },
-  scales: getScaleOptions(isDarkMode, true, yType),
+  scales: getScaleOptions(isDarkMode, true, yType, autoSkip),
 });
 
 export const getDoughnutChartOptions = (isDarkMode) => ({
