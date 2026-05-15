@@ -63,7 +63,9 @@ export default function useTransactionData({
     try {
       await Promise.all([
         loadData(currentRange.start, currentRange.end),
-        loadAnalytics(currentRange.start, currentRange.end)
+        loadAnalytics(currentRange.start, currentRange.end),
+        transactionService.getFrequentItems().then(setFrequentItems),
+        transactionService.getPeriods().then(setMasterPeriods)
       ]);
     } catch (err) { console.error('Refresh failed', err); }
   }, [loadData, loadAnalytics, currentRange]);

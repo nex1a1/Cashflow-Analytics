@@ -41,7 +41,8 @@ export default function QuickSuggest({
   return (
     <div className={`w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${dm ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
       <h4 className={`shrink-0 font-bold text-sm flex items-center gap-2 mb-3 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>
-        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> Quick Suggestions
+        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
+        Quick Suggestions {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
       </h4>
       <div className="mb-3 shrink-0">
         <select value={suggCatFilter} onChange={e => setSuggCatFilter(e.target.value)} className={tokens.input}>
@@ -55,7 +56,7 @@ export default function QuickSuggest({
         ) : (
           <div className="flex flex-col gap-2">
             {quickSuggestions.map((s, idx) => {
-              const catObj = catMap[s.categoryId] || categories.find(c => c.id === s.categoryId || c.name === s.categoryId);
+              const catObj = catMap[s.categoryId] || catMap[s.categoryName] || categories.find(c => c.id === s.categoryId || c.name === s.categoryName);
               const catColor = catObj?.color || '#cbd5e1';
               const bgAlpha = dm ? 0.2 : 0.15;
               
