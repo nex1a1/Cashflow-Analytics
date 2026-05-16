@@ -8,15 +8,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PeriodPicker from '../layout/PeriodPicker';
 import { isDateInFilter } from '../../utils/dateHelpers';
 import { useTheme } from '../../context/ThemeContext';
+import { transactionService } from '../../services/api';
 
 export default function ExportModal({
-  isOpen, onClose, transactions, categories, dayTypes, dayTypeConfig,
+  isOpen, onClose, transactions: filteredTransactions, categories, dayTypes, dayTypeConfig,
   groupedOptions, getFilterLabel, initialPeriod
 }) {
   const { isDarkMode: dm } = useTheme();
   const [exportPeriod, setExportPeriod] = useState(initialPeriod || 'ALL');
   const [exportFormat, setExportFormat] = useState('long');
   const [isExporting, setIsExporting] = useState(false);
+  const [localTransactions, setLocalTransactions] = useState([]);
+  const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
     const handleEsc = (e) => { if (e.key === 'Escape' && isOpen && !isExporting) onClose(); };
@@ -24,31 +27,133 @@ export default function ExportModal({
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose, isExporting]);
 
-  useEffect(() => { if (isOpen) setExportPeriod(initialPeriod || 'ALL'); }, [isOpen, initialPeriod]);
+  useEffect(() => { 
+    if (isOpen) {
+      setExportPeriod(initialPeriod || 'ALL');
+      // Fetch all transactions for export to override the filtered prop
+      const fetchAll = async () => {
+        setIsFetching(true);
+        try {
+          const all = await transactionService.getAll();
+          setLocalTransactions(all);
+        } catch (err) {
+          console.error("Export fetch failed:", err);
+          // Fallback to prop if fetch fails
+          setLocalTransactions(filteredTransactions);
+        } finally {
+          setIsFetching(false);
+        }
+      };
+      fetchAll();
+    } 
+  }, [isOpen, initialPeriod, filteredTransactions]);
 
   const dataToExport = useMemo(() => 
-    transactions.filter(t => isDateInFilter(t.date, exportPeriod) && !t.category.includes('หักวงเงิน')),
-    [transactions, exportPeriod]
+    localTransactions.filter(t => isDateInFilter(t.date, exportPeriod) && !t.category.includes('หักวงเงิน')),
+    [localTransactions, exportPeriod]
   );
 
   const stats = useMemo(() => {
     const rowCount = exportFormat === 'full' 
-      ? transactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length
+      ? localTransactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length
       : (exportFormat === 'wide' ? [...new Set(dataToExport.map(t => t.date))].length : dataToExport.length);
     const estKB = (rowCount * (exportFormat === 'wide' ? 0.25 : 0.12)).toFixed(1);
     return { rowCount, estKB, hasData: rowCount > 0 };
-  }, [exportFormat, dataToExport, transactions, categories, dayTypeConfig, dayTypes]);
+  }, [exportFormat, dataToExport, localTransactions, categories, dayTypeConfig, dayTypes]);
 
   if (!isOpen) return null;
 
   const executeExport = () => {
     if ((!dataToExport.length && exportFormat !== 'full') || isExporting) return;
     setIsExporting(true);
-    setTimeout(() => {
-      // Logic การ Gen CSV ยังใช้ตัวเดิมที่คุณเขียนมาได้เลยครับ (ข้ามส่วนนี้เพื่อความกระชับ)
-      setIsExporting(false);
-      onClose();
-    }, 800);
+
+    try {
+      let csvContent = '\uFEFF'; // BOM for Excel/Thai support
+
+      if (exportFormat === 'long') {
+        const headers = ['Date', 'DayType', 'Type', 'Category', 'Description', 'Amount', 'Note'];
+        csvContent += headers.join(',') + '\n';
+        dataToExport.forEach(t => {
+          const cat = categories.find(c => c.name === t.category);
+          
+          // Map DayType ID to Label
+          const dtId = dayTypes[t.date];
+          let dtLabel = '';
+          if (dtId) {
+            dtLabel = dayTypeConfig.find(d => d.id === dtId)?.label || dtId;
+          } else {
+            // Weekend Fallback
+            const dayIdx = new Date(t.date).getDay();
+            const isWeekend = dayIdx === 0 || dayIdx === 6;
+            dtLabel = isWeekend ? (dayTypeConfig[1]?.label || 'Holiday') : (dayTypeConfig[0]?.label || 'Workday');
+          }
+
+          const row = [
+            t.date,
+            dtLabel,
+            cat?.type || 'expense',
+            t.category,
+            `"${(t.description || '').replace(/"/g, '""')}"`,
+            t.amount,
+            `"${(t.dayNote || '').replace(/"/g, '""')}"`
+          ];
+          csvContent += row.join(',') + '\n';
+        });
+      } else if (exportFormat === 'wide') {
+        // Pivot table style
+        const dates = [...new Set(dataToExport.map(t => t.date))].sort();
+        const cats = categories.filter(c => dataToExport.some(t => t.category === c.name));
+        const headers = ['Date', 'DayType', ...cats.map(c => c.name)];
+        csvContent += headers.join(',') + '\n';
+        
+        dates.forEach(date => {
+          const dtId = dayTypes[date];
+          let dtLabel = '';
+          if (dtId) {
+            dtLabel = dayTypeConfig.find(d => d.id === dtId)?.label || dtId;
+          } else {
+            const dayIdx = new Date(date).getDay();
+            const isWeekend = dayIdx === 0 || dayIdx === 6;
+            dtLabel = isWeekend ? (dayTypeConfig[1]?.label || 'Holiday') : (dayTypeConfig[0]?.label || 'Workday');
+          }
+
+          const row = [date, dtLabel];
+          cats.forEach(cat => {
+            const amount = dataToExport
+              .filter(t => t.date === date && t.category === cat.name)
+              .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            row.push(amount || 0);
+          });
+          csvContent += row.join(',') + '\n';
+        });
+      } else if (exportFormat === 'full') {
+        // Complete Database Dump (JSON embedded in CSV or multi-section CSV)
+        csvContent += 'SECTION,DATA\n';
+        csvContent += `TRANSACTIONS,"${JSON.stringify(localTransactions).replace(/"/g, '""')}"\n`;
+        csvContent += `CATEGORIES,"${JSON.stringify(categories).replace(/"/g, '""')}"\n`;
+        csvContent += `DAY_TYPES,"${JSON.stringify(dayTypes).replace(/"/g, '""')}"\n`;
+        csvContent += `CONFIG,"${JSON.stringify(dayTypeConfig).replace(/"/g, '""')}"\n`;
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const filename = `CashflowShark_${exportFormat}_${exportPeriod}_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setTimeout(() => {
+        setIsExporting(false);
+        onClose();
+      }, 500);
+    }
   };
 
   // --- UI Components ---
@@ -159,7 +264,15 @@ export default function ExportModal({
 
             <div className={`flex-1 rounded-sm border border-slate-800/50 flex flex-col relative z-20 overflow-hidden`}>
               <div className="flex-1 p-6 font-mono text-[10px] leading-relaxed overflow-auto scrollbar-tactical text-slate-400">
-                {!stats.hasData && exportFormat !== 'full' ? (
+                {isFetching ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                    <div className="space-y-1">
+                      <p className="text-blue-500 font-black tracking-widest uppercase">Fetching_Data_Stream</p>
+                      <p className="text-[9px] text-slate-600">Synchronizing with core database...</p>
+                    </div>
+                  </div>
+                ) : !stats.hasData && exportFormat !== 'full' ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                     <AlertTriangle className="w-8 h-8 text-amber-500 animate-pulse" />
                     <div className="space-y-1">
@@ -197,7 +310,7 @@ export default function ExportModal({
                     )}
                     {exportFormat === 'full' && (
                       <div className="space-y-1">
-                        <div className="flex gap-2"><span className="text-blue-500 font-black">[DB_MAP]</span> <span className="text-slate-200">TRANSACTION_OBJECTS</span> <span className="text-slate-600">-> {transactions.length} entries</span></div>
+                        <div className="flex gap-2"><span className="text-blue-500 font-black">[DB_MAP]</span> <span className="text-slate-200">TRANSACTION_OBJECTS</span> <span className="text-slate-600">-> {localTransactions.length} entries</span></div>
                         <div className="flex gap-2"><span className="text-amber-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CATEGORY_DEFINITIONS</span> <span className="text-slate-600">-> {categories.length} entries</span></div>
                         <div className="flex gap-2"><span className="text-emerald-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CALENDAR_STATE</span> <span className="text-slate-600">-> Linked</span></div>
                       </div>

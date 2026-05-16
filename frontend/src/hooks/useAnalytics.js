@@ -181,17 +181,7 @@ export default function useAnalytics({
           let passCategoryFilter = false;
           const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
           
-          if (activeFilters.includes('ALL')) {
-            passCategoryFilter = true;
-          } else if (activeFilters.includes('FIXED') && isFixed) {
-            passCategoryFilter = true;
-          } else if (activeFilters.includes('VARIABLE') && !isFixed) {
-            passCategoryFilter = true;
-          } else if (activeFilters.includes(catId)) {
-            passCategoryFilter = true;
-          }
-
-          if (passFixedFilter && passCategoryFilter) {
+          if (passFixedFilter && (activeFilters.includes('ALL') || (activeFilters.includes('FIXED') && isFixed) || (activeFilters.includes('VARIABLE') && !isFixed) || activeFilters.includes(catId) || activeFilters.includes(catObj.name))) {
             dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
             monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
             chartTotal += amt;
@@ -236,7 +226,7 @@ export default function useAnalytics({
     const actualSavings = netCashflow;
     const explicitSavings = totals.savings || 0;
     const numMonths = uniqueMonthsSet.size || 1;
-    const savingsRate = totals.income > 0 ? ((actualSavings / totals.income) * 100).toFixed(1) : 0;
+    const savingsRate = totals.income > 0 ? parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
 
     // ─── CATEGORY BREAKDOWN ───────────────────────────────────────────────────
     const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
@@ -251,7 +241,7 @@ export default function useAnalytics({
             if (activeFilters.includes('ALL')) return true;
             if (activeFilters.includes('FIXED') && catMeta.isFixed) return true;
             if (activeFilters.includes('VARIABLE') && !catMeta.isFixed) return true;
-            return activeFilters.includes(c.id);
+            return activeFilters.includes(c.id) || activeFilters.includes(c.name) || activeFilters.includes(catMeta.name);
           })
           .map(c => ({
             ...c,
@@ -266,7 +256,7 @@ export default function useAnalytics({
             if (activeFilters.includes('ALL')) return true;
             if (activeFilters.includes('FIXED') && catObj.isFixed) return true;
             if (activeFilters.includes('VARIABLE') && !catObj.isFixed) return true;
-            return activeFilters.includes(catId);
+            return activeFilters.includes(catId) || activeFilters.includes(catObj.name);
           })
           .sort((a, b) => b[1] - a[1])
           .map(([catId, amount]) => {
@@ -332,7 +322,7 @@ export default function useAnalytics({
     }
 
     // ─── FORECASTING ─────────────────────────────────────────────────────────
-    let projectedExpense = 0, safeToSpend = 0, showForecasting = false;
+    let projectedExpense = 0, safeToSpend = 0, projectedSurplus = 0, showForecasting = false;
     let periodDays = datesInPeriod.length || 1;
     let adjustedDailyAvg = totals.expense / periodDays;
     let adjustedFoodDailyAvg = totals.food / periodDays;
@@ -348,6 +338,7 @@ export default function useAnalytics({
       
       const variableRunRate = variableUpToToday / currentDay;
       projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
+      projectedSurplus = totals.income - projectedExpense;
       
       const remainingBudget = totals.income - totals.fixed - variableUpToToday;
       const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
@@ -372,7 +363,7 @@ export default function useAnalytics({
     }
 
     return {
-      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, smartInsights,
+      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus, smartInsights,
       prevTotals, totalExpense: totals.expense, totalIncome: totals.income,
       totalSavings: totals.savings || 0, actualSavings, explicitSavings,
       netCashflow, savingsRate, chartTotal, numMonths, sortedCats,

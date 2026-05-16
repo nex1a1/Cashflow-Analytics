@@ -1,4 +1,6 @@
 // src/utils/chartOptions.js
+import { formatMoney } from './formatters';
+
 // ─────────────────────────────────────────────────────────────
 const getTooltipOptions = (isDarkMode) => ({
   backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
@@ -66,7 +68,7 @@ export const getComboChartOptions = (isDarkMode, yType = 'linear', autoSkip = tr
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
       },
     },
   },
@@ -77,7 +79,6 @@ export const getComboChartOptions = (isDarkMode, yType = 'linear', autoSkip = tr
   scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
-// เพิ่ม showLegend parameter
 export const getBarChartOptions = (isDarkMode, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
@@ -86,7 +87,7 @@ export const getBarChartOptions = (isDarkMode, yType = 'linear', autoSkip = true
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
       },
     },
   },
@@ -97,7 +98,6 @@ export const getBarChartOptions = (isDarkMode, yType = 'linear', autoSkip = true
   scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
-// เพิ่ม showLegend parameter
 export const getLineChartOptions = (isDarkMode, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
@@ -106,7 +106,7 @@ export const getLineChartOptions = (isDarkMode, yType = 'linear', autoSkip = tru
     tooltip: {
       ...getTooltipOptions(isDarkMode),
       callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
       },
     },
   },
@@ -123,7 +123,7 @@ export const getDoughnutChartOptions = (isDarkMode) => ({
       ...getTooltipOptions(isDarkMode),
       cornerRadius: 8,
       callbacks: {
-        label: (ctx) => ` ${ctx.label}: ${ctx.raw?.toLocaleString('th-TH')} ฿`,
+        label: (ctx) => ` ${ctx.label}: ${formatMoney(ctx.raw)} ฿`,
       },
     },
   },

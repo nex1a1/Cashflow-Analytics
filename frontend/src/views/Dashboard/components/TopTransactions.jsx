@@ -144,7 +144,12 @@ export default function TopTransactions() {
     if (dashboardCategory) {
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
       if (!activeCats.includes('ALL')) {
-        filtered = filtered.filter(tx => activeCats.includes(tx.category_id) || activeCats.includes(tx.category));
+        filtered = filtered.filter(tx => {
+          const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
+          return activeCats.includes(tx.category_id) || 
+                 activeCats.includes(tx.category) || 
+                 (catDef && (activeCats.includes(catDef.id) || activeCats.includes(catDef.name)));
+        });
       }
     }
     filtered.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));

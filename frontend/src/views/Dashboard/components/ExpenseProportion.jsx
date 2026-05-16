@@ -30,7 +30,7 @@ const CatItem = ({ cat, dm, idx }) => (
     <div className="mt-auto flex flex-col gap-1">
       <div className="flex justify-between items-baseline">
         <p className={`text-[11px] font-bold tabular-nums ${dm ? 'text-slate-200' : 'text-slate-900'}`}>
-          {formatMoney(cat.amount).split('.')[0]}
+          {formatMoney(cat.amount)}
         </p>
       </div>
       <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
@@ -49,7 +49,7 @@ const CatItem = ({ cat, dm, idx }) => (
 
 export default function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
-  const { sortedCats = [], catChartData = { labels: [], datasets: [] }, totalExpense = 0 } = analytics;
+  const { sortedCats = [], catChartData = { labels: [], datasets: [] }, chartTotal = 0 } = analytics;
   const catCount = sortedCats.length;
 
   const options = useMemo(() => {
@@ -118,7 +118,7 @@ export default function ExpenseProportion() {
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                  <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Total</span>
                  <span className={`text-[12px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
-                   {formatMoney(totalExpense).split('.')[0]}
+                   {formatMoney(chartTotal)}
                  </span>
               </div>
             </div>

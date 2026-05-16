@@ -70,8 +70,6 @@ export const isDateInFilter = (dateStr, filter) => {
 };
 
 export const generateDatesForPeriod = (period, allTransactions) => {
-    if (!allTransactions || allTransactions.length === 0) return [];
-
     // Support Multi-select: handle as special case to avoid range logic issues
     if (period.includes(',')) {
         const months = period.split(',');
@@ -92,16 +90,17 @@ export const generateDatesForPeriod = (period, allTransactions) => {
         return dateArray;
     }
 
-    const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
-    if (filteredTx.length === 0) return [];
-
-    const txDates = filteredTx.map(t => parseDateStrToObj(t.isoDate || t.date).getTime());
-    const minTxDate = new Date(Math.min(...txDates));
-    const maxTxDate = new Date(Math.max(...txDates));
-
     let start, end;
 
     if (period === 'ALL') {
+        if (!allTransactions || allTransactions.length === 0) return [];
+        const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
+        if (filteredTx.length === 0) return [];
+
+        const txDates = filteredTx.map(t => parseDateStrToObj(t.isoDate || t.date).getTime());
+        const minTxDate = new Date(Math.min(...txDates));
+        const maxTxDate = new Date(Math.max(...txDates));
+
         start = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
         end = maxTxDate;
     } else if (period.match(/^\d{4}$/)) {
@@ -134,13 +133,20 @@ export const generateDatesForPeriod = (period, allTransactions) => {
         return [];
     }
 
-    if (period !== 'ALL' && !period.match(/^\d{4}-\d{2}$/)) {
-        if (end > maxTxDate) {
-            end = maxTxDate;
-        }
-        const minMonthStart = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
-        if (start < minMonthStart) {
-            start = minMonthStart;
+    if (period !== 'ALL' && !period.match(/^\d{4}-\d{2}$/) && allTransactions && allTransactions.length > 0) {
+        const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
+        if (filteredTx.length > 0) {
+            const txDates = filteredTx.map(t => parseDateStrToObj(t.isoDate || t.date).getTime());
+            const maxTxDate = new Date(Math.max(...txDates));
+            const minTxDate = new Date(Math.min(...txDates));
+
+            if (end > maxTxDate) {
+                end = maxTxDate;
+            }
+            const minMonthStart = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
+            if (start < minMonthStart) {
+                start = minMonthStart;
+            }
         }
     }
 
