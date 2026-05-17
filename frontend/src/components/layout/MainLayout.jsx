@@ -141,6 +141,7 @@ export default function MainLayout({ controller }) {
                   transactions={transactions} filterPeriod={filterPeriod}
                   setFilterPeriod={setFilterPeriod} rawAvailableMonths={rawAvailableMonths}
                   handleOpenAddModal={handleOpenAddModal} categories={categories}
+                  cashflowGroups={cashflowGroups}
                   dayTypes={dayTypes}
                   handleDayTypeChange={handleDayTypeChange} dayTypeConfig={dayTypeConfig}
                   getFilterLabel={getFilterLabel}

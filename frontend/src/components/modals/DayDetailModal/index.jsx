@@ -9,7 +9,7 @@ import TransactionList from './TransactionList';
 
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-export default function DayDetailModal({ dateStr, transactions = [], categories = [], onClose, onSave, onDelete, frequentItems = [] }) {
+export default function DayDetailModal({ dateStr, transactions = [], categories = [], cashflowGroups = [], onClose, onSave, onDelete, frequentItems = [] }) {
   const { isDarkMode: dm } = useTheme();
   const { showToast } = useToast();
   
@@ -51,17 +51,57 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose, categories]);
 
-  const txIds      = new Set(transactions.map(t => t.id));
-  const pendingItems = localItems.filter(i => !txIds.has(i.id));
-  const dayTx      = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
+  const groupMap = useMemo(() => {
+    return cashflowGroups.reduce((acc, g) => {
+      acc[g.id] = g;
+      return acc;
+    }, {});
+  }, [cashflowGroups]);
 
   const catMap = useMemo(() => {
     return categories.reduce((acc, c) => { 
-      acc[c.id] = c; 
-      acc[c.name] = c; // Fallback
+      const group = groupMap[c.cashflowGroup];
+      acc[c.id] = { ...c, _group: group }; 
+      acc[c.name] = { ...c, _group: group }; // Fallback
       return acc; 
     }, {});
-  }, [categories]);
+  }, [categories, groupMap]);
+
+  const dayTx = useMemo(() => {
+    const txIds = new Set(transactions.map(t => t.id));
+    const pendingItems = localItems.filter(i => !txIds.has(i.id));
+    const combined = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
+    
+    // Sankey-Style Logic Sorting
+    return combined.sort((a, b) => {
+      const catA = catMap[a.category_id] || catMap[a.category];
+      const catB = catMap[b.category_id] || catMap[b.category];
+
+      // 1. Sort by Type (Income -> Expense -> Savings)
+      const typeOrder = { income: 0, expense: 1, savings: 2 };
+      const typeA = typeOrder[catA?.type] ?? 9;
+      const typeB = typeOrder[catB?.type] ?? 9;
+      if (typeA !== typeB) return typeA - typeB;
+
+      // 2. Sort by Group order_index
+      const groupIdxA = catA?._group?.order_index ?? 999;
+      const groupIdxB = catB?._group?.order_index ?? 999;
+      if (groupIdxA !== groupIdxB) return groupIdxA - groupIdxB;
+
+      // 3. Sort by Category order_index
+      const catIdxA = catA?.order_index ?? 999;
+      const catIdxB = catB?.order_index ?? 999;
+      if (catIdxA !== catIdxB) return catIdxA - catIdxB;
+
+      // 4. Sort by Amount (Descending)
+      const amtA = parseFloat(a.amount) || 0;
+      const amtB = parseFloat(b.amount) || 0;
+      if (amtB !== amtA) return amtB - amtA;
+
+      // 5. Fallback to ID for stability
+      return String(a.id).localeCompare(String(b.id));
+    });
+  }, [transactions, localItems, dateStr, catMap]);
 
   const expenses   = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
   const income     = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
@@ -90,7 +130,8 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
       category_id: data.categoryId, 
       description: data.description || targetCatName, 
       amount: data.amount, 
-      dayNote: ''
+      dayNote: '',
+      created_at: new Date().toISOString()
     };
 
     setLocalItems(prev => [...prev, { ...newItem, _catObj: catObj }]);

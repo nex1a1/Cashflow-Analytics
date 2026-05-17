@@ -26,43 +26,45 @@ const CashflowTableHeader = ({
   };
 
   return (
-    <thead className={`border-b ${thinBorder} ${dm ? 'bg-slate-800/95' : 'bg-slate-100/95'}`}>
+    <thead className={`sticky top-0 z-30 ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
       <tr>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-10 align-middle border-r ${thinBorder} ${dm ? 'text-blue-300 bg-slate-900' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-b ${thinBorder} ${dm ? 'text-blue-300 bg-slate-900' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
+        
         {activeIncomeGroups.length > 0 && (
-          <th colSpan={activeIncomeGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-b border-dashed ${thinBorder} ${boundaryBorder} ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
+          <th colSpan={activeIncomeGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-l border-b border-dashed ${thinBorder} ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
             รายรับ (+)
           </th>
         )}
 
         {activeExpenseGroups.length > 0 && (
-          <th colSpan={activeExpenseGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-b border-dashed ${thinBorder} ${dm ? 'text-slate-400' : 'text-slate-700'}`}>
+          <th colSpan={activeExpenseGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-l border-b border-dashed ${thinBorder} ${dm ? 'text-slate-400' : 'text-slate-700'}`}>
             รายจ่าย (-)
           </th>
         )}
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l ${thinBorder} align-middle ${dm ? 'text-red-400' : 'text-red-800'}`}>Trend/ยอดจ่ายสุทธิ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold align-middle ${dm ? 'text-blue-400' : 'text-[#00509E]'}`}>เงินคงเหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center align-middle ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}>% ออม</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center align-middle ${dm ? 'text-pink-400' : 'text-pink-600'}`}>% จ่าย</th>
+        
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 ${dm ? 'text-red-400 bg-slate-900' : 'text-red-800 bg-slate-200'} min-w-[100px] max-w-[100px]`}>Trend</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[120px] z-50 ${dm ? 'text-blue-400 bg-slate-900' : 'text-[#00509E] bg-slate-200'} min-w-[110px] max-w-[110px]`}>เงินคงเหลือ</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${dm ? 'text-emerald-400 bg-slate-900' : 'text-emerald-600 bg-slate-200'} min-w-[60px] max-w-[60px]`}>%ออม</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 ${dm ? 'text-pink-400 bg-slate-900' : 'text-pink-600 bg-slate-200'} min-w-[60px] max-w-[60px] ${thinBorder}`}>%จ่าย</th>
       </tr>
       
       <tr>
         {activeIncomeGroups.map((g, idx) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
-          const isLastGroup = idx === activeIncomeGroups.length - 1;
+          const isLastIncome = idx === activeIncomeGroups.length - 1;
 
           return (
             <React.Fragment key={g.id}>
               <th 
                 onClick={() => toggleGroup(g.id)}
-                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l ${isExpanded ? boxBorder : thinBorder} ${isLastGroup && !isExpanded ? boundaryBorder : ''}`} 
+                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
                 style={{ color: g.color || (dm ? '#34d399' : '#059669'), backgroundColor: getHighlightBg(g) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
               </th>
               {isExpanded && cats.map((c, cIdx) => (
-                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-t border-b transition-all ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`} border-t-slate-500 border-b-slate-500 ${isLastGroup && cIdx === cats.length - 1 ? boundaryBorder : ''}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-all ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-slate-500 border-b-slate-500`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
                   {c.name}
                 </th>
               ))}
@@ -77,13 +79,13 @@ const CashflowTableHeader = ({
             <React.Fragment key={g.id}>
               <th 
                 onClick={() => toggleGroup(g.id)}
-                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l ${isExpanded ? boxBorder : thinBorder}`} 
+                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder}`} 
                 style={{ color: g.color || (dm ? '#cbd5e1' : '#334155'), backgroundColor: getHighlightBg(g) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
               </th>
-              {isExpanded && cats.map((c, cIdx) => (
-                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-t border-b transition-all ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`} border-t-slate-500 border-b-slate-500`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+              {isExpanded && cats.map((c) => (
+                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-all ${thinBorder} border-t-slate-500 border-b-slate-500`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
                   {c.name}
                 </th>
               ))}
@@ -125,7 +127,7 @@ const CashflowTableRow = ({
     const isUp = percent > 0;
     const isFlat = Math.abs(percent) < 0.1;
     expMoMJSX = (
-      <span className={`inline-flex items-center justify-center min-w-[44px] text-[10px] font-bold px-1 py-[1px] rounded leading-none ${isFlat ? (dm ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500') : (isUp ? (dm ? 'bg-red-500/20 text-red-400' : 'bg-red-50 text-red-600') : (dm ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'))}`}>
+      <span className={`inline-flex items-center justify-center min-w-[38px] text-[9px] font-black px-1 py-[1px] rounded leading-none ${isFlat ? (dm ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500') : (isUp ? (dm ? 'bg-red-500/20 text-red-400' : 'bg-red-50 text-red-600') : (dm ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'))}`}>
         {isFlat ? '-' : (isUp ? '↑' : '↓')} {Math.abs(percent).toFixed(1)}%
       </span>
     );
@@ -133,22 +135,22 @@ const CashflowTableRow = ({
 
   return (
     <tr className="group hover:bg-slate-400/5 transition-colors">
-      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-r ${thinBorder} transition-colors ${dm ? 'text-blue-300 bg-slate-800' : 'text-[#00509E] bg-slate-50'}`}>{getThaiMonth(row.monthStr)}</td>
+      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} transition-colors ${dm ? 'text-blue-300 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'}`}>{getThaiMonth(row.monthStr)}</td>
       
       {activeIncomeGroups.map((g, idx) => {
         const isExpanded = expandedGroups.has(g.id);
         const cats = getActiveCatsForGroup(g.id);
-        const isLastGroup = idx === activeIncomeGroups.length - 1;
+        const isLastIncome = idx === activeIncomeGroups.length - 1;
 
         return (
           <React.Fragment key={g.id}>
-            <td className={`px-3 py-2 font-semibold border-l ${isExpanded ? boxBorder : thinBorder} ${isLastGroup && !isExpanded ? boundaryBorder : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669'), backgroundColor: getHighlightBg(g) }}>
+            <td className={`px-3 py-2 font-semibold border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669'), backgroundColor: getHighlightBg(g) }}>
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
             {isExpanded && cats.map((c, cIdx) => {
               const amt = analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0;
               return (
-                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`} ${isLastGroup && cIdx === cats.length - 1 ? boundaryBorder : ''}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
               );
@@ -162,13 +164,13 @@ const CashflowTableRow = ({
         const cats = getActiveCatsForGroup(g.id);
         return (
           <React.Fragment key={g.id}>
-            <td className={`px-3 py-2 font-medium border-l ${isExpanded ? boxBorder : thinBorder}`} style={{ color: g.color || (dm ? '#cbd5e1' : '#334155'), backgroundColor: getHighlightBg(g) }}>
+            <td className={`px-3 py-2 font-medium border-l border-b ${isExpanded ? boxBorder : thinBorder}`} style={{ color: g.color || (dm ? '#cbd5e1' : '#334155'), backgroundColor: getHighlightBg(g) }}>
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
-            {isExpanded && cats.map((c, cIdx) => {
+            {isExpanded && cats.map((c) => {
               const amt = analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0;
               return (
-                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b ${thinBorder}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
               );
@@ -177,15 +179,15 @@ const CashflowTableRow = ({
         );
       })}
 
-      <td className={`px-3 py-2 font-bold border-l ${thinBorder} ${dm ? 'text-red-400' : 'text-red-700'}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="w-11 flex-shrink-0 text-left">{expMoMJSX}</div>
-          <span>{formatMoney(row.totalExp)}</span>
+      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 transition-colors ${dm ? 'text-red-400 bg-slate-800 group-hover:bg-slate-700' : 'text-red-700 bg-slate-50 group-hover:bg-slate-100'} min-w-[100px] max-w-[100px]`}>
+        <div className="flex items-center justify-between gap-1">
+          <div className="shrink-0">{expMoMJSX}</div>
+          <span className="text-[11px] tabular-nums">{formatMoney(row.totalExp)}</span>
         </div>
       </td>
-      <td className={`px-3 py-2 font-black ${dm ? 'text-blue-400' : 'text-[#00509E]'}`}>{formatMoney(row.income - row.totalExp)}</td>
-      <td className={`px-3 py-2 font-black text-center ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%</td>
-      <td className={`px-3 py-2 font-black text-center ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'}`}>{row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}</td>
+      <td className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[120px] z-10 transition-colors ${dm ? 'text-blue-400 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'} min-w-[110px] max-w-[110px]`}>{formatMoney(row.income - row.totalExp)}</td>
+      <td className={`px-3 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[60px] z-10 transition-colors ${dm ? 'bg-slate-800 group-hover:bg-slate-700' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%</td>
+      <td className={`px-3 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors ${dm ? 'bg-slate-800 group-hover:bg-slate-700' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}</td>
     </tr>
   );
 };
@@ -200,21 +202,21 @@ const CashflowTableFooter = ({
   if (analytics.numMonths <= 1) return null;
 
   return (
-    <tfoot className={`font-bold border-t ${thinBorder} ${dm ? 'bg-slate-900 text-slate-200' : 'bg-slate-800 text-white'}`}>
-      <tr>
-        <td className={`px-3 py-2.5 text-center sticky left-0 z-10 bg-inherit border-r ${thinBorder}`}>รวมทั้งหมด</td>
+    <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`}>
+      <tr className={dm ? 'text-slate-200' : 'text-white'}>
+        <td className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} ${dm ? 'bg-slate-900' : 'bg-slate-800'}`}>รวมทั้งหมด</td>
         {activeIncomeGroups.map((g, idx) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
-          const isLastGroup = idx === activeIncomeGroups.length - 1;
+          const isLastIncome = idx === activeIncomeGroups.length - 1;
 
           return (
             <React.Fragment key={g.id}>
-              <td className={`px-3 py-2.5 border-l ${isExpanded ? boxBorder : thinBorder} ${isLastGroup && !isExpanded ? boundaryBorder : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669') }}>
+              <td className={`px-3 py-2.5 border-l border-b ${thinBorder} ${dm ? 'bg-slate-900' : 'bg-slate-800'} ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} style={{ color: g.color || (dm ? '#34d399' : '#059669') }}>
                 {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
               {isExpanded && cats.map((c, cIdx) => (
-                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`} ${isLastGroup && cIdx === cats.length - 1 ? boundaryBorder : ''}`} style={{ color: c.color }}>
+                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b ${dm ? 'bg-slate-900' : 'bg-slate-800'} ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder}`} style={{ color: c.color }}>
                   {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
                 </td>
               ))}
@@ -227,21 +229,21 @@ const CashflowTableFooter = ({
           const cats = getActiveCatsForGroup(g.id);
           return (
             <React.Fragment key={g.id}>
-              <td className={`px-3 py-2.5 border-l ${isExpanded ? boxBorder : thinBorder}`} style={{ color: g.color || (dm ? '#cbd5e1' : '#334155') }}>
+              <td className={`px-3 py-2.5 border-l border-b ${thinBorder} ${dm ? 'bg-slate-900' : 'bg-slate-800'} ${isExpanded ? boxBorder : thinBorder}`} style={{ color: g.color || (dm ? '#cbd5e1' : '#334155') }}>
                 {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
-              {isExpanded && cats.map((c, cIdx) => (
-                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase ${cIdx === cats.length - 1 ? `border-r ${boxBorder}` : `border-r ${thinBorder}`}`} style={{ color: c.color }}>
+              {isExpanded && cats.map((c) => (
+                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b ${dm ? 'bg-slate-900' : 'bg-slate-800'} ${thinBorder}`} style={{ color: c.color }}>
                   {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
                 </td>
               ))}
             </React.Fragment>
           );
         })}
-        <td className={`px-3 py-2.5 border-l ${thinBorder} text-red-400`}>{formatMoney(analytics.totalExpense)}</td>
-        <td className={`px-3 py-2.5 text-blue-400`}>{formatMoney(analytics.netCashflow)}</td>
-        <td className="px-3 py-2.5 text-center text-emerald-400">{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</td>
-        <td className="px-3 py-2.5 text-center text-pink-400">{analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}</td>
+        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[230px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[100px] max-w-[100px]`}>{formatMoney(analytics.totalExpense)}</td>
+        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-blue-400 sticky right-[120px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[110px] max-w-[110px]`}>{formatMoney(analytics.netCashflow)}</td>
+        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[60px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</td>
+        <td className={`px-3 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}</td>
       </tr>
     </tfoot>
   );
@@ -301,13 +303,13 @@ export default function CashflowTable() {
         </div>
       </div>
       
-      <div className="overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+      <div className="overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'auto' }}>
         {showSkeleton ? (
           <div className="p-8">
             <div className={`h-40 w-full rounded-sm animate-pulse ${dm ? 'bg-slate-900/40' : 'bg-slate-50'}`} />
           </div>
         ) : (
-          <table className="w-full text-right text-[13px] whitespace-nowrap">
+          <table className="w-full min-w-full text-right text-[13px] whitespace-nowrap border-separate border-spacing-0">
             <CashflowTableHeader {...segmentProps} />
             <tbody className={`divide-y ${dm ? 'divide-slate-700/40' : 'divide-slate-100'}`}>
               {analytics.sortedCashflow.map((row) => (

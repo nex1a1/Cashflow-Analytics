@@ -12,6 +12,13 @@ const sortTransactions = (dataArr) =>
   [...dataArr].sort((a, b) => {
     const dateDiff = parseDateStrToObj(a.date) - parseDateStrToObj(b.date);
     if (dateDiff !== 0) return dateDiff;
+    
+    // Sort by created_at if available (Entry sequence)
+    if (a.created_at && b.created_at) {
+      return new Date(a.created_at) - new Date(b.created_at);
+    }
+    
+    // Fallback to ID only if timestamps are missing
     return String(a.id).localeCompare(String(b.id));
   });
 

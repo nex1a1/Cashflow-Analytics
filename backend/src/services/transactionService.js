@@ -9,6 +9,7 @@ class TransactionService {
         t.description, 
         t.amount, 
         t.category_id,
+        t.created_at,
         c.name as category,
         c.icon as category_icon,
         cg.name as group_name,
@@ -208,7 +209,7 @@ class TransactionService {
 
     const rows = db.prepare(`
       SELECT 
-        t.id, t.date, t.description, t.amount, t.category_id,
+        t.id, t.date, t.description, t.amount, t.category_id, t.created_at,
         c.name as category, cg.type as group_type
       FROM transactions_fts f
       JOIN transactions t ON f.rowid = t.rowid

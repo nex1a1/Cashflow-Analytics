@@ -62,13 +62,13 @@ export default function TransactionList({
           <p className="text-xs mt-1">เพิ่มข้อมูลใหม่ที่ฟอร์มด้านล่างเลยครับ!</p>
         </div>
       )}
-      {expenses.length > 0 && (
+      {income.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-600'}`}>
-            <Wallet className="w-3.5 h-3.5" /> รายจ่าย
+          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}>
+            <Coins className="w-3.5 h-3.5" /> รายรับ
           </p>
           <div className="space-y-1.5">
-            {expenses.map(tx => (
+            {income.map(tx => (
               <TxRow 
                 key={tx.id} 
                 tx={tx} 
@@ -80,13 +80,13 @@ export default function TransactionList({
           </div>
         </div>
       )}
-      {income.length > 0 && (
+      {expenses.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}>
-            <Coins className="w-3.5 h-3.5" /> รายรับ
+          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-600'}`}>
+            <Wallet className="w-3.5 h-3.5" /> รายจ่าย
           </p>
           <div className="space-y-1.5">
-            {income.map(tx => (
+            {expenses.map(tx => (
               <TxRow 
                 key={tx.id} 
                 tx={tx} 

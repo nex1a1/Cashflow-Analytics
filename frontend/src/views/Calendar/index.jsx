@@ -15,7 +15,7 @@ const formatValue = (val) => {
 
 export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
-  handleOpenAddModal, categories, dayTypes,
+  handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction, paymentMethods,
   isLoading, frequentItems = []
@@ -283,6 +283,7 @@ export default function CalendarView({
           dateStr={selectedDate}
           transactions={transactions}
           categories={categories}
+          cashflowGroups={cashflowGroups}
           onClose={() => setSelectedDate(null)}
           onSave={async (item) => { await onSaveTransaction(item); }}
           onDelete={(id) => { handleDeleteTransaction(id); }}

@@ -22,10 +22,8 @@ body {
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
-/* Custom Scrollbar แบบใสๆ ทันสมัย และไม่มี Scroll แนวนอน */
+/* Custom Scrollbar แบบใสๆ ทันสมัย */
 .custom-scrollbar {
-  overflow-y: auto;
-  overflow-x: hidden; /* ห้ามเกิด Scroll แนวนอนเด็ดขาด */
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
   
