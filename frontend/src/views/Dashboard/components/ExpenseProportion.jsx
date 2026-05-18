@@ -1,8 +1,8 @@
 // src/views/Dashboard/components/ExpenseProportion.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Doughnut } from 'react-chartjs-2';
-import { PieChart, Inbox } from 'lucide-react';
+import { PieChart, Inbox, ArrowDownWideNarrow, ListOrdered } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { getDoughnutChartOptions } from '../../../utils/chartOptions';
 import { useDashboardContext } from '../context/DashboardContext';
@@ -24,15 +24,15 @@ const CatItem = ({ cat, dm, idx }) => (
         <span className="shrink-0 leading-none group-hover:scale-110 transition-transform" style={{ color: cat.color }}>{cat.icon}</span>
         <span className="truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{cat.name}</span>
       </span>
-      <span className="text-sm font-black tabular-nums shrink-0 leading-none" style={{ color: cat.color }}>{cat.percentage}%</span>
+      <div className="flex flex-col items-end shrink-0 leading-none">
+        <span className="text-[9px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
+          {formatMoney(cat.amount)}
+        </span>
+        <span className="text-xs font-black tabular-nums" style={{ color: cat.color }}>{cat.percentage}%</span>
+      </div>
     </div>
     
     <div className="mt-auto flex flex-col gap-1">
-      <div className="flex justify-between items-baseline">
-        <p className={`text-[11px] font-bold tabular-nums ${dm ? 'text-slate-200' : 'text-slate-900'}`}>
-          {formatMoney(cat.amount)}
-        </p>
-      </div>
       <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
         <div 
           className="h-full transition-all duration-1000" 
@@ -47,10 +47,217 @@ const CatItem = ({ cat, dm, idx }) => (
   </div>
 );
 
+/**
+ * Sub-component for Group cell (With Category breakdown)
+ */
+const GroupItem = ({ item, dm }) => (
+  <div 
+    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-4 ${dm ? 'bg-slate-800/50 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
+    style={{ borderLeftColor: item.color }}
+  >
+    <div className="flex justify-between items-start gap-1 mb-2">
+      <div className="flex flex-col min-w-0">
+        <span className="text-[11px] font-black uppercase tracking-tight flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+          <span className="shrink-0 group-hover:scale-110 transition-transform">{item.icon || '📁'}</span>
+          <span className="truncate group-hover:text-blue-500 transition-colors">{item.name}</span>
+        </span>
+        <span className={`text-[9px] font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+          เฉลี่ยรายเดือน: {formatMoney(item.avgPerMonth)}
+        </span>
+      </div>
+      <div className="flex flex-col items-end shrink-0">
+        <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
+          {formatMoney(item.amount)}
+        </span>
+        <span className="text-lg font-black tabular-nums leading-none" style={{ color: item.color }}>
+          {item.percentage}%
+        </span>
+      </div>
+    </div>
+    
+    <div className="mb-3">
+      <div className={`w-full rounded-full h-[6px] overflow-hidden ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+        <div 
+          className="h-full transition-all duration-1000" 
+          style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+        />
+      </div>
+    </div>
+
+    {/* ─── CONSTITUENT CATEGORIES ─── */}
+    <div className={`pt-2 border-t border-dashed ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+      <div className="flex flex-col gap-0.5 h-[72px] overflow-y-auto pr-1 custom-scrollbar">
+        {(item.categories || []).map(c => (
+          <div key={c.id} className="flex items-center justify-between gap-2 overflow-hidden py-0.5">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="text-[9px] shrink-0 opacity-70">{c.icon || '✨'}</span>
+              <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                {c.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                {formatMoney(c.amount)}
+              </span>
+              <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                {c.relativePercentage}%
+              </span>
+            </div>
+          </div>
+        ))}
+        {(!item.categories || item.categories.length === 0) && (
+           <div className="flex items-center justify-center py-1">
+              <span className={`text-[8px] font-bold uppercase tracking-widest ${dm ? 'text-slate-600' : 'text-slate-300'}`}>No Categories</span>
+           </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * Sub-component for Allocation Ratio cell (Special UX)
+ */
+const AllocationItem = ({ item, dm }) => {
+  const diff = item.percentage - item.target;
+  const isOver = item.id !== 'savings' && diff > 5;
+  const isUnder = item.id === 'savings' && diff < -5;
+  const isGood = !isOver && !isUnder;
+
+  return (
+    <div 
+      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-4 ${dm ? 'bg-slate-800/60 hover:bg-slate-800/90 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
+      style={{ borderLeftColor: item.color }}
+    >
+      <div className="flex justify-between items-start gap-1 mb-2">
+        <div className="flex flex-col min-w-0">
+          <span className="text-[11px] font-black uppercase tracking-tight flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+            <span className="shrink-0">{item.icon}</span>
+            <span className="truncate">{item.name}</span>
+          </span>
+          <span className={`text-[9px] font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            เป้าหมาย: {item.target}%
+          </span>
+        </div>
+        <div className="flex flex-col items-end shrink-0">
+          <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
+            {formatMoney(item.amount)}
+          </span>
+          <span className="text-lg font-black tabular-nums leading-none" style={{ color: item.color }}>
+            {item.percentage}%
+          </span>
+          <span className={`text-[8px] font-black px-1 rounded-sm mt-1 uppercase ${
+            isGood ? 'bg-emerald-500/20 text-emerald-400' : (isOver ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400')
+          }`}>
+            {isGood ? 'Optimal' : (isOver ? 'Over Limit' : 'Below Target')}
+          </span>
+        </div>
+      </div>
+      
+      <div className="mb-2">
+        <div className={`w-full rounded-full h-[6px] overflow-hidden ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+          <div 
+            className="h-full transition-all duration-1000 relative" 
+            style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+          >
+            {/* Target Marker */}
+            <div 
+              className="absolute top-0 bottom-0 w-[2px] bg-white/40 shadow-sm" 
+              style={{ left: `${(item.target / Math.max(item.percentage, 1)) * 100}%` }} 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ─── CONSTITUENT GROUPS ─── */}
+      <div className={`pt-2 border-t border-dashed ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="flex flex-col gap-0.5 h-[72px] overflow-y-auto pr-1 custom-scrollbar">
+          {(item.groups || []).map(g => (
+            <div key={g.id} className="flex items-center justify-between gap-2 overflow-hidden py-0.5">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-[9px] shrink-0 opacity-70">{g.icon || '✨'}</span>
+                <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {g.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {formatMoney(g.amount)}
+                </span>
+                <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {g.relativePercentage}%
+                </span>
+              </div>
+            </div>
+          ))}
+          {item.id === 'savings' && item.groups?.length === 0 && (
+             <div className="flex items-center justify-between gap-2 py-0.5">
+                <span className={`text-[9px] font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>Net Surplus (เหลือสุทธิ)</span>
+                <span className={`text-[9px] font-black ${dm ? 'text-slate-300' : 'text-slate-600'}`}>100%</span>
+             </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
-  const { sortedCats = [], catChartData = { labels: [], datasets: [] }, chartTotal = 0 } = analytics;
-  const catCount = sortedCats.length;
+  const [displayMode, setDisplayMode] = useState('category'); // 'category', 'group', or 'allocation'
+  const [sortMode, setSortMode] = useState('amount'); // 'amount' or 'order'
+
+  const { 
+    sortedCats = [], chartTotal = 0,
+    sortedGroups = [], totalExpense = 0,
+    sortedAllocation = [], totalIncome = 0
+  } = analytics;
+
+  // Select data based on mode
+  const isGroupMode = displayMode === 'group';
+  const isAllocationMode = displayMode === 'allocation';
+  
+  const rawItems = useMemo(() => {
+    if (isGroupMode) return sortedGroups;
+    if (isAllocationMode) return sortedAllocation;
+    return sortedCats;
+  }, [isGroupMode, isAllocationMode, sortedGroups, sortedAllocation, sortedCats]);
+
+  // Apply Dynamic Sorting (Skip for allocation mode as it has fixed needs/wants/savings order)
+  const activeItems = useMemo(() => {
+    const items = [...rawItems];
+    if (isAllocationMode) return items; // Keep original order
+    
+    if (sortMode === 'amount') {
+      return items.sort((a, b) => b.amount - a.amount);
+    } else {
+      // Sort by order_index, then by amount as fallback
+      return items.sort((a, b) => (a.order_index - b.order_index) || (b.amount - a.amount));
+    }
+  }, [rawItems, sortMode, isAllocationMode]);
+
+  // Sync Chart Data with Sorted Items
+  const activeChartData = useMemo(() => {
+    return {
+      labels: activeItems.map(i => i.name),
+      datasets: [{
+        data: activeItems.map(i => i.amount),
+        backgroundColor: activeItems.map(i => i.color),
+        borderWidth: 2, 
+        borderColor: dm ? '#1e293b' : '#ffffff',
+      }],
+    };
+  }, [activeItems, dm]);
+
+  const activeTotal = useMemo(() => {
+    if (isGroupMode) return totalExpense;
+    if (isAllocationMode) return totalIncome || (totalExpense + (analytics.explicitSavings || 0));
+    return chartTotal;
+  }, [isGroupMode, isAllocationMode, totalExpense, totalIncome, analytics.explicitSavings, chartTotal]);
+
+  const gridColsClass = (isGroupMode || isAllocationMode) ? 'grid-cols-3' : 'grid-cols-5';
+
+  const itemCount = activeItems.length;
 
   const options = useMemo(() => {
     const baseOptions = getDoughnutChartOptions(dm);
@@ -68,7 +275,7 @@ export default function ExpenseProportion() {
     dm ? 'bg-[#111827] border-slate-700/50' : 'bg-slate-50 border-slate-200'
   }`;
 
-  if (catCount === 0 && !showSkeleton) {
+  if (itemCount === 0 && !showSkeleton) {
     return (
       <div className={`${cardClass} p-10 items-center justify-center text-center opacity-60`}>
         <Inbox className="w-10 h-10 mb-2 opacity-20" />
@@ -86,9 +293,71 @@ export default function ExpenseProportion() {
           <span className={`text-[9px] font-black uppercase tracking-widest ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
             สัดส่วนรายจ่าย (Proportions)
           </span>
+
+          {/* Mode Switcher */}
+          <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
+            <button 
+              onClick={() => setDisplayMode('category')}
+              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+                displayMode === 'category' 
+                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
+                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+              }`}
+            >
+              รายหมวด
+            </button>
+            <button 
+              onClick={() => setDisplayMode('group')}
+              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+                displayMode === 'group' 
+                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
+                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+              }`}
+            >
+              ตามกลุ่ม
+            </button>
+            <button 
+              onClick={() => setDisplayMode('allocation')}
+              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+                displayMode === 'allocation' 
+                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
+                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+              }`}
+            >
+              สัดส่วน 50/30/20
+            </button>
+          </div>
+
+          {/* Sort Switcher (Hidden in Allocation mode) */}
+          {!isAllocationMode && (
+            <div className={`ml-2 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
+              <button 
+                onClick={() => setSortMode('amount')}
+                title="เรียงตามยอดเงิน (มากไปน้อย)"
+                className={`px-1.5 py-0.5 rounded-sm transition-all ${
+                  sortMode === 'amount' 
+                  ? (dm ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-white text-amber-600 shadow-sm') 
+                  : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                }`}
+              >
+                <ArrowDownWideNarrow className="w-2.5 h-2.5" />
+              </button>
+              <button 
+                onClick={() => setSortMode('order')}
+                title="เรียงตามลำดับหมวดหมู่"
+                className={`px-1.5 py-0.5 rounded-sm transition-all ${
+                  sortMode === 'order' 
+                  ? (dm ? 'bg-blue-500/20 text-blue-400 shadow-sm' : 'bg-white text-blue-600 shadow-sm') 
+                  : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                }`}
+              >
+                <ListOrdered className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          )}
         </div>
         <span className={`text-[9px] font-black px-1.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>
-          {showSkeleton ? '...' : `${catCount} หมวดหมู่`}
+          {showSkeleton ? '...' : `${itemCount} ${isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่')}`}
         </span>
       </div>
 
@@ -109,29 +378,36 @@ export default function ExpenseProportion() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-row items-stretch">
-          
+        <div className="flex flex-row items-stretch min-h-[140px]">
+
           {/* LEFT: CHART ANCHOR (No Padding) */}
           <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
             <div className="relative w-[140px] h-[140px]">
-              <Doughnut data={catChartData} options={options} />
+              <Doughnut data={activeChartData} options={options} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                 <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>Total</span>
+                 <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                   {isAllocationMode ? 'Income' : 'Total'}
+                 </span>
                  <span className={`text-[12px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
-                   {formatMoney(chartTotal)}
+                   {formatMoney(activeTotal)}
                  </span>
               </div>
             </div>
           </div>
 
           {/* RIGHT: TABLE-GRID HUD */}
-          <div className="flex-1 grid grid-cols-5 gap-[1px] bg-slate-700/20">
-             {sortedCats.map((cat, idx) => (
-               <CatItem key={cat.id || idx} cat={cat} dm={dm} idx={idx} />
-             ))}
+          <div className={`flex-1 grid ${gridColsClass} gap-[1px] bg-slate-700/20`}>
+             {activeItems.map((item, idx) => {
+               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} />;
+               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} dm={dm} />;
+               return <CatItem key={item.id || idx} cat={item} dm={dm} idx={idx} />;
+             })}
              {/* Fill empty cells to maintain grid borders if needed */}
-             {[...Array((5 - (catCount % 5)) % 5)].map((_, i) => (
+             {![isAllocationMode, isGroupMode].some(Boolean) && [...Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
                <div key={`empty-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+             ))}
+             {(isAllocationMode || isGroupMode) && [...Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
+               <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
              ))}
           </div>
 

@@ -70,6 +70,26 @@ const CashflowGroupsCard = memo(({
                   <option value="expense">รายจ่าย</option>
                 </select>
 
+                {group.type !== 'income' ? (
+                  <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
+                    className={`p-1 text-[11px] font-bold outline-none border w-[85px] shrink-0 transition-colors ${
+                      dm ? 'bg-slate-900 border-slate-600' : 'bg-slate-50 border-slate-200'
+                    } ${
+                      (group.allocation_type || 'want') === 'need' 
+                        ? (dm ? 'text-rose-400' : 'text-rose-600') : 
+                      (group.allocation_type || 'want') === 'want' 
+                        ? (dm ? 'text-sky-400' : 'text-sky-600') : // Switched from yellow to Sky/Blue for better readability
+                      (dm ? 'text-emerald-400' : 'text-emerald-600')
+                    } cursor-pointer focus:border-purple-500`}
+                    title="ประเภทสัดส่วน (50/30/20)">
+                    <option value="need">NEED (จำเป็น)</option>
+                    <option value="want">WANT (ทั่วไป)</option>
+                    <option value="savings">SAVING (ออม)</option>
+                  </select>
+                ) : (
+                  <div className="w-[85px] shrink-0" /> // Spacer for alignment
+                )}
+
                 <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
                   className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${
                     dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-purple-500 placeholder:text-slate-600'

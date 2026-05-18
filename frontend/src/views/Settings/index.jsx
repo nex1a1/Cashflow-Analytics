@@ -31,6 +31,10 @@ export default function SettingsView({
   };
 
   const handleChangeCashflowGroup = (id, field, value) => {
+    // 1. Optimistic Update
+    setCashflowGroups(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
+    
+    // 2. Persistent Save
     const group = cashflowGroups.find(g => g.id === id);
     if (group) {
       handleUpdateCashflowGroup({ ...group, [field]: value });

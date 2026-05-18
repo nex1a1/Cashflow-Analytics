@@ -10,6 +10,7 @@ const initSchema = () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'savings')),
+      allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
       order_index INTEGER DEFAULT 0,
       color TEXT,
       icon TEXT,
@@ -192,6 +193,10 @@ const verifyTableColumns = () => {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN highlight_bg INTEGER DEFAULT 0");
     console.log('🔹 Forced: Added column highlight_bg to cashflow_groups');
   }
+  if (groupCols.length > 0 && !groupCols.includes('allocation_type')) {
+    db.exec("ALTER TABLE cashflow_groups ADD COLUMN allocation_type TEXT DEFAULT 'want'");
+    console.log('🔹 Forced: Added column allocation_type to cashflow_groups');
+  }
 
   // --- Day Types ---
   const dayTypeInfo = db.prepare("PRAGMA table_info(day_types)").all();
@@ -244,10 +249,10 @@ const seedInitialData = () => {
   // --- Seed Cashflow Groups ---
   const groupsCount = db.prepare("SELECT COUNT(*) as count FROM cashflow_groups").get().count;
   if (groupsCount === 0) {
-    const insertGroup = db.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?)");
-    insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
-    insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
-    insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
+    const insertGroup = db.prepare("INSERT INTO cashflow_groups (id, name, type, allocation_type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 'savings', 1, '#10B981', '💰');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 'need', 2, '#6366F1', '🏠');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 'want', 3, '#F59E0B', '🛒');
   }
 };
 

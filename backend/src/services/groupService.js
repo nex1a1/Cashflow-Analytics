@@ -11,11 +11,12 @@ class GroupService {
 
   upsert(group) {
     const stmt = db.prepare(`
-      INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, highlight_bg)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cashflow_groups (id, name, type, allocation_type, order_index, color, icon, highlight_bg)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         type = excluded.type,
+        allocation_type = excluded.allocation_type,
         order_index = excluded.order_index,
         color = excluded.color,
         icon = excluded.icon,
@@ -25,6 +26,7 @@ class GroupService {
       group.id,
       group.name,
       group.type,
+      group.allocation_type || 'want',
       group.order_index,
       group.color,
       group.icon,

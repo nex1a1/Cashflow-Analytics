@@ -6,6 +6,7 @@ const groupSchema = z.object({
   type: z.enum(['income', 'expense', 'savings'], {
     errorMap: () => ({ message: "Type must be 'income', 'expense', or 'savings'" })
   }),
+  allocation_type: z.enum(['need', 'want', 'savings']).optional().default('want'),
   order_index: z.number().int().optional().default(0),
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),

@@ -243,11 +243,15 @@ export default function useAnalytics({
             if (activeFilters.includes('VARIABLE') && !catMeta.isFixed) return true;
             return activeFilters.includes(c.id) || activeFilters.includes(c.name) || activeFilters.includes(catMeta.name);
           })
-          .map(c => ({
-            ...c,
-            percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
-            avgPerMonth: c.amount / (summaryData.monthly?.length || 1)
-          }))
+          .map(c => {
+            const catMeta = catMapLookup[c.id] || {};
+            return {
+              ...c,
+              percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
+              avgPerMonth: c.amount / (summaryData.monthly?.length || 1),
+              order_index: catMeta.order_index || 999
+            };
+          })
       : Object.entries(catMapData)
           .filter(([catId]) => {
             const catObj = catMapLookup[catId] || { isFixed: false };
@@ -268,9 +272,138 @@ export default function useAnalytics({
               percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
               avgPerMonth: amount / numMonths,
               icon: catObj.icon,
-              color: catObj.color || '#64748B'
+              color: catObj.color || '#64748B',
+              order_index: catObj.order_index || 999
             };
           });
+
+    // ─── GROUP BREAKDOWN (CashflowTable Mode) ─────────────────────────────────
+    const groupTotals = {};
+    const groupCatsMap = {}; // Track categories within each group
+    const groupChartTotal = { expense: 0 };
+    
+    // Aggregate from monthly data (already filtered by period)
+    Object.values(cashflowMap).forEach(m => {
+      Object.entries(m.groups).forEach(([groupId, amount]) => {
+        const groupObj = cashflowGroups.find(g => g.id === groupId);
+        if (!groupObj || groupObj.type !== 'expense') return; // Only expense for proportion
+        
+        groupTotals[groupId] = (groupTotals[groupId] || 0) + amount;
+        groupChartTotal.expense += amount;
+      });
+    });
+
+    // Link categories to their respective groups using the catMapData aggregated in main loop
+    Object.entries(catMapData).forEach(([catId, amount]) => {
+      const catObj = catMapLookup[catId];
+      if (!catObj || catObj.type !== 'expense') return;
+      const gId = catObj.cashflowGroup;
+      if (!gId || groupTotals[gId] === undefined) return;
+
+      if (!groupCatsMap[gId]) groupCatsMap[gId] = [];
+      groupCatsMap[gId].push({
+        id: catId,
+        name: catObj.name,
+        amount: amount,
+        icon: catObj.icon,
+        color: catObj.color,
+        order_index: catObj.order_index || 999
+      });
+    });
+
+    // Sort categories within each group and calc relative %
+    Object.keys(groupCatsMap).forEach(gId => {
+      const total = groupTotals[gId];
+      groupCatsMap[gId] = groupCatsMap[gId]
+        .map(c => ({
+          ...c,
+          relativePercentage: total > 0 ? ((c.amount / total) * 100).toFixed(0) : 0
+        }))
+        .sort((a, b) => (a.order_index - b.order_index) || (b.amount - a.amount));
+    });
+
+    const sortedGroups = cashflowGroups
+      .filter(g => g.type === 'expense' && groupTotals[g.id] > 0)
+      .map(g => ({
+        id: g.id,
+        name: g.name,
+        amount: groupTotals[g.id],
+        percentage: groupChartTotal.expense > 0 ? ((groupTotals[g.id] / groupChartTotal.expense) * 100).toFixed(1) : 0,
+        avgPerMonth: groupTotals[g.id] / numMonths,
+        icon: g.icon,
+        color: g.color || '#64748B',
+        order_index: g.order_index || 999,
+        categories: groupCatsMap[g.id] || []
+      }))
+      .sort((a, b) => (a.order_index - b.order_index) || (b.amount - a.amount));
+
+    const groupChartData = {
+      labels: sortedGroups.map(g => g.name),
+      datasets: [{
+        data: sortedGroups.map(g => g.amount),
+        backgroundColor: sortedGroups.map(g => g.color),
+        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+      }],
+    };
+
+    // ─── ALLOCATION BREAKDOWN (Ratio 50/30/20 Mode) ───────────────────────────
+    const allocTotals = { need: 0, want: 0, savings: 0 };
+    const allocGroupsMap = { need: [], want: [], savings: [] };
+    
+    // Aggregate by allocation_type of each group across the selected period
+    Object.values(cashflowMap).forEach(m => {
+      Object.entries(m.groups).forEach(([groupId, amount]) => {
+        if (amount <= 0) return;
+        const groupObj = cashflowGroups.find(g => g.id === groupId);
+        if (!groupObj) return;
+        
+        if (groupObj.type === 'expense' || groupObj.type === 'savings') {
+          const aType = groupObj.allocation_type || 'want';
+          allocTotals[aType] += amount;
+          
+          // Track individual group totals within this allocation
+          let groupEntry = allocGroupsMap[aType].find(g => g.id === groupId);
+          if (!groupEntry) {
+            groupEntry = { id: groupId, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+            allocGroupsMap[aType].push(groupEntry);
+          }
+          groupEntry.amount += amount;
+        }
+      });
+    });
+
+    // Calculate relative percentages for sub-groups
+    Object.keys(allocGroupsMap).forEach(key => {
+      const total = allocTotals[key];
+      allocGroupsMap[key] = allocGroupsMap[key]
+        .map(g => ({
+          ...g,
+          relativePercentage: total > 0 ? ((g.amount / total) * 100).toFixed(0) : 0
+        }))
+        .sort((a, b) => b.amount - a.amount);
+    });
+
+    const netSavingsActual = netCashflow; // Total remaining after ALL expenses
+    const allocationItems = [
+      { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: '#EF4444', icon: '🏠', target: 50, groups: allocGroupsMap.need },
+      { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: '#F59E0B', icon: '🛍️', target: 30, groups: allocGroupsMap.want },
+      { id: 'savings', name: 'Savings & Net', amount: Math.max(0, netSavingsActual), color: '#10B981', icon: '🏦', target: 20, groups: allocGroupsMap.savings }
+    ];
+
+    const allocationTotal = totals.income > 0 ? totals.income : (totals.expense + (netSavingsActual > 0 ? netSavingsActual : 0));
+    const sortedAllocation = allocationItems.map(item => ({
+      ...item,
+      percentage: allocationTotal > 0 ? ((item.amount / allocationTotal) * 100).toFixed(1) : 0
+    }));
+
+    const allocationChartData = {
+      labels: sortedAllocation.map(i => i.name),
+      datasets: [{
+        data: sortedAllocation.map(i => i.amount),
+        backgroundColor: sortedAllocation.map(i => i.color),
+        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+      }],
+    };
 
     // ─── CHART DATA & SORTED CASHFLOW ────────────────────────────────────────
     if (useBackendTotals && summaryData.monthly) {
@@ -379,7 +512,9 @@ export default function useAnalytics({
       weekendTotal: totals.weekend, weekdayTotal: totals.weekday,
       globalMaxThreshold, datesInPeriod, filterPeriod, dayTypeCounts,
       dailyAllMap, sortedMonthsKeys, monthlyCatMap, dailyCatMap,
-      catChartData, mainChartData, mainChartType, sortedCashflow
+      catChartData, mainChartData, mainChartType, sortedCashflow,
+      sortedGroups, groupChartData,
+      sortedAllocation, allocationChartData
     };
   }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
 
