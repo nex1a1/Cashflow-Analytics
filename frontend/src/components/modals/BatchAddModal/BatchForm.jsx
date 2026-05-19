@@ -50,11 +50,17 @@ export default function BatchForm({
   const formDate = watch('date');
   const allocationType = watch('allocation_type');
 
+  const selectedCatId = watch('categoryId');
   useEffect(() => {
     if (formType === 'income') {
       setValue('allocation_type', 'savings');
+      return;
     }
-  }, [formType, setValue]);
+    const cat = categories.find(c => c.id === selectedCatId);
+    if (cat && cat.allocation_type) {
+      setValue('allocation_type', cat.allocation_type);
+    }
+  }, [formType, selectedCatId, setValue, categories]);
 
   useEffect(() => {
     if (externalFormSetter) {

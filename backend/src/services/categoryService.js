@@ -4,7 +4,7 @@ const crypto = require('crypto');
 class CategoryService {
   getAll() {
     return db.prepare(`
-      SELECT c.*, cg.type as group_type 
+      SELECT c.*, cg.type as group_type, cg.allocation_type 
       FROM categories c
       JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
       ORDER BY c.order_index ASC

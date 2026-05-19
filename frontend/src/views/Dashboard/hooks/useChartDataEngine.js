@@ -6,7 +6,7 @@ const makeCumulative = (dataArr) => {
   return dataArr.map(val => { sum += (val || 0); return sum; });
 };
 
-export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData }) {
+export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, chartGroupMode }) {
   const { analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, chartGroupBy, dm } = useDashboardContext();
 
   const categoriesWithData = useMemo(() => {
@@ -102,7 +102,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
       return {
         ...ds, data: finalData, type: newType, tension: isSmoothLine ? 0.4 : 0,
         backgroundColor: chartViewType === 'line' ? ds.backgroundColor : bgColor,
-        borderColor, borderWidth: bWidth, borderRadius: 4,
+        borderColor, borderWidth: bWidth, borderRadius: 0,
         pointRadius: chartViewType === 'line' ? 4 : 0,
         pointBackgroundColor: borderColor,
         pointBorderWidth: 2, pointBorderColor: dm ? '#1e293b' : '#ffffff',

@@ -17,6 +17,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         color: c.color,
         cashflowGroup: c.cashflow_group_id,
         type: c.group_type,
+        allocation_type: c.allocation_type,
         order_index: c.order_index || 0
       }));
       setCategories(mapped);

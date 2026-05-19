@@ -185,17 +185,39 @@ const AllocationItem = ({ item, dm }) => {
                   {formatMoney(g.amount)}
                 </span>
                 <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
-                  {g.relativePercentage}%
+                  {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
                 </span>
               </div>
             </div>
           ))}
-          {item.id === 'savings' && item.groups?.length === 0 && (
-             <div className="flex items-center justify-between gap-2 py-0.5">
-                <span className={`text-[9px] font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>Net Surplus (เหลือสุทธิ)</span>
-                <span className={`text-[9px] font-black ${dm ? 'text-slate-300' : 'text-slate-600'}`}>100%</span>
-             </div>
-          )}
+
+          {/* ─── NET SURPLUS (Remainder) ─── */}
+          {item.id === 'savings' && (() => {
+            const sumGroups = (item.groups || []).reduce((acc, g) => acc + g.amount, 0);
+            const surplus = item.amount - sumGroups;
+            if (surplus <= 10) return null; // Ignore tiny floating point diffs
+
+            const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
+
+            return (
+              <div className="flex items-center justify-between gap-2 py-0.5 border-t border-dotted border-slate-700/30 mt-0.5">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="text-[9px] shrink-0 opacity-70">🌊</span>
+                  <span className={`text-[9px] font-bold truncate ${dm ? 'text-blue-400/80' : 'text-blue-600/80'}`}>
+                    Net Surplus (เหลือสุทธิ)
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {formatMoney(surplus)}
+                  </span>
+                  <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {surplusPercent}%
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -251,9 +273,13 @@ export default function ExpenseProportion() {
 
   const activeTotal = useMemo(() => {
     if (isGroupMode) return totalExpense;
-    if (isAllocationMode) return totalIncome || (totalExpense + (analytics.explicitSavings || 0));
+    if (isAllocationMode) {
+      // Use income as the 100% base. 
+      // If in "All" period and no explicit income target is set, income is still the denominator.
+      return totalIncome || (totalExpense + Math.max(0, analytics.netCashflow || 0));
+    }
     return chartTotal;
-  }, [isGroupMode, isAllocationMode, totalExpense, totalIncome, analytics.explicitSavings, chartTotal]);
+  }, [isGroupMode, isAllocationMode, totalExpense, totalIncome, analytics.netCashflow, chartTotal]);
 
   const gridColsClass = (isGroupMode || isAllocationMode) ? 'grid-cols-3' : 'grid-cols-5';
 

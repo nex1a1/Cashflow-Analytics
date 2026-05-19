@@ -9,7 +9,7 @@ const getTooltipOptions = (isDarkMode) => ({
   borderColor:     isDarkMode ? '#334155' : '#e2e8f0',
   borderWidth: 1,
   padding: 12,
-  cornerRadius: 10,
+  cornerRadius: 2,
 });
 
 const formatTickValue = (v) => {
@@ -121,7 +121,7 @@ export const getDoughnutChartOptions = (isDarkMode) => ({
     legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
-      cornerRadius: 8,
+      cornerRadius: 2,
       callbacks: {
         label: (ctx) => ` ${ctx.label}: ${formatMoney(ctx.raw)} ฿`,
       },

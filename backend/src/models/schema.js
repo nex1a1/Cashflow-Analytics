@@ -10,6 +10,7 @@ const initSchema = () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'savings')),
+      allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
       order_index INTEGER DEFAULT 0,
       color TEXT,
       icon TEXT,
@@ -221,13 +222,9 @@ const verifyTableColumns = () => {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN highlight_bg INTEGER DEFAULT 0");
     console.log('🔹 Forced: Added column highlight_bg to cashflow_groups');
   }
-  if (groupCols.includes('allocation_type')) {
-    try {
-      db.exec("ALTER TABLE cashflow_groups DROP COLUMN allocation_type");
-      console.log('🗑️ Removed allocation_type from cashflow_groups');
-    } catch (e) {
-      console.warn('⚠️ Could not drop allocation_type from cashflow_groups:', e.message);
-    }
+  if (groupCols.length > 0 && !groupCols.includes('allocation_type')) {
+    db.exec("ALTER TABLE cashflow_groups ADD COLUMN allocation_type TEXT DEFAULT 'want'");
+    console.log('🔹 Forced: Added column allocation_type to cashflow_groups');
   }
 
   // --- Day Types ---

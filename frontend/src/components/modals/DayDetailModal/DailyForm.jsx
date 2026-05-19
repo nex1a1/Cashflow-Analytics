@@ -57,9 +57,11 @@ export default function DailyForm({
       setValue('allocation_type', 'savings');
       return;
     }
-    // Optional: If you want to guess from history or category, do it here.
-    // For now, we'll keep the current or default to 'want'.
-  }, [formType, setValue]);
+    const cat = categories.find(c => c.id === selectedCatId);
+    if (cat && cat.allocation_type) {
+      setValue('allocation_type', cat.allocation_type);
+    }
+  }, [formType, selectedCatId, setValue, categories]);
 
   const onSubmit = (data) => {
     onSubmitItem(data);

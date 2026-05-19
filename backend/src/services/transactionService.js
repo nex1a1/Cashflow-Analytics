@@ -142,12 +142,17 @@ class TransactionService {
         }
 
         // Smart Allocation Type logic: 
-        // Use provided allocation_type, or default to 'want'
+        // Use provided allocation_type, or default to the category's group default
         let allocationType = tx.allocation_type;
         if (!allocationType) {
-          // You could potentially look up a default for the group here, 
-          // but 'want' is a safe universal default for expenses.
-          allocationType = 'want';
+          const groupDefault = db.prepare(`
+            SELECT cg.allocation_type 
+            FROM cashflow_groups cg
+            JOIN categories c ON c.cashflow_group_id = cg.id
+            WHERE c.id = ?
+          `).get(categoryId);
+          
+          allocationType = groupDefault?.allocation_type || 'want';
         }
 
         stmt.run(

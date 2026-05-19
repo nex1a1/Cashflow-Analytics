@@ -40,45 +40,46 @@ const MainChartHeader = ({
       </h3>
 
       <div className="flex items-center gap-2 flex-wrap">
+
         {chartViewType !== 'sankey' && !filterPeriod.match(/^\d{4}-\d{2}$/) && (
-          <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
-            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
+          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
+            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
           </div>
         )}
 
-        <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+        <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
           <button
             onClick={() => { setChartViewType('line'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
           >
             <TrendingUp className="w-3.5 h-3.5" /> เส้น
           </button>
           <button
             onClick={() => setChartViewType('bar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
           >
             <BarChart className="w-3.5 h-3.5" /> แท่ง
           </button>
           <button
             onClick={() => { setChartViewType('sankey'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${chartViewType === 'sankey' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'sankey' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
           >
             <Network className="w-3.5 h-3.5" /> Sankey
           </button>
         </div>
 
         {chartViewType === 'sankey' && (
-          <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
             <button 
               onClick={() => setSankeySortMode('value')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${sankeySortMode === 'value' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'value' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
             >
               เรียงตามยอดเงิน
             </button>
             <button 
               onClick={() => setSankeySortMode('index')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${sankeySortMode === 'index' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'index' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
             >
               เรียงตามลำดับ (Settings)
             </button>
@@ -105,7 +106,7 @@ const MainChartFilterMenu = ({
     <div className="relative" ref={filterMenuRef}>
       <button
         onClick={() => setShowCatMenu(!showCatMenu)}
-        className={`px-3 py-1.5 border rounded-md shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
+        className={`px-3 py-1.5 border rounded-sm shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
       >
         <Filter className="w-3.5 h-3.5" />
         ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>{dashboardCategory.length}</span> : ''}
@@ -113,8 +114,8 @@ const MainChartFilterMenu = ({
       </button>
 
       {showCatMenu && (
-        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-xl shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-slate-50 border-slate-200 shadow-slate-300/50'}`}>
-          <div className={`p-4 border-b flex flex-col gap-4 rounded-t-xl ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-sm shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-slate-50 border-slate-200 shadow-slate-300/50'}`}>
+          <div className={`p-4 border-b flex flex-col gap-4 rounded-t-sm ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
             <label className="flex items-center justify-between cursor-pointer group">
               <div className="flex flex-col pr-3">
                 <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
@@ -153,8 +154,8 @@ const MainChartFilterMenu = ({
 
             <label className="flex items-center justify-between cursor-pointer group">
               <div className="flex flex-col pr-3">
-                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายคงที่ (Fixed)</span>
-                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระคงที่ออกจากกราฟ</span>
+                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายจำเป็น (NEED)</span>
+                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระที่จำเป็นออกเพื่อดูไลฟ์สไตล์</span>
               </div>
               <div className="relative flex items-center shrink-0">
                 <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
@@ -164,7 +165,7 @@ const MainChartFilterMenu = ({
             </label>
           </div>
 
-          <div className={`p-4 flex flex-col gap-3 rounded-b-xl ${dm ? 'bg-slate-800' : 'bg-white'}`}>
+          <div className={`p-4 flex flex-col gap-3 rounded-b-sm ${dm ? 'bg-slate-800' : 'bg-white'}`}>
             <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่</span>
             {(() => {
               const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
@@ -186,10 +187,10 @@ const MainChartFilterMenu = ({
               return (
                 <>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setDashboardCategory(['ALL'])} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
+                    <button onClick={() => setDashboardCategory(['ALL'])} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
                       📊 ทั้งหมด (รวม)
                     </button>
-                    <button onClick={selectAllVariable} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}>
+                    <button onClick={selectAllVariable} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}>
                       🔄 เลือกผันแปรทั้งหมด
                     </button>
                   </div>
@@ -197,7 +198,7 @@ const MainChartFilterMenu = ({
                     {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
                       const isActive = activeCats.includes(c.name);
                       return (
-                        <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
+                        <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
                           <span className="opacity-90">{c.icon}</span> {c.name}
                         </button>
                       );
@@ -301,7 +302,7 @@ export default function MainChart() {
             {/* Status Badges Row */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {showTrendLines && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
                   dm ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'
                 }`}>
                   <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
@@ -309,7 +310,7 @@ export default function MainChart() {
                 </div>
               )}
               {isCumulative && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
                   dm ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'bg-purple-50 border-purple-200 text-purple-700'
                 }`}>
                   <div className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" />
@@ -317,7 +318,7 @@ export default function MainChart() {
                 </div>
               )}
               {isLogScale && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
                   dm ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 }`}>
                   <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
@@ -325,7 +326,7 @@ export default function MainChart() {
                 </div>
               )}
               {hideFixedExpenses && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
                   dm ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'
                 }`}>
                   <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
@@ -337,7 +338,7 @@ export default function MainChart() {
             <button
               onClick={() => setIsBreakdown(prev => !prev)}
               disabled={showSkeleton}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md border shadow-sm transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm border shadow-sm transition-all ${
                 isBreakdown
                   ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white')
                   : (dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
@@ -347,12 +348,12 @@ export default function MainChart() {
             </button>
 
             {chartViewType === 'line' && (
-              <div className={`flex p-0.5 rounded-md border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+              <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
                   เส้นตรง
                 </button>
-                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
                   เส้นโค้ง
                 </button>
@@ -374,7 +375,7 @@ export default function MainChart() {
 
       <div className="relative w-full flex-1 min-h-[350px]">
         {showSkeleton ? (
-          <div className={`absolute inset-0 rounded-md animate-pulse ${dm ? 'bg-slate-900/40' : 'bg-slate-50'}`} />
+          <div className={`absolute inset-0 rounded-sm animate-pulse ${dm ? 'bg-slate-900/40' : 'bg-slate-50'}`} />
         ) : (
           <div className="absolute inset-0">
             <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar'} data={displayChartData} options={options} />

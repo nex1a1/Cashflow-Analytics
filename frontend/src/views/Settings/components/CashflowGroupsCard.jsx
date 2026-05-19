@@ -62,14 +62,27 @@ const CashflowGroupsCard = memo(({
 
                 <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
                   disabled={group.isDefault || inUse}
-                  className={`p-1 text-[11px] font-bold outline-none border w-[158px] shrink-0 ${
+                  className={`p-1 text-[11px] font-bold outline-none border w-[120px] shrink-0 ${
                     dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                   } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-purple-500'}`}
                   title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}>
-                  <option value="income">รายรับ (INCOME)</option>
-                  <option value="expense">รายจ่าย (EXPENSE)</option>
-                  <option value="savings">ออม/ลงทุน (SAVINGS)</option>
+                  <option value="income">รายรับ (IN)</option>
+                  <option value="expense">รายจ่าย (EXP)</option>
+                  <option value="savings">ออม/ลงทุน (SAV)</option>
                 </select>
+
+                {group.type === 'expense' && (
+                  <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
+                    className={`p-1 text-[10px] font-black outline-none border w-[80px] shrink-0 ${
+                      group.allocation_type === 'need' ? (dm ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-700 border-red-200') :
+                      group.allocation_type === 'savings' ? (dm ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200') :
+                      (dm ? 'bg-slate-900 border-slate-600 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500')
+                    } cursor-pointer focus:border-purple-500`}>
+                    <option value="need">NEED</option>
+                    <option value="want">WANT</option>
+                    <option value="savings">SAVE</option>
+                  </select>
+                )}
 
                 <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
                   className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${

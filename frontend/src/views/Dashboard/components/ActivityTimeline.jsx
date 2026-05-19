@@ -42,12 +42,12 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   ];
 
   return (
-    <div className={`relative flex p-1 rounded-md border shadow-sm ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+    <div className={`relative flex p-1 rounded-sm border shadow-sm ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
       {modeButtons.map((btn) => (
         <button
           key={btn.id}
           onClick={() => setViewMode(btn.id)}
-          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-md transition-colors duration-200 ${
+          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-colors duration-200 ${
             viewMode === btn.id 
               ? btn.color 
               : (isDarkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
@@ -58,7 +58,7 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
           {viewMode === btn.id && (
             <motion.div
               layoutId="activeModeTab"
-              className={`absolute inset-0 rounded-md shadow-sm z-[-1] ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
+              className={`absolute inset-0 rounded-sm shadow-sm z-[-1] ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -155,7 +155,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
             className="flex flex-col items-center"
           >
-            <div className={`text-center rounded-md py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] ${
+            <div className={`text-center rounded-sm py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] ${
               isDarkMode 
                 ? 'bg-slate-900 border-slate-700 text-white shadow-black/60' 
                 : 'bg-slate-800 border-slate-700 text-white shadow-slate-400/60'
@@ -301,7 +301,7 @@ export default function ActivityTimeline() {
       <div className={`border rounded-sm relative z-10 ${dm ? 'bg-slate-900/40 border-slate-700' : 'bg-slate-50/50 border-slate-200'}`}>
         {showSkeleton ? (
           <div className="py-12 px-3">
-             <div className={`h-24 w-full rounded-md animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-100/80'}`} />
+             <div className={`h-24 w-full rounded-sm animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-100/80'}`} />
           </div>
         ) : datesInPeriod.length === 0 ? (
           <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>

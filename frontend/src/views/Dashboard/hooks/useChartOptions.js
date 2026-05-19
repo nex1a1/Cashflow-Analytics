@@ -40,7 +40,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
             },
             borderWidth: 2,
             padding: 12,
-            cornerRadius: 8,
+            cornerRadius: 2,
             callbacks: {
               label: (c) => {
                 const item = c.dataset.data[c.dataIndex];

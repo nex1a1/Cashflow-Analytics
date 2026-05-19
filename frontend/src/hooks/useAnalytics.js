@@ -61,6 +61,9 @@ export default function useAnalytics({
 
     const allocTotals = { need: 0, want: 0, savings: 0 };
     const allocGroupsMap = { need: [], want: [], savings: [] };
+    const groupTotals = {};
+    const groupCatsMap = {}; // Track categories within each group
+    const groupChartTotal = { expense: 0 };
 
     let dayIncomeMap = {}, dayExpenseMap = {};
     let uniqueMonthsSet = new Set();
@@ -70,6 +73,8 @@ export default function useAnalytics({
     let dailyCatMap = {}, monthlyCatMap = {}; // Keyed by [catId][date/month]
     let chartTotal = 0;
     let chartTx = [];
+    let dailyAllocMap = { need: {}, want: {}, savings: {} };
+    let monthlyAllocMap = { need: {}, want: {}, savings: {} };
     let globalDailySum = {};
     let prevTotals = { income: 0, expense: 0, net: 0 };
 
@@ -103,6 +108,8 @@ export default function useAnalytics({
     // Variables for Forecasting
     let expenseUpToToday = 0, variableUpToToday = 0, foodUpToToday = 0;
 
+    const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+    
     // ─── SINGLE PASS AGGREGATION ──────────────────────────────────────────────
     transactions.forEach(t => {
       const isoDate = toISODate(t.date);
@@ -142,7 +149,7 @@ export default function useAnalytics({
         const ym = isoDate.substring(0, 7);
         uniqueMonthsSet.add(ym);
 
-        // Initialize cashflowMap for the month if it doesn't exist
+        // Initialize cashflowMap for the month if it doesn't exist (Global)
         if (!cashflowMap[ym]) {
           cashflowMap[ym] = { 
             monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
@@ -167,43 +174,59 @@ export default function useAnalytics({
           totals.savings += amt;
           cashflowMap[ym].totalSav += amt;
           allocTotals.savings += amt;
+          
+          // Allocation Maps for Savings
+          dailyAllocMap.savings[isoDate] = (dailyAllocMap.savings[isoDate] || 0) + amt;
+          monthlyAllocMap.savings[ym] = (monthlyAllocMap.savings[ym] || 0) + amt;
         } else {
+          // --- EXPENSE LOGIC ---
           totals.expense += amt;
           cashflowMap[ym].totalExp += amt;
           dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
           
-          allocTotals[aType] = (allocTotals[aType] || 0) + amt;
-          if (isNeed) totals.fixed += amt;
-          else totals.variable += amt;
-
-          // Track individual group totals within this allocation
-          if (cGroup) {
-            let groupEntry = allocGroupsMap[aType].find(g => g.id === cGroup);
-            if (!groupEntry) {
-              groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
-              allocGroupsMap[aType].push(groupEntry);
-            }
-            groupEntry.amount += amt;
-          }
-
           // Semantic Grouping
           if (isRent) totals.rent += amt;
           else if (isFood) totals.food += amt;
 
-          // Per-Category Breakdown
-          catMapData[catId] = (catMapData[catId] || 0) + amt;
+          if (isNeed) totals.fixed += amt;
+          else totals.variable += amt;
 
-          // Daily/Monthly Breakdown for Charts
+          // Apply UI Filters for Chart/Proportion Breakdown
           const passFixedFilter = !hideFixedExpenses || !isNeed;
-          
-          let passCategoryFilter = false;
-          const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-          
-          if (passFixedFilter && (activeFilters.includes('ALL') || (activeFilters.includes('FIXED') && isNeed) || (activeFilters.includes('VARIABLE') && !isNeed) || activeFilters.includes(catId) || activeFilters.includes(catObj.name))) {
+          const passCategoryFilter = activeFilters.includes('ALL') || 
+                                    (activeFilters.includes('FIXED') && isNeed) || 
+                                    (activeFilters.includes('VARIABLE') && !isNeed) || 
+                                    activeFilters.includes(catId) || 
+                                    activeFilters.includes(catObj.name);
+
+          if (passFixedFilter && passCategoryFilter) {
             dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
             monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
             chartTotal += amt;
             chartTx.push(t);
+
+            // Per-Category Breakdown (Filtered)
+            catMapData[catId] = (catMapData[catId] || 0) + amt;
+
+            // Allocation Maps (Filtered)
+            allocTotals[aType] = (allocTotals[aType] || 0) + amt;
+            if (aType !== 'savings') {
+              dailyAllocMap[aType][isoDate] = (dailyAllocMap[aType][isoDate] || 0) + amt;
+              monthlyAllocMap[aType][ym] = (monthlyAllocMap[aType][ym] || 0) + amt;
+            }
+
+            // Track individual group totals within this allocation (Filtered)
+            if (cGroup) {
+              let groupEntry = allocGroupsMap[aType].find(g => g.id === cGroup);
+              if (!groupEntry) {
+                groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+                allocGroupsMap[aType].push(groupEntry);
+              }
+              groupEntry.amount += amt;
+
+              // Also update group totals for Group Mode (Filtered)
+              groupTotals[cGroup] = (groupTotals[cGroup] || 0) + amt;
+            }
           }
         }
 
@@ -247,18 +270,17 @@ export default function useAnalytics({
     const savingsRate = totals.income > 0 ? parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
 
     // ─── CATEGORY BREAKDOWN ───────────────────────────────────────────────────
-    const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-    
     const sortedCats = useBackendTotals && summaryData.categories 
       ? summaryData.categories
           .filter(c => {
             if (c.type !== 'expense') return false;
-            const catMeta = catMapLookup[c.id] || { isFixed: false };
-            if (hideFixedExpenses && catMeta.isFixed) return false;
+            const catMeta = catMapLookup[c.id] || {};
+            const isNeedCat = catMeta.allocation_type === 'need';
+            if (hideFixedExpenses && isNeedCat) return false;
             
             if (activeFilters.includes('ALL')) return true;
-            if (activeFilters.includes('FIXED') && catMeta.isFixed) return true;
-            if (activeFilters.includes('VARIABLE') && !catMeta.isFixed) return true;
+            if (activeFilters.includes('FIXED') && isNeedCat) return true;
+            if (activeFilters.includes('VARIABLE') && !isNeedCat) return true;
             return activeFilters.includes(c.id) || activeFilters.includes(c.name) || activeFilters.includes(catMeta.name);
           })
           .map(c => {
@@ -272,12 +294,13 @@ export default function useAnalytics({
           })
       : Object.entries(catMapData)
           .filter(([catId]) => {
-            const catObj = catMapLookup[catId] || { isFixed: false };
-            if (hideFixedExpenses && catObj.isFixed) return false;
+            const catObj = catMapLookup[catId] || {};
+            const isNeedCat = catObj.allocation_type === 'need';
+            if (hideFixedExpenses && isNeedCat) return false;
             
             if (activeFilters.includes('ALL')) return true;
-            if (activeFilters.includes('FIXED') && catObj.isFixed) return true;
-            if (activeFilters.includes('VARIABLE') && !catObj.isFixed) return true;
+            if (activeFilters.includes('FIXED') && isNeedCat) return true;
+            if (activeFilters.includes('VARIABLE') && !isNeedCat) return true;
             return activeFilters.includes(catId) || activeFilters.includes(catObj.name);
           })
           .sort((a, b) => b[1] - a[1])
@@ -296,21 +319,6 @@ export default function useAnalytics({
           });
 
     // ─── GROUP BREAKDOWN (CashflowTable Mode) ─────────────────────────────────
-    const groupTotals = {};
-    const groupCatsMap = {}; // Track categories within each group
-    const groupChartTotal = { expense: 0 };
-    
-    // Aggregate from monthly data (already filtered by period)
-    Object.values(cashflowMap).forEach(m => {
-      Object.entries(m.groups).forEach(([groupId, amount]) => {
-        const groupObj = cashflowGroups.find(g => g.id === groupId);
-        if (!groupObj || groupObj.type !== 'expense') return; // Only expense for proportion
-        
-        groupTotals[groupId] = (groupTotals[groupId] || 0) + amount;
-        groupChartTotal.expense += amount;
-      });
-    });
-
     // Link categories to their respective groups using the catMapData aggregated in main loop
     Object.entries(catMapData).forEach(([catId, amount]) => {
       const catObj = catMapLookup[catId];
@@ -503,7 +511,8 @@ export default function useAnalytics({
       sparklineIncome, sparklineExpense, sparklineNet,
       weekendTotal: totals.weekend, weekdayTotal: totals.weekday,
       globalMaxThreshold, datesInPeriod, filterPeriod, dayTypeCounts,
-      dailyAllMap, sortedMonthsKeys, monthlyCatMap, dailyCatMap,
+      dailyAllMap, monthlyAllMap, dailyAllocMap, monthlyAllocMap,
+      sortedMonthsKeys, monthlyCatMap, dailyCatMap,
       catChartData, mainChartData, mainChartType, sortedCashflow,
       sortedGroups, groupChartData,
       sortedAllocation, allocationChartData
