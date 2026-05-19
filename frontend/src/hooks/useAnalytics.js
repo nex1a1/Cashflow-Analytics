@@ -59,6 +59,9 @@ export default function useAnalytics({
       dayOfWeekMap: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
     };
 
+    const allocTotals = { need: 0, want: 0, savings: 0 };
+    const allocGroupsMap = { need: [], want: [], savings: [] };
+
     let dayIncomeMap = {}, dayExpenseMap = {};
     let uniqueMonthsSet = new Set();
     let cashflowMap = {};
@@ -107,7 +110,7 @@ export default function useAnalytics({
 
       const amt = parseFloat(t.amount) || 0;
       const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
-      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: fallbackExpId, isFixed: false };
+      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: fallbackExpId };
       
       const cGroupId = catObj.cashflowGroup;
       const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
@@ -117,7 +120,10 @@ export default function useAnalytics({
       const isInc = groupType === 'income';
       const isSav = groupType === 'savings';
       const isExp = !isInc && !isSav;
-      const isFixed = catObj.isFixed || false;
+
+      // Smart Allocation Type: Transaction-level > Group default
+      const aType = t.allocation_type || groupObj.allocation_type || (isInc ? 'savings' : 'want');
+      const isNeed = aType === 'need';
 
       // a) Global Stats (for Heatmap)
       if (isExp) {
@@ -160,28 +166,40 @@ export default function useAnalytics({
         } else if (isSav) {
           totals.savings += amt;
           cashflowMap[ym].totalSav += amt;
+          allocTotals.savings += amt;
         } else {
           totals.expense += amt;
           cashflowMap[ym].totalExp += amt;
           dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
           
-          if (isFixed) totals.fixed += amt;
+          allocTotals[aType] = (allocTotals[aType] || 0) + amt;
+          if (isNeed) totals.fixed += amt;
           else totals.variable += amt;
+
+          // Track individual group totals within this allocation
+          if (cGroup) {
+            let groupEntry = allocGroupsMap[aType].find(g => g.id === cGroup);
+            if (!groupEntry) {
+              groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+              allocGroupsMap[aType].push(groupEntry);
+            }
+            groupEntry.amount += amt;
+          }
 
           // Semantic Grouping
           if (isRent) totals.rent += amt;
           else if (isFood) totals.food += amt;
 
-          // Per-Category Breakdown (Always count for local sortedCats calculation)
+          // Per-Category Breakdown
           catMapData[catId] = (catMapData[catId] || 0) + amt;
 
-          // Daily/Monthly Breakdown for Charts & Specific Analytics
-          const passFixedFilter = !hideFixedExpenses || !isFixed;
+          // Daily/Monthly Breakdown for Charts
+          const passFixedFilter = !hideFixedExpenses || !isNeed;
           
           let passCategoryFilter = false;
           const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
           
-          if (passFixedFilter && (activeFilters.includes('ALL') || (activeFilters.includes('FIXED') && isFixed) || (activeFilters.includes('VARIABLE') && !isFixed) || activeFilters.includes(catId) || activeFilters.includes(catObj.name))) {
+          if (passFixedFilter && (activeFilters.includes('ALL') || (activeFilters.includes('FIXED') && isNeed) || (activeFilters.includes('VARIABLE') && !isNeed) || activeFilters.includes(catId) || activeFilters.includes(catObj.name))) {
             dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
             monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
             chartTotal += amt;
@@ -189,7 +207,7 @@ export default function useAnalytics({
           }
         }
 
-        // Per-Category Time Breakdown (Track for BOTH Income and Expense)
+        // Per-Category Time Breakdown
         if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
         dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
         if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
@@ -204,10 +222,10 @@ export default function useAnalytics({
           else totals.weekday += amt;
         }
 
-        // Forecasting Logic (Accumulate up to today)
+        // Forecasting Logic
         if (isCurrentMonth && isoDate <= todayStr && isExp) {
           expenseUpToToday += amt;
-          if (!isFixed) variableUpToToday += amt;
+          if (!isNeed) variableUpToToday += amt;
           if (isFood) foodUpToToday += amt;
         }
       }
@@ -345,32 +363,6 @@ export default function useAnalytics({
         borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
       }],
     };
-
-    // ─── ALLOCATION BREAKDOWN (Ratio 50/30/20 Mode) ───────────────────────────
-    const allocTotals = { need: 0, want: 0, savings: 0 };
-    const allocGroupsMap = { need: [], want: [], savings: [] };
-    
-    // Aggregate by allocation_type of each group across the selected period
-    Object.values(cashflowMap).forEach(m => {
-      Object.entries(m.groups).forEach(([groupId, amount]) => {
-        if (amount <= 0) return;
-        const groupObj = cashflowGroups.find(g => g.id === groupId);
-        if (!groupObj) return;
-        
-        if (groupObj.type === 'expense' || groupObj.type === 'savings') {
-          const aType = groupObj.allocation_type || 'want';
-          allocTotals[aType] += amount;
-          
-          // Track individual group totals within this allocation
-          let groupEntry = allocGroupsMap[aType].find(g => g.id === groupId);
-          if (!groupEntry) {
-            groupEntry = { id: groupId, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
-            allocGroupsMap[aType].push(groupEntry);
-          }
-          groupEntry.amount += amount;
-        }
-      });
-    });
 
     // Calculate relative percentages for sub-groups
     Object.keys(allocGroupsMap).forEach(key => {

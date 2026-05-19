@@ -86,6 +86,7 @@ export default function BatchAddModal({
       category_id: data.categoryId,
       description: data.description || targetCatName,
       amount: Number(data.amount), 
+      allocation_type: data.allocation_type,
       dayNote: '',
       _catObj: catObj, 
       _isInc: data.type === 'income'
@@ -102,6 +103,9 @@ export default function BatchAddModal({
       setValue('categoryId', s.categoryId);
       setValue('description', s.description || '');
       setValue('amount', Number(s.amount), { shouldValidate: true });
+      if (s.allocation_type) {
+        setValue('allocation_type', s.allocation_type);
+      }
       setTimeout(() => setFocus('amount'), 10);
     }
   };
@@ -117,6 +121,7 @@ export default function BatchAddModal({
         category_id: item._catObj?.id, 
         description: item.description, 
         amount: item.amount, 
+        allocation_type: item.allocation_type,
         dayNote: item.dayNote
       }));
       await onSaveBatch(finalItems);

@@ -18,7 +18,18 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
       style={{ backgroundColor: rowBg }}>
       <div className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
+          {tx.allocation_type && (
+            <span className={`text-[8px] font-black px-1 rounded-[2px] border shrink-0 ${
+              tx.allocation_type === 'need' ? (dm ? 'bg-rose-900/30 text-rose-400 border-rose-800/40' : 'bg-rose-50 text-rose-600 border-rose-200') :
+              tx.allocation_type === 'want' ? (dm ? 'bg-sky-900/30 text-sky-400 border-sky-800/40' : 'bg-sky-50 text-sky-600 border-sky-200') :
+              (dm ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40' : 'bg-emerald-50 text-emerald-600 border-emerald-200')
+            }`}>
+              {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
+            </span>
+          )}
+        </div>
         <p className="text-[10px] font-medium flex items-center gap-1 mt-0.5" style={{ color, filter: dm ? 'brightness(1.3)' : 'brightness(0.7)' }}>
           {catObj?.icon} {tx.category}
         </p>

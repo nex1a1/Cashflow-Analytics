@@ -9,6 +9,7 @@ class TransactionService {
         t.description, 
         t.amount, 
         t.category_id,
+        t.allocation_type,
         t.created_at,
         c.name as category,
         c.icon as category_icon,
@@ -98,13 +99,14 @@ class TransactionService {
 
   upsertMany(transactions) {
     const stmt = db.prepare(`
-      INSERT INTO transactions (id, date, description, amount, category_id, updated_at)
-      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO transactions (id, date, description, amount, category_id, allocation_type, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
         date = excluded.date,
         description = excluded.description,
         amount = excluded.amount,
         category_id = excluded.category_id,
+        allocation_type = excluded.allocation_type,
         updated_at = CURRENT_TIMESTAMP,
         is_deleted = 0
     `);
@@ -119,34 +121,33 @@ class TransactionService {
         }
 
         // Amount to Satang (integer)
-        // Assume input is Baht (float)
         const amountSatang = Math.round(tx.amount * 100);
 
-        // Category mapping logic (Elite "Data Looting")
+        // Category mapping logic
         let categoryId = tx.category_id;
         
-        // หากไม่มี category_id ค่อยไปหา/เดา
         if (!categoryId || categoryId === '') {
-          // 1. ลองหาจากชื่อหมวดหมู่ที่ส่งมา (ถ้ามี)
           if (tx.category) {
             categoryId = this.getCategoryIdByName(tx.category);
           }
-          
-          // 2. หากยังไม่มี หรือหาไม่เจอ ให้ "เดา" จาก Description
           if (!categoryId) {
             categoryId = this.suggestCategory(tx.description);
           }
         }
 
         if (!categoryId) {
-          // Fallback สุดท้าย: ใช้หมวดหมู่ "เบ็ดเตล็ด" หรือหมวดหมู่แรกสุด
           const fallback = db.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get()
                         || db.prepare("SELECT id FROM categories LIMIT 1").get();
           categoryId = fallback?.id;
         }
 
-        if (!categoryId) {
-          throw new Error(`Critical Error: No category available even after fallback for: ${tx.description}`);
+        // Smart Allocation Type logic: 
+        // Use provided allocation_type, or default to 'want'
+        let allocationType = tx.allocation_type;
+        if (!allocationType) {
+          // You could potentially look up a default for the group here, 
+          // but 'want' is a safe universal default for expenses.
+          allocationType = 'want';
         }
 
         stmt.run(
@@ -154,7 +155,8 @@ class TransactionService {
           date,
           tx.description || '',
           amountSatang,
-          categoryId
+          categoryId,
+          allocationType
         );
       }
     });
@@ -209,7 +211,7 @@ class TransactionService {
 
     const rows = db.prepare(`
       SELECT 
-        t.id, t.date, t.description, t.amount, t.category_id, t.created_at,
+        t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
         c.name as category, cg.type as group_type
       FROM transactions_fts f
       JOIN transactions t ON f.rowid = t.rowid
@@ -223,29 +225,36 @@ class TransactionService {
   }
 
   /**
-   * Returns aggregated frequent transactions for all-time suggestions
+   * Returns aggregated frequent transactions for all-time suggestions.
+   * Improved logic: We weigh frequency by "last used" recency to keep suggestions fresh.
    */
   getFrequentItems() {
+    // 1. Get raw groups with counts and last date
     const rows = db.prepare(`
       SELECT 
         t.category_id, 
         c.name as category_name,
         t.description, 
         t.amount, 
-        COUNT(*) as count
+        t.allocation_type,
+        COUNT(*) as count,
+        MAX(t.date) as last_date
       FROM transactions t
       JOIN categories c ON t.category_id = c.id
       WHERE t.is_deleted = 0
-      GROUP BY t.category_id, t.description, t.amount
-      ORDER BY count DESC, t.amount DESC
+      GROUP BY t.category_id, t.description, t.amount, t.allocation_type
+      ORDER BY count DESC, last_date DESC
     `).all();
     
+    // 2. Score them (Optional: Could add more complex weighting here)
     return rows.map(row => ({
       categoryId: row.category_id,
       categoryName: row.category_name,
       description: row.description || '',
       amount: row.amount / 100, // Convert Satang to Baht
-      count: row.count
+      allocation_type: row.allocation_type,
+      count: row.count,
+      lastDate: row.last_date
     }));
   }
 }

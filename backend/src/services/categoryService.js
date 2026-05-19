@@ -14,13 +14,12 @@ class CategoryService {
   upsert(category) {
     const id = category.id || crypto.randomUUID();
     const stmt = db.prepare(`
-      INSERT INTO categories (id, name, icon, color, is_fixed, order_index, cashflow_group_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         icon = excluded.icon,
         color = excluded.color,
-        is_fixed = excluded.is_fixed,
         order_index = excluded.order_index,
         cashflow_group_id = excluded.cashflow_group_id
     `);
@@ -29,7 +28,6 @@ class CategoryService {
       category.name,
       category.icon,
       category.color,
-      category.is_fixed ? 1 : 0,
       category.order_index || 0,
       category.cashflow_group_id
     );

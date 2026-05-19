@@ -13,7 +13,8 @@ exports.getAllTransactions = (req, res) => {
       category_id: row.category_id,
       description: row.description,
       amount:      row.amount / 100, // Convert Satang to Baht
-      group_type:  row.group_type
+      group_type:  row.group_type,
+      allocation_type: row.allocation_type
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -85,7 +86,8 @@ exports.searchTransactions = (req, res) => {
       category_id: row.category_id,
       description: row.description,
       amount:      row.amount / 100, // Convert Satang to Baht
-      group_type:  row.group_type
+      group_type:  row.group_type,
+      allocation_type: row.allocation_type
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -45,7 +45,8 @@ export default function LedgerTable({
             <tr>
               <SortHeader label="วันที่" sortKey="date" className="w-[145px]" />
               <th className={`px-4 py-3 font-bold w-[90px] text-center text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ประเภท</th>
-              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[270px]" />
+              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[220px]" />
+              <th className={`px-4 py-3 font-bold w-[100px] text-center text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ALLOCATION</th>
               <th className={`px-4 py-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>รายละเอียด</th>
               <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" />
               <th className="w-10" />
@@ -58,6 +59,13 @@ export default function LedgerTable({
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
               const rowBg      = isAlt ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : 'bg-transparent';
+              
+              const aType = item.allocation_type || (isInc ? 'savings' : 'want');
+              const aColors = {
+                need: dm ? 'text-rose-400 border-rose-900/40 bg-rose-900/10' : 'text-rose-600 border-rose-200 bg-rose-50/50',
+                want: dm ? 'text-sky-400 border-sky-900/40 bg-sky-900/10' : 'text-sky-600 border-sky-200 bg-sky-50/50',
+                savings: dm ? 'text-emerald-400 border-emerald-900/40 bg-emerald-900/10' : 'text-emerald-600 border-emerald-200 bg-emerald-50/50'
+              };
 
               return (
                 <tr key={item.id} className={`group transition-colors duration-100 border-b ${dm ? 'border-slate-800/60 hover:bg-slate-700/40' : 'border-slate-100 hover:bg-blue-50/40'} ${rowBg}`}>
@@ -90,6 +98,24 @@ export default function LedgerTable({
                         {categories.filter(c => c.type === catObj?.type).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
                       </select>
                     </div>
+                  </td>
+                  <td className="px-3 py-2 align-middle text-center">
+                    {!isInc ? (
+                      <select 
+                        value={aType} 
+                        onChange={e => handleUpdateTransaction(item.id, 'allocation_type', e.target.value)}
+                        className={`w-full bg-transparent outline-none appearance-none px-2 py-1 font-black border rounded-sm text-[10px] text-center transition-all cursor-pointer ${aColors[aType]}`}
+                        style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.2rem center', backgroundSize: '0.6em' }}
+                      >
+                        <option value="need">NEED</option>
+                        <option value="want">WANT</option>
+                        <option value="savings">SAVE</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex items-center justify-center px-2 py-1 text-[10px] font-black opacity-20 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+                        —
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 group/input relative align-middle">
                     <Pencil className={`w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-60 transition-all pointer-events-none z-10 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />

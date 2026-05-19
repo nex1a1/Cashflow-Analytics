@@ -10,6 +10,7 @@ const dailyAddSchema = z.object({
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   description: z.string().optional(),
   amount: z.number({ invalid_type_error: "ระบุจำนวนเงิน" }).positive("ต้องมากกว่า 0"),
+  allocation_type: z.enum(['need', 'want', 'savings']),
 });
 
 export default function DailyForm({
@@ -29,21 +30,36 @@ export default function DailyForm({
       type: defaultType || 'expense',
       categoryId: defaultCategoryId || '',
       description: '',
-      amount: ''
+      amount: '',
+      allocation_type: 'want'
     }
   });
 
   const formType = watch('type');
+  const allocationType = watch('allocation_type');
 
+  // 1. Expose form methods to parent (for hotkeys & QuickSuggest)
   useEffect(() => {
     if (externalFormSetter) {
-      externalFormSetter({ setValue, setFocus });
+      externalFormSetter({ setValue, setFocus, watch });
     }
-  }, [externalFormSetter, setValue, setFocus]);
+  }, [externalFormSetter, setValue, setFocus, watch]);
 
+  // 2. Notify parent of type changes to filter suggestions
   useEffect(() => {
     if (onTypeChange) onTypeChange(formType);
   }, [formType, onTypeChange]);
+
+  // Auto-default allocation type when category changes
+  const selectedCatId = watch('categoryId');
+  useEffect(() => {
+    if (formType === 'income') {
+      setValue('allocation_type', 'savings');
+      return;
+    }
+    // Optional: If you want to guess from history or category, do it here.
+    // For now, we'll keep the current or default to 'want'.
+  }, [formType, setValue]);
 
   const onSubmit = (data) => {
     onSubmitItem(data);
@@ -94,6 +110,21 @@ export default function DailyForm({
           </select>
           {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
         </div>
+
+        {formType === 'expense' && (
+          <div className={`flex p-0.5 rounded-sm border shrink-0 ${dm ? 'bg-slate-900 border-slate-700' : 'bg-slate-200/60 border-slate-200'}`}>
+            {[
+              { val: 'need', label: 'NEED', color: dm ? 'text-rose-400' : 'text-rose-600' },
+              { val: 'want', label: 'WANT', color: dm ? 'text-sky-400' : 'text-sky-600' },
+              { val: 'savings', label: 'SAVE', color: dm ? 'text-emerald-400' : 'text-emerald-600' }
+            ].map(opt => (
+              <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
+                className={`px-2 py-1 text-[10px] font-black rounded-sm transition-all ${allocationType === opt.val ? (dm ? 'bg-slate-700 ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : tokens.textMuted}`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 items-start">

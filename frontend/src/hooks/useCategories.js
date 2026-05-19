@@ -15,7 +15,6 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         name: c.name,
         icon: c.icon,
         color: c.color,
-        isFixed: !!c.is_fixed,
         cashflowGroup: c.cashflow_group_id,
         type: c.group_type,
         order_index: c.order_index || 0
@@ -48,7 +47,6 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         name: cat.name,
         icon: cat.icon,
         color: cat.color,
-        is_fixed: cat.isFixed ? 1 : 0,
         cashflow_group_id: cat.cashflowGroup,
         order_index: cat.order_index
       };
@@ -82,7 +80,6 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         name: type === 'income' ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
         icon: type === 'income' ? '💰' : '📌',
         color: type === 'income' ? '#10B981' : '#64748B',
-        is_fixed: 0,
         cashflow_group_id: defaultGroup.id,
         order_index: maxOrder + 1
       };
@@ -145,8 +142,10 @@ export default function useCategories(initialCategories, setCashflowGroups) {
       const updatedOther = { ...otherCat, order_index: targetCat.order_index };
 
       const toBackend = (c) => ({
-        ...c,
-        is_fixed: c.isFixed ? 1 : 0,
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        color: c.color,
         cashflow_group_id: c.cashflowGroup,
         order_index: c.order_index
       });

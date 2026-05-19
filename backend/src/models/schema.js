@@ -10,7 +10,6 @@ const initSchema = () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'savings')),
-      allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
       order_index INTEGER DEFAULT 0,
       color TEXT,
       icon TEXT,
@@ -22,7 +21,6 @@ const initSchema = () => {
       name TEXT NOT NULL,
       icon TEXT,
       color TEXT,
-      is_fixed INTEGER DEFAULT 0,
       order_index INTEGER DEFAULT 0,
       cashflow_group_id TEXT NOT NULL,
       FOREIGN KEY (cashflow_group_id) REFERENCES cashflow_groups(id)
@@ -49,6 +47,7 @@ const initSchema = () => {
       description TEXT,
       amount INTEGER NOT NULL CHECK(amount >= 0),
       category_id TEXT NOT NULL,
+      allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
       is_deleted INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -173,6 +172,27 @@ const verifyTableColumns = () => {
       console.log('🔹 Forced: Added column category_id to transactions');
     } catch (e) {}
   }
+  if (!txCols.includes('allocation_type')) {
+    db.exec("ALTER TABLE transactions ADD COLUMN allocation_type TEXT DEFAULT 'want'");
+    console.log('🔹 Forced: Added column allocation_type to transactions');
+    
+    // Migration logic: Move from group to transaction
+    try {
+      db.exec(`
+        UPDATE transactions 
+        SET allocation_type = (
+          SELECT allocation_type 
+          FROM cashflow_groups cg
+          JOIN categories c ON c.cashflow_group_id = cg.id
+          WHERE c.id = transactions.category_id
+        )
+        WHERE allocation_type = 'want'
+      `);
+      console.log('✅ Migrated allocation_type from Groups to Transactions');
+    } catch (e) {
+      console.warn('⚠️ Migration warning:', e.message);
+    }
+  }
 
   // --- Categories ---
   const catInfo = db.prepare("PRAGMA table_info(categories)").all();
@@ -180,6 +200,14 @@ const verifyTableColumns = () => {
   if (catCols.length > 0 && !catCols.includes('order_index')) {
     db.exec("ALTER TABLE categories ADD COLUMN order_index INTEGER DEFAULT 0");
     console.log('🔹 Forced: Added column order_index to categories');
+  }
+  if (catCols.includes('is_fixed')) {
+    try {
+      db.exec("ALTER TABLE categories DROP COLUMN is_fixed");
+      console.log('🗑️ Removed is_fixed from categories');
+    } catch (e) {
+      console.warn('⚠️ Could not drop is_fixed from categories:', e.message);
+    }
   }
 
   // --- Cashflow Groups ---
@@ -193,9 +221,13 @@ const verifyTableColumns = () => {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN highlight_bg INTEGER DEFAULT 0");
     console.log('🔹 Forced: Added column highlight_bg to cashflow_groups');
   }
-  if (groupCols.length > 0 && !groupCols.includes('allocation_type')) {
-    db.exec("ALTER TABLE cashflow_groups ADD COLUMN allocation_type TEXT DEFAULT 'want'");
-    console.log('🔹 Forced: Added column allocation_type to cashflow_groups');
+  if (groupCols.includes('allocation_type')) {
+    try {
+      db.exec("ALTER TABLE cashflow_groups DROP COLUMN allocation_type");
+      console.log('🗑️ Removed allocation_type from cashflow_groups');
+    } catch (e) {
+      console.warn('⚠️ Could not drop allocation_type from cashflow_groups:', e.message);
+    }
   }
 
   // --- Day Types ---
@@ -249,10 +281,10 @@ const seedInitialData = () => {
   // --- Seed Cashflow Groups ---
   const groupsCount = db.prepare("SELECT COUNT(*) as count FROM cashflow_groups").get().count;
   if (groupsCount === 0) {
-    const insertGroup = db.prepare("INSERT INTO cashflow_groups (id, name, type, allocation_type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 'savings', 1, '#10B981', '💰');
-    insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 'need', 2, '#6366F1', '🏠');
-    insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 'want', 3, '#F59E0B', '🛒');
+    const insertGroup = db.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?)");
+    insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
+    insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
   }
 };
 

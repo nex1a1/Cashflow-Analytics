@@ -19,6 +19,7 @@ const batchAddSchema = z.object({
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   description: z.string().optional(),
   amount: z.number({ invalid_type_error: "กรุณาระบุจำนวนเงิน" }).positive("จำนวนเงินต้องมากกว่า 0"),
+  allocation_type: z.enum(['need', 'want', 'savings']),
 });
 
 export default function BatchForm({
@@ -40,12 +41,20 @@ export default function BatchForm({
       date: defaultDate || getLocalDateString(),
       categoryId: defaultCategoryId || '',
       description: '',
-      amount: ''
+      amount: '',
+      allocation_type: 'want'
     }
   });
 
   const formType = watch('type');
   const formDate = watch('date');
+  const allocationType = watch('allocation_type');
+
+  useEffect(() => {
+    if (formType === 'income') {
+      setValue('allocation_type', 'savings');
+    }
+  }, [formType, setValue]);
 
   useEffect(() => {
     if (externalFormSetter) {
@@ -112,9 +121,26 @@ export default function BatchForm({
 
       <div className="mb-4">
         <label className={tokens.label}>หมวดหมู่</label>
-        <select {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
-          {categories.filter(c => c.type === formType).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-        </select>
+        <div className="flex gap-2">
+          <select {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
+            {categories.filter(c => c.type === formType).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+          </select>
+          
+          {formType === 'expense' && (
+            <div className={`flex p-0.5 rounded-sm border shrink-0 ${dm ? 'bg-slate-900 border-slate-700' : 'bg-slate-200/60 border-slate-200'}`}>
+              {[
+                { val: 'need', label: 'NEED', color: dm ? 'text-rose-400' : 'text-rose-600' },
+                { val: 'want', label: 'WANT', color: dm ? 'text-sky-400' : 'text-sky-600' },
+                { val: 'savings', label: 'SAVE', color: dm ? 'text-emerald-400' : 'text-emerald-600' }
+              ].map(opt => (
+                <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
+                  className={`px-2 py-1 text-[10px] font-black rounded-sm transition-all ${allocationType === opt.val ? (dm ? 'bg-slate-700 ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : (dm ? 'text-slate-500' : 'text-slate-400')}`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
       </div>
 

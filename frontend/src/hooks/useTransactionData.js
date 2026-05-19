@@ -104,7 +104,7 @@ export default function useTransactionData({
         if (categories?.length) {
           setCategories(categories.map(c => ({
             id: c.id, name: c.name, icon: c.icon, color: c.color,
-            isFixed: !!c.is_fixed, cashflowGroup: c.cashflow_group_id,
+            cashflowGroup: c.cashflow_group_id,
             type: c.group_type, order_index: c.order_index || 0
           })));
         }

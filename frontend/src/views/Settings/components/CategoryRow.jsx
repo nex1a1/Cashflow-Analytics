@@ -27,10 +27,8 @@ const CategoryRow = memo(({ cat, isNew, isIncome, onMove, onChange, onDelete, fi
 
   return (
     <div style={{ borderLeftColor: groupColor, borderLeftWidth: '4px' }} className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 group/cat ${
-      !isIncome && cat.isFixed
-        ? (dm ? 'bg-purple-900/10 hover:bg-purple-900/20' : 'bg-purple-50/40 hover:bg-purple-50/80')
-        : (dm ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
-    } ${dm ? 'border-slate-700/60' : 'border-slate-200/70'}`}>
+      dm ? 'border-slate-700/60 hover:bg-slate-800/60' : 'border-slate-200/70 hover:bg-slate-50'
+    }`}>
 
       <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-300'}`}>
         <button type="button" onClick={() => onMove(cat.id, 'UP')} disabled={isFirst}
@@ -70,17 +68,6 @@ const CategoryRow = memo(({ cat, isNew, isIncome, onMove, onChange, onDelete, fi
           <AlertTriangle className="w-3 h-3 text-amber-500 absolute -top-1 -right-1 pointer-events-none" title="กลุ่มไม่ตรงประเภท" />
         )}
       </div>
-
-      {!isIncome && (
-        <label className={`flex items-center justify-center gap-1 cursor-pointer px-1.5 py-1 border text-[11px] font-bold shrink-0 w-14 transition-colors ${
-          cat.isFixed
-            ? (dm ? 'bg-purple-900/40 text-purple-400 border-purple-700/50' : 'bg-purple-50 text-purple-700 border-purple-300')
-            : (dm ? 'text-slate-500 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-400')
-        }`} title="ตั้งเป็นภาระคงที่">
-          <input type="checkbox" checked={!!cat.isFixed} onChange={e => onChange(cat.id, 'isFixed', e.target.checked)} className="w-3 h-3 accent-purple-600 cursor-pointer" />
-          Fixed
-        </label>
-      )}
 
       <ColorPicker color={cat.color || '#64748B'} onChange={c => onChange(cat.id, 'color', c)} />
       <div className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
