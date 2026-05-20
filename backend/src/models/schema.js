@@ -64,8 +64,7 @@ const initSchema = () => {
     CREATE VIRTUAL TABLE IF NOT EXISTS transactions_fts USING fts5(
       id UNINDEXED,
       description,
-      content='transactions',
-      content_rowid='id'
+      content='transactions'
     );
 
     -- 1.2 Triggers for Automated Metadata (updated_at)

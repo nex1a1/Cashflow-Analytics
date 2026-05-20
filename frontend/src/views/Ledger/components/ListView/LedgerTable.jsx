@@ -141,7 +141,7 @@ export default function LedgerTable({
       }`}>
         {/* Left: Record Count */}
         <div className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
-          หน้า {currentPage} • รวม {currentData.length} รายการ
+          หน้า {currentPage} • แสดง {currentData.length} จาก {sortedTransactions.length} รายการ
         </div>
 
         {/* Center: Pagination Controls */}

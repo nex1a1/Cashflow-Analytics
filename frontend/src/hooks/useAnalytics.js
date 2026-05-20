@@ -63,7 +63,6 @@ export default function useAnalytics({
     const allocGroupsMap = { need: [], want: [], savings: [] };
     const groupTotals = {};
     const groupCatsMap = {}; // Track categories within each group
-    const groupChartTotal = { expense: 0 };
 
     let dayIncomeMap = {}, dayExpenseMap = {};
     let uniqueMonthsSet = new Set();
@@ -354,7 +353,7 @@ export default function useAnalytics({
         id: g.id,
         name: g.name,
         amount: groupTotals[g.id],
-        percentage: groupChartTotal.expense > 0 ? ((groupTotals[g.id] / groupChartTotal.expense) * 100).toFixed(1) : 0,
+        percentage: chartTotal > 0 ? ((groupTotals[g.id] / chartTotal) * 100).toFixed(1) : 0,
         avgPerMonth: groupTotals[g.id] / numMonths,
         icon: g.icon,
         color: g.color || '#64748B',

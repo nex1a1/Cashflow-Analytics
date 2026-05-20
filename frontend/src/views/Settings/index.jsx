@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Settings2, Info, Coins, Wallet, Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -22,15 +22,15 @@ export default function SettingsView({
   const { isDarkMode: dm, toggleTheme } = useTheme();
   const [newCatId, setNewCatId] = useState(null);
   
-  const onAddCategory = (type) => {
+  const onAddCategory = useCallback((type) => {
     handleAddCategory(type);
     setTimeout(() => {
       const added = [...categories].reverse().find(c => c.type === type);
       if (added) setNewCatId(added.id);
     }, 0);
-  };
+  }, [handleAddCategory, categories]);
 
-  const handleChangeCashflowGroup = (id, field, value) => {
+  const handleChangeCashflowGroup = useCallback((id, field, value) => {
     // 1. Optimistic Update
     setCashflowGroups(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
     
@@ -39,19 +39,19 @@ export default function SettingsView({
     if (group) {
       handleUpdateCashflowGroup({ ...group, [field]: value });
     }
-  };
+  }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 
   const [cashflowDeleteError, setCashflowDeleteError] = useState(null);
-  const handleDeleteGroup = (id) => {
+  const handleDeleteGroup = useCallback((id) => {
     if (categories.some(c => c.cashflowGroup === id)) {
       setCashflowDeleteError({ id, msg: 'ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่' });
       setTimeout(() => setCashflowDeleteError(null), 4000);
       return;
     }
     handleDeleteCashflowGroup(id);
-  };
+  }, [categories, handleDeleteCashflowGroup]);
 
-  const handleMoveCashflowGroup = async (id, direction) => {
+  const handleMoveCashflowGroup = useCallback(async (id, direction) => {
     const idx = cashflowGroups.findIndex(g => g.id === id);
     if (idx < 0) return;
     const ti = direction === 'UP' ? idx - 1 : idx + 1;
@@ -70,7 +70,7 @@ export default function SettingsView({
         console.error('Failed to save groups order:', err);
       }
     }
-  };
+  }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 
   const txCountByGroup = useMemo(() => {
     const map = {};

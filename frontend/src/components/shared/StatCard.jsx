@@ -6,7 +6,9 @@ export default function StatCard({
   icon, 
   label, 
   value, 
-  subValue, 
+  subValue,
+  subValueJSX,
+  topRightBadge,
   trend, // { value: number, isGood: boolean }
   color, 
   variant = 'vitals' // 'vitals' | 'compact'
@@ -45,7 +47,7 @@ export default function StatCard({
 
   // VITALS VARIANT (Vertical - Used at the top of the Ledger/Dashboard)
   return (
-    <div className={`relative overflow-hidden flex flex-col p-4 rounded-sm border transition-all duration-300 group ${
+    <div className={`relative overflow-hidden flex flex-col px-4 py-2.5 rounded-sm border transition-all duration-300 group ${
       dm 
         ? 'bg-slate-800/80 border-slate-700 hover:bg-slate-800 hover:border-slate-600' 
         : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
@@ -60,7 +62,7 @@ export default function StatCard({
           {React.cloneElement(icon, { size: 18 })}
         </div>
         <div className="flex-1 min-w-0 pr-1">
-          <p className={`text-[10px] font-black uppercase tracking-wider leading-none mb-1.5 truncate ${color.text} filter brightness-90`}>
+          <p className={`text-[10px] font-black uppercase tracking-wider leading-none mb-1 truncate ${color.text} filter brightness-90`}>
             {label}
           </p>
           <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
@@ -78,13 +80,20 @@ export default function StatCard({
               </div>
             )}
           </div>
+          {subValueJSX}
           {subValue && (
-            <p className={`mt-1.5 text-[9px] font-black tracking-wide truncate ${color.text} filter brightness-75 opacity-60`}>
+            <p className={`mt-1 text-[9px] font-black tracking-wide truncate ${color.text} filter brightness-75 opacity-60`}>
               {subValue}
             </p>
           )}
         </div>
       </div>
+
+      {topRightBadge && (
+        <div className="absolute top-2 right-2.5">
+          {topRightBadge}
+        </div>
+      )}
     </div>
   );
 }

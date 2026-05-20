@@ -45,6 +45,8 @@ const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
   const avgExpensePerDay = totalExpense / periodDays;
   const avgNeedPerDay = fixedTotal / periodDays;
   const avgWantPerDay = variableTotal / periodDays;
+  
+  const expensePercent = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : 0;
 
   const vitalsConfig = [
     {
@@ -61,28 +63,29 @@ const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
       label: "รายจ่ายรวม",
       value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={totalExpense} />,
       subValueJSX: showSkeleton ? <Shimmer className="h-3 w-24" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 tabular-nums ${dm ? 'text-orange-400' : 'text-orange-600'}`}>เฉลี่ย ฿{formatMoney(avgExpensePerDay)}/วัน</span>,
+      topRightBadge: !showSkeleton && (
+        <div className={`px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest ${dm ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
+          ใช้ไป {expensePercent}%
+        </div>
+      ),
       color: { bg: dm ? 'bg-orange-900/30' : 'bg-orange-50', text: dm ? 'text-orange-400' : 'text-orange-600' }
     },
     {
       id: 'cashflow',
       icon: <Navigation />,
-      label: "กระแสเงินสด",
+      label: "กระแสเงินสดสุทธิ",
       value: showSkeleton ? <Shimmer className="h-6 w-20 my-1" dm={dm} /> : <AnimatedNumber value={netCashflow} />,
       subValueJSX: showSkeleton ? <Shimmer className="h-3 w-12" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 ${netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>{netCashflow >= 0 ? 'Surplus' : 'Deficit'}</span>,
+      topRightBadge: !showSkeleton && (
+        <div className={`px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest flex items-center gap-1 ${savingsRate >= 20 ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')}`}>
+          <span>ออม {savingsRate}%</span>
+          <span className="opacity-60">|</span>
+          <span>{savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>
+        </div>
+      ),
       color: { 
         bg: netCashflow >= 0 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-rose-900/30' : 'bg-rose-50'),
         text: netCashflow >= 0 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')
-      }
-    },
-    {
-      id: 'savings',
-      icon: <ShieldCheck />,
-      label: "ประสิทธิภาพ",
-      value: showSkeleton ? <Shimmer className="h-6 w-12 my-1" dm={dm} /> : `${savingsRate}%`,
-      subValueJSX: showSkeleton ? <Shimmer className="h-3 w-16" dm={dm} /> : <span className={`text-[9px] font-medium opacity-80 ${savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')}`}>Grade {savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>,
-      color: { 
-        bg: savingsRate >= 20 ? (dm ? 'bg-emerald-900/30' : 'bg-emerald-50') : (dm ? 'bg-blue-900/30' : 'bg-blue-50'),
-        text: savingsRate >= 20 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-blue-400' : 'text-blue-600')
       }
     }
   ];
@@ -90,14 +93,15 @@ const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
   return (
     <div className="flex flex-col border-b border-dashed border-slate-700/40">
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
-      <div className="grid grid-cols-4 gap-[1px] bg-slate-700/20 p-[1px]">
+      <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px]">
         {vitalsConfig.map(card => (
           <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-slate-50'}>
             <StatCard 
               icon={card.icon}
               label={card.label}
               value={card.value}
-              subValueJSX={card.subValueJSX} 
+              subValueJSX={card.subValueJSX}
+              topRightBadge={card.topRightBadge}
               color={card.color}
             />
           </div>

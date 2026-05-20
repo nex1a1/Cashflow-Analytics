@@ -10,7 +10,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 /**
  * Sub-component for individual category cell (Table-like HUD)
  */
-const CatItem = ({ cat, dm, idx }) => (
+const CatItem = React.memo(({ cat, dm, idx }) => (
   <div 
     className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
     style={{ borderLeftColor: cat.color }}
@@ -45,80 +45,93 @@ const CatItem = ({ cat, dm, idx }) => (
       </div>
     </div>
   </div>
-);
+));
 
 /**
  * Sub-component for Group cell (With Category breakdown)
  */
-const GroupItem = ({ item, dm }) => (
+const GroupItem = React.memo(({ item, dm, isSingleMonthView }) => (
   <div 
-    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-4 ${dm ? 'bg-slate-800/50 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
+    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
     style={{ borderLeftColor: item.color }}
   >
-    <div className="flex justify-between items-start gap-1 mb-2">
-      <div className="flex flex-col min-w-0">
-        <span className="text-[11px] font-black uppercase tracking-tight flex items-center gap-1.5 truncate" style={{ color: item.color }}>
-          <span className="shrink-0 group-hover:scale-110 transition-transform">{item.icon || '📁'}</span>
-          <span className="truncate group-hover:text-blue-500 transition-colors">{item.name}</span>
+    {/* ─── HEADER ─── */}
+    <div className="flex justify-between items-start gap-2 mb-3">
+      <div className="flex flex-col min-w-0 gap-1.5">
+        <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+          <span className="shrink-0 opacity-80 group-hover:scale-110 transition-transform">{item.icon || '📁'}</span>
+          <span className="truncate group-hover:brightness-125 transition-all">{item.name}</span>
         </span>
-        <span className={`text-[9px] font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-          เฉลี่ยรายเดือน: {formatMoney(item.avgPerMonth)}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {!isSingleMonthView && (
+            <span className={`text-[8.5px] font-bold tracking-widest uppercase ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              AVG. ฿{formatMoney(item.avgPerMonth)} / MO
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col items-end shrink-0">
-        <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
-          {formatMoney(item.amount)}
-        </span>
-        <span className="text-lg font-black tabular-nums leading-none" style={{ color: item.color }}>
-          {item.percentage}%
+      
+      <div className="flex flex-col items-end shrink-0 gap-0.5">
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: item.color }}>
+            {item.percentage}
+          </span>
+          <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
+        </div>
+        <span className={`text-[9px] font-bold tabular-nums opacity-60 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+          ฿ {formatMoney(item.amount)}
         </span>
       </div>
     </div>
     
+    {/* ─── PROGRESS BAR ─── */}
     <div className="mb-3">
-      <div className={`w-full rounded-full h-[6px] overflow-hidden ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
         <div 
-          className="h-full transition-all duration-1000" 
+          className="h-full transition-all duration-1000 relative" 
           style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
-        />
+        >
+           {/* Premium Gradient Overlay */}
+           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20" />
+        </div>
       </div>
     </div>
 
     {/* ─── CONSTITUENT CATEGORIES ─── */}
-    <div className={`pt-2 border-t border-dashed ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
-      <div className="flex flex-col gap-0.5 h-[72px] overflow-y-auto pr-1 custom-scrollbar">
+    <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+      <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
         {(item.categories || []).map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-2 overflow-hidden py-0.5">
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="text-[9px] shrink-0 opacity-70">{c.icon || '✨'}</span>
-              <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{c.icon || '✨'}</span>
+              <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400 group-hover/item:text-slate-200' : 'text-slate-500 group-hover/item:text-slate-800'} transition-colors`}>
                 {c.name}
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className={`text-[8.5px] font-bold tabular-nums ${dm ? 'text-slate-500 group-hover/item:text-slate-400' : 'text-slate-400 group-hover/item:text-slate-500'} transition-colors`}>
                 {formatMoney(c.amount)}
               </span>
-              <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-slate-300 group-hover/item:text-slate-100' : 'text-slate-600 group-hover/item:text-slate-900'} transition-colors`}>
                 {c.relativePercentage}%
               </span>
             </div>
           </div>
         ))}
         {(!item.categories || item.categories.length === 0) && (
-           <div className="flex items-center justify-center py-1">
-              <span className={`text-[8px] font-bold uppercase tracking-widest ${dm ? 'text-slate-600' : 'text-slate-300'}`}>No Categories</span>
+           <div className="flex-1 flex items-center justify-center py-1">
+              <span className={`text-[8.5px] font-bold uppercase tracking-widest ${dm ? 'text-slate-600' : 'text-slate-300'}`}>No Data</span>
            </div>
         )}
       </div>
     </div>
   </div>
-);
+));
 
 /**
  * Sub-component for Allocation Ratio cell (Special UX)
  */
-const AllocationItem = ({ item, dm }) => {
+const AllocationItem = React.memo(({ item, dm }) => {
   const diff = item.percentage - item.target;
   const isOver = item.id !== 'savings' && diff > 5;
   const isUnder = item.id === 'savings' && diff < -5;
@@ -126,65 +139,77 @@ const AllocationItem = ({ item, dm }) => {
 
   return (
     <div 
-      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-4 ${dm ? 'bg-slate-800/60 hover:bg-slate-800/90 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
+      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
       style={{ borderLeftColor: item.color }}
     >
-      <div className="flex justify-between items-start gap-1 mb-2">
-        <div className="flex flex-col min-w-0">
-          <span className="text-[11px] font-black uppercase tracking-tight flex items-center gap-1.5 truncate" style={{ color: item.color }}>
-            <span className="shrink-0">{item.icon}</span>
+      {/* ─── HEADER ─── */}
+      <div className="flex justify-between items-start gap-2 mb-3">
+        <div className="flex flex-col min-w-0 gap-1.5">
+          <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+            <span className="shrink-0 opacity-80">{item.icon}</span>
             <span className="truncate">{item.name}</span>
           </span>
-          <span className={`text-[9px] font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-            เป้าหมาย: {item.target}%
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[8px] font-bold tracking-widest uppercase ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              Target {item.target}%
+            </span>
+            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider ${
+              isGood ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : 
+              (isOver ? (dm ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600') : 
+              (dm ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'))
+            }`}>
+              {isGood ? 'Optimal' : (isOver ? 'Over Limit' : 'Below')}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-end shrink-0">
-          <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
-            {formatMoney(item.amount)}
-          </span>
-          <span className="text-lg font-black tabular-nums leading-none" style={{ color: item.color }}>
-            {item.percentage}%
-          </span>
-          <span className={`text-[8px] font-black px-1 rounded-sm mt-1 uppercase ${
-            isGood ? 'bg-emerald-500/20 text-emerald-400' : (isOver ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400')
-          }`}>
-            {isGood ? 'Optimal' : (isOver ? 'Over Limit' : 'Below Target')}
+        
+        <div className="flex flex-col items-end shrink-0 gap-0.5">
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: item.color }}>
+              {item.percentage}
+            </span>
+            <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
+          </div>
+          <span className={`text-[9px] font-bold tabular-nums opacity-60 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+            ฿ {formatMoney(item.amount)}
           </span>
         </div>
       </div>
       
-      <div className="mb-2">
-        <div className={`w-full rounded-full h-[6px] overflow-hidden ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+      {/* ─── PROGRESS BAR ─── */}
+      <div className="mb-3">
+        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
           <div 
             className="h-full transition-all duration-1000 relative" 
             style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
           >
-            {/* Target Marker */}
-            <div 
-              className="absolute top-0 bottom-0 w-[2px] bg-white/40 shadow-sm" 
-              style={{ left: `${(item.target / Math.max(item.percentage, 1)) * 100}%` }} 
-            />
+             {/* Premium Gradient Overlay */}
+             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20" />
           </div>
+          {/* Target Marker */}
+          <div 
+            className="absolute top-0 bottom-0 w-[2px] shadow-sm z-10" 
+            style={{ left: `${item.target}%`, backgroundColor: dm ? '#fff' : '#000', opacity: 0.8 }} 
+          />
         </div>
       </div>
 
       {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className={`pt-2 border-t border-dashed ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
-        <div className="flex flex-col gap-0.5 h-[72px] overflow-y-auto pr-1 custom-scrollbar">
+      <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+        <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
           {(item.groups || []).map(g => (
-            <div key={g.id} className="flex items-center justify-between gap-2 overflow-hidden py-0.5">
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-[9px] shrink-0 opacity-70">{g.icon || '✨'}</span>
-                <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{g.icon || '✨'}</span>
+                <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400 group-hover/item:text-slate-200' : 'text-slate-500 group-hover/item:text-slate-800'} transition-colors`}>
                   {g.name}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-[8.5px] font-bold tabular-nums ${dm ? 'text-slate-500 group-hover/item:text-slate-400' : 'text-slate-400 group-hover/item:text-slate-500'} transition-colors`}>
                   {formatMoney(g.amount)}
                 </span>
-                <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+                <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-slate-300 group-hover/item:text-slate-100' : 'text-slate-600 group-hover/item:text-slate-900'} transition-colors`}>
                   {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
                 </span>
               </div>
@@ -200,18 +225,18 @@ const AllocationItem = ({ item, dm }) => {
             const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
 
             return (
-              <div className="flex items-center justify-between gap-2 py-0.5 border-t border-dotted border-slate-700/30 mt-0.5">
-                <div className="flex items-center gap-1 min-w-0">
-                  <span className="text-[9px] shrink-0 opacity-70">🌊</span>
-                  <span className={`text-[9px] font-bold truncate ${dm ? 'text-blue-400/80' : 'text-blue-600/80'}`}>
+              <div className={`flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted ${dm ? 'border-slate-700/50' : 'border-slate-300'} group/item`}>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[9px] shrink-0 opacity-80 group-hover/item:scale-110 transition-transform">🌊</span>
+                  <span className={`text-[9px] font-bold truncate ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
                     Net Surplus (เหลือสุทธิ)
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={`text-[8px] font-bold tabular-nums opacity-50 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className={`text-[8.5px] font-bold tabular-nums opacity-70 ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
                     {formatMoney(surplus)}
                   </span>
-                  <span className={`text-[9px] font-black tabular-nums ${dm ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
                     {surplusPercent}%
                   </span>
                 </div>
@@ -222,7 +247,7 @@ const AllocationItem = ({ item, dm }) => {
       </div>
     </div>
   );
-};
+});
 
 export default function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
@@ -425,7 +450,7 @@ export default function ExpenseProportion() {
           <div className={`flex-1 grid ${gridColsClass} gap-[1px] bg-slate-700/20`}>
              {activeItems.map((item, idx) => {
                if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} />;
-               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} dm={dm} />;
+               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} dm={dm} isSingleMonthView={analytics.isSingleMonthView} />;
                return <CatItem key={item.id || idx} cat={item} dm={dm} idx={idx} />;
              })}
              {/* Fill empty cells to maintain grid borders if needed */}

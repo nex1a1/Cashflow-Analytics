@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-export const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าหอพัก'];
+export const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าหอพัก', 'ค่าไฟ', 'ค่าเน็ต', 'ค่าน้ำ'];
 
 const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const DAY_NAMES = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
