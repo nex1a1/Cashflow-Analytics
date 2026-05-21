@@ -3,11 +3,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 
 export default function AppToast({ toast }) {
-  const { isDarkMode } = useTheme();
   const { hideToast } = useToast();
   const isError = toast.type === 'error';
   
@@ -26,7 +24,7 @@ export default function AppToast({ toast }) {
             flex flex-col z-[9999] overflow-hidden /* 🚨 ดัน Z-index ทะลุ Modal ไปเลย */
             ${isError 
               ? 'bg-red-600 border-red-700' 
-              : (isDarkMode ? 'bg-emerald-700/95 border-emerald-800' : 'bg-emerald-600 border-emerald-700')}
+              : 'bg-emerald-700/95 border-emerald-800'}
           `}
         >
           <div className="flex items-center gap-3 pl-5 pr-3 py-3">

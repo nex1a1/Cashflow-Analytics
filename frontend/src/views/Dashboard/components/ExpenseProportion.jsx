@@ -10,10 +10,16 @@ import { useDashboardContext } from '../context/DashboardContext';
 /**
  * Sub-component for individual category cell (Table-like HUD)
  */
-const CatItem = React.memo(({ cat, dm, idx }) => (
+const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
   <div 
-    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
-    style={{ borderLeftColor: cat.color }}
+    onMouseEnter={() => onHover(idx)}
+    onMouseLeave={() => onHover(null)}
+    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 transition-all ${
+      isHovered 
+        ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+        : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+    }`}
+    style={{ borderLeftColor: isHovered ? undefined : cat.color }}
   >
     <div className="flex justify-between items-start gap-1 mb-1">
       <span 
@@ -50,10 +56,16 @@ const CatItem = React.memo(({ cat, dm, idx }) => (
 /**
  * Sub-component for Group cell (With Category breakdown)
  */
-const GroupItem = React.memo(({ item, dm, isSingleMonthView }) => (
+const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonthView }) => (
   <div 
-    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
-    style={{ borderLeftColor: item.color }}
+    onMouseEnter={() => onHover(idx)}
+    onMouseLeave={() => onHover(null)}
+    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
+      isHovered 
+        ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+        : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+    }`}
+    style={{ borderLeftColor: isHovered ? undefined : item.color }}
   >
     {/* ─── HEADER ─── */}
     <div className="flex justify-between items-start gap-2 mb-3">
@@ -131,16 +143,24 @@ const GroupItem = React.memo(({ item, dm, isSingleMonthView }) => (
 /**
  * Sub-component for Allocation Ratio cell (Special UX)
  */
-const AllocationItem = React.memo(({ item, dm }) => {
-  const diff = item.percentage - item.target;
+const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
+  const percentage = parseFloat(item.percentage) || 0;
+  const diff = percentage - item.target;
   const isOver = item.id !== 'savings' && diff > 5;
   const isUnder = item.id === 'savings' && diff < -5;
   const isGood = !isOver && !isUnder;
+  const isAlert = isOver || isUnder;
 
   return (
     <div 
-      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'} transition-all`}
-      style={{ borderLeftColor: item.color }}
+      onMouseEnter={() => onHover(idx)}
+      onMouseLeave={() => onHover(null)}
+      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
+        isHovered 
+          ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+          : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+      }`}
+      style={{ borderLeftColor: isHovered ? undefined : item.color }}
     >
       {/* ─── HEADER ─── */}
       <div className="flex justify-between items-start gap-2 mb-3">
@@ -180,8 +200,8 @@ const AllocationItem = React.memo(({ item, dm }) => {
       <div className="mb-3">
         <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
           <div 
-            className="h-full transition-all duration-1000 relative" 
-            style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+            className={`h-full transition-all duration-1000 relative ${isAlert ? 'animate-pulse' : ''}`} 
+            style={{ width: `${percentage}%`, backgroundColor: item.color }}
           >
              {/* Premium Gradient Overlay */}
              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20" />
@@ -253,6 +273,7 @@ export default function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
   const [displayMode, setDisplayMode] = useState('category'); // 'category', 'group', or 'allocation'
   const [sortMode, setSortMode] = useState('amount'); // 'amount' or 'order'
+  const [hoveredIdx, setHoveredIdx] = useState(null); // Track hovered item for visual highlighting
 
   const { 
     sortedCats = [], chartTotal = 0,
@@ -264,6 +285,11 @@ export default function ExpenseProportion() {
   const isGroupMode = displayMode === 'group';
   const isAllocationMode = displayMode === 'allocation';
   
+  const changeDisplayMode = (mode) => {
+    setDisplayMode(mode);
+    setHoveredIdx(null); // Reset hovered item when changing tabs
+  };
+
   const rawItems = useMemo(() => {
     if (isGroupMode) return sortedGroups;
     if (isAllocationMode) return sortedAllocation;
@@ -289,15 +315,24 @@ export default function ExpenseProportion() {
       labels: activeItems.map(i => i.name),
       datasets: [{
         data: activeItems.map(i => i.amount),
-        backgroundColor: activeItems.map(i => i.color),
-        borderWidth: 2, 
-        borderColor: dm ? '#1e293b' : '#ffffff',
+        backgroundColor: activeItems.map((i, idx) => {
+          if (hoveredIdx === null || hoveredIdx === idx) {
+            return i.color;
+          }
+          // Elite styling: Fade out non-hovered segments
+          return `${i.color}40`;
+        }),
+        borderWidth: activeItems.map((_, idx) => hoveredIdx === idx ? 3 : 2),
+        borderColor: activeItems.map((_, idx) => {
+          if (hoveredIdx === idx) return dm ? '#3b82f6' : '#2563eb';
+          return dm ? '#1e293b' : '#ffffff';
+        }),
       }],
     };
-  }, [activeItems, dm]);
+  }, [activeItems, dm, hoveredIdx]);
 
   const activeTotal = useMemo(() => {
-    if (isGroupMode) return totalExpense;
+    if (isGroupMode) return chartTotal; // FIXED: use chartTotal (filtered) to match sorted groups
     if (isAllocationMode) {
       // Use income as the 100% base. 
       // If in "All" period and no explicit income target is set, income is still the denominator.
@@ -348,7 +383,7 @@ export default function ExpenseProportion() {
           {/* Mode Switcher */}
           <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
             <button 
-              onClick={() => setDisplayMode('category')}
+              onClick={() => changeDisplayMode('category')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'category' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
@@ -358,7 +393,7 @@ export default function ExpenseProportion() {
               รายหมวด
             </button>
             <button 
-              onClick={() => setDisplayMode('group')}
+              onClick={() => changeDisplayMode('group')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'group' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
@@ -368,7 +403,7 @@ export default function ExpenseProportion() {
               ตามกลุ่ม
             </button>
             <button 
-              onClick={() => setDisplayMode('allocation')}
+              onClick={() => changeDisplayMode('allocation')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'allocation' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
@@ -420,11 +455,11 @@ export default function ExpenseProportion() {
           </div>
           <div className="flex-1 grid grid-cols-5 gap-[1px] bg-slate-700/20">
              {[...Array(5)].map((_, i) => (
-               <div key={i} className={`p-2 animate-pulse ${dm ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
-                  <div className={`h-2 w-12 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
-                  <div className={`h-4 w-16 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
-                  <div className={`h-1 w-full rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
-               </div>
+                <div key={i} className={`p-2 animate-pulse ${dm ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
+                   <div className={`h-2 w-12 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
+                   <div className={`h-4 w-16 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
+                   <div className={`h-1 w-full rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
+                </div>
              ))}
           </div>
         </div>
@@ -449,17 +484,18 @@ export default function ExpenseProportion() {
           {/* RIGHT: TABLE-GRID HUD */}
           <div className={`flex-1 grid ${gridColsClass} gap-[1px] bg-slate-700/20`}>
              {activeItems.map((item, idx) => {
-               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} />;
-               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} dm={dm} isSingleMonthView={analytics.isSingleMonthView} />;
-               return <CatItem key={item.id || idx} cat={item} dm={dm} idx={idx} />;
+               const isHovered = hoveredIdx === idx;
+               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
+               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} dm={dm} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} />;
+               return <CatItem key={item.id || idx} cat={item} dm={dm} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
              })}
              {/* Fill empty cells to maintain grid borders if needed */}
              {![isAllocationMode, isGroupMode].some(Boolean) && [...Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
-               <div key={`empty-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
-             ))}
+                <div key={`empty-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+              ))}
              {(isAllocationMode || isGroupMode) && [...Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
-               <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
-             ))}
+                <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+              ))}
           </div>
 
         </div>

@@ -11,27 +11,16 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('isDarkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const isDarkMode = true;
+  const dm = true;
 
   useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-    // Also toggle the 'dark-mode' or 'light-mode' class on the body as a fallback or for global styling
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-      document.body.classList.add('light-mode');
-    }
-  }, [isDarkMode]);
+    document.body.classList.add('dark-mode');
+    document.body.classList.remove('light-mode');
+  }, []);
 
-  const toggleTheme = () => setIsDarkMode(prev => !prev);
-
-  // Alias for shorter usage in components that expect 'dm'
-  const dm = isDarkMode;
+  const toggleTheme = () => {};
+  const setIsDarkMode = () => {};
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, dm, toggleTheme, setIsDarkMode }}>

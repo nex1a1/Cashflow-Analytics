@@ -177,6 +177,16 @@ export default function useAnalytics({
           // Allocation Maps for Savings
           dailyAllocMap.savings[isoDate] = (dailyAllocMap.savings[isoDate] || 0) + amt;
           monthlyAllocMap.savings[ym] = (monthlyAllocMap.savings[ym] || 0) + amt;
+
+          // Track individual savings groups for the 50/30/20 breakdown
+          if (cGroup) {
+            let groupEntry = allocGroupsMap.savings.find(g => g.id === cGroup);
+            if (!groupEntry) {
+              groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+              allocGroupsMap.savings.push(groupEntry);
+            }
+            groupEntry.amount += amt;
+          }
         } else {
           // --- EXPENSE LOGIC ---
           totals.expense += amt;

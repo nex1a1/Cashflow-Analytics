@@ -2,7 +2,6 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppHeader from './AppHeader';
 import AppToast from '../shared/AppToast';
-import { useTheme } from '../../context/ThemeContext';
 
 // View Components
 import DashboardView from '../../views/Dashboard/index';
@@ -25,7 +24,7 @@ const pageVariants = {
 const pageTransition = { type: 'tween', ease: 'anticipate', duration: 0.3 };
 
 export default function MainLayout({ controller }) {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   const {
     activeTab, setActiveTab,
     dbStatus, isProcessing,

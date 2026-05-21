@@ -14,21 +14,21 @@ const CashflowTableHeader = ({
   const getHighlightBg = (group) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = group.highlightBg ? (dm ? 0.25 : 0.12) : (dm ? 0.08 : 0.05);
+    const opacity = group.highlightBg ? (dm ? 0.25 : 0.45) : (dm ? 0.08 : 0.28);
     return `rgba(${rgb}, ${opacity})`;
   };
 
   const getSubHighlightBg = (group, subColor) => {
     const hexColor = subColor || group.color || '#64748B';
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.06 : 0.03;
+    const opacity = dm ? 0.06 : 0.20;
     return `rgba(${rgb}, ${opacity})`;
   };
 
   return (
     <thead className={`sticky top-0 z-30 ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
       <tr>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-b ${thinBorder} ${dm ? 'text-blue-300 bg-slate-900' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-blue-300 bg-slate-900' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
         
         {activeIncomeGroups.length > 0 && (
           <th colSpan={activeIncomeGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-l border-b border-dashed ${thinBorder} ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
@@ -42,9 +42,9 @@ const CashflowTableHeader = ({
           </th>
         )}
         
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 ${dm ? 'text-red-400 bg-slate-900' : 'text-red-800 bg-slate-200'} min-w-[110px] max-w-[140px]`}>รวมรายจ่าย (Trend)</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-red-400 bg-slate-900' : 'text-red-800 bg-slate-200'} min-w-[140px] max-w-[140px]`}>รวมรายจ่าย (Trend)</th>
         <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[120px] z-50 ${dm ? 'text-blue-400 bg-slate-900' : 'text-[#00509E] bg-slate-200'} min-w-[110px] max-w-[110px]`}>เงินคงเหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${dm ? 'text-emerald-400 bg-slate-900' : 'text-emerald-600 bg-slate-200'} min-w-[70px] max-w-[70px]`}>%เหลือ</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${dm ? 'text-emerald-400 bg-slate-900' : 'text-emerald-600 bg-slate-200'} min-w-[60px] max-w-[60px]`}>%เหลือ</th>
         <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 ${dm ? 'text-pink-400 bg-slate-900' : 'text-pink-600 bg-slate-200'} min-w-[60px] max-w-[60px] ${thinBorder}`}>%จ่าย</th>
       </tr>
       
@@ -107,14 +107,14 @@ const CashflowTableRow = ({
   const getHighlightBg = (group) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = group.highlightBg ? (dm ? 0.25 : 0.12) : (dm ? 0.08 : 0.05);
+    const opacity = group.highlightBg ? (dm ? 0.25 : 0.45) : (dm ? 0.08 : 0.28);
     return `rgba(${rgb}, ${opacity})`;
   };
 
   const getSubHighlightBg = (group, subColor) => {
     const hexColor = subColor || group.color || '#64748B';
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.06 : 0.03;
+    const opacity = dm ? 0.06 : 0.20;
     return `rgba(${rgb}, ${opacity})`;
   };
 
@@ -135,7 +135,7 @@ const CashflowTableRow = ({
 
   return (
     <tr className="group hover:bg-slate-400/5 transition-colors">
-      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} transition-colors ${dm ? 'text-blue-300 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'}`}>{getThaiMonth(row.monthStr)}</td>
+      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-blue-300 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'}`}>{getThaiMonth(row.monthStr)}</td>
       
       {activeIncomeGroups.map((g, idx) => {
         const isExpanded = expandedGroups.has(g.id);
@@ -179,7 +179,7 @@ const CashflowTableRow = ({
         );
       })}
 
-      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 transition-colors ${dm ? 'text-red-400 bg-slate-800 group-hover:bg-slate-700' : 'text-red-700 bg-slate-50 group-hover:bg-slate-100'} min-w-[140px] max-w-[140px]`}>
+      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-red-400 bg-slate-800 group-hover:bg-slate-700' : 'text-red-700 bg-slate-50 group-hover:bg-slate-100'} min-w-[140px] max-w-[140px]`}>
         <div className="flex items-center justify-between gap-1">
           <div className="shrink-0">{expMoMJSX}</div>
           <span className="text-[11px] tabular-nums">{formatMoney(row.totalExp)}</span>
@@ -204,7 +204,7 @@ const CashflowTableFooter = ({
   return (
     <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`}>
       <tr className={dm ? 'text-slate-200' : 'text-white'}>
-        <td className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} ${dm ? 'bg-slate-900' : 'bg-slate-800'}`}>รวมทั้งหมด</td>
+        <td className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'bg-slate-900' : 'bg-slate-800'}`}>รวมทั้งหมด</td>
         {activeIncomeGroups.map((g, idx) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
@@ -240,7 +240,7 @@ const CashflowTableFooter = ({
             </React.Fragment>
           );
         })}
-        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[230px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[140px] max-w-[140px]`}>{formatMoney(analytics.totalExpense)}</td>
+        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[230px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[140px] max-w-[140px]`}>{formatMoney(analytics.totalExpense)}</td>
         <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-blue-400 sticky right-[120px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[110px] max-w-[110px]`}>{formatMoney(analytics.netCashflow)}</td>
         <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[60px] z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</td>
         <td className={`px-3 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 ${dm ? 'bg-slate-900' : 'bg-slate-800'} min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}</td>

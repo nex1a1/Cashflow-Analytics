@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Moon, Sun, Calendar as CalendarIcon, HelpCircle
+  Calendar as CalendarIcon, HelpCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import sharkBlack from '../../assets/images/shark-black.svg';
@@ -11,7 +11,6 @@ import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
 import Tooltip from '../ui/Tooltip';
-import { useTheme } from '../../context/ThemeContext';
 
 const TABS = [
   { id: 'dashboard', label: 'เจาะลึกวิเคราะห์', icon: BarChart3 },
@@ -32,8 +31,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }) {
-  const { isDarkMode, toggleTheme } = useTheme();
-  const dm = isDarkMode;
+  const dm = true;
   const showPeriodPicker = ['dashboard', 'analytics', 'ledger', 'calendar'].includes(activeTab);
 
   // ── Logic: Smooth Processing Transition ───────────────────
@@ -93,16 +91,6 @@ export default function AppHeader({
           
           {/* Utility Tools */}
           <div className={`flex items-center gap-1 p-1 rounded-sm border shadow-sm ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-            <button
-              onClick={toggleTheme}
-              className={`p-1.5 rounded-sm transition-colors ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`}
-              title="สลับโหมดมืด/สว่าง"
-            >
-              {dm ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-            </button>
-            
-            <div className={`w-px h-4 mx-0.5 ${dm ? 'bg-slate-700' : 'bg-slate-300'}`} />
-            
             <button
               onClick={onClickExport}
               className={`flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`}
