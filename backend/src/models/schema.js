@@ -194,6 +194,23 @@ const verifyTableColumns = () => {
     }
   }
 
+  // Clean up allocation_type for existing income transactions to NULL
+  try {
+    db.exec(`
+      UPDATE transactions 
+      SET allocation_type = NULL 
+      WHERE category_id IN (
+        SELECT c.id 
+        FROM categories c
+        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+        WHERE cg.type = 'income'
+      )
+    `);
+    console.log('🧹 Cleaned allocation_type for existing income transactions to NULL');
+  } catch (e) {
+    console.warn('⚠️ Income allocation cleanup warning:', e.message);
+  }
+
   // --- Categories ---
   const catInfo = db.prepare("PRAGMA table_info(categories)").all();
   const catCols = catInfo.map(c => c.name);

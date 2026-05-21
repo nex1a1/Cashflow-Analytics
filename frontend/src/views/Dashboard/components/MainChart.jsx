@@ -391,95 +391,238 @@ export default function MainChart() {
       <div className="flex items-center justify-between gap-3 mb-3 relative z-10 flex-wrap w-full">
         {chartViewType !== 'sankey' ? (
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className={`text-[10px] uppercase tracking-wider font-extrabold flex items-center gap-1 shrink-0 select-none ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
-              <Activity className="w-3.5 h-3.5 text-blue-500 animate-pulse" /> MODES:
+            <span className={`text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none ${
+              dm ? 'text-slate-600' : 'text-slate-400'
+            }`}>
+              <Activity className="w-3 h-3 text-blue-500 animate-pulse" /> MODES
             </span>
+
+            {/* Divider */}
+            <span className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
             
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className={`flex items-center gap-1 p-1 rounded-sm transition-all duration-300 ${
+              dm 
+                ? 'bg-slate-900/40 border border-slate-700/30 shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)]' 
+                : 'bg-slate-200/40 border border-slate-200/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]'
+            }`}>
+
               {/* 1. Breakdown Mode */}
               <button
                 disabled={showSkeleton}
                 onClick={() => setIsBreakdown(prev => !prev)}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
-                  isBreakdown
-                    ? (dm ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.15)]' : 'bg-blue-50 border-blue-200 text-[#00509E] shadow-[0_0_8px_rgba(0,80,158,0.05)]')
-                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
-                }`}
                 title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
+                className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isBreakdown
+                    ? (dm
+                        ? 'bg-blue-500/10 border-blue-500/40 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
+                        : 'bg-blue-50/70 border-blue-200 text-blue-700 shadow-[0_2px_8px_rgba(59,130,246,0.06)]')
+                    : (dm
+                        ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
+                }`}
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>แจกแจง {isBreakdown ? 'ON' : 'OFF'}</span>
+                <Layers className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
+                  isBreakdown ? (dm ? 'text-blue-400' : 'text-blue-600') : ''
+                }`} />
+                <span>แจกแจง</span>
+                
+                {/* Visual Hairline Divider */}
+                <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
+                  isBreakdown
+                    ? (dm ? 'bg-blue-500/30' : 'bg-blue-200')
+                    : (dm ? 'bg-slate-700/60' : 'bg-slate-200')
+                }`} />
+
+                {/* Tactical Micro-Switch */}
+                <div className={`relative w-7 h-4 rounded-sm transition-all duration-300 shrink-0 ${
+                  isBreakdown 
+                    ? 'bg-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                    : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
+                }`}>
+                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                    isBreakdown 
+                      ? 'bg-white translate-x-3.5 shadow-md' 
+                      : (dm ? 'bg-slate-500' : 'bg-slate-400')
+                  }`} />
+                </div>
               </button>
 
-              {/* 2. Cumulative Mode (Pacing Curve) */}
+              {/* 2. Cumulative Mode */}
               <button
                 disabled={showSkeleton}
                 onClick={() => {
                   const nextVal = !isCumulative;
                   setIsCumulative(nextVal);
-                  if (nextVal) {
-                    setShowTrendLines(false);
-                  }
+                  if (nextVal) setShowTrendLines(false);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
-                  isCumulative
-                    ? (dm ? 'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.15)]' : 'bg-purple-50 border-purple-200 text-purple-700 shadow-[0_0_8px_rgba(126,34,206,0.05)]')
-                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
-                }`}
                 title="ดูความเร็วการใช้จ่ายเป็นกราฟยอดสะสมเทียบกับเป้าหมาย"
+                className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isCumulative
+                    ? (dm
+                        ? 'bg-violet-500/10 border-violet-500/40 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
+                        : 'bg-violet-50/70 border-violet-200 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.06)]')
+                    : (dm
+                        ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
+                }`}
               >
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>กราฟสะสม {isCumulative ? 'ON' : 'OFF'}</span>
+                <TrendingUp className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
+                  isCumulative ? (dm ? 'text-violet-400' : 'text-violet-600') : ''
+                }`} />
+                <span>กราฟสะสม</span>
+                
+                {/* Visual Hairline Divider */}
+                <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
+                  isCumulative
+                    ? (dm ? 'bg-violet-500/30' : 'bg-violet-200')
+                    : (dm ? 'bg-slate-700/60' : 'bg-slate-200')
+                }`} />
+
+                {/* Tactical Micro-Switch */}
+                <div className={`relative w-7 h-4 rounded-sm transition-all duration-300 shrink-0 ${
+                  isCumulative 
+                    ? 'bg-violet-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                    : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
+                }`}>
+                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                    isCumulative 
+                      ? 'bg-white translate-x-3.5 shadow-md' 
+                      : (dm ? 'bg-slate-500' : 'bg-slate-400')
+                  }`} />
+                </div>
               </button>
 
-              {/* 3. Trend Lines Mode (MTD Average) */}
+              {/* 3. Trend Lines Mode */}
               <button
                 disabled={showSkeleton || isCumulative}
-                onClick={() => {
-                  if (!isCumulative) setShowTrendLines(prev => !prev);
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
-                  isCumulative
-                    ? (dm ? 'bg-slate-900/20 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50' : 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50')
-                    : showTrendLines
-                      ? (dm ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.15)]' : 'bg-amber-50 border-amber-200 text-amber-800 shadow-[0_0_8px_rgba(180,83,9,0.05)]')
-                      : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
-                }`}
+                onClick={() => { if (!isCumulative) setShowTrendLines(prev => !prev); }}
                 title={isCumulative ? "ไม่สามารถใช้เส้นเทรนด์ร่วมกับกราฟสะสมได้" : "ดูแนวโน้มค่าเฉลี่ยสะสมรายวัน (MTD Average)"}
+                className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isCumulative
+                    ? (dm
+                        ? 'bg-slate-900/30 border-transparent text-slate-700 cursor-not-allowed'
+                        : 'bg-slate-50/50 border-transparent text-slate-300 cursor-not-allowed')
+                    : showTrendLines
+                      ? (dm
+                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
+                          : 'bg-amber-50/70 border-amber-200 text-amber-700 shadow-[0_2px_8px_rgba(245,158,11,0.06)]')
+                      : (dm
+                          ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
+                }`}
               >
-                {isCumulative ? <Lock className="w-3.5 h-3.5 text-slate-500" /> : <Zap className="w-3.5 h-3.5" />}
-                <span>เส้นเทรนด์ {showTrendLines ? 'ON' : 'OFF'}</span>
+                {isCumulative ? (
+                  <Lock className="w-3.5 h-3.5 text-slate-500" />
+                ) : (
+                  <Zap className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
+                    showTrendLines ? (dm ? 'text-amber-400' : 'text-amber-600') : ''
+                  }`} />
+                )}
+                <span>เส้นเทรนด์</span>
+                
+                {/* Visual Hairline Divider */}
+                <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
+                  showTrendLines && !isCumulative
+                    ? (dm ? 'bg-amber-500/30' : 'bg-amber-200')
+                    : (dm ? 'bg-slate-700/60' : 'bg-slate-200')
+                }`} />
+
+                {/* Tactical Micro-Switch */}
+                <div className={`relative w-7 h-4 rounded-sm transition-all duration-300 shrink-0 ${
+                  showTrendLines && !isCumulative
+                    ? 'bg-amber-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                    : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
+                }`}>
+                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                    showTrendLines && !isCumulative
+                      ? 'bg-white translate-x-3.5 shadow-md' 
+                      : (dm ? 'bg-slate-500' : 'bg-slate-400')
+                  }`} />
+                </div>
               </button>
 
               {/* 4. Logarithmic Scale Mode */}
               <button
                 disabled={showSkeleton}
                 onClick={() => setIsLogScale(prev => !prev)}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
-                  isLogScale
-                    ? (dm ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.15)]' : 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_0_8px_rgba(4,120,87,0.05)]')
-                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
-                }`}
                 title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบสัดส่วน"
+                className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isLogScale
+                    ? (dm
+                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
+                        : 'bg-emerald-50/70 border-emerald-200 text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.06)]')
+                    : (dm
+                        ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
+                }`}
               >
-                <BarChart className="w-3.5 h-3.5" />
-                <span>สเกล Log {isLogScale ? 'ON' : 'OFF'}</span>
+                <BarChart className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
+                  isLogScale ? (dm ? 'text-emerald-400' : 'text-emerald-600') : ''
+                }`} />
+                <span>สเกล Log</span>
+                
+                {/* Visual Hairline Divider */}
+                <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
+                  isLogScale
+                    ? (dm ? 'bg-emerald-500/30' : 'bg-emerald-200')
+                    : (dm ? 'bg-slate-700/60' : 'bg-slate-200')
+                }`} />
+
+                {/* Tactical Micro-Switch */}
+                <div className={`relative w-7 h-4 rounded-sm transition-all duration-300 shrink-0 ${
+                  isLogScale 
+                    ? 'bg-emerald-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                    : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
+                }`}>
+                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                    isLogScale 
+                      ? 'bg-white translate-x-3.5 shadow-md' 
+                      : (dm ? 'bg-slate-500' : 'bg-slate-400')
+                  }`} />
+                </div>
               </button>
 
               {/* 5. Hide NEED Mode */}
               <button
                 disabled={showSkeleton}
                 onClick={() => setHideFixedExpenses(prev => !prev)}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
-                  hideFixedExpenses
-                    ? (dm ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.15)]' : 'bg-rose-50 border-rose-200 text-rose-700 shadow-[0_0_8px_rgba(190,24,74,0.05)]')
-                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
-                }`}
                 title="ซ่อนค่าใช้จ่ายคงที่ที่จำเป็น (Fixed Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายผันแปร"
+                className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  hideFixedExpenses
+                    ? (dm
+                        ? 'bg-rose-500/10 border-rose-500/40 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
+                        : 'bg-rose-50/70 border-rose-200 text-rose-700 shadow-[0_2px_8px_rgba(244,63,94,0.06)]')
+                    : (dm
+                        ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
+                }`}
               >
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>ซ่อน NEED {hideFixedExpenses ? 'ON' : 'OFF'}</span>
+                <EyeOff className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
+                  hideFixedExpenses ? (dm ? 'text-rose-400' : 'text-rose-600') : ''
+                }`} />
+                <span>ซ่อน NEED</span>
+                
+                {/* Visual Hairline Divider */}
+                <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
+                  hideFixedExpenses
+                    ? (dm ? 'bg-rose-500/30' : 'bg-rose-200')
+                    : (dm ? 'bg-slate-700/60' : 'bg-slate-200')
+                }`} />
+
+                {/* Tactical Micro-Switch */}
+                <div className={`relative w-7 h-4 rounded-sm transition-all duration-300 shrink-0 ${
+                  hideFixedExpenses 
+                    ? 'bg-rose-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                    : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
+                }`}>
+                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                    hideFixedExpenses 
+                      ? 'bg-white translate-x-3.5 shadow-md' 
+                      : (dm ? 'bg-slate-500' : 'bg-slate-400')
+                  }`} />
+                </div>
               </button>
+
             </div>
           </div>
         ) : (

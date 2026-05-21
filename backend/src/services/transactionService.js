@@ -143,8 +143,18 @@ class TransactionService {
 
         // Smart Allocation Type logic: 
         // Use provided allocation_type, or default to the category's group default
+        // For income transactions, we force allocationType to NULL since they are not allocations
         let allocationType = tx.allocation_type;
-        if (!allocationType) {
+        const categoryGroup = db.prepare(`
+          SELECT cg.type 
+          FROM cashflow_groups cg
+          JOIN categories c ON c.cashflow_group_id = cg.id
+          WHERE c.id = ?
+        `).get(categoryId);
+
+        if (categoryGroup?.type === 'income') {
+          allocationType = null;
+        } else if (!allocationType) {
           const groupDefault = db.prepare(`
             SELECT cg.allocation_type 
             FROM cashflow_groups cg

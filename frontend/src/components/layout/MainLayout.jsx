@@ -39,6 +39,7 @@ export default function MainLayout({ controller }) {
     advancedFilterGroup, setAdvancedFilterGroup,
     advancedFilterDate, setAdvancedFilterDate,
     typeFilter, setTypeFilter,
+    allocationFilter, setAllocationFilter,
     minAmount, setMinAmount,
     maxAmount, setMaxAmount,
     dayTypeFilter, setDayTypeFilter,
@@ -173,6 +174,7 @@ export default function MainLayout({ controller }) {
                   advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
                   advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
                   typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                  allocationFilter={allocationFilter} setAllocationFilter={setAllocationFilter}
                   minAmount={minAmount} setMinAmount={setMinAmount}
                   maxAmount={maxAmount} setMaxAmount={setMaxAmount}
                   dayTypeFilter={dayTypeFilter} setDayTypeFilter={setDayTypeFilter}

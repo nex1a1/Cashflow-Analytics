@@ -21,6 +21,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [dayTypeFilter, setDayTypeFilter] = useState('ALL'); // ALL, WEEKDAY, WEEKEND
+  const [allocationFilter, setAllocationFilter] = useState('ALL'); // ALL, need, want, savings
 
   // Debounce search query
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     setAdvancedFilterGroup('ALL');
     setAdvancedFilterDate('ALL');
     setTypeFilter('ALL');
+    setAllocationFilter('ALL');
     setMinAmount('');
     setMaxAmount('');
     setDayTypeFilter('ALL');
@@ -154,6 +156,16 @@ export default function useFilters({ transactions, categories, masterPeriods = [
       });
     }
 
+    // 6.5 Allocation Filter (Need/Want/Savings)
+    if (allocationFilter !== 'ALL') {
+      filtered = filtered.filter(t => {
+        const cat = getCat(t);
+        if (cat?.type === 'income') return false; // Income transactions do not have Need/Want/Save allocation types in UI
+        const aType = t.allocation_type || 'want';
+        return aType === allocationFilter;
+      });
+    }
+
     // 7. Debounced Search (Description & Category)
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase();
@@ -164,13 +176,14 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     }
 
     return filtered;
-  }, [transactions, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, minAmount, maxAmount, dayTypeFilter, categories]);
+  }, [transactions, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, allocationFilter, minAmount, maxAmount, dayTypeFilter, categories]);
 
   const isFilterActive = searchQuery || 
     advancedFilterDate !== 'ALL' || 
     advancedFilterGroup !== 'ALL' || 
     advancedFilterCategory !== 'ALL' || 
     typeFilter !== 'ALL' || 
+    allocationFilter !== 'ALL' || 
     minAmount || 
     maxAmount || 
     dayTypeFilter !== 'ALL';
@@ -188,6 +201,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     advancedFilterGroup,    setAdvancedFilterGroup,
     advancedFilterDate,     setAdvancedFilterDate,
     typeFilter,             setTypeFilter,
+    allocationFilter,       setAllocationFilter,
     minAmount,              setMinAmount,
     maxAmount,              setMaxAmount,
     dayTypeFilter,          setDayTypeFilter,

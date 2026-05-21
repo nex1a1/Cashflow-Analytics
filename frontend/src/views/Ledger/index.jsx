@@ -26,6 +26,7 @@ export default function LedgerView({
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
   typeFilter, setTypeFilter,
+  allocationFilter, setAllocationFilter,
   minAmount, setMinAmount,
   maxAmount, setMaxAmount,
   dayTypeFilter, setDayTypeFilter,
@@ -179,6 +180,7 @@ export default function LedgerView({
             advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
             advancedFilterCategory={advancedFilterCategory} setAdvancedFilterCategory={setAdvancedFilterCategory}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+            allocationFilter={allocationFilter} setAllocationFilter={setAllocationFilter}
             minAmount={minAmount} setMinAmount={setMinAmount}
             maxAmount={maxAmount} setMaxAmount={setMaxAmount}
             dayTypeFilter={dayTypeFilter} setDayTypeFilter={setDayTypeFilter}

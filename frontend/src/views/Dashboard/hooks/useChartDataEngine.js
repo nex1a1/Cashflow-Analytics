@@ -34,7 +34,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
       let catsToRender = activeCats.includes('ALL')
         ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed))
-        : categories.filter(c => (activeCats.includes(c.name) || activeCats.includes(c.id)) && categoriesWithData.has(c.name));
+        : categories.filter(c => (activeCats.includes(c.name) || activeCats.includes(c.id)) && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed));
 
       const datasets = catsToRender.map(catObj => {
         const catName = catObj.name;

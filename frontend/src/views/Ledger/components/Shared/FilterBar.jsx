@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Hash, CalendarDays, MousePointer2 } from 'lucide-react';
+import { Search, X, Hash, CalendarDays, MousePointer2, Target } from 'lucide-react';
 import { useTheme } from '../../../../context/ThemeContext';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
@@ -10,6 +10,7 @@ export default function FilterBar({
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterCategory, setAdvancedFilterCategory,
   typeFilter, setTypeFilter,
+  allocationFilter, setAllocationFilter,
   minAmount, setMinAmount,
   maxAmount, setMaxAmount,
   dayTypeFilter, setDayTypeFilter,
@@ -89,6 +90,17 @@ export default function FilterBar({
             <SegmentButton label="ทุกวัน" active={dayTypeFilter === 'ALL'} onClick={() => setDayTypeFilter('ALL')} />
             <SegmentButton label="Weekday" active={dayTypeFilter === 'WEEKDAY'} onClick={() => setDayTypeFilter('WEEKDAY')} />
             <SegmentButton label="Weekend" active={dayTypeFilter === 'WEEKEND'} onClick={() => setDayTypeFilter('WEEKEND')} colorClass="amber" />
+          </div>
+        </div>
+
+        {/* Allocation Toggle */}
+        <div className="flex items-center">
+          <span className="text-[10px] font-black uppercase opacity-40 mr-2 flex items-center gap-1"><Target className="w-2.5 h-2.5" /> allocation</span>
+          <div className="flex">
+            <SegmentButton label="ทั้งหมด" active={allocationFilter === 'ALL'} onClick={() => setAllocationFilter('ALL')} />
+            <SegmentButton label="Need" active={allocationFilter === 'need'} onClick={() => setAllocationFilter('need')} colorClass="rose" />
+            <SegmentButton label="Want" active={allocationFilter === 'want'} onClick={() => setAllocationFilter('want')} colorClass="sky" />
+            <SegmentButton label="Save" active={allocationFilter === 'savings'} onClick={() => setAllocationFilter('savings')} colorClass="emerald" />
           </div>
         </div>
       </div>
