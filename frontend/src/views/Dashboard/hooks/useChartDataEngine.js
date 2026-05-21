@@ -6,7 +6,7 @@ const makeCumulative = (dataArr) => {
   return dataArr.map(val => { sum += (val || 0); return sum; });
 };
 
-export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, chartGroupMode }) {
+export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, chartGroupMode, hiddenDatasets }) {
   const { analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, chartGroupBy, dm } = useDashboardContext();
 
   const categoriesWithData = useMemo(() => {
@@ -59,15 +59,56 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
           pointBorderColor: dm ? '#1e293b' : '#ffffff',
           fill: false,
           borderRadius: 0,
+          hidden: hiddenDatasets?.includes(catName),
         };
       });
 
-      if (showTrendLines && !showMonthly && chartViewType !== 'line' && !isCumulative) {
+      if (showTrendLines && !showMonthly && !isCumulative) {
         const mtdDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยสะสม'));
         const avgDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยทั้งเดือน'));
-        if (mtdDataset) datasets.push({ ...mtdDataset, type: 'line', tension: isSmoothLine ? 0.4 : 0, borderWidth: 4 });
-        if (avgDataset) datasets.push({ ...avgDataset, type: 'line', borderWidth: 2 });
+        if (mtdDataset) {
+          datasets.push({
+            ...mtdDataset,
+            type: 'line',
+            tension: isSmoothLine ? 0.4 : 0,
+            borderWidth: 4,
+            hidden: hiddenDatasets?.includes(mtdDataset.label)
+          });
+        }
+        if (avgDataset) {
+          datasets.push({
+            ...avgDataset,
+            type: 'line',
+            borderWidth: 2,
+            hidden: hiddenDatasets?.includes(avgDataset.label)
+          });
+        }
       }
+
+      // Add target pacing line if cumulative pacing is active
+      if (isCumulative) {
+        const timeSteps = showMonthly ? analytics.sortedMonthsKeys : analytics.datesInPeriod;
+        const N = timeSteps.length || 1;
+        const targetBudget = analytics.totalIncome > 0 ? analytics.totalIncome : (analytics.totalExpense > 0 ? analytics.totalExpense : 30000);
+        
+        const pacingTargetData = timeSteps.map((_, idx) => (targetBudget / N) * (idx + 1));
+        
+        datasets.push({
+          type: 'line',
+          label: 'เป้าหมายความเร็วเงิน (Pacing Target)',
+          data: pacingTargetData,
+          borderColor: dm ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.5)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [6, 6],
+          tension: 0,
+          pointRadius: 0,
+          pointHitRadius: 0,
+          hidden: hiddenDatasets?.includes('เป้าหมายความเร็วเงิน (Pacing Target)'),
+          order: -1
+        });
+      }
+
       return { labels: xLabels, datasets };
     }
 
@@ -86,7 +127,14 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
          finalData = makeCumulative(ds.data);
       }
       if (isTrendLine && !isCumulative) {
-        return { ...ds, data: finalData, type: 'line', tension: isSmoothLine ? 0.4 : 0, borderWidth: ds.label.includes('เฉลี่ยทั้งเดือน') ? 2 : 4 };
+        return {
+          ...ds,
+          data: finalData,
+          type: 'line',
+          tension: isSmoothLine ? 0.4 : 0,
+          borderWidth: ds.label.includes('เฉลี่ยทั้งเดือน') ? 2 : 4,
+          hidden: hiddenDatasets?.includes(ds.label)
+        };
       }
       const newType = chartViewType === 'line' ? 'line' : 'bar';
       let bgColor = ds.backgroundColor;
@@ -106,16 +154,41 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
         pointRadius: chartViewType === 'line' ? 4 : 0,
         pointBackgroundColor: borderColor,
         pointBorderWidth: 2, pointBorderColor: dm ? '#1e293b' : '#ffffff',
+        hidden: hiddenDatasets?.includes(ds.label)
       };
     });
+
+    // Add target pacing line if cumulative pacing is active (Non-Breakdown mode)
+    if (isCumulative) {
+      const timeSteps = showMonthly ? analytics.sortedMonthsKeys : analytics.datesInPeriod;
+      const N = timeSteps.length || 1;
+      const targetBudget = analytics.totalIncome > 0 ? analytics.totalIncome : (analytics.totalExpense > 0 ? analytics.totalExpense : 30000);
+      
+      const pacingTargetData = timeSteps.map((_, idx) => (targetBudget / N) * (idx + 1));
+      
+      processedDatasets.push({
+        type: 'line',
+        label: 'เป้าหมายความเร็วเงิน (Pacing Target)',
+        data: pacingTargetData,
+        borderColor: dm ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.5)',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [6, 6],
+        tension: 0,
+        pointRadius: 0,
+        pointHitRadius: 0,
+        hidden: hiddenDatasets?.includes('เป้าหมายความเร็วเงิน (Pacing Target)')
+      });
+    }
+
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm, sankeyData]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm, sankeyData, hiddenDatasets]);
 
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];
     if (chartViewType === 'sankey') return [];
     return displayChartData.datasets.filter(ds => {
-      if (ds.label?.includes('เฉลี่ย') || ds.label === 'Cashflow') return false;
+      if (ds.label?.includes('เฉลี่ย') || ds.label === 'Cashflow' || ds.label?.includes('Target') || ds.label?.includes('เป้าหมาย')) return false;
       return ds.data?.some(v => v > 0);
     });
   }, [displayChartData, chartViewType]);

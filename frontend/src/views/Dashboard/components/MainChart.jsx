@@ -4,7 +4,8 @@ import PropTypes from 'prop-types';
 import { Chart } from 'react-chartjs-2';
 import { 
   Layers, TrendingUp, BarChart, Network, 
-  Filter, ChevronDown 
+  Filter, ChevronDown, Settings, Search,
+  Zap, EyeOff, Activity, X, Lock
 } from 'lucide-react';
 
 import { useDashboardContext } from '../context/DashboardContext';
@@ -90,123 +91,170 @@ const MainChartHeader = ({
   );
 };
 
+MainChartHeader.propTypes = {
+  chartViewType: PropTypes.string.isRequired,
+  setChartViewType: PropTypes.func.isRequired,
+  chartGroupBy: PropTypes.string.isRequired,
+  setChartGroupBy: PropTypes.func.isRequired,
+  sankeySortMode: PropTypes.string.isRequired,
+  setSankeySortMode: PropTypes.func.isRequired,
+  setIsBreakdown: PropTypes.func.isRequired,
+  filterPeriod: PropTypes.string.isRequired,
+  dm: PropTypes.bool.isRequired,
+  mainChartType: PropTypes.string,
+  mainChartData: PropTypes.object,
+  showTrendLines: PropTypes.bool.isRequired
+};
+
 /**
  * INTERNAL COMPONENT: MainChartFilterMenu
  */
 const MainChartFilterMenu = ({
   dm, showCatMenu, setShowCatMenu, filterMenuRef,
-  showTrendLines, setShowTrendLines,
-  isCumulative, setIsCumulative,
-  isLogScale, setIsLogScale,
-  hideFixedExpenses, setHideFixedExpenses,
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Reset search when menu closes
+  useEffect(() => {
+    if (!showCatMenu) {
+      setSearchQuery('');
+    }
+  }, [showCatMenu]);
+
   return (
     <div className="relative" ref={filterMenuRef}>
       <button
         onClick={() => setShowCatMenu(!showCatMenu)}
-        className={`px-3 py-1.5 border rounded-sm shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${showCatMenu ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white') : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')}`}
+        className={`px-3 py-1.5 border rounded-sm shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${
+          showCatMenu 
+            ? (dm ? 'bg-blue-600 border-blue-500 text-white shadow-md' : 'bg-[#00509E] border-[#00509E] text-white shadow-md') 
+            : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-55')
+        }`}
       >
         <Filter className="w-3.5 h-3.5" />
-        ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>{dashboardCategory.length}</span> : ''}
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCatMenu ? 'rotate-180' : ''}`} />
+        ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? (
+          <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
+            {dashboardCategory.length}
+          </span>
+        ) : ''}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showCatMenu ? 'rotate-180' : ''}`} />
       </button>
 
       {showCatMenu && (
-        <div className={`absolute right-0 top-full mt-2 w-[320px] sm:w-[340px] max-w-[90vw] rounded-sm shadow-2xl border z-40 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ${dm ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-slate-50 border-slate-200 shadow-slate-300/50'}`}>
-          <div className={`p-4 border-b flex flex-col gap-4 rounded-t-sm ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-            <label className="flex items-center justify-between cursor-pointer group">
-              <div className="flex flex-col pr-3">
-                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-amber-400' : 'text-slate-800 group-hover:text-amber-600'}`}>แสดงเส้นเทรนด์ (MTD Average)</span>
-                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูแนวโน้มค่าเฉลี่ยสะสมเทียบกับต้นเดือน</span>
-              </div>
-              <div className="relative flex items-center shrink-0">
-                <input type="checkbox" className="sr-only" checked={showTrendLines} onChange={() => setShowTrendLines(!showTrendLines)} disabled={isCumulative} />
-                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${showTrendLines ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')} ${isCumulative ? 'opacity-50' : ''}`} />
-                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${showTrendLines ? 'translate-x-4' : ''}`} />
-              </div>
-            </label>
-
-            <label className="flex items-center justify-between cursor-pointer group">
-              <div className="flex flex-col pr-3">
-                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-purple-400' : 'text-slate-800 group-hover:text-purple-600'}`}>กราฟสะสม (Pacing Curve)</span>
-                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ดูความเร็วในการจ่ายแบบสะสมทีละวัน</span>
-              </div>
-              <div className="relative flex items-center shrink-0">
-                <input type="checkbox" className="sr-only" checked={isCumulative} onChange={() => { setIsCumulative(!isCumulative); if(!isCumulative) setShowTrendLines(false); }} />
-                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isCumulative ? (dm ? 'bg-purple-500' : 'bg-purple-600') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isCumulative ? 'translate-x-4' : ''}`} />
-              </div>
-            </label>
-
-            <label className="flex items-center justify-between cursor-pointer group">
-              <div className="flex flex-col pr-3">
-                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-emerald-400' : 'text-slate-800 group-hover:text-emerald-600'}`}>สเกลลอการิทึม (Log Scale)</span>
-                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>เน้นดูสัดส่วนการเติบโต/ความแตกต่าง</span>
-              </div>
-              <div className="relative flex items-center shrink-0">
-                <input type="checkbox" className="sr-only" checked={isLogScale} onChange={() => setIsLogScale(!isLogScale)} />
-                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${isLogScale ? 'bg-emerald-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${isLogScale ? 'translate-x-4' : ''}`} />
-              </div>
-            </label>
-
-            <label className="flex items-center justify-between cursor-pointer group">
-              <div className="flex flex-col pr-3">
-                <span className={`text-xs font-bold transition-colors ${dm ? 'text-slate-200 group-hover:text-blue-400' : 'text-slate-800 group-hover:text-[#00509E]'}`}>ซ่อนรายจ่ายจำเป็น (NEED)</span>
-                <span className={`text-[10px] mt-0.5 leading-tight ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ตัดภาระที่จำเป็นออกเพื่อดูไลฟ์สไตล์</span>
-              </div>
-              <div className="relative flex items-center shrink-0">
-                <input type="checkbox" className="sr-only" checked={hideFixedExpenses} onChange={() => setHideFixedExpenses(!hideFixedExpenses)} />
-                <div className={`block w-9 h-5 rounded-full transition-colors duration-300 ${hideFixedExpenses ? (dm ? 'bg-blue-500' : 'bg-[#00509E]') : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
-                <div className={`absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${hideFixedExpenses ? 'translate-x-4' : ''}`} />
-              </div>
-            </label>
+        <div className={`absolute right-0 top-full mt-2 w-[340px] max-w-[90vw] rounded-sm shadow-2xl border z-45 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+          dm ? 'bg-slate-800 border-slate-700 shadow-slate-950/60' : 'bg-white border-slate-200 shadow-slate-300/60'
+        }`}>
+          {/* Header */}
+          <div className={`px-4 py-2.5 border-b flex items-center gap-1.5 ${dm ? 'border-slate-700 bg-slate-900/65 text-slate-200' : 'border-slate-100 bg-slate-50 text-slate-700'}`}>
+            <Layers className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
           </div>
 
-          <div className={`p-4 flex flex-col gap-3 rounded-b-sm ${dm ? 'bg-slate-800' : 'bg-white'}`}>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เปรียบเทียบหมวดหมู่</span>
-            {(() => {
-              const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-              const toggleCategory = (catName) => {
-                if (catName === 'ALL') { setDashboardCategory(['ALL']); }
-                else {
-                  let newCats = activeCats.filter(c => c !== 'ALL');
-                  if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
-                  else newCats.push(catName);
-                  if (newCats.length === 0) newCats = ['ALL'];
-                  setDashboardCategory(newCats);
-                }
-              };
-              const selectAllVariable = () => {
-                const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
-                setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
-              };
+          {/* Body */}
+          <div className="p-4">
+            <div className="flex flex-col gap-3 animate-in fade-in duration-200">
+              {(() => {
+                const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+                const toggleCategory = (catName) => {
+                  if (catName === 'ALL') { setDashboardCategory(['ALL']); }
+                  else {
+                    let newCats = activeCats.filter(c => c !== 'ALL');
+                    if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
+                    else newCats.push(catName);
+                    if (newCats.length === 0) newCats = ['ALL'];
+                    setDashboardCategory(newCats);
+                  }
+                };
+                const selectAllVariable = () => {
+                  const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
+                  setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
+                };
 
-              return (
-                <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setDashboardCategory(['ALL'])} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${activeCats.includes('ALL') && activeCats.length === 1 ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}>
-                      📊 ทั้งหมด (รวม)
-                    </button>
-                    <button onClick={selectAllVariable} className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'}`}>
-                      🔄 เลือกผันแปรทั้งหมด
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                    {categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => {
-                      const isActive = activeCats.includes(c.name);
-                      return (
-                        <button key={c.id} onClick={() => toggleCategory(c.name)} className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-[10px] font-bold transition-all border`} style={{ backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') }}>
-                          <span className="opacity-90">{c.icon}</span> {c.name}
+                const filteredCategories = categories.filter(c => 
+                  c.type === 'expense' && 
+                  categoriesWithData.has(c.name) &&
+                  (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || (c.icon && c.icon.includes(searchQuery)))
+                );
+
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => setDashboardCategory(['ALL'])} 
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${
+                          activeCats.includes('ALL') && activeCats.length === 1 
+                            ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') 
+                            : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-750' : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-55')
+                        }`}
+                      >
+                        📊 ทั้งหมด (รวม)
+                      </button>
+                      <button 
+                        onClick={selectAllVariable} 
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${
+                          dm ? 'bg-amber-900/20 border-amber-700/50 text-amber-400 hover:bg-amber-900/40' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                        }`}
+                      >
+                        🔄 ผันแปรทั้งหมด
+                      </button>
+                    </div>
+
+                    {/* Search Bar inside categories tab */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="ค้นหาหมวดหมู่ด่วน..."
+                        className={`w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-none font-medium transition-all ${
+                          dm 
+                            ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-blue-500' 
+                            : 'bg-white border-slate-200 text-slate-700 focus:border-blue-600'
+                        }`}
+                      />
+                      <Search className={`absolute left-2.5 top-2.5 w-3.5 h-3.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')}
+                          className={`absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600`}
+                        >
+                          ✕
                         </button>
-                      );
-                    })}
-                  </div>
-                </>
-              );
-            })()}
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                      {filteredCategories.length > 0 ? (
+                        filteredCategories.map(c => {
+                          const isActive = activeCats.includes(c.name);
+                          return (
+                            <button 
+                              key={c.id} 
+                              onClick={() => toggleCategory(c.name)} 
+                              className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-[10px] font-bold transition-all border shadow-sm hover:scale-[1.02]" 
+                              style={{ 
+                                backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), 
+                                borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), 
+                                color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') 
+                              }}
+                            >
+                              <span className="opacity-90">{c.icon}</span> 
+                              {c.name}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className={`text-[11px] italic py-6 text-center w-full ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+                          ไม่พบหมวดหมู่ที่ต้องการ
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}
@@ -214,31 +262,67 @@ const MainChartFilterMenu = ({
   );
 };
 
+MainChartFilterMenu.propTypes = {
+  dm: PropTypes.bool.isRequired,
+  showCatMenu: PropTypes.bool.isRequired,
+  setShowCatMenu: PropTypes.func.isRequired,
+  filterMenuRef: PropTypes.object.isRequired,
+  dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]).isRequired,
+  setDashboardCategory: PropTypes.func.isRequired,
+  categories: PropTypes.array.isRequired,
+  categoriesWithData: PropTypes.object.isRequired
+};
+
 /**
  * INTERNAL COMPONENT: MainChartLegend
  */
-const MainChartLegend = ({ legendDatasets, dm }) => {
+const MainChartLegend = ({ legendDatasets, hiddenDatasets, setHiddenDatasets, dm }) => {
   if (legendDatasets.length === 0) return null;
+
+  const toggleDataset = (label) => {
+    setHiddenDatasets(prev => 
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  };
 
   return (
     <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${dm ? 'border-slate-700' : 'border-slate-100'}`}>
-      {legendDatasets.map((ds, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          <span
-            className="inline-block rounded-sm shrink-0"
-            style={{
-              width: ds.type === 'line' ? 16 : 10,
-              height: ds.type === 'line' ? 3 : 10,
-              backgroundColor: ds.type === 'line'
-                ? (ds.borderColor || ds.backgroundColor)
-                : (ds.backgroundColor || ds.borderColor),
-            }}
-          />
-          <span className={`text-[10px] font-medium leading-none ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{ds.label}</span>
-        </div>
-      ))}
+      {legendDatasets.map((ds, i) => {
+        const isHidden = hiddenDatasets.includes(ds.label);
+        return (
+          <button
+            key={i}
+            onClick={() => toggleDataset(ds.label)}
+            className={`flex items-center gap-1.5 transition-all duration-200 hover:opacity-80 active:scale-95 border border-transparent rounded-sm px-1.5 py-0.5 ${
+              isHidden ? 'opacity-35 line-through' : 'opacity-100'
+            }`}
+            title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
+          >
+            <span
+              className="inline-block rounded-sm shrink-0"
+              style={{
+                width: ds.type === 'line' ? 16 : 10,
+                height: ds.type === 'line' ? 3 : 10,
+                backgroundColor: ds.type === 'line'
+                  ? (ds.borderColor || ds.backgroundColor)
+                  : (ds.backgroundColor || ds.borderColor),
+              }}
+            />
+            <span className={`text-[10px] font-medium leading-none ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+              {ds.label}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
+};
+
+MainChartLegend.propTypes = {
+  legendDatasets: PropTypes.array.isRequired,
+  hiddenDatasets: PropTypes.array.isRequired,
+  setHiddenDatasets: PropTypes.func.isRequired,
+  dm: PropTypes.bool.isRequired
 };
 
 /**
@@ -263,6 +347,14 @@ export default function MainChart() {
   const [isCumulative, setIsCumulative] = useState(false);
   const [isLogScale, setIsLogScale] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
+  
+  // Interactive Legend state
+  const [hiddenDatasets, setHiddenDatasets] = useState([]);
+
+  // Reset interactive legend when main query inputs change to avoid state ghost paths
+  useEffect(() => {
+    setHiddenDatasets([]);
+  }, [chartViewType, isBreakdown, dashboardCategory, filterPeriod]);
 
   // Filter Menu Click-Outside Logic
   const filterMenuRef = useRef(null);
@@ -278,7 +370,7 @@ export default function MainChart() {
   // The Logic Engines
   const sankeyData = useSankeyEngine({ chartViewType, sankeySortMode });
   const { displayChartData, legendDatasets, categoriesWithData } = useChartDataEngine({
-    chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData
+    chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, hiddenDatasets
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
@@ -296,57 +388,107 @@ export default function MainChart() {
         showTrendLines={showTrendLines}
       />
 
-      <div className="flex items-center justify-end gap-2 mb-3 relative z-10 flex-wrap">
-        {chartViewType !== 'sankey' && (
-          <>
-            {/* Status Badges Row */}
+      <div className="flex items-center justify-between gap-3 mb-3 relative z-10 flex-wrap w-full">
+        {chartViewType !== 'sankey' ? (
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className={`text-[10px] uppercase tracking-wider font-extrabold flex items-center gap-1 shrink-0 select-none ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+              <Activity className="w-3.5 h-3.5 text-blue-500 animate-pulse" /> MODES:
+            </span>
+            
             <div className="flex items-center gap-1.5 flex-wrap">
-              {showTrendLines && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
-                  dm ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'
-                }`}>
-                  <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
-                  TREND ON
-                </div>
-              )}
-              {isCumulative && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
-                  dm ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'bg-purple-50 border-purple-200 text-purple-700'
-                }`}>
-                  <div className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" />
-                  PACING ON
-                </div>
-              )}
-              {isLogScale && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
-                  dm ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                }`}>
-                  <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                  LOGARITHM ON
-                </div>
-              )}
-              {hideFixedExpenses && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-sm border text-[9px] font-bold animate-in fade-in zoom-in duration-300 ${
-                  dm ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-700'
-                }`}>
-                  <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-                  FIXED HIDDEN
-                </div>
-              )}
+              {/* 1. Breakdown Mode */}
+              <button
+                disabled={showSkeleton}
+                onClick={() => setIsBreakdown(prev => !prev)}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
+                  isBreakdown
+                    ? (dm ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.15)]' : 'bg-blue-50 border-blue-200 text-[#00509E] shadow-[0_0_8px_rgba(0,80,158,0.05)]')
+                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
+                }`}
+                title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>แจกแจง {isBreakdown ? 'ON' : 'OFF'}</span>
+              </button>
+
+              {/* 2. Cumulative Mode (Pacing Curve) */}
+              <button
+                disabled={showSkeleton}
+                onClick={() => {
+                  const nextVal = !isCumulative;
+                  setIsCumulative(nextVal);
+                  if (nextVal) {
+                    setShowTrendLines(false);
+                  }
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
+                  isCumulative
+                    ? (dm ? 'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.15)]' : 'bg-purple-50 border-purple-200 text-purple-700 shadow-[0_0_8px_rgba(126,34,206,0.05)]')
+                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
+                }`}
+                title="ดูความเร็วการใช้จ่ายเป็นกราฟยอดสะสมเทียบกับเป้าหมาย"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>กราฟสะสม {isCumulative ? 'ON' : 'OFF'}</span>
+              </button>
+
+              {/* 3. Trend Lines Mode (MTD Average) */}
+              <button
+                disabled={showSkeleton || isCumulative}
+                onClick={() => {
+                  if (!isCumulative) setShowTrendLines(prev => !prev);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
+                  isCumulative
+                    ? (dm ? 'bg-slate-900/20 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50' : 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50')
+                    : showTrendLines
+                      ? (dm ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.15)]' : 'bg-amber-50 border-amber-200 text-amber-800 shadow-[0_0_8px_rgba(180,83,9,0.05)]')
+                      : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
+                }`}
+                title={isCumulative ? "ไม่สามารถใช้เส้นเทรนด์ร่วมกับกราฟสะสมได้" : "ดูแนวโน้มค่าเฉลี่ยสะสมรายวัน (MTD Average)"}
+              >
+                {isCumulative ? <Lock className="w-3.5 h-3.5 text-slate-500" /> : <Zap className="w-3.5 h-3.5" />}
+                <span>เส้นเทรนด์ {showTrendLines ? 'ON' : 'OFF'}</span>
+              </button>
+
+              {/* 4. Logarithmic Scale Mode */}
+              <button
+                disabled={showSkeleton}
+                onClick={() => setIsLogScale(prev => !prev)}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
+                  isLogScale
+                    ? (dm ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.15)]' : 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_0_8px_rgba(4,120,87,0.05)]')
+                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
+                }`}
+                title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบสัดส่วน"
+              >
+                <BarChart className="w-3.5 h-3.5" />
+                <span>สเกล Log {isLogScale ? 'ON' : 'OFF'}</span>
+              </button>
+
+              {/* 5. Hide NEED Mode */}
+              <button
+                disabled={showSkeleton}
+                onClick={() => setHideFixedExpenses(prev => !prev)}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-sm border transition-all duration-250 ${
+                  hideFixedExpenses
+                    ? (dm ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.15)]' : 'bg-rose-50 border-rose-200 text-rose-700 shadow-[0_0_8px_rgba(190,24,74,0.05)]')
+                    : (dm ? 'bg-slate-800/45 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:border-slate-650' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-750 hover:border-slate-300')
+                }`}
+                title="ซ่อนค่าใช้จ่ายคงที่ที่จำเป็น (Fixed Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายผันแปร"
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>ซ่อน NEED {hideFixedExpenses ? 'ON' : 'OFF'}</span>
+              </button>
             </div>
+          </div>
+        ) : (
+          <div />
+        )}
 
-            <button
-              onClick={() => setIsBreakdown(prev => !prev)}
-              disabled={showSkeleton}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm border shadow-sm transition-all ${
-                isBreakdown
-                  ? (dm ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#00509E] border-[#00509E] text-white')
-                  : (dm ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" /> {breakdownLabel}
-            </button>
-
+        {/* Right controls */}
+        {chartViewType !== 'sankey' && (
+          <div className="flex items-center gap-2 flex-wrap">
             {chartViewType === 'line' && (
               <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
                 <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
@@ -362,14 +504,10 @@ export default function MainChart() {
 
             <MainChartFilterMenu 
               dm={dm} showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
-              showTrendLines={showTrendLines} setShowTrendLines={setShowTrendLines}
-              isCumulative={isCumulative} setIsCumulative={setIsCumulative}
-              isLogScale={isLogScale} setIsLogScale={setIsLogScale}
-              hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
               dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
               categories={categories} categoriesWithData={categoriesWithData}
             />
-          </>
+          </div>
         )}
       </div>
 
@@ -383,7 +521,12 @@ export default function MainChart() {
         )}
       </div>
 
-      <MainChartLegend legendDatasets={legendDatasets} dm={dm} />
+      <MainChartLegend 
+        legendDatasets={legendDatasets} 
+        hiddenDatasets={hiddenDatasets} 
+        setHiddenDatasets={setHiddenDatasets} 
+        dm={dm} 
+      />
     </div>
   );
 }
