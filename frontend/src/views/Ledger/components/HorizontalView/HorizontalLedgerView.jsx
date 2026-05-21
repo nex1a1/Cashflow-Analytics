@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Inbox } from 'lucide-react';
 import { useTheme } from '../../../../context/ThemeContext';
 
@@ -35,7 +35,7 @@ export default function HorizontalLedgerView({
   } = useHeatmapEngine(displayTransactions, categories, allDates);
 
   // ─── 2. Event Handlers ───
-  const handleCellHover = (e, date, catId, cat, items) => {
+  const handleCellHover = useCallback((e, date, catId, cat, items) => {
     setHoveredDate(date);
     setHoveredCat(catId);
     if (!items || items.length === 0) {
@@ -43,20 +43,19 @@ export default function HorizontalLedgerView({
       return;
     }
     setTooltip({ x: e.clientX, y: e.clientY, date, cat, items });
-  };
+  }, []);
 
-  const handleCellMouseMove = (e) => {
-    if (!tooltip) return;
+  const handleCellMouseMove = useCallback((e) => {
     setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
-  };
+  }, []);
 
-  const handleCellLeave = () => {
+  const handleCellLeave = useCallback(() => {
     setHoveredDate(null);
     setHoveredCat(null);
     setTooltip(null);
-  };
+  }, []);
 
-  const fmtCell = (v) => v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtCell = useCallback((v) => v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), []);
 
   // ─── 3. Styles ───
   const border  = dm ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
@@ -118,7 +117,7 @@ export default function HorizontalLedgerView({
                   date={date} rowIdx={rowIdx} day={day} month={month} dayName={dayName} isWeekend={isWeekend}
                   dailyTotal={dailyTotal} grandTotal={grandTotal} cellMap={cellMap}
                   activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
-                  hoveredDate={hoveredDate} hoveredCat={hoveredCat}
+                  isRowHovered={hoveredDate === date} hoveredCat={hoveredCat}
                   setHoveredDate={setHoveredDate} handleCellLeave={handleCellLeave}
                   handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove}
                   dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}

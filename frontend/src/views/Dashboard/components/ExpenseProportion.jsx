@@ -17,7 +17,7 @@ const CatItem = React.memo(({ cat, dm, idx }) => (
   >
     <div className="flex justify-between items-start gap-1 mb-1">
       <span 
-        className="text-[10px] font-black truncate flex items-center gap-1 min-w-0" 
+        className="text-[12px] font-black truncate flex items-center gap-1 min-w-0" 
         style={{ color: dm ? '#94a3b8' : '#64748b' }}
         title={cat.name}
       >
@@ -25,7 +25,7 @@ const CatItem = React.memo(({ cat, dm, idx }) => (
         <span className="truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{cat.name}</span>
       </span>
       <div className="flex flex-col items-end shrink-0 leading-none">
-        <span className="text-[9px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
+        <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
           {formatMoney(cat.amount)}
         </span>
         <span className="text-xs font-black tabular-nums" style={{ color: cat.color }}>{cat.percentage}%</span>
@@ -58,14 +58,14 @@ const GroupItem = React.memo(({ item, dm, isSingleMonthView }) => (
     {/* ─── HEADER ─── */}
     <div className="flex justify-between items-start gap-2 mb-3">
       <div className="flex flex-col min-w-0 gap-1.5">
-        <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+        <span className="text-[16px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
           <span className="shrink-0 opacity-80 group-hover:scale-110 transition-transform">{item.icon || '📁'}</span>
           <span className="truncate group-hover:brightness-125 transition-all">{item.name}</span>
         </span>
         <div className="flex items-center gap-1.5">
           {!isSingleMonthView && (
             <span className={`text-[8.5px] font-bold tracking-widest uppercase ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-              AVG. ฿{formatMoney(item.avgPerMonth)} / MO
+              เฉลี่ย  ฿{formatMoney(item.avgPerMonth)} / เดือน
             </span>
           )}
         </div>
@@ -349,7 +349,7 @@ export default function ExpenseProportion() {
           <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
             <button 
               onClick={() => setDisplayMode('category')}
-              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'category' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
                 : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
@@ -359,7 +359,7 @@ export default function ExpenseProportion() {
             </button>
             <button 
               onClick={() => setDisplayMode('group')}
-              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'group' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
                 : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
@@ -369,7 +369,7 @@ export default function ExpenseProportion() {
             </button>
             <button 
               onClick={() => setDisplayMode('allocation')}
-              className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded-sm transition-all ${
+              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'allocation' 
                 ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
                 : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
@@ -391,7 +391,7 @@ export default function ExpenseProportion() {
                   : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
                 }`}
               >
-                <ArrowDownWideNarrow className="w-2.5 h-2.5" />
+                <ArrowDownWideNarrow className="w-3.5 h-3.5" />
               </button>
               <button 
                 onClick={() => setSortMode('order')}
@@ -402,7 +402,7 @@ export default function ExpenseProportion() {
                   : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
                 }`}
               >
-                <ListOrdered className="w-2.5 h-2.5" />
+                <ListOrdered className="w-3.5 h-3.5" />
               </button>
             </div>
           )}

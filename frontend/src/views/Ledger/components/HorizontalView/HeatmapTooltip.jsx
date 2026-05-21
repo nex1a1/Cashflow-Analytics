@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export default function HeatmapTooltip({ tooltip, tooltipRef, dm }) {
+const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, tooltipRef, dm }) {
   if (!tooltip) return null;
 
   return (
@@ -77,4 +77,6 @@ export default function HeatmapTooltip({ tooltip, tooltipRef, dm }) {
       </div>
     </div>
   );
-}
+});
+
+export default HeatmapTooltip;

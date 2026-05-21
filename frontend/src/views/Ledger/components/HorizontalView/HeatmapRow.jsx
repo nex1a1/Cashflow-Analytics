@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { hexToRgb } from '../../../../utils/formatters';
 import HeatmapCell from './HeatmapCell';
 
-export default function HeatmapRow({
+const HeatmapRow = memo(function HeatmapRow({
   date, rowIdx, day, month, dayName, isWeekend,
   dailyTotal, grandTotal, cellMap, activeCategories,
-  dayTypes, dayTypeConfig, hoveredDate, hoveredCat,
+  dayTypes, dayTypeConfig, isRowHovered, hoveredCat,
   setHoveredDate, handleCellLeave, handleCellHover, handleCellMouseMove,
   dm, bgBase, border, ROW_H, maxCellValue, fmtCell
 }) {
   const total = dailyTotal[date] || 0;
-  const isRowHovered = hoveredDate === date;
 
   const defTypeId = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
   const curTypeId = dayTypes[date] || defTypeId;
@@ -154,4 +153,6 @@ export default function HeatmapRow({
       </td>
     </tr>
   );
-}
+});
+
+export default HeatmapRow;

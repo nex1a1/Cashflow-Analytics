@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { hexToRgb } from '../../../../utils/formatters';
 
-export default function HeatmapCell({
+const HeatmapCell = memo(function HeatmapCell({
   date, cat, items, cellSum, intensity, 
   isRowHovered, isColHovered, isCellHovered,
   dm, border, ROW_H, maxCellValue,
@@ -120,4 +120,6 @@ export default function HeatmapCell({
       )}
     </td>
   );
-}
+});
+
+export default HeatmapCell;

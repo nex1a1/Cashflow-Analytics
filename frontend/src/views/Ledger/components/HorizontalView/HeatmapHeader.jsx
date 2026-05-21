@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export default function HeatmapHeader({ 
+const HeatmapHeader = memo(function HeatmapHeader({ 
   activeCategories, dm, bgHead, border, border2, 
   hoveredCat, setHoveredCat 
 }) {
@@ -86,4 +86,6 @@ export default function HeatmapHeader({
       </tr>
     </thead>
   );
-}
+});
+
+export default HeatmapHeader;

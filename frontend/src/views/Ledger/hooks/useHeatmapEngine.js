@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 
 export const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าหอพัก', 'ค่าไฟ', 'ค่าเน็ต', 'ค่าน้ำ'];
 
@@ -46,9 +46,12 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
   const dailyTotal = useMemo(() => {
     const totals = {};
     sortedDates.forEach(date => {
-      totals[date] = expenseTransactions
-        .filter(t => t.date === date)
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      totals[date] = 0;
+    });
+    expenseTransactions.forEach(t => {
+      if (totals[t.date] !== undefined) {
+        totals[t.date] += parseFloat(t.amount) || 0;
+      }
     });
     return totals;
   }, [sortedDates, expenseTransactions]);
@@ -56,9 +59,12 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
   const categoryTotal = useMemo(() => {
     const totals = {};
     activeCategories.forEach(cat => {
-      totals[cat.name] = expenseTransactions
-        .filter(t => t.category === cat.name)
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      totals[cat.name] = 0;
+    });
+    expenseTransactions.forEach(t => {
+      if (totals[t.category] !== undefined) {
+        totals[t.category] += parseFloat(t.amount) || 0;
+      }
     });
     return totals;
   }, [activeCategories, expenseTransactions]);
@@ -79,7 +85,7 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     return max || 1;
   }, [sortedDates, activeCategories, cellMap]);
 
-  const formatDate = (dateStr) => {
+  const formatDate = useCallback((dateStr) => {
     let dayNum, monthIdx, yearNum;
     if (dateStr.includes('-')) {
       const parts = dateStr.split('-');
@@ -98,7 +104,7 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     const dateObj = new Date(yearNum, monthIdx, dayNum);
     const dow     = dateObj.getDay();
     return { day: dayNum, month: THAI_MONTHS_SHORT[monthIdx] || '', dayName: DAY_NAMES[dow], isWeekend: dow === 0 || dow === 6 };
-  };
+  }, []);
 
   return {
     expenseTransactions,
