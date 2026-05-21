@@ -1,0 +1,233 @@
+/* src/styles/lightMode.css                                    */
+/* ──────────────────────────────────────────────────────────  */
+/* Premium Soft High-Contrast Slate-Monochrome (Light Mode)  */
+/* Optimized to eliminate double-borders, holes/gaps, and     */
+/* faint, illegible texts.                                     */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode {
+  background-color: #f1f5f9 !important; /* Soothing cool-gray outer canvas to absorb backlight glare */
+  color: #0f172a !important; /* Deepest charcoal for absolute legibility */
+}
+
+/* Page containers - completely unified to remove odd channels/gaps/holes */
+body.light-mode .bg-slate-100,
+body.light-mode .bg-slate-50,
+body.light-mode .bg-slate-100\/60 {
+  background-color: #f1f5f9 !important; /* Seamless matte background */
+  border-color: #cbd5e1 !important;
+}
+
+/* Custom scrollbar colors for light mode */
+body.light-mode .custom-scrollbar {
+  scrollbar-color: rgba(71, 85, 105, 0.4) transparent !important;
+}
+
+/* ──────────────────────────────────────────────────────────  */
+/* Card Panels (Only outer containers pop, inner lines stay clean) */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode .bg-white {
+  background-color: #ffffff !important; /* Clean paper-white card panel */
+  border: 1px solid #b8c2cc !important; /* Crisp, elegant slate border (thin, not heavy) */
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03) !important;
+}
+
+/* Keep nested sub-panels clean and borderless to remove honeycomb gaps */
+body.light-mode .bg-white .bg-slate-50,
+body.light-mode .bg-white .bg-slate-100,
+body.light-mode .bg-white .bg-slate-50/60 {
+  background-color: #fafbfc !important;
+  border-color: #e2e8f0 !important;
+  border-width: 0px !important; /* Remove nested container borders */
+}
+
+/* Soft notice panels & alert blocks */
+body.light-mode .bg-blue-50\/50,
+body.light-mode .bg-blue-50 {
+  background-color: rgba(226, 232, 240, 0.6) !important; /* Softer, structured navy tint */
+  border: 1px solid #b8c2cc !important;
+}
+
+/* Primary Accents */
+body.light-mode .bg-\[\#00509E\] {
+  background-color: #0f4c81 !important; /* Softened professional navy blue */
+}
+
+body.light-mode .hover\:bg-\[\#00509E\/90\]:hover,
+body.light-mode .hover\:bg-\[\#00509e\]:hover,
+body.light-mode .hover\:bg-\[\#00509E\]:hover {
+  background-color: #0c3e6a !important; /* Deeper slate-blue on hover */
+}
+
+/* ──────────────────────────────────────────────────────────  */
+/* Text Overrides - Absolute Readability & Boldness           */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode .text-slate-900 { color: #0f172a !important; }
+body.light-mode .text-slate-800 { color: #0f172a !important; }
+body.light-mode .text-slate-700 { color: #1e293b !important; }
+body.light-mode .text-slate-600 { color: #334155 !important; }
+body.light-mode .text-slate-500 { color: #475569 !important; }
+body.light-mode .text-\[\#00509E\] { color: #0f4c81 !important; }
+body.light-mode .hover\:text-\[\#00509E\]:hover { color: #0c3e6a !important; }
+
+/* ──────────────────────────────────────────────────────────  */
+/* Resolving Faint Status Text Colors (Tailwind 400s override)  */
+/* ──────────────────────────────────────────────────────────  */
+
+/* Green Status / Income / Surplus (Emerald 700) */
+body.light-mode .text-emerald-400,
+body.light-mode .text-emerald-500,
+body.light-mode .text-emerald-600 {
+  color: #047857 !important;
+  font-weight: 700 !important; /* Force bold for clarity */
+}
+
+/* Red Status / Expense / Deficit (Rose 700) */
+body.light-mode .text-red-400,
+body.light-mode .text-rose-400,
+body.light-mode .text-rose-500,
+body.light-mode .text-rose-600 {
+  color: #b91c1c !important;
+  font-weight: 700 !important; /* Force bold for clarity */
+}
+
+/* Blue / Net cashflow values (Navy 700) */
+body.light-mode .text-blue-400,
+body.light-mode .text-blue-500,
+body.light-mode .text-blue-600 {
+  color: #0f4c81 !important;
+}
+
+/* Pink / Expense ratios (Pink 700) */
+body.light-mode .text-pink-400,
+body.light-mode .text-pink-500,
+body.light-mode .text-pink-600 {
+  color: #be185d !important;
+  font-weight: 700 !important;
+}
+
+/* Orange Status (Orange 700) */
+body.light-mode .text-orange-400,
+body.light-mode .text-orange-500,
+body.light-mode .text-orange-600 {
+  color: #c2410c !important;
+}
+
+/* Cyan / Daily spend averages (Cyan 700) */
+body.light-mode .text-cyan-400,
+body.light-mode .text-cyan-500,
+body.light-mode .text-cyan-600 {
+  color: #0369a1 !important;
+}
+
+/* Restore solid opacity for grid labels to remove faint/light texts */
+body.light-mode .text-blue-600\/70,
+body.light-mode .text-rose-600\/70,
+body.light-mode .text-emerald-600\/70,
+body.light-mode .text-orange-600\/70,
+body.light-mode .text-cyan-600\/70 {
+  opacity: 1 !important;
+  font-weight: 800 !important;
+}
+
+body.light-mode .text-blue-600\/70 { color: #0f4c81 !important; }
+body.light-mode .text-rose-600\/70 { color: #b91c1c !important; }
+body.light-mode .text-emerald-600\/70 { color: #047857 !important; }
+body.light-mode .text-orange-600\/70 { color: #c2410c !important; }
+body.light-mode .text-cyan-600\/70 { color: #0369a1 !important; }
+
+/* ──────────────────────────────────────────────────────────  */
+/* Inner Borders & Dividers (Thin & Clean, not thick/heavy)    */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode .border-slate-200,
+body.light-mode .border-slate-100 {
+  border-color: #cbd5e1 !important; /* Soft, unobtrusive dividers inside cards */
+}
+
+body.light-mode .border-slate-300 {
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode .border-blue-200 {
+  border-color: #93c5fd !important;
+}
+
+body.light-mode .border-\[\#00509E\] {
+  border-color: #0f4c81 !important;
+}
+
+/* ──────────────────────────────────────────────────────────  */
+/* Forms & Form Controls                                      */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode input,
+body.light-mode select:not(.day-type-badge),
+body.light-mode textarea {
+  background-color: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important; /* Clean defined border */
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+
+body.light-mode input:focus,
+body.light-mode select:not(.day-type-badge):focus,
+body.light-mode textarea:focus {
+  border-color: #0f4c81 !important;
+  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15) !important;
+  outline: none !important;
+}
+
+/* ──────────────────────────────────────────────────────────  */
+/* Tables & grids                                             */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode table thead th {
+  background-color: #f1f5f9 !important; /* Light slate table header */
+  color: #0f172a !important;
+  border-bottom: 1.5px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+body.light-mode table tbody td {
+  background-color: #ffffff !important; /* Keep table cells crisp paper-white */
+  border-bottom: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+/* Keep dark blue styling for totals row at the bottom */
+body.light-mode table tbody tr.text-white td,
+body.light-mode table tbody tr td[class*="bg-slate-800"] {
+  background-color: #1e293b !important; /* Deep charcoal navy anchor row */
+  color: #ffffff !important;
+}
+
+body.light-mode table tbody tr:hover td {
+  background-color: #f8fafc !important; /* Subtle hover effect on rows */
+}
+
+/* ──────────────────────────────────────────────────────────  */
+/* Summary KPI HUD Grid Optimization                         */
+/* ──────────────────────────────────────────────────────────  */
+
+body.light-mode [class*="SummaryCards"] {
+  background-color: #ffffff !important;
+  border: 1px solid #b8c2cc !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05) !important;
+}
+
+body.light-mode [class*="SummaryCards"] [class*="bg-slate-50"],
+body.light-mode [class*="SummaryCards"] [class*="bg-slate-800"],
+body.light-mode [class*="SummaryCards"] [class*="bg-[#111827]"] {
+  background-color: #ffffff !important; /* Force HUD cells to have clean white background */
+}
+
+body.light-mode [class*="SummaryCards"] .border-slate-700/40 {
+  border-color: #cbd5e1 !important; /* Clean inner border separating HUD zones */
+}
+
+body.light-mode [class*="SummaryCards"] .bg-slate-700\/20 {
+  background-color: #cbd5e1 !important; /* Perfect thin grid separation lines */
+}

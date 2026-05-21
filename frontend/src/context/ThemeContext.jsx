@@ -18,11 +18,13 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-    // Also toggle the 'dark-mode' class on the body as a fallback or for global styling
+    // Also toggle the 'dark-mode' or 'light-mode' class on the body as a fallback or for global styling
     if (isDarkMode) {
       document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
     } else {
       document.body.classList.remove('dark-mode');
+      document.body.classList.add('light-mode');
     }
   }, [isDarkMode]);
 
