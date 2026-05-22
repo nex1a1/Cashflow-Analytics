@@ -43,44 +43,44 @@ const MainChartHeader = ({
       <div className="flex items-center gap-2 flex-wrap">
 
         {chartViewType !== 'sankey' && !filterPeriod.match(/^\d{4}-\d{2}$/) && (
-          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายเดือน</button>
-            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>รายวัน</button>
+          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'}`}>
+            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'monthly' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}>รายเดือน</button>
+            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartGroupBy === 'daily' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}>รายวัน</button>
           </div>
         )}
 
-        <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+        <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'}`}>
           <button
             onClick={() => { setChartViewType('line'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'line' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}
           >
             <TrendingUp className="w-3.5 h-3.5" /> เส้น
           </button>
           <button
             onClick={() => setChartViewType('bar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'bar' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}
           >
             <BarChart className="w-3.5 h-3.5" /> แท่ง
           </button>
           <button
             onClick={() => { setChartViewType('sankey'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'sankey' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${chartViewType === 'sankey' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}
           >
             <Network className="w-3.5 h-3.5" /> Sankey
           </button>
         </div>
 
         {chartViewType === 'sankey' && (
-          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+          <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'}`}>
             <button 
               onClick={() => setSankeySortMode('value')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'value' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'value' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}
             >
               เรียงตามยอดเงิน
             </button>
             <button 
               onClick={() => setSankeySortMode('index')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'index' ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}
+              className={`px-3 py-1.5 text-[10px] font-bold rounded-sm transition-all ${sankeySortMode === 'index' ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}
             >
               เรียงตามลำดับ (Settings)
             </button>
@@ -130,12 +130,12 @@ const MainChartFilterMenu = ({
         className={`px-3 py-1.5 border rounded-sm shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${
           showCatMenu 
             ? (dm ? 'bg-blue-600 border-blue-500 text-white shadow-md' : 'bg-[#00509E] border-[#00509E] text-white shadow-md') 
-            : (dm ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-55')
+            : (dm ? 'bg-slate-950 border-slate-850 text-slate-200 hover:bg-slate-900' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
         }`}
       >
         <Filter className="w-3.5 h-3.5" />
         ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? (
-          <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
+          <span className={`px-1.5 rounded-full text-[9px] ${dm ? 'bg-slate-900 text-blue-400 border border-slate-850' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
             {dashboardCategory.length}
           </span>
         ) : ''}
@@ -144,10 +144,10 @@ const MainChartFilterMenu = ({
 
       {showCatMenu && (
         <div className={`absolute right-0 top-full mt-2 w-[340px] max-w-[90vw] rounded-sm shadow-2xl border z-45 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
-          dm ? 'bg-slate-800 border-slate-700 shadow-slate-950/60' : 'bg-white border-slate-200 shadow-slate-300/60'
+          dm ? 'bg-slate-900 border-slate-800 shadow-slate-950/60' : 'bg-white border-slate-200 shadow-slate-300/60'
         }`}>
           {/* Header */}
-          <div className={`px-4 py-2.5 border-b flex items-center gap-1.5 ${dm ? 'border-slate-700 bg-slate-900/65 text-slate-200' : 'border-slate-100 bg-slate-50 text-slate-700'}`}>
+          <div className={`px-4 py-2.5 border-b flex items-center gap-1.5 ${dm ? 'border-slate-800 bg-slate-950/65 text-slate-200' : 'border-slate-100 bg-slate-50 text-slate-700'}`}>
             <Layers className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
           </div>
@@ -186,7 +186,7 @@ const MainChartFilterMenu = ({
                         className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-[11px] font-bold transition-all border ${
                           activeCats.includes('ALL') && activeCats.length === 1 
                             ? (dm ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-blue-50 border-blue-200 text-[#00509E]') 
-                            : (dm ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-750' : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-55')
+                            : (dm ? 'bg-slate-950/50 border-slate-800 text-slate-300 hover:bg-slate-900' : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50')
                         }`}
                       >
                         📊 ทั้งหมด (รวม)
@@ -210,7 +210,7 @@ const MainChartFilterMenu = ({
                         placeholder="ค้นหาหมวดหมู่ด่วน..."
                         className={`w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-none font-medium transition-all ${
                           dm 
-                            ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-blue-500' 
+                            ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-500' 
                             : 'bg-white border-slate-200 text-slate-700 focus:border-blue-600'
                         }`}
                       />
@@ -218,7 +218,7 @@ const MainChartFilterMenu = ({
                       {searchQuery && (
                         <button 
                           onClick={() => setSearchQuery('')}
-                          className={`absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600`}
+                          className={`absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-650`}
                         >
                           ✕
                         </button>
@@ -235,8 +235,8 @@ const MainChartFilterMenu = ({
                               onClick={() => toggleCategory(c.name)} 
                               className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-[10px] font-bold transition-all border shadow-sm hover:scale-[1.02]" 
                               style={{ 
-                                backgroundColor: isActive ? c.color : (dm ? '#0f172a' : '#ffffff'), 
-                                borderColor: isActive ? c.color : (dm ? '#334155' : '#e2e8f0'), 
+                                backgroundColor: isActive ? c.color : (dm ? '#090d16' : '#ffffff'), 
+                                borderColor: isActive ? c.color : (dm ? '#1e293b' : '#e2e8f0'), 
                                 color: isActive ? '#ffffff' : (dm ? '#cbd5e1' : '#475569') 
                               }}
                             >
@@ -374,7 +374,7 @@ export default function MainChart() {
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
-  const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
+  const card = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`;
   const breakdownLabel = isBreakdown ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓') : 'แจกแจง';
 
   return (
@@ -392,18 +392,18 @@ export default function MainChart() {
         {chartViewType !== 'sankey' ? (
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className={`text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none ${
-              dm ? 'text-slate-600' : 'text-slate-400'
+              dm ? 'text-slate-650' : 'text-slate-400'
             }`}>
               <Activity className="w-3 h-3 text-blue-500 animate-pulse" /> MODES
             </span>
 
             {/* Divider */}
-            <span className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
+            <span className={`w-px h-4 shrink-0 ${dm ? 'bg-slate-800' : 'bg-slate-200'}`} />
             
             <div className={`flex items-center gap-1 p-1 rounded-sm transition-all duration-300 ${
               dm 
-                ? 'bg-slate-900/40 border border-slate-700/30 shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)]' 
-                : 'bg-slate-200/40 border border-slate-200/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]'
+                ? 'bg-slate-950 border border-slate-850 shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)]' 
+                : 'bg-slate-50 border border-slate-200/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]'
             }`}>
 
               {/* 1. Breakdown Mode */}
@@ -414,8 +414,8 @@ export default function MainChart() {
                 className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                   isBreakdown
                     ? (dm
-                        ? 'bg-blue-500/10 border-blue-500/40 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
-                        : 'bg-blue-50/70 border-blue-200 text-blue-700 shadow-[0_2px_8px_rgba(59,130,246,0.06)]')
+                        ? 'bg-blue-600/20 border-blue-500/80 text-blue-300 shadow-sm'
+                        : 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm')
                     : (dm
                         ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                         : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
@@ -459,8 +459,8 @@ export default function MainChart() {
                 className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                   isCumulative
                     ? (dm
-                        ? 'bg-violet-500/10 border-violet-500/40 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
-                        : 'bg-violet-50/70 border-violet-200 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.06)]')
+                        ? 'bg-violet-600/20 border-violet-500/80 text-violet-300 shadow-sm'
+                        : 'bg-violet-50 border-violet-300 text-violet-700 shadow-sm')
                     : (dm
                         ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                         : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
@@ -504,8 +504,8 @@ export default function MainChart() {
                         : 'bg-slate-50/50 border-transparent text-slate-300 cursor-not-allowed')
                     : showTrendLines
                       ? (dm
-                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
-                          : 'bg-amber-50/70 border-amber-200 text-amber-700 shadow-[0_2px_8px_rgba(245,158,11,0.06)]')
+                          ? 'bg-amber-600/20 border-amber-500/80 text-amber-300 shadow-sm'
+                          : 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm')
                       : (dm
                           ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                           : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
@@ -549,8 +549,8 @@ export default function MainChart() {
                 className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                   isLogScale
                     ? (dm
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
-                        : 'bg-emerald-50/70 border-emerald-200 text-emerald-700 shadow-[0_2px_8px_rgba(16,185,129,0.06)]')
+                        ? 'bg-emerald-600/20 border-emerald-500/80 text-emerald-300 shadow-sm'
+                        : 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm')
                     : (dm
                         ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                         : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
@@ -590,8 +590,8 @@ export default function MainChart() {
                 className={`group px-2.5 py-1 rounded-sm border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                   hideFixedExpenses
                     ? (dm
-                        ? 'bg-rose-500/10 border-rose-500/40 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]'
-                        : 'bg-rose-50/70 border-rose-200 text-rose-700 shadow-[0_2px_8px_rgba(244,63,94,0.06)]')
+                        ? 'bg-rose-600/20 border-rose-500/80 text-rose-300 shadow-sm'
+                        : 'bg-rose-50 border-rose-300 text-rose-700 shadow-sm')
                     : (dm
                         ? 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                         : 'bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-200/40')
@@ -633,12 +633,12 @@ export default function MainChart() {
         {chartViewType !== 'sankey' && (
           <div className="flex items-center gap-2 flex-wrap">
             {chartViewType === 'line' && (
-              <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${!isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+              <div className={`flex p-0.5 rounded-sm border shadow-sm ${dm ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${!isSmoothLine ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
                   เส้นตรง
                 </button>
-                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${isSmoothLine ? (dm ? 'bg-slate-700 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700')}`}>
+                <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-all ${isSmoothLine ? (dm ? 'bg-slate-800 text-blue-400 shadow-sm' : 'bg-white text-[#00509E] shadow-sm') : (dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40')}`}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
                   เส้นโค้ง
                 </button>

@@ -48,85 +48,158 @@ export default function AppHeader({
 
   return (
     <div className="flex flex-col relative z-[60]">
-      {/* ── Top Header (Logo & Global Actions) ── */}
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3 border-b transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+      {/* ── Top Header (Logo & Global Actions - Tactical HUD) ── */}
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3.5 border-b-2 transition-all duration-300 ${
+        dm 
+          ? 'bg-slate-950 border-slate-800 text-slate-100' 
+          : 'bg-white border-slate-200 text-slate-900'
+      }`}>
         
-        {/* Left: Logo & Status */}
-        <div className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-sm shadow-sm border transition-all shrink-0 ${
+        {/* Left: Logo & Status Cockpit */}
+        <div className="flex items-center gap-4">
+          {/* Logo container: Pure sharp tactical bracket */}
+          <div className={`p-2 rounded-none border-2 transition-all shrink-0 ${
             dm 
-              ? 'bg-gradient-to-br from-[#00509E] to-blue-800 border-blue-700' 
-              : 'bg-gradient-to-br from-sky-50 to-blue-100 border-blue-200'
+              ? 'bg-slate-900 border-blue-600' 
+              : 'bg-slate-50 border-blue-600 shadow-sm'
           }`}>
             <img 
               src={dm ? sharkWhite : sharkBlack} 
               alt="Shark Logo" 
-              className="w-6 h-6 object-contain" 
+              className="w-7 h-7 object-contain" 
             />
           </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className={`text-lg md:text-xl font-black tracking-tight leading-none truncate ${dm ? 'text-white' : 'text-slate-900'}`}>
+          
+          <div className="flex flex-col min-w-0 font-mono">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className={`text-xl md:text-2xl font-black tracking-wider leading-none truncate ${
+                dm 
+                  ? 'text-white' 
+                  : 'text-slate-900'
+              }`}>
                 Cashflow Analytics
               </h1>
-              <span className={`hidden sm:inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-sm border leading-none shrink-0 ${dm ? 'bg-red-900/30 text-red-400 border-red-800' : 'bg-red-50 text-[#D81A21] border-red-200'}`}>
+              <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-none border-2 uppercase leading-none shrink-0 ${
+                dm 
+                  ? 'bg-red-950/60 text-red-400 border-red-500/50' 
+                  : 'bg-red-50 text-[#D81A21] border-red-600'
+              }`}>
                 MASTER
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              {/* DB Status Badge */}
-              <span className={`flex items-center gap-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border leading-none ${dbStatus.includes('Online') ? (dm ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200') : (dm ? 'bg-orange-900/20 text-orange-400 border-orange-800/50' : 'bg-orange-50 text-orange-700 border-orange-200')}`}>
-                <span className={`w-1.5 h-1.5 rounded-sm shrink-0 ${dbStatus.includes('Online') ? 'bg-emerald-500 animate-pulse' : 'bg-orange-400'}`} />
-                {dbStatus}
-              </span>
-              <span className={`text-[11px] font-bold ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
-                ข้อมูล: <AnimatedNumber value={transactionCount} /> รายการ
-              </span>
+            
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {/* DB Status Badge (HUD Cockpit readout style) */}
+              <div className={`flex items-center gap-2 text-[10px] font-bold px-2 py-1 rounded-none border ${
+                dbStatus.includes('Online') 
+                  ? (dm ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/50' : 'bg-emerald-50 text-emerald-700 border-emerald-500') 
+                  : (dm ? 'bg-amber-950/40 text-amber-400 border-amber-500/50' : 'bg-amber-50 text-amber-700 border-amber-500')
+              }`}>
+                <span className={`w-2 h-2 rounded-none shrink-0 ${
+                  dbStatus.includes('Online') 
+                    ? 'bg-emerald-500 animate-pulse' 
+                    : 'bg-amber-500'
+                }`} />
+                <span className="tracking-wider uppercase">{dbStatus}</span>
+              </div>
+              
+              {/* Records readout */}
+              <div className={`text-[10px] font-bold px-2 py-1 rounded-none border ${
+                dm ? 'bg-slate-900/60 text-slate-300 border-slate-800' : 'bg-slate-50 text-slate-700 border-slate-300'
+              }`}>
+                <span className={`${dm ? 'text-slate-500' : 'text-slate-400'} mr-1`}>ข้อมูล:</span>
+                <span className={dm ? 'text-blue-400 font-extrabold' : 'text-blue-800 font-extrabold'}>
+                  <AnimatedNumber value={transactionCount} />
+                </span>
+                <span className={`${dm ? 'text-slate-500' : 'text-slate-400'} ml-1`}>รายการ</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Action Toolbar (จัด Flex ใหม่ให้ไหลลื่นบนมือถือ) */}
-        <div className="flex items-center justify-end gap-2 flex-wrap">
+        {/* Right: Action Toolbar (Cockpit Controls) */}
+        <div className="flex items-center justify-end gap-2.5 flex-wrap">
           
-          {/* Utility Tools */}
-          <div className={`flex items-center gap-1 p-1 rounded-sm border shadow-sm ${dm ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+          {/* Utility Tools Console */}
+          <div className={`flex items-center gap-1 p-1 rounded-none border-2 ${
+            dm 
+              ? 'bg-slate-900/80 border-slate-800' 
+              : 'bg-slate-50 border-slate-300'
+          }`}>
             <button
               onClick={onClickExport}
-              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-none text-xs font-bold tracking-wider transition-all duration-150 border border-transparent ${
+                dm 
+                  ? 'hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-blue-400' 
+                  : 'hover:bg-white text-slate-700 hover:shadow-sm hover:border-slate-300'
+              }`}
               title="ส่งออกข้อมูลเป็นไฟล์ CSV"
             >
-              <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Export</span>
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Export</span>
             </button>
             
-            <label className={`cursor-pointer flex items-center gap-1.5 text-[11px] font-bold px-2 py-1.5 rounded-sm transition-all ${showProcessing ? 'opacity-50 pointer-events-none' : ''} ${dm ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-white text-slate-600 hover:shadow-sm'}`} title="นำเข้าข้อมูลจากไฟล์ CSV">
-              {showProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse text-amber-500" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />}
-              <span className="hidden sm:inline">{showProcessing ? 'กำลังประมวลผล...' : 'Import'}</span>
-              <input type="file" accept=".csv" className="hidden" onChange={onFileUpload} disabled={showProcessing} ref={fileInputRef} />
+            <label className={`cursor-pointer flex items-center gap-2 text-xs font-bold tracking-wider px-3 py-1.5 rounded-none border border-transparent transition-all duration-150 ${
+              showProcessing ? 'opacity-50 pointer-events-none' : ''
+            } ${
+              dm 
+                ? 'hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-blue-400' 
+                : 'hover:bg-white text-slate-700 hover:shadow-sm hover:border-slate-300'
+            }`} title="นำเข้าข้อมูลจากไฟล์ CSV">
+              {showProcessing ? (
+                <Zap className="w-3.5 h-3.5 animate-pulse text-amber-400" />
+              ) : (
+                <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />
+              )}
+              <span className="hidden sm:inline">
+                {showProcessing ? 'กำลังประมวลผล...' : 'Import'}
+              </span>
+              <input 
+                type="file" 
+                accept=".csv" 
+                className="hidden" 
+                onChange={onFileUpload} 
+                disabled={showProcessing} 
+                ref={fileInputRef} 
+              />
             </label>
             
-            {/* เปลี่ยนจากปุ่ม ? ธรรมดาเป็น HelpCircle ให้ดูพรีเมียมขึ้น */}
+            <span className={`w-[1px] h-5 ${dm ? 'bg-slate-800' : 'bg-slate-300'}`} />
+            
             <button
               onClick={onClickImportGuide}
-              className={`p-1.5 rounded-sm transition-colors ${dm ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-400 hover:text-slate-700 hover:bg-white hover:shadow-sm'}`}
+              className={`p-1.5 rounded-none transition-colors border border-transparent ${
+                dm 
+                  ? 'text-slate-400 hover:text-blue-400 hover:bg-slate-800 hover:border-slate-700' 
+                  : 'text-slate-400 hover:text-blue-700 hover:bg-white hover:border-slate-300'
+              }`}
               title="คู่มือการ Import"
             >
               <HelpCircle className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Primary Action: Quick Add */}
+          {/* Primary Action Button (Quick Add) */}
           <button
             onClick={onClickAddQuick}
-            className={`text-[11px] font-bold text-white flex items-center gap-1.5 px-3 py-2.5 rounded-sm shadow-sm transition-all active:scale-95 border shrink-0 ${dm ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700'}`}
+            className={`text-xs font-bold tracking-wider flex items-center gap-2 px-4 py-2.5 rounded-none border-2 transition-all duration-150 active:translate-y-[1px] shrink-0 ${
+              dm 
+                ? 'bg-emerald-600 border-emerald-500 hover:bg-emerald-500 hover:border-emerald-400 text-white' 
+                : 'bg-emerald-600 border-emerald-700 hover:bg-emerald-700 text-white hover:shadow-md'
+            }`}
           >
-            <CalendarPlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">เพิ่มข้อมูลด่วน</span>
+            <CalendarPlus className="w-4 h-4" />
+            <span>เพิ่มข้อมูลด่วน</span>
           </button>
         </div>
       </div>
 
-      {/* ── Sub Header (Tab Navigation & Context Actions) ── */}
-      <div className={`sticky top-0 z-30 flex flex-col md:flex-row justify-between items-center px-4 md:px-6 border-b transition-colors backdrop-blur-md ${dm ? 'bg-slate-900/90 border-slate-800 shadow-sm' : 'bg-slate-50/90 border-slate-200 shadow-sm'}`}>
+      {/* ── Sub Header (Tab Navigation & Context Actions - Folder/Terminal Tabs) ── */}
+      <div className={`sticky top-0 z-30 flex flex-col md:flex-row justify-between items-stretch px-4 md:px-6 border-b-2 transition-all duration-300 backdrop-blur-md ${
+        dm 
+          ? 'bg-slate-900/90 border-slate-800 shadow-lg' 
+          : 'bg-slate-50/90 border-slate-200 shadow-sm'
+      }`}>
         <div className="flex w-full md:w-auto overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
@@ -134,18 +207,24 @@ export default function AppHeader({
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`relative px-3 md:px-4 py-3 flex justify-center items-center gap-2 transition-all text-xs whitespace-nowrap group ${
+                className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                   isActive 
-                    ? (dm ? 'text-blue-400 font-black' : 'text-[#00509E] font-black')
-                    : (dm ? 'text-slate-400 hover:text-slate-200 font-bold' : 'text-slate-500 hover:text-slate-800 font-bold')
+                    ? (dm 
+                        ? 'bg-slate-950 text-blue-400 border-t-blue-500 border-r-slate-800 font-black' 
+                        : 'bg-white text-[#00509E] border-t-[#00509E] border-r-slate-200 font-black')
+                    : (dm 
+                        ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border-t-transparent border-r-slate-800/40' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/60 border-t-transparent border-r-slate-200/60')
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} /> {label}
-                {/* Active Indicator Line - 🪄 Magic Motion sliding effect */}
+                <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-110 text-blue-400' : 'group-hover:scale-110'}`} />
+                <span>{label}</span>
+                
+                {/* Active Indicator Underline - Bold & Sharp */}
                 {isActive && (
                   <motion.div 
                     layoutId="activeTabIndicator"
-                    className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-t-sm ${dm ? 'bg-blue-400' : 'bg-[#00509E]'}`} 
+                    className={`absolute bottom-0 left-0 right-0 h-[3px] rounded-none ${dm ? 'bg-blue-500' : 'bg-[#00509E]'}`} 
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -154,9 +233,11 @@ export default function AppHeader({
           })}
         </div>
 
-        {/* Right side of Sub Header (PeriodPicker) */}
+        {/* Right side of Sub Header (PeriodPicker Boxy Container) */}
         {showPeriodPicker && (
-          <div className="flex items-center py-2 w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 mt-1 md:mt-0 pt-2 md:pt-0 border-slate-200 dark:border-slate-800">
+          <div className={`flex items-center py-2 px-1 w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 mt-1 md:mt-0 pt-2 md:pt-0 ${
+            dm ? 'border-slate-800' : 'border-slate-200'
+          }`}>
             <PeriodPicker
               filterPeriod={filterPeriod}
               setFilterPeriod={setFilterPeriod}

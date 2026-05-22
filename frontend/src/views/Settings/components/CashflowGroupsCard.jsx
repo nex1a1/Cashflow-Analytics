@@ -20,7 +20,7 @@ const CashflowGroupsCard = memo(({
       badge={cashflowGroups.length}
       action={{ label: 'เพิ่ม', onClick: handleAddCashflowGroup }}
     >
-      <div className={`p-2 space-y-1.5 ${dm ? '' : 'bg-slate-50/40'}`}>
+      <div className={`p-3 space-y-2 ${dm ? 'bg-slate-950/25' : 'bg-slate-50/30'}`}>
         {[...cashflowGroups].sort((a, b) => a.order_index - b.order_index).map((group, idx, arr) => {
           const hasError = cashflowDeleteError?.id === group.id;
           const txCount  = txCountByGroup[group.id] || 0;
@@ -30,15 +30,15 @@ const CashflowGroupsCard = memo(({
               <div className={`flex items-center gap-1.5 p-1.5 border transition-colors group/cg ${
                 hasError
                   ? (dm ? 'border-red-700 bg-red-900/20' : 'border-red-300 bg-red-50')
-                  : dm ? 'bg-slate-800/70 border-slate-700 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+                  : dm ? 'bg-slate-900 border-slate-850 hover:bg-slate-950/80' : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
               }`}>
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 transition-opacity ${dm ? 'text-slate-600' : 'text-slate-400'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
+                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-800' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
                     <ChevronUp className="w-3 h-3" />
                   </button>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-700' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
+                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${dm ? 'hover:text-purple-400 hover:bg-slate-800' : 'hover:text-purple-600 hover:bg-slate-200'}`}>
                     <ChevronDown className="w-3 h-3" />
                   </button>
                 </div>
@@ -47,13 +47,13 @@ const CashflowGroupsCard = memo(({
 
                 <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength="2"
                   className={`w-7 h-7 text-center text-base outline-none border shrink-0 transition-colors ${
-                    dm ? 'bg-slate-900 border-slate-600 text-white focus:border-slate-400' : 'bg-slate-50 border-slate-200 focus:border-slate-400'
+                    dm ? 'bg-slate-950 border-slate-850 text-white focus:border-purple-500' : 'bg-white border-slate-200 focus:border-purple-400 focus:bg-white'
                   }`} title="ไอคอน" placeholder="✨" />
 
                 <label className={`flex items-center justify-center gap-0.5 cursor-pointer px-1.5 py-0.5 border text-[10px] font-bold shrink-0 transition-colors ${
                   group.highlightBg
                     ? (dm ? 'bg-amber-900/40 text-amber-400 border-amber-800/50' : 'bg-amber-50 text-amber-700 border-amber-200')
-                    : (dm ? 'text-slate-600 border-slate-700 hover:border-slate-500' : 'text-slate-400 border-slate-200 hover:border-slate-400')
+                    : (dm ? 'text-slate-400 border-slate-850 hover:border-slate-700' : 'text-slate-400 border-slate-200 hover:border-slate-400')
                 }`} title="เทสีพื้นหลังคอลัมน์">
                   <input type="checkbox" checked={!!group.highlightBg} onChange={e => handleChangeCashflowGroup(group.id, 'highlightBg', e.target.checked)} className="hidden" />
                   <span className={`w-1.5 h-1.5 rounded-full ${group.highlightBg ? 'bg-amber-500' : (dm ? 'bg-slate-600' : 'bg-slate-300')}`} />
@@ -63,7 +63,7 @@ const CashflowGroupsCard = memo(({
                 <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
                   disabled={group.isDefault || inUse}
                   className={`p-1 text-[11px] font-bold outline-none border w-[120px] shrink-0 ${
-                    dm ? 'bg-slate-900 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                    dm ? 'bg-slate-950 border-slate-850 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
                   } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-purple-500'}`}
                   title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}>
                   <option value="income">รายรับ (IN)</option>
@@ -76,7 +76,7 @@ const CashflowGroupsCard = memo(({
                     className={`p-1 text-[10px] font-black outline-none border w-[80px] shrink-0 ${
                       group.allocation_type === 'need' ? (dm ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-700 border-red-200') :
                       group.allocation_type === 'savings' ? (dm ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200') :
-                      (dm ? 'bg-slate-900 border-slate-600 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500')
+                      (dm ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-white border-slate-200 text-slate-500')
                     } cursor-pointer focus:border-purple-500`}>
                     <option value="need">NEED</option>
                     <option value="want">WANT</option>
@@ -86,14 +86,14 @@ const CashflowGroupsCard = memo(({
 
                 <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
                   className={`flex-1 min-w-0 px-2 py-1 border outline-none font-semibold text-[13px] transition-colors ${
-                    dm ? 'bg-slate-900 border-slate-600 text-slate-200 focus:border-purple-500 placeholder:text-slate-600'
+                    dm ? 'bg-slate-950 border-slate-850 text-slate-200 focus:border-purple-500 placeholder:text-slate-700'
                        : 'bg-white border-slate-200 text-slate-800 focus:border-purple-400'
                   }`} placeholder="ชื่อคอลัมน์" />
 
                 <div className="flex items-center justify-end w-[36px] shrink-0">
                   {txCount > 0 && (
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 leading-none rounded-sm ${
-                      dm ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'
+                      dm ? 'bg-slate-950 text-slate-300 border border-slate-850' : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`} title={`มี ${txCount} รายการในกลุ่มนี้`}>
                       {txCount}
                     </span>

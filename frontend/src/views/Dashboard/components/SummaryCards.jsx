@@ -23,9 +23,9 @@ const Shimmer = ({ className, dm }) => (
  * Shared Header for Summary Sections
  */
 const SectionHeader = ({ icon: Icon, title, dm }) => (
-  <div className={`px-2.5 py-0.5 flex items-center gap-1.5 ${dm ? 'bg-slate-800 border-b border-slate-700/50' : 'bg-slate-100 border-b border-slate-200'}`}>
+  <div className={`px-2.5 py-1 flex items-center gap-1.5 border-b ${dm ? 'bg-slate-950/40 border-slate-800/60' : 'bg-slate-50 border-slate-100'}`}>
     <Icon className={`w-3 h-3 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
-    <span className={`text-[11px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+    <span className={`text-[11px] font-black uppercase tracking-widest ${dm ? 'text-slate-400' : 'text-slate-650'}`}>
       {title}
     </span>
   </div>
@@ -91,11 +91,11 @@ const SummaryVitals = ({ analytics, dm, showSkeleton }) => {
   ];
 
   return (
-    <div className="flex flex-col border-b border-dashed border-slate-700/40">
+    <div className={`flex flex-col border-b border-dashed ${dm ? 'border-slate-800/80' : 'border-slate-200'}`}>
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" dm={dm} />
-      <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px]">
+      <div className={`grid grid-cols-3 gap-px p-px ${dm ? 'bg-slate-800/60' : 'bg-slate-200/60'}`}>
         {vitalsConfig.map(card => (
-          <div key={card.id} className={dm ? 'bg-[#111827]' : 'bg-slate-50'}>
+          <div key={card.id} className={dm ? 'bg-slate-900' : 'bg-white'}>
             <StatCard 
               icon={card.icon}
               label={card.label}
@@ -130,10 +130,10 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
   return (
     <div className="grid grid-cols-12 items-stretch">
          {/* Strategic Analysis */}
-         <div className="col-span-7 flex flex-col border-r border-dashed border-slate-700/40">
+         <div className={`col-span-7 flex flex-col border-r border-dashed ${dm ? 'border-slate-800/80' : 'border-slate-200'}`}>
             <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์" dm={dm} />
-            <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+            <div className={`grid grid-cols-3 gap-px p-px flex-1 ${dm ? 'bg-slate-800/60' : 'bg-slate-200/60'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-blue-400/70' : 'text-blue-600/70'}`}>ภาระที่พักอาศัย (RENT)</span>
                   <div className="mt-auto">
                     {showSkeleton ? (
@@ -144,13 +144,13 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
                         <div className={`text-[10px] font-bold opacity-60 tabular-nums ${dm ? 'text-slate-400' : 'text-slate-500'}`}>฿{formatMoney(analytics.rentTotal)}</div>
                       </div>
                     )}
-                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
+                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-800' : 'bg-slate-200'} overflow-hidden`}>
                        <div className={`h-full ${showSkeleton ? 'bg-slate-500 animate-pulse' : (rentPercentage > 30 ? 'bg-rose-500' : 'bg-blue-500')}`} style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentage)}%` }} />
                     </div>
                   </div>
                </div>
 
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-rose-400/70' : 'text-rose-600/70'}`}>ดัชนีการใช้ชีวิต (WANT RATIO)</span>
                   <div className="mt-auto">
                     {showSkeleton ? (
@@ -161,13 +161,13 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
                         <div className={`text-[10px] font-bold opacity-60 tabular-nums ${dm ? 'text-slate-400' : 'text-slate-500'}`}>฿{formatMoney(variableTotal)}</div>
                       </div>
                     )}
-                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-700' : 'bg-slate-200'} overflow-hidden`}>
+                    <div className={`w-full h-1 mt-1.5 rounded-full ${dm ? 'bg-slate-800' : 'bg-slate-200'} overflow-hidden`}>
                        <div className={`h-full ${showSkeleton ? 'bg-slate-500 animate-pulse' : 'bg-rose-500'}`} style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }} />
                     </div>
                   </div>
                </div>
 
-               <div className={`p-2 rounded-none flex flex-col justify-between h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-between h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dailyVictory >= 0 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>เงินคงเหลือรายวัน (Victory)</span>
                   {showSkeleton ? (
                     <Shimmer className="h-6 w-20 mt-auto" dm={dm} />
@@ -181,19 +181,19 @@ const SummaryStrategic = ({ analytics, dm, showSkeleton }) => {
          {/* Key Metrics */}
          <div className="col-span-5 flex flex-col">
             <SectionHeader icon={Scale} title="ข้อมูลสำคัญ" dm={dm} />
-            <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px] flex-1">
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+            <div className={`grid grid-cols-3 gap-px p-px flex-1 ${dm ? 'bg-slate-800/60' : 'bg-slate-200/60'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>สัดส่วนค่าอาหาร</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     {showSkeleton ? <Shimmer className="h-6 w-12" dm={dm} /> : <span className={`text-lg font-black ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{foodPercentage}%</span>}
                     {!showSkeleton && <UtensilsCrossed size={12} className="text-orange-500 opacity-60" />}
                   </div>
                </div>
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-orange-400/70' : 'text-orange-600/70'}`}>กินเฉลี่ย/วัน</span>
                   {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-orange-400' : 'text-orange-600'}`}>{formatMoney(foodDailyAvg)}</span>}
                </div>
-               <div className={`p-2 rounded-none flex flex-col justify-center h-full ${dm ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+               <div className={`p-2 rounded-none flex flex-col justify-center h-full transition-colors ${dm ? 'bg-slate-900/60 hover:bg-slate-900' : 'bg-white hover:bg-slate-50/50'}`}>
                   <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-cyan-400/70' : 'text-cyan-600/70'}`}>รายจ่ายเฉลี่ย/วัน</span>
                   {showSkeleton ? <Shimmer className="h-6 w-16 mt-0.5" dm={dm} /> : <span className={`text-lg font-black tabular-nums mt-0.5 ${dm ? 'text-cyan-400' : 'text-cyan-600'}`}>{formatMoney(dailyAvg)}</span>}
                </div>
@@ -214,22 +214,22 @@ const SummaryForecasting = ({ analytics, dm, showSkeleton }) => {
   if (!showForecasting) return null;
 
   return (
-    <div className="flex flex-col border-t border-dashed border-slate-700/40">
+    <div className={`flex flex-col border-t border-dashed ${dm ? 'border-slate-800/80' : 'border-slate-200'}`}>
       <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน" dm={dm} />
-      <div className="grid grid-cols-3 gap-[1px] bg-slate-700/20 p-[1px]">
+      <div className={`grid grid-cols-3 gap-px p-px ${dm ? 'bg-slate-800/60' : 'bg-slate-200/60'}`}>
         {/* Projected Expense */}
-        <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-[#1e1b4b]/40' : 'bg-indigo-50/40'}`}>
+        <div className={`p-2 rounded-none flex items-center justify-between transition-colors ${dm ? 'bg-indigo-950/20 hover:bg-indigo-950/30' : 'bg-indigo-50/30 hover:bg-indigo-50/60'}`}>
           <div>
-            <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-600/80'}`}>รายจ่ายเดือนนี้ (พยากรณ์)</span>
-            {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : <div className={`text-lg font-black tabular-nums ${dm ? 'text-white' : 'text-indigo-900/90'}`}><AnimatedNumber value={projectedExpense} /></div>}
+            <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-indigo-300' : 'text-indigo-650'}`}>รายจ่ายเดือนนี้ (พยากรณ์)</span>
+            {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : <div className={`text-lg font-black tabular-nums ${dm ? 'text-indigo-200' : 'text-indigo-900/90'}`}><AnimatedNumber value={projectedExpense} /></div>}
           </div>
           <TrendingUp size={48} className={`${dm ? 'text-indigo-400' : 'text-indigo-300'} opacity-20`} />
         </div>
 
         {/* Safe to Spend */}
-        <div className={`p-2 rounded-none flex items-center justify-between ${safeToSpend > 300 ? (dm ? 'bg-emerald-500/5' : 'bg-emerald-50/40') : (dm ? 'bg-rose-500/5' : 'bg-rose-50/40')}`}>
+        <div className={`p-2 rounded-none flex items-center justify-between transition-colors ${safeToSpend > 300 ? (dm ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'bg-emerald-50/30 hover:bg-emerald-50/60') : (dm ? 'bg-rose-950/20 hover:bg-rose-950/30' : 'bg-rose-50/30 hover:bg-rose-50/60')}`}>
           <div>
-            <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/70' : 'text-emerald-600/70') : (dm ? 'text-rose-400/70' : 'text-rose-600/70')}`}>งบใช้จ่ายรายวัน (Safe)</span>
+            <span className={`text-[9px] font-black uppercase tracking-wider ${safeToSpend > 300 ? (dm ? 'text-emerald-400/80' : 'text-emerald-650') : (dm ? 'text-rose-400/80' : 'text-rose-650')}`}>งบใช้จ่ายรายวัน (Safe)</span>
             {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : (
               <div className={`text-lg font-black tabular-nums ${safeToSpend > 300 ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-rose-400' : 'text-rose-600')}`}>
                 <AnimatedNumber value={safeToSpend} />
@@ -240,9 +240,9 @@ const SummaryForecasting = ({ analytics, dm, showSkeleton }) => {
         </div>
 
         {/* Shark Surplus */}
-        <div className={`p-2 rounded-none flex items-center justify-between ${dm ? 'bg-purple-900/30' : 'bg-purple-50/40'}`}>
+        <div className={`p-2 rounded-none flex items-center justify-between transition-colors ${dm ? 'bg-purple-950/20 hover:bg-purple-950/30' : 'bg-purple-50/30 hover:bg-purple-50/60'}`}>
           <div>
-            <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-purple-300' : 'text-purple-600/80'}`}>เงินเหลือรอจัดสรร (Surplus)</span>
+            <span className={`text-[9px] font-black uppercase tracking-wider ${dm ? 'text-purple-300' : 'text-purple-650'}`}>เงินเหลือรอจัดสรร (Surplus)</span>
             {showSkeleton ? <Shimmer className="h-6 w-24 my-1" dm={dm} /> : (
               <div className={`text-xl font-black tabular-nums ${dm ? 'text-purple-400' : 'text-purple-800'}`}>
                 <AnimatedNumber value={projectedSurplus} />
@@ -265,7 +265,7 @@ export default function SummaryCards() {
   if (!analytics) return null;
 
   return (
-    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm ${dm ? 'bg-[#111827] border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
+    <div className={`w-full flex flex-col rounded-sm overflow-hidden border shadow-sm transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
       <SummaryVitals analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
       <SummaryStrategic analytics={analytics} dm={dm} showSkeleton={showSkeleton} />
       <SummaryForecasting analytics={analytics} dm={dm} showSkeleton={showSkeleton} />

@@ -30,13 +30,13 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
   const mode = dm ? 'dark' : 'light';
 
   return (
-    <div className={`border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-700/70' : 'bg-slate-50 border-slate-200'}`}>
+    <div className={`border overflow-hidden shadow-sm ${dm ? 'bg-slate-900 border-slate-850' : 'bg-white border-slate-200 shadow-sm'}`}>
       <div className={`px-3 py-2 border-b flex items-center justify-between gap-2 ${a.header[mode]}`}>
         <h2 className={`text-[13px] font-bold flex items-center gap-1.5 ${a.title[mode]}`}>
           {icon}
           {title}
           {badge != null && (
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 ml-1 ${dm ? 'bg-slate-700/80 text-slate-400' : 'bg-white/80 text-slate-500 border border-slate-200'}`}>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 ml-1 ${dm ? 'bg-slate-950/80 text-slate-400 border border-slate-850' : 'bg-white/80 text-slate-500 border border-slate-200'}`}>
               {badge}
             </span>
           )}
@@ -45,7 +45,7 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
           {subAction && (
             <button type="button" onClick={subAction.onClick}
               className={`text-[11px] font-bold px-2 py-1 flex items-center gap-1 transition-all active:scale-95 border ${
-                dm ? 'border-slate-600 text-slate-400 hover:bg-slate-700' : 'border-slate-200 text-slate-500 hover:bg-slate-100'
+                dm ? 'border-slate-800 text-slate-300 hover:bg-slate-850 bg-slate-950' : 'border-slate-200 text-slate-500 hover:bg-slate-100'
               }`}>
               {subAction.icon} {subAction.label}
             </button>

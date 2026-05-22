@@ -1,53 +1,157 @@
 /* src/styles/darkMode.css                                    */
 /* ──────────────────────────────────────────────────────────  */
-/* Dark mode overrides                                        */
-/* import ไฟล์นี้ใน main.jsx หรือ index.jsx แทนการใช้        */
-/* dangerouslySetInnerHTML ใน App.jsx                         */
+/* Gundam-inspired Dark Mode Overrides (Eliminates rounded gray) */
 /* ──────────────────────────────────────────────────────────  */
 
-.dark-mode { background-color: #0f172a !important; color: #e2e8f0 !important; }
+/* Global Page Base */
+.dark-mode { 
+  background-color: #050507 !important; 
+  color: #f8fafc !important; 
+}
 
-/* Backgrounds */
-.dark-mode .bg-white                { background-color: #1e293b !important; border-color: #334155 !important; }
-.dark-mode .bg-slate-50,
-.dark-mode .bg-slate-100            { background-color: #0f172a !important; border-color: #334155 !important; }
-.dark-mode .bg-slate-50\/80         { background-color: rgba(15,23,42,0.8) !important; border-color: #334155 !important; }
-.dark-mode .bg-slate-50\/50         { background-color: rgba(15,23,42,0.5) !important; border-color: #334155 !important; }
-.dark-mode .bg-blue-50\/50          { background-color: rgba(30,58,138,0.5) !important; border-color: #1e3a8a !important; }
-.dark-mode .bg-blue-50              { background-color: rgba(30,58,138,0.5) !important; border-color: #1e3a8a !important; }
+/* Force dark-mode borders to be extremely faded by default, avoiding default Tailwind white-ish borders */
+.dark-mode *,
+.dark-mode ::before,
+.dark-mode ::after {
+  border-color: rgba(35, 41, 53, 0.45);
+}
 
-/* Text */
-.dark-mode .text-slate-900          { color: #e2e8f0 !important; }
-.dark-mode .text-slate-800          { color: #cbd5e1 !important; }
-.dark-mode .text-slate-700          { color: #e2e8f0 !important; }
-.dark-mode .text-slate-600          { color: #cbd5e1 !important; }
-.dark-mode .text-slate-500          { color: #94a3b8 !important; }
-.dark-mode .text-\[\#00509E\]       { color: #60a5fa !important; }
-.dark-mode .hover\:text-\[\#00509E\]:hover { color: #93c5fd !important; }
+/* Backgrounds - Deep Space Base (#050507) & Matte Metal Card (#14141A) */
+.dark-mode .bg-slate-950,
+.dark-mode .bg-slate-100,
+.dark-mode .bg-slate-50 { 
+  background-color: #050507 !important; 
+  border-color: #232935 !important; 
+}
 
-/* Borders */
-.dark-mode .border-blue-200         { border-color: #1e3a8a !important; }
-.dark-mode .border-\[\#00509E\]     { border-color: #60a5fa !important; }
-.dark-mode .border-slate-200        { border-color: #334155 !important; }
-.dark-mode .border-slate-300        { border-color: #475569 !important; }
-.dark-mode .border-slate-100        { border-color: #1e293b !important; }
+.dark-mode .bg-white,
+.dark-mode .bg-slate-900 { 
+  background-color: #14141A !important; 
+  border-color: #232935 !important; 
+}
 
-/* Hover states */
-.dark-mode .hover\:bg-slate-50:hover  { background-color: #334155 !important; }
-.dark-mode .hover\:bg-slate-100:hover { background-color: #475569 !important; }
-.dark-mode .hover\:bg-slate-200:hover { background-color: #64748b !important; }
+/* Secondary Panels & Inner Elements */
+.dark-mode .bg-slate-800 { 
+  background-color: #1a1a24 !important; 
+  border-color: #232935 !important; 
+}
 
-/* Form elements */
+.dark-mode .bg-slate-700 { 
+  background-color: #232935 !important; 
+}
+
+.dark-mode .bg-slate-850 { 
+  background-color: #171720 !important; 
+  border-color: #232935 !important; 
+}
+
+.dark-mode .bg-slate-850\/60 { 
+  background-color: rgba(23, 23, 32, 0.6) !important; 
+}
+
+.dark-mode .bg-slate-850\/40 { 
+  background-color: rgba(23, 23, 32, 0.4) !important; 
+}
+
+.dark-mode .bg-slate-900\/90 { 
+  background-color: rgba(20, 20, 26, 0.9) !important; 
+  border-color: #232935 !important; 
+}
+
+.dark-mode .bg-slate-800\/50 { 
+  background-color: rgba(26, 26, 36, 0.5) !important; 
+  border-color: #232935 !important; 
+}
+
+.dark-mode .bg-slate-50\/80 { 
+  background-color: rgba(5, 5, 7, 0.8) !important; 
+  border-color: #232935 !important; 
+}
+
+.dark-mode .bg-slate-50\/50 { 
+  background-color: rgba(5, 5, 7, 0.5) !important; 
+  border-color: #232935 !important; 
+}
+
+/* Accent overlays */
+.dark-mode .bg-blue-50\/50,
+.dark-mode .bg-blue-50 { 
+  background-color: rgba(244, 63, 94, 0.1) !important; /* Beam Sabre Red transparent overlay */
+  border-color: rgba(244, 63, 94, 0.3) !important; 
+}
+
+/* Text Overrides - Clean High Contrast & Gundam Red/Gold */
+.dark-mode .text-slate-900          { color: #f8fafc !important; }
+.dark-mode .text-slate-800          { color: #e2e8f0 !important; }
+.dark-mode .text-slate-700          { color: #cbd5e1 !important; }
+.dark-mode .text-slate-600          { color: #94a3b8 !important; }
+.dark-mode .text-slate-500          { color: #64748b !important; }
+.dark-mode .text-slate-400          { color: #475569 !important; }
+
+/* Primary Accent Override (Originally Blue [#00509E]) -> Beam Sabre Red (#F43F5E) */
+.dark-mode .text-\[\#00509E\]       { color: #F43F5E !important; }
+.dark-mode .hover\:text-\[\#00509E\]:hover { color: #f472b6 !important; }
+
+/* Borders - Desaturated Shield Slate (#232935) */
+.dark-mode .border-slate-100        { border-color: #14141A !important; }
+.dark-mode .border-slate-200        { border-color: #232935 !important; }
+.dark-mode .border-slate-300        { border-color: #232935 !important; }
+.dark-mode .border-slate-700        { border-color: #232935 !important; }
+.dark-mode .border-slate-800        { border-color: #232935 !important; }
+.dark-mode .border-slate-850        { border-color: #232935 !important; }
+.dark-mode .border-slate-850\/80     { border-color: rgba(35, 41, 53, 0.8) !important; }
+.dark-mode .border-slate-850\/60     { border-color: rgba(35, 41, 53, 0.6) !important; }
+.dark-mode .border-slate-750        { border-color: #232935 !important; }
+
+/* Primary Header Accent Border [#00509E] -> Beam Sabre Red (#F43F5E) */
+.dark-mode .border-\[\#00509E\]     { border-color: #F43F5E !important; }
+.dark-mode .border-blue-200         { border-color: #232935 !important; }
+
+/* Hover States - Matte Metal Hover */
+.dark-mode .hover\:bg-slate-50:hover  { background-color: #1a1a24 !important; }
+.dark-mode .hover\:bg-slate-100:hover { background-color: #232935 !important; }
+.dark-mode .hover\:bg-slate-200:hover { background-color: #232935 !important; }
+.dark-mode .hover\:bg-slate-700:hover { background-color: #232935 !important; }
+.dark-mode .hover\:bg-slate-850:hover { background-color: #232935 !important; }
+.dark-mode .hover\:bg-slate-850\/40:hover { background-color: rgba(35, 41, 53, 0.4) !important; }
+.dark-mode .hover\:bg-slate-850\/60:hover { background-color: rgba(35, 41, 53, 0.6) !important; }
+.dark-mode .group:hover .group-hover\:bg-slate-850 { background-color: #232935 !important; }
+.dark-mode .hover\:border-slate-750:hover { border-color: #232935 !important; }
+.dark-mode .group:hover .group-hover\:border-slate-750 { border-color: #232935 !important; }
+
+/* Form elements & Inputs */
 .dark-mode input,
 .dark-mode select:not(.day-type-badge),
-.dark-mode textarea                 { background-color: transparent !important; border-color: #475569 !important; }
-.dark-mode select optgroup          { background-color: #0f172a !important; color: #60a5fa !important; font-weight: bold; }
-.dark-mode select option            { background-color: #1e293b !important; color: #f8fafc !important; }
+.dark-mode textarea { 
+  background-color: #050507 !important; 
+  border-color: #232935 !important; 
+  color: #f8fafc !important; 
+  border-radius: 4px !important;
+}
 
-/* Table */
-.dark-mode table thead th           { background-color: #0f172a !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+.dark-mode select optgroup { 
+  background-color: #050507 !important; 
+  color: #F43F5E !important; 
+  font-weight: bold; 
+}
 
-/* Color input */
-input[type="color"]                             { -webkit-appearance: none; border: none; padding: 0; overflow: hidden; border-radius: 4px; }
-input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-input[type="color"]::-webkit-color-swatch       { border: none; border-radius: 4px; }
+.dark-mode select option { 
+  background-color: #14141A !important; 
+  color: #f8fafc !important; 
+}
+
+/* Tables */
+.dark-mode table thead th { 
+  background-color: #050507 !important; 
+  color: #cbd5e1 !important; 
+  border-color: #232935 !important; 
+}
+
+/* Custom Scrollbars to blend with deep black base */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(35, 41, 53, 0.8) !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(244, 63, 94, 0.6) !important;
+}

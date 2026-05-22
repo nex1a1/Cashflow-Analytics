@@ -16,8 +16,8 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-        : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+        ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+        : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : cat.color }}
   >
@@ -39,7 +39,7 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     </div>
     
     <div className="mt-auto flex flex-col gap-1">
-      <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-700/40' : 'bg-slate-100'}`}>
+      <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-950' : 'bg-slate-100'}`}>
         <div 
           className="h-full transition-all duration-1000" 
           style={{ 
@@ -62,8 +62,8 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-        : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+        ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+        : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : item.color }}
   >
@@ -98,7 +98,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     
     {/* ─── PROGRESS BAR ─── */}
     <div className="mb-3">
-      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-950' : 'bg-slate-200'}`}>
         <div 
           className="h-full transition-all duration-1000 relative" 
           style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
@@ -157,8 +157,8 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       onMouseLeave={() => onHover(null)}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
         isHovered 
-          ? (dm ? 'bg-slate-800 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-          : (dm ? 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50' : 'bg-slate-50 hover:bg-slate-100 border-slate-100')
+          ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
+          : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
       }`}
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
     >
@@ -198,7 +198,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       
       {/* ─── PROGRESS BAR ─── */}
       <div className="mb-3">
-        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-900/60' : 'bg-slate-200'}`}>
+        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-950' : 'bg-slate-200'}`}>
           <div 
             className={`h-full transition-all duration-1000 relative ${isAlert ? 'animate-pulse' : ''}`} 
             style={{ width: `${percentage}%`, backgroundColor: item.color }}
@@ -358,7 +358,7 @@ export default function ExpenseProportion() {
   }, [dm]);
   
   const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
-    dm ? 'bg-[#111827] border-slate-700/50' : 'bg-slate-50 border-slate-200'
+    dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
   }`;
 
   if (itemCount === 0 && !showSkeleton) {
@@ -373,7 +373,7 @@ export default function ExpenseProportion() {
   return (
     <div className={cardClass}>
       {/* ─── HEADER (Ultra Tighter) ─── */}
-      <div className={`px-3 py-1 border-b flex items-center justify-between ${dm ? 'bg-slate-800/90 border-slate-700/50' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`px-3 py-1.5 border-b flex items-center justify-between ${dm ? 'bg-slate-950/40 border-slate-800/60' : 'bg-slate-50 border-slate-100'}`}>
         <div className="flex items-center gap-1.5">
           <PieChart className={`w-3 h-3 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
           <span className={`text-[9px] font-black uppercase tracking-widest ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -381,7 +381,7 @@ export default function ExpenseProportion() {
           </span>
 
           {/* Mode Switcher */}
-          <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
+          <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm border ${dm ? 'bg-slate-950 border-slate-800/60' : 'bg-slate-100 border-slate-200/60'}`}>
             <button 
               onClick={() => changeDisplayMode('category')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
@@ -416,7 +416,7 @@ export default function ExpenseProportion() {
 
           {/* Sort Switcher (Hidden in Allocation mode) */}
           {!isAllocationMode && (
-            <div className={`ml-2 flex items-center gap-[1px] p-[2px] rounded-sm ${dm ? 'bg-slate-900/60' : 'bg-slate-200/50'}`}>
+            <div className={`ml-2 flex items-center gap-[1px] p-[2px] rounded-sm border ${dm ? 'bg-slate-950 border-slate-800/60' : 'bg-slate-100 border-slate-200/60'}`}>
               <button 
                 onClick={() => setSortMode('amount')}
                 title="เรียงตามยอดเงิน (มากไปน้อย)"
@@ -467,7 +467,7 @@ export default function ExpenseProportion() {
         <div className="flex flex-row items-stretch min-h-[140px]">
 
           {/* LEFT: CHART ANCHOR (No Padding) */}
-          <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
+          <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed ${dm ? 'border-slate-850 bg-slate-950/20' : 'border-slate-150 bg-slate-50/50'}`}>
             <div className="relative w-[140px] h-[140px]">
               <Doughnut data={activeChartData} options={options} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -482,7 +482,7 @@ export default function ExpenseProportion() {
           </div>
 
           {/* RIGHT: TABLE-GRID HUD */}
-          <div className={`flex-1 grid ${gridColsClass} gap-[1px] bg-slate-700/20`}>
+          <div className={`flex-1 grid ${gridColsClass} gap-px ${dm ? 'bg-slate-800/50' : 'bg-slate-200/50'}`}>
              {activeItems.map((item, idx) => {
                const isHovered = hoveredIdx === idx;
                if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
@@ -491,10 +491,10 @@ export default function ExpenseProportion() {
              })}
              {/* Fill empty cells to maintain grid borders if needed */}
              {![isAllocationMode, isGroupMode].some(Boolean) && [...Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
-                <div key={`empty-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+                <div key={`empty-${i}`} className={`${dm ? 'bg-slate-950/10' : 'bg-slate-50/10'}`} />
               ))}
              {(isAllocationMode || isGroupMode) && [...Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
-                <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-800/20' : 'bg-slate-50/30'}`} />
+                <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-950/10' : 'bg-slate-50/10'}`} />
               ))}
           </div>
 

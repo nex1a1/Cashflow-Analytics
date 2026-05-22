@@ -11,8 +11,8 @@ import { useDashboardContext } from '../context/DashboardContext';
 const MONTH_LABELS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const DAY_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
-const HEATMAP_SHADES_DARK = ['#2e1065', '#4338ca', '#6d28d9', '#c2410c', '#ea580c', '#f97316'];
-const HEATMAP_SHADES_LIGHT = ['#e0e7ff', '#c7d2fe', '#ddd6fe', '#ffedd5', '#fed7aa', '#fb923c'];
+const HEATMAP_SHADES_DARK = ['#1e1b4b', '#312e81', '#4338ca', '#5850ec', '#ea580c', '#e11d48'];
+const HEATMAP_SHADES_LIGHT = ['#e0e7ff', '#c7d2fe', '#a5b4fc', '#818cf8', '#fed7aa', '#fecdd3'];
 
 // --- Helpers ---
 const getExpenseLevel = (amount, maxThreshold) => {
@@ -42,7 +42,7 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   ];
 
   return (
-    <div className={`relative flex p-1 rounded-sm border shadow-sm ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+    <div className={`relative flex p-1 rounded-sm border shadow-sm ${isDarkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'}`}>
       {modeButtons.map((btn) => (
         <button
           key={btn.id}
@@ -58,7 +58,7 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
           {viewMode === btn.id && (
             <motion.div
               layoutId="activeModeTab"
-              className={`absolute inset-0 rounded-sm shadow-sm z-[-1] ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}
+              className={`absolute inset-0 rounded-sm shadow-sm z-[-1] ${isDarkMode ? 'bg-slate-850' : 'bg-white'}`}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -248,9 +248,9 @@ export default function ActivityTimeline() {
   const handleMouseLeave = () => setTooltip(prev => ({ ...prev, active: false }));
 
   // Styles
-  const cardStyles = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
+  const cardStyles = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`;
   const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
+  const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-850' : 'border-slate-100'}`;
 
   if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
 
@@ -298,7 +298,7 @@ export default function ActivityTimeline() {
       </div>
 
       {/* Timeline Grid */}
-      <div className={`border rounded-sm relative z-10 ${dm ? 'bg-slate-900/40 border-slate-700' : 'bg-slate-50/50 border-slate-200'}`}>
+      <div className={`border rounded-sm relative z-10 ${dm ? 'bg-slate-950 border-slate-850' : 'bg-slate-50/50 border-slate-200'}`}>
         {showSkeleton ? (
           <div className="py-12 px-3">
              <div className={`h-24 w-full rounded-sm animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-100/80'}`} />
@@ -311,7 +311,7 @@ export default function ActivityTimeline() {
               
               {/* Day Labels (Sticky) */}
               <div className="flex flex-col gap-[3px] shrink-0 sticky left-0 z-20 pr-3 border-r"
-                style={{ backgroundColor: dm ? '#1a2232' : '#f8fafc', borderColor: dm ? '#334155' : '#e2e8f0' }}>
+                style={{ backgroundColor: dm ? '#090d16' : '#ffffff', borderColor: dm ? '#1e293b' : '#e2e8f0' }}>
                 <div className="h-4" />
                 {DAY_LABELS.map((day, i) => (
                   <div 

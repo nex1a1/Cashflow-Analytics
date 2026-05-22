@@ -50,7 +50,7 @@ export default function SmartInsightHeader({ insights }) {
   return (
     <div className="flex justify-end mb-2 sm:-mb-2 relative z-10">
       <div 
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-bold shadow-sm transition-colors w-full sm:w-auto max-w-full sm:max-w-2xl ${dm ? 'bg-slate-800/90 border-slate-700 hover:bg-slate-800' : 'bg-white/90 border-slate-200 hover:bg-white backdrop-blur-sm'}`}
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-bold shadow-sm transition-colors w-full sm:w-auto max-w-full sm:max-w-2xl ${dm ? 'bg-slate-900/95 border-slate-800 hover:bg-slate-850 backdrop-blur-sm' : 'bg-white/95 border-slate-200 hover:bg-white backdrop-blur-sm'}`}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -58,7 +58,7 @@ export default function SmartInsightHeader({ insights }) {
         
         <div className="relative flex items-center justify-start flex-1 w-full sm:min-w-[400px] sm:max-w-[700px]">
           {showSkeleton ? (
-            <div className={`h-3 w-4/5 rounded-sm animate-pulse ${dm ? 'bg-slate-700' : 'bg-slate-200'}`} />
+            <div className={`h-3 w-4/5 rounded-sm animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-250'}`} />
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
@@ -76,13 +76,13 @@ export default function SmartInsightHeader({ insights }) {
           )}
         </div>
 
-        <div className={`flex items-center gap-0.5 ml-2 pl-2 border-l shrink-0 self-stretch ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className={`flex items-center gap-0.5 ml-2 pl-2 border-l shrink-0 self-stretch ${dm ? 'border-slate-800' : 'border-slate-200'}`}>
           {insights.length > 1 && (
             <>
-              <button onClick={prevInsight} className={`p-0.5 rounded-full transition-colors ${dm ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button onClick={prevInsight} className={`p-0.5 rounded-full transition-colors ${dm ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <button onClick={nextInsight} className={`p-0.5 rounded-full transition-colors ${dm ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}>
+              <button onClick={nextInsight} className={`p-0.5 rounded-full transition-colors ${dm ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </>

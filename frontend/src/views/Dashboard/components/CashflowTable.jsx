@@ -26,9 +26,9 @@ const CashflowTableHeader = ({
   };
 
   return (
-    <thead className={`sticky top-0 z-30 ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
+    <thead className={`sticky top-0 z-30 ${dm ? 'bg-slate-950' : 'bg-slate-100'}`}>
       <tr>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-blue-300 bg-slate-900' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-blue-300 bg-slate-950' : 'text-[#00509E] bg-slate-200'}`}>ช่วงเวลา</th>
         
         {activeIncomeGroups.length > 0 && (
           <th colSpan={activeIncomeGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-l border-b border-dashed ${thinBorder} ${dm ? 'text-emerald-400' : 'text-emerald-700'}`}>
@@ -42,10 +42,10 @@ const CashflowTableHeader = ({
           </th>
         )}
         
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-red-400 bg-slate-900' : 'text-red-800 bg-slate-200'} min-w-[140px] max-w-[140px]`}>รวมรายจ่าย (Trend)</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[120px] z-50 ${dm ? 'text-blue-400 bg-slate-900' : 'text-[#00509E] bg-slate-200'} min-w-[110px] max-w-[110px]`}>เงินคงเหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${dm ? 'text-emerald-400 bg-slate-900' : 'text-emerald-600 bg-slate-200'} min-w-[60px] max-w-[60px]`}>%เหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 ${dm ? 'text-pink-400 bg-slate-900' : 'text-pink-600 bg-slate-200'} min-w-[60px] max-w-[60px] ${thinBorder}`}>%จ่าย</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${dm ? 'text-red-400 bg-slate-950' : 'text-red-800 bg-slate-200'} min-w-[140px] max-w-[140px]`}>รวมรายจ่าย (Trend)</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[120px] z-50 ${dm ? 'text-blue-400 bg-slate-950' : 'text-[#00509E] bg-slate-200'} min-w-[110px] max-w-[110px]`}>เงินคงเหลือ</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${dm ? 'text-emerald-400 bg-slate-950' : 'text-emerald-600 bg-slate-200'} min-w-[60px] max-w-[60px]`}>%เหลือ</th>
+        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 ${dm ? 'text-pink-400 bg-slate-950' : 'text-pink-600 bg-slate-200'} min-w-[60px] max-w-[60px] ${thinBorder}`}>%จ่าย</th>
       </tr>
       
       <tr>
@@ -135,7 +135,7 @@ const CashflowTableRow = ({
 
   return (
     <tr className="group hover:bg-slate-400/5 transition-colors">
-      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-blue-300 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'}`}>{getThaiMonth(row.monthStr)}</td>
+      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-blue-300 bg-slate-900 group-hover:bg-slate-850' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'}`}>{getThaiMonth(row.monthStr)}</td>
       
       {activeIncomeGroups.map((g, idx) => {
         const isExpanded = expandedGroups.has(g.id);
@@ -179,15 +179,15 @@ const CashflowTableRow = ({
         );
       })}
 
-      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-red-400 bg-slate-800 group-hover:bg-slate-700' : 'text-red-700 bg-slate-50 group-hover:bg-slate-100'} min-w-[140px] max-w-[140px]`}>
+      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${dm ? 'text-red-400 bg-slate-900 group-hover:bg-slate-850' : 'text-red-700 bg-slate-50 group-hover:bg-slate-100'} min-w-[140px] max-w-[140px]`}>
         <div className="flex items-center justify-between gap-1">
           <div className="shrink-0">{expMoMJSX}</div>
           <span className="text-[11px] tabular-nums">{formatMoney(row.totalExp)}</span>
         </div>
       </td>
-      <td className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[120px] z-10 transition-colors ${dm ? 'text-blue-400 bg-slate-800 group-hover:bg-slate-700' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'} min-w-[110px] max-w-[110px]`}>{formatMoney(row.income - row.totalExp)}</td>
-      <td className={`px-3 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[60px] z-10 transition-colors ${dm ? 'bg-slate-800 group-hover:bg-slate-700' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%</td>
-      <td className={`px-3 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors ${dm ? 'bg-slate-800 group-hover:bg-slate-700' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}</td>
+      <td className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[120px] z-10 transition-colors ${dm ? 'text-blue-400 bg-slate-900 group-hover:bg-slate-850' : 'text-[#00509E] bg-slate-50 group-hover:bg-slate-100'} min-w-[110px] max-w-[110px]`}>{formatMoney(row.income - row.totalExp)}</td>
+      <td className={`px-3 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[60px] z-10 transition-colors ${dm ? 'bg-slate-900 group-hover:bg-slate-850' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%</td>
+      <td className={`px-3 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors ${dm ? 'bg-slate-900 group-hover:bg-slate-850' : 'bg-slate-50 group-hover:bg-slate-100'} ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'} min-w-[60px] max-w-[60px]`}>{row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}</td>
     </tr>
   );
 };
@@ -284,10 +284,10 @@ export default function CashflowTable() {
     .sort((a,b) => a.order_index - b.order_index)
     .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
-  const thinBorder = dm ? 'border-slate-700' : 'border-slate-200';
-  const boxBorder = dm ? 'border-slate-500' : 'border-slate-400';
-  const boundaryBorder = dm ? 'border-r-2 !border-r-slate-500' : 'border-r-2 !border-r-slate-300';
-  const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
+  const thinBorder = dm ? 'border-slate-850' : 'border-slate-200/60';
+  const boxBorder = dm ? 'border-slate-700' : 'border-slate-300';
+  const boundaryBorder = dm ? 'border-r-2 !border-r-slate-800' : 'border-r-2 !border-r-slate-250';
+  const card = `rounded-sm border shadow-sm transition-colors ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`;
 
   const segmentProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
@@ -296,7 +296,7 @@ export default function CashflowTable() {
 
   return (
     <div className={`${card} overflow-hidden`}>
-      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${dm ? 'bg-slate-950/70 border-slate-850' : 'bg-slate-50/50 border-slate-100'}`}>
         <div className="flex items-center gap-2">
           <FileSpreadsheet className={`w-4 h-4 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`} />
           <h3 className={`font-bold text-sm ${dm ? 'text-slate-200' : 'text-slate-800'}`}>ตารางสรุปกระแสเงินสด</h3>

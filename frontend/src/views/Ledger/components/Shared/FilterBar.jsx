@@ -21,8 +21,8 @@ export default function FilterBar({
 
   const baseInputCls = `border rounded-sm outline-none focus:ring-1 text-[11px] font-bold transition-all ${
     dm
-      ? 'bg-slate-900 border-slate-700 focus:border-blue-500 focus:ring-blue-500/20 text-slate-200'
-      : 'bg-slate-50 border-slate-200 focus:border-[#00509E] focus:ring-[#00509E]/10 text-slate-800 focus:bg-white'
+      ? 'bg-slate-950 border-slate-850 focus:border-blue-500 focus:ring-blue-500/20 text-slate-200'
+      : 'bg-white border-slate-200 focus:border-[#00509E] focus:ring-[#00509E]/10 text-slate-800'
   }`;
 
   const selCls = `${baseInputCls} px-3 py-1.5 cursor-pointer appearance-none min-w-[120px]`;
@@ -33,7 +33,7 @@ export default function FilterBar({
       ? `bg-${colorClass}-500/20 border-${colorClass}-500/40 text-${colorClass}-400`
       : `bg-${colorClass}-50 border-${colorClass}-200 text-${colorClass}-700`;
     const inactiveCls = dm
-      ? 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
+      ? 'bg-slate-950 border-slate-850 text-slate-400 hover:bg-slate-850'
       : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50';
 
     return (
@@ -48,7 +48,7 @@ export default function FilterBar({
 
   return (
     <div className={`flex flex-col gap-3 p-4 rounded border shadow-sm transition-all ${
-      dm ? 'bg-slate-800/40 border-slate-700/60' : 'bg-white border-slate-200'
+      dm ? 'bg-slate-900 border-slate-850' : 'bg-white border-slate-200'
     }`}>
       
       {/* ─── ROW 1: SEARCH & QUICK TOGGLES ─── */}
@@ -106,7 +106,9 @@ export default function FilterBar({
       </div>
 
       {/* ─── ROW 2: SELECTORS & AMOUNT RANGE ─── */}
-      <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-dashed border-slate-700/20">
+      <div className={`flex flex-wrap items-center gap-4 pt-3 border-t border-dashed ${
+        dm ? 'border-slate-800/80' : 'border-slate-100'
+      }`}>
         
         {/* Selectors Group */}
         <div className="flex items-center gap-2">

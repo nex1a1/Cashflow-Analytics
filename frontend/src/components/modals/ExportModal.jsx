@@ -247,8 +247,7 @@ export default function ExportModal({
 
           {/* Main Terminal View */}
           <div className="flex-1 flex flex-col p-6 bg-[#080B12] relative overflow-hidden">
-            {/* Terminal Scanline Effect */}
-            <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.02]" style={{ background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))', backgroundSize: '100% 4px, 3px 100%' }} />
+            {/* Clean Terminal Container (No scanline glow) */}
             
             <div className="flex items-center justify-between mb-4 relative z-20">
               <div className="flex items-center gap-2">
@@ -310,9 +309,9 @@ export default function ExportModal({
                     )}
                     {exportFormat === 'full' && (
                       <div className="space-y-1">
-                        <div className="flex gap-2"><span className="text-blue-500 font-black">[DB_MAP]</span> <span className="text-slate-200">TRANSACTION_OBJECTS</span> <span className="text-slate-600">-> {localTransactions.length} entries</span></div>
-                        <div className="flex gap-2"><span className="text-amber-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CATEGORY_DEFINITIONS</span> <span className="text-slate-600">-> {categories.length} entries</span></div>
-                        <div className="flex gap-2"><span className="text-emerald-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CALENDAR_STATE</span> <span className="text-slate-600">-> Linked</span></div>
+                        <div className="flex gap-2"><span className="text-blue-500 font-black">[DB_MAP]</span> <span className="text-slate-200">TRANSACTION_OBJECTS</span> <span className="text-slate-600">{"->"} {localTransactions.length} entries</span></div>
+                        <div className="flex gap-2"><span className="text-amber-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CATEGORY_DEFINITIONS</span> <span className="text-slate-600">{"->"} {categories.length} entries</span></div>
+                        <div className="flex gap-2"><span className="text-emerald-500 font-black">[DB_MAP]</span> <span className="text-slate-200">CALENDAR_STATE</span> <span className="text-slate-600">{"->"} Linked</span></div>
                       </div>
                     )}
                     <div className="mt-4 flex items-center gap-1">
@@ -359,7 +358,7 @@ export default function ExportModal({
               onClick={executeExport} 
               disabled={(!stats.hasData && exportFormat !== 'full') || isExporting}
               className={`relative px-8 py-2 rounded-sm font-black text-[10px] uppercase tracking-[0.2em] transition-all overflow-hidden group active:scale-95 disabled:opacity-30 disabled:grayscale ${
-                exportFormat === 'full' ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                exportFormat === 'full' ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white shadow-sm'
               }`}
             >
               <span className="relative z-10 flex items-center gap-2">

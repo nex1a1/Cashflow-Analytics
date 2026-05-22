@@ -125,10 +125,10 @@ export default function CalendarView({
 
   const styles = {
     surface: isDarkMode ? 'bg-slate-900' : 'bg-white',
-    surfaceAlt: isDarkMode ? 'bg-slate-800' : 'bg-slate-50',
-    border: isDarkMode ? 'border-slate-700' : 'border-slate-200',
+    surfaceAlt: isDarkMode ? 'bg-slate-950/70' : 'bg-slate-50',
+    border: isDarkMode ? 'border-slate-850' : 'border-slate-200',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
-    gapColor: isDarkMode ? 'bg-slate-700' : 'bg-slate-100',
+    gapColor: isDarkMode ? 'bg-slate-800/80' : 'bg-slate-100',
   };
 
   // ── Unified Render ──────────────────────────────────────────
@@ -145,7 +145,7 @@ export default function CalendarView({
   } else if (isReadOnlyView) {
     content = (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full">
-        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${isDarkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
+        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${isDarkMode ? 'bg-slate-950/50 border-slate-850 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
           <div className={`p-4 rounded-sm mb-4 ${styles.surfaceAlt}`}>
             <CalendarDays className={`w-12 h-12 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
           </div>
@@ -194,13 +194,13 @@ export default function CalendarView({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={prevMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <button onClick={prevMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
                 เดือนปัจจุบัน
               </button>
-              <button onClick={nextMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-600 hover:bg-slate-700 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <button onClick={nextMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -266,7 +266,7 @@ export default function CalendarView({
               </div>
             );
           })}
-          <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+          <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
             {daysInMonth} วัน
           </div>
         </div>

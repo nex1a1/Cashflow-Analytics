@@ -35,18 +35,18 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
   const getRankStyle = (rank) => {
     if (rank === 0) {
       return isDarkMode
-        ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)]`
-        : `bg-gradient-to-r from-amber-500 to-yellow-650 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]`;
+        ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-sm`
+        : `bg-gradient-to-r from-amber-500 to-yellow-600 text-white border-amber-400 shadow-sm`;
     }
     if (rank === 1) {
       return isDarkMode
-        ? `bg-slate-200 text-slate-950 border-slate-300 shadow-[0_0_12px_rgba(203,213,225,0.3)]`
-        : `bg-gradient-to-r from-slate-300 to-slate-400 text-white border-slate-300 shadow-[0_0_10px_rgba(148,163,184,0.15)]`;
+        ? `bg-slate-200 text-slate-950 border-slate-300 shadow-sm`
+        : `bg-gradient-to-r from-slate-300 to-slate-400 text-white border-slate-300 shadow-sm`;
     }
     if (rank === 2) {
       return isDarkMode
-        ? `bg-orange-700/80 text-orange-100 border-orange-500/50 shadow-[0_0_12px_rgba(234,88,12,0.3)]`
-        : `bg-gradient-to-r from-amber-800 to-orange-600 text-white border-orange-500 shadow-[0_0_10px_rgba(194,65,12,0.15)]`;
+        ? `bg-orange-700/80 text-orange-100 border-orange-500/50 shadow-sm`
+        : `bg-gradient-to-r from-amber-800 to-orange-600 text-white border-orange-500 shadow-sm`;
     }
     return isDarkMode 
       ? `bg-slate-800/80 text-slate-400 border-slate-700` 
@@ -55,16 +55,16 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
   const getCardBorderClass = () => {
     if (!isDarkMode) {
-      if (index === 0) return 'border-amber-200/80 hover:border-amber-400 bg-amber-50/15';
-      if (index === 1) return 'border-slate-200 hover:border-slate-400 bg-slate-50/15';
-      if (index === 2) return 'border-orange-200 hover:border-orange-400 bg-orange-50/15';
-      return 'border-slate-200 hover:border-slate-300 bg-white';
+      if (index === 0) return 'border-amber-250 hover:border-amber-400 bg-amber-50/30 hover:bg-amber-50/50 shadow-sm';
+      if (index === 1) return 'border-slate-200 hover:border-slate-300 bg-slate-50/30 hover:bg-slate-50/50 shadow-sm';
+      if (index === 2) return 'border-orange-250 hover:border-orange-400 bg-orange-50/30 hover:bg-orange-50/50 shadow-sm';
+      return 'border-slate-150 hover:border-slate-250 bg-white hover:bg-slate-50 shadow-sm';
     }
     // Dark Mode card styles: more subtle backgrounds to prevent visual distraction
-    if (index === 0) return 'border-amber-500/10 hover:border-amber-500/30 bg-amber-500/[0.02]';
-    if (index === 1) return 'border-slate-700 hover:border-slate-600 bg-slate-400/[0.02]';
-    if (index === 2) return 'border-orange-500/10 hover:border-orange-500/30 bg-orange-500/[0.02]';
-    return 'border-slate-800/85 hover:border-slate-700 bg-slate-900/15';
+    if (index === 0) return 'border-amber-500/20 hover:border-amber-500/40 bg-amber-950/10 hover:bg-amber-950/20';
+    if (index === 1) return 'border-slate-800 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900/60';
+    if (index === 2) return 'border-orange-500/25 hover:border-orange-500/45 bg-orange-950/10 hover:bg-orange-950/20';
+    return 'border-slate-850 hover:border-slate-750 bg-slate-950/30 hover:bg-slate-950/70';
   };
 
   return (
@@ -83,9 +83,9 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
           className="h-full bg-gradient-to-r from-red-500/5 to-red-500/10 dark:from-red-500/[0.015] dark:to-red-500/[0.05] transition-all duration-1000 ease-out group-hover:from-red-500/8 group-hover:to-red-500/15 group-hover:dark:from-red-500/[0.03] group-hover:dark:to-red-500/[0.08]"
           style={{ width: `${relativeWidth}%` }}
         />
-        {/* Subtle glowing tip for the progress bar (subtle and organic) */}
+        {/* Flat solid tip for the progress bar */}
         <div 
-          className="absolute top-0 bottom-0 w-[2px] bg-red-500/25 dark:bg-red-500/15 blur-[0.5px] transition-all duration-1000"
+          className="absolute top-0 bottom-0 w-[1.5px] bg-red-500/30 dark:bg-red-500/20 transition-all duration-1000"
           style={{ left: `${relativeWidth}%` }}
         />
       </div>
@@ -119,7 +119,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
           {tx.date && (
             <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${
               isDarkMode 
-                ? 'bg-slate-900/60 border-slate-800 text-slate-400 group-hover:border-slate-700' 
+                ? 'bg-slate-950 border-slate-850 text-slate-400 group-hover:border-slate-750' 
                 : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:border-slate-300'
             }`}>
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
@@ -152,9 +152,9 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`;
+  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`;
   const headerStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-700' : 'border-slate-100'}`;
+  const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-850' : 'border-slate-100'}`;
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum } = useMemo(() => {
@@ -236,8 +236,8 @@ export default function TopTransactions() {
               disabled={showSkeleton}
               className={`pl-2 pr-6 py-0.5 text-xs font-black rounded-sm border outline-none cursor-pointer appearance-none transition-colors ${
                 dm 
-                  ? 'bg-slate-900 border-slate-700 text-white hover:border-slate-500 focus:border-red-500/50' 
-                  : 'bg-slate-100 border-slate-300 text-[#D81A21] hover:border-[#D81A21]/50 focus:border-[#D81A21]'
+                  ? 'bg-slate-950 border-slate-800 text-white hover:border-slate-700 focus:border-red-500/50' 
+                  : 'bg-slate-50 border-slate-200 text-[#D81A21] hover:border-[#D81A21]/50 focus:border-[#D81A21]'
               }`}
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}

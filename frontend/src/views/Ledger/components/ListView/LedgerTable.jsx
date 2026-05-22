@@ -21,7 +21,7 @@ export default function LedgerTable({
     return (
       <th
         className={`px-4 py-3 font-bold cursor-pointer transition-all select-none group text-${align} ${className} ${
-          dm ? `text-slate-400 hover:text-slate-200 ${isActive ? 'text-blue-400 bg-slate-700/40' : 'hover:bg-slate-700/30'}` : `text-slate-500 hover:text-slate-800 ${isActive ? 'text-[#00509E] bg-blue-50/60' : 'hover:bg-slate-100/80'}`
+          dm ? `text-slate-400 hover:text-slate-200 ${isActive ? 'text-blue-400 bg-slate-900/60' : 'hover:bg-slate-850/40'}` : `text-slate-500 hover:text-slate-800 ${isActive ? 'text-[#00509E] bg-blue-50/60' : 'hover:bg-slate-100/80'}`
         }`}
         onClick={() => handleSort(sortKey)}
         title={`เรียงตาม${label}`}
@@ -41,7 +41,7 @@ export default function LedgerTable({
     <div className="flex flex-col w-full">
       <div className="overflow-auto no-scrollbar" style={{ scrollbarWidth: 'thin' }}>
         <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
-          <thead className={`sticky top-0 z-20 border-b ${dm ? 'bg-slate-800/95 border-slate-700 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'}`}>
+          <thead className={`sticky top-0 z-20 border-b ${dm ? 'bg-slate-950/80 border-slate-850 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'}`}>
             <tr>
               <SortHeader label="วันที่" sortKey="date" className="w-[145px]" />
               <th className={`px-4 py-3 font-bold w-[90px] text-center text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ประเภท</th>
@@ -58,7 +58,7 @@ export default function LedgerTable({
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category) || categories[categories.length - 1];
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
-              const rowBg      = isAlt ? (dm ? 'bg-slate-800/30' : 'bg-slate-50/60') : 'bg-transparent';
+              const rowBg      = isAlt ? (dm ? 'bg-slate-950/20' : 'bg-slate-50/60') : 'bg-transparent';
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
               const aColors = {
@@ -68,7 +68,7 @@ export default function LedgerTable({
               };
 
               return (
-                <tr key={item.id} className={`group transition-colors duration-100 border-b ${dm ? 'border-slate-800/60 hover:bg-slate-700/40' : 'border-slate-100 hover:bg-blue-50/40'} ${rowBg}`}>
+                <tr key={item.id} className={`group transition-colors duration-100 border-b ${dm ? 'border-slate-850/60 hover:bg-slate-850/40' : 'border-slate-100 hover:bg-blue-50/40'} ${rowBg}`}>
                   <td className="px-4 py-2.5 align-middle">
                     {isNewDate ? (
                       <div className="flex items-center gap-2">
@@ -119,11 +119,11 @@ export default function LedgerTable({
                   </td>
                   <td className="px-3 py-2 group/input relative align-middle">
                     <Pencil className={`w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-60 transition-all pointer-events-none z-10 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className={`w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-sm py-1.5 px-2 pl-7 text-sm font-medium transition-all ${dm ? 'text-slate-200 hover:bg-slate-800/80 hover:border-slate-600/80 focus:border-blue-500/70 focus:bg-slate-800/60' : 'text-slate-700 hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm focus:border-[#00509E]/50 focus:bg-slate-100'}`} placeholder="รายละเอียด..." />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className={`w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-sm py-1.5 px-2 pl-7 text-sm font-medium transition-all ${dm ? 'text-slate-200 hover:bg-slate-950 hover:border-slate-800 focus:border-blue-500/70 focus:bg-slate-950' : 'text-slate-700 hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm focus:border-[#00509E]/50 focus:bg-slate-100'}`} placeholder="รายละเอียด..." />
                   </td>
                   <td className="px-3 py-2 group/input relative align-middle">
                     <Pencil className={`w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-60 transition-all pointer-events-none z-10 ${dm ? 'text-slate-500' : 'text-slate-400'}`} />
-                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-sm py-1.5 px-2 text-right text-sm font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-slate-800/80 hover:border-slate-600/80 ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/70' : 'text-slate-200 focus:border-red-600/70') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
+                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-sm py-1.5 px-2 text-right text-sm font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-slate-950 hover:border-slate-800 ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/70' : 'text-slate-200 focus:border-red-600/70') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
                   </td>
                   <td className="px-2 py-2 text-center align-middle">
                     <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} />
@@ -136,8 +136,8 @@ export default function LedgerTable({
       </div>
 
       {/* Master Footer Bar (Dedicated Bottom Line) */}
-      <div className={`flex items-center justify-between px-4 py-3 border-t-2 z-30 ${
-        dm ? 'bg-slate-900/95 border-slate-700 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'
+      <div className={`flex items-center justify-between px-4 py-3 border-t z-30 ${
+        dm ? 'bg-slate-950/80 border-slate-850 backdrop-blur-sm' : 'bg-slate-50/95 border-slate-200 backdrop-blur-sm'
       }`}>
         {/* Left: Record Count */}
         <div className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -152,7 +152,7 @@ export default function LedgerTable({
             className={`flex items-center gap-1 px-2 py-1 rounded-sm border transition-all text-[10px] font-black uppercase tracking-widest ${
               currentPage === 1
                 ? 'opacity-20 cursor-not-allowed'
-                : dm ? 'hover:bg-slate-800 border-slate-600 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
+                : dm ? 'hover:bg-slate-850 border-slate-800 bg-slate-900 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
             }`}
           >
             <ChevronLeft className="w-3 h-3" /> ก่อนหน้า
@@ -168,7 +168,7 @@ export default function LedgerTable({
             className={`flex items-center gap-1 px-2 py-1 rounded-sm border transition-all text-[10px] font-black uppercase tracking-widest ${
               currentPage === totalPages
                 ? 'opacity-20 cursor-not-allowed'
-                : dm ? 'hover:bg-slate-800 border-slate-600 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
+                : dm ? 'hover:bg-slate-850 border-slate-800 bg-slate-900 text-slate-300' : 'hover:bg-white border-slate-300 text-slate-600 shadow-sm'
             }`}
           >
             ถัดไป <ChevronRight className="w-3 h-3" />

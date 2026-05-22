@@ -23,9 +23,9 @@ export default function CalendarDayCell({
   const typeConf = dayTypeConfig.find(dt => dt.id === curType) || dayTypeConfig[0];
 
   const cellBg = useMemo(() => {
-    if (isToday) return isDarkMode ? 'bg-blue-950' : 'bg-blue-50';
-    if (isWeekend && !(data.inc > 0 || data.exp > 0)) return isDarkMode ? 'bg-slate-800/80' : 'bg-slate-50';
-    return isDarkMode ? 'bg-slate-800' : 'bg-white';
+    if (isToday) return isDarkMode ? 'bg-blue-950/40 ring-1 ring-inset ring-blue-500/60 z-20' : 'bg-blue-50';
+    if (isWeekend && !(data.inc > 0 || data.exp > 0)) return isDarkMode ? 'bg-slate-950/65' : 'bg-slate-50';
+    return isDarkMode ? 'bg-slate-900' : 'bg-white';
   }, [isToday, isWeekend, data, isDarkMode]);
 
   const hiddenExpItems = data.items.slice(4);
@@ -39,14 +39,14 @@ export default function CalendarDayCell({
       )}
 
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
-      <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-700/60 bg-slate-800/80' : 'border-slate-100 bg-white'}`}>
+      <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative ${isDarkMode ? 'border-slate-850/80 bg-slate-900/60' : 'border-slate-100 bg-white'}`}>
         <div className="flex items-center gap-1.5">
           <span className={`text-[15px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
             isToday
               ? 'bg-[#00509E] text-white'
               : isWeekend
-                ? (isDarkMode ? 'text-red-400 bg-red-900/20' : 'text-red-500 bg-red-50')
-                : (isDarkMode ? 'text-slate-200' : 'text-slate-700')
+                ? (isDarkMode ? 'text-red-400 bg-red-950/30' : 'text-red-500 bg-red-50')
+                : (isDarkMode ? 'text-slate-200 bg-slate-950/20' : 'text-slate-700 bg-slate-50')
           }`}>
             {day}
           </span>
@@ -75,7 +75,7 @@ export default function CalendarDayCell({
       {/* ส่วนแสดงรายการธุรกรรม */}
       <div 
         onClick={() => onSelectDate(dateStr)}
-        className={`flex flex-col flex-grow gap-1 p-1.5 overflow-hidden cursor-pointer z-10 ${!isToday && (isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-blue-50/40')}`}
+        className={`flex flex-col flex-grow gap-1 p-1.5 overflow-hidden cursor-pointer z-10 ${!isToday && (isDarkMode ? 'hover:bg-slate-850/60' : 'hover:bg-blue-50/40')}`}
       >
         <div className="flex justify-between items-baseline mb-0.5">
            {data.exp > 0 ? (

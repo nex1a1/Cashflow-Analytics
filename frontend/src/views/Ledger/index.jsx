@@ -192,7 +192,7 @@ export default function LedgerView({
       </div>
 
       {/* Table Area */}
-      <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors min-h-[400px] relative ${dm ? 'bg-slate-900 border-slate-700/60' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors min-h-[400px] relative ${dm ? 'bg-slate-900 border-slate-850' : 'bg-white border-slate-200 shadow-sm'}`}>
         {showSkeleton ? (
           <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-10 backdrop-blur-sm" style={{ backgroundColor: dm ? 'rgba(15, 23, 42, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
             <div className={`w-12 h-12 mb-4 rounded-full animate-bounce flex items-center justify-center ${dm ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#00509E]'}`}>
