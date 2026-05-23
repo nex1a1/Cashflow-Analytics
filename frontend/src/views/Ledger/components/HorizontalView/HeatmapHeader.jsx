@@ -17,7 +17,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
           fontSize: 11,
           fontWeight: 900,
           letterSpacing: '0.02em',
-          color: dm ? '#475569' : '#94a3b8',
+          color: '#475569',
         }}>DATE</th>
 
         {activeCategories.map(cat => (
@@ -57,7 +57,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
                 fontSize: 10,
                 fontWeight: 900,
                 color: cat.color,
-                filter: dm ? 'brightness(1.4)' : 'brightness(0.75)',
+                filter: 'brightness(1.4)',
                 lineHeight: 1.1,
                 maxWidth: '100%',
                 overflow: 'hidden',
@@ -81,7 +81,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
           textAlign: 'right',
           fontSize: 12,
           fontWeight: 900,
-          color: dm ? '#475569' : '#94a3b8',
+          color: '#475569',
         }}>รวมรายวัน</th>
       </tr>
     </thead>

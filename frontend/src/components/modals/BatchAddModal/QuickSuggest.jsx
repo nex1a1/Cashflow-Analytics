@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Star, Search } from 'lucide-react';
 import { hexToRgb } from '../../../utils/formatters';
-import { useTheme } from '../../../context/ThemeContext';
 
 export default function QuickSuggest({
   transactions,
@@ -14,7 +13,7 @@ export default function QuickSuggest({
   isProcessing,
   frequentItems = [] // Added frequentItems prop
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const [searchQuery, setSearchQuery] = useState('');
 
   // Reset category filter when form type (income/expense) changes
@@ -51,13 +50,13 @@ export default function QuickSuggest({
   }, [frequentItems, catMap, formType, suggCatFilter, categories, searchQuery]);
 
   const tokens = {
-    input: `w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors ${dm ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/30' : 'bg-white border-slate-300 text-slate-800 focus:border-[#00509E] focus:ring-[#00509E]/20'}`,
-    searchIcon: `absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${dm ? 'text-slate-500' : 'text-slate-400'}`
+    input: `w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors ${'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/30'}`,
+    searchIcon: `absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${'text-slate-500'}`
   };
 
   return (
-    <div className={`w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${dm ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50/50'}`}>
-      <h4 className={`shrink-0 font-bold text-sm flex items-center gap-2 mb-3 ${dm ? 'text-slate-300' : 'text-slate-700'}`}>
+    <div className={`w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${'border-slate-800 bg-slate-900/50'}`}>
+      <h4 className={`shrink-0 font-bold text-sm flex items-center gap-2 mb-3 ${'text-slate-300'}`}>
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
         Quick Suggestions {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
       </h4>
@@ -81,7 +80,7 @@ export default function QuickSuggest({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
         {quickSuggestions.length === 0 ? (
-          <p className={`text-sm text-center py-8 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>ยังไม่มีข้อมูล</p>
+          <p className={`text-sm text-center py-8 ${'text-slate-500'}`}>ยังไม่มีข้อมูล</p>
         ) : (
           <div className="flex flex-col gap-2">
             {quickSuggestions.slice(0, 100).map((s, idx) => {
@@ -90,9 +89,9 @@ export default function QuickSuggest({
               const bgAlpha = dm ? 0.2 : 0.15;
               
               // Allocation Bar Color
-              const allocColor = s.allocation_type === 'need' ? (dm ? '#f43f5e' : '#e11d48') :
-                                s.allocation_type === 'want' ? (dm ? '#38bdf8' : '#0284c7') :
-                                (dm ? '#34d399' : '#059669');
+              const allocColor = s.allocation_type === 'need' ? ('#f43f5e') :
+                                s.allocation_type === 'want' ? ('#38bdf8') :
+                                ('#34d399');
 
               return (
                 <button 
@@ -101,7 +100,7 @@ export default function QuickSuggest({
                   onClick={() => onApplySuggestion(s)} 
                   disabled={isProcessing}
                   className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md border transition-all active:scale-95 relative overflow-hidden text-left ${
-                    dm ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-slate-500 text-slate-200' : 'bg-white border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-700 shadow-sm'
+                    'bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-slate-500 text-slate-200'
                   }`}
                 >
                   {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
@@ -121,15 +120,15 @@ export default function QuickSuggest({
                     
                     <div className="flex flex-col items-start min-w-0 overflow-hidden leading-none">
                       <span className="text-xs font-bold truncate w-full">{s.description || catObj?.name || 'อื่นๆ'}</span>
-                      <span className={`text-[9px] font-medium truncate w-full mt-0.5 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>{catObj?.name}</span>
+                      <span className={`text-[9px] font-medium truncate w-full mt-0.5 ${'text-slate-500'}`}>{catObj?.name}</span>
                     </div>
                   </div>
 
-                  <div className={`flex items-center justify-end gap-2 pl-2 w-24 shrink-0 border-l ${dm ? 'border-slate-600' : 'border-slate-200'}`}>
-                    <span className={`text-[13px] font-black ${formType === 'expense' ? (dm ? 'text-red-400' : 'text-red-600') : (dm ? 'text-emerald-400' : 'text-emerald-600')}`}>
+                  <div className={`flex items-center justify-end gap-2 pl-2 w-24 shrink-0 border-l ${'border-slate-600'}`}>
+                    <span className={`text-[13px] font-black ${formType === 'expense' ? ('text-red-400') : ('text-emerald-400')}`}>
                       {s.amount}฿
                     </span>
-                    <span className={`text-[9px] font-bold ${dm ? 'text-slate-500' : 'text-slate-400'}`}>{s.count}x</span>
+                    <span className={`text-[9px] font-bold ${'text-slate-500'}`}>{s.count}x</span>
                   </div>
                 </button>
               );

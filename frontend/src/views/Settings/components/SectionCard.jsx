@@ -1,5 +1,4 @@
 import { PlusCircle } from 'lucide-react';
-import { useTheme } from '../../../context/ThemeContext';
 
 const ACCENT = {
   emerald: {
@@ -41,25 +40,23 @@ const ACCENT = {
 };
 
 export default function SectionCard({ accentColor, icon, title, badge, action, children, subAction }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const a = ACCENT[accentColor] || ACCENT.blue;
-  const mode = dm ? 'dark' : 'light';
+  const mode = 'dark';
 
   return (
     <div className={`overflow-hidden rounded-sm transition-all duration-300 border ${
-      dm 
-        ? 'bg-slate-900/60 border-slate-850/80 backdrop-blur-md shadow-md shadow-slate-950/10' 
-        : 'bg-white border-slate-205 shadow-sm'
+      'bg-slate-900/60 border-slate-850/80 backdrop-blur-md shadow-md shadow-slate-950/10'
     } ${a.glow[mode]}`}>
       <div className={`px-3.5 py-2 flex items-center justify-between gap-3 border-b ${
-        dm ? 'border-slate-850/50' : 'border-slate-100'
+        'border-slate-850/50'
       } ${a.header[mode]}`}>
         <h2 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5 ${a.title[mode]}`}>
           {icon}
           {title}
           {badge != null && (
             <span className={`text-[9px] font-black px-1.5 py-0.5 ml-1 rounded-sm transition-colors ${
-              dm ? 'bg-slate-950/80 text-slate-400 border border-slate-850/60' : 'bg-slate-100 text-slate-500 border border-slate-200'
+              'bg-slate-950/80 text-slate-400 border border-slate-850/60'
             }`}>
               {badge}
             </span>
@@ -69,7 +66,7 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
           {subAction && (
             <button type="button" onClick={subAction.onClick}
               className={`text-[10px] font-bold px-2 py-1 flex items-center gap-1 transition-all active:scale-95 border rounded-sm ${
-                dm ? 'border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white bg-slate-950/60' : 'border-slate-205 text-slate-500 hover:bg-slate-100'
+                'border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white bg-slate-950/60'
               }`}>
               {subAction.icon} {subAction.label}
             </button>
@@ -82,7 +79,7 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
           )}
         </div>
       </div>
-      <div className={`w-full ${dm ? 'text-slate-200' : 'text-slate-800'}`}>
+      <div className={`w-full ${'text-slate-200'}`}>
         {children}
       </div>
     </div>

@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Trash2 } from 'lucide-react';
-import { useTheme } from '../../../context/ThemeContext';
 
 export default function ConfirmDeleteButton({ onConfirm, size = 'sm', disabled = false, tooltip = 'ลบ' }) {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   const [confirming, setConfirming] = useState(false);
   const timer = useRef(null);
 
@@ -26,9 +25,7 @@ export default function ConfirmDeleteButton({ onConfirm, size = 'sm', disabled =
         className={`flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed border ${
           confirming
             ? 'bg-red-600 text-white border-red-600 animate-pulse'
-            : isDarkMode
-              ? 'bg-red-950/60 text-red-300 hover:bg-red-600 hover:text-white border-red-800'
-              : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border-red-200'
+            : 'bg-red-950/60 text-red-300 hover:bg-red-600 hover:text-white border-red-800'
         }`}
         title={confirming ? 'ยืนยันการลบ?' : tooltip}>
         <Trash2 className="w-3.5 h-3.5" />
@@ -43,9 +40,7 @@ export default function ConfirmDeleteButton({ onConfirm, size = 'sm', disabled =
           ? 'opacity-20 cursor-not-allowed'
           : confirming
             ? 'bg-red-500 text-white animate-pulse'
-            : isDarkMode
-              ? 'text-slate-600 hover:text-white hover:bg-red-500/80'
-              : 'text-slate-300 hover:text-white hover:bg-red-500'
+            : 'text-slate-600 hover:text-white hover:bg-red-500/80'
       }`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}>
       <Trash2 className="w-3.5 h-3.5" />

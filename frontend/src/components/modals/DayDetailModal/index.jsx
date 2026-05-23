@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
-import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../context/ToastContext';
 import DailyForm from './DailyForm';
 import QuickSuggest from './QuickSuggest';
@@ -10,7 +9,7 @@ import TransactionList from './TransactionList';
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
 export default function DayDetailModal({ dateStr, transactions = [], categories = [], cashflowGroups = [], onClose, onSave, onDelete, frequentItems = [] }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const { showToast } = useToast();
   
   const [yyyyStr, mmStr, ddStr] = dateStr.split('-');
@@ -164,11 +163,11 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   };
 
   const tokens = {
-    surface: dm ? 'bg-slate-900' : 'bg-white',
-    border: dm ? 'border-slate-700' : 'border-slate-200',
-    textPri: dm ? 'text-slate-100' : 'text-slate-800',
-    textMuted: dm ? 'text-slate-400' : 'text-slate-500',
-    closeBtn: `p-1.5 rounded-sm transition-colors absolute top-4 right-4 z-10 ${dm ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`,
+    surface: 'bg-slate-900',
+    border: 'border-slate-700',
+    textPri: 'text-slate-100',
+    textMuted: 'text-slate-400',
+    closeBtn: `p-1.5 rounded-sm transition-colors absolute top-4 right-4 z-10 ${'hover:bg-slate-700 text-slate-400'}`,
   };
 
   return (
@@ -186,12 +185,12 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className={`text-xs font-medium ${tokens.textMuted}`}>วัน{dayOfWeek}</span>
                 {totalExp > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${dm ? 'bg-red-900/40 text-red-400' : 'bg-red-50 text-red-600'}`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${'bg-red-900/40 text-red-400'}`}>
                     ▼ {formatMoney(totalExp)} ฿
                   </span>
                 )}
                 {totalInc > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${dm ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${'bg-emerald-900/40 text-emerald-400'}`}>
                     ▲ {formatMoney(totalInc)} ฿
                   </span>
                 )}

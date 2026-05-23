@@ -16,22 +16,22 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-        : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
+        ? ('bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10')
+        : ('bg-slate-950/45 hover:bg-slate-900/90 border-slate-850')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : cat.color }}
   >
     <div className="flex justify-between items-start gap-1 mb-1">
       <span 
         className="text-[12px] font-black truncate flex items-center gap-1 min-w-0" 
-        style={{ color: dm ? '#94a3b8' : '#64748b' }}
+        style={{ color: '#94a3b8' }}
         title={cat.name}
       >
         <span className="shrink-0 leading-none group-hover:scale-110 transition-transform" style={{ color: cat.color }}>{cat.icon}</span>
         <span className="truncate group-hover:text-blue-500 transition-colors uppercase tracking-tight">{cat.name}</span>
       </span>
       <div className="flex flex-col items-end shrink-0 leading-none">
-        <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: dm ? '#cbd5e1' : '#475569' }}>
+        <span className="text-[10px] font-bold tabular-nums opacity-60 mb-0.5" style={{ color: '#cbd5e1' }}>
           {formatMoney(cat.amount)}
         </span>
         <span className="text-xs font-black tabular-nums" style={{ color: cat.color }}>{cat.percentage}%</span>
@@ -39,7 +39,7 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     </div>
     
     <div className="mt-auto flex flex-col gap-1">
-      <div className={`w-full rounded-full h-[4px] overflow-hidden ${dm ? 'bg-slate-950' : 'bg-slate-100'}`}>
+      <div className={`w-full rounded-full h-[4px] overflow-hidden ${'bg-slate-950'}`}>
         <div 
           className="h-full transition-all duration-1000" 
           style={{ 
@@ -62,8 +62,8 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-        : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
+        ? ('bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10')
+        : ('bg-slate-950/45 hover:bg-slate-900/90 border-slate-850')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : item.color }}
   >
@@ -76,7 +76,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
         </span>
         <div className="flex items-center gap-1.5">
           {!isSingleMonthView && (
-            <span className={`text-[8.5px] font-bold tracking-widest uppercase ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-[8.5px] font-bold tracking-widest uppercase ${'text-slate-400'}`}>
               เฉลี่ย  ฿{formatMoney(item.avgPerMonth)} / เดือน
             </span>
           )}
@@ -90,7 +90,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
           </span>
           <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
         </div>
-        <span className={`text-[9px] font-bold tabular-nums opacity-60 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+        <span className={`text-[9px] font-bold tabular-nums opacity-60 ${'text-slate-300'}`}>
           ฿ {formatMoney(item.amount)}
         </span>
       </div>
@@ -98,7 +98,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     
     {/* ─── PROGRESS BAR ─── */}
     <div className="mb-3">
-      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-950' : 'bg-slate-200'}`}>
+      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${'bg-slate-950'}`}>
         <div 
           className="h-full transition-all duration-1000 relative" 
           style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
@@ -110,21 +110,21 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     </div>
 
     {/* ─── CONSTITUENT CATEGORIES ─── */}
-    <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+    <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
       <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
         {(item.categories || []).map(c => (
           <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{c.icon || '✨'}</span>
-              <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400 group-hover/item:text-slate-200' : 'text-slate-500 group-hover/item:text-slate-800'} transition-colors`}>
+              <span className={`text-[9px] font-bold truncate ${'text-slate-400 group-hover/item:text-slate-200'} transition-colors`}>
                 {c.name}
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`text-[8.5px] font-bold tabular-nums ${dm ? 'text-slate-500 group-hover/item:text-slate-400' : 'text-slate-400 group-hover/item:text-slate-500'} transition-colors`}>
+              <span className={`text-[8.5px] font-bold tabular-nums ${'text-slate-500 group-hover/item:text-slate-400'} transition-colors`}>
                 {formatMoney(c.amount)}
               </span>
-              <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-slate-300 group-hover/item:text-slate-100' : 'text-slate-600 group-hover/item:text-slate-900'} transition-colors`}>
+              <span className={`text-[9px] font-black tabular-nums w-5 text-right ${'text-slate-300 group-hover/item:text-slate-100'} transition-colors`}>
                 {c.relativePercentage}%
               </span>
             </div>
@@ -132,7 +132,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
         ))}
         {(!item.categories || item.categories.length === 0) && (
            <div className="flex-1 flex items-center justify-center py-1">
-              <span className={`text-[8.5px] font-bold uppercase tracking-widest ${dm ? 'text-slate-600' : 'text-slate-300'}`}>No Data</span>
+              <span className={`text-[8.5px] font-bold uppercase tracking-widest ${'text-slate-600'}`}>No Data</span>
            </div>
         )}
       </div>
@@ -157,8 +157,8 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       onMouseLeave={() => onHover(null)}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
         isHovered 
-          ? (dm ? 'bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10' : 'bg-white border-blue-600 scale-[1.02] shadow-md z-10')
-          : (dm ? 'bg-slate-950/45 hover:bg-slate-900/90 border-slate-850' : 'bg-white hover:bg-slate-50/50 border-slate-150 shadow-sm')
+          ? ('bg-slate-850 border-blue-500 scale-[1.02] shadow-md z-10')
+          : ('bg-slate-950/45 hover:bg-slate-900/90 border-slate-850')
       }`}
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
     >
@@ -170,13 +170,13 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
             <span className="truncate">{item.name}</span>
           </span>
           <div className="flex items-center gap-1.5">
-            <span className={`text-[8px] font-bold tracking-widest uppercase ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-[8px] font-bold tracking-widest uppercase ${'text-slate-400'}`}>
               Target {item.target}%
             </span>
             <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider ${
-              isGood ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : 
-              (isOver ? (dm ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600') : 
-              (dm ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'))
+              isGood ? ('bg-emerald-500/10 text-emerald-400') : 
+              (isOver ? ('bg-red-500/10 text-red-400') : 
+              ('bg-amber-500/10 text-amber-400'))
             }`}>
               {isGood ? 'Optimal' : (isOver ? 'Over Limit' : 'Below')}
             </span>
@@ -190,7 +190,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
             </span>
             <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
           </div>
-          <span className={`text-[9px] font-bold tabular-nums opacity-60 ${dm ? 'text-slate-300' : 'text-slate-600'}`}>
+          <span className={`text-[9px] font-bold tabular-nums opacity-60 ${'text-slate-300'}`}>
             ฿ {formatMoney(item.amount)}
           </span>
         </div>
@@ -198,7 +198,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       
       {/* ─── PROGRESS BAR ─── */}
       <div className="mb-3">
-        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${dm ? 'bg-slate-950' : 'bg-slate-200'}`}>
+        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${'bg-slate-950'}`}>
           <div 
             className={`h-full transition-all duration-1000 relative ${isAlert ? 'animate-pulse' : ''}`} 
             style={{ width: `${percentage}%`, backgroundColor: item.color }}
@@ -209,27 +209,27 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
           {/* Target Marker */}
           <div 
             className="absolute top-0 bottom-0 w-[2px] shadow-sm z-10" 
-            style={{ left: `${item.target}%`, backgroundColor: dm ? '#fff' : '#000', opacity: 0.8 }} 
+            style={{ left: `${item.target}%`, backgroundColor: '#fff', opacity: 0.8 }} 
           />
         </div>
       </div>
 
       {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${dm ? 'border-slate-700/60' : 'border-slate-200'}`}>
+      <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
         <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
           {(item.groups || []).map(g => (
             <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{g.icon || '✨'}</span>
-                <span className={`text-[9px] font-bold truncate ${dm ? 'text-slate-400 group-hover/item:text-slate-200' : 'text-slate-500 group-hover/item:text-slate-800'} transition-colors`}>
+                <span className={`text-[9px] font-bold truncate ${'text-slate-400 group-hover/item:text-slate-200'} transition-colors`}>
                   {g.name}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[8.5px] font-bold tabular-nums ${dm ? 'text-slate-500 group-hover/item:text-slate-400' : 'text-slate-400 group-hover/item:text-slate-500'} transition-colors`}>
+                <span className={`text-[8.5px] font-bold tabular-nums ${'text-slate-500 group-hover/item:text-slate-400'} transition-colors`}>
                   {formatMoney(g.amount)}
                 </span>
-                <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-slate-300 group-hover/item:text-slate-100' : 'text-slate-600 group-hover/item:text-slate-900'} transition-colors`}>
+                <span className={`text-[9px] font-black tabular-nums w-5 text-right ${'text-slate-300 group-hover/item:text-slate-100'} transition-colors`}>
                   {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
                 </span>
               </div>
@@ -245,18 +245,18 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
             const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
 
             return (
-              <div className={`flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted ${dm ? 'border-slate-700/50' : 'border-slate-300'} group/item`}>
+              <div className={`flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted ${'border-slate-700/50'} group/item`}>
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="text-[9px] shrink-0 opacity-80 group-hover/item:scale-110 transition-transform">🌊</span>
-                  <span className={`text-[9px] font-bold truncate ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
+                  <span className={`text-[9px] font-bold truncate ${'text-blue-400 group-hover/item:text-blue-300'} transition-colors`}>
                     Net Surplus (เหลือสุทธิ)
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={`text-[8.5px] font-bold tabular-nums opacity-70 ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
+                  <span className={`text-[8.5px] font-bold tabular-nums opacity-70 ${'text-blue-400 group-hover/item:text-blue-300'} transition-colors`}>
                     {formatMoney(surplus)}
                   </span>
-                  <span className={`text-[9px] font-black tabular-nums w-5 text-right ${dm ? 'text-blue-400 group-hover/item:text-blue-300' : 'text-blue-600 group-hover/item:text-blue-700'} transition-colors`}>
+                  <span className={`text-[9px] font-black tabular-nums w-5 text-right ${'text-blue-400 group-hover/item:text-blue-300'} transition-colors`}>
                     {surplusPercent}%
                   </span>
                 </div>
@@ -324,8 +324,8 @@ export default function ExpenseProportion() {
         }),
         borderWidth: activeItems.map((_, idx) => hoveredIdx === idx ? 3 : 2),
         borderColor: activeItems.map((_, idx) => {
-          if (hoveredIdx === idx) return dm ? '#3b82f6' : '#2563eb';
-          return dm ? '#1e293b' : '#ffffff';
+          if (hoveredIdx === idx) return '#3b82f6';
+          return '#1e293b';
         }),
       }],
     };
@@ -358,7 +358,7 @@ export default function ExpenseProportion() {
   }, [dm]);
   
   const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
-    dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+    'bg-slate-900 border-slate-800'
   }`;
 
   if (itemCount === 0 && !showSkeleton) {
@@ -373,21 +373,21 @@ export default function ExpenseProportion() {
   return (
     <div className={cardClass}>
       {/* ─── HEADER (Ultra Tighter) ─── */}
-      <div className={`px-3 py-1.5 border-b flex items-center justify-between ${dm ? 'bg-slate-950/40 border-slate-800/60' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`px-3 py-1.5 border-b flex items-center justify-between ${'bg-slate-950/40 border-slate-800/60'}`}>
         <div className="flex items-center gap-1.5">
-          <PieChart className={`w-3 h-3 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-          <span className={`text-[9px] font-black uppercase tracking-widest ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+          <PieChart className={`w-3 h-3 ${'text-blue-400'}`} />
+          <span className={`text-[9px] font-black uppercase tracking-widest ${'text-slate-400'}`}>
             สัดส่วนรายจ่าย (Proportions)
           </span>
 
           {/* Mode Switcher */}
-          <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm border ${dm ? 'bg-slate-950 border-slate-800/60' : 'bg-slate-100 border-slate-200/60'}`}>
+          <div className={`ml-4 flex items-center gap-[1px] p-[2px] rounded-sm border ${'bg-slate-950 border-slate-800/60'}`}>
             <button 
               onClick={() => changeDisplayMode('category')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'category' 
-                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
-                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                ? ('bg-blue-600 text-white shadow-sm') 
+                : ('text-slate-500 hover:text-slate-300')
               }`}
             >
               รายหมวด
@@ -396,8 +396,8 @@ export default function ExpenseProportion() {
               onClick={() => changeDisplayMode('group')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'group' 
-                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
-                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                ? ('bg-blue-600 text-white shadow-sm') 
+                : ('text-slate-500 hover:text-slate-300')
               }`}
             >
               ตามกลุ่ม
@@ -406,8 +406,8 @@ export default function ExpenseProportion() {
               onClick={() => changeDisplayMode('allocation')}
               className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-sm transition-all ${
                 displayMode === 'allocation' 
-                ? (dm ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-blue-700 shadow-sm') 
-                : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                ? ('bg-blue-600 text-white shadow-sm') 
+                : ('text-slate-500 hover:text-slate-300')
               }`}
             >
               สัดส่วน 50/30/20
@@ -416,14 +416,14 @@ export default function ExpenseProportion() {
 
           {/* Sort Switcher (Hidden in Allocation mode) */}
           {!isAllocationMode && (
-            <div className={`ml-2 flex items-center gap-[1px] p-[2px] rounded-sm border ${dm ? 'bg-slate-950 border-slate-800/60' : 'bg-slate-100 border-slate-200/60'}`}>
+            <div className={`ml-2 flex items-center gap-[1px] p-[2px] rounded-sm border ${'bg-slate-950 border-slate-800/60'}`}>
               <button 
                 onClick={() => setSortMode('amount')}
                 title="เรียงตามยอดเงิน (มากไปน้อย)"
                 className={`px-1.5 py-0.5 rounded-sm transition-all ${
                   sortMode === 'amount' 
-                  ? (dm ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-white text-amber-600 shadow-sm') 
-                  : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                  ? ('bg-amber-500/20 text-amber-400 shadow-sm') 
+                  : ('text-slate-500 hover:text-slate-300')
                 }`}
               >
                 <ArrowDownWideNarrow className="w-3.5 h-3.5" />
@@ -433,8 +433,8 @@ export default function ExpenseProportion() {
                 title="เรียงตามลำดับหมวดหมู่"
                 className={`px-1.5 py-0.5 rounded-sm transition-all ${
                   sortMode === 'order' 
-                  ? (dm ? 'bg-blue-500/20 text-blue-400 shadow-sm' : 'bg-white text-blue-600 shadow-sm') 
-                  : (dm ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')
+                  ? ('bg-blue-500/20 text-blue-400 shadow-sm') 
+                  : ('text-slate-500 hover:text-slate-300')
                 }`}
               >
                 <ListOrdered className="w-3.5 h-3.5" />
@@ -442,7 +442,7 @@ export default function ExpenseProportion() {
             </div>
           )}
         </div>
-        <span className={`text-[9px] font-black px-1.5 rounded-full ${dm ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700'}`}>
+        <span className={`text-[9px] font-black px-1.5 rounded-full ${'bg-blue-500/10 text-blue-400'}`}>
           {showSkeleton ? '...' : `${itemCount} ${isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่')}`}
         </span>
       </div>
@@ -450,15 +450,15 @@ export default function ExpenseProportion() {
       {/* ─── MONOLITHIC CONTENT ─── */}
       {showSkeleton ? (
         <div className="flex flex-row items-stretch h-32">
-          <div className={`shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-slate-700/40 ${dm ? 'bg-slate-900/30' : 'bg-slate-50/50'}`}>
-             <div className={`w-20 h-24 rounded-full animate-pulse ${dm ? 'bg-slate-800' : 'bg-slate-200'}`} />
+          <div className={`shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-slate-700/40 ${'bg-slate-900/30'}`}>
+             <div className={`w-20 h-24 rounded-full animate-pulse ${'bg-slate-800'}`} />
           </div>
           <div className="flex-1 grid grid-cols-5 gap-[1px] bg-slate-700/20">
              {[...Array(5)].map((_, i) => (
-                <div key={i} className={`p-2 animate-pulse ${dm ? 'bg-slate-800/40' : 'bg-slate-50'}`}>
-                   <div className={`h-2 w-12 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
-                   <div className={`h-4 w-16 mb-2 rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
-                   <div className={`h-1 w-full rounded-sm ${dm ? 'bg-slate-700' : 'bg-slate-100'}`} />
+                <div key={i} className={`p-2 animate-pulse ${'bg-slate-800/40'}`}>
+                   <div className={`h-2 w-12 mb-2 rounded-sm ${'bg-slate-700'}`} />
+                   <div className={`h-4 w-16 mb-2 rounded-sm ${'bg-slate-700'}`} />
+                   <div className={`h-1 w-full rounded-sm ${'bg-slate-700'}`} />
                 </div>
              ))}
           </div>
@@ -467,14 +467,14 @@ export default function ExpenseProportion() {
         <div className="flex flex-row items-stretch min-h-[140px]">
 
           {/* LEFT: CHART ANCHOR (No Padding) */}
-          <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed ${dm ? 'border-slate-850 bg-slate-950/20' : 'border-slate-150 bg-slate-50/50'}`}>
+          <div className={`shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed ${'border-slate-850 bg-slate-950/20'}`}>
             <div className="relative w-[140px] h-[140px]">
               <Doughnut data={activeChartData} options={options} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                 <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                 <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${'text-slate-400'}`}>
                    {isAllocationMode ? 'Income' : 'Total'}
                  </span>
-                 <span className={`text-[12px] font-black tabular-nums ${dm ? 'text-slate-100' : 'text-slate-900'}`}>
+                 <span className={`text-[12px] font-black tabular-nums ${'text-slate-100'}`}>
                    {formatMoney(activeTotal)}
                  </span>
               </div>
@@ -482,7 +482,7 @@ export default function ExpenseProportion() {
           </div>
 
           {/* RIGHT: TABLE-GRID HUD */}
-          <div className={`flex-1 grid ${gridColsClass} gap-px ${dm ? 'bg-slate-800/50' : 'bg-slate-200/50'}`}>
+          <div className={`flex-1 grid ${gridColsClass} gap-px ${'bg-slate-800/50'}`}>
              {activeItems.map((item, idx) => {
                const isHovered = hoveredIdx === idx;
                if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} dm={dm} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
@@ -491,10 +491,10 @@ export default function ExpenseProportion() {
              })}
              {/* Fill empty cells to maintain grid borders if needed */}
              {![isAllocationMode, isGroupMode].some(Boolean) && [...Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
-                <div key={`empty-${i}`} className={`${dm ? 'bg-slate-950/10' : 'bg-slate-50/10'}`} />
+                <div key={`empty-${i}`} className={`${'bg-slate-950/10'}`} />
               ))}
              {(isAllocationMode || isGroupMode) && [...Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
-                <div key={`empty-grid3-${i}`} className={`${dm ? 'bg-slate-950/10' : 'bg-slate-50/10'}`} />
+                <div key={`empty-grid3-${i}`} className={`${'bg-slate-950/10'}`} />
               ))}
           </div>
 

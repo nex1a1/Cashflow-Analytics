@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 import { DashboardProvider } from './context/DashboardContext';
 import DashboardSkeleton from './components/DashboardSkeleton';
 
@@ -15,7 +14,7 @@ import ActivityTimeline from './components/ActivityTimeline';
 import CashflowTable from './components/CashflowTable';
 
 export default function DashboardView(props) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const { transactions, analytics, isLoading } = props;
   
   // ── Logic: Smooth Loading Transition ───────────────────────
@@ -38,7 +37,7 @@ export default function DashboardView(props) {
   // Case 2: Truly Empty State (Not loading and no transactions)
   if (transactions.length === 0 && !showSkeleton) {
     return (
-      <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${dm ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+      <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${'bg-slate-800 border-slate-700'}`}>
         <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />
         <p className="text-lg font-bold text-slate-500">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
       </div>

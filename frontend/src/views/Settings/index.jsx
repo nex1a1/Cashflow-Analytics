@@ -101,16 +101,14 @@ export default function SettingsView({
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">
 
       <div className="flex items-center justify-between mb-4 gap-4">
-        <h1 className={`text-lg font-black tracking-wide flex items-center gap-2.5 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
-          <Settings2 className={`w-5 h-5 ${dm ? 'text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]' : 'text-[#00509E]'}`} /> 
+        <h1 className={`text-lg font-black tracking-wide flex items-center gap-2.5 ${'text-slate-100'}`}>
+          <Settings2 className={`w-5 h-5 ${'text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]'}`} /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
         <div className={`flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-sm transition-all duration-300 ${
-          dm 
-            ? 'bg-slate-900/60 border-slate-850/80 text-slate-350 shadow-sm' 
-            : 'bg-slate-50 border-slate-205 text-slate-600'
+          'bg-slate-900/60 border-slate-850/80 text-slate-350 shadow-sm'
         }`}>
-          <Info className={`w-3.5 h-3.5 shrink-0 ${dm ? 'text-sky-400' : 'text-[#00509E]'}`} />
+          <Info className={`w-3.5 h-3.5 shrink-0 ${'text-sky-400'}`} />
           <span><b>BG</b> = เทสีพื้นหลังคอลัมน์ใน Dashboard &nbsp;·&nbsp; <b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>
@@ -137,7 +135,7 @@ export default function SettingsView({
                   isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
               ))}
               {expenseCategories.length === 0 && (
-                <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
+                <p className={`text-center py-6 text-xs ${'text-slate-600'}`}>ยังไม่มีหมวดหมู่รายจ่าย</p>
               )}
             </div>
           </SectionCard>
@@ -158,7 +156,7 @@ export default function SettingsView({
                   isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
               ))}
               {incomeCategories.length === 0 && (
-                <p className={`text-center py-6 text-xs ${dm ? 'text-slate-600' : 'text-slate-400'}`}>ยังไม่มีหมวดหมู่รายรับ</p>
+                <p className={`text-center py-6 text-xs ${'text-slate-600'}`}>ยังไม่มีหมวดหมู่รายรับ</p>
               )}
             </div>
           </SectionCard>

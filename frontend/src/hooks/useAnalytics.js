@@ -377,7 +377,7 @@ export default function useAnalytics({
       datasets: [{
         data: sortedGroups.map(g => g.amount),
         backgroundColor: sortedGroups.map(g => g.color),
-        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+        borderWidth: 2, borderColor: '#1e293b',
       }],
     };
 
@@ -410,7 +410,7 @@ export default function useAnalytics({
       datasets: [{
         data: sortedAllocation.map(i => i.amount),
         backgroundColor: sortedAllocation.map(i => i.color),
-        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+        borderWidth: 2, borderColor: '#1e293b',
       }],
     };
 
@@ -431,7 +431,7 @@ export default function useAnalytics({
       datasets: [{
         data: sortedCats.map(c => c.amount),
         backgroundColor: sortedCats.map(c => c.color),
-        borderWidth: 2, borderColor: isDarkMode ? '#1e293b' : '#ffffff',
+        borderWidth: 2, borderColor: '#1e293b',
       }],
     };
 

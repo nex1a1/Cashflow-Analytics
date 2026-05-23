@@ -34,23 +34,15 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
   
   const getRankStyle = (rank) => {
     if (rank === 0) {
-      return isDarkMode
-        ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-sm`
-        : `bg-gradient-to-r from-amber-500 to-yellow-600 text-white border-amber-400 shadow-sm`;
+      return `bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-sm`;
     }
     if (rank === 1) {
-      return isDarkMode
-        ? `bg-slate-200 text-slate-950 border-slate-300 shadow-sm`
-        : `bg-gradient-to-r from-slate-300 to-slate-400 text-white border-slate-300 shadow-sm`;
+      return `bg-slate-200 text-slate-950 border-slate-300 shadow-sm`;
     }
     if (rank === 2) {
-      return isDarkMode
-        ? `bg-orange-700/80 text-orange-100 border-orange-500/50 shadow-sm`
-        : `bg-gradient-to-r from-amber-800 to-orange-600 text-white border-orange-500 shadow-sm`;
+      return `bg-orange-700/80 text-orange-100 border-orange-500/50 shadow-sm`;
     }
-    return isDarkMode 
-      ? `bg-slate-800/80 text-slate-400 border-slate-700` 
-      : `bg-slate-100 text-slate-500 border-slate-200`;
+    return `bg-slate-800/80 text-slate-400 border-slate-700`;
   };
 
   const getCardBorderClass = () => {
@@ -96,7 +88,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
       {/* Main Content */}
       <div className="relative z-10 flex-1 min-w-0 flex flex-col gap-2">
-        <p className={`text-xs font-bold leading-snug line-clamp-2 break-all ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`} title={tx.description}>
+        <p className={`text-xs font-bold leading-snug line-clamp-2 break-all ${'text-slate-200'}`} title={tx.description}>
           {tx.description}
         </p>
         
@@ -117,9 +109,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
           {/* Date Tag */}
           {tx.date && (
             <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${
-              isDarkMode 
-                ? 'bg-slate-950 border-slate-850 text-slate-400 group-hover:border-slate-750' 
-                : 'bg-slate-50 border-slate-200 text-slate-500 group-hover:border-slate-300'
+              'bg-slate-950 border-slate-850 text-slate-400 group-hover:border-slate-750'
             }`}>
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
@@ -151,9 +141,9 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${dm ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`;
-  const headerStyles = `font-bold text-sm flex items-center gap-2 ${dm ? 'text-slate-200' : 'text-slate-800'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${dm ? 'border-slate-850' : 'border-slate-100'}`;
+  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${'bg-slate-900 border-slate-800'}`;
+  const headerStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
+  const dividerStyles = `border-b mb-3 pb-3 ${'border-slate-850'}`;
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum } = useMemo(() => {
@@ -234,14 +224,12 @@ export default function TopTransactions() {
               onChange={(e) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
               className={`pl-2 pr-6 py-0.5 text-xs font-black rounded-sm border outline-none cursor-pointer appearance-none transition-colors ${
-                dm 
-                  ? 'bg-slate-950 border-slate-800 text-white hover:border-slate-700 focus:border-red-500/50' 
-                  : 'bg-slate-50 border-slate-200 text-[#D81A21] hover:border-[#D81A21]/50 focus:border-[#D81A21]'
+                'bg-slate-950 border-slate-800 text-white hover:border-slate-700 focus:border-red-500/50'
               }`}
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
-            <ChevronDown className={`w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 ${dm ? 'text-white' : 'text-[#D81A21]'}`} />
+            <ChevronDown className={`w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 ${'text-white'}`} />
           </div>
           <span>รายจ่าย</span>
         </h3>
@@ -249,9 +237,7 @@ export default function TopTransactions() {
         {/* Real-time sum indicator pill (Border is now rounded-sm for consistency) */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div className={`px-2 py-0.5 rounded-sm border text-[9px] font-black tracking-wider flex items-center gap-1 shrink-0 ${
-            dm 
-              ? 'bg-slate-900/50 border-slate-700/80 text-slate-400' 
-              : 'bg-slate-100 border-slate-200 text-slate-650'
+            'bg-slate-900/50 border-slate-700/80 text-slate-400'
           }`}>
             <span className="opacity-60">ยอดรวมกลุ่มนี้:</span>
             <span className="text-[#D81A21]">{formatMoney(topSum)}</span>
@@ -264,7 +250,7 @@ export default function TopTransactions() {
         {showSkeleton ? (
           <div className="flex flex-col gap-2">
             {[...Array(topXLimit || 7)].map((_, i) => (
-              <div key={i} className={`h-16 w-full rounded-sm border animate-pulse ${dm ? 'bg-slate-900/40 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`} />
+              <div key={i} className={`h-16 w-full rounded-sm border animate-pulse ${'bg-slate-900/40 border-slate-700/50'}`} />
             ))}
           </div>
         ) : (
@@ -291,10 +277,10 @@ export default function TopTransactions() {
                 animate={{ opacity: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center py-10"
               >
-                <div className={`p-4 rounded-full mb-3 ${dm ? 'bg-slate-700/30' : 'bg-slate-100'}`}>
-                  <AlertCircle className={`w-8 h-8 opacity-20 ${dm ? 'text-slate-400' : 'text-slate-500'}`} />
+                <div className={`p-4 rounded-full mb-3 ${'bg-slate-700/30'}`}>
+                  <AlertCircle className={`w-8 h-8 opacity-20 ${'text-slate-400'}`} />
                 </div>
-                <p className={`text-sm font-bold opacity-60 ${dm ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-sm font-bold opacity-60 ${'text-slate-400'}`}>
                   ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
                 </p>
                 <p className="text-[10px] mt-1 opacity-40">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>

@@ -13,11 +13,10 @@ import useTransactionData from '../useTransactionData';
 import useFilters from '../useFilters';
 import useImportCSV from '../useImportCSV';
 import useAnalytics from '../useAnalytics';
-import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 
 export function useAppController() {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   const { showToast: triggerToast, toast } = useToast();
   
   // 1. Navigation & App State

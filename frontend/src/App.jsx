@@ -2,7 +2,6 @@ import React from 'react';
 import MainLayout from './components/layout/MainLayout';
 import { useAppController } from './hooks/app/useAppController';
 import './assets/styles/darkMode.css';
-import './assets/styles/lightMode.css';
 
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement,

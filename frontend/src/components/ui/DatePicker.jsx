@@ -1,7 +1,6 @@
 // src/components/ui/DatePicker.jsx
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
 
 const THAI_MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -29,7 +28,7 @@ function formatDisplay(v) {
 }
 
 export default function DatePicker({ value, onChange, required }) {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value));
   
@@ -94,11 +93,11 @@ export default function DatePicker({ value, onChange, required }) {
   };
 
   /* ── Styles ── */
-  const surface   = isDarkMode ? 'bg-slate-800' : 'bg-white';
-  const border    = isDarkMode ? 'border-slate-600' : 'border-slate-300';
-  const textMain  = isDarkMode ? 'text-slate-100' : 'text-slate-800';
-  const textMuted = isDarkMode ? 'text-slate-400' : 'text-slate-500';
-  const hoverDay  = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-blue-50';
+  const surface   = 'bg-slate-800';
+  const border    = 'border-slate-600';
+  const textMain  = 'text-slate-100';
+  const textMuted = 'text-slate-400';
+  const hoverDay  = 'hover:bg-slate-700';
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -106,13 +105,11 @@ export default function DatePicker({ value, onChange, required }) {
         type="button"
         onClick={() => setOpen(!open)}
         className={`w-full px-3 py-2.5 text-sm border rounded-sm flex items-center justify-between gap-2 font-medium transition-colors outline-none
-          ${isDarkMode
-            ? 'bg-slate-900 border-slate-700 text-white hover:border-blue-500 focus:border-blue-500'
-            : 'bg-white border-slate-300 text-slate-800 hover:border-[#00509E] focus:border-[#00509E]'
+          ${'bg-slate-900 border-slate-700 text-white hover:border-blue-500 focus:border-blue-500'
           }`}
       >
         <span className={value ? textMain : textMuted}>{formatDisplay(value)}</span>
-        <Calendar className={`w-4 h-4 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-400'}`} />
+        <Calendar className={`w-4 h-4 shrink-0 ${'text-slate-400'}`} />
       </button>
 
       {open && (
@@ -120,21 +117,21 @@ export default function DatePicker({ value, onChange, required }) {
 
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={prevMonth}
-              className={`p-1.5 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
+              className={`p-1.5 rounded-sm transition-colors ${'hover:bg-slate-700 text-slate-300'}`}>
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className={`text-sm font-bold ${textMain}`}>
               {THAI_MONTHS[m]} {y}
             </span>
             <button type="button" onClick={nextMonth}
-              className={`p-1.5 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}>
+              className={`p-1.5 rounded-sm transition-colors ${'hover:bg-slate-700 text-slate-300'}`}>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           <div className="grid grid-cols-7 mb-1">
             {DAY_LABELS.map((l, i) => (
-              <div key={l} className={`text-center text-[11px] font-bold py-1 ${i === 0 || i === 6 ? (isDarkMode ? 'text-red-400' : 'text-red-500') : textMuted}`}>
+              <div key={l} className={`text-center text-[11px] font-bold py-1 ${i === 0 || i === 6 ? ('text-red-400') : textMuted}`}>
                 {l}
               </div>
             ))}
@@ -155,7 +152,7 @@ export default function DatePicker({ value, onChange, required }) {
                       : isToday(d)
                         ? `ring-1 ring-[#00509E] ${textMain} ${hoverDay}`
                         : weekend
-                          ? `${isDarkMode ? 'text-red-400' : 'text-red-500'} ${hoverDay}`
+                          ? `${'text-red-400'} ${hoverDay}`
                           : `${textMain} ${hoverDay}`
                     }
                   `}
@@ -166,13 +163,13 @@ export default function DatePicker({ value, onChange, required }) {
             })}
           </div>
 
-          <div className={`flex justify-between mt-3 pt-2.5 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+          <div className={`flex justify-between mt-3 pt-2.5 border-t ${'border-slate-700'}`}>
             <button type="button" onClick={() => { onChange(''); setOpen(false); }}
-              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>
+              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${'text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}>
               ล้าง
             </button>
             <button type="button" onClick={goToday}
-              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-slate-700' : 'text-[#00509E] hover:bg-blue-50'}`}>
+              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${'text-blue-400 hover:bg-slate-700'}`}>
               วันนี้
             </button>
           </div>

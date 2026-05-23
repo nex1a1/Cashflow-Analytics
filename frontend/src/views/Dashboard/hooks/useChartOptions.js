@@ -21,7 +21,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
 
     if (chartViewType === 'sankey') {
       return {
-        responsive: true, maintainAspectRatio: false, color: dm ? '#FFFFFF' : '#1e293b',
+        responsive: true, maintainAspectRatio: false, color: '#FFFFFF',
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -30,13 +30,13 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               if (item?.element?.options?.backgroundColor) {
                 return item.element.options.backgroundColor;
               }
-              return dm ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+              return 'rgba(30, 41, 59, 0.9)';
             },
-            titleColor: (ctx) => dm ? '#FFFFFF' : '#1e293b',
-            bodyColor: (ctx) => dm ? '#CBD5E1' : '#475569',
+            titleColor: (ctx) => '#FFFFFF',
+            bodyColor: (ctx) => '#CBD5E1',
             borderColor: (ctx) => {
               const item = ctx.tooltipItems[0];
-              return item?.element?.options?.backgroundColor || (dm ? '#475569' : '#e2e8f0');
+              return item?.element?.options?.backgroundColor || ('#475569');
             },
             borderWidth: 2,
             padding: 12,
@@ -54,7 +54,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               },
               labelColor: (context) => {
                 const item = context.raw;
-                const flowColor = item?.color || (dm ? '#475569' : '#94a3b8');
+                const flowColor = item?.color || ('#475569');
                 return {
                   borderColor: flowColor,
                   backgroundColor: flowColor,

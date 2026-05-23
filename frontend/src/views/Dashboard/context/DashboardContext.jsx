@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { useTheme } from '../../../context/ThemeContext';
 
 const DashboardContext = createContext(null);
 
 export const DashboardProvider = ({ children, value }) => {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   
   // Memoize the context value to avoid unnecessary re-renders
   const contextValue = useMemo(() => ({

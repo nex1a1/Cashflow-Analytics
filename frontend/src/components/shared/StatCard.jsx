@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function StatCard({ 
@@ -13,15 +12,13 @@ export default function StatCard({
   color, 
   variant = 'vitals' // 'vitals' | 'compact'
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
 
   // COMPACT VARIANT (Horizontal - Used in Heatmap/Pinned areas)
   if (variant === 'compact') {
     return (
       <div className={`group flex items-center gap-2 px-3 py-1.5 rounded-sm border transition-all duration-300 ${
-        dm 
-          ? 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/60 hover:border-slate-700' 
-          : 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] border-slate-200 hover:border-slate-300'
+        'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800/60 hover:border-slate-700'
       }`} style={{ borderColor: color.border || undefined }}>
         <div className={`p-1.5 rounded-sm ${color.bg} shrink-0 transition-transform group-hover:scale-110`}>
           {icon}
@@ -48,9 +45,7 @@ export default function StatCard({
   // VITALS VARIANT (Vertical - Used at the top of the Ledger/Dashboard)
   return (
     <div className={`relative overflow-hidden flex flex-col px-4 py-2.5 rounded-sm border transition-all duration-300 group ${
-      dm 
-        ? 'bg-slate-900 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/90 shadow-md' 
-        : 'bg-white border-slate-200 shadow-sm hover:border-slate-300'
+      'bg-slate-900 border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-900/90 shadow-md'
     }`}>
       {/* Background Icon Glow */}
       <div className={`absolute -right-2 -bottom-2 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 ${color.text}`}>
@@ -72,8 +67,8 @@ export default function StatCard({
             {trend && (
               <div className={`flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full mt-0.5 shrink-0 ${
                 trend.isGood 
-                  ? (dm ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
-                  : (dm ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-600')
+                  ? ('bg-emerald-500/10 text-emerald-400')
+                  : ('bg-rose-500/10 text-rose-400')
               }`}>
                 {trend.isGood ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                 {trend.value}%

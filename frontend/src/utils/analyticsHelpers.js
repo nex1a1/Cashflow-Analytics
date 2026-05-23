@@ -227,11 +227,11 @@ export const generateMainChartData = ({
         },
         {
           type: 'line', label: `เฉลี่ยทั้งเดือน ${formatMoney(currentDailyAvg)}/วัน`, data: datesInPeriod.map(() => currentDailyAvg),
-          borderColor: isDarkMode ? '#94a3b8' : '#64748b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
+          borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
         },
         {
           type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : 'รายจ่ายจริง', data: datesInPeriod.map(d => dailyAllMap[d] || 0),
-          backgroundColor: hideFixedExpenses ? (isDarkMode ? 'rgba(216,26,33,0.6)' : 'rgba(216,26,33,0.4)') : (isDarkMode ? 'rgba(239,68,68,0.6)' : 'rgba(239,68,68,0.4)'),
+          backgroundColor: hideFixedExpenses ? ('rgba(216,26,33,0.6)') : ('rgba(239,68,68,0.6)'),
           borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444', borderWidth: 2, borderRadius: 4, order: 3
         }
       ]

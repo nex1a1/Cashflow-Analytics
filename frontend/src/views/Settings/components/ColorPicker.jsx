@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useTheme } from '../../../context/ThemeContext';
 
 const COLOR_PALETTE = [
   '#F43F5E','#E11D48','#BE123C','#FB7185','#9F1239',
@@ -18,7 +17,7 @@ const COLOR_PALETTE = [
 ];
 
 export default function ColorPicker({ color, onChange }) {
-  const { isDarkMode } = useTheme();
+  const isDarkMode = true;
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef(null);
@@ -59,7 +58,7 @@ export default function ColorPicker({ color, onChange }) {
         style={{ backgroundColor: color, borderColor: color }} title="เลือกสี" />
       {open && (
         <div ref={paletteRef}
-          className={`fixed z-[9999] p-2.5 shadow-2xl border ${isDarkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
+          className={`fixed z-[9999] p-2.5 shadow-2xl border ${'bg-slate-800 border-slate-600'}`}
           style={{ top: pos.top, left: pos.left, width: 256 }}>
           <div className="grid grid-cols-10 gap-1 mb-2.5">
             {COLOR_PALETTE.map(c => (
@@ -68,10 +67,10 @@ export default function ColorPicker({ color, onChange }) {
                 style={{ backgroundColor: c, width: '1.05rem', height: '1.05rem' }} title={c} />
             ))}
           </div>
-          <div className={`flex items-center gap-2 border-t pt-2 ${isDarkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+          <div className={`flex items-center gap-2 border-t pt-2 ${'border-slate-700'}`}>
             <input type="color" value={color} onChange={e => onChange(e.target.value)}
               className="w-6 h-5 cursor-pointer border-0 bg-transparent p-0" title="สีกำหนดเอง" />
-            <span className={`text-[11px] font-mono font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{color}</span>
+            <span className={`text-[11px] font-mono font-bold ${'text-slate-300'}`}>{color}</span>
           </div>
         </div>
       )}

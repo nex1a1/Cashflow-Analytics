@@ -1,12 +1,11 @@
-import { useTheme } from '../../../context/ThemeContext';
 
 export default function CalendarSkeleton() {
-  const { isDarkMode } = useTheme();
-  const shimmer = isDarkMode ? 'bg-slate-700 animate-pulse' : 'bg-slate-200 animate-pulse';
-  const surface = isDarkMode ? 'bg-slate-900' : 'bg-white';
-  const surfaceAlt = isDarkMode ? 'bg-slate-800' : 'bg-slate-50';
-  const border = isDarkMode ? 'border-slate-700' : 'border-slate-200';
-  const gapColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-100';
+  const isDarkMode = true;
+  const shimmer = 'bg-slate-700 animate-pulse';
+  const surface = 'bg-slate-900';
+  const surfaceAlt = 'bg-slate-800';
+  const border = 'border-slate-700';
+  const gapColor = 'bg-slate-700';
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
   return (

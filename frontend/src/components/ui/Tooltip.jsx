@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../../context/ThemeContext';
 
 export default function Tooltip({ children, content, position = 'bottom' }) {
   const [isVisible, setIsVisible] = useState(false);
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
 
   // Position styles
   const positions = {
@@ -31,9 +30,7 @@ export default function Tooltip({ children, content, position = 'bottom' }) {
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
             className={`absolute z-[9999] px-2.5 py-1.5 text-[11px] font-bold rounded-sm whitespace-nowrap shadow-lg border pointer-events-none ${positions[position]} ${
-              dm 
-                ? 'bg-slate-800 text-slate-200 border-slate-700 shadow-black/50' 
-                : 'bg-slate-800 text-white border-slate-700 shadow-slate-300/50'
+              'bg-slate-800 text-slate-200 border-slate-700 shadow-black/50'
             }`}
           >
             {content}

@@ -75,9 +75,9 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
               value={formatMoney(total)}
               subValue={getSubValue(total, true, g.type)}
               color={{ 
-                bg: dm ? `${g.color || '#64748b'}40` : `${g.color || '#64748b'}20`, 
+                bg: `${g.color || '#64748b'}40`, 
                 text: dm ? (g.color || '#94a3b8') : (g.color || '#334155'),
-                border: dm ? `${g.color || '#64748b'}60` : `${g.color || '#64748b'}40`
+                border: `${g.color || '#64748b'}60`
               }}
             />
           </div>

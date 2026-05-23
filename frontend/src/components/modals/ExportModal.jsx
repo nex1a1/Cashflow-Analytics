@@ -7,14 +7,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PeriodPicker from '../layout/PeriodPicker';
 import { isDateInFilter } from '../../utils/dateHelpers';
-import { useTheme } from '../../context/ThemeContext';
 import { transactionService } from '../../services/api';
 
 export default function ExportModal({
   isOpen, onClose, transactions: filteredTransactions, categories, dayTypes, dayTypeConfig,
   groupedOptions, getFilterLabel, initialPeriod
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const [exportPeriod, setExportPeriod] = useState(initialPeriod || 'ALL');
   const [exportFormat, setExportFormat] = useState('long');
   const [isExporting, setIsExporting] = useState(false);
@@ -163,16 +162,16 @@ export default function ExportModal({
       className={`w-full flex flex-col p-3 rounded-sm border transition-all relative overflow-hidden group ${
         exportFormat === id 
           ? (amber ? 'border-amber-500 bg-amber-500/10' : 'border-blue-500 bg-blue-500/10') 
-          : (dm ? 'border-slate-800 bg-slate-800/20 hover:border-slate-700' : 'border-slate-100 bg-slate-50 hover:border-slate-200')
+          : ('border-slate-800 bg-slate-800/20 hover:border-slate-700')
       }`}
     >
       <div className="flex items-center gap-2 mb-1 z-10">
         <Icon className={`w-3.5 h-3.5 ${exportFormat === id ? (amber ? 'text-amber-500' : 'text-blue-500') : 'text-slate-500'}`} />
-        <span className={`text-[10px] font-black uppercase tracking-tight ${exportFormat === id ? (dm ? 'text-slate-100' : 'text-slate-900') : 'text-slate-500'}`}>
+        <span className={`text-[10px] font-black uppercase tracking-tight ${exportFormat === id ? ('text-slate-100') : 'text-slate-500'}`}>
           {title}
         </span>
       </div>
-      <p className={`text-[9px] leading-tight z-10 text-left ${dm ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
+      <p className={`text-[9px] leading-tight z-10 text-left ${'text-slate-400'}`}>{desc}</p>
       {exportFormat === id && <div className={`absolute inset-0 opacity-10 ${amber ? 'bg-amber-500' : 'bg-blue-500'}`} />}
     </button>
   );
@@ -181,13 +180,13 @@ export default function ExportModal({
     <div className="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center backdrop-blur-md p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className={`relative rounded-sm shadow-2xl flex flex-col w-full max-w-5xl h-[85vh] border overflow-hidden ${dm ? 'bg-[#0B0F1A] border-slate-800' : 'bg-white border-slate-200'}`}
+        className={`relative rounded-sm shadow-2xl flex flex-col w-full max-w-5xl h-[85vh] border overflow-hidden ${'bg-[#0B0F1A] border-slate-800'}`}
       >
         {/* Header - Tactical HUD Style */}
-        <div className={`px-6 py-3 border-b flex justify-between items-center shrink-0 ${dm ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+        <div className={`px-6 py-3 border-b flex justify-between items-center shrink-0 ${'bg-slate-900/50'}`}>
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
-              <h3 className={`text-[11px] font-black uppercase tracking-[0.3em] ${dm ? 'text-blue-400' : 'text-blue-800'}`}>
+              <h3 className={`text-[11px] font-black uppercase tracking-[0.3em] ${'text-blue-400'}`}>
                 Export Control Unit
               </h3>
               <div className="flex items-center gap-2">
@@ -201,7 +200,7 @@ export default function ExportModal({
 
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar Config */}
-          <div className={`w-80 shrink-0 border-r flex flex-col p-6 space-y-8 ${dm ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50/30 border-slate-100'}`}>
+          <div className={`w-80 shrink-0 border-r flex flex-col p-6 space-y-8 ${'bg-slate-900/30 border-slate-800'}`}>
             <section className="space-y-3">
               <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-500 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-blue-500 rotate-45" /> 01. Selection Scope
@@ -324,11 +323,11 @@ export default function ExportModal({
             </div>
 
             <div className="mt-6 flex items-start gap-4">
-               <div className={`p-2 rounded-sm ${dm ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+               <div className={`p-2 rounded-sm ${'bg-blue-500/10'}`}>
                  <Info className="w-4 h-4 text-blue-500" />
                </div>
                <div className="space-y-1">
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${dm ? 'text-slate-300' : 'text-slate-700'}`}>Protocol: UTF-8 BOM Universal Encoding</p>
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${'text-slate-300'}`}>Protocol: UTF-8 BOM Universal Encoding</p>
                   <p className="text-[9px] text-slate-500 leading-relaxed">
                     Data packets are automatically injected with a Byte Order Mark (BOM) to ensure 100% Thai character integrity in Excel and legacy systems.
                   </p>
@@ -338,7 +337,7 @@ export default function ExportModal({
         </div>
 
         {/* Tactical Footer */}
-        <div className={`px-6 py-4 border-t flex justify-between items-center shrink-0 ${dm ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`px-6 py-4 border-t flex justify-between items-center shrink-0 ${'bg-slate-900/80 border-slate-800'}`}>
           <div className="flex gap-6">
             <div className="flex flex-col">
               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Encryption</span>

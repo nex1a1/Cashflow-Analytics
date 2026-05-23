@@ -56,7 +56,7 @@ const HeatmapCell = memo(function HeatmapCell({
               fontWeight: 900,
               lineHeight: 1,
               color: cat.color,
-              filter: dm ? 'brightness(1.5)' : 'brightness(0.6)',
+              filter: 'brightness(1.5)',
               opacity: 0.9,
               background: `rgba(${hexToRgb(cat.color)}, ${dm ? 0.2 : 0.1})`,
               borderRadius: '0 0 3px 3px',
@@ -85,7 +85,7 @@ const HeatmapCell = memo(function HeatmapCell({
                   fontWeight: 800,
                   fontVariantNumeric: 'tabular-nums',
                   color: cat.color,
-                  filter: dm ? 'brightness(1.8) saturate(1.2)' : 'brightness(0.35) saturate(1.8)',
+                  filter: 'brightness(1.8) saturate(1.2)',
                   lineHeight: 1,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -93,7 +93,7 @@ const HeatmapCell = memo(function HeatmapCell({
                   minWidth: 0,
                   letterSpacing: '-0.01em',
                   textShadow: intensity > 0.4 
-                    ? `0 1px 2px ${dm ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)'}` 
+                    ? `0 1px 2px ${'rgba(0,0,0,0.6)'}` 
                     : 'none',
                   transform: isCellHovered ? 'scale(1.05)' : 'scale(1)',
                   transition: 'all 0.15s ease',
@@ -116,7 +116,7 @@ const HeatmapCell = memo(function HeatmapCell({
           }} />
         </div>
       ) : (
-        <span style={{ fontSize: 10, opacity: 0.15, color: dm ? '#94a3b8' : '#64748b', lineHeight: 1 }}>·</span>
+        <span style={{ fontSize: 10, opacity: 0.15, color: '#94a3b8', lineHeight: 1 }}>·</span>
       )}
     </td>
   );

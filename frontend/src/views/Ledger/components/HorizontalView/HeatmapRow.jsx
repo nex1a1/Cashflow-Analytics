@@ -24,7 +24,7 @@ const HeatmapRow = memo(function HeatmapRow({
     >
       <td style={{
         position: 'sticky', left: 0, zIndex: 30,
-        background: isRowHovered ? (dm ? '#1a2035' : '#eef0ff') : bgBase,
+        background: isRowHovered ? ('#1a2035') : bgBase,
         borderBottom: `1px solid ${border}`,
         borderRight: `1px solid ${border}`,
         padding: '2px',
@@ -71,7 +71,7 @@ const HeatmapRow = memo(function HeatmapRow({
                   fontSize: 9,
                   fontWeight: 800,
                   color: typeColor,
-                  filter: dm ? 'brightness(1.2)' : 'brightness(0.7)',
+                  filter: 'brightness(1.2)',
                   opacity: 0.8,
                   marginBottom: '1px',
                 }}>{dayName}</span>
@@ -80,7 +80,7 @@ const HeatmapRow = memo(function HeatmapRow({
                   fontSize: 14,
                   fontWeight: 900,
                   color: typeColor,
-                  filter: dm ? 'brightness(1.4)' : 'brightness(0.65)',
+                  filter: 'brightness(1.4)',
                   fontVariantNumeric: 'tabular-nums',
                   letterSpacing: '-0.02em',
                 }}>
@@ -123,8 +123,8 @@ const HeatmapRow = memo(function HeatmapRow({
       <td style={{
         position: 'sticky', right: 0, zIndex: 30,
         background: isRowHovered
-          ? (dm ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.07)')
-          : (dm ? 'rgba(239,68,68,0.04)' : 'rgba(239,68,68,0.02)'),
+          ? ('rgba(239,68,68,0.12)')
+          : ('rgba(239,68,68,0.04)'),
         borderBottom: `1px solid ${border}`,
         borderLeft: `1px solid ${border}`,
         padding: '0 6px',
@@ -138,13 +138,13 @@ const HeatmapRow = memo(function HeatmapRow({
             alignItems: 'baseline',
             width: '100%',
           }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: dm ? '#f87171' : '#dc2626', opacity: 0.6 }}>฿</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f87171', opacity: 0.6 }}>฿</span>
             <span style={{
               fontSize: '13px',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
-              color: dm ? '#f87171' : '#dc2626',
+              color: '#f87171',
             }}>
               {fmtCell(total)}
             </span>

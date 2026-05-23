@@ -192,12 +192,12 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
         data: flows,
         priority,
         column,
-        colorFrom: (c) => c.dataset?.data?.[c.dataIndex]?.color || (dm ? '#475569' : '#94a3b8'),
-        colorTo: (c) => c.dataset?.data?.[c.dataIndex]?.color || (dm ? '#475569' : '#94a3b8'),
+        colorFrom: (c) => c.dataset?.data?.[c.dataIndex]?.color || ('#475569'),
+        colorTo: (c) => c.dataset?.data?.[c.dataIndex]?.color || ('#475569'),
         colorMode: 'gradient',
         size: 'max',
         labels: {
-          color: dm ? '#FFFFFF' : '#1e293b',
+          color: '#FFFFFF',
           font: { family: "'Inter', 'IBM Plex Sans Thai Looped', sans-serif", size: 10, weight: 'bold' },
           display: true
         },

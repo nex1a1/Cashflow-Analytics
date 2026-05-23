@@ -1,17 +1,16 @@
 import React, { memo } from 'react';
 import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
-import { useTheme } from '../../../context/ThemeContext';
 
 const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const isInc = catObj?.type === 'income';
   const color = catObj?.color || '#94a3b8';
   const isConfirming = confirmDeleteId === tx.id;
   
   const rowBg = `rgba(${hexToRgb(color)}, ${dm ? 0.06 : 0.04})`;
-  const borderCls = dm ? 'border-slate-700/60' : 'border-slate-100';
-  const textPriCls = dm ? 'text-slate-100' : 'text-slate-800';
+  const borderCls = 'border-slate-700/60';
+  const textPriCls = 'text-slate-100';
   
   return (
     <div className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-all ${borderCls}`}
@@ -22,23 +21,23 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
           <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
           {tx.allocation_type && (
             <span className={`text-[8px] font-black px-1 rounded-[2px] border shrink-0 ${
-              tx.allocation_type === 'need' ? (dm ? 'bg-rose-900/30 text-rose-400 border-rose-800/40' : 'bg-rose-50 text-rose-600 border-rose-200') :
-              tx.allocation_type === 'want' ? (dm ? 'bg-sky-900/30 text-sky-400 border-sky-800/40' : 'bg-sky-50 text-sky-600 border-sky-200') :
-              (dm ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40' : 'bg-emerald-50 text-emerald-600 border-emerald-200')
+              tx.allocation_type === 'need' ? ('bg-rose-900/30 text-rose-400 border-rose-800/40') :
+              tx.allocation_type === 'want' ? ('bg-sky-900/30 text-sky-400 border-sky-800/40') :
+              ('bg-emerald-900/30 text-emerald-400 border-emerald-800/40')
             }`}>
               {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
             </span>
           )}
         </div>
-        <p className="text-[10px] font-medium flex items-center gap-1 mt-0.5" style={{ color, filter: dm ? 'brightness(1.3)' : 'brightness(0.7)' }}>
+        <p className="text-[10px] font-medium flex items-center gap-1 mt-0.5" style={{ color, filter: 'brightness(1.3)' }}>
           {catObj?.icon} {tx.category}
         </p>
       </div>
-      <span className={`text-sm font-black shrink-0 ${isInc ? (dm ? 'text-emerald-400' : 'text-emerald-600') : (dm ? 'text-red-400' : 'text-red-600')}`}>
+      <span className={`text-sm font-black shrink-0 ${isInc ? ('text-emerald-400') : ('text-red-400')}`}>
         {isInc ? '+' : '-'}{formatMoney(tx.amount)} ฿
       </span>
       <button onClick={() => onDeleteClick(tx.id)}
-        className={`shrink-0 px-2 py-1 rounded-sm text-xs font-bold transition-all active:scale-95 ${isConfirming ? 'bg-red-500 text-white' : (dm ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30' : 'text-slate-400 hover:text-red-500 hover:bg-red-50')}`}>
+        className={`shrink-0 px-2 py-1 rounded-sm text-xs font-bold transition-all active:scale-95 ${isConfirming ? 'bg-red-500 text-white' : ('text-slate-500 hover:text-red-400 hover:bg-red-900/30')}`}>
         {isConfirming ? 'ยืนยัน?' : <Trash2 className="w-3.5 h-3.5" />}
       </button>
     </div>
@@ -55,13 +54,13 @@ export default function TransactionList({
   confirmDeleteId,
   handleDelete
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
 
   const expenses = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
   const income   = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
 
   const tokens = {
-    textMuted: dm ? 'text-slate-400' : 'text-slate-500',
+    textMuted: 'text-slate-400',
   };
 
   return (
@@ -75,7 +74,7 @@ export default function TransactionList({
       )}
       {income.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-emerald-400' : 'text-emerald-600'}`}>
+          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${'text-emerald-400'}`}>
             <Coins className="w-3.5 h-3.5" /> รายรับ
           </p>
           <div className="space-y-1.5">
@@ -93,7 +92,7 @@ export default function TransactionList({
       )}
       {expenses.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${dm ? 'text-red-400' : 'text-red-600'}`}>
+          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${'text-red-400'}`}>
             <Wallet className="w-3.5 h-3.5" /> รายจ่าย
           </p>
           <div className="space-y-1.5">

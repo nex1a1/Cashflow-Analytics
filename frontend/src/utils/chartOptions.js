@@ -3,10 +3,10 @@ import { formatMoney } from './formatters';
 
 // ─────────────────────────────────────────────────────────────
 const getTooltipOptions = (isDarkMode) => ({
-  backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-  titleColor:      isDarkMode ? '#f1f5f9' : '#1e293b',
-  bodyColor:       isDarkMode ? '#94a3b8' : '#475569',
-  borderColor:     isDarkMode ? '#334155' : '#e2e8f0',
+  backgroundColor: '#1e293b',
+  titleColor:      '#f1f5f9',
+  bodyColor:       '#94a3b8',
+  borderColor:     '#334155',
   borderWidth: 1,
   padding: 12,
   cornerRadius: 2,
@@ -22,7 +22,7 @@ const formatTickValue = (v) => {
 const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear', autoSkip = true) => ({
   x: {
     ticks: {
-      color: isDarkMode ? '#94a3b8' : '#64748b',
+      color: '#94a3b8',
       font: { size: 9 },
       maxRotation: 90,
       minRotation: 0,
@@ -31,7 +31,7 @@ const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear', auto
     },
     grid: {
       display: true,
-      color: isDarkMode ? 'rgba(148, 163, 184, 0.05)' : 'rgba(100, 116, 139, 0.05)',
+      color: 'rgba(148, 163, 184, 0.05)',
       drawTicks: false,
     },
     border: { display: false },
@@ -41,20 +41,20 @@ const getScaleOptions = (isDarkMode, beginAtZero = false, yType = 'linear', auto
     ...(beginAtZero && { beginAtZero: true }),
     ...(yType === 'linear' && { grace: '15%' }),
     ticks: {
-      color: isDarkMode ? '#94a3b8' : '#64748b',
+      color: '#94a3b8',
       font: { size: 10, weight: '500' },
       padding: 8,
       maxTicksLimit: 12,
       callback: (v) => formatTickValue(v),
     },
     grid: { 
-      color: isDarkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(100, 116, 139, 0.12)', 
+      color: 'rgba(148, 163, 184, 0.12)', 
       lineWidth: 1,
       drawTicks: false,
     },
     border: { 
       display: true, 
-      color: isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+      color: 'rgba(148, 163, 184, 0.2)',
       dash: [4, 4] 
     },
   },

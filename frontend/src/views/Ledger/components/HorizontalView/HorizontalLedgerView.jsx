@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Inbox } from 'lucide-react';
-import { useTheme } from '../../../../context/ThemeContext';
 
 // Hooks & Logic
 import { useHeatmapEngine } from '../../hooks/useHeatmapEngine';
@@ -13,7 +12,7 @@ import HeatmapRow from './HeatmapRow';
 export default function HorizontalLedgerView({
   displayTransactions, categories, formatMoney, dayTypes = {}, dayTypeConfig = [], allDates = []
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   
   // UI State
   const [tooltip, setTooltip] = useState(null);
@@ -58,21 +57,21 @@ export default function HorizontalLedgerView({
   const fmtCell = useCallback((v) => v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), []);
 
   // ─── 3. Styles ───
-  const border  = dm ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
-  const border2 = dm ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.14)';
-  const bgBase  = dm ? '#0f172a' : '#ffffff';
-  const bgHead  = dm ? '#0d1424' : '#f8fafc';
-  const bgFoot  = dm ? '#0d1424' : '#f1f5f9';
+  const border  = 'rgba(255,255,255,0.06)';
+  const border2 = 'rgba(255,255,255,0.12)';
+  const bgBase  = '#0f172a';
+  const bgHead  = '#0d1424';
+  const bgFoot  = '#0d1424';
   const ROW_H   = '34px';
 
   if (expenseTransactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 px-4">
-        <div className={`p-6 rounded-full mb-6 ${dm ? 'bg-slate-800' : 'bg-slate-100'}`}>
-          <Inbox className={`w-16 h-16 ${dm ? 'text-slate-600' : 'text-slate-300'}`} />
+        <div className={`p-6 rounded-full mb-6 ${'bg-slate-800'}`}>
+          <Inbox className={`w-16 h-16 ${'text-slate-600'}`} />
         </div>
-        <p className={`text-lg font-black ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className={`text-sm mt-2 ${dm ? 'text-slate-500' : 'text-slate-400'}`}>เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className={`text-lg font-black ${'text-slate-400'}`}>ยังไม่มีรายการจ่ายในมุมมองนี้</p>
+        <p className={`text-sm mt-2 ${'text-slate-500'}`}>เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
       </div>
     );
   }
@@ -138,14 +137,14 @@ export default function HorizontalLedgerView({
                 textAlign: 'center',
                 fontSize: 12,
                 fontWeight: 900,
-                color: dm ? '#64748b' : '#94a3b8',
+                color: '#64748b',
               }}>รวม</td>
 
               {activeCategories.map(cat => (
                 <td key={cat.id} style={{
                   position: 'sticky', bottom: 0, zIndex: 40,
                   background: hoveredCat === cat.id
-                    ? (dm ? '#1e293b' : '#ffffff')
+                    ? ('#1e293b')
                     : bgFoot,
                   borderTop: `1.5px solid ${border2}`,
                   borderRight: `1px solid ${border}`,
@@ -166,7 +165,7 @@ export default function HorizontalLedgerView({
                         fontWeight: 900,
                         fontVariantNumeric: 'tabular-nums',
                         color: cat.color,
-                        filter: dm ? 'brightness(1.4)' : 'brightness(0.75)',
+                        filter: 'brightness(1.4)',
                       }}>
                         {fmtCell(categoryTotal[cat.name])}
                       </span>
@@ -188,12 +187,12 @@ export default function HorizontalLedgerView({
                   alignItems: 'baseline',
                   width: '100%',
                 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: dm ? '#f87171' : '#dc2626', opacity: 0.8 }}>฿</span>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#f87171', opacity: 0.8 }}>฿</span>
                   <span style={{
                     fontSize: '15px',
                     fontWeight: 900,
                     fontVariantNumeric: 'tabular-nums',
-                    color: dm ? '#f87171' : '#dc2626',
+                    color: '#f87171',
                   }}>
                     {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>

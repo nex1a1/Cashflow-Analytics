@@ -19,9 +19,7 @@ export default function InlineConfirmDelete({ onDelete, isDarkMode }) {
         confirming
           ? 'bg-red-500 text-white px-2.5 py-1 text-[11px] font-bold animate-pulse'
           : `p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 ${
-              isDarkMode
-                ? 'text-slate-500 hover:text-red-400 hover:bg-red-900/30'
-                : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+              'text-slate-500 hover:text-red-400 hover:bg-red-900/30'
             }`
       }`}
       title="ลบ"

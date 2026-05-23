@@ -1,11 +1,10 @@
 import React from 'react';
-import { useTheme } from '../../../context/ThemeContext';
 
 export default function DashboardSkeleton() {
-  const { isDarkMode } = useTheme();
-  const shimmer = isDarkMode ? 'bg-slate-800 animate-pulse' : 'bg-slate-200 animate-pulse';
-  const surface = isDarkMode ? 'bg-slate-900' : 'bg-white';
-  const border = isDarkMode ? 'border-slate-800' : 'border-slate-200';
+  const isDarkMode = true;
+  const shimmer = 'bg-slate-800 animate-pulse';
+  const surface = 'bg-slate-900';
+  const border = 'border-slate-800';
 
   return (
     <div className="w-full pb-10 flex flex-col gap-4 animate-in fade-in duration-300">

@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './assets/styles/index.css';
-import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 
 import {
@@ -21,9 +20,7 @@ defaults.font.family = "'Inter', 'IBM Plex Sans Thai Looped', sans-serif";
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ToastProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
+      <App />
     </ToastProvider>
   </React.StrictMode>
 );

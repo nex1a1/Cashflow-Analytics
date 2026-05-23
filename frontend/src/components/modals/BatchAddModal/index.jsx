@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CalendarPlus, X, Zap, CheckCircle } from 'lucide-react';
 import AnimatedNumber from '../../ui/AnimatedNumber';
-import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../context/ToastContext';
 import BatchForm from './BatchForm';
 import QuickSuggest from './QuickSuggest';
@@ -13,7 +12,7 @@ export default function BatchAddModal({
   defaultDate, defaultType, defaultCategory,
   frequentItems = [] // Added frequentItems prop
 }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const { showToast } = useToast();
   
   const [pendingItems, setPendingItems]   = useState([]);
@@ -138,8 +137,8 @@ export default function BatchAddModal({
   if (!isOpen) return null;
 
   const tokens = {
-    surface: dm ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200',
-    headerFooter: dm ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200',
+    surface: 'bg-slate-900 border-slate-700',
+    headerFooter: 'bg-slate-800 border-slate-700',
   };
 
   return (
@@ -147,15 +146,15 @@ export default function BatchAddModal({
       <div className={`rounded-sm shadow-2xl flex flex-col w-full max-w-[1350px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
 
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
-          <h3 className={`text-base font-bold flex items-center gap-2 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
+          <h3 className={`text-base font-bold flex items-center gap-2 ${'text-slate-100'}`}>
             <CalendarPlus className="w-5 h-5 text-emerald-500" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
           </h3>
-          <button type="button" onClick={() => { onClose(); setPendingItems([]); }} className={`p-1.5 rounded-sm transition-colors ${dm ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>
+          <button type="button" onClick={() => { onClose(); setPendingItems([]); }} className={`p-1.5 rounded-sm transition-colors ${'text-slate-400 hover:bg-slate-700 hover:text-slate-200'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${dm ? 'bg-slate-900' : 'bg-white'}`}>
+        <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${'bg-slate-900'}`}>
 
           <BatchForm
             onSubmitItem={handleAddSubmit}
@@ -190,14 +189,14 @@ export default function BatchAddModal({
 
         <div className={`px-5 py-4 border-t flex flex-col sm:flex-row justify-between items-center shrink-0 gap-3 ${tokens.headerFooter}`}>
           <div className="flex items-center gap-2">
-            <span className={`font-bold text-xs ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ยอดรวมในตะกร้า:</span>
-            <span className={`text-xl font-black ${dm ? 'text-blue-400' : 'text-[#00509E]'}`}>
+            <span className={`font-bold text-xs ${'text-slate-400'}`}>ยอดรวมในตะกร้า:</span>
+            <span className={`text-xl font-black ${'text-blue-400'}`}>
               <AnimatedNumber value={pendingItems.reduce((acc, curr) => acc + (curr._isInc ? curr.amount : -curr.amount), 0)} /> ฿
             </span>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button type="button" onClick={() => { onClose(); setPendingItems([]); }} disabled={isProcessing}
-              className={`flex-1 sm:flex-none px-4 py-2 border rounded-sm font-bold text-xs transition-all active:scale-95 disabled:opacity-50 ${dm ? 'text-slate-300 bg-slate-800 border-slate-600 hover:bg-slate-700' : 'text-slate-600 bg-white border-slate-300 hover:bg-slate-100'}`}>
+              className={`flex-1 sm:flex-none px-4 py-2 border rounded-sm font-bold text-xs transition-all active:scale-95 disabled:opacity-50 ${'text-slate-300 bg-slate-800 border-slate-600 hover:bg-slate-700'}`}>
               ทิ้งข้อมูล
             </button>
             <button type="button" onClick={submitBatch} disabled={pendingItems.length === 0 || isProcessing}

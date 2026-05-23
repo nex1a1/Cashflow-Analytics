@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { CalendarDays, ChevronDown, ChevronRight, Check, LayoutGrid, CalendarRange, ListChecks, X } from 'lucide-react';
 import { getFilterLabel, getThaiMonth } from '../../utils/formatters';
-import { useTheme } from '../../context/ThemeContext';
 
 const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
 export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOptions }) {
-  const { isDarkMode: dm } = useTheme();
+  const dm = true;
   const [open, setOpen]               = useState(false);
   const [expandedYear, setExpandedYear] = useState(null);
   
@@ -120,34 +119,34 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   }, [mode, rangeStart, rangeEnd]);
 
   /* ── 🎨 Tokens: ปรับปรุงสีสำหรับการเลือกให้ชัดเจนยิ่งขึ้น ── */
-  const surface    = dm ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200';
+  const surface    = 'bg-slate-900 border-slate-700';
   const itemBase   = `flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs rounded-none transition-colors cursor-pointer`;
-  const itemHover  = dm ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-50 text-slate-700';
+  const itemHover  = 'hover:bg-slate-700 text-slate-200';
   
   // Standard Active (แบบดั้งเดิมที่นุ่มนวล)
-  const itemActive = dm ? 'bg-blue-900/40 text-blue-300 font-bold' : 'bg-blue-50 text-[#00509E] font-bold';
-  const pillActive = dm ? 'bg-slate-700 text-blue-400' : 'bg-white text-[#00509E] shadow-sm ring-1 ring-[#00509E]/20';
+  const itemActive = 'bg-blue-900/40 text-blue-300 font-bold';
+  const pillActive = 'bg-slate-700 text-blue-400';
   
   const pillBase    = `w-full text-[10px] py-1.5 px-0.5 rounded-none transition-all font-bold border border-transparent flex items-center justify-center gap-1 leading-none`; 
-  const pillIdle    = dm ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600';
+  const pillIdle    = 'bg-slate-800 hover:bg-slate-700 text-slate-300';
 
   // Dark: ฟ้าโปร่งแสงนุ่มๆ | Light: ฟ้าสว่างขอบคมชัด
-  const pillRangeActive  = dm ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' : 'bg-blue-100 border-blue-300 text-[#00509E] shadow-sm';
-  const pillRangeBetween = dm ? 'bg-blue-500/10 border-transparent text-blue-400/60' : 'bg-blue-50 border-transparent text-[#00509E]/70';
+  const pillRangeActive  = 'bg-blue-500/20 border-blue-500/40 text-blue-300';
+  const pillRangeBetween = 'bg-blue-500/10 border-transparent text-blue-400/60';
 
   // Dark: แดงเข้มหม่น | Light: แดงกุหลาบทึบ ตัดกับจอขาว
-  const pillIndependentActive = dm ? 'bg-rose-900 border-rose-700 text-rose-200 shadow-sm' : 'bg-rose-600 border-rose-700 text-white shadow-sm'; 
+  const pillIndependentActive = 'bg-rose-900 border-rose-700 text-rose-200 shadow-sm'; 
 
   // --- UI Action Colors ---
-  const confirmBtnCls = dm ? 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg border-[#059669]' : 'bg-[#10B981] hover:bg-[#059669] text-white shadow-md';
+  const confirmBtnCls = 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg border-[#059669]';
 
   const ModeBtn = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setMode(id)}
       className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-none transition-all ${
         mode === id 
-          ? (dm ? 'bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/30 border border-indigo-500' : 'bg-indigo-600 text-white font-bold shadow-md border border-indigo-700')
-          : (dm ? 'text-slate-400 hover:text-slate-300 hover:bg-slate-800 border border-transparent' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent')
+          ? ('bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/30 border border-indigo-500')
+          : ('text-slate-400 hover:text-slate-300 hover:bg-slate-800 border border-transparent')
       }`}
     >
       <Icon className="w-3 h-3 shrink-0" />
@@ -160,13 +159,11 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
       {/* Trigger */}
       <button onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-2 px-3 py-1.5 border-2 rounded-none shadow-sm transition-colors text-xs font-semibold ${
-          dm 
-            ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700' 
-            : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
+          'bg-slate-800 border-slate-700 text-white hover:bg-slate-700'
         }`}>
         <CalendarDays className="w-3.5 h-3.5 text-[#D81A21] shrink-0" />
         <span className="max-w-[160px] truncate">{getFilterLabel(filterPeriod)}</span>
-        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${dm ? 'text-slate-400' : 'text-slate-400'}`} />
+        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${'text-slate-400'}`} />
       </button>
 
       {/* Dropdown */}
@@ -174,7 +171,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
         <div className={`absolute right-0 top-full mt-1.5 z-[300] rounded-none border-2 shadow-2xl overflow-hidden w-72 flex flex-col ${surface}`}>
 
           {/* Mode Bar */}
-          <div className={`flex gap-1 p-1.5 border-b ${dm ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100/80 border-slate-200'}`}>
+          <div className={`flex gap-1 p-1.5 border-b ${'bg-slate-800/80 border-slate-700'}`}>
             <ModeBtn id="standard" icon={LayoutGrid} label="หลัก" />
             <ModeBtn id="range" icon={CalendarRange} label="ช่วง" />
             <ModeBtn id="multi" icon={ListChecks} label="อิสระ" />
@@ -182,7 +179,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
           <div className="flex-1 overflow-y-auto" style={{ maxHeight: 360, scrollbarWidth: 'thin' }}>
             {mode === 'standard' && (
-              <div className={`p-2 border-b ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className={`p-2 border-b ${'border-slate-700'}`}>
                 <button onClick={() => select('ALL')} className={`${itemBase} ${filterPeriod === 'ALL' ? itemActive : itemHover}`}>
                   {filterPeriod === 'ALL' ? <Check className="w-3 h-3 shrink-0 text-blue-400" /> : <span className="w-3 h-3 shrink-0" />}
                   <span className="truncate">ดูภาพรวมทั้งหมด (All Time)</span>
@@ -192,7 +189,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
             <div className="p-2 space-y-0.5">
               {groupedOptions?.sortedYears?.length === 0 ? (
-                <div className={`text-center py-4 text-xs ${dm ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`text-center py-4 text-xs ${'text-slate-500'}`}>
                   ยังไม่มีข้อมูลปี
                 </div>
               ) : (
@@ -204,12 +201,12 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                     <div key={year}>
                       <button onClick={() => setExpandedYear(isExpanded ? null : year)}
                         className={`${itemBase} ${itemHover} font-bold`}>
-                        <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${dm ? 'text-slate-400' : 'text-slate-400'}`} />
+                        <ChevronRight className={`w-3 h-3 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''} ${'text-slate-400'}`} />
                         <span>📅 {year}</span>
                       </button>
 
                       {isExpanded && (
-                        <div className={`ml-2 pl-2 border-l space-y-0.5 mt-0.5 mb-1 ${dm ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`ml-2 pl-2 border-l space-y-0.5 mt-0.5 mb-1 ${'border-slate-700'}`}>
                           {mode === 'standard' && (
                             <>
                               <button onClick={() => select(year)} className={`${itemBase} ${filterPeriod === year ? itemActive : itemHover}`}>
@@ -276,10 +273,10 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
           {/* Dynamic Summary Section (Range & Multi) */}
           {(mode === 'multi' && multiSelected.length > 0) && (
-             <div className={`p-2 border-t flex flex-col gap-2 ${dm ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+             <div className={`p-2 border-t flex flex-col gap-2 ${'border-slate-700 bg-slate-800/50'}`}>
                 <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1 custom-scrollbar">
                     {multiSelected.sort().map(m => (
-                        <div key={m} className={`flex items-center gap-1 px-1.5 py-0.5 rounded-none border ${dm ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-amber-100 border-amber-300 text-amber-800 shadow-sm'}`}>
+                        <div key={m} className={`flex items-center gap-1 px-1.5 py-0.5 rounded-none border ${'bg-amber-500/20 border-amber-500/50 text-amber-300'}`}>
                             {THAI_MONTHS_SHORT[parseInt(m.split('-')[1]) - 1]} {m.split('-')[0].slice(2)}
                             <button onClick={() => setMultiSelected(multiSelected.filter(x => x !== m))} className="hover:text-red-500 transition-colors ml-0.5">
                                 <X className="w-2.5 h-2.5" />
@@ -288,7 +285,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                     ))}
                 </div>
                 <div className="flex gap-1.5">
-                    <button onClick={() => setMultiSelected([])} className={`px-2 py-1 rounded-none text-[10px] font-medium transition-colors ${dm ? 'bg-slate-800 border border-slate-600 text-slate-300 hover:bg-slate-700' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 shadow-sm'}`}>ล้าง</button>
+                    <button onClick={() => setMultiSelected([])} className={`px-2 py-1 rounded-none text-[10px] font-medium transition-colors ${'bg-slate-800 border border-slate-600 text-slate-300 hover:bg-slate-700'}`}>ล้าง</button>
                     <button onClick={handleConfirmMulti} className={`flex-1 py-1 rounded-none text-[11px] font-bold transition-all active:scale-[0.98] ${confirmBtnCls}`}>
                         ยืนยันการเลือก ({multiSelected.length})
                     </button>
@@ -297,8 +294,8 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           )}
 
           {(mode === 'range' && rangeSummaryText) && (
-             <div className={`p-2 border-t flex flex-col gap-2 ${dm ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-                <div className={`relative py-1.5 px-2 rounded-none border text-center flex items-center justify-between ${dm ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm'}`}>
+             <div className={`p-2 border-t flex flex-col gap-2 ${'border-slate-700 bg-slate-800/50'}`}>
+                <div className={`relative py-1.5 px-2 rounded-none border text-center flex items-center justify-between ${'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`}>
                     <p className="text-[11px] font-bold w-full">{rangeSummaryText}</p>
                     <button onClick={() => { setRangeStart(null); setRangeEnd(null); }} className="text-slate-400 hover:text-red-500 transition-colors">
                         <X className="w-3.5 h-3.5" />
