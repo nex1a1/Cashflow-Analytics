@@ -439,7 +439,7 @@ export default function MainChart() {
                     ? 'bg-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
                     : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
                 }`}>
-                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                  <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
                     isBreakdown 
                       ? 'bg-white translate-x-3.5 shadow-md' 
                       : (dm ? 'bg-slate-500' : 'bg-slate-400')
@@ -484,7 +484,7 @@ export default function MainChart() {
                     ? 'bg-violet-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
                     : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
                 }`}>
-                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                  <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
                     isCumulative 
                       ? 'bg-white translate-x-3.5 shadow-md' 
                       : (dm ? 'bg-slate-500' : 'bg-slate-400')
@@ -533,7 +533,7 @@ export default function MainChart() {
                     ? 'bg-amber-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
                     : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
                 }`}>
-                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                  <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
                     showTrendLines && !isCumulative
                       ? 'bg-white translate-x-3.5 shadow-md' 
                       : (dm ? 'bg-slate-500' : 'bg-slate-400')
@@ -574,7 +574,7 @@ export default function MainChart() {
                     ? 'bg-emerald-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
                     : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
                 }`}>
-                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                  <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
                     isLogScale 
                       ? 'bg-white translate-x-3.5 shadow-md' 
                       : (dm ? 'bg-slate-500' : 'bg-slate-400')
@@ -615,7 +615,7 @@ export default function MainChart() {
                     ? 'bg-rose-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
                     : (dm ? 'bg-slate-800 border border-slate-700' : 'bg-slate-200 border border-slate-350')
                 }`}>
-                  <div className={`absolute top-[3px] left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
+                  <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-sm transition-all duration-300 ease-out ${
                     hideFixedExpenses 
                       ? 'bg-white translate-x-3.5 shadow-md' 
                       : (dm ? 'bg-slate-500' : 'bg-slate-400')

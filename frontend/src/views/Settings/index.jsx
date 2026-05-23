@@ -6,7 +6,6 @@ import SectionCard from './components/SectionCard';
 import CategoryRow from './components/CategoryRow';
 import CashflowGroupsCard from './components/CashflowGroupsCard';
 import DayTypesCard from './components/DayTypesCard';
-import AdvancedOptions from './components/AdvancedOptions';
 import DangerZone from './components/DangerZone';
 
 export default function SettingsView({
@@ -16,7 +15,7 @@ export default function SettingsView({
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
   transactions = [],
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
-  enableSmartInsights, setEnableSmartInsights, triggerToast
+  triggerToast
 }) {
   const dm = true;
   const [newCatId, setNewCatId] = useState(null);
@@ -101,13 +100,18 @@ export default function SettingsView({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">
 
-      <div className="flex items-center justify-between mb-3 gap-4">
-        <h1 className={`text-lg font-black flex items-center gap-2 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
-          <Settings2 className="w-5 h-5 text-[#00509E]" /> การตั้งค่าระบบ
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <h1 className={`text-lg font-black tracking-wide flex items-center gap-2.5 ${dm ? 'text-slate-100' : 'text-slate-800'}`}>
+          <Settings2 className={`w-5 h-5 ${dm ? 'text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]' : 'text-[#00509E]'}`} /> 
+          <span>การตั้งค่าระบบ</span>
         </h1>
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 border text-[11px] ${dm ? 'bg-blue-950/30 border-blue-900/40 text-blue-300' : 'bg-blue-50 border-blue-100 text-blue-700'}`}>
-          <Info className={`w-3 h-3 shrink-0 ${dm ? 'text-blue-400' : 'text-[#00509E]'}`} />
-          <span><b>Fixed</b> = รายจ่ายคงที่ &nbsp;·&nbsp; <b>Bg</b> = เทสีพื้นหลังคอลัมน์ใน Dashboard</span>
+        <div className={`flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-sm transition-all duration-300 ${
+          dm 
+            ? 'bg-slate-900/60 border-slate-850/80 text-slate-350 shadow-sm' 
+            : 'bg-slate-50 border-slate-205 text-slate-600'
+        }`}>
+          <Info className={`w-3.5 h-3.5 shrink-0 ${dm ? 'text-sky-400' : 'text-[#00509E]'}`} />
+          <span><b>BG</b> = เทสีพื้นหลังคอลัมน์ใน Dashboard &nbsp;·&nbsp; <b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>
 
@@ -185,7 +189,6 @@ export default function SettingsView({
         </div>
       </div>
 
-      <AdvancedOptions enableSmartInsights={enableSmartInsights} setEnableSmartInsights={setEnableSmartInsights} />
       <DangerZone transactions={transactions} handleDeleteAllData={handleDeleteAllData} />
 
     </div>

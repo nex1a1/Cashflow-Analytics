@@ -7,7 +7,6 @@ import { DashboardProvider } from './context/DashboardContext';
 import DashboardSkeleton from './components/DashboardSkeleton';
 
 // Components
-import SmartInsightHeader from './components/SmartInsightHeader';
 import SummaryCards from './components/SummaryCards';
 import ExpenseProportion from './components/ExpenseProportion';
 import MainChart from './components/MainChart';
@@ -17,7 +16,7 @@ import CashflowTable from './components/CashflowTable';
 
 export default function DashboardView(props) {
   const { isDarkMode: dm } = useTheme();
-  const { transactions, analytics, enableSmartInsights, isLoading } = props;
+  const { transactions, analytics, isLoading } = props;
   
   // ── Logic: Smooth Loading Transition ───────────────────────
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
@@ -49,11 +48,6 @@ export default function DashboardView(props) {
   return (
     <DashboardProvider value={{ ...props, showSkeleton }}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
-
-        {/* ══════════════════════════════════════════════════════════
-            SMART INSIGHTS HEADER
-        ══════════════════════════════════════════════════════════ */}
-        {enableSmartInsights && <SmartInsightHeader insights={analytics?.smartInsights} />}
 
         {/* ══════════════════════════════════════════════════════════
             ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION

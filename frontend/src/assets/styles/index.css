@@ -26,8 +26,9 @@ h1, h2, h3, h4, h5, h6 {
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-  
-  /* เพิ่มตรงนี้ด้วยสำหรับ Chrome/Edge/Safari รุ่นใหม่ๆ */
+}
+
+.scrollbar-gutter-stable {
   scrollbar-gutter: stable;
 }
 

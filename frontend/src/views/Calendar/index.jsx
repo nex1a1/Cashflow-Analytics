@@ -49,6 +49,12 @@ export default function CalendarView({
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const firstDayOfMonth = new Date(y, m, 1).getDay();
 
+  const suffixDaysCount = useMemo(() => {
+    const totalCells = firstDayOfMonth + daysInMonth;
+    const remainder = totalCells % 7;
+    return remainder === 0 ? 0 : 7 - remainder;
+  }, [firstDayOfMonth, daysInMonth]);
+
   const { dayData: calendarData, monthInc, monthExp } = useMemo(() => {
     let dayData = {};
     let tInc = 0, tExp = 0;
@@ -165,42 +171,63 @@ export default function CalendarView({
     );
   } else {
     content = (
-      <div className="flex flex-col h-full space-y-3 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col h-full space-y-3.5 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
-        <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-3 md:p-4`}>
+        <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-[#00509E] dark:border-l-[#F43F5E] shadow-md p-4 transition-all duration-300`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <h2 className={`text-xl font-black flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-                <CalendarIcon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-[#00509E]'}`} />
+              <h2 className={`text-xl font-black flex items-center gap-2 tracking-wide ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                <CalendarIcon className={`w-5 h-5 ${isDarkMode ? 'text-[#F43F5E]' : 'text-[#00509E]'}`} />
                 {thaiMonths[m]} {y}
               </h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {monthInc > 0 && (
-                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${isDarkMode ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                     ▲ {formatValue(monthInc)} ฿
                   </span>
                 )}
                 {monthExp > 0 && (
-                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${isDarkMode ? 'bg-red-900/40 text-red-400 border-red-800/50' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${isDarkMode ? 'bg-red-950/40 text-red-400 border-red-800/40' : 'bg-red-50 text-red-600 border-red-200'}`}>
                     ▼ {formatValue(monthExp)} ฿
                   </span>
                 )}
                 {(monthInc > 0 || monthExp > 0) && (
-                  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-sm border ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-900/40 text-blue-400 border-blue-800/50' : 'bg-blue-50 text-[#00509E] border-blue-200') : (isDarkMode ? 'bg-orange-900/40 text-orange-400 border-orange-800/50' : 'bg-orange-50 text-orange-600 border-orange-200')}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${monthNet >= 0 ? (isDarkMode ? 'bg-blue-950/30 text-blue-400 border-blue-900/30' : 'bg-blue-50 text-[#00509E] border-blue-200') : (isDarkMode ? 'bg-orange-950/30 text-orange-400 border-orange-900/30' : 'bg-orange-50 text-orange-600 border-orange-200')}`}>
                     คงเหลือ {formatValue(monthNet)} ฿
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={prevMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={prevMonth} 
+                className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
+                  isDarkMode 
+                    ? 'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300' 
+                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-350 text-slate-650'
+                }`}
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={goToCurrentMonth} className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <button 
+                onClick={goToCurrentMonth} 
+                className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 shadow-sm ${
+                  isDarkMode 
+                    ? 'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300' 
+                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-350 text-slate-650'
+                }`}
+              >
                 เดือนปัจจุบัน
               </button>
-              <button onClick={nextMonth} className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isDarkMode ? 'border-slate-800 hover:bg-slate-850 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-600'}`}>
+              <button 
+                onClick={nextMonth} 
+                className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
+                  isDarkMode 
+                    ? 'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300' 
+                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-350 text-slate-650'
+                }`}
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -208,10 +235,10 @@ export default function CalendarView({
         </div>
 
         {/* Calendar Grid */}
-        <div className={`rounded-sm border ${styles.border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
-          <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border}`}>
+        <div className={`rounded-sm border ${styles.border} shadow-md overflow-hidden flex-1 flex flex-col transition-all duration-300`}>
+          <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border} divide-x ${isDarkMode ? 'divide-slate-950/30' : 'divide-slate-200/50'}`}>
             {DAYS_LABEL.map((label, i) => (
-              <div key={label} className={`py-2 text-center text-[15px] font-bold tracking-wide ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : styles.textMuted}`}>
+              <div key={label} className={`py-2 text-center text-[14px] font-black tracking-wider ${WEEKEND_IDX.includes(i) ? (isDarkMode ? 'text-red-400' : 'text-red-500') : styles.textMuted}`}>
                 {label}
               </div>
             ))}
@@ -219,7 +246,14 @@ export default function CalendarView({
 
           <div className={`grid grid-cols-7 gap-[1px] ${styles.gapColor} flex-1`}>
             {Array(firstDayOfMonth).fill(null).map((_, i) => (
-              <div key={`blank-${i}`} className={`min-h-[120px] 2xl:min-h-[140px] ${styles.surfaceAlt}`} />
+              <div 
+                key={`blank-${i}`} 
+                className={`min-h-[120px] 2xl:min-h-[140px] ${styles.surfaceAlt} ${
+                  isDarkMode 
+                    ? 'bg-[radial-gradient(rgba(244,63,94,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40' 
+                    : 'bg-[radial-gradient(rgba(15,76,129,0.04)_1px,transparent_1px)] bg-[size:10px_10px] opacity-50'
+                }`} 
+              />
             ))}
 
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
@@ -242,11 +276,22 @@ export default function CalendarView({
                 />
               );
             })}
+
+            {Array.from({ length: suffixDaysCount }).map((_, i) => (
+              <div 
+                key={`suffix-blank-${i}`} 
+                className={`min-h-[120px] 2xl:min-h-[140px] ${styles.surfaceAlt} ${
+                  isDarkMode 
+                    ? 'bg-[radial-gradient(rgba(244,63,94,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40' 
+                    : 'bg-[radial-gradient(rgba(15,76,129,0.04)_1px,transparent_1px)] bg-[size:10px_10px] opacity-50'
+                }`} 
+              />
+            ))}
           </div>
         </div>
 
         {/* Summary Footer */}
-        <div className={`${styles.surface} rounded-sm border ${styles.border} shadow-sm p-2 px-3 flex flex-wrap gap-2 items-center`}>
+        <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-slate-400 dark:border-l-slate-650 shadow-md p-3 px-4 flex flex-wrap gap-2.5 items-center transition-all duration-300`}>
           <span className={`text-[13px] font-bold mr-1 ${styles.textMuted}`}>สรุป:</span>
           {dayTypeConfig.map(dt => {
             const count = dayTypeCounts[dt.id] || 0;
@@ -254,10 +299,10 @@ export default function CalendarView({
             return (
               <div
                 key={dt.id}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-bold"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm border text-[11px] font-bold shadow-sm transition-transform hover:scale-102"
                 style={{
                   backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
-                  borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.3 : 0.2})`,
+                  borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.35 : 0.2})`,
                   color: dt.color,
                 }}
               >
@@ -266,7 +311,7 @@ export default function CalendarView({
               </div>
             );
           })}
-          <div className={`ml-auto text-[13px] font-bold px-2 py-0.5 rounded-sm ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+          <div className={`ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-sm border ${isDarkMode ? 'bg-slate-950 border-slate-850 text-slate-300 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 shadow-sm'}`}>
             {daysInMonth} วัน
           </div>
         </div>

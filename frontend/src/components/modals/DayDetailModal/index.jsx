@@ -173,7 +173,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className={`${tokens.surface} rounded-sm shadow-2xl w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border ${tokens.border} overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
+      <div className={`${tokens.surface} rounded-sm shadow-2xl w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-t-4 border-t-[#00509E] dark:border-t-[#F43F5E] border-x border-b ${tokens.border} overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
 
         <button onClick={onClose} className={tokens.closeBtn}>
           <X className="w-5 h-5" />

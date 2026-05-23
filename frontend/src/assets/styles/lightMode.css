@@ -164,7 +164,7 @@ body.light-mode .border-\[\#00509E\] {
 /* ──────────────────────────────────────────────────────────  */
 
 body.light-mode input,
-body.light-mode select:not(.day-type-badge),
+body.light-mode select:not(.day-type-badge):not(.category-select),
 body.light-mode textarea {
   background-color: #ffffff !important;
   border: 1.5px solid #cbd5e1 !important; /* Clean defined border */
@@ -173,7 +173,7 @@ body.light-mode textarea {
 }
 
 body.light-mode input:focus,
-body.light-mode select:not(.day-type-badge):focus,
+body.light-mode select:not(.day-type-badge):not(.category-select):focus,
 body.light-mode textarea:focus {
   border-color: #0f4c81 !important;
   box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15) !important;
@@ -230,4 +230,12 @@ body.light-mode [class*="SummaryCards"] .border-slate-700/40 {
 
 body.light-mode [class*="SummaryCards"] .bg-slate-700\/20 {
   background-color: #cbd5e1 !important; /* Perfect thin grid separation lines */
+}
+
+/* Category Pill Custom Text Color Override */
+.category-pill-text,
+.category-pill-text *,
+body.light-mode .category-pill-text,
+body.light-mode .category-pill-text * {
+  color: var(--pill-text-color) !important;
 }

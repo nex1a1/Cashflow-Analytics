@@ -8,6 +8,65 @@ import { useTheme } from '../../../../context/ThemeContext';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
+const getCategoryPillStyles = (hexColor, dm) => {
+  const defaultRgb = '148, 163, 184';
+  const rgb = hexToRgb(hexColor) || defaultRgb;
+  
+  // Parse HSL to adjust lightness beautifully for text readability
+  let hex = hexColor || '#94a3b8';
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  let r = 148, g = 163, b = 184;
+  if (hex.length === 6) {
+    r = parseInt(hex.substring(0, 2), 16);
+    g = parseInt(hex.substring(2, 4), 16);
+    b = parseInt(hex.substring(4, 6), 16);
+  }
+  
+  let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+  let max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+      case gNorm: h = (bNorm - rNorm) / d + 2; break;
+      case bNorm: h = (rNorm - gNorm) / d + 4; break;
+    }
+    h /= 6;
+  }
+  
+  h = Math.round(h * 360);
+  s = Math.round(s * 100);
+  
+  let textColor;
+  let bgOpacity = dm ? 0.15 : 0.12;
+  let borderOpacity = dm ? 0.35 : 0.25;
+  
+  if (dm) {
+    // Dark mode: Boost lightness to at least 65% for excellent visibility
+    const targetL = Math.max(l * 100, 65);
+    const targetS = Math.max(s, 60);
+    textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
+  } else {
+    // Light mode: Clamp lightness to max 35% so it's readable
+    const targetL = Math.min(l * 100, 35);
+    const targetS = Math.max(s, 70);
+    textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
+  }
+  
+  return {
+    backgroundColor: `rgba(${rgb}, ${bgOpacity})`,
+    borderColor: `rgba(${rgb}, ${borderOpacity})`,
+    textColor,
+    iconBgColor: dm ? `rgba(${rgb}, 0.25)` : `rgba(${rgb}, 0.15)`
+  };
+};
+
 export default function LedgerTable({
   currentData, sortedTransactions, categories, 
   sortConfig, handleSort, isDateSorted, dateBands,
@@ -45,7 +104,7 @@ export default function LedgerTable({
             <tr>
               <SortHeader label="วันที่" sortKey="date" className="w-[145px]" />
               <th className={`px-4 py-3 font-bold w-[90px] text-center text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ประเภท</th>
-              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[220px]" />
+              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" />
               <th className={`px-4 py-3 font-bold w-[100px] text-center text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>ALLOCATION</th>
               <th className={`px-4 py-3 font-bold text-xs uppercase tracking-wide ${dm ? 'text-slate-400' : 'text-slate-500'}`}>รายละเอียด</th>
               <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" />
@@ -56,6 +115,7 @@ export default function LedgerTable({
             {currentData.map((item, index, arr) => {
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category) || categories[categories.length - 1];
+              const pillStyles = getCategoryPillStyles(catObj?.color, dm);
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
               const rowBg      = isAlt ? (dm ? 'bg-slate-950/20' : 'bg-slate-50/60') : 'bg-transparent';
@@ -92,10 +152,39 @@ export default function LedgerTable({
                     </span>
                   </td>
                   <td className="px-3 py-2 align-middle">
-                    <div className="relative w-full flex items-center rounded-sm border transition-all duration-150 focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: `rgba(${hexToRgb(catObj?.color)}, ${dm ? 0.12 : 0.04})`, borderColor: `rgba(${hexToRgb(catObj?.color)}, ${dm ? 0.3 : 0.2})` }}>
-                      <div className="absolute left-2.5 w-2 h-2 rounded pointer-events-none" style={{ backgroundColor: catObj?.color || '#cbd5e1' }} />
-                      <select value={item.category_id || ''} onChange={e => handleUpdateTransaction(item.id, 'category_id', e.target.value)} className="w-full bg-transparent outline-none appearance-none pl-6 pr-7 py-1.5 font-bold border-none text-xs cursor-pointer" style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8em', color: catObj?.color || (dm ? '#e2e8f0' : '#475569'), filter: dm ? 'brightness(1.3)' : 'none' }}>
-                        {categories.filter(c => c.type === catObj?.type).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                    <div className="relative w-full flex items-center rounded-sm border transition-all duration-150 focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
+                      {/* Visual Custom Overlay */}
+                      <div 
+                        className="category-pill-text w-full flex items-center pl-1.5 pr-7 py-1 text-xs font-extrabold select-none pointer-events-none transition-all" 
+                        style={{ '--pill-text-color': pillStyles.textColor }}
+                      >
+                        <span className="shrink-0 mr-1.5 text-xs">
+                          {catObj?.icon}
+                        </span>
+                        <span className="truncate">{catObj?.name}</span>
+                        
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-85">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Invisible select overlay for native interaction */}
+                      <select 
+                        value={item.category_id || ''} 
+                        onChange={e => handleUpdateTransaction(item.id, 'category_id', e.target.value)} 
+                        className="category-select absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      >
+                        {categories.filter(c => c.type === catObj?.type).map(c => (
+                          <option 
+                            key={c.id} 
+                            value={c.id}
+                            className={dm ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}
+                          >
+                            {c.icon} {c.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </td>

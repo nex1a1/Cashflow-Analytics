@@ -73,7 +73,6 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ scale: 1.015, x: 5 }}
       transition={{ type: 'spring', stiffness: 420, damping: 30 }}
       className={`relative flex items-start gap-3.5 p-3.5 rounded-sm border transition-all overflow-hidden group shadow-sm ${getCardBorderClass()}`}
     >
@@ -130,7 +129,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
       {/* Price Block */}
       <div className="relative z-10 shrink-0 flex flex-col items-end justify-start min-w-[95px] pt-0.5">
-        <span className={`text-sm font-black tabular-nums whitespace-nowrap transition-transform group-hover:scale-105 origin-right text-[#D81A21]`}>
+        <span className={`text-sm font-black tabular-nums whitespace-nowrap text-[#D81A21]`}>
           {formatMoney(Math.abs(tx.amount))}
         </span>
       </div>

@@ -29,10 +29,6 @@ export function useAppController() {
   const [dayTypes, setDayTypes] = useState({});
   const [dayTypeConfig, setDayTypeConfig] = useState(DEFAULT_DAY_TYPES);
   const [cashflowGroups, setCashflowGroups] = useState([]);
-  const [enableSmartInsights, setEnableSmartInsights] = useState(() => {
-    const saved = localStorage.getItem('enableSmartInsights');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
 
   // 3. UI Control State (Modals, etc.)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -120,10 +116,6 @@ export function useAppController() {
   });
 
   // ─── EFFECTS & PERSISTENCE (Safe now that all variables are initialized) ───
-  useEffect(() => {
-    localStorage.setItem('enableSmartInsights', JSON.stringify(enableSmartInsights));
-  }, [enableSmartInsights]);
-
   useEffect(() => {
     localStorage.setItem('activeTab', activeTab);
   }, [activeTab]);
@@ -279,7 +271,6 @@ export function useAppController() {
     activeCashflowGroupIds,
     summaryData,
     analytics,
-    enableSmartInsights, setEnableSmartInsights,
     hideFixedExpenses, setHideFixedExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,

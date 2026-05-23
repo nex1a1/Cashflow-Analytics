@@ -46,7 +46,6 @@ export default function MainLayout({ controller }) {
     activeCashflowGroupIds,
     analytics,
     summaryData,
-    enableSmartInsights, setEnableSmartInsights,
     hideFixedExpenses, setHideFixedExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
@@ -130,7 +129,6 @@ export default function MainLayout({ controller }) {
                   topXLimit={topXLimit} setTopXLimit={setTopXLimit}
                   categories={categories} dayTypeConfig={dayTypeConfig}
                   dayTypes={dayTypes}
-                  enableSmartInsights={enableSmartInsights}
                   isLoading={isProcessing}
                 />
               </motion.div>
@@ -209,8 +207,6 @@ export default function MainLayout({ controller }) {
                   handleMoveDayType={handleMoveDayType}
                   handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
                   transactions={transactions}
-                  enableSmartInsights={enableSmartInsights}
-                  setEnableSmartInsights={setEnableSmartInsights}
                   triggerToast={triggerToast}
                 />
               </motion.div>

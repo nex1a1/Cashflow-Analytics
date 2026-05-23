@@ -496,16 +496,8 @@ export default function useAnalytics({
     // ─── DAY TYPE DISTRIBUTION ───────────────────────────────────────────────
     const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes, dayTypeConfig);
 
-    // ─── SMART INSIGHTS ──────────────────────────────────────────────────────
-    const smartInsights = [];
-    if (totals.income > 0) {
-      if (totals.expense > totals.income) smartInsights.push({ type: 'error', icon: '🚨', message: `สภาพคล่องติดลบ: คุณดึงเงินเก็บมาใช้แล้ว ${formatMoney(totals.expense - totals.income)} บาท` });
-      else if (savingsRate >= 20) smartInsights.push({ type: 'success', icon: '🏆', message: `วินัยการเงินยอดเยี่ยม: คุณออมเงินได้ ${savingsRate}%` });
-      else if (savingsRate < 10) smartInsights.push({ type: 'warning', icon: '⚠️', message: `สัดส่วนการออมต่ำ: คุณออมได้เพียง ${savingsRate}%` });
-    }
-
     return {
-      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus, smartInsights,
+      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus,
       prevTotals, totalExpense: totals.expense, totalIncome: totals.income,
       totalSavings: totals.savings || 0, actualSavings, explicitSavings,
       netCashflow, savingsRate, chartTotal, numMonths, sortedCats,
