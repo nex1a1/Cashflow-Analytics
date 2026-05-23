@@ -21,6 +21,9 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
   }, [displayTransactions, catTypeMap]);
 
   const net = sumInc - sumExp;
+  const savingsRate = useMemo(() => {
+    return sumInc > 0 ? Math.round((net / sumInc) * 100) : 0;
+  }, [sumInc, net]);
 
   // ─── Logic: Aggregate Data by Cashflow Groups ───
   const groupSums = useMemo(() => {
@@ -67,19 +70,57 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
       .map(g => {
         const total = groupSums[g.id];
         return (
-          <div key={g.id} className="min-w-[240px] flex-1">
-            <StatCard 
-              variant="compact"
-              icon={g.icon || (g.type === 'income' ? '💰' : '📉')} 
-              label={g.name}
-              value={formatMoney(total)}
-              subValue={getSubValue(total, true, g.type)}
-              color={{ 
-                bg: `${g.color || '#64748b'}40`, 
-                text: dm ? (g.color || '#94a3b8') : (g.color || '#334155'),
-                border: `${g.color || '#64748b'}60`
-              }}
-            />
+          <div key={g.id} className="min-w-[210px] flex-1">
+            <div 
+              className="group flex items-center gap-3 px-3 py-2 border-2 transition-all duration-300 bg-slate-900/80 hover:bg-slate-900 border-slate-800 hover:border-slate-700 rounded-none relative overflow-hidden shadow-sm"
+              style={{ borderLeftColor: g.color || '#64748b' }}
+            >
+              {/* Subtle background glow of group color */}
+              <div 
+                className="absolute inset-0 opacity-[0.015] transition-opacity duration-300 group-hover:opacity-[0.04]"
+                style={{ backgroundColor: g.color }}
+              />
+              
+              {/* Group icon with subtle background */}
+              <div 
+                className="w-7 h-7 flex items-center justify-center text-sm rounded-none border border-slate-805 shrink-0 transition-transform group-hover:scale-105"
+                style={{ 
+                  backgroundColor: `${g.color || '#64748b'}20`, 
+                  color: g.color || '#94a3b8',
+                  borderColor: `${g.color || '#64748b'}30`
+                }}
+              >
+                {g.icon || (g.type === 'income' ? '💰' : '📉')}
+              </div>
+              
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider truncate text-slate-400">
+                    {g.name}
+                  </span>
+                  <span 
+                    className="text-[8px] font-black uppercase tracking-widest px-1 py-0.2 rounded-none border"
+                    style={{ 
+                      backgroundColor: `${g.color || '#64748b'}15`, 
+                      color: g.color || '#94a3b8', 
+                      borderColor: `${g.color || '#64748b'}30` 
+                    }}
+                  >
+                    {g.type === 'income' ? 'IN' : 'OUT'}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between mt-0.5 min-w-0 font-mono">
+                  <span className="text-xs font-black tabular-nums tracking-tight text-slate-100">
+                    ฿{formatMoney(total)}
+                  </span>
+                  {uniqueMonths > 1 && (
+                    <span className="text-[8.5px] font-bold text-slate-500 truncate ml-1">
+                      ฿{formatMoney(total / uniqueMonths)}/ด.
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         );
       });
@@ -89,6 +130,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     sumInc,
     sumExp,
     net,
+    savingsRate,
     activeGroupCards,
     getSubValue,
     catTypeMap

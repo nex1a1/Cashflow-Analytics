@@ -72,14 +72,14 @@ const CashflowGroupsCard = memo(({
 
                 {group.type === 'expense' && (
                   <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
-                    className={`p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm ${
-                      group.allocation_type === 'need' ? ('bg-red-955/30 text-red-400 border-red-900/40') :
-                      group.allocation_type === 'savings' ? ('bg-emerald-955/30 text-emerald-400 border-emerald-800/40') :
-                      ('bg-slate-955 border-slate-850/80 text-slate-400')
-                    } cursor-pointer focus:border-purple-500/70`}>
-                    <option value="need">NEED</option>
-                    <option value="want">WANT</option>
-                    <option value="savings">SAVE</option>
+                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer transition-all ${
+                      group.allocation_type === 'need' ? 'bg-rose-950/40 text-rose-400 border-rose-800/50 focus:border-rose-500/70' :
+                      group.allocation_type === 'savings' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50 focus:border-emerald-500/70' :
+                      'bg-sky-950/40 text-sky-400 border-sky-800/50 focus:border-sky-500/70'
+                    }`}>
+                    <option value="need" className="bg-slate-950 text-rose-400 font-extrabold">NEED</option>
+                    <option value="want" className="bg-slate-950 text-sky-400 font-extrabold">WANT</option>
+                    <option value="savings" className="bg-slate-950 text-emerald-400 font-extrabold">SAVE</option>
                   </select>
                 )}
 

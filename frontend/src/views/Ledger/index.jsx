@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
-  TrendingUp, TrendingDown, Wallet, Inbox
+  TrendingUp, TrendingDown, Wallet, Inbox, Activity
 } from 'lucide-react';
 import { formatMoney } from '../../utils/formatters';
 
@@ -77,6 +77,7 @@ export default function LedgerView({
     sumInc,
     sumExp,
     net,
+    savingsRate,
     activeGroupCards,
     getSubValue,
     catTypeMap
@@ -99,69 +100,200 @@ export default function LedgerView({
 
   return (
     <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 w-full pb-8">
-      <div className="flex flex-col gap-3 mb-4">
+      <div className="flex flex-col gap-3.5 mb-4">
         {/* Top Header Actions */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h2 className={`text-xl font-black leading-tight tracking-tight ${'text-slate-100'}`}>บัญชีแยกประเภท</h2>
-            <p className={`text-xs font-medium mt-0.5 ${'text-slate-500'}`}>
-              {getFilterLabel(filterPeriod)} · {displayTransactions.length} รายการ
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-6 bg-blue-500 rounded-none shrink-0" />
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-mono">
+                บัญชีแยกประเภท
+              </h2>
+            </div>
+            <p className="text-[10px] font-black tracking-widest mt-1.5 font-mono text-slate-500 uppercase flex items-center gap-2">
+              <span>{getFilterLabel(filterPeriod)}</span>
+              <span className="text-slate-800 font-bold">•</span>
+              <span className="text-blue-400 font-extrabold">{displayTransactions.length}</span>
+              <span>รายการ</span>
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {viewMode === 'list' && (
-              <button onClick={() => setFilterOpen(v => !v)} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-colors ${filterOpen ? 'bg-blue-600/20 border-blue-600/40 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'} ${isFilterActive ? ('!border-amber-500/50 !text-amber-400 !bg-amber-900/20') : ''}`}>
-                <SlidersHorizontal className="w-3.5 h-3.5" /> ตัวกรอง
-                {isFilterActive && <span className={`w-1.5 h-1.5 rounded-full ${'bg-amber-400'}`} />}
+              <button 
+                onClick={() => setFilterOpen(v => !v)} 
+                className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border-2 transition-all active:scale-95 font-mono ${
+                  filterOpen 
+                    ? 'bg-blue-950/40 border-blue-500 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.15)]' 
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:border-slate-700'
+                } ${isFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/40 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : ''}`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" /> 
+                <span>ตัวกรอง</span>
+                {isFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400 animate-pulse" />}
               </button>
             )}
 
-            <div className={`flex items-center rounded-sm border overflow-hidden ${'border-slate-700'}`}>
-              <button onClick={() => setViewMode('list')} title="มุมมองรายการ" className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-slate-700 text-slate-100' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}>
-                <LayoutList className="w-3.5 h-3.5" /><span className="hidden sm:inline">รายการ</span>
+            <div className="flex items-center rounded-none border-2 border-slate-800 overflow-hidden bg-slate-900">
+              <button 
+                onClick={() => setViewMode('list')} 
+                title="มุมมองรายการ" 
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none font-mono ${
+                  viewMode === 'list' 
+                    ? 'bg-slate-800 text-blue-400 font-extrabold shadow-inner' 
+                    : 'bg-slate-900 text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">รายการ</span>
               </button>
-              <button onClick={() => setViewMode('horizontal')} title="มุมมองตารางแนวนอน" className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors border-l ${'border-slate-700'} ${viewMode === 'horizontal' ? 'bg-slate-700 text-slate-100' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}>
-                <TableProperties className="w-3.5 h-3.5" /><span className="hidden sm:inline">ตาราง</span>
+              <button 
+                onClick={() => setViewMode('horizontal')} 
+                title="มุมมองตารางแนวนอน" 
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none border-l-2 border-slate-800 font-mono ${
+                  viewMode === 'horizontal' 
+                    ? 'bg-slate-800 text-blue-400 font-extrabold shadow-inner' 
+                    : 'bg-slate-900 text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <TableProperties className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">ตาราง</span>
               </button>
             </div>
 
-            <button onClick={() => handleOpenAddModal('', 'income')} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border shadow-sm transition-colors active:scale-95 ${'text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/40 border-emerald-800/50'}`}>
-              <PlusCircle className="w-3.5 h-3.5" /> เพิ่มรายรับ
+            <button 
+              onClick={() => handleOpenAddModal('', 'income')} 
+              className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-emerald-400 bg-emerald-950/40 hover:bg-emerald-900/30 border-emerald-500/50 hover:border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
+            >
+              <PlusCircle className="w-3.5 h-3.5" /> 
+              <span>เพิ่มรายรับ</span>
             </button>
-            <button onClick={() => handleOpenAddModal('', 'expense')} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border shadow-sm transition-colors active:scale-95 ${'text-red-400 bg-red-900/20 hover:bg-red-900/40 border-red-800/50'}`}>
-              <PlusCircle className="w-3.5 h-3.5" /> เพิ่มรายจ่าย
+            
+            <button 
+              onClick={() => handleOpenAddModal('', 'expense')} 
+              className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-red-400 bg-red-950/40 hover:bg-red-900/30 border-red-500/50 hover:border-red-400 shadow-[0_0_10px_rgba(244,63,94,0.05)]"
+            >
+              <PlusCircle className="w-3.5 h-3.5" /> 
+              <span>เพิ่มรายจ่าย</span>
             </button>
+            
             {displayTransactions.length > 0 && (
-              <button onClick={() => { if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }} className={`text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-sm border shadow-sm transition-colors active:scale-95 ${'text-slate-500 bg-slate-800 hover:text-red-400 hover:bg-red-900/20 hover:border-red-800/50 border-slate-700'}`} title="ลบข้อมูลเดือนนี้">
-                <Trash2 className="w-3.5 h-3.5" /> ลบเดือนนี้
+              <button 
+                onClick={() => { if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }} 
+                className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-slate-500 bg-slate-900 border-slate-800 hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/50" 
+                title="ลบข้อมูลเดือนนี้"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> 
+                <span>ลบเดือนนี้</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Stats Area (Vitals) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <StatCard 
-            icon={<TrendingUp />} 
-            label="รายรับรวม" 
-            value={formatMoney(sumInc)} 
-            subValue={getSubValue(sumInc)}
-            color={{ bg: 'bg-emerald-900/30', text: 'text-emerald-400' }} 
-          />
-          <StatCard 
-            icon={<TrendingDown />} 
-            label="รายจ่ายรวม" 
-            value={formatMoney(sumExp)} 
-            subValue={getSubValue(sumExp)}
-            color={{ bg: 'bg-red-900/30', text: 'text-red-400' }} 
-          />
-          <StatCard 
-            icon={<Wallet />} 
-            label="คงเหลือสุทธิ" 
-            value={formatMoney(net)} 
-            subValue={getSubValue(net)}
-            color={{ bg: net >= 0 ? ('bg-blue-900/30') : ('bg-orange-900/30'), text: net >= 0 ? ('text-blue-400') : ('text-orange-400') }} 
-          />
+        {/* Stats Area (Vitals) - High-Density HUD Command Panel */}
+        <div className="w-full flex flex-col rounded-none overflow-hidden border-2 shadow-lg bg-slate-950 border-slate-800">
+          {/* Header Panel */}
+          <div className="px-3.5 py-2 flex items-center justify-between border-b-2 transition-colors bg-slate-900 border-slate-800">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                แผงวิเคราะห์รายรับ-รายจ่าย (TRANSACTION COMMAND PANEL)
+              </span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-800/60">
+            {/* INCOME CELL */}
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 transition-all duration-300 bg-slate-900 hover:bg-slate-900/90 hover:bg-gradient-to-br hover:from-emerald-500/[0.03]">
+              {/* Background Icon Glow */}
+              <div className="absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none text-emerald-400">
+                <TrendingUp size={80} />
+              </div>
+              <div className="relative z-10 flex justify-between items-center mb-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                  รายรับรวม (INCOME)
+                </span>
+                <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  + INFLOW
+                </span>
+              </div>
+              <div className="relative z-10 mt-1">
+                <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-emerald-400 font-mono">
+                  {formatMoney(sumInc)}
+                </div>
+              </div>
+              <div className="relative z-10 mt-2 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
+                  {getSubValue(sumInc) || 'ข้อมูลในรอบบิลปัจจุบัน'}
+                </span>
+              </div>
+            </div>
+
+            {/* EXPENSE CELL */}
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 transition-all duration-300 bg-slate-900 hover:bg-slate-900/90 hover:bg-gradient-to-br hover:from-rose-500/[0.03]">
+              {/* Background Icon Glow */}
+              <div className="absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none text-rose-455">
+                <TrendingDown size={80} />
+              </div>
+              <div className="relative z-10 flex justify-between items-center mb-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                  รายจ่ายรวม (EXPENSE)
+                </span>
+                <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  - OUTFLOW
+                </span>
+              </div>
+              <div className="relative z-10 mt-1">
+                <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-rose-400 font-mono">
+                  {formatMoney(sumExp)}
+                </div>
+              </div>
+              <div className="relative z-10 mt-2 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
+                  {getSubValue(sumExp) || 'ข้อมูลในรอบบิลปัจจุบัน'}
+                </span>
+              </div>
+            </div>
+
+            {/* NET SURPLUS CELL WITH SAVINGS RATE PILL */}
+            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] transition-all duration-300 bg-slate-900 hover:bg-slate-900/90 ${net >= 0 ? 'border-l-blue-500 hover:bg-gradient-to-br hover:from-blue-500/[0.03]' : 'border-l-orange-500 hover:bg-gradient-to-br hover:from-orange-500/[0.03]'}`}>
+              {/* Background Icon Glow */}
+              <div className={`absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                <Wallet size={80} />
+              </div>
+              <div className="relative z-10 flex justify-between items-center mb-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                  คงเหลือสุทธิ (NET CASHFLOW)
+                </span>
+                <div className="flex items-center gap-1">
+                  {sumInc > 0 && (
+                    <div className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest flex items-center gap-1 border ${
+                      savingsRate >= 20 
+                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                        : (savingsRate >= 10 ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20')
+                    }`}>
+                      <span>ออม {savingsRate}%</span>
+                      <span className="opacity-40">|</span>
+                      <span className="font-extrabold">{savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>
+                    </div>
+                  )}
+                  <span className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest border ${net >= 0 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                    {net >= 0 ? 'SURPLUS' : 'DEFICIT'}
+                  </span>
+                </div>
+              </div>
+              <div className="relative z-10 mt-1">
+                <div className={`text-2xl font-black tabular-nums tracking-tight leading-none font-mono ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                  {formatMoney(net)}
+                </div>
+              </div>
+              <div className="relative z-10 mt-2 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
+                  {getSubValue(net) || (net >= 0 ? 'สถานะ: ยอดสะสมเป็นบวก' : 'สถานะ: ยอดสะสมติดลบ')}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Group Breakdown Area (Visible in all view modes) */}

@@ -121,7 +121,7 @@
 
 /* Form elements & Inputs */
 .dark-mode input,
-.dark-mode select:not(.day-type-badge):not(.category-select),
+.dark-mode select:not(.day-type-badge):not(.category-select):not(.allocation-select),
 .dark-mode textarea { 
   background-color: #050507 !important; 
   border-color: #232935 !important; 
@@ -135,7 +135,7 @@
   font-weight: bold; 
 }
 
-.dark-mode select option { 
+.dark-mode select:not(.allocation-select) option { 
   background-color: #14141A !important; 
   color: #f8fafc !important; 
 }

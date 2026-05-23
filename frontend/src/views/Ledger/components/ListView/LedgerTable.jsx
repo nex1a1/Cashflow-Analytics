@@ -121,9 +121,9 @@ export default function LedgerTable({
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
               const aColors = {
-                need: 'text-rose-400 border-rose-900/40 bg-rose-900/10',
-                want: 'text-sky-400 border-sky-900/40 bg-sky-900/10',
-                savings: 'text-emerald-400 border-emerald-900/40 bg-emerald-900/10'
+                need: 'text-rose-400 border-rose-800/50 bg-rose-950/40 hover:bg-rose-900/30 hover:border-rose-700/60 focus:ring-1 focus:ring-rose-500/30',
+                want: 'text-sky-400 border-sky-800/50 bg-sky-950/40 hover:bg-sky-900/30 hover:border-sky-700/60 focus:ring-1 focus:ring-sky-500/30',
+                savings: 'text-emerald-400 border-emerald-800/50 bg-emerald-950/40 hover:bg-emerald-900/30 hover:border-emerald-700/60 focus:ring-1 focus:ring-emerald-500/30'
               };
 
               return (
@@ -192,12 +192,12 @@ export default function LedgerTable({
                       <select 
                         value={aType} 
                         onChange={e => handleUpdateTransaction(item.id, 'allocation_type', e.target.value)}
-                        className={`w-full bg-transparent outline-none appearance-none px-2 py-1 font-black border rounded-sm text-[10px] text-center transition-all cursor-pointer ${aColors[aType]}`}
+                        className={`allocation-select w-full bg-transparent outline-none appearance-none px-2 py-1 font-black border rounded-sm text-[10px] text-center transition-all cursor-pointer ${aColors[aType]}`}
                         style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.2rem center', backgroundSize: '0.6em' }}
                       >
-                        <option value="need">NEED</option>
-                        <option value="want">WANT</option>
-                        <option value="savings">SAVE</option>
+                        <option value="need" className="bg-slate-950 text-rose-400 font-extrabold">NEED</option>
+                        <option value="want" className="bg-slate-950 text-sky-400 font-extrabold">WANT</option>
+                        <option value="savings" className="bg-slate-950 text-emerald-400 font-extrabold">SAVE</option>
                       </select>
                     ) : (
                       <span className={`inline-flex items-center justify-center px-2 py-1 text-[10px] font-black opacity-20 ${'text-slate-500'}`}>
