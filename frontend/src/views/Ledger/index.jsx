@@ -323,11 +323,11 @@ export default function LedgerView({
       </div>
 
       {/* Table Area */}
-      <div className={`flex flex-col border rounded overflow-hidden shadow-sm transition-colors min-h-[400px] relative ${'bg-slate-900 border-slate-850'}`}>
+      <div className={`flex flex-col border-2 rounded-none overflow-hidden shadow-lg transition-colors min-h-[400px] relative ${'bg-slate-900 border-slate-800'}`}>
         {showSkeleton ? (
           <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-10 backdrop-blur-sm" style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)' }}>
-            <div className={`w-12 h-12 mb-4 rounded-full animate-bounce flex items-center justify-center ${'bg-slate-800 text-blue-400'}`}>
-              <LayoutList className="w-6 h-6 animate-pulse" />
+            <div className={`w-12 h-12 mb-4 rounded-none border border-slate-700 animate-pulse flex items-center justify-center ${'bg-slate-850 text-blue-400'}`}>
+              <LayoutList className="w-6 h-6" />
             </div>
             <p className={`text-sm font-bold animate-pulse ${'text-slate-400'}`}>กำลังโหลดข้อมูล...</p>
           </div>

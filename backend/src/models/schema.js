@@ -145,6 +145,7 @@ const initSchema = () => {
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
       CREATE INDEX IF NOT EXISTS idx_transactions_is_deleted ON transactions(is_deleted);
+      CREATE INDEX IF NOT EXISTS idx_transactions_category_deleted ON transactions(category_id, is_deleted);
       CREATE INDEX IF NOT EXISTS idx_calendar_days_day_type ON calendar_days(day_type_id);
     `);
   } catch (e) {
@@ -154,8 +155,15 @@ const initSchema = () => {
   // 4. Seed Initial Data
   seedInitialData();
 
+  // 5. Run Custom Migrations (Subscription Category Split)
+  runSubscriptionMigration();
+
+  // 6. Run IT Category Split Migration
+  runITCategorySplitMigration();
+
   console.log('✅ Database Schema initialized and verified');
 };
+
 
 const verifyTableColumns = () => {
   // --- Transactions ---
@@ -301,4 +309,186 @@ const seedInitialData = () => {
   }
 };
 
+const runSubscriptionMigration = () => {
+  const crypto = require('crypto');
+  
+  try {
+    // 1. Find or create the target group 'บริการรายเดือน'
+    let groupId;
+    
+    // Check if 'บริการรายเดือน' group already exists
+    const group1 = db.prepare("SELECT id FROM cashflow_groups WHERE name = 'บริการรายเดือน'").get();
+    // Check if 'รายเดือน' group exists
+    const group2 = db.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน'").get();
+    // Check if old 'รายเดือน/หนี้' group exists
+    const group3 = db.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน/หนี้'").get();
+
+    if (group1) {
+      groupId = group1.id;
+    } else if (group2) {
+      db.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
+        .run('บริการรายเดือน', '🔄', '#8B5CF6', group2.id);
+      groupId = group2.id;
+      console.log('✅ Migrated Group: Renamed "รายเดือน" to "บริการรายเดือน"');
+    } else if (group3) {
+      db.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
+        .run('บริการรายเดือน', '🔄', '#8B5CF6', group3.id);
+      groupId = group3.id;
+      console.log('✅ Migrated Group: Renamed "รายเดือน/หนี้" to "บริการรายเดือน"');
+    } else {
+      groupId = crypto.randomUUID();
+      db.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, allocation_type) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        .run(groupId, 'บริการรายเดือน', 'expense', 4, '#8B5CF6', '🔄', 'want');
+      console.log('🌱 Created Group: "บริการรายเดือน"');
+    }
+
+    // Move categories and delete redundant groups
+    const redundantGroups = [group2, group3].filter(g => g && g.id !== groupId);
+    redundantGroups.forEach(rg => {
+      // Move all categories from redundant group to the target group
+      const updateCats = db.prepare("UPDATE categories SET cashflow_group_id = ? WHERE cashflow_group_id = ?")
+        .run(groupId, rg.id);
+      if (updateCats.changes > 0) {
+        console.log(`✅ Merged ${updateCats.changes} categories from redundant group to "บริการรายเดือน"`);
+      }
+      
+      // Delete the redundant group
+      db.prepare("DELETE FROM cashflow_groups WHERE id = ?").run(rg.id);
+      console.log(`🗑️ Deleted redundant cashflow group: ${rg.id}`);
+    });
+
+    // 2. Add / Rename Categories
+    let softwareCatId;
+    let shoppingCatId;
+    let entertainmentCatId;
+
+    // 2.1 Software & AI (Rename old 'บริการรายเดือน' category if exists, or create new)
+    const oldCat = db.prepare("SELECT id FROM categories WHERE name = 'บริการรายเดือน'").get();
+    if (oldCat) {
+      db.prepare("UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ?")
+        .run('ซอฟต์แวร์ & AI', '🤖', '#3B82F6', oldCat.id);
+      softwareCatId = oldCat.id;
+      console.log('✅ Migrated Category: Renamed "บริการรายเดือน" to "ซอฟต์แวร์ & AI"');
+    } else {
+      const existingSoftwareCat = db.prepare("SELECT id FROM categories WHERE name = 'ซอฟต์แวร์ & AI'").get();
+      if (existingSoftwareCat) {
+        softwareCatId = existingSoftwareCat.id;
+      } else {
+        softwareCatId = crypto.randomUUID();
+        db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+          .run(softwareCatId, 'ซอฟต์แวร์ & AI', '🤖', '#3B82F6', 1, groupId);
+        console.log('🌱 Created Category: "ซอฟต์แวร์ & AI"');
+      }
+    }
+
+    // 2.2 Shopping & Food Delivery VIP (Create if not exists)
+    const existingShoppingCat = db.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง & ส่งอาหาร'").get();
+    if (existingShoppingCat) {
+      shoppingCatId = existingShoppingCat.id;
+    } else {
+      shoppingCatId = crypto.randomUUID();
+      db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(shoppingCatId, 'สมาชิกช้อปปิ้ง & ส่งอาหาร', '🛍️', '#EC4899', 2, groupId);
+      console.log('🌱 Created Category: "สมาชิกช้อปปิ้ง & ส่งอาหาร"');
+    }
+
+    // 2.3 Entertainment & Streaming (Create if not exists)
+    const existingEntertainmentCat = db.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง & สตรีมมิ่ง'").get();
+    if (existingEntertainmentCat) {
+      entertainmentCatId = existingEntertainmentCat.id;
+    } else {
+      entertainmentCatId = crypto.randomUUID();
+      db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(entertainmentCatId, 'ความบันเทิง & สตรีมมิ่ง', '🍿', '#EF4444', 3, groupId);
+      console.log('🌱 Created Category: "ความบันเทิง & สตรีมมิ่ง"');
+    }
+
+    // 3. Smart Transaction Re-classification
+    // Select transactions under the 'ซอฟต์แวร์ & AI' category to classify them
+    const txs = db.prepare("SELECT id, description FROM transactions WHERE category_id = ? AND is_deleted = 0").all(softwareCatId);
+    let shoppingCount = 0;
+    let entertainmentCount = 0;
+
+    const updateTx = db.prepare("UPDATE transactions SET category_id = ? WHERE id = ?");
+
+    txs.forEach(tx => {
+      if (!tx.description) return;
+      const desc = tx.description.toLowerCase();
+
+      // Shopping / Food VIP keywords
+      const shoppingKeywords = ['shopee', 'lazada', 'grab', 'lineman', 'foodpanda', 'membership', 'vip', 'prime', 'delivery', 'ช้อป', 'ส่งอาหาร'];
+      // Entertainment keywords
+      const entertainmentKeywords = ['netflix', 'spotify', 'youtube', 'disney', 'hbo', 'prime video', 'steam', 'playstation', 'xbox', 'nintendo', 'game', 'เพลง', 'หนัง', 'บันเทิง'];
+
+      if (shoppingKeywords.some(k => desc.includes(k))) {
+        updateTx.run(shoppingCatId, tx.id);
+        shoppingCount++;
+      } else if (entertainmentKeywords.some(k => desc.includes(k))) {
+        updateTx.run(entertainmentCatId, tx.id);
+        entertainmentCount++;
+      }
+    });
+
+    if (shoppingCount > 0 || entertainmentCount > 0) {
+      console.log(`🧠 Smart Re-classified: Moved ${shoppingCount} to Shopping VIP, ${entertainmentCount} to Entertainment & Streaming`);
+    }
+
+  } catch (err) {
+    console.error('⚠️ Subscription Migration error:', err.message);
+  }
+};
+
+const runITCategorySplitMigration = () => {
+  const crypto = require('crypto');
+
+  try {
+    // 1. Find the target group for these expense categories
+    let groupId;
+    const groupVar = db.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายจ่ายผันแปร'").get();
+    if (groupVar) {
+      groupId = groupVar.id;
+    } else {
+      const anyExpenseGroup = db.prepare("SELECT id FROM cashflow_groups WHERE type = 'expense' ORDER BY order_index LIMIT 1").get();
+      if (anyExpenseGroup) {
+        groupId = anyExpenseGroup.id;
+      } else {
+        console.warn('⚠️ No expense group found for IT categories');
+        return;
+      }
+    }
+
+    // 2. Define the new IT categories
+    const newCategories = [
+      { id: 'c7_comp', name: 'ประกอบคอม & ฮาร์ดแวร์', icon: '🖥️', color: '#00509E', order_index: 10 },
+      { id: 'c7_gear', name: 'เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง', icon: '⌨️', color: '#6366F1', order_index: 11 },
+      { id: 'c7_desk', name: 'เฟอร์นิเจอร์ & จัดโต๊ะคอม', icon: '🪑', color: '#06B6D4', order_index: 12 },
+      { id: 'c7_phone', name: 'สมาร์ทโฟน & ไอทีพกพา', icon: '📱', color: '#8B5CF6', order_index: 13 }
+    ];
+
+    const insertCat = db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)");
+    const updateCatColor = db.prepare("UPDATE categories SET color = ?, icon = ? WHERE id = ?");
+    
+    newCategories.forEach(cat => {
+      const exists = db.prepare("SELECT id FROM categories WHERE id = ?").get(cat.id);
+      if (!exists) {
+        insertCat.run(cat.id, cat.name, cat.icon, cat.color, cat.order_index, groupId);
+        console.log(`🌱 Created Category: "${cat.name}"`);
+      } else {
+        updateCatColor.run(cat.color, cat.icon, cat.id);
+      }
+    });
+
+    // 3. Sync 'ค่าเช่า/ค่าหอพัก' color if it exists in the database
+    const rentCat = db.prepare("SELECT id FROM categories WHERE name = 'ค่าเช่า/ค่าหอพัก' OR id = 'c13'").get();
+    if (rentCat) {
+      updateCatColor.run('#B45309', '🏢', rentCat.id);
+      console.log(`🏢 Synced "ค่าเช่า/ค่าหอพัก" color to #B45309`);
+    }
+
+  } catch (err) {
+    console.error('⚠️ IT Category Migration error:', err.message);
+  }
+};
+
 module.exports = { initSchema };
+

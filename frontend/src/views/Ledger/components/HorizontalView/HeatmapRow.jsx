@@ -5,8 +5,8 @@ import HeatmapCell from './HeatmapCell';
 const HeatmapRow = memo(function HeatmapRow({
   date, rowIdx, day, month, dayName, isWeekend,
   dailyTotal, grandTotal, cellMap, activeCategories,
-  dayTypes, dayTypeConfig, isRowHovered, hoveredCat,
-  setHoveredDate, handleCellLeave, handleCellHover, handleCellMouseMove,
+  dayTypes, dayTypeConfig,
+  handleCellLeave, handleCellHover, handleCellMouseMove,
   dm, bgBase, border, ROW_H, maxCellValue, fmtCell
 }) {
   const total = dailyTotal[date] || 0;
@@ -19,16 +19,14 @@ const HeatmapRow = memo(function HeatmapRow({
 
   return (
     <tr style={{ height: ROW_H }}
-      onMouseEnter={() => setHoveredDate(date)}
       onMouseLeave={handleCellLeave}
     >
       <td style={{
         position: 'sticky', left: 0, zIndex: 30,
-        background: isRowHovered ? ('#1a2035') : bgBase,
+        background: bgBase,
         borderBottom: `1px solid ${border}`,
         borderRight: `1px solid ${border}`,
         padding: '2px',
-        transition: 'background 0.08s',
       }}>
         {(() => {
           const dailyValues = Object.values(dailyTotal);
@@ -43,10 +41,12 @@ const HeatmapRow = memo(function HeatmapRow({
               justifyContent: 'center',
               height: '100%',
               minHeight: '30px',
-              borderRadius: 3,
+              borderRadius: 0,
               overflow: 'hidden',
               background: `rgba(${typeRgb}, ${dm ? 0.08 : 0.04})`,
+              borderLeft: `2.5px solid ${typeColor}`,
               padding: '2px 0',
+              '--type-rgb': typeRgb,
             }}>
               <div style={{
                 position: 'absolute',
@@ -54,9 +54,9 @@ const HeatmapRow = memo(function HeatmapRow({
                 top: 0,
                 bottom: 0,
                 width: `${sparkPct}%`,
-                background: `rgba(${typeRgb}, ${isRowHovered ? (dm ? 0.3 : 0.18) : (dm ? 0.18 : 0.1)})`,
-                borderRadius: '3px 0 0 3px',
-                transition: 'width 0.3s ease, background 0.15s',
+                background: `rgba(${typeRgb}, ${dm ? 0.18 : 0.1})`,
+                borderRadius: 0,
+                transition: 'width 0.3s ease',
               }} />
               
               <div style={{
@@ -102,18 +102,16 @@ const HeatmapRow = memo(function HeatmapRow({
         })()}
       </td>
 
-      {activeCategories.map(cat => {
+      {activeCategories.map((cat, idx) => {
         const items    = cellMap[date]?.[cat.name] || [];
         const cellSum  = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
         const intensity = items.length > 0 ? Math.max(0.07, Math.min(0.78, (cellSum / maxCellValue) * 0.72)) : 0;
-        const isColHovered  = hoveredCat === cat.id;
         
         return (
           <HeatmapCell
             key={cat.id}
+            idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
-            isRowHovered={isRowHovered} isColHovered={isColHovered}
-            isCellHovered={isRowHovered && isColHovered}
             dm={dm} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
             handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove} fmtCell={fmtCell}
           />
@@ -122,13 +120,10 @@ const HeatmapRow = memo(function HeatmapRow({
 
       <td style={{
         position: 'sticky', right: 0, zIndex: 30,
-        background: isRowHovered
-          ? ('rgba(239,68,68,0.12)')
-          : ('rgba(239,68,68,0.04)'),
+        background: 'rgba(239, 68, 68, 0.04)',
         borderBottom: `1px solid ${border}`,
         borderLeft: `1px solid ${border}`,
         padding: '0 6px',
-        transition: 'background 0.08s',
         height: ROW_H,
       }}>
         {total > 0 && (

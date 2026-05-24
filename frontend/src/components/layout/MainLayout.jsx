@@ -72,6 +72,7 @@ export default function MainLayout({ controller }) {
     handleUpdateCashflowGroup,
     handleAddCashflowGroup,
     handleDeleteCashflowGroup,
+    handleMoveCashflowGroup,
     handleSaveTransaction,
     handleUpdateTransaction,
     handleDeleteTransaction,
@@ -200,6 +201,7 @@ export default function MainLayout({ controller }) {
                   handleAddCashflowGroup={handleAddCashflowGroup}
                   handleUpdateCashflowGroup={handleUpdateCashflowGroup}
                   handleDeleteCashflowGroup={handleDeleteCashflowGroup}
+                  handleMoveCashflowGroup={handleMoveCashflowGroup}
                   dayTypeConfig={dayTypeConfig}
                   handleDayTypeConfigChange={handleDayTypeConfigChange}
                   handleAddDayType={handleAddDayType}

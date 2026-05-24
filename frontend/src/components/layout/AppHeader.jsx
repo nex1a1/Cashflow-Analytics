@@ -166,7 +166,7 @@ export default function AppHeader({
           {/* Primary Action Button (Quick Add) */}
           <button
             onClick={onClickAddQuick}
-            className={`text-xs font-bold tracking-wider flex items-center gap-2 px-4 py-2.5 rounded-none border-2 transition-all duration-150 active:translate-y-[1px] shrink-0 ${
+            className={`text-xs font-bold tracking-wider flex items-center gap-2 px-4 py-2.5 rounded-none border-2 shrink-0 ${
               'bg-emerald-600 border-emerald-500 hover:bg-emerald-500 hover:border-emerald-400 text-white'
             }`}
           >
@@ -211,7 +211,7 @@ export default function AppHeader({
 
         {/* Right side of Sub Header (PeriodPicker Boxy Container) */}
         {showPeriodPicker && (
-          <div className={`flex items-center py-2 px-1 w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 mt-1 md:mt-0 pt-2 md:pt-0 ${
+          <div className={`flex items-center py-2 md:py-0 px-1 w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 mt-1 md:mt-0 ${
             'border-slate-800'
           }`}>
             <PeriodPicker

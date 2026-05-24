@@ -17,7 +17,7 @@ const CashflowTableHeader = ({
   const getHighlightBg = (group) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = group.highlightBg ? (dm ? 0.25 : 0.45) : (dm ? 0.08 : 0.28);
+    const opacity = dm ? 0.08 : 0.28;
     return `rgba(${rgb}, ${opacity})`;
   };
 
@@ -115,7 +115,7 @@ const CashflowTableRow = ({
   const getHighlightBg = (group) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = group.highlightBg ? (dm ? 0.25 : 0.45) : (dm ? 0.08 : 0.28);
+    const opacity = dm ? 0.08 : 0.28;
     return `rgba(${rgb}, ${opacity})`;
   };
 

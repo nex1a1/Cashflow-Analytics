@@ -9,6 +9,36 @@ import HeatmapTooltip from './HeatmapTooltip';
 import HeatmapHeader from './HeatmapHeader';
 import HeatmapRow from './HeatmapRow';
 
+const THAI_MONTHS_FULL = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+const parseYearMonth = (dateStr) => {
+  let monthIdx = 0;
+  let year = 0;
+  if (!dateStr) return { year, monthIdx };
+
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      year = parseInt(parts[0], 10);
+      monthIdx = parseInt(parts[1], 10) - 1;
+    }
+  } else {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      monthIdx = parseInt(parts[1], 10) - 1;
+      year = parseInt(parts[2], 10);
+    }
+  }
+  
+  if (year > 0 && year < 2500) {
+    year += 543;
+  }
+  return { year, monthIdx };
+};
+
 export default function HorizontalLedgerView({
   displayTransactions, categories, formatMoney, dayTypes = {}, dayTypeConfig = [], allDates = []
 }) {
@@ -17,8 +47,6 @@ export default function HorizontalLedgerView({
   // UI State
   const [tooltip, setTooltip] = useState(null);
   const tooltipRef = useRef(null);
-  const [hoveredDate, setHoveredDate] = useState(null);
-  const [hoveredCat, setHoveredCat] = useState(null);
 
   // ─── 1. Engine: Pure Data Logic ───
   const {
@@ -35,22 +63,25 @@ export default function HorizontalLedgerView({
 
   // ─── 2. Event Handlers ───
   const handleCellHover = useCallback((e, date, catId, cat, items) => {
-    setHoveredDate(date);
-    setHoveredCat(catId);
     if (!items || items.length === 0) {
       setTooltip(null);
       return;
     }
-    setTooltip({ x: e.clientX, y: e.clientY, date, cat, items });
+    setTooltip({ date, cat, items });
+    if (tooltipRef.current) {
+      tooltipRef.current.style.left = `${e.clientX + 14}px`;
+      tooltipRef.current.style.top = `${e.clientY - 8}px`;
+    }
   }, []);
 
   const handleCellMouseMove = useCallback((e) => {
-    setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
+    if (tooltipRef.current) {
+      tooltipRef.current.style.left = `${e.clientX + 14}px`;
+      tooltipRef.current.style.top = `${e.clientY - 8}px`;
+    }
   }, []);
 
   const handleCellLeave = useCallback(() => {
-    setHoveredDate(null);
-    setHoveredCat(null);
     setTooltip(null);
   }, []);
 
@@ -67,11 +98,11 @@ export default function HorizontalLedgerView({
   if (expenseTransactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 px-4">
-        <div className={`p-6 rounded-full mb-6 ${'bg-slate-800'}`}>
-          <Inbox className={`w-16 h-16 ${'text-slate-600'}`} />
+        <div className="p-6 rounded-none border-2 border-slate-800 mb-6 bg-slate-900 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
+          <Inbox className="w-16 h-16 text-slate-500" />
         </div>
-        <p className={`text-lg font-black ${'text-slate-400'}`}>ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className={`text-sm mt-2 ${'text-slate-500'}`}>เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className="text-lg font-black text-slate-400">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
+        <p className="text-sm mt-2 text-slate-500">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
       </div>
     );
   }
@@ -86,6 +117,7 @@ export default function HorizontalLedgerView({
       <div className="w-full" style={{ overflowX: 'auto' }}>
         <table
           onMouseLeave={handleCellLeave}
+          className="heatmap-table"
           style={{
             borderCollapse: 'separate',
             borderSpacing: 0,
@@ -104,24 +136,76 @@ export default function HorizontalLedgerView({
           <HeatmapHeader 
             activeCategories={activeCategories}
             dm={dm} bgHead={bgHead} border={border} border2={border2}
-            hoveredCat={hoveredCat} setHoveredCat={setHoveredCat}
           />
 
           <tbody>
             {sortedDates.map((date, rowIdx) => {
               const { day, month, dayName, isWeekend } = formatDate(date);
+              
+              const currentYM = parseYearMonth(date);
+              const prevDate = rowIdx > 0 ? sortedDates[rowIdx - 1] : null;
+              const prevYM = prevDate ? parseYearMonth(prevDate) : null;
+              
+              const isNewYear = !prevYM || currentYM.year !== prevYM.year;
+              const isNewMonth = !prevYM || currentYM.monthIdx !== prevYM.monthIdx || currentYM.year !== prevYM.year;
+              
               return (
-                <HeatmapRow 
-                  key={date}
-                  date={date} rowIdx={rowIdx} day={day} month={month} dayName={dayName} isWeekend={isWeekend}
-                  dailyTotal={dailyTotal} grandTotal={grandTotal} cellMap={cellMap}
-                  activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
-                  isRowHovered={hoveredDate === date} hoveredCat={hoveredCat}
-                  setHoveredDate={setHoveredDate} handleCellLeave={handleCellLeave}
-                  handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove}
-                  dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-                  fmtCell={fmtCell}
-                />
+                <React.Fragment key={date}>
+                  {isNewMonth && (
+                    <tr className="select-none">
+                      <td
+                        colSpan={activeCategories.length + 2}
+                        style={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 20,
+                          background: isNewYear 
+                            ? 'linear-gradient(90deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)' 
+                            : 'linear-gradient(90deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                          borderTop: isNewYear ? '1.5px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          padding: '6px 10px',
+                          textAlign: 'left',
+                          height: '32px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{
+                            background: isNewYear ? 'rgba(59, 130, 246, 0.25)' : 'rgba(100, 116, 139, 0.15)',
+                            border: isNewYear ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(100, 116, 139, 0.25)',
+                            color: isNewYear ? '#60a5fa' : '#94a3b8',
+                            fontSize: '9px',
+                            fontWeight: 900,
+                            padding: '1px 5px',
+                            fontFamily: 'monospace',
+                            letterSpacing: '0.05em',
+                          }}>
+                            {isNewYear ? 'YEAR' : 'MONTH'}
+                          </span>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: 900,
+                            color: isNewYear ? '#60a5fa' : '#cbd5e1',
+                            letterSpacing: '0.02em',
+                            fontFamily: 'monospace',
+                          }}>
+                            {THAI_MONTHS_FULL[currentYM.monthIdx]} {currentYM.year}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  <HeatmapRow 
+                    date={date} rowIdx={rowIdx} day={day} month={month} dayName={dayName} isWeekend={isWeekend}
+                    dailyTotal={dailyTotal} grandTotal={grandTotal} cellMap={cellMap}
+                    activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
+                    handleCellLeave={handleCellLeave}
+                    handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove}
+                    dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
+                    fmtCell={fmtCell}
+                  />
+                </React.Fragment>
               );
             })}
           </tbody>
@@ -140,17 +224,18 @@ export default function HorizontalLedgerView({
                 color: '#64748b',
               }}>รวม</td>
 
-              {activeCategories.map(cat => (
-                <td key={cat.id} style={{
-                  position: 'sticky', bottom: 0, zIndex: 40,
-                  background: hoveredCat === cat.id
-                    ? ('#1e293b')
-                    : bgFoot,
-                  borderTop: `1.5px solid ${border2}`,
-                  borderRight: `1px solid ${border}`,
-                  padding: '8px 4px',
-                  transition: 'background 0.1s',
-                }}>
+              {activeCategories.map((cat, idx) => (
+                <td key={cat.id} 
+                  className={`heatmap-footer-cell col-idx-${idx}`}
+                  style={{
+                    position: 'sticky', bottom: 0, zIndex: 40,
+                    background: bgFoot,
+                    borderTop: `1.5px solid ${border2}`,
+                    borderRight: `1px solid ${border}`,
+                    padding: '8px 4px',
+                    '--cat-color': cat.color,
+                  }}
+                >
                   {categoryTotal[cat.name] > 0 && (
                     <div style={{
                       display: 'flex',

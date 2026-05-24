@@ -12,7 +12,7 @@ export default function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, handleDayTypeConfigChange, handleDeleteAllData,
   cashflowGroups = [], setCashflowGroups,
-  handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup,
+  handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup, handleMoveCashflowGroup,
   transactions = [],
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
   triggerToast
@@ -49,26 +49,6 @@ export default function SettingsView({
     handleDeleteCashflowGroup(id);
   }, [categories, handleDeleteCashflowGroup]);
 
-  const handleMoveCashflowGroup = useCallback(async (id, direction) => {
-    const idx = cashflowGroups.findIndex(g => g.id === id);
-    if (idx < 0) return;
-    const ti = direction === 'UP' ? idx - 1 : idx + 1;
-    if (ti >= 0 && ti < cashflowGroups.length) {
-      const updated = [...cashflowGroups];
-      [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
-      
-      const finalUpdated = updated.map((g, i) => ({ ...g, order_index: i + 1 }));
-      setCashflowGroups(finalUpdated);
-
-      try {
-        for (const group of finalUpdated) {
-          await handleUpdateCashflowGroup(group);
-        }
-      } catch (err) {
-        console.error('Failed to save groups order:', err);
-      }
-    }
-  }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 
   const txCountByGroup = useMemo(() => {
     const map = {};
@@ -109,7 +89,7 @@ export default function SettingsView({
           'bg-slate-900/60 border-slate-850/80 text-slate-350 shadow-sm'
         }`}>
           <Info className={`w-3.5 h-3.5 shrink-0 ${'text-sky-400'}`} />
-          <span><b>BG</b> = เทสีพื้นหลังคอลัมน์ใน Dashboard &nbsp;·&nbsp; <b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
+          <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>
 

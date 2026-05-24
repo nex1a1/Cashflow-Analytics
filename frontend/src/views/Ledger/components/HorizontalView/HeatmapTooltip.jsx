@@ -1,24 +1,29 @@
 import React, { memo } from 'react';
 
 const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, tooltipRef, dm }) {
-  if (!tooltip) return null;
+  const isVisible = !!tooltip;
 
   return (
     <div
       ref={tooltipRef}
       className="fixed z-[9999] pointer-events-none"
-      style={{ left: tooltip.x + 14, top: tooltip.y - 8, transform: 'translateY(-100%)' }}
+      style={{ 
+        display: isVisible ? 'block' : 'none', 
+        transform: 'translateY(-100%)',
+        position: 'fixed'
+      }}
     >
-      <div style={{
-        background: 'rgba(15,23,42,0.97)',
-        border: `1px solid ${'rgba(255,255,255,0.1)'}`,
-        borderRadius: 4,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-        minWidth: 220,
-        maxWidth: 300,
-        overflow: 'hidden',
-        backdropFilter: 'blur(20px)',
-      }}>
+      {isVisible && (
+        <div style={{
+          background: 'rgba(15,23,42,0.97)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: 0,
+          boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
+          minWidth: 220,
+          maxWidth: 300,
+          overflow: 'hidden',
+          backdropFilter: 'blur(20px)',
+        }}>
         <div style={{
           padding: '8px 12px',
           display: 'flex',
@@ -75,6 +80,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, tooltipRef, dm })
           </div>
         )}
       </div>
+      )}
     </div>
   );
 });

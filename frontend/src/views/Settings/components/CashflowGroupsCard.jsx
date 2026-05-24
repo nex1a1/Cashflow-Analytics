@@ -49,15 +49,6 @@ const CashflowGroupsCard = memo(({
                     'bg-slate-950 border-slate-850/80 text-white focus:border-purple-500/70 focus:shadow-[0_0_8px_rgba(168,85,247,0.2)]'
                   }`} title="ไอคอน" placeholder="✨" />
 
-                <label className={`flex items-center justify-center gap-1 cursor-pointer px-2 py-1 border text-[10px] font-black shrink-0 transition-all rounded-sm ${
-                  group.highlightBg
-                    ? ('bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-[0_0_6px_rgba(245,158,11,0.1)]')
-                    : ('text-slate-500 border-slate-850 bg-slate-950/20 hover:border-slate-700 hover:text-slate-400')
-                }`} title="เทสีพื้นหลังคอลัมน์">
-                  <input type="checkbox" checked={!!group.highlightBg} onChange={e => handleChangeCashflowGroup(group.id, 'highlightBg', e.target.checked)} className="hidden" />
-                  <span className={`w-1.5 h-1.5 rounded-full transition-transform ${group.highlightBg ? 'bg-amber-500 scale-110' : ('bg-slate-650')}`} />
-                  BG
-                </label>
 
                 <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
                   disabled={group.isDefault || inUse}

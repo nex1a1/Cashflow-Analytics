@@ -1,5 +1,5 @@
 // src/views/Dashboard/index.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
 import { DashboardProvider } from './context/DashboardContext';
@@ -44,8 +44,32 @@ export default function DashboardView(props) {
     );
   }
 
+  // Memoize the context value to avoid recreating it on every single render
+  const dashboardContextValue = useMemo(() => ({
+    ...props,
+    showSkeleton
+  }), [
+    props.transactions,
+    props.categories,
+    props.filterPeriod,
+    props.getFilterLabel,
+    props.hideFixedExpenses,
+    props.setHideFixedExpenses,
+    props.dashboardCategory,
+    props.setDashboardCategory,
+    props.chartGroupBy,
+    props.setChartGroupBy,
+    props.topXLimit,
+    props.setTopXLimit,
+    props.analytics,
+    props.isLoading,
+    props.dayTypeConfig,
+    props.dayTypes,
+    showSkeleton
+  ]);
+
   return (
-    <DashboardProvider value={{ ...props, showSkeleton }}>
+    <DashboardProvider value={dashboardContextValue}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-10 flex flex-col gap-4">
 
         {/* ══════════════════════════════════════════════════════════

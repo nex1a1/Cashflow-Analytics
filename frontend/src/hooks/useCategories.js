@@ -137,10 +137,15 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     else if (dir === 'down' && index < sameTypeCategories.length - 1) swapIndex = index + 1;
     
     if (swapIndex !== -1) {
-      const otherCat = sameTypeCategories[swapIndex];
+      // Create a new array with swapped elements
+      const updatedList = [...sameTypeCategories];
+      [updatedList[index], updatedList[swapIndex]] = [updatedList[swapIndex], updatedList[index]];
       
-      const updatedTarget = { ...targetCat, order_index: otherCat.order_index };
-      const updatedOther = { ...otherCat, order_index: targetCat.order_index };
+      // Map to set clean sequential indices (1, 2, 3...) to heal any duplicates/gaps
+      const finalUpdated = updatedList.map((c, i) => ({
+        ...c,
+        order_index: i + 1
+      }));
 
       const toBackend = (c) => ({
         id: c.id,
@@ -152,8 +157,12 @@ export default function useCategories(initialCategories, setCashflowGroups) {
       });
 
       try {
-        await categoryService.save(toBackend(updatedTarget));
-        await categoryService.save(toBackend(updatedOther));
+        for (const cat of finalUpdated) {
+          const original = categories.find(c => c.id === cat.id);
+          if (!original || original.order_index !== cat.order_index) {
+            await categoryService.save(toBackend(cat));
+          }
+        }
         await loadCategories();
       } catch (err) {
         showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');

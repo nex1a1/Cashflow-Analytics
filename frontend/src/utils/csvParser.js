@@ -5,7 +5,11 @@ export const autoCategorize = (description, categoryName, categoryList) => {
   else if (t.match(/โบนัส|รายรับพิเศษ|ขายของ/)) matchedName = "รายรับพิเศษ/โบนัส";
   else if (t.match(/หุ้น|nvda|xom|ko|qqq|webull|ออมทอง|กองทุน|ลงทุน/)) matchedName = "การลงทุนและออมเงิน";
   else if (t.match(/ค่าเช่า|ค่าหอ|หอพัก|อพาร์ทเม้นท์|คอนโด|ห้องพัก/)) matchedName = "ค่าเช่า/ค่าหอพัก";
-  else if (t.match(/คอม|computer|ผ่อน|mainboard|psu|ram|ryzen|cpu|case|ssd|usb|การ์ดจอ|keyboard|เมาส์|ไมค์|maono|สายรัด|จอ|ไอแพด|ipad/)) matchedName = "อุปกรณ์ไอที/คอมพิวเตอร์";
+  else if (t.match(/ไอแพด|ipad|iphone|ไอโฟน|มือถือ|samsung|xiaomi|tablet|แท็บเล็ต|apple watch|smartwatch/)) matchedName = "สมาร์ทโฟน & ไอทีพกพา";
+  else if (t.match(/mainboard|psu|ram|ryzen|cpu|case|ssd|การ์ดจอ|vga|cooler|heatsink|fan|ups|สำรองไฟ/)) matchedName = "ประกอบคอม & ฮาร์ดแวร์";
+  else if (t.match(/keyboard|คีย์บอร์ด|เมาส์|mouse|ไมค์|microphone|maono|dac|soundcard|sound blaster|headphone|หูฟัง|earbud|in-ear|joystick|จอย|flydigi|xbox|connection|สายเชื่อมต่อ|enclosure|usb/)) matchedName = "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง";
+  else if (t.match(/โต๊ะ|table|desk|chair|เก้าอี้|bewell|pegboard|mousepad|แผ่นรองเมาส์|monitor arm|ขาตั้งจอ/)) matchedName = "เฟอร์นิเจอร์ & จัดโต๊ะคอม";
+  else if (t.match(/คอม|computer|ผ่อน|จอ/)) matchedName = "อุปกรณ์ไอที/คอมพิวเตอร์";
   else if (t.match(/gemini|vip|subscription|netflix|youtube|spotify|yt premium|รายเดือน|สมาชิก/)) matchedName = "บริการรายเดือน";
   else if (t.match(/max value|maxvalue|lotus|big c|tops|makro|ซุปเปอร์|ห้าง|เซเว่น|7-11|ดองกิ/)) matchedName = "ซุปเปอร์มาร์เก็ต/ห้าง";
   else if (t.match(/shopee|lazada|ออนไลน์|สั่งของ|tiktok shop/)) matchedName = "ช้อปปิ้งออนไลน์";

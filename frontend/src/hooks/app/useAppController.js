@@ -207,6 +207,33 @@ export function useAppController() {
     } catch (err) { triggerToast('ไม่สามารถลบกลุ่มได้: ' + err.message, 'error'); }
   };
 
+  const handleMoveCashflowGroup = async (id, direction) => {
+    const sortedGroups = [...cashflowGroups].sort((a, b) => a.order_index - b.order_index);
+    const idx = sortedGroups.findIndex(g => g.id === id);
+    if (idx < 0) return;
+    
+    const ti = direction === 'UP' ? idx - 1 : idx + 1;
+    if (ti >= 0 && ti < sortedGroups.length) {
+      const updated = [...sortedGroups];
+      [updated[idx], updated[ti]] = [updated[ti], updated[idx]];
+      
+      const finalUpdated = updated.map((g, i) => ({ ...g, order_index: i + 1 }));
+      setCashflowGroups(finalUpdated);
+
+      try {
+        for (const group of finalUpdated) {
+          await groupService.save(group);
+        }
+        await loadGroups();
+        triggerToast('จัดเรียงลำดับกลุ่มสำเร็จ', 'success');
+      } catch (err) {
+        console.error('Failed to save groups order:', err);
+        triggerToast('ไม่สามารถจัดเรียงลำดับกลุ่มได้: ' + err.message, 'error');
+        await loadGroups();
+      }
+    }
+  };
+
   const handleOpenAddModal = useCallback((dateStr, type) => {
     const formattedDate = dateStr ? toISODate(dateStr) : new Date().toISOString().split('T')[0];
     setAddForm(prev => ({
@@ -297,6 +324,7 @@ export function useAppController() {
     handleUpdateCashflowGroup,
     handleAddCashflowGroup,
     handleDeleteCashflowGroup,
+    handleMoveCashflowGroup,
     handleSaveTransaction,
     handleUpdateTransaction,
     handleDeleteTransaction,

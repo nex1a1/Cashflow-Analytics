@@ -34,10 +34,10 @@ export default function CalendarDayCell({
   return (
     <div 
       onClick={() => onSelectDate(dateStr)}
-      className={`min-h-[120px] 2xl:min-h-[140px] flex flex-col relative group group/cell transition-all duration-200 ease-out cursor-pointer select-none ${cellBg} ${
+      className={`min-h-[120px] 2xl:min-h-[140px] flex flex-col relative group group/cell cursor-pointer select-none ${cellBg} ${
         isToday 
-          ? ('hover:bg-blue-950/50 hover:z-20 hover:-translate-y-[1px] hover:shadow-[0_4px_25px_rgba(59,130,246,0.15)]') 
-          : ('hover:bg-slate-850/80 hover:shadow-[0_8px_30px_rgba(0,0,0,0.45)] hover:z-20 hover:-translate-y-[1px]')
+          ? 'hover:bg-blue-950/50 hover:shadow-[0_4px_25px_rgba(59,130,246,0.15)]' 
+          : 'hover:bg-slate-850/80 hover:shadow-[0_8px_30px_rgba(0,0,0,0.45)]'
       }`}
     >
       {isToday && (
@@ -50,7 +50,7 @@ export default function CalendarDayCell({
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
       <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative transition-colors duration-200 ${'border-slate-850/60 bg-slate-950/40 backdrop-blur-sm'}`}>
         <div className="flex items-center gap-1.5">
-          <span className={`text-[14px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 transition-transform duration-200 group-hover/cell:scale-105 ${
+          <span className={`text-[14px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
             isToday
               ? 'bg-[#00509E] dark:bg-[#F43F5E] text-white shadow-sm'
               : isWeekend
@@ -59,14 +59,14 @@ export default function CalendarDayCell({
           }`}>
             {day}
           </span>
-          <PlusCircle className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all transform scale-75 group-hover:scale-100 duration-200 pointer-events-none ${'text-blue-400'}`} />
+          <PlusCircle className={`w-3.5 h-3.5 opacity-0 group-hover:opacity-100 pointer-events-none ${'text-blue-400'}`} />
         </div>
 
         <select
           onClick={(e) => e.stopPropagation()} 
           value={curType}
           onChange={e => handleDayTypeChange(dateStr, e.target.value)}
-          className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-sm cursor-pointer outline-none appearance-none text-center border transition-all hover:scale-105 shadow-sm"
+          className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-sm cursor-pointer outline-none appearance-none text-center border shadow-sm"
           style={{
             backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.05})`,
             borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.4 : 0.2})`,
@@ -101,7 +101,7 @@ export default function CalendarDayCell({
         {data.incItems?.slice(0, 1).map(tx => {
           const color = tx._catObj?.color || '#10b981';
           return (
-            <div key={tx.id} className="flex items-center gap-1 overflow-hidden opacity-90 transition-transform duration-200 group-hover/cell:translate-x-1" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
+            <div key={tx.id} className="flex items-center gap-1 overflow-hidden opacity-90" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
               <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate text-[12px] font-semibold leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
             </div>
@@ -111,7 +111,7 @@ export default function CalendarDayCell({
         {data.items.slice(0, 4).map(tx => {
           const color = tx._catObj?.color || '#94a3b8';
           return (
-            <div key={tx.id} className="flex items-center gap-1 overflow-hidden transition-transform duration-200 group-hover/cell:translate-x-1" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
+            <div key={tx.id} className="flex items-center gap-1 overflow-hidden" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
               <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate text-[12px] font-semibold leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
               <span className="text-[12px] font-bold shrink-0 ml-1 opacity-70" style={{ color }}>

@@ -48,3 +48,157 @@ h1, h2, h3, h4, h5, h6 {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(148, 163, 184, 0.6);
 }
+
+/* ────────────────────────────────────────────────────────── */
+/* ELITE Financial Intelligence - Disable Moving Animations   */
+/* ────────────────────────────────────────────────────────── */
+
+/* 1. Globally disable standard transitions & keyframe animations */
+*, ::before, ::after {
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* 2. Exception: Allow rotating loader spinners (animate-spin) so loading states still function */
+.animate-spin,
+.spinner,
+[class*="animate-spin"],
+[class*="spinner"] {
+  animation-name: spin !important;
+  animation-duration: 1s !important;
+  animation-iteration-count: infinite !important;
+  animation-timing-function: linear !important;
+}
+
+/* 3. Disable hover-translate-y, scale-up, or translate-x actions */
+.hover\:-translate-y-\[1px\]:hover,
+.hover\:-translate-y-0\.5:hover,
+.hover\:scale-105:hover,
+.group-hover\/cell\:translate-x-1,
+.group-hover\/cell\:scale-105,
+.hover\:z-20:hover {
+  transform: none !important;
+}
+
+/* 4. Disable keyframe entries from Tailwind Animate (slide-in, zoom-in, fade-in, etc.) */
+.animate-in {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* 5. Disable bounce and pulse moving effects */
+.animate-bounce {
+  animation: none !important;
+  transform: none !important;
+}
+
+.animate-pulse {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* PURE CSS HEATMAP HOVER SYSTEM (Ultra-Performance)           */
+/* ────────────────────────────────────────────────────────── */
+.heatmap-table {
+  overflow: hidden;
+  position: relative;
+}
+
+.heatmap-cell {
+  position: relative;
+}
+
+/* Zero-JS Column Highlighting Trick */
+.heatmap-cell:hover::after {
+  content: "";
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.035);
+  left: 0;
+  right: 0;
+  top: -9999px;
+  bottom: -9999px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Zero-JS Row Hover Highlighting */
+.heatmap-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Sticky first column (date cell) row hover */
+.heatmap-table tbody tr:hover td:first-child > div {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  border-left-color: #3b82f6 !important;
+}
+
+/* Sparkline bar row hover highlight inside date cell */
+.heatmap-table tbody tr:hover td:first-child > div > div:first-child {
+  background-color: rgba(var(--type-rgb), 0.3) !important;
+}
+
+/* Daily total (sticky last column) row hover */
+.heatmap-table tbody tr:hover td:last-child {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Cell hover glow */
+.heatmap-cell:hover > div {
+  background-color: rgba(var(--cat-color-rgb), 0.14) !important;
+  filter: brightness(1.2) saturate(1.1) !important;
+  box-shadow: inset 0 0 0 1px var(--cat-color) !important;
+}
+
+/* Cell width bar height glow on hover */
+.heatmap-cell:hover > div > div:last-child {
+  height: 3px !important;
+  background-color: rgba(var(--cat-color-rgb), 0.95) !important;
+}
+
+/* Column Header Hover style when directly hovering the header */
+.heatmap-header-cell:hover {
+  background-color: #1e293b !important;
+}
+
+/* Footer Category Total Column Hover when directly hovering the footer */
+.heatmap-footer-cell:hover {
+  background-color: #1e293b !important;
+}
+
+/* ── Zero-JS Column Hover Sync for Header & Footer (using :has) ── */
+.heatmap-table:has(tbody td.col-idx-0:hover) .col-idx-0 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-1:hover) .col-idx-1 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-2:hover) .col-idx-2 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-3:hover) .col-idx-3 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-4:hover) .col-idx-4 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-5:hover) .col-idx-5 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-6:hover) .col-idx-6 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-7:hover) .col-idx-7 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-8:hover) .col-idx-8 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-9:hover) .col-idx-9 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-10:hover) .col-idx-10 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-11:hover) .col-idx-11 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-12:hover) .col-idx-12 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-13:hover) .col-idx-13 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-14:hover) .col-idx-14 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-15:hover) .col-idx-15 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-16:hover) .col-idx-16 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-17:hover) .col-idx-17 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-18:hover) .col-idx-18 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-19:hover) .col-idx-19 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-20:hover) .col-idx-20 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-21:hover) .col-idx-21 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-22:hover) .col-idx-22 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-23:hover) .col-idx-23 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-24:hover) .col-idx-24 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-25:hover) .col-idx-25 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-26:hover) .col-idx-26 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-27:hover) .col-idx-27 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-28:hover) .col-idx-28 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-29:hover) .col-idx-29 { background-color: #1e293b !important; }

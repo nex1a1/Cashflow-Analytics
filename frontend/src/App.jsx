@@ -1,4 +1,5 @@
 import React from 'react';
+import { MotionConfig } from 'framer-motion';
 import MainLayout from './components/layout/MainLayout';
 import { useAppController } from './hooks/app/useAppController';
 import './assets/styles/darkMode.css';
@@ -18,5 +19,9 @@ ChartJS.register(
 
 export default function App() {
   const controller = useAppController();
-  return <MainLayout controller={controller} />;
+  return (
+    <MotionConfig transition={{ duration: 0 }} reducedMotion="always">
+      <MainLayout controller={controller} />
+    </MotionConfig>
+  );
 }

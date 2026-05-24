@@ -2,8 +2,7 @@ import React, { memo } from 'react';
 import { hexToRgb } from '../../../../utils/formatters';
 
 const HeatmapCell = memo(function HeatmapCell({
-  date, cat, items, cellSum, intensity, 
-  isRowHovered, isColHovered, isCellHovered,
+  idx, date, cat, items, cellSum, intensity, 
   dm, border, ROW_H, maxCellValue,
   handleCellHover, handleCellMouseMove, fmtCell
 }) {
@@ -12,17 +11,19 @@ const HeatmapCell = memo(function HeatmapCell({
 
   return (
     <td
+      className={`heatmap-cell col-idx-${idx}`}
       style={{
         background: 'transparent',
         borderBottom: `1px solid ${border}`,
-        borderRight: `1px solid ${isColHovered ? `rgba(${hexToRgb(cat.color)}, 0.4)` : border}`,
+        borderRight: `1px solid ${border}`,
         textAlign: 'center',
         padding: 0,
         cursor: hasData ? 'pointer' : 'default',
-        transition: 'background 0.08s, border-color 0.1s',
         height: ROW_H,
         overflow: 'hidden',
         position: 'relative',
+        '--cat-color': cat.color,
+        '--cat-color-rgb': hexToRgb(cat.color),
       }}
       onMouseEnter={(e) => handleCellHover(e, date, cat.id, cat, items)}
       onMouseMove={hasData ? handleCellMouseMove : undefined}
@@ -36,14 +37,7 @@ const HeatmapCell = memo(function HeatmapCell({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: isCellHovered
-            ? `rgba(${hexToRgb(cat.color)}, 0.14)`
-            : isColHovered
-              ? `rgba(${hexToRgb(cat.color)}, ${intensity * 0.45 + 0.06})`
-              : isRowHovered
-                ? `rgba(${hexToRgb(cat.color)}, ${intensity * 0.45 + 0.04})`
-                : `rgba(${hexToRgb(cat.color)}, ${intensity * 0.45})`,
-          transition: 'background 0.1s',
+          background: `rgba(${hexToRgb(cat.color)}, ${intensity * 0.45})`,
           padding: '2px 4px',
         }}>
           {items.length > 1 && (
@@ -59,7 +53,7 @@ const HeatmapCell = memo(function HeatmapCell({
               filter: 'brightness(1.5)',
               opacity: 0.9,
               background: `rgba(${hexToRgb(cat.color)}, ${dm ? 0.2 : 0.1})`,
-              borderRadius: '0 0 3px 3px',
+              borderRadius: 0,
               padding: '1px 3px',
               zIndex: 10,
               whiteSpace: 'nowrap',
@@ -95,8 +89,7 @@ const HeatmapCell = memo(function HeatmapCell({
                   textShadow: intensity > 0.4 
                     ? `0 1px 2px ${'rgba(0,0,0,0.6)'}` 
                     : 'none',
-                  transform: isCellHovered ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.15s ease',
+                  transform: 'scale(1)',
                 }}>
                   {fmtCell(cellSum)}
                 </span>
@@ -109,10 +102,10 @@ const HeatmapCell = memo(function HeatmapCell({
             left: '50%',
             transform: 'translateX(-50%)',
             width: `${barW}%`,
-            height: isCellHovered ? 3 : 2,
-            borderRadius: '2px 2px 0 0',
+            height: 2,
+            borderRadius: 0,
             background: `rgba(${hexToRgb(cat.color)}, ${dm ? 0.85 : 0.7})`,
-            transition: 'width 0.2s ease, height 0.1s ease',
+            transition: 'width 0.2s ease',
           }} />
         </div>
       ) : (

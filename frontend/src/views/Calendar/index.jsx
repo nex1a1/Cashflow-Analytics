@@ -107,6 +107,34 @@ export default function CalendarView({
     return counts;
   }, [dayTypes, daysInMonth, m, y, dayTypeConfig]);
 
+  const activeCategories = useMemo(() => {
+    const targetMonthYear = `${y}-${(m + 1).toString().padStart(2, '0')}`;
+    const catsMap = new Map();
+    
+    transactions.forEach(t => {
+      if (!t.date || !t.date.startsWith(targetMonthYear)) return;
+      
+      const catObj = categories.find(c => c.name === t.category);
+      if (catObj) {
+        catsMap.set(catObj.id, catObj);
+      } else if (t.category) {
+        catsMap.set(t.category, {
+          id: t.category,
+          name: t.category,
+          color: '#94a3b8',
+          type: 'expense'
+        });
+      }
+    });
+    
+    return Array.from(catsMap.values()).sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === 'income' ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name, 'th');
+    });
+  }, [transactions, y, m, categories]);
+
   const prevMonth = () => {
     const d = new Date(y, m - 1, 1);
     setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
@@ -278,6 +306,38 @@ export default function CalendarView({
             ))}
           </div>
         </div>
+
+        {/* Category Color Legend */}
+        {activeCategories.length > 0 && (
+          <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-blue-500/80 dark:border-l-blue-600 shadow-md p-3 px-4 transition-all duration-300`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                หมวดหมู่ธุรกรรมในเดือนนี้ (Category Colors)
+              </span>
+              <div className="h-[1px] bg-slate-800 flex-1 ml-1" />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {activeCategories.map(cat => {
+                const color = cat.color || '#94a3b8';
+                return (
+                  <div 
+                    key={cat.id} 
+                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-sm border transition-all duration-200 shadow-sm cursor-default select-none"
+                    style={{
+                      backgroundColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
+                      borderColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
+                      color: color,
+                    }}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-sm shrink-0 shadow-inner" style={{ backgroundColor: color }} />
+                    <span className="opacity-90">{cat.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Summary Footer */}
         <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-slate-400 dark:border-l-slate-650 shadow-md p-3 px-4 flex flex-wrap gap-2.5 items-center transition-all duration-300`}>

@@ -1,8 +1,7 @@
 import React, { memo } from 'react';
 
 const HeatmapHeader = memo(function HeatmapHeader({ 
-  activeCategories, dm, bgHead, border, border2, 
-  hoveredCat, setHoveredCat 
+  activeCategories, dm, bgHead, border, border2 
 }) {
   return (
     <thead>
@@ -20,31 +19,33 @@ const HeatmapHeader = memo(function HeatmapHeader({
           color: '#475569',
         }}>DATE</th>
 
-        {activeCategories.map(cat => (
-          <th key={cat.id} style={{
-            position: 'sticky', top: 0, zIndex: 40,
-            background: hoveredCat === cat.id
-              ? (dm ? '#1e293b' : `${cat.color}08`)
-              : bgHead,
-            borderBottom: `2px solid ${hoveredCat === cat.id ? cat.color : border2}`,
-            borderTop: `2px solid ${hoveredCat === cat.id ? cat.color : 'transparent'}`,
-            borderRight: `1px solid ${border}`,
-            padding: '2px 1px',
-            transition: 'background 0.1s, border-color 0.1s',
-            overflow: 'visible',
-          }}>
+        {activeCategories.map((cat, idx) => (
+          <th key={cat.id} 
+            className={`heatmap-header-cell col-idx-${idx}`}
+            style={{
+              position: 'sticky', top: 0, zIndex: 40,
+              background: bgHead,
+              borderBottom: `2px solid ${border2}`,
+              borderTop: `2px solid transparent`,
+              borderRight: `1px solid ${border}`,
+              padding: '2px 1px',
+              overflow: 'visible',
+              '--cat-color': cat.color,
+              '--cat-color-20': `${cat.color}20`,
+              '--cat-color-30': `${cat.color}30`,
+            }}
+          >
             <div 
-              onMouseEnter={() => setHoveredCat(cat.id)}
+              className="heatmap-header-div"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 2,
                 padding: '4px 2px 5px',
-                borderRadius: 6,
-                background: hoveredCat === cat.id ? `${cat.color}28` : `${cat.color}16`,
-                boxShadow: hoveredCat === cat.id ? `0 0 0 1.5px ${cat.color}60, 0 4px 16px -4px ${cat.color}40` : 'none',
-                transition: 'background 0.15s ease, box-shadow 0.15s ease',
+                borderRadius: 0,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: `${cat.color}08`,
                 position: 'relative',
                 zIndex: 1,
                 cursor: 'default',
