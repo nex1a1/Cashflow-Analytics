@@ -178,8 +178,8 @@ export default function CalendarView({
   } else if (isReadOnlyView) {
     content = (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full">
-        <div className={`flex flex-col items-center justify-center py-20 rounded-sm border-2 border-dashed h-[60vh] transition-colors shadow-sm ${'bg-slate-950/50 border-slate-850 text-slate-400'}`}>
-          <div className={`p-4 rounded-sm mb-4 ${styles.surfaceAlt}`}>
+        <div className={`flex flex-col items-center justify-center py-20 rounded-none border-2 border-dashed h-[60vh] transition-colors shadow-sm ${'bg-slate-950/50 border-slate-850 text-slate-400'}`}>
+          <div className={`p-4 rounded-none mb-4 ${styles.surfaceAlt}`}>
             <CalendarDays className={`w-12 h-12 ${'text-blue-400'}`} />
           </div>
           <p className={`text-xl font-bold mb-2 ${'text-slate-200'}`}>โหมดปฏิทินรองรับเฉพาะรายเดือน</p>
@@ -189,7 +189,7 @@ export default function CalendarView({
           </p>
           <button 
             onClick={goToCurrentMonth}
-            className={`px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${'bg-blue-600 hover:bg-blue-500 text-white'}`}
+            className={`px-5 py-2.5 rounded-none text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${'bg-blue-600 hover:bg-blue-500 text-white'}`}
           >
             สลับไปดูเดือนปัจจุบัน ({getFilterLabel(currentMonthStr)})
           </button>
@@ -200,7 +200,7 @@ export default function CalendarView({
     content = (
       <div className="flex flex-col h-full space-y-3.5 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
-        <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-[#00509E] dark:border-l-[#F43F5E] shadow-md p-4 transition-all duration-300`}>
+        <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-[#00509E] dark:border-l-[#F43F5E] shadow-md p-4 transition-all duration-300`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <h2 className={`text-xl font-black flex items-center gap-2 tracking-wide ${'text-slate-100'}`}>
@@ -209,17 +209,17 @@ export default function CalendarView({
               </h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {monthInc > 0 && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'}`}>
                     ▲ {formatValue(monthInc)} ฿
                   </span>
                 )}
                 {monthExp > 0 && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${'bg-red-950/40 text-red-400 border-red-800/40'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${'bg-red-950/40 text-red-400 border-red-800/40'}`}>
                     ▼ {formatValue(monthExp)} ฿
                   </span>
                 )}
                 {(monthInc > 0 || monthExp > 0) && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-sm border shadow-sm ${monthNet >= 0 ? ('bg-blue-950/30 text-blue-400 border-blue-900/30') : ('bg-orange-950/30 text-orange-400 border-orange-900/30')}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${monthNet >= 0 ? ('bg-blue-950/30 text-blue-400 border-blue-900/30') : ('bg-orange-950/30 text-orange-400 border-orange-900/30')}`}>
                     คงเหลือ {formatValue(monthNet)} ฿
                   </span>
                 )}
@@ -229,7 +229,7 @@ export default function CalendarView({
             <div className="flex items-center gap-2 shrink-0">
               <button 
                 onClick={prevMonth} 
-                className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
+                className={`p-1.5 rounded-none border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
                   'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300'
                 }`}
               >
@@ -237,7 +237,7 @@ export default function CalendarView({
               </button>
               <button 
                 onClick={goToCurrentMonth} 
-                className={`px-3 py-1.5 rounded-sm border text-[12px] font-bold transition-all active:scale-95 shadow-sm ${
+                className={`px-3 py-1.5 rounded-none border text-[12px] font-bold transition-all active:scale-95 shadow-sm ${
                   'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300'
                 }`}
               >
@@ -245,7 +245,7 @@ export default function CalendarView({
               </button>
               <button 
                 onClick={nextMonth} 
-                className={`p-1.5 rounded-sm border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
+                className={`p-1.5 rounded-none border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
                   'border-slate-800 bg-slate-950/50 hover:bg-slate-800/80 hover:border-slate-700 text-slate-300'
                 }`}
               >
@@ -256,7 +256,7 @@ export default function CalendarView({
         </div>
 
         {/* Calendar Grid */}
-        <div className={`rounded-sm border ${styles.border} shadow-md overflow-hidden flex-1 flex flex-col transition-all duration-300`}>
+        <div className={`rounded-none border ${styles.border} shadow-md overflow-hidden flex-1 flex flex-col transition-all duration-300`}>
           <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border} divide-x ${'divide-slate-950/30'}`}>
             {DAYS_LABEL.map((label, i) => (
               <div key={label} className={`py-2 text-center text-[14px] font-black tracking-wider ${WEEKEND_IDX.includes(i) ? ('text-red-400') : styles.textMuted}`}>
@@ -309,10 +309,10 @@ export default function CalendarView({
 
         {/* Category Color Legend */}
         {activeCategories.length > 0 && (
-          <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-blue-500/80 dark:border-l-blue-600 shadow-md p-3 px-4 transition-all duration-300`}>
+          <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-blue-500/80 dark:border-l-blue-600 shadow-md p-3 px-4 transition-all duration-300`}>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-none bg-blue-500 animate-pulse" />
                 หมวดหมู่ธุรกรรมในเดือนนี้ (Category Colors)
               </span>
               <div className="h-[1px] bg-slate-800 flex-1 ml-1" />
@@ -323,14 +323,14 @@ export default function CalendarView({
                 return (
                   <div 
                     key={cat.id} 
-                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-sm border transition-all duration-200 shadow-sm cursor-default select-none"
+                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-none border transition-all duration-200 shadow-sm cursor-default select-none"
                     style={{
                       backgroundColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
                       borderColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
                       color: color,
                     }}
                   >
-                    <div className="w-2.5 h-2.5 rounded-sm shrink-0 shadow-inner" style={{ backgroundColor: color }} />
+                    <div className="w-2.5 h-2.5 rounded-none shrink-0 shadow-inner" style={{ backgroundColor: color }} />
                     <span className="opacity-90">{cat.name}</span>
                   </div>
                 );
@@ -340,7 +340,7 @@ export default function CalendarView({
         )}
 
         {/* Summary Footer */}
-        <div className={`${styles.surface} rounded-sm border ${styles.border} border-l-4 border-l-slate-400 dark:border-l-slate-650 shadow-md p-3 px-4 flex flex-wrap gap-2.5 items-center transition-all duration-300`}>
+        <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-slate-400 dark:border-l-slate-650 shadow-md p-3 px-4 flex flex-wrap gap-2.5 items-center transition-all duration-300`}>
           <span className={`text-[13px] font-bold mr-1 ${styles.textMuted}`}>สรุป:</span>
           {dayTypeConfig.map(dt => {
             const count = dayTypeCounts[dt.id] || 0;
@@ -348,19 +348,19 @@ export default function CalendarView({
             return (
               <div
                 key={dt.id}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm border text-[11px] font-bold shadow-sm transition-transform hover:scale-102"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[11px] font-bold shadow-sm transition-transform hover:scale-102"
                 style={{
                   backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
                   borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.35 : 0.2})`,
                   color: dt.color,
                 }}
               >
-                <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: dt.color }} />
+                <div className="w-2 h-2 rounded-none" style={{ backgroundColor: dt.color }} />
                 <span>{dt.label} ({count})</span>
               </div>
             );
           })}
-          <div className={`ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-sm border ${'bg-slate-950 border-slate-850 text-slate-300 shadow-sm'}`}>
+          <div className={`ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border ${'bg-slate-950 border-slate-850 text-slate-300 shadow-sm'}`}>
             {daysInMonth} วัน
           </div>
         </div>

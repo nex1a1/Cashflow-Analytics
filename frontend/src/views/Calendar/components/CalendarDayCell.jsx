@@ -50,7 +50,7 @@ export default function CalendarDayCell({
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
       <div className={`flex items-center justify-between px-1.5 py-1 shrink-0 border-b z-30 relative transition-colors duration-200 ${'border-slate-850/60 bg-slate-950/40 backdrop-blur-sm'}`}>
         <div className="flex items-center gap-1.5">
-          <span className={`text-[14px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-sm shrink-0 ${
+          <span className={`text-[14px] font-black leading-none w-6 h-6 flex items-center justify-center rounded-none shrink-0 ${
             isToday
               ? 'bg-[#00509E] dark:bg-[#F43F5E] text-white shadow-sm'
               : isWeekend
@@ -66,7 +66,7 @@ export default function CalendarDayCell({
           onClick={(e) => e.stopPropagation()} 
           value={curType}
           onChange={e => handleDayTypeChange(dateStr, e.target.value)}
-          className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-sm cursor-pointer outline-none appearance-none text-center border shadow-sm"
+          className="day-type-badge text-[11px] font-bold px-1.5 py-0.5 rounded-none cursor-pointer outline-none appearance-none text-center border shadow-sm"
           style={{
             backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.18 : 0.05})`,
             borderColor: `rgba(${hexToRgb(typeConf?.color)}, ${isDarkMode ? 0.4 : 0.2})`,
@@ -102,7 +102,7 @@ export default function CalendarDayCell({
           const color = tx._catObj?.color || '#10b981';
           return (
             <div key={tx.id} className="flex items-center gap-1 overflow-hidden opacity-90" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
-              <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate text-[12px] font-semibold leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
             </div>
           );
@@ -112,7 +112,7 @@ export default function CalendarDayCell({
           const color = tx._catObj?.color || '#94a3b8';
           return (
             <div key={tx.id} className="flex items-center gap-1 overflow-hidden" title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}>
-              <div className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate text-[12px] font-semibold leading-tight flex-1" style={{ color }}>{tx.description || tx.category}</span>
               <span className="text-[12px] font-bold shrink-0 ml-1 opacity-70" style={{ color }}>
                 {formatValue(tx.amount)}

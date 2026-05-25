@@ -9,29 +9,39 @@ import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
 /**
  * INTERNAL COMPONENT: CashflowTableHeader
  */
-const CashflowTableHeader = ({ 
+const CashflowTableHeader = React.memo(({ 
   activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
   getActiveCatsForGroup, dm, thinBorder, boundaryBorder, boxBorder,
-  handleMouseEnter, handleMouseLeave
+  handleMouseEnter, handleMouseLeave,
+  hoveredCol, setHoveredCol
 }) => {
-  const getHighlightBg = (group) => {
+  const getHighlightBg = (group, isHovered) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.08 : 0.28;
+    const opacity = dm ? (isHovered ? 0.16 : 0.08) : (isHovered ? 0.38 : 0.28);
     return `rgba(${rgb}, ${opacity})`;
   };
 
-  const getSubHighlightBg = (group, subColor) => {
+  const getSubHighlightBg = (group, subColor, isHovered) => {
     const hexColor = subColor || group.color || '#64748B';
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.06 : 0.20;
+    const opacity = dm ? (isHovered ? 0.12 : 0.06) : (isHovered ? 0.30 : 0.20);
     return `rgba(${rgb}, ${opacity})`;
   };
 
   return (
     <thead className={`sticky top-0 z-30 ${'bg-slate-950'}`}>
       <tr>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${'text-blue-300 bg-slate-950'}`}>ช่วงเวลา</th>
+        <th 
+          rowSpan={2} 
+          onMouseEnter={() => setHoveredCol('month')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
+            hoveredCol === 'month' ? 'bg-slate-800 text-blue-300' : 'text-blue-300 bg-slate-950'
+          }`}
+        >
+          ช่วงเวลา
+        </th>
         
         {activeIncomeGroups.length > 0 && (
           <th colSpan={activeIncomeGroups.reduce((acc, g) => acc + (expandedGroups.has(g.id) ? getActiveCatsForGroup(g.id).length + 1 : 1), 0)} className={`px-3 py-1.5 font-black text-center border-l border-b border-dashed ${thinBorder} ${'text-emerald-400'}`}>
@@ -45,10 +55,46 @@ const CashflowTableHeader = ({
           </th>
         )}
         
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[230px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${'text-red-400 bg-slate-950'} w-[140px] min-w-[140px] max-w-[140px]`}>รวมรายจ่าย (Trend)</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[120px] z-50 ${'text-blue-400 bg-slate-950'} w-[110px] min-w-[110px] max-w-[110px]`}>เงินคงเหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[60px] z-50 ${'text-emerald-400 bg-slate-950'} w-[60px] min-w-[60px] max-w-[60px] ${thinBorder}`}>%เหลือ</th>
-        <th rowSpan={2} className={`px-3 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 ${'text-pink-400 bg-slate-950'} w-[60px] min-w-[60px] max-w-[60px] ${thinBorder}`}>%จ่าย</th>
+        <th 
+          rowSpan={2} 
+          onMouseEnter={() => setHoveredCol('trend')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+            hoveredCol === 'trend' ? 'bg-slate-800 text-red-400' : 'text-red-400 bg-slate-950'
+          }`}
+        >
+          รวมรายจ่าย (Trend)
+        </th>
+        <th 
+          rowSpan={2} 
+          onMouseEnter={() => setHoveredCol('net')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[140px] z-50 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
+            hoveredCol === 'net' ? 'bg-slate-800 text-blue-400' : 'text-blue-400 bg-slate-950'
+          }`}
+        >
+          เงินคงเหลือ
+        </th>
+        <th 
+          rowSpan={2} 
+          onMouseEnter={() => setHoveredCol('pct-left')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-2 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[70px] z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors ${
+            hoveredCol === 'pct-left' ? 'bg-slate-800 text-emerald-400' : 'text-emerald-400 bg-slate-950'
+          }`}
+        >
+          %เหลือ
+        </th>
+        <th 
+          rowSpan={2} 
+          onMouseEnter={() => setHoveredCol('pct-spent')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-2 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors ${
+            hoveredCol === 'pct-spent' ? 'bg-slate-800 text-pink-400' : 'text-pink-400 bg-slate-950'
+          }`}
+        >
+          %จ่าย
+        </th>
       </tr>
       
       <tr>
@@ -56,23 +102,41 @@ const CashflowTableHeader = ({
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
           const isLastIncome = idx === activeIncomeGroups.length - 1;
+          const colId = `g-${g.id}`;
+          const isColHovered = hoveredCol === colId;
 
           return (
             <React.Fragment key={g.id}>
               <th 
                 onClick={() => toggleGroup(g.id)}
-                onMouseEnter={(e) => handleMouseEnter(e, g)}
-                onMouseLeave={handleMouseLeave}
+                onMouseEnter={(e) => {
+                  handleMouseEnter(e, g);
+                  setHoveredCol(colId);
+                }}
+                onMouseLeave={() => {
+                  handleMouseLeave();
+                  setHoveredCol(null);
+                }}
                 className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
-                style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g) }}
+                style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
               </th>
-              {isExpanded && cats.map((c, cIdx) => (
-                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-all ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-slate-500 border-b-slate-500`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
-                  {c.name}
-                </th>
-              ))}
+              {isExpanded && cats.map((c, cIdx) => {
+                const catColId = `c-${c.id}`;
+                const isCatColHovered = hoveredCol === catColId;
+                return (
+                  <th 
+                    key={c.id} 
+                    onMouseEnter={() => setHoveredCol(catColId)}
+                    onMouseLeave={() => setHoveredCol(null)}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-slate-500 border-b-slate-500`} 
+                    style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                  >
+                    {c.name}
+                  </th>
+                );
+              })}
             </React.Fragment>
           );
         })}
@@ -80,49 +144,77 @@ const CashflowTableHeader = ({
         {activeExpenseGroups.map((g) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
+          const colId = `g-${g.id}`;
+          const isColHovered = hoveredCol === colId;
+
           return (
             <React.Fragment key={g.id}>
               <th 
                 onClick={() => toggleGroup(g.id)}
-                onMouseEnter={(e) => handleMouseEnter(e, g)}
-                onMouseLeave={handleMouseLeave}
+                onMouseEnter={(e) => {
+                  handleMouseEnter(e, g);
+                  setHoveredCol(colId);
+                }}
+                onMouseLeave={() => {
+                  handleMouseLeave();
+                  setHoveredCol(null);
+                }}
                 className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder}`} 
-                style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g) }}
+                style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
               </th>
-              {isExpanded && cats.map((c) => (
-                <th key={c.id} className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-all ${thinBorder} border-t-slate-500 border-b-slate-500`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
-                  {c.name}
-                </th>
-              ))}
+              {isExpanded && cats.map((c) => {
+                const catColId = `c-${c.id}`;
+                const isCatColHovered = hoveredCol === catColId;
+                return (
+                  <th 
+                    key={c.id} 
+                    onMouseEnter={() => setHoveredCol(catColId)}
+                    onMouseLeave={() => setHoveredCol(null)}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-slate-500 border-b-slate-500`} 
+                    style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                  >
+                    {c.name}
+                  </th>
+                );
+              })}
             </React.Fragment>
           );
         })}
       </tr>
     </thead>
   );
-};
+});
+
+CashflowTableHeader.displayName = 'CashflowTableHeader';
 
 /**
  * INTERNAL COMPONENT: CashflowTableRow
  */
-const CashflowTableRow = ({ 
+const CashflowTableRow = React.memo(({ 
   row, activeIncomeGroups, activeExpenseGroups, expandedGroups, 
   getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
-  handleMouseEnter, handleMouseLeave
+  handleMouseEnter, handleMouseLeave,
+  hoveredCol, setHoveredCol,
+  isRowHovered, setHoveredRow
 }) => {
-  const getHighlightBg = (group) => {
+  const getHighlightBg = (group, isColHovered) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.08 : 0.28;
+    // Intersection Glow Logic: bump opacity when both row and col are hovered
+    const opacity = dm 
+      ? (isColHovered && isRowHovered ? 0.22 : (isColHovered ? 0.14 : (isRowHovered ? 0.12 : 0.08))) 
+      : (isColHovered && isRowHovered ? 0.44 : (isColHovered ? 0.34 : (isRowHovered ? 0.32 : 0.28)));
     return `rgba(${rgb}, ${opacity})`;
   };
 
-  const getSubHighlightBg = (group, subColor) => {
+  const getSubHighlightBg = (group, subColor, isColHovered) => {
     const hexColor = subColor || group.color || '#64748B';
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? 0.06 : 0.20;
+    const opacity = dm 
+      ? (isColHovered && isRowHovered ? 0.18 : (isColHovered ? 0.12 : (isRowHovered ? 0.10 : 0.06))) 
+      : (isColHovered && isRowHovered ? 0.36 : (isColHovered ? 0.26 : (isRowHovered ? 0.24 : 0.20)));
     return `rgba(${rgb}, ${opacity})`;
   };
 
@@ -134,36 +226,74 @@ const CashflowTableRow = ({
     const percent = (diff / prevMonth.totalExp) * 100;
     const isUp = percent > 0;
     const isFlat = Math.abs(percent) < 0.1;
+
+    // Elite vibrant semi-transparent badge styling (rounded-none compliance)
+    const badgeClass = isFlat 
+      ? 'bg-slate-800/40 text-slate-400 border-slate-700/30' 
+      : isUp 
+        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
     expMoMJSX = (
-      <span className={`inline-flex items-center justify-center min-w-[38px] text-[9px] font-black px-1 py-[1px] rounded leading-none ${isFlat ? ('bg-slate-700 text-slate-400') : (isUp ? ('bg-red-500/20 text-red-400') : ('bg-emerald-500/20 text-emerald-400'))}`}>
+      <span className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[9px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}>
         {isFlat ? '-' : (isUp ? '↑' : '↓')} {Math.abs(percent).toFixed(1)}%
       </span>
     );
   }
 
+  const isMonthHovered = hoveredCol === 'month';
+  const isTrendHovered = hoveredCol === 'trend';
+  const isNetHovered = hoveredCol === 'net';
+  const isPctLeftHovered = hoveredCol === 'pct-left';
+  const isPctSpentHovered = hoveredCol === 'pct-spent';
+
   return (
-    <tr className="group hover:bg-slate-400/5 transition-colors">
-      <td className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${'text-blue-300 bg-slate-900 group-hover:bg-slate-850'}`}>{getThaiMonth(row.monthStr)}</td>
+    <tr 
+      onMouseEnter={() => setHoveredRow(row.monthStr)}
+      onMouseLeave={() => setHoveredRow(null)}
+      className="group hover:bg-slate-400/5 transition-colors"
+    >
+      <td 
+        onMouseEnter={() => setHoveredCol('month')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
+          isMonthHovered 
+            ? 'text-blue-300 bg-slate-850' 
+            : (isRowHovered ? 'text-blue-300 bg-slate-850/80' : 'text-blue-300 bg-slate-900 group-hover:bg-slate-850')
+        }`}
+      >
+        {getThaiMonth(row.monthStr)}
+      </td>
       
       {activeIncomeGroups.map((g, idx) => {
         const isExpanded = expandedGroups.has(g.id);
         const cats = getActiveCatsForGroup(g.id);
         const isLastIncome = idx === activeIncomeGroups.length - 1;
+        const colId = `g-${g.id}`;
+        const isColHovered = hoveredCol === colId;
 
         return (
           <React.Fragment key={g.id}>
             <td 
-              onMouseEnter={(e) => handleMouseEnter(e, g)}
-              onMouseLeave={handleMouseLeave}
-              className={`px-3 py-2 font-semibold border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
-              style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g) }}
+              onMouseEnter={() => setHoveredCol(colId)}
+              onMouseLeave={() => setHoveredCol(null)}
+              className={`px-3 py-2 font-semibold border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
+              style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
             >
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
             {isExpanded && cats.map((c, cIdx) => {
               const amt = analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0;
+              const catColId = `c-${c.id}`;
+              const isCatColHovered = hoveredCol === catColId;
               return (
-                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+                <td 
+                  key={c.id} 
+                  onMouseEnter={() => setHoveredCol(catColId)}
+                  onMouseLeave={() => setHoveredCol(null)}
+                  className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder}`} 
+                  style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                >
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
               );
@@ -175,20 +305,31 @@ const CashflowTableRow = ({
       {activeExpenseGroups.map((g) => {
         const isExpanded = expandedGroups.has(g.id);
         const cats = getActiveCatsForGroup(g.id);
+        const colId = `g-${g.id}`;
+        const isColHovered = hoveredCol === colId;
+
         return (
           <React.Fragment key={g.id}>
             <td 
-              onMouseEnter={(e) => handleMouseEnter(e, g)}
-              onMouseLeave={handleMouseLeave}
-              className={`px-3 py-2 font-medium border-l border-b ${isExpanded ? boxBorder : thinBorder}`} 
-              style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g) }}
+              onMouseEnter={() => setHoveredCol(colId)}
+              onMouseLeave={() => setHoveredCol(null)}
+              className={`px-3 py-2 font-medium border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder}`} 
+              style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
             >
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
             {isExpanded && cats.map((c) => {
               const amt = analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0;
+              const catColId = `c-${c.id}`;
+              const isCatColHovered = hoveredCol === catColId;
               return (
-                <td key={c.id} className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b ${thinBorder}`} style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color) }}>
+                <td 
+                  key={c.id} 
+                  onMouseEnter={() => setHoveredCol(catColId)}
+                  onMouseLeave={() => setHoveredCol(null)}
+                  className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${thinBorder}`} 
+                  style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                >
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
               );
@@ -197,53 +338,118 @@ const CashflowTableRow = ({
         );
       })}
 
-      <td className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[230px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${'text-red-400 bg-slate-900 group-hover:bg-slate-850'} w-[140px] min-w-[140px] max-w-[140px]`}>
+      <td 
+        onMouseEnter={() => setHoveredCol('trend')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+          isTrendHovered 
+            ? 'text-red-400 bg-slate-850' 
+            : (isRowHovered ? 'text-red-400 bg-slate-850/80' : 'text-red-400 bg-slate-900 group-hover:bg-slate-850')
+        }`}
+      >
         <div className="flex items-center justify-between gap-1">
           <div className="shrink-0">{expMoMJSX}</div>
           <span className="text-[11px] tabular-nums">{formatMoney(row.totalExp)}</span>
         </div>
       </td>
-      <td className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[120px] z-10 transition-colors ${'text-blue-400 bg-slate-900 group-hover:bg-slate-850'} w-[110px] min-w-[110px] max-w-[110px]`}>{formatMoney(row.income - row.totalExp)}</td>
-      <td className={`px-3 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[60px] z-10 transition-colors ${'bg-slate-900 group-hover:bg-slate-850'} ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'} w-[60px] min-w-[60px] max-w-[60px]`}>{row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%</td>
-      <td className={`px-3 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors ${'bg-slate-900 group-hover:bg-slate-850'} ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'} w-[60px] min-w-[60px] max-w-[60px]`}>{row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}</td>
+      <td 
+        onMouseEnter={() => setHoveredCol('net')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
+          isNetHovered 
+            ? 'text-blue-400 bg-slate-850' 
+            : (isRowHovered ? 'text-blue-400 bg-slate-850/80' : 'text-blue-400 bg-slate-900 group-hover:bg-slate-850')
+        }`}
+      >
+        {formatMoney(row.income - row.totalExp)}
+      </td>
+      <td 
+        onMouseEnter={() => setHoveredCol('pct-left')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-2 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[70px] z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+          isPctLeftHovered 
+            ? 'bg-slate-850' 
+            : (isRowHovered ? 'bg-slate-850/80' : 'bg-slate-900 group-hover:bg-slate-850')
+        } ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'}`}
+      >
+        {row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%
+      </td>
+      <td 
+        onMouseEnter={() => setHoveredCol('pct-spent')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-2 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+          isPctSpentHovered 
+            ? 'bg-slate-850' 
+            : (isRowHovered ? 'bg-slate-850/80' : 'bg-slate-900 group-hover:bg-slate-850')
+        } ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'}`}
+      >
+        {row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}
+      </td>
     </tr>
   );
-};
+});
+
+CashflowTableRow.displayName = 'CashflowTableRow';
 
 /**
  * INTERNAL COMPONENT: CashflowTableFooter
  */
-const CashflowTableFooter = ({ 
+const CashflowTableFooter = React.memo(({ 
   activeIncomeGroups, activeExpenseGroups, expandedGroups, 
   getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
-  handleMouseEnter, handleMouseLeave
+  handleMouseEnter, handleMouseLeave,
+  hoveredCol, setHoveredCol
 }) => {
   if (analytics.numMonths <= 1) return null;
 
   return (
     <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`}>
       <tr className={'text-slate-200'}>
-        <td className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] ${'bg-slate-900'}`}>รวมทั้งหมด</td>
+        <td 
+          onMouseEnter={() => setHoveredCol('month')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
+            hoveredCol === 'month' ? 'bg-slate-850' : 'bg-slate-900'
+          }`}
+        >
+          รวมทั้งหมด
+        </td>
         {activeIncomeGroups.map((g, idx) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
           const isLastIncome = idx === activeIncomeGroups.length - 1;
+          const colId = `g-${g.id}`;
+          const isColHovered = hoveredCol === colId;
 
           return (
             <React.Fragment key={g.id}>
               <td 
-                onMouseEnter={(e) => handleMouseEnter(e, g)}
-                onMouseLeave={handleMouseLeave}
-                className={`px-3 py-2.5 border-l border-b ${thinBorder} ${'bg-slate-900'} ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
+                onMouseEnter={() => setHoveredCol(colId)}
+                onMouseLeave={() => setHoveredCol(null)}
+                className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
+                  isColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                }`} 
                 style={{ color: g.color || ('#34d399') }}
               >
                 {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
-              {isExpanded && cats.map((c, cIdx) => (
-                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b ${'bg-slate-900'} ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder}`} style={{ color: c.color }}>
-                  {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
-                </td>
-              ))}
+              {isExpanded && cats.map((c, cIdx) => {
+                const catColId = `c-${c.id}`;
+                const isCatColHovered = hoveredCol === catColId;
+                return (
+                  <td 
+                    key={c.id} 
+                    onMouseEnter={() => setHoveredCol(catColId)}
+                    onMouseLeave={() => setHoveredCol(null)}
+                    className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
+                      isCatColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                    }`} 
+                    style={{ color: c.color }}
+                  >
+                    {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
+                  </td>
+                );
+              })}
             </React.Fragment>
           );
         })}
@@ -251,32 +457,83 @@ const CashflowTableFooter = ({
         {activeExpenseGroups.map((g) => {
           const isExpanded = expandedGroups.has(g.id);
           const cats = getActiveCatsForGroup(g.id);
+          const colId = `g-${g.id}`;
+          const isColHovered = hoveredCol === colId;
+
           return (
             <React.Fragment key={g.id}>
               <td 
-                onMouseEnter={(e) => handleMouseEnter(e, g)}
-                onMouseLeave={handleMouseLeave}
-                className={`px-3 py-2.5 border-l border-b ${thinBorder} ${'bg-slate-900'} ${isExpanded ? boxBorder : thinBorder}`} 
+                onMouseEnter={() => setHoveredCol(colId)}
+                onMouseLeave={() => setHoveredCol(null)}
+                className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
+                  isColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                }`} 
                 style={{ color: g.color || ('#cbd5e1') }}
               >
                 {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
-              {isExpanded && cats.map((c) => (
-                <td key={c.id} className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b ${'bg-slate-900'} ${thinBorder}`} style={{ color: c.color }}>
-                  {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
-                </td>
-              ))}
+              {isExpanded && cats.map((c) => {
+                const catColId = `c-${c.id}`;
+                const isCatColHovered = hoveredCol === catColId;
+                return (
+                  <td 
+                    key={c.id} 
+                    onMouseEnter={() => setHoveredCol(catColId)}
+                    onMouseLeave={() => setHoveredCol(null)}
+                    className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${thinBorder} ${
+                      isCatColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                    }`} 
+                    style={{ color: c.color }}
+                  >
+                    {formatMoney(analytics.sortedCashflow.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
+                  </td>
+                );
+              })}
             </React.Fragment>
           );
         })}
-        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[230px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] ${'bg-slate-900'} w-[140px] min-w-[140px] max-w-[140px]`}>{formatMoney(analytics.totalExpense)}</td>
-        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-blue-400 sticky right-[120px] z-30 ${'bg-slate-900'} w-[110px] min-w-[110px] max-w-[110px]`}>{formatMoney(analytics.netCashflow)}</td>
-        <td className={`px-3 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[60px] z-30 ${'bg-slate-900'} w-[60px] min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}</td>
-        <td className={`px-3 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 ${'bg-slate-900'} w-[60px] min-w-[60px] max-w-[60px]`}>{analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}</td>
+        <td 
+          onMouseEnter={() => setHoveredCol('trend')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[250px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+            hoveredCol === 'trend' ? 'bg-slate-850' : 'bg-slate-900'
+          }`}
+        >
+          {formatMoney(analytics.totalExpense)}
+        </td>
+        <td 
+          onMouseEnter={() => setHoveredCol('net')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-3 py-2.5 border-l border-b ${thinBorder} text-blue-400 sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
+            hoveredCol === 'net' ? 'bg-slate-850' : 'bg-slate-900'
+          }`}
+        >
+          {formatMoney(analytics.netCashflow)}
+        </td>
+        <td 
+          onMouseEnter={() => setHoveredCol('pct-left')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-2 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[70px] z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+            hoveredCol === 'pct-left' ? 'bg-slate-850' : 'bg-slate-900'
+          }`}
+        >
+          {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
+        </td>
+        <td 
+          onMouseEnter={() => setHoveredCol('pct-spent')}
+          onMouseLeave={() => setHoveredCol(null)}
+          className={`px-2 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+            hoveredCol === 'pct-spent' ? 'bg-slate-850' : 'bg-slate-900'
+          }`}
+        >
+          {analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}
+        </td>
       </tr>
     </tfoot>
   );
-};
+});
+
+CashflowTableFooter.displayName = 'CashflowTableFooter';
 
 /**
  * INTERNAL COMPONENT: GroupTooltip
@@ -302,7 +559,7 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 2 }}
           transition={{ duration: 0.12 }}
-          className="flex flex-col items-center min-w-[160px] max-w-[320px]"
+          className="flex flex-col items-center min-w-[160px] max-w-[420px]"
         >
           <div className={`w-full rounded-none p-2 text-[11px] font-medium shadow-2xl border backdrop-blur-md ${
             'bg-slate-950/95 border-slate-800 text-slate-200 shadow-black/80'
@@ -325,7 +582,7 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
                   style={{ borderLeftColor: c.color || '#64748B', borderLeftWidth: '3px' }}
                 >
                   <span className="text-[11px] leading-none shrink-0">{c.icon || '📁'}</span>
-                  <span className="truncate max-w-[85px] leading-none">{c.name}</span>
+                  <span className="whitespace-nowrap leading-none">{c.name}</span>
                 </div>
               ))}
             </div>
@@ -349,6 +606,10 @@ export default function CashflowTable() {
   const { analytics, cashflowGroups = [], categories = [], dm, showSkeleton } = useDashboardContext();
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [hoveredGroup, setHoveredGroup] = useState(null);
+  
+  // High-performance state hooks for row/column intersection highlighting
+  const [hoveredCol, setHoveredCol] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
 
   const toggleGroup = useCallback((groupId) => {
     setExpandedGroups(prev => {
@@ -400,12 +661,15 @@ export default function CashflowTable() {
   const thinBorder = 'border-slate-850';
   const boxBorder = 'border-slate-700';
   const boundaryBorder = 'border-r-2 !border-r-slate-800';
-  const card = `rounded-sm border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
+  
+  // Obsidian zero-rounded flat edge compliance
+  const card = `rounded-none border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
 
   const segmentProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
     getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
-    handleMouseEnter, handleMouseLeave
+    handleMouseEnter, handleMouseLeave,
+    hoveredCol, setHoveredCol
   };
 
   return (
@@ -420,14 +684,20 @@ export default function CashflowTable() {
       <div className="overflow-x-auto overflow-y-hidden custom-scrollbar" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'auto' }}>
         {showSkeleton ? (
           <div className="p-8">
-            <div className={`h-40 w-full rounded-sm animate-pulse ${'bg-slate-900/40'}`} />
+            <div className={`h-40 w-full rounded-none animate-pulse ${'bg-slate-900/40'}`} />
           </div>
         ) : (
           <table className="w-full min-w-full text-right text-[13px] whitespace-nowrap border-separate border-spacing-0">
             <CashflowTableHeader {...segmentProps} />
             <tbody className={`divide-y ${'divide-slate-700/40'}`}>
               {analytics.sortedCashflow.map((row) => (
-                <CashflowTableRow key={row.monthStr} row={row} {...segmentProps} />
+                <CashflowTableRow 
+                  key={row.monthStr} 
+                  row={row} 
+                  isRowHovered={hoveredRow === row.monthStr}
+                  setHoveredRow={setHoveredRow}
+                  {...segmentProps} 
+                />
               ))}
             </tbody>
             <CashflowTableFooter {...segmentProps} />

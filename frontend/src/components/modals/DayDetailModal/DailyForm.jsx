@@ -9,7 +9,7 @@ const dailyAddSchema = z.object({
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   description: z.string().optional(),
   amount: z.number({ invalid_type_error: "ระบุจำนวนเงิน" }).positive("ต้องมากกว่า 0"),
-  allocation_type: z.enum(['need', 'want', 'savings']),
+  allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
 });
 
 export default function DailyForm({
@@ -53,7 +53,7 @@ export default function DailyForm({
   const selectedCatId = watch('categoryId');
   useEffect(() => {
     if (formType === 'income') {
-      setValue('allocation_type', 'savings');
+      setValue('allocation_type', null);
       return;
     }
     const cat = categories.find(c => c.id === selectedCatId);

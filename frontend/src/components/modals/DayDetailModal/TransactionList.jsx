@@ -19,7 +19,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
-          {tx.allocation_type && (
+          {tx.allocation_type && !isInc && (
             <span className={`text-[8px] font-black px-1 rounded-[2px] border shrink-0 ${
               tx.allocation_type === 'need' ? ('bg-rose-900/30 text-rose-400 border-rose-800/40') :
               tx.allocation_type === 'want' ? ('bg-sky-900/30 text-sky-400 border-sky-800/40') :

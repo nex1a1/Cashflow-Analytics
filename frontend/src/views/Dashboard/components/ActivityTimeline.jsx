@@ -246,7 +246,7 @@ export default function ActivityTimeline() {
   const handleMouseLeave = () => setTooltip(prev => ({ ...prev, active: false }));
 
   // Styles
-  const cardStyles = `rounded-sm border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
+  const cardStyles = `rounded-none border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
   const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
   const dividerStyles = `border-b mb-3 pb-3 ${'border-slate-850'}`;
 
@@ -268,7 +268,7 @@ export default function ActivityTimeline() {
       {/* Legend Row (New Line) */}
       <div className="mb-4 flex justify-end min-h-[20px]">
         {showSkeleton ? (
-          <div className={`h-4 w-48 rounded-sm animate-pulse ${'bg-slate-700'}`} />
+          <div className={`h-4 w-48 rounded-none animate-pulse ${'bg-slate-700'}`} />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
@@ -296,10 +296,10 @@ export default function ActivityTimeline() {
       </div>
 
       {/* Timeline Grid */}
-      <div className={`border rounded-sm relative z-10 ${'bg-slate-950 border-slate-850'}`}>
+      <div className={`border rounded-none relative z-10 ${'bg-slate-950 border-slate-850'}`}>
         {showSkeleton ? (
           <div className="py-12 px-3">
-             <div className={`h-24 w-full rounded-sm animate-pulse ${'bg-slate-800'}`} />
+             <div className={`h-24 w-full rounded-none animate-pulse ${'bg-slate-800'}`} />
           </div>
         ) : datesInPeriod.length === 0 ? (
           <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
@@ -330,7 +330,7 @@ export default function ActivityTimeline() {
                   <div className="h-4 relative flex items-end pb-1">
                     {week.monthLabel && (
                       <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
-                        <div className={`w-[2px] h-3 mr-1 rounded-full ${'bg-blue-500/50'}`} />
+                        <div className={`w-[3px] h-3 mr-1 rounded-none ${'bg-blue-500/50'}`} />
                         <span className={`text-[9px] font-black leading-none uppercase tracking-tighter ${'text-slate-400'}`}>
                           {week.monthLabel}
                         </span>
@@ -353,7 +353,7 @@ export default function ActivityTimeline() {
                     return (
                       <motion.div 
                         key={dateStr} 
-                        className={`w-3.5 h-3.5 rounded-[2px] cursor-pointer border transition-colors ${
+                        className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors ${
                           isToday 
                             ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900 z-10' 
                             : 'opacity-90 hover:opacity-100 hover:border-slate-400 dark:hover:border-slate-500'
