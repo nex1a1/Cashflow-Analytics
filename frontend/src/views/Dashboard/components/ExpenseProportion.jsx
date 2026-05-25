@@ -110,10 +110,10 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     </div>
 
     {/* ─── CONSTITUENT CATEGORIES ─── */}
-    <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
-      <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
+    <div className={`flex-1 flex flex-col min-w-0 pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
+      <div className="flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden min-w-0 pr-1 custom-scrollbar h-[72px]">
         {(item.categories || []).map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
+          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{c.icon || '✨'}</span>
               <span className={`text-[9px] font-bold truncate ${'text-slate-400 group-hover/item:text-slate-200'} transition-colors`}>
@@ -215,10 +215,10 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       </div>
 
       {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className={`flex-1 flex flex-col pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
-        <div className="flex flex-col gap-0.5 overflow-y-auto pr-1 custom-scrollbar h-[72px]">
+      <div className={`flex-1 flex flex-col min-w-0 pt-2 border-t border-dashed ${'border-slate-700/60'}`}>
+        <div className="flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden min-w-0 pr-1 custom-scrollbar h-[72px]">
           {(item.groups || []).map(g => (
-            <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 group/item">
+            <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-[9px] shrink-0 opacity-70 group-hover/item:scale-110 transition-transform">{g.icon || '✨'}</span>
                 <span className={`text-[9px] font-bold truncate ${'text-slate-400 group-hover/item:text-slate-200'} transition-colors`}>
@@ -245,7 +245,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
             const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
 
             return (
-              <div className={`flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted ${'border-slate-700/50'} group/item`}>
+              <div className={`flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted ${'border-slate-700/50'} min-w-0 group/item`}>
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="text-[9px] shrink-0 opacity-80 group-hover/item:scale-110 transition-transform">🌊</span>
                   <span className={`text-[9px] font-bold truncate ${'text-blue-400 group-hover/item:text-blue-300'} transition-colors`}>

@@ -102,6 +102,23 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     return ids;
   }, [transactions, filterPeriod, categories]);
 
+  // ── Category names ที่มีข้อมูลจริงใน period ปัจจุบัน ────
+  // ใช้ใน LedgerView เพื่อซ่อน option ที่ไม่มีรายการ
+  const activeCategoryNames = useMemo(() => {
+    const names = new Set();
+    transactions
+      .filter(t => isDateInFilter(t.date, filterPeriod))
+      .forEach(t => {
+        const cat = categories.find(c => c.id === t.category_id) || categories.find(c => c.name === t.category);
+        if (cat) {
+          names.add(cat.name);
+        } else if (t.category) {
+          names.add(t.category);
+        }
+      });
+    return names;
+  }, [transactions, filterPeriod, categories]);
+
   // ── displayTransactions: filtered list สำหรับ LedgerView ────
   const displayTransactions = useMemo(() => {
     let filtered = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
@@ -210,6 +227,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     allDatesInPeriod,
     displayTransactions,
     activeCashflowGroupIds,
+    activeCategoryNames,
     isFilterActive,
     clearFilters
   };

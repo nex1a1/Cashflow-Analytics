@@ -44,6 +44,7 @@ export default function MainLayout({ controller }) {
     maxAmount, setMaxAmount,
     dayTypeFilter, setDayTypeFilter,
     activeCashflowGroupIds,
+    activeCategoryNames,
     analytics,
     summaryData,
     hideFixedExpenses, setHideFixedExpenses,
@@ -180,6 +181,7 @@ export default function MainLayout({ controller }) {
                   availableDatesInPeriod={availableDatesInPeriod}
                   allDatesInPeriod={allDatesInPeriod}
                   activeCashflowGroupIds={activeCashflowGroupIds}
+                  activeCategoryNames={activeCategoryNames}
                   isFilterActive={isFilterActive}
                   clearFilters={clearFilters}
                   dayTypes={dayTypes}

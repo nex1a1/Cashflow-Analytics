@@ -14,7 +14,7 @@ export default function FilterBar({
   minAmount, setMinAmount,
   maxAmount, setMaxAmount,
   dayTypeFilter, setDayTypeFilter,
-  availableDatesInPeriod, cashflowGroups, activeCashflowGroupIds, categories,
+  availableDatesInPeriod, cashflowGroups, activeCashflowGroupIds, activeCategoryNames, categories,
   clearFilters, isFilterActive
 }) {
   const dm = true;
@@ -282,7 +282,7 @@ export default function FilterBar({
                   {cashflowGroups?.length > 0 && (
                     <optgroup label="แยกตามกลุ่ม">
                       {cashflowGroups
-                        .filter(g => activeCashflowGroupIds.has(g.id))
+                        .filter(g => (activeCashflowGroupIds?.has ? activeCashflowGroupIds.has(g.id) : false) || advancedFilterGroup === g.id)
                         .map(g => (
                           <option key={g.id} value={g.id}>
                             {g.icon ? g.icon : (g.type === 'income' ? '🟢' : '🔴')} {g.name}
@@ -303,7 +303,9 @@ export default function FilterBar({
               options={
                 <>
                   <option value="ALL">🏷️ หมวดหมู่</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                  {categories
+                    .filter(c => (activeCategoryNames?.has ? activeCategoryNames.has(c.name) : false) || advancedFilterCategory === c.name)
+                    .map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
                 </>
               }
             />

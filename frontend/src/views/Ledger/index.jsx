@@ -34,6 +34,7 @@ export default function LedgerView({
   setFilterPeriod, rawAvailableMonths,
   cashflowGroups = [],
   activeCashflowGroupIds = new Set(),
+  activeCategoryNames = new Set(),
   dayTypes = {},
   dayTypeConfig = [],
   isFilterActive,
@@ -316,8 +317,8 @@ export default function LedgerView({
             maxAmount={maxAmount} setMaxAmount={setMaxAmount}
             dayTypeFilter={dayTypeFilter} setDayTypeFilter={setDayTypeFilter}
             availableDatesInPeriod={availableDatesInPeriod} cashflowGroups={cashflowGroups}
-            activeCashflowGroupIds={activeCashflowGroupIds} categories={categories}
-            clearFilters={clearFilters} isFilterActive={isFilterActive}
+            activeCashflowGroupIds={activeCashflowGroupIds} activeCategoryNames={activeCategoryNames}
+            categories={categories} clearFilters={clearFilters} isFilterActive={isFilterActive}
           />
         )}
       </div>

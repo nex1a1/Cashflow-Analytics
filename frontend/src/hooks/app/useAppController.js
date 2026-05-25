@@ -86,6 +86,7 @@ export function useAppController() {
     allDatesInPeriod,
     displayTransactions,
     activeCashflowGroupIds,
+    activeCategoryNames,
     isFilterActive,
     clearFilters,
   } = useFilters({ transactions, categories, masterPeriods });
@@ -295,6 +296,7 @@ export function useAppController() {
     maxAmount, setMaxAmount,
     dayTypeFilter, setDayTypeFilter,
     activeCashflowGroupIds,
+    activeCategoryNames,
     summaryData,
     analytics,
     hideFixedExpenses, setHideFixedExpenses,
