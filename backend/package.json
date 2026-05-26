@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed:demo": "node src/scripts/seedMockupDb.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",

@@ -2,7 +2,16 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../data/cashflow.db');
+let DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../data/cashflow.db');
+
+// Override for Demo Mode
+if (process.env.USE_DEMO_DB === 'true') {
+    const dbDir = path.dirname(DB_PATH);
+    DB_PATH = path.join(dbDir, 'cashflow_demo.db');
+    console.warn('⚠️ ===================================================');
+    console.warn('⚠️ WARNING: RUNNING IN DEMO MODE (cashflow_demo.db)');
+    console.warn('⚠️ ===================================================');
+}
 
 // สร้าง directory ถ้ายังไม่มี
 const dbDir = path.dirname(DB_PATH);

@@ -370,7 +370,7 @@ const runSubscriptionMigration = () => {
       softwareCatId = oldCat.id;
       console.log('✅ Migrated Category: Renamed "บริการรายเดือน" to "ซอฟต์แวร์ & AI"');
     } else {
-      const existingSoftwareCat = db.prepare("SELECT id FROM categories WHERE name = 'ซอฟต์แวร์ & AI'").get();
+      const existingSoftwareCat = db.prepare("SELECT id FROM categories WHERE name = 'ซอฟต์แวร์ & AI' OR name = 'ซอฟต์แวร์'").get();
       if (existingSoftwareCat) {
         softwareCatId = existingSoftwareCat.id;
       } else {
@@ -381,10 +381,20 @@ const runSubscriptionMigration = () => {
       }
     }
 
-    // 2.2 Shopping & Food Delivery VIP (Create if not exists)
-    const existingShoppingCat = db.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง & ส่งอาหาร'").get();
-    if (existingShoppingCat) {
-      shoppingCatId = existingShoppingCat.id;
+    // 2.2 Shopping & Food Delivery VIP (Create if not exists, merge duplicates if both exist)
+    const catLong = db.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง & ส่งอาหาร'").get();
+    const catShort = db.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง'").get();
+
+    if (catLong && catShort) {
+      // Both exist! Merge long into short (user preferred short)
+      db.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(catShort.id, catLong.id);
+      db.prepare("DELETE FROM categories WHERE id = ?").run(catLong.id);
+      console.log('🧹 Merged duplicate category "สมาชิกช้อปปิ้ง & ส่งอาหาร" into "สมาชิกช้อปปิ้ง"');
+      shoppingCatId = catShort.id;
+    } else if (catShort) {
+      shoppingCatId = catShort.id;
+    } else if (catLong) {
+      shoppingCatId = catLong.id;
     } else {
       shoppingCatId = crypto.randomUUID();
       db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
@@ -392,10 +402,19 @@ const runSubscriptionMigration = () => {
       console.log('🌱 Created Category: "สมาชิกช้อปปิ้ง & ส่งอาหาร"');
     }
 
-    // 2.3 Entertainment & Streaming (Create if not exists)
-    const existingEntertainmentCat = db.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง & สตรีมมิ่ง'").get();
-    if (existingEntertainmentCat) {
-      entertainmentCatId = existingEntertainmentCat.id;
+    // 2.3 Entertainment & Streaming (Create if not exists, merge duplicates if both exist)
+    const entLong = db.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง & สตรีมมิ่ง'").get();
+    const entShort = db.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง'").get();
+
+    if (entLong && entShort) {
+      db.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(entShort.id, entLong.id);
+      db.prepare("DELETE FROM categories WHERE id = ?").run(entLong.id);
+      console.log('🧹 Merged duplicate category "ความบันเทิง & สตรีมมิ่ง" into "ความบันเทิง"');
+      entertainmentCatId = entShort.id;
+    } else if (entShort) {
+      entertainmentCatId = entShort.id;
+    } else if (entLong) {
+      entertainmentCatId = entLong.id;
     } else {
       entertainmentCatId = crypto.randomUUID();
       db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")

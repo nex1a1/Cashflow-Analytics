@@ -36,6 +36,7 @@ export default function AppHeader({
 
   // ── Logic: Smooth Processing Transition ───────────────────
   const [showProcessing, setShowProcessing] = useState(isProcessing);
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
   useEffect(() => {
     if (isProcessing) {
@@ -78,6 +79,13 @@ export default function AppHeader({
               }`}>
                 MASTER
               </span>
+              {isDemoMode && (
+                <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-none border-2 uppercase leading-none shrink-0 animate-pulse ${
+                  'bg-yellow-950/60 text-yellow-400 border-yellow-500/50'
+                }`}>
+                  DEMO MODE
+                </span>
+              )}
             </div>
             
             <div className="flex items-center gap-3 mt-2 flex-wrap">
