@@ -42,18 +42,13 @@ export const getFilterLabel = (period) => {
   }
   return period;
 };
-const hexCache = {};
 export const hexToRgb = (hexStr) => {
     let hex = hexStr || '#94a3b8';
-    if (hexCache[hex]) return hexCache[hex];
-    const originalHex = hex;
     hex = hex.replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
     if (hex.length !== 6) return '148, 163, 184'; 
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-    const rgb = `${r}, ${g}, ${b}`;
-    hexCache[originalHex] = rgb;
-    return rgb;
+    return `${r}, ${g}, ${b}`;
 };

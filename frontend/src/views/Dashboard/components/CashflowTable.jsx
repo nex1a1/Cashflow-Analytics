@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/CashflowTable.jsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileSpreadsheet } from 'lucide-react';
@@ -193,7 +193,7 @@ CashflowTableHeader.displayName = 'CashflowTableHeader';
  * INTERNAL COMPONENT: CashflowTableRow
  */
 const CashflowTableRow = React.memo(({ 
-  row, prevMonth, activeIncomeGroups, activeExpenseGroups, expandedGroups, 
+  row, activeIncomeGroups, activeExpenseGroups, expandedGroups, 
   getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
   handleMouseEnter, handleMouseLeave,
   hoveredCol, setHoveredCol,
@@ -218,6 +218,8 @@ const CashflowTableRow = React.memo(({
     return `rgba(${rgb}, ${opacity})`;
   };
 
+  const prevIndex = analytics.sortedCashflow.findIndex(r => r.monthStr === row.monthStr) - 1;
+  const prevMonth = analytics.sortedCashflow[prevIndex];
   let expMoMJSX = null;
   if (prevMonth && prevMonth.totalExp > 0) {
     const diff = row.totalExp - prevMonth.totalExp;
@@ -618,22 +620,12 @@ export default function CashflowTable() {
     });
   }, []);
 
-  // Pre-calculate active categories for each group once
-  const activeCatsMap = useMemo(() => {
-    if (!analytics || !analytics.sortedCashflow || !categories) return {};
-    const map = {};
-    for (const group of cashflowGroups) {
-      const allCatsInGroup = categories.filter(c => c.cashflowGroup === group.id || c.cashflow_group_id === group.id);
-      map[group.id] = allCatsInGroup.filter(c => {
-        return analytics.sortedCashflow.some(row => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0);
-      });
-    }
-    return map;
-  }, [categories, cashflowGroups, analytics]);
-
   const getActiveCatsForGroup = useCallback((groupId) => {
-    return activeCatsMap[groupId] || [];
-  }, [activeCatsMap]);
+    const allCatsInGroup = categories.filter(c => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
+    return allCatsInGroup.filter(c => {
+      return analytics?.sortedCashflow?.some(row => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0);
+    });
+  }, [categories, analytics]);
 
   const handleMouseEnter = useCallback((e, group) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -656,22 +648,15 @@ export default function CashflowTable() {
 
   if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0)) return null;
 
-  // Memoize active groups to stabilize React.memo checks
-  const activeIncomeGroups = useMemo(() => {
-    if (!analytics || !cashflowGroups) return [];
-    return cashflowGroups
-      .filter(g => g.type === 'income')
-      .sort((a,b) => a.order_index - b.order_index)
-      .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
-  }, [cashflowGroups, analytics, showSkeleton]);
+  const activeIncomeGroups = cashflowGroups
+    .filter(g => g.type === 'income')
+    .sort((a,b) => a.order_index - b.order_index)
+    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
-  const activeExpenseGroups = useMemo(() => {
-    if (!analytics || !cashflowGroups) return [];
-    return cashflowGroups
-      .filter(g => g.type === 'expense')
-      .sort((a,b) => a.order_index - b.order_index)
-      .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
-  }, [cashflowGroups, analytics, showSkeleton]);
+  const activeExpenseGroups = cashflowGroups
+    .filter(g => g.type === 'expense')
+    .sort((a,b) => a.order_index - b.order_index)
+    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
   const thinBorder = 'border-slate-850';
   const boxBorder = 'border-slate-700';
@@ -705,11 +690,10 @@ export default function CashflowTable() {
           <table className="w-full min-w-full text-right text-[13px] whitespace-nowrap border-separate border-spacing-0">
             <CashflowTableHeader {...segmentProps} />
             <tbody className={`divide-y ${'divide-slate-700/40'}`}>
-              {analytics.sortedCashflow.map((row, idx) => (
+              {analytics.sortedCashflow.map((row) => (
                 <CashflowTableRow 
                   key={row.monthStr} 
                   row={row} 
-                  prevMonth={idx > 0 ? analytics.sortedCashflow[idx - 1] : null}
                   isRowHovered={hoveredRow === row.monthStr}
                   setHoveredRow={setHoveredRow}
                   {...segmentProps} 
