@@ -1,11 +1,16 @@
 // src/hooks/useCategories.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { categoryService, groupService } from '../services/api';
 
 export default function useCategories(initialCategories, setCashflowGroups) {
   const [categories, setCategories] = useState(initialCategories);
   const { showToast } = useToast();
+
+  const categoriesRef = useRef(categories);
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -70,7 +75,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         return;
       }
 
-      const sameTypeCategories = categories.filter(c => c.type === type);
+      const sameTypeCategories = categoriesRef.current.filter(c => c.type === type);
       const maxOrder = sameTypeCategories.length > 0 
         ? Math.max(...sameTypeCategories.map(c => c.order_index || 0)) 
         : 0;
@@ -92,10 +97,10 @@ export default function useCategories(initialCategories, setCashflowGroups) {
     } catch (err) {
       showToast('ไม่สามารถเพิ่มหมวดหมู่ได้: ' + err.message, 'error');
     }
-  }, [categories, loadCategories, showToast]);
+  }, [loadCategories, showToast]);
 
   const handleDeleteCategory = useCallback(async (id, transactions) => {
-    const catToDelete = categories.find(c => c.id === id);
+    const catToDelete = categoriesRef.current.find(c => c.id === id);
     if (!catToDelete) return;
     
     if (transactions.some(t => t.category_id === id || t.category === catToDelete.name)) {
@@ -116,14 +121,15 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
       }
     }
-  }, [categories, loadCategories, showToast]);
+  }, [loadCategories, showToast]);
 
   const handleMoveCategory = useCallback(async (id, direction) => {
-    const targetCat = categories.find(c => c.id === id);
+    const currentCategories = categoriesRef.current;
+    const targetCat = currentCategories.find(c => c.id === id);
     if (!targetCat) return;
 
     // Filter categories WITHIN the same type
-    const sameTypeCategories = categories
+    const sameTypeCategories = currentCategories
       .filter(c => c.type === targetCat.type)
       .sort((a, b) => a.order_index - b.order_index);
     
@@ -158,7 +164,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
 
       try {
         for (const cat of finalUpdated) {
-          const original = categories.find(c => c.id === cat.id);
+          const original = currentCategories.find(c => c.id === cat.id);
           if (!original || original.order_index !== cat.order_index) {
             await categoryService.save(toBackend(cat));
           }
@@ -168,7 +174,7 @@ export default function useCategories(initialCategories, setCashflowGroups) {
         showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');
       }
     }
-  }, [categories, loadCategories, showToast]);
+  }, [loadCategories, showToast]);
 
   return { 
     categories, setCategories, 

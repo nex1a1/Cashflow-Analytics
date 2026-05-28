@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
 } from '../../constants';
@@ -57,6 +57,11 @@ export function useAppController() {
     loadCategories,
     loadGroups,
   } = useCategories(DEFAULT_CATEGORIES, setCashflowGroups);
+
+  const categoriesRef = useRef(categories);
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
 
   const {
     transactions, summaryData, masterPeriods, frequentItems, isProcessing: isTxProcessing,
@@ -133,13 +138,13 @@ export function useAppController() {
   }, [activeTab, filterPeriod]);
 
   // ─── HANDLERS ───
-  const handleDayTypeChange = async (dateStr, type) => {
+  const handleDayTypeChange = useCallback(async (dateStr, type) => {
     setDayTypes(prev => ({ ...prev, [dateStr]: type }));
     try { await calendarService.save(dateStr, type); }
     catch (err) { console.error('Failed to save day type to DB:', err); }
-  };
+  }, []);
 
-  const handleDayTypeConfigChange = async (id, field, value) => {
+  const handleDayTypeConfigChange = useCallback(async (id, field, value) => {
     const dt = dayTypeConfig.find(d => d.id === id);
     if (!dt) return;
     const updatedDt = { ...dt, [field]: value };
@@ -147,27 +152,27 @@ export function useAppController() {
     setDayTypeConfig(newConfig); 
     try { await dayTypeService.save(updatedDt); } 
     catch (err) { triggerToast('อัปเดตชนิดวันไม่สำเร็จ: ' + err.message, 'error'); }
-  };
+  }, [dayTypeConfig, triggerToast]);
 
-  const handleAddDayType = async () => {
+  const handleAddDayType = useCallback(async () => {
     const newDt = { id: crypto.randomUUID(), label: 'ชนิดวันใหม่', color: '#64748B', name: '', order_index: dayTypeConfig.length + 1 };
     try {
       await dayTypeService.save(newDt);
-      setDayTypeConfig([...dayTypeConfig, newDt]);
+      setDayTypeConfig(prev => [...prev, newDt]);
       triggerToast('เพิ่มชนิดวันสำเร็จ', 'success');
     } catch (err) { triggerToast('ไม่สามารถเพิ่มชนิดวันได้: ' + err.message, 'error'); }
-  };
+  }, [dayTypeConfig.length, triggerToast]);
 
-  const handleDeleteDayType = async (id) => {
+  const handleDeleteDayType = useCallback(async (id) => {
     if (!window.confirm('ยืนยันการลบชนิดวันนี้?')) return;
     try {
       await dayTypeService.deleteById(id);
-      setDayTypeConfig(dayTypeConfig.filter(d => d.id !== id));
+      setDayTypeConfig(prev => prev.filter(d => d.id !== id));
       triggerToast('ลบชนิดวันสำเร็จ', 'success');
     } catch (err) { triggerToast('ไม่สามารถลบชนิดวันได้: ' + err.message, 'error'); }
-  };
+  }, [triggerToast]);
 
-  const handleMoveDayType = async (id, direction) => {
+  const handleMoveDayType = useCallback(async (id, direction) => {
     const idx = dayTypeConfig.findIndex(c => c.id === id);
     if (idx < 0) return;
     const ti = direction === 'UP' ? idx - 1 : idx + 1;
@@ -179,36 +184,36 @@ export function useAppController() {
       try { for (const dt of updatedConfig) { await dayTypeService.save(dt); } } 
       catch (err) { triggerToast('ไม่สามารถบันทึกลำดับได้: ' + err.message, 'error'); }
     }
-  };
+  }, [dayTypeConfig, triggerToast]);
 
-  const handleUpdateCashflowGroup = async (group) => {
+  const handleUpdateCashflowGroup = useCallback(async (group) => {
     try {
       await groupService.save(group);
       await loadGroups();
       triggerToast('อัปเดตกลุ่มสำเร็จ', 'success');
     } catch (err) { triggerToast('ไม่สามารถอัปเดตกลุ่มได้: ' + err.message, 'error'); }
-  };
+  }, [loadGroups, triggerToast]);
 
-  const handleAddCashflowGroup = async () => {
+  const handleAddCashflowGroup = useCallback(async () => {
     const g = { id: crypto.randomUUID(), name: 'คอลัมน์ใหม่', type: 'expense', order_index: cashflowGroups.length + 1, color: '#6366F1', icon: '✨', highlightBg: false };
     try {
       await groupService.save(g);
       await loadGroups();
       triggerToast('เพิ่มกลุ่มสำเร็จ', 'success');
     } catch (err) { triggerToast('ไม่สามารถเพิ่มกลุ่มได้: ' + err.message, 'error'); }
-  };
+  }, [cashflowGroups.length, loadGroups, triggerToast]);
 
-  const handleDeleteCashflowGroup = async (id) => {
-    if (categories.some(c => c.cashflowGroup === id)) { triggerToast('ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่', 'error'); return; }
+  const handleDeleteCashflowGroup = useCallback(async (id) => {
+    if (categoriesRef.current.some(c => c.cashflowGroup === id)) { triggerToast('ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่', 'error'); return; }
     if (!window.confirm('ยืนยันการลบกลุ่มนี้?')) return;
     try {
       await groupService.deleteById(id);
       await loadGroups();
       triggerToast('ลบกลุ่มสำเร็จ', 'success');
     } catch (err) { triggerToast('ไม่สามารถลบกลุ่มได้: ' + err.message, 'error'); }
-  };
+  }, [loadGroups, triggerToast]);
 
-  const handleMoveCashflowGroup = async (id, direction) => {
+  const handleMoveCashflowGroup = useCallback(async (id, direction) => {
     const sortedGroups = [...cashflowGroups].sort((a, b) => a.order_index - b.order_index);
     const idx = sortedGroups.findIndex(g => g.id === id);
     if (idx < 0) return;
@@ -233,7 +238,7 @@ export function useAppController() {
         await loadGroups();
       }
     }
-  };
+  }, [cashflowGroups, loadGroups, triggerToast]);
 
   const handleOpenAddModal = useCallback((dateStr, type) => {
     const formattedDate = dateStr ? toISODate(dateStr) : new Date().toISOString().split('T')[0];

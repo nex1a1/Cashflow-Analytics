@@ -51,10 +51,24 @@ export default function SettingsView({
 
 
   const txCountByGroup = useMemo(() => {
+    // 1. Build a fast lookup map for Category ID/Name to CashflowGroup ID
+    const catToGroupMap = {};
+    categories.forEach(c => {
+      if (c.cashflowGroup) {
+        catToGroupMap[c.id] = c.cashflowGroup;
+        if (c.name) {
+          catToGroupMap[c.name] = c.cashflowGroup;
+        }
+      }
+    });
+
+    // 2. Count transactions by CashflowGroup ID in a single pass O(T)
     const map = {};
     transactions.forEach(t => {
-      const cat = categories.find(c => c.id === t.category_id || c.name === t.category);
-      if (cat?.cashflowGroup) map[cat.cashflowGroup] = (map[cat.cashflowGroup] || 0) + 1;
+      const groupId = catToGroupMap[t.category_id] || catToGroupMap[t.category];
+      if (groupId) {
+        map[groupId] = (map[groupId] || 0) + 1;
+      }
     });
     return map;
   }, [transactions, categories]);

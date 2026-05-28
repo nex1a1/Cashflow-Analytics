@@ -45,8 +45,8 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
   const mode = 'dark';
 
   return (
-    <div className={`overflow-hidden rounded-sm transition-all duration-300 border ${
-      'bg-slate-900/60 border-slate-850/80 backdrop-blur-md shadow-md shadow-slate-950/10'
+    <div className={`overflow-hidden rounded-sm border ${
+      'bg-slate-900 border-slate-850/80 shadow-md shadow-slate-950/10'
     } ${a.glow[mode]}`}>
       <div className={`px-3.5 py-2 flex items-center justify-between gap-3 border-b ${
         'border-slate-850/50'

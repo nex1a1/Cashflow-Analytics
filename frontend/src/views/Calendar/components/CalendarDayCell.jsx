@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 
@@ -9,7 +9,7 @@ const formatValue = (val) => {
   });
 };
 
-export default function CalendarDayCell({ 
+const CalendarDayCell = memo(function CalendarDayCell({ 
   day, data, dateStr, isToday, isWeekend, 
   dayTypeConfig, dayTypes, handleDayTypeChange, onSelectDate
 }) {
@@ -130,4 +130,6 @@ export default function CalendarDayCell({
       </div>
     </div>
   );
-}
+});
+
+export default CalendarDayCell;
