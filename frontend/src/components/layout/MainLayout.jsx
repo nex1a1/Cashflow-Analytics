@@ -16,12 +16,12 @@ import ImportGuideModal from '../modals/ImportGuideModal';
 import ImportPreviewModal from '../modals/ImportPreviewModal';
 
 const pageVariants = {
-  initial: { opacity: 0, y: 10 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -10 }
+  initial: { opacity: 0 },
+  in: { opacity: 1 },
+  out: { opacity: 0 }
 };
 
-const pageTransition = { type: 'tween', ease: 'anticipate', duration: 0.3 };
+const pageTransition = { duration: 0 };
 
 export default function MainLayout({ controller }) {
   const isDarkMode = true;
