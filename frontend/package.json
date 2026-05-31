@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-sans-thai-looped": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "chart.js": "^4.4.1",
     "chartjs-chart-sankey": "^0.14.0",

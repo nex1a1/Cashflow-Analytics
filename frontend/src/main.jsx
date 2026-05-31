@@ -4,6 +4,18 @@ import App from './App';
 import './assets/styles/index.css';
 import { ToastProvider } from './context/ToastContext';
 
+// Offline-First Fonts
+import "@fontsource/inter/300.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/ibm-plex-sans-thai-looped/300.css";
+import "@fontsource/ibm-plex-sans-thai-looped/400.css";
+import "@fontsource/ibm-plex-sans-thai-looped/500.css";
+import "@fontsource/ibm-plex-sans-thai-looped/600.css";
+import "@fontsource/ibm-plex-sans-thai-looped/700.css";
+
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, 
   LineElement, Title, Tooltip, Legend, ArcElement, Filler, defaults, 
