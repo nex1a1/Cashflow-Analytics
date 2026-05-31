@@ -40,7 +40,7 @@ export default function ConfirmDeleteButton({ onConfirm, size = 'sm', disabled =
           ? 'opacity-20 cursor-not-allowed'
           : confirming
             ? 'bg-red-500 text-white animate-pulse'
-            : 'text-slate-600 hover:text-white hover:bg-red-500/80'
+            : 'text-[#888888] hover:text-white hover:bg-[#da291c]'
       }`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}>
       <Trash2 className="w-3.5 h-3.5" />

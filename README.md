@@ -17,7 +17,7 @@
 
 *   **🌌 Antigravity:** สุดยอด AI Agent คู่หูนักพัฒนาผู้ทรงพลังจากทีม **Google DeepMind** ทำหน้าที่เป็นเสนาธิการคุมงานโครงสร้างสถาปัตยกรรม (Architect & Workspace Orchestrator) วางแผน จัดการไฟล์ รันคำสั่ง และประสานงานระบบอย่างแม่นยำ
 *   **🦈 Gemini 3.5 (Flash / Pro):** ขุมพลังการประมวลผลตรรกะเบื้องหลัง คิดคำนวณคณิตศาสตร์ทางการเงินอันซับซ้อน จัดการฐานข้อมูลความเร็วสูง และสร้างคำสั่ง SQL/Analytical Views ที่แม่นยำอย่างไร้ที่ติ
-*   **🎭 Claude:** นักรังสรรค์และขัดเกลาประสบการณ์ผู้ใช้งาน (UX/UI Catalyst) ผู้คอยเติมเต็มความประณีตของ Component, จังหวะการเคลื่อนไหวที่นุ่มนวลของ Framer Motion, โทนสี HSL สุดพรีเมียม และ Micro-animations ที่น่าดึงดูด
+*   **🎭 Claude:** นักรังสรรค์และขัดเกลาประสบการณ์ผู้ใช้งาน (UX/UI Catalyst) ผู้คอยเติมเต็มความประณีตของ Component, ดีไซน์หรูหราระดับพรีเมียมแบบ Ferrari Luxury Cinematic Editorial, โครงสร้างขอบเหลี่ยมคม 0px และระบบ Static Performance Engine ไร้การกระตุกกระตื้น
 
 การ Vibe Coding ในโปรเจกต์นี้ก้าวข้ามขีดจำกัดของการพัฒนาโปรแกรมทั่วไป ด้วยการใช้เทคนิค **Direct Prompt Engineering** และ **Agentic Workflows** ในการสร้างฐานข้อมูล SQLite Schema, Express API และหน้าจอ React UI ให้สอดประสานกันเป็นหนึ่งเดียวในพริบตา!
 
@@ -47,7 +47,7 @@
 
 ### Frontend (Client Side)
 *   **Core Framework:** `React v18.2.0` (ขับเคลื่อนด้วย `Vite v5.0.8`)
-*   **Styling & Themes:** `Tailwind CSS v3.4.1` (เน้นการแสดงผลหน้าจอกว้างความละเอียดสูง ปรับแต่งโครงสี HSL แบบเฉพาะตัว **Ignore mobile breakpoints**)
+*   **Styling & Themes:** `Tailwind CSS v3.4.1` (สไตล์หรูหราพรีเมียมแบบ Ferrari Rosso Corsa Cinematic Editorial, พื้นหลัง Near-Black `#181818`, ขอบเหลี่ยมคม 0px `rounded-none`, พิมพ์ใหญ่และระยะห่างอักษรแบบมีเอกลักษณ์, **Ignore mobile breakpoints**)
 *   **Visualization:** `Chart.js v4.4.1` & `react-chartjs-2 v5.2.0`
 *   **Motion & Interaction:** `Framer Motion v12.38.0` และไอคอนคุณภาพจาก `Lucide React`
 

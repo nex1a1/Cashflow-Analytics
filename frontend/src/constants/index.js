@@ -9,8 +9,8 @@ export const SETTINGS_API_URL = 'http://localhost:3000/api/settings';
 export const OLD_PALETTE_MAP = {
   'slate': '#64748B', 'red': '#EF4444', 'orange': '#F97316', 'amber': '#F59E0B',
   'green': '#10B981', 'teal': '#14B8A6', 'blue': '#3B82F6', 'indigo': '#6366F1',
-  'purple': '#8B5CF6', 'pink': '#EC4899', 'rose': '#F43F5E', 'gundam-blue': '#00509E',
-  'gundam-red': '#D81A21', 'gundam-gold': '#F4B800', 'income-green': '#059669'
+  'purple': '#8B5CF6', 'pink': '#EC4899', 'rose': '#F43F5E', 'gundam-blue': '#da291c',
+  'gundam-red': '#b01e0a', 'gundam-gold': '#fff200', 'income-green': '#059669'
 };
 
 /**
@@ -27,8 +27,8 @@ export const DEFAULT_CATEGORIES = [
   { id: 'c4', name: "บริการรายเดือน", icon: "💳", color: '#6366F1', type: 'expense', cashflowGroup: null, isFixed: true },
   { id: 'c5', name: "การเดินทาง", icon: "🚗", color: '#64748B', type: 'expense', cashflowGroup: null, isFixed: false },
   { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "🏠", color: '#F59E0B', type: 'expense', cashflowGroup: null, isFixed: true },
-  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "💻", color: '#00509E', type: 'expense', cashflowGroup: null, isFixed: false },
-  { id: 'c7_comp', name: "ประกอบคอม & ฮาร์ดแวร์", icon: "🖥️", color: '#00509E', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "💻", color: '#da291c', type: 'expense', cashflowGroup: null, isFixed: false },
+  { id: 'c7_comp', name: "ประกอบคอม & ฮาร์ดแวร์", icon: "🖥️", color: '#da291c', type: 'expense', cashflowGroup: null, isFixed: false },
   { id: 'c7_gear', name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง", icon: "⌨️", color: '#6366F1', type: 'expense', cashflowGroup: null, isFixed: false },
   { id: 'c7_desk', name: "เฟอร์นิเจอร์ & จัดโต๊ะคอม", icon: "🪑", color: '#06B6D4', type: 'expense', cashflowGroup: null, isFixed: false },
   { id: 'c7_phone', name: "สมาร์ทโฟน & ไอทีพกพา", icon: "📱", color: '#8B5CF6', type: 'expense', cashflowGroup: null, isFixed: false },

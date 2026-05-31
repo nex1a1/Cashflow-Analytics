@@ -90,19 +90,19 @@ export default function HorizontalLedgerView({
   // ─── 3. Styles ───
   const border  = 'rgba(255,255,255,0.06)';
   const border2 = 'rgba(255,255,255,0.12)';
-  const bgBase  = '#0f172a';
-  const bgHead  = '#0d1424';
-  const bgFoot  = '#0d1424';
+  const bgBase  = '#181818';
+  const bgHead  = '#1c1c1c';
+  const bgFoot  = '#121212';
   const ROW_H   = '34px';
 
   if (expenseTransactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 px-4">
-        <div className="p-6 rounded-none border-2 border-slate-800 mb-6 bg-slate-900 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
-          <Inbox className="w-16 h-16 text-slate-500" />
+        <div className="p-6 rounded-none border-2 border-[#3e3e3e] mb-6 bg-[#181818] shadow-[0_0_15px_rgba(0,0,0,0.3)]">
+          <Inbox className="w-16 h-16 text-[#666666]" />
         </div>
-        <p className="text-lg font-black text-slate-400">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className="text-sm mt-2 text-slate-500">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className="text-lg font-black text-[#cbd5e1]">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
+        <p className="text-sm mt-2 text-[#888888]">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
       </div>
     );
   }
@@ -160,9 +160,9 @@ export default function HorizontalLedgerView({
                           left: 0,
                           zIndex: 20,
                           background: isNewYear 
-                            ? 'linear-gradient(90deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)' 
-                            : 'linear-gradient(90deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                          borderTop: isNewYear ? '1.5px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.08)',
+                            ? 'linear-gradient(90deg, rgba(218, 41, 28, 0.2) 0%, rgba(24, 24, 24, 0.95) 100%)' 
+                            : 'linear-gradient(90deg, rgba(48, 48, 48, 0.4) 0%, rgba(24, 24, 24, 0.95) 100%)',
+                          borderTop: isNewYear ? '1.5px solid #da291c' : '1px solid rgba(255, 255, 255, 0.08)',
                           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                           padding: '6px 10px',
                           textAlign: 'left',
@@ -171,9 +171,9 @@ export default function HorizontalLedgerView({
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{
-                            background: isNewYear ? 'rgba(59, 130, 246, 0.25)' : 'rgba(100, 116, 139, 0.15)',
-                            border: isNewYear ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(100, 116, 139, 0.25)',
-                            color: isNewYear ? '#60a5fa' : '#94a3b8',
+                            background: isNewYear ? 'rgba(218, 41, 28, 0.2)' : 'rgba(100, 116, 139, 0.15)',
+                            border: isNewYear ? '1px solid rgba(218, 41, 28, 0.4)' : '1px solid rgba(100, 116, 139, 0.25)',
+                            color: isNewYear ? '#da291c' : '#888888',
                             fontSize: '9px',
                             fontWeight: 900,
                             padding: '1px 5px',
@@ -185,7 +185,7 @@ export default function HorizontalLedgerView({
                           <span style={{
                             fontSize: '12px',
                             fontWeight: 900,
-                            color: isNewYear ? '#60a5fa' : '#cbd5e1',
+                            color: isNewYear ? '#da291c' : '#cbd5e1',
                             letterSpacing: '0.02em',
                             fontFamily: 'monospace',
                           }}>
@@ -221,7 +221,7 @@ export default function HorizontalLedgerView({
                 textAlign: 'center',
                 fontSize: 12,
                 fontWeight: 900,
-                color: '#64748b',
+                color: '#888888',
               }}>รวม</td>
 
               {activeCategories.map((cat, idx) => (

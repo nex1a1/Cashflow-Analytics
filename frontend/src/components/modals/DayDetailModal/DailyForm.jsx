@@ -83,23 +83,23 @@ export default function DailyForm({
   };
 
   const tokens = {
-    surfaceAlt: 'bg-slate-800',
-    border: 'border-slate-700',
+    surfaceAlt: 'bg-[#1c1c1c]',
+    border: 'border-[#303030]',
     textMuted: 'text-slate-400',
-    input: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-slate-900 border-slate-600 text-slate-200 focus:border-blue-500 focus:ring-blue-500/30'}`,
-    inputError: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-slate-900 border-red-500 text-red-200 focus:ring-red-500/30'}`,
+    input: `px-3 py-2 rounded-none border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30'}`,
+    inputError: `px-3 py-2 rounded-none border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30'}`,
     errorText: `text-[10px] font-bold text-red-500 mt-1`
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
-      <div className={`flex p-0.5 rounded-sm border ${'bg-slate-900 border-slate-700'}`}>
+      <div className={`flex p-0.5 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
         <button type="button" onClick={() => handleTypeChange('expense')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-sm transition-all ${formType === 'expense' ? ('bg-slate-700 text-red-400 shadow-sm') : tokens.textMuted}`}>
+          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : tokens.textMuted}`}>
           รายจ่าย (Alt+E)
         </button>
         <button type="button" onClick={() => handleTypeChange('income')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-sm transition-all ${formType === 'income' ? ('bg-slate-700 text-emerald-400 shadow-sm') : tokens.textMuted}`}>
+          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : tokens.textMuted}`}>
           รายรับ (Alt+I)
         </button>
       </div>
@@ -113,14 +113,14 @@ export default function DailyForm({
         </div>
 
         {formType === 'expense' && (
-          <div className={`flex p-0.5 rounded-sm border shrink-0 ${'bg-slate-900 border-slate-700'}`}>
+          <div className={`flex p-0.5 rounded-none border shrink-0 ${'bg-[#181818] border-[#303030]'}`}>
             {[
               { val: 'need', label: 'NEED', color: 'text-rose-400' },
               { val: 'want', label: 'WANT', color: 'text-sky-400' },
               { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
             ].map(opt => (
               <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
-                className={`px-2 py-1 text-[10px] font-black rounded-sm transition-all ${allocationType === opt.val ? (dm ? 'bg-slate-700 ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : tokens.textMuted}`}>
+                className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${allocationType === opt.val ? (dm ? 'bg-[#303030] ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : tokens.textMuted}`}>
                 {opt.label}
               </button>
             ))}
@@ -140,13 +140,13 @@ export default function DailyForm({
 
       <div className="flex gap-2">
         <button type="button" onClick={() => { setValue('description', ''); setValue('amount', '', { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
-          className={`px-3 py-2.5 rounded-sm font-bold text-xs flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 border ${'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'}`}
+          className={`px-3 py-2.5 rounded-none font-bold text-xs flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 border ${'bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]'}`}
           title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
         >
           ล้าง
         </button>
         <button type="submit" disabled={isProcessing}
-          className={`flex-1 py-2.5 rounded-sm font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-white shadow-sm border ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600 border-red-600' : 'bg-emerald-500 hover:bg-emerald-600 border-emerald-600'}`}>
+          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-white shadow-sm border ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600 border-red-600' : 'bg-emerald-500 hover:bg-emerald-600 border-emerald-600'}`}>
           {isProcessing ? <><Zap className="w-4 h-4 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-4 h-4" /> บันทึก (Enter)</>}
         </button>
       </div>

@@ -1,11 +1,11 @@
 
 export default function CalendarSkeleton() {
   const isDarkMode = true;
-  const shimmer = 'bg-slate-700 animate-pulse';
-  const surface = 'bg-slate-900';
-  const surfaceAlt = 'bg-slate-800';
-  const border = 'border-slate-700';
-  const gapColor = 'bg-slate-700';
+  const shimmer = 'bg-[#303030] animate-pulse';
+  const surface = 'bg-[#181818]';
+  const surfaceAlt = 'bg-[#1c1c1c]';
+  const border = 'border-[#303030]';
+  const gapColor = 'bg-[#303030]';
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
   return (

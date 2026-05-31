@@ -30,14 +30,14 @@ const CashflowTableHeader = React.memo(({
   };
 
   return (
-    <thead className={`sticky top-0 z-30 ${'bg-slate-950'}`}>
+    <thead className="sticky top-0 z-30 bg-[#121212]">
       <tr>
         <th 
           rowSpan={2} 
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
-            hoveredCol === 'month' ? 'bg-slate-800 text-blue-300' : 'text-blue-300 bg-slate-950'
+            hoveredCol === 'month' ? 'bg-[#303030] text-blue-300' : 'text-blue-300 bg-[#121212]'
           }`}
         >
           ช่วงเวลา
@@ -60,7 +60,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
-            hoveredCol === 'trend' ? 'bg-slate-800 text-red-400' : 'text-red-400 bg-slate-950'
+            hoveredCol === 'trend' ? 'bg-[#303030] text-red-400' : 'text-red-400 bg-[#121212]'
           }`}
         >
           รวมรายจ่าย (Trend)
@@ -70,7 +70,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('net')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[140px] z-50 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-            hoveredCol === 'net' ? 'bg-slate-800 text-blue-400' : 'text-blue-400 bg-slate-950'
+            hoveredCol === 'net' ? 'bg-[#303030] text-blue-400' : 'text-blue-400 bg-[#121212]'
           }`}
         >
           เงินคงเหลือ
@@ -80,7 +80,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-left')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[70px] z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors ${
-            hoveredCol === 'pct-left' ? 'bg-slate-800 text-emerald-400' : 'text-emerald-400 bg-slate-950'
+            hoveredCol === 'pct-left' ? 'bg-[#303030] text-emerald-400' : 'text-emerald-400 bg-[#121212]'
           }`}
         >
           %เหลือ
@@ -90,7 +90,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-spent')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors ${
-            hoveredCol === 'pct-spent' ? 'bg-slate-800 text-pink-400' : 'text-pink-400 bg-slate-950'
+            hoveredCol === 'pct-spent' ? 'bg-[#303030] text-pink-400' : 'text-pink-400 bg-[#121212]'
           }`}
         >
           %จ่าย
@@ -130,7 +130,7 @@ const CashflowTableHeader = React.memo(({
                     key={c.id} 
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-slate-500 border-b-slate-500`} 
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65`} 
                     style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
                   >
                     {c.name}
@@ -172,7 +172,7 @@ const CashflowTableHeader = React.memo(({
                     key={c.id} 
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-slate-500 border-b-slate-500`} 
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65`} 
                     style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
                   >
                     {c.name}
@@ -229,7 +229,7 @@ const CashflowTableRow = React.memo(({
 
     // Elite vibrant semi-transparent badge styling (rounded-none compliance)
     const badgeClass = isFlat 
-      ? 'bg-slate-800/40 text-slate-400 border-slate-700/30' 
+      ? 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/30' 
       : isUp 
         ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
         : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -251,15 +251,15 @@ const CashflowTableRow = React.memo(({
     <tr 
       onMouseEnter={() => setHoveredRow(row.monthStr)}
       onMouseLeave={() => setHoveredRow(null)}
-      className="group hover:bg-slate-400/5 transition-colors"
+      className="group hover:bg-[#303030]/10 transition-colors"
     >
       <td 
         onMouseEnter={() => setHoveredCol('month')}
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
           isMonthHovered 
-            ? 'text-blue-300 bg-slate-850' 
-            : (isRowHovered ? 'text-blue-300 bg-slate-850/80' : 'text-blue-300 bg-slate-900 group-hover:bg-slate-850')
+            ? 'text-blue-300 bg-[#1c1c1c]' 
+            : (isRowHovered ? 'text-blue-300 bg-[#1c1c1c]/80' : 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]')
         }`}
       >
         {getThaiMonth(row.monthStr)}
@@ -343,8 +343,8 @@ const CashflowTableRow = React.memo(({
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
           isTrendHovered 
-            ? 'text-red-400 bg-slate-850' 
-            : (isRowHovered ? 'text-red-400 bg-slate-850/80' : 'text-red-400 bg-slate-900 group-hover:bg-slate-850')
+            ? 'text-red-400 bg-[#1c1c1c]' 
+            : (isRowHovered ? 'text-red-400 bg-[#1c1c1c]/80' : 'text-red-400 bg-[#181818] group-hover:bg-[#1c1c1c]')
         }`}
       >
         <div className="flex items-center justify-between gap-1">
@@ -357,8 +357,8 @@ const CashflowTableRow = React.memo(({
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
           isNetHovered 
-            ? 'text-blue-400 bg-slate-850' 
-            : (isRowHovered ? 'text-blue-400 bg-slate-850/80' : 'text-blue-400 bg-slate-900 group-hover:bg-slate-850')
+            ? 'text-blue-400 bg-[#1c1c1c]' 
+            : (isRowHovered ? 'text-blue-400 bg-[#1c1c1c]/80' : 'text-blue-400 bg-[#181818] group-hover:bg-[#1c1c1c]')
         }`}
       >
         {formatMoney(row.income - row.totalExp)}
@@ -368,8 +368,8 @@ const CashflowTableRow = React.memo(({
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-2 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[70px] z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
           isPctLeftHovered 
-            ? 'bg-slate-850' 
-            : (isRowHovered ? 'bg-slate-850/80' : 'bg-slate-900 group-hover:bg-slate-850')
+            ? 'bg-[#1c1c1c]' 
+            : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
         } ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-red-400' : 'text-emerald-400'}`}
       >
         {row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%
@@ -379,8 +379,8 @@ const CashflowTableRow = React.memo(({
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-2 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
           isPctSpentHovered 
-            ? 'bg-slate-850' 
-            : (isRowHovered ? 'bg-slate-850/80' : 'bg-slate-900 group-hover:bg-slate-850')
+            ? 'bg-[#1c1c1c]' 
+            : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
         } ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-red-400' : 'text-pink-400'}`}
       >
         {row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}
@@ -404,12 +404,12 @@ const CashflowTableFooter = React.memo(({
 
   return (
     <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`}>
-      <tr className={'text-slate-200'}>
+      <tr className="text-slate-200">
         <td 
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
-            hoveredCol === 'month' ? 'bg-slate-850' : 'bg-slate-900'
+            hoveredCol === 'month' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
           รวมทั้งหมด
@@ -427,7 +427,7 @@ const CashflowTableFooter = React.memo(({
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
-                  isColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                  isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                 }`} 
                 style={{ color: g.color || ('#34d399') }}
               >
@@ -442,7 +442,7 @@ const CashflowTableFooter = React.memo(({
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
                     className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
-                      isCatColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                      isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                     }`} 
                     style={{ color: c.color }}
                   >
@@ -466,7 +466,7 @@ const CashflowTableFooter = React.memo(({
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
-                  isColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                  isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                 }`} 
                 style={{ color: g.color || ('#cbd5e1') }}
               >
@@ -481,7 +481,7 @@ const CashflowTableFooter = React.memo(({
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
                     className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${thinBorder} ${
-                      isCatColHovered ? 'bg-slate-850' : 'bg-slate-900'
+                      isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                     }`} 
                     style={{ color: c.color }}
                   >
@@ -496,7 +496,7 @@ const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} text-red-400 sticky right-[250px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
-            hoveredCol === 'trend' ? 'bg-slate-850' : 'bg-slate-900'
+            hoveredCol === 'trend' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
           {formatMoney(analytics.totalExpense)}
@@ -505,7 +505,7 @@ const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('net')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} text-blue-400 sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-            hoveredCol === 'net' ? 'bg-slate-850' : 'bg-slate-900'
+            hoveredCol === 'net' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
           {formatMoney(analytics.netCashflow)}
@@ -514,7 +514,7 @@ const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-left')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[70px] z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-            hoveredCol === 'pct-left' ? 'bg-slate-850' : 'bg-slate-900'
+            hoveredCol === 'pct-left' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
           {analytics.totalIncome > 0 ? `${analytics.savingsRate}%` : '0%'}
@@ -523,7 +523,7 @@ const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-spent')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-            hoveredCol === 'pct-spent' ? 'bg-slate-850' : 'bg-slate-900'
+            hoveredCol === 'pct-spent' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
           {analytics.totalIncome > 0 ? `${(analytics.totalExpense / analytics.totalIncome * 100).toFixed(1)}%` : '0%'}
@@ -561,9 +561,7 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
           transition={{ duration: 0.12 }}
           className="flex flex-col items-center min-w-[160px] max-w-[420px]"
         >
-          <div className={`w-full rounded-none p-2 text-[11px] font-medium shadow-2xl border backdrop-blur-md ${
-            'bg-slate-950/95 border-slate-800 text-slate-200 shadow-black/80'
-          }`}>
+          <div className="w-full rounded-none p-2 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/95 border-[#3e3e3e] text-slate-200">
             {/* Header: Slim, crisp and completely squared */}
             <div className="flex items-center gap-1.5 border-b pb-1.5 mb-1.5" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <span className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
@@ -576,9 +574,7 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
               {activeCats.map(c => (
                 <div 
                   key={c.id} 
-                  className={`flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold ${
-                    'bg-slate-900/80 border-slate-800/60 text-slate-300'
-                  }`}
+                  className="flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold bg-[#181818]/80 border-[#303030]/60 text-slate-300"
                   style={{ borderLeftColor: c.color || '#64748B', borderLeftWidth: '3px' }}
                 >
                   <span className="text-[11px] leading-none shrink-0">{c.icon || '📁'}</span>
@@ -589,9 +585,7 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
           </div>
           
           {/* Arrow */}
-          <div className={`w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] ${
-            'border-t-slate-950/95'
-          }`} />
+          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212]/95" />
         </motion.div>
       </div>
     </AnimatePresence>,
@@ -658,12 +652,12 @@ export default function CashflowTable() {
     .sort((a,b) => a.order_index - b.order_index)
     .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
 
-  const thinBorder = 'border-slate-850';
-  const boxBorder = 'border-slate-700';
-  const boundaryBorder = 'border-r-2 !border-r-slate-800';
+  const thinBorder = 'border-[#303030]/60';
+  const boxBorder = 'border-[#3e3e3e]';
+  const boundaryBorder = 'border-r-2 !border-r-[#303030]';
   
   // Obsidian zero-rounded flat edge compliance
-  const card = `rounded-none border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
+  const card = 'rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]';
 
   const segmentProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
@@ -674,22 +668,22 @@ export default function CashflowTable() {
 
   return (
     <div className={`${card} overflow-hidden`}>
-      <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${'bg-slate-950/70 border-slate-850'}`}>
+      <div className="px-4 py-3 border-b flex items-center justify-between gap-2 bg-[#121212]/70 border-[#303030]/60">
         <div className="flex items-center gap-2">
-          <FileSpreadsheet className={`w-4 h-4 ${'text-emerald-400'}`} />
-          <h3 className={`font-bold text-sm ${'text-slate-200'}`}>ตารางสรุปกระแสเงินสด</h3>
+          <FileSpreadsheet className="w-4 h-4 text-[#da291c]" />
+          <h3 className="font-bold text-sm text-slate-200">ตารางสรุปกระแสเงินสด</h3>
         </div>
       </div>
       
       <div className="overflow-x-auto overflow-y-hidden custom-scrollbar" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'auto' }}>
         {showSkeleton ? (
           <div className="p-8">
-            <div className={`h-40 w-full rounded-none animate-pulse ${'bg-slate-900/40'}`} />
+            <div className="h-40 w-full rounded-none animate-pulse bg-[#303030]/40" />
           </div>
         ) : (
           <table className="w-full min-w-full text-right text-[13px] whitespace-nowrap border-separate border-spacing-0">
             <CashflowTableHeader {...segmentProps} />
-            <tbody className={`divide-y ${'divide-slate-700/40'}`}>
+            <tbody className="divide-y divide-[#303030]/40">
               {analytics.sortedCashflow.map((row) => (
                 <CashflowTableRow 
                   key={row.monthStr} 

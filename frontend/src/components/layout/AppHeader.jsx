@@ -51,14 +51,14 @@ export default function AppHeader({
     <div className="flex flex-col relative z-[60]">
       {/* ── Top Header (Logo & Global Actions - Tactical HUD) ── */}
       <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-3.5 border-b-2 transition-all duration-300 ${
-        'bg-slate-950 border-slate-800 text-slate-100'
+        'bg-[#181818] border-[#303030] text-[#cbd5e1]'
       }`}>
         
         {/* Left: Logo & Status Cockpit */}
         <div className="flex items-center gap-4">
           {/* Logo container: Pure sharp tactical bracket */}
           <div className={`p-2 rounded-none border-2 transition-all shrink-0 ${
-            'bg-slate-900 border-blue-600'
+            'bg-[#121212] border-[#da291c]'
           }`}>
             <img 
               src={dm ? sharkWhite : sharkBlack} 
@@ -75,7 +75,7 @@ export default function AppHeader({
                 Cashflow Analytics
               </h1>
               <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-none border-2 uppercase leading-none shrink-0 ${
-                'bg-red-950/60 text-red-400 border-red-500/50'
+                'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/50'
               }`}>
                 MASTER
               </span>
@@ -105,13 +105,13 @@ export default function AppHeader({
               
               {/* Records readout */}
               <div className={`text-[10px] font-bold px-2 py-1 rounded-none border ${
-                'bg-slate-900/60 text-slate-300 border-slate-800'
+                'bg-[#121212] text-[#cbd5e1] border-[#303030]'
               }`}>
-                <span className={`${'text-slate-500'} mr-1`}>ข้อมูล:</span>
-                <span className={'text-blue-400 font-extrabold'}>
+                <span className={`${'text-[#888888]'} mr-1`}>ข้อมูล:</span>
+                <span className={'text-[#da291c] font-extrabold'}>
                   <AnimatedNumber value={transactionCount} />
                 </span>
-                <span className={`${'text-slate-500'} ml-1`}>รายการ</span>
+                <span className={`${'text-[#888888]'} ml-1`}>รายการ</span>
               </div>
             </div>
           </div>
@@ -122,12 +122,12 @@ export default function AppHeader({
           
           {/* Utility Tools Console */}
           <div className={`flex items-center gap-1 p-1 rounded-none border-2 ${
-            'bg-slate-900/80 border-slate-800'
+            'bg-[#121212] border-[#303030]'
           }`}>
             <button
               onClick={onClickExport}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-none text-xs font-bold tracking-wider transition-all duration-150 border border-transparent ${
-                'hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-blue-400'
+                'hover:bg-[#303030] hover:border-[#da291c]/50 text-[#cbd5e1] hover:text-[#da291c]'
               }`}
               title="ส่งออกข้อมูลเป็นไฟล์ CSV"
             >
@@ -138,12 +138,12 @@ export default function AppHeader({
             <label className={`cursor-pointer flex items-center gap-2 text-xs font-bold tracking-wider px-3 py-1.5 rounded-none border border-transparent transition-all duration-150 ${
               showProcessing ? 'opacity-50 pointer-events-none' : ''
             } ${
-              'hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-blue-400'
+              'hover:bg-[#303030] hover:border-[#da291c]/50 text-[#cbd5e1] hover:text-[#da291c]'
             }`} title="นำเข้าข้อมูลจากไฟล์ CSV">
               {showProcessing ? (
                 <Zap className="w-3.5 h-3.5 animate-pulse text-amber-400" />
               ) : (
-                <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#da291c]" />
               )}
               <span className="hidden sm:inline">
                 {showProcessing ? 'กำลังประมวลผล...' : 'Import'}
@@ -158,12 +158,12 @@ export default function AppHeader({
               />
             </label>
             
-            <span className={`w-[1px] h-5 ${'bg-slate-800'}`} />
+            <span className={`w-[1px] h-5 ${'bg-[#3e3e3e]'}`} />
             
             <button
               onClick={onClickImportGuide}
               className={`p-1.5 rounded-none transition-colors border border-transparent ${
-                'text-slate-400 hover:text-blue-400 hover:bg-slate-800 hover:border-slate-700'
+                'text-[#888888] hover:text-[#da291c] hover:bg-[#303030] hover:border-[#da291c]/50'
               }`}
               title="คู่มือการ Import"
             >
@@ -186,7 +186,7 @@ export default function AppHeader({
 
       {/* ── Sub Header (Tab Navigation & Context Actions - Folder/Terminal Tabs) ── */}
       <div className={`sticky top-0 z-30 flex flex-col md:flex-row justify-between items-stretch px-4 md:px-6 border-b-2 transition-all duration-300 backdrop-blur-md ${
-        'bg-slate-900/90 border-slate-800 shadow-lg'
+        'bg-[#1c1c1c]/90 border-[#303030] shadow-lg'
       }`}>
         <div className="flex w-full md:w-auto overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, icon: Icon }) => {
@@ -197,18 +197,18 @@ export default function AppHeader({
                 onClick={() => setActiveTab(id)}
                 className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                   isActive 
-                    ? ('bg-slate-950 text-blue-400 border-t-blue-500 border-r-slate-800 font-black')
-                    : ('text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border-t-transparent border-r-slate-800/40')
+                    ? ('bg-[#181818] text-[#da291c] border-t-[#da291c] border-r-[#303030] font-black')
+                    : ('text-[#888888] hover:text-[#e0e0e0] hover:bg-[#303030]/40 border-t-transparent border-r-[#303030]/40')
                 }`}
               >
-                <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-110 text-blue-400' : 'group-hover:scale-110'}`} />
+                <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-110 text-[#da291c]' : 'group-hover:scale-110'}`} />
                 <span>{label}</span>
                 
                 {/* Active Indicator Underline - Bold & Sharp */}
                 {isActive && (
                   <motion.div 
                     layoutId="activeTabIndicator"
-                    className={`absolute bottom-0 left-0 right-0 h-[3px] rounded-none ${'bg-blue-500'}`} 
+                    className={`absolute bottom-0 left-0 right-0 h-[3px] rounded-none ${'bg-[#da291c]'}`} 
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -220,7 +220,7 @@ export default function AppHeader({
         {/* Right side of Sub Header (PeriodPicker Boxy Container) */}
         {showPeriodPicker && (
           <div className={`flex items-center py-2 md:py-0 px-1 w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 mt-1 md:mt-0 ${
-            'border-slate-800'
+            'border-[#303030]'
           }`}>
             <PeriodPicker
               filterPeriod={filterPeriod}

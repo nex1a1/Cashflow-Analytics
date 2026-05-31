@@ -12,12 +12,12 @@ export default function DangerZone({ transactions, handleDeleteAllData }) {
         icon={<AlertCircle className="w-3.5 h-3.5" />}
         title="Danger Zone"
       >
-        <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-br from-red-950/10 via-slate-950/30 to-red-950/15">
+        <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-br from-red-950/15 via-[#181818] to-red-950/20">
           <div className="flex-1">
             <h3 className={`text-[13px] font-black uppercase tracking-wider mb-0.5 ${'text-red-400'}`}>
               ล้างข้อมูลทั้งหมด (Factory Reset)
             </h3>
-            <p className={`text-xs leading-relaxed font-semibold ${'text-slate-400'}`}>
+            <p className={`text-xs leading-relaxed font-semibold ${'text-[#888888]'}`}>
               จะลบ<strong className="text-red-500 mx-1">รายการบัญชีทั้งหมด</strong>,
               <strong className="text-red-500 mx-1">ประวัติปฏิทิน</strong> และ
               <strong className="text-red-500 mx-1">รีเซ็ตการตั้งค่า</strong>กลับเป็นค่าเริ่มต้น
@@ -27,7 +27,7 @@ export default function DangerZone({ transactions, handleDeleteAllData }) {
                   มีข้อมูล {transactions.length} รายการที่จะหายไป
                 </span>
               )}
-              <span className="font-bold text-red-650">ไม่สามารถกู้คืนได้</span>
+              <span className="font-bold text-[#da291c]">ไม่สามารถกู้คืนได้</span>
             </p>
           </div>
           <ConfirmDeleteButton onConfirm={() => handleDeleteAllData({ setShowToast: () => {} })} size="lg" />

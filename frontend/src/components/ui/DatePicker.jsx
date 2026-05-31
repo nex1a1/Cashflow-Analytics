@@ -93,38 +93,38 @@ export default function DatePicker({ value, onChange, required }) {
   };
 
   /* ── Styles ── */
-  const surface   = 'bg-slate-800';
-  const border    = 'border-slate-600';
-  const textMain  = 'text-slate-100';
-  const textMuted = 'text-slate-400';
-  const hoverDay  = 'hover:bg-slate-700';
+  const surface   = 'bg-[#1c1c1c]';
+  const border    = 'border-[#3e3e3e]';
+  const textMain  = 'text-[#e0e0e0]';
+  const textMuted = 'text-[#888888]';
+  const hoverDay  = 'hover:bg-[#303030] hover:text-white';
 
   return (
     <div ref={containerRef} className="relative w-full">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full px-3 py-2.5 text-sm border rounded-sm flex items-center justify-between gap-2 font-medium transition-colors outline-none
-          ${'bg-slate-900 border-slate-700 text-white hover:border-blue-500 focus:border-blue-500'
+        className={`w-full px-3 py-2.5 text-sm border rounded-none flex items-center justify-between gap-2 font-medium transition-colors outline-none
+          ${'bg-[#121212] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]'
           }`}
       >
         <span className={value ? textMain : textMuted}>{formatDisplay(value)}</span>
-        <Calendar className={`w-4 h-4 shrink-0 ${'text-slate-400'}`} />
+        <Calendar className={`w-4 h-4 shrink-0 ${'text-[#888888]'}`} />
       </button>
 
       {open && (
-        <div className={`absolute top-[calc(100%+6px)] left-0 z-[200] rounded-sm border shadow-2xl p-3 w-72 ${surface} ${border}`}>
+        <div className={`absolute top-[calc(100%+6px)] left-0 z-[200] rounded-none border shadow-2xl p-3 w-72 ${surface} ${border}`}>
 
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={prevMonth}
-              className={`p-1.5 rounded-sm transition-colors ${'hover:bg-slate-700 text-slate-300'}`}>
+              className={`p-1.5 rounded-none transition-colors ${'hover:bg-[#303030] text-white'}`}>
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className={`text-sm font-bold ${textMain}`}>
               {THAI_MONTHS[m]} {y}
             </span>
             <button type="button" onClick={nextMonth}
-              className={`p-1.5 rounded-sm transition-colors ${'hover:bg-slate-700 text-slate-300'}`}>
+              className={`p-1.5 rounded-none transition-colors ${'hover:bg-[#303030] text-white'}`}>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -143,14 +143,14 @@ export default function DatePicker({ value, onChange, required }) {
               const weekend = new Date(y, m, d).getDay() === 0 || new Date(y, m, d).getDay() === 6;
               return (
                 <button
-                  key={d}
+                   key={d}
                   type="button"
                   onClick={() => selectDay(d)}
-                  className={`h-8 w-full rounded-sm text-sm font-medium transition-all
+                  className={`h-8 w-full rounded-none text-sm font-medium transition-all
                     ${isSelected(d)
-                      ? 'bg-[#00509E] text-white font-bold shadow-sm'
+                      ? 'bg-[#da291c] text-white font-bold shadow-none'
                       : isToday(d)
-                        ? `ring-1 ring-[#00509E] ${textMain} ${hoverDay}`
+                        ? `ring-1 ring-[#da291c] ${textMain} ${hoverDay}`
                         : weekend
                           ? `${'text-red-400'} ${hoverDay}`
                           : `${textMain} ${hoverDay}`
@@ -163,13 +163,13 @@ export default function DatePicker({ value, onChange, required }) {
             })}
           </div>
 
-          <div className={`flex justify-between mt-3 pt-2.5 border-t ${'border-slate-700'}`}>
+          <div className={`flex justify-between mt-3 pt-2.5 border-t ${'border-[#303030]'}`}>
             <button type="button" onClick={() => { onChange(''); setOpen(false); }}
-              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${'text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}>
+              className={`text-xs font-bold px-2 py-1 rounded-none transition-colors ${'text-[#888888] hover:text-white hover:bg-[#303030]'}`}>
               ล้าง
             </button>
             <button type="button" onClick={goToday}
-              className={`text-xs font-bold px-2 py-1 rounded-sm transition-colors ${'text-blue-400 hover:bg-slate-700'}`}>
+              className={`text-xs font-bold px-2 py-1 rounded-none transition-colors ${'text-[#da291c] hover:bg-[#303030]'}`}>
               วันนี้
             </button>
           </div>

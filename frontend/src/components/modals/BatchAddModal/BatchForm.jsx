@@ -85,22 +85,22 @@ export default function BatchForm({
   };
 
   const tokens = {
-    input: `w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors ${'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/30'}`,
-    inputError: `w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors ${'bg-slate-900 border-red-500 text-red-200 focus:ring-red-500/30'}`,
+    input: `w-full px-3 py-2.5 text-sm border rounded-none outline-none focus:ring-1 transition-colors ${'bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30'}`,
+    inputError: `w-full px-3 py-2.5 text-sm border rounded-none outline-none focus:ring-1 transition-colors ${'bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30'}`,
     label: `block text-[11px] font-bold uppercase mb-1.5 ${'text-slate-400'}`,
     errorText: `text-[10px] font-bold text-red-500 mt-1`
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={`w-full lg:w-[32%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto ${'border-slate-800'}`}>
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[32%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-[#1c1c1c] border-[#303030]">
       
-      <div className={`flex p-0.5 mb-4 rounded-sm border ${'bg-slate-800 border-slate-700'}`}>
+      <div className={`flex p-0.5 mb-4 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
         <button type="button" onClick={() => handleTypeChange('expense')}
-          className={`flex-1 py-1.5 font-bold text-xs rounded-sm transition-all ${formType === 'expense' ? ('bg-slate-700 text-red-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
+          className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
           รายจ่าย (Alt+E)
         </button>
         <button type="button" onClick={() => handleTypeChange('income')}
-          className={`flex-1 py-1.5 font-bold text-xs rounded-sm transition-all ${formType === 'income' ? ('bg-slate-700 text-emerald-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
+          className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
           รายรับ (Alt+I)
         </button>
       </div>
@@ -118,7 +118,7 @@ export default function BatchForm({
             step="any"
             {...register('amount', { valueAsNumber: true })}
             placeholder="0.00"
-            className={`${errors.amount ? tokens.inputError : tokens.input} font-black text-right ${'text-blue-400'}`} 
+            className={`${errors.amount ? tokens.inputError : tokens.input} font-black text-right ${'text-[#da291c]'}`} 
           />
           {errors.amount && <p className={tokens.errorText}>{errors.amount.message}</p>}
         </div>
@@ -132,14 +132,14 @@ export default function BatchForm({
           </select>
           
           {formType === 'expense' && (
-            <div className={`flex p-0.5 rounded-sm border shrink-0 ${'bg-slate-900 border-slate-700'}`}>
+            <div className={`flex p-0.5 rounded-none border shrink-0 ${'bg-[#181818] border-[#303030]'}`}>
               {[
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
                 { val: 'want', label: 'WANT', color: 'text-sky-400' },
                 { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
               ].map(opt => (
                 <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
-                  className={`px-2 py-1 text-[10px] font-black rounded-sm transition-all ${allocationType === opt.val ? (dm ? 'bg-slate-700 ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : ('text-slate-500')}`}>
+                  className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${allocationType === opt.val ? (dm ? 'bg-[#303030] ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : ('text-slate-500')}`}>
                   {opt.label}
                 </button>
               ))}
@@ -157,13 +157,13 @@ export default function BatchForm({
 
       <div className="mt-auto flex gap-2">
         <button type="button" onClick={() => { setValue('description', ''); setValue('amount', '', { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
-          className={`px-3 py-2.5 border rounded-sm font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 ${'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'}`}
+          className={`px-3 py-2.5 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 ${'bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]'}`}
           title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
         >
           ล้าง
         </button>
         <button type="submit" disabled={isProcessing}
-          className={`flex-1 px-4 py-2.5 border rounded-sm font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${'bg-slate-800 hover:bg-slate-700 text-blue-400 border-slate-700'}`}>
+          className={`flex-1 px-4 py-2.5 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${'bg-[#da291c] hover:bg-[#b01e0a] text-white border-[#da291c]'}`}>
           <PlusCircle className="w-4 h-4" /> เพิ่มลงตะกร้า (Enter)
         </button>
       </div>

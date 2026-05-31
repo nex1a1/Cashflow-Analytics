@@ -50,12 +50,12 @@ export default function QuickSuggest({
   }, [frequentItems, catMap, formType, suggCatFilter, categories, searchQuery]);
 
   const tokens = {
-    input: `w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors ${'bg-slate-900 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/30'}`,
+    input: "w-full px-3 py-2.5 text-sm border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
     searchIcon: `absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${'text-slate-500'}`
   };
 
   return (
-    <div className={`w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 ${'border-slate-800 bg-slate-900/50'}`}>
+    <div className="w-full lg:w-[28%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col min-h-0 border-[#303030] bg-[#1c1c1c]">
       <h4 className={`shrink-0 font-bold text-sm flex items-center gap-2 mb-3 ${'text-slate-300'}`}>
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
         Quick Suggestions {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
@@ -99,9 +99,7 @@ export default function QuickSuggest({
                   key={idx} 
                   onClick={() => onApplySuggestion(s)} 
                   disabled={isProcessing}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md border transition-all active:scale-95 relative overflow-hidden text-left ${
-                    'bg-slate-800 border-slate-700 hover:bg-slate-700 hover:border-slate-500 text-slate-200'
-                  }`}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border transition-all active:scale-95 relative overflow-hidden text-left bg-[#181818] border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-200"
                 >
                   {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
                   <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: catColor }} />
@@ -124,7 +122,7 @@ export default function QuickSuggest({
                     </div>
                   </div>
 
-                  <div className={`flex items-center justify-end gap-2 pl-2 w-24 shrink-0 border-l ${'border-slate-600'}`}>
+                  <div className={`flex items-center justify-end gap-2 pl-2 w-24 shrink-0 border-l ${'border-[#303030]/60'}`}>
                     <span className={`text-[13px] font-black ${formType === 'expense' ? ('text-red-400') : ('text-emerald-400')}`}>
                       {s.amount}฿
                     </span>

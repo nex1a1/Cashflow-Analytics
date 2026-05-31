@@ -96,13 +96,13 @@ export default function SettingsView({
 
       <div className="flex items-center justify-between mb-4 gap-4">
         <h1 className={`text-lg font-black tracking-wide flex items-center gap-2.5 ${'text-slate-100'}`}>
-          <Settings2 className={`w-5 h-5 ${'text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]'}`} /> 
+          <Settings2 className={`w-5 h-5 ${'text-[#da291c] drop-shadow-[0_0_8px_rgba(218,41,28,0.35)]'}`} /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
         <div className={`flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-sm transition-all duration-300 ${
-          'bg-slate-900/60 border-slate-850/80 text-slate-350 shadow-sm'
+          'bg-[#1c1c1c] border-[#303030] text-[#cbd5e1] shadow-sm'
         }`}>
-          <Info className={`w-3.5 h-3.5 shrink-0 ${'text-sky-400'}`} />
+          <Info className={`w-3.5 h-3.5 shrink-0 ${'text-[#da291c]'}`} />
           <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>

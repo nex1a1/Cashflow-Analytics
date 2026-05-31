@@ -27,7 +27,7 @@ const getExpenseLevel = (amount, maxThreshold) => {
 };
 
 const getHeatmapColor = (level, isDarkMode) => {
-  if (level === 0) return '#1e293b';
+  if (level === 0) return '#181818';
   const shades = isDarkMode ? HEATMAP_SHADES_DARK : HEATMAP_SHADES_LIGHT;
   return shades[level - 1] || shades[0];
 };
@@ -37,20 +37,20 @@ const getHeatmapColor = (level, isDarkMode) => {
  */
 const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   const modeButtons = [
-    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-blue-400' },
+    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-[#da291c]' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: 'text-orange-400' }
   ];
 
   return (
-    <div className={`relative flex p-1 rounded-sm border shadow-sm ${'bg-slate-950 border-slate-850'}`}>
+    <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
       {modeButtons.map((btn) => (
         <button
           key={btn.id}
           onClick={() => setViewMode(btn.id)}
-          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-sm transition-colors duration-200 ${
+          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 ${
             viewMode === btn.id 
               ? btn.color 
-              : ('text-slate-500 hover:text-slate-300')
+              : ('text-slate-450 hover:text-slate-200')
           }`}
         >
           <btn.icon className="w-3.5 h-3.5" /> 
@@ -58,7 +58,7 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
           {viewMode === btn.id && (
             <motion.div
               layoutId="activeModeTab"
-              className={`absolute inset-0 rounded-sm shadow-sm z-[-1] ${'bg-slate-850'}`}
+              className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -84,7 +84,7 @@ const TimelineDayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }) => 
           const percentage = totalDays > 0 ? ((count / totalDays) * 100).toFixed(2) : '0.00';
           return (
             <div key={dt.id} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
+              <div className="w-3 h-3 rounded-none shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
               <span className={muted}>
                 {dt.label} 
                 <span className="opacity-70 text-[10px] ml-1">({count} วัน / {percentage}%)</span>
@@ -103,36 +103,36 @@ const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }) => {
   return (
     <div className="flex items-center gap-2">
       <div className="relative group/info cursor-help mr-1">
-        <Info className={`w-3.5 h-3.5 ${'text-slate-600'}`} />
+        <Info className="w-3.5 h-3.5 text-slate-400" />
         <AnimatePresence>
           <motion.div 
             className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible"
             initial={{ opacity: 0, y: 5 }}
             whileHover={{ opacity: 1, y: 0 }}
           >
-            <div className={`text-left rounded-sm py-2 px-3 text-[10px] font-medium shadow-2xl w-[250px] leading-relaxed ${'bg-slate-900 text-white'}`}>
+            <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[250px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
               <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
               <p className="text-slate-300">
                 ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดตลอดกาลของคุณ ({globalMaxThreshold.toLocaleString('th-TH')} บ.) 
                 เพื่อให้สเกลสีคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
               </p>
             </div>
-            <div className={`w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] ${'border-t-slate-900'} md:ml-2 mr-2 md:mr-0`} />
+            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212] md:ml-2 mr-2 md:mr-0" />
           </motion.div>
         </AnimatePresence>
       </div>
-      <span className={`text-[10px] font-bold ${'text-slate-500'}`}>น้อย</span>
+      <span className="text-[10px] font-bold text-slate-400">น้อย</span>
       {[0, 1, 2, 3, 4, 5, 6].map(level => (
         <div 
           key={level} 
-          className="w-3 h-3 rounded-sm shrink-0 border" 
+          className="w-3 h-3 rounded-none shrink-0 border" 
           style={{ 
             backgroundColor: getHeatmapColor(level, isDarkMode), 
-            borderColor: level === 0 ? ('#334155') : 'transparent' 
+            borderColor: level === 0 ? ('#3e3e3e') : 'transparent' 
           }} 
         />
       ))}
-      <span className={`text-[10px] font-bold ${'text-slate-500'}`}>มาก</span>
+      <span className="text-[10px] font-bold text-slate-400">มาก</span>
     </div>
   );
 };
@@ -155,9 +155,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
             className="flex flex-col items-center"
           >
-            <div className={`text-center rounded-sm py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] ${
-              'bg-slate-900 border-slate-700 text-white shadow-black/60'
-            }`}>
+            <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#1c1c1c] border-[#3e3e3e] text-white">
               <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
               {viewMode === 'dayType' ? (
                 <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
@@ -172,9 +170,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
                 </div>
               )}
             </div>
-            <div className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${
-              'border-t-slate-900'
-            }`} />
+            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#1c1c1c]" />
           </motion.div>
         </div>
       )}
@@ -246,9 +242,9 @@ export default function ActivityTimeline() {
   const handleMouseLeave = () => setTooltip(prev => ({ ...prev, active: false }));
 
   // Styles
-  const cardStyles = `rounded-none border shadow-sm transition-colors ${'bg-slate-900 border-slate-800'}`;
+  const cardStyles = `rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]`;
   const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${'border-slate-850'}`;
+  const dividerStyles = `border-b mb-3 pb-3 border-[#303030]/60`;
 
   if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
 
@@ -258,7 +254,7 @@ export default function ActivityTimeline() {
       <div className={`flex items-center justify-between ${dividerStyles} gap-4 relative z-20`}>
         <div className="flex items-center gap-4 flex-wrap">
           <h3 className={headerTextStyles}>
-            <CalendarClock className={`w-4 h-4 ${'text-blue-400'}`} />
+            <CalendarClock className="w-4 h-4 text-[#da291c]" />
             ไทม์ไลน์กิจกรรม
           </h3>
           <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
@@ -268,7 +264,7 @@ export default function ActivityTimeline() {
       {/* Legend Row (New Line) */}
       <div className="mb-4 flex justify-end min-h-[20px]">
         {showSkeleton ? (
-          <div className={`h-4 w-48 rounded-none animate-pulse ${'bg-slate-700'}`} />
+          <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
@@ -296,10 +292,10 @@ export default function ActivityTimeline() {
       </div>
 
       {/* Timeline Grid */}
-      <div className={`border rounded-none relative z-10 ${'bg-slate-950 border-slate-850'}`}>
+      <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e]">
         {showSkeleton ? (
           <div className="py-12 px-3">
-             <div className={`h-24 w-full rounded-none animate-pulse ${'bg-slate-800'}`} />
+             <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
           </div>
         ) : datesInPeriod.length === 0 ? (
           <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
@@ -309,7 +305,7 @@ export default function ActivityTimeline() {
               
               {/* Day Labels (Sticky) */}
               <div className="flex flex-col gap-[3px] shrink-0 sticky left-0 z-20 pr-3 border-r"
-                style={{ backgroundColor: '#090d16', borderColor: '#1e293b' }}>
+                style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
                 <div className="h-4" />
                 {DAY_LABELS.map((day, i) => (
                   <div 
@@ -330,8 +326,8 @@ export default function ActivityTimeline() {
                   <div className="h-4 relative flex items-end pb-1">
                     {week.monthLabel && (
                       <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
-                        <div className={`w-[3px] h-3 mr-1 rounded-none ${'bg-blue-500/50'}`} />
-                        <span className={`text-[9px] font-black leading-none uppercase tracking-tighter ${'text-slate-400'}`}>
+                        <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
+                        <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
                           {week.monthLabel}
                         </span>
                       </div>
@@ -355,12 +351,12 @@ export default function ActivityTimeline() {
                         key={dateStr} 
                         className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors ${
                           isToday 
-                            ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900 z-10' 
-                            : 'opacity-90 hover:opacity-100 hover:border-slate-400 dark:hover:border-slate-500'
+                            ? 'ring-2 ring-[#da291c] ring-offset-1 dark:ring-offset-[#121212] z-10' 
+                            : 'opacity-90 hover:opacity-100 hover:border-[#da291c]/80 dark:hover:border-[#da291c]/80'
                         }`}
                         style={{
                           backgroundColor,
-                          borderColor: (viewMode === 'heatmap' && level === 0) ? ('#1e293b') : 'transparent'
+                          borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
                         }}
                         whileHover={{ scale: 1.25 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}

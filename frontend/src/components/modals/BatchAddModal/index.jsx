@@ -137,24 +137,24 @@ export default function BatchAddModal({
   if (!isOpen) return null;
 
   const tokens = {
-    surface: 'bg-slate-900 border-slate-700',
-    headerFooter: 'bg-slate-800 border-slate-700',
+    surface: 'bg-[#181818] border-[#3e3e3e]',
+    headerFooter: 'bg-[#1c1c1c] border-[#303030]',
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6">
-      <div className={`rounded-sm shadow-2xl flex flex-col w-full max-w-[1350px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
+    <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6">
+      <div className={`rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] flex flex-col w-full max-w-[1350px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
 
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className={`text-base font-bold flex items-center gap-2 ${'text-slate-100'}`}>
             <CalendarPlus className="w-5 h-5 text-emerald-500" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
           </h3>
-          <button type="button" onClick={() => { onClose(); setPendingItems([]); }} className={`p-1.5 rounded-sm transition-colors ${'text-slate-400 hover:bg-slate-700 hover:text-slate-200'}`}>
+          <button type="button" onClick={() => { onClose(); setPendingItems([]); }} className={`p-1.5 rounded-none transition-colors ${'text-slate-400 hover:bg-[#303030] hover:text-slate-200'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${'bg-slate-900'}`}>
+        <div className={`flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden ${'bg-[#181818]'}`}>
 
           <BatchForm
             onSubmitItem={handleAddSubmit}
@@ -196,7 +196,7 @@ export default function BatchAddModal({
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button type="button" onClick={() => { onClose(); setPendingItems([]); }} disabled={isProcessing}
-              className={`flex-1 sm:flex-none px-4 py-2 border rounded-sm font-bold text-xs transition-all active:scale-95 disabled:opacity-50 ${'text-slate-300 bg-slate-800 border-slate-600 hover:bg-slate-700'}`}>
+              className={`flex-1 sm:flex-none px-4 py-2 border rounded-none font-bold text-xs transition-all active:scale-95 disabled:opacity-50 ${'text-slate-300 bg-[#303030]/60 border-[#303030] hover:bg-[#303030]'}`}>
               ทิ้งข้อมูล
             </button>
             <button type="button" onClick={submitBatch} disabled={pendingItems.length === 0 || isProcessing}

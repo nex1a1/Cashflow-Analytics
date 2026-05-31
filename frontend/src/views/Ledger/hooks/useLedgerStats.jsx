@@ -72,7 +72,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
         return (
           <div key={g.id} className="min-w-[210px] flex-1">
             <div 
-              className="group flex items-center gap-3 px-3 py-2 border-2 transition-all duration-300 bg-slate-900/80 hover:bg-slate-900 border-slate-800 hover:border-slate-700 rounded-none relative overflow-hidden shadow-sm"
+              className="group flex items-center gap-3 px-3 py-2 border-2 transition-all duration-300 bg-[#121212] hover:bg-[#1c1c1c] border-[#303030] hover:border-[#3e3e3e] rounded-none relative overflow-hidden shadow-sm"
               style={{ borderLeftColor: g.color || '#64748b' }}
             >
               {/* Subtle background glow of group color */}
@@ -83,7 +83,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
               
               {/* Group icon with subtle background */}
               <div 
-                className="w-7 h-7 flex items-center justify-center text-sm rounded-none border border-slate-805 shrink-0 transition-transform group-hover:scale-105"
+                className="w-7 h-7 flex items-center justify-center text-sm rounded-none border border-[#303030] shrink-0 transition-transform group-hover:scale-105"
                 style={{ 
                   backgroundColor: `${g.color || '#64748b'}20`, 
                   color: g.color || '#94a3b8',
@@ -95,7 +95,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
               
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider truncate text-slate-400">
+                  <span className="text-[10px] font-black uppercase tracking-wider truncate text-[#cbd5e1]">
                     {g.name}
                   </span>
                   <span 
@@ -110,11 +110,11 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between mt-0.5 min-w-0 font-mono">
-                  <span className="text-xs font-black tabular-nums tracking-tight text-slate-100">
+                  <span className="text-xs font-black tabular-nums tracking-tight text-white">
                     ฿{formatMoney(total)}
                   </span>
                   {uniqueMonths > 1 && (
-                    <span className="text-[8.5px] font-bold text-slate-500 truncate ml-1">
+                    <span className="text-[8.5px] font-bold text-[#888888] truncate ml-1">
                       ฿{formatMoney(total / uniqueMonths)}/ด.
                     </span>
                   )}

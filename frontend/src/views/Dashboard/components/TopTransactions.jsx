@@ -54,9 +54,9 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
     }
     // Dark Mode card styles: more subtle backgrounds to prevent visual distraction
     if (index === 0) return 'border-amber-500/20 hover:border-amber-500/40 bg-amber-950/10 hover:bg-amber-950/20';
-    if (index === 1) return 'border-slate-800 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900/60';
+    if (index === 1) return 'border-[#303030] hover:border-[#da291c]/40 bg-[#303030]/40 hover:bg-[#303030]/60';
     if (index === 2) return 'border-orange-500/25 hover:border-orange-500/45 bg-orange-950/10 hover:bg-orange-950/20';
-    return 'border-slate-850 hover:border-slate-750 bg-slate-950/30 hover:bg-slate-950/70';
+    return 'border-[#303030]/50 hover:border-[#303030] bg-[#181818]/30 hover:bg-[#181818]/70';
   };
 
   return (
@@ -109,7 +109,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
           {/* Date Tag */}
           {tx.date && (
             <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border shrink-0 ${
-              'bg-slate-950 border-slate-850 text-slate-400 group-hover:border-slate-750'
+              'bg-[#181818] border-[#303030] text-slate-400 group-hover:border-[#303030]'
             }`}>
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
@@ -119,7 +119,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
       {/* Price Block */}
       <div className="relative z-10 shrink-0 flex flex-col items-end justify-start min-w-[95px] pt-0.5">
-        <span className={`text-sm font-black tabular-nums whitespace-nowrap text-[#D81A21]`}>
+        <span className={`text-sm font-black tabular-nums whitespace-nowrap text-[#da291c]`}>
           {formatMoney(Math.abs(tx.amount))}
         </span>
       </div>
@@ -141,9 +141,9 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${'bg-slate-900 border-slate-800'}`;
+  const cardStyles = `rounded-sm border shadow-sm transition-colors h-full flex flex-col ${'bg-[#181818] border-[#303030]'}`;
   const headerStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${'border-slate-850'}`;
+  const dividerStyles = `border-b mb-3 pb-3 ${'border-[#303030]/60'}`;
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum } = useMemo(() => {
@@ -216,7 +216,7 @@ export default function TopTransactions() {
       {/* Premium Header HUD */}
       <div className={`flex items-center justify-between gap-2 ${dividerStyles} flex-wrap`}>
         <h3 className={headerStyles}>
-          <TrendingDown className="w-4 h-4 text-[#D81A21] shrink-0" />
+          <TrendingDown className="w-4 h-4 text-[#da291c] shrink-0" />
           <span>TOP</span>
           <div className="relative group shrink-0">
             <select
@@ -224,7 +224,7 @@ export default function TopTransactions() {
               onChange={(e) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
               className={`pl-2 pr-6 py-0.5 text-xs font-black rounded-sm border outline-none cursor-pointer appearance-none transition-colors ${
-                'bg-slate-950 border-slate-800 text-white hover:border-slate-700 focus:border-red-500/50'
+                'bg-[#181818] border-[#303030] text-white hover:border-[#da291c] focus:border-[#da291c]'
               }`}
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
@@ -237,10 +237,10 @@ export default function TopTransactions() {
         {/* Real-time sum indicator pill (Border is now rounded-sm for consistency) */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div className={`px-2 py-0.5 rounded-sm border text-[9px] font-black tracking-wider flex items-center gap-1 shrink-0 ${
-            'bg-slate-900/50 border-slate-700/80 text-slate-400'
+            'bg-[#303030]/50 border-[#303030]/80 text-slate-400'
           }`}>
             <span className="opacity-60">ยอดรวมกลุ่มนี้:</span>
-            <span className="text-[#D81A21]">{formatMoney(topSum)}</span>
+            <span className="text-[#da291c]">{formatMoney(topSum)}</span>
           </div>
         )}
       </div>
@@ -250,7 +250,7 @@ export default function TopTransactions() {
         {showSkeleton ? (
           <div className="flex flex-col gap-2">
             {[...Array(topXLimit || 7)].map((_, i) => (
-              <div key={i} className={`h-16 w-full rounded-sm border animate-pulse ${'bg-slate-900/40 border-slate-700/50'}`} />
+              <div key={i} className={`h-16 w-full rounded-sm border animate-pulse ${'bg-[#303030]/40 border-[#303030]/50'}`} />
             ))}
           </div>
         ) : (
@@ -277,7 +277,7 @@ export default function TopTransactions() {
                 animate={{ opacity: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center py-10"
               >
-                <div className={`p-4 rounded-full mb-3 ${'bg-slate-700/30'}`}>
+                <div className={`p-4 rounded-full mb-3 ${'bg-[#303030]/30'}`}>
                   <AlertCircle className={`w-8 h-8 opacity-20 ${'text-slate-400'}`} />
                 </div>
                 <p className={`text-sm font-bold opacity-60 ${'text-slate-400'}`}>

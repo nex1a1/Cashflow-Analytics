@@ -36,7 +36,7 @@ export default function FilterBar({
   const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
     const getColors = () => {
       if (!active) {
-        return 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300 hover:bg-slate-900/60';
+        return 'bg-[#121212] border-[#3e3e3e] text-[#888888] hover:text-[#e0e0e0] hover:bg-[#303030]';
       }
 
       switch (colorScheme) {
@@ -52,14 +52,14 @@ export default function FilterBar({
           return 'bg-sky-950/30 border-sky-850 text-sky-400 font-bold';
         case 'blue':
         default:
-          return 'bg-slate-800 border-slate-700 text-slate-100 font-bold';
+          return 'bg-[#da291c] border-[#da291c] text-white font-bold';
       }
     };
 
     return (
       <button 
         onClick={onClick}
-        className={`flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider border first:rounded-l-sm last:rounded-r-sm -ml-[1px] first:ml-0 transition-colors ${getColors()}`}
+        className={`flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 transition-colors ${getColors()}`}
       >
         {label}
       </button>
@@ -69,13 +69,13 @@ export default function FilterBar({
   // Custom visual select box (Flat Slate HUD Style)
   const CustomSelect = ({ value, onChange, options, icon, isActive }) => {
     return (
-      <div className={`relative flex items-center border rounded-sm bg-slate-950/60 transition-colors ${
+      <div className={`relative flex items-center border rounded-none bg-[#121212] transition-colors ${
         isActive 
-          ? 'border-blue-700 text-slate-100 bg-slate-950' 
-          : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-900/40'
+          ? 'border-[#da291c] text-white bg-[#121212]' 
+          : 'border-[#3e3e3e] text-[#888888] hover:border-[#da291c]/50 hover:bg-[#303030]/20'
       }`}>
         <div className={`pl-2 pr-1.5 py-1.5 border-r flex items-center justify-center shrink-0 ${
-          isActive ? 'border-blue-700/40 text-blue-400' : 'border-slate-800 text-slate-500'
+          isActive ? 'border-[#da291c]/40 text-[#da291c]' : 'border-[#3e3e3e] text-[#666666]'
         }`}>
           {icon}
         </div>
@@ -84,21 +84,21 @@ export default function FilterBar({
           value={value}
           onChange={onChange}
           className={`w-full bg-transparent text-xs font-bold py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none ${
-            'text-slate-300'
+            'text-[#cbd5e1]'
           }`}
         >
           {options}
         </select>
         
         <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-          isActive ? 'text-[#00509E]' : 'text-slate-500'
+          isActive ? 'text-[#da291c]' : 'text-[#666666]'
         }`}>
           <ChevronDown className="w-3 h-3" />
         </div>
         
         {isActive && (
           <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#00509E]"></span>
+            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
           </span>
         )}
       </div>
@@ -107,8 +107,8 @@ export default function FilterBar({
 
   return (
     <div 
-      className={`relative p-4 rounded-sm border transition-colors mb-5 ${
-        'bg-slate-900 border-slate-800'
+      className={`relative p-4 rounded-none border transition-colors mb-5 ${
+        'bg-[#181818] border-[#3e3e3e]'
       }`}
     >
       {/* Grid Layout (3 Columns, High Density, Mathematical Spacing) */}
@@ -116,12 +116,12 @@ export default function FilterBar({
         
         {/* ================= COLUMN 1: SCOPE & VALUE ================= */}
         <div className={`col-span-4 pr-8 flex flex-col gap-2.5 ${
-          'border-r border-slate-800/80'
+          'border-r border-[#303030]/80'
         }`}>
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
-            <Search className="w-3 h-3 text-slate-500" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-slate-500'}`}>
+            <Search className="w-3 h-3 text-[#666666]" />
+            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
               ค้นหาและขอบเขตเงิน
             </span>
           </div>
@@ -129,22 +129,22 @@ export default function FilterBar({
           {/* Search Box */}
           <div className="relative group">
             <Search className={`w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-              'text-slate-500 group-focus-within:text-[#00509E]'
+              'text-[#666666] group-focus-within:text-[#da291c]'
             }`} />
             <input
               type="text"
               placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={`w-full pl-8 pr-8 py-1.5 border rounded-sm outline-none text-xs font-bold transition-colors ${
-                'bg-slate-950 border-slate-800 focus:border-[#00509E] text-slate-200 placeholder:text-slate-700'
+              className={`w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-bold transition-colors ${
+                'bg-[#121212] border-[#3e3e3e] focus:border-[#da291c] text-[#e0e0e0] placeholder-[#555555]'
               }`}
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')} 
-                className={`absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm transition-colors ${
-                  'hover:bg-slate-800 text-slate-500 hover:text-slate-300'
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none transition-colors ${
+                  'hover:bg-[#303030] text-[#666666] hover:text-white'
                 }`}
               >
                 <X className="w-3 h-3" />
@@ -154,32 +154,32 @@ export default function FilterBar({
 
           {/* Amount Limits */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-slate-500/80'}`}>
+            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
               ช่วงจำนวนเงิน (฿ Baht Range)
             </span>
             <div className="flex items-center gap-1.5">
               <div className="relative flex-1">
-                <Hash className="w-2.5 h-2.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-650" />
+                <Hash className="w-2.5 h-2.5 absolute left-2 top-1/2 -translate-y-1/2 text-[#666666]" />
                 <input 
                   type="number" 
                   placeholder="Min" 
                   value={minAmount}
                   onChange={e => setMinAmount(e.target.value)}
-                  className={`w-full pl-6 pr-1 py-1 border rounded-sm outline-none text-xs font-bold transition-colors ${
-                    'bg-slate-950 border-slate-800 text-slate-200 focus:border-[#00509E] placeholder:text-slate-700'
+                  className={`w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-bold transition-colors ${
+                    'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] placeholder-[#555555]'
                   }`}
                 />
               </div>
-              <span className={`text-xs font-black ${'text-slate-750'}`}>—</span>
+              <span className={`text-xs font-black ${'text-[#666666]'}`}>—</span>
               <div className="relative flex-1">
-                <Hash className="w-2.5 h-2.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-655" />
+                <Hash className="w-2.5 h-2.5 absolute left-2 top-1/2 -translate-y-1/2 text-[#666666]" />
                 <input 
                   type="number" 
                   placeholder="Max" 
                   value={maxAmount}
                   onChange={e => setMaxAmount(e.target.value)}
-                  className={`w-full pl-6 pr-1 py-1 border rounded-sm outline-none text-xs font-bold transition-colors ${
-                    'bg-slate-950 border-slate-800 text-slate-200 focus:border-[#00509E] placeholder:text-slate-700'
+                  className={`w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-bold transition-colors ${
+                    'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] placeholder-[#555555]'
                   }`}
                 />
               </div>
@@ -189,23 +189,23 @@ export default function FilterBar({
 
         {/* ================= COLUMN 2: QUICK TOGGLES ================= */}
         <div className={`col-span-4 pr-8 flex flex-col gap-2.5 ${
-          'border-r border-slate-800/80'
+          'border-r border-[#303030]/80'
         }`}>
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
-            <MousePointer2 className="w-3 h-3 text-slate-500" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-slate-500'}`}>
+            <MousePointer2 className="w-3 h-3 text-[#666666]" />
+            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
               คัดกรองด่วนแบบกลุ่ม
             </span>
           </div>
 
           {/* Type Toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-slate-500/80'}`}>
+            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
               ประเภทรายการ
             </span>
-            <div className={`flex rounded-sm p-0.5 border ${
-              'bg-slate-950 border-slate-800'
+            <div className={`flex rounded-none p-0.5 border ${
+              'bg-[#121212] border-[#3e3e3e]'
             }`}>
               <SegmentButton label="ทั้งหมด" active={typeFilter === 'ALL'} onClick={() => setTypeFilter('ALL')} />
               <SegmentButton label="รายรับ" active={typeFilter === 'INCOME'} onClick={() => setTypeFilter('INCOME')} colorScheme="emerald" />
@@ -216,11 +216,11 @@ export default function FilterBar({
 
           {/* Allocation Toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-slate-500/80'}`}>
+            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
               การจัดสรรเงิน (Allocation)
             </span>
-            <div className={`flex rounded-sm p-0.5 border ${
-              'bg-slate-950 border-slate-800'
+            <div className={`flex rounded-none p-0.5 border ${
+              'bg-[#121212] border-[#3e3e3e]'
             }`}>
               <SegmentButton label="ทั้งหมด" active={allocationFilter === 'ALL'} onClick={() => setAllocationFilter('ALL')} />
               <SegmentButton label="Need" active={allocationFilter === 'need'} onClick={() => setAllocationFilter('need')} colorScheme="rose" />
@@ -234,19 +234,19 @@ export default function FilterBar({
         <div className="col-span-4 flex flex-col gap-2.5">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
-            <CalendarDays className="w-3 h-3 text-slate-500" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-slate-500'}`}>
+            <CalendarDays className="w-3 h-3 text-[#666666]" />
+            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
               คัดกรองและจำแนกกลุ่ม
             </span>
           </div>
 
           {/* Day type toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-slate-500/80'}`}>
+            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
               วันทำงาน / วันหยุด
             </span>
-            <div className={`flex rounded-sm p-0.5 border ${
-              'bg-slate-950 border-slate-800'
+            <div className={`flex rounded-none p-0.5 border ${
+              'bg-[#121212] border-[#3e3e3e]'
             }`}>
               <SegmentButton label="ทุกวัน" active={dayTypeFilter === 'ALL'} onClick={() => setDayTypeFilter('ALL')} />
               <SegmentButton label="Weekday" active={dayTypeFilter === 'WEEKDAY'} onClick={() => setDayTypeFilter('WEEKDAY')} colorScheme="blue" />
@@ -318,20 +318,20 @@ export default function FilterBar({
       {isFilterActive && (
         <div 
           className={`flex items-center justify-between border-t border-dashed mt-3 pt-2.5 relative z-10 ${
-            'border-slate-800'
+            'border-[#303030]'
           }`}
         >
           {/* Active stats counter */}
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#00509E]"></span>
+              <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
             </span>
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-[#00509E]" />
-              <span className={`text-[9.5px] font-black uppercase tracking-wider ${'text-slate-500'}`}>
+              <Sparkles className="w-3 h-3 text-[#da291c]" />
+              <span className={`text-[9.5px] font-black uppercase tracking-wider ${'text-[#888888]'}`}>
                 ตัวกรองที่ทำงานอยู่:
               </span>
-              <span className="px-1.5 py-0.5 rounded-sm text-[8.5px] font-black bg-slate-950 border border-slate-800 text-slate-400">
+              <span className="px-1.5 py-0.5 rounded-none text-[8.5px] font-black bg-[#121212] border border-[#3e3e3e] text-[#cbd5e1]">
                 {activeCount} active
               </span>
             </div>
@@ -340,7 +340,7 @@ export default function FilterBar({
           {/* Clear Filters Action */}
           <button
             onClick={clearFilters}
-            className={`flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-sm border transition-colors ${
+            className={`flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-none border transition-colors ${
               'text-rose-450 bg-rose-950/20 hover:bg-rose-950/40 border-rose-900/40'
             }`}
           >

@@ -202,9 +202,9 @@ export const generateMainChartData = ({
     chartData = {
       labels: xLabels,
       datasets: [
-        { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#00509E', backgroundColor: '#00509E', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
-        { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 4 },
-        { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 4 },
+        { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => cashflowMap[m].income - cashflowMap[m].totalExp), borderColor: '#da291c', backgroundColor: '#da291c', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+        { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m].income), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 0 },
+        { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m].totalExp), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 0 },
       ],
     };
   } else if (!showMonthly && isOnlyAll) {
@@ -232,7 +232,7 @@ export const generateMainChartData = ({
         {
           type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : 'รายจ่ายจริง', data: datesInPeriod.map(d => dailyAllMap[d] || 0),
           backgroundColor: hideFixedExpenses ? ('rgba(216,26,33,0.6)') : ('rgba(239,68,68,0.6)'),
-          borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444', borderWidth: 2, borderRadius: 4, order: 3
+          borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444', borderWidth: 2, borderRadius: 0, order: 3
         }
       ]
     };

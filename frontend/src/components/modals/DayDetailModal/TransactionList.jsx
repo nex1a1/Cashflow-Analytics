@@ -9,7 +9,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
   const isConfirming = confirmDeleteId === tx.id;
   
   const rowBg = `rgba(${hexToRgb(color)}, ${dm ? 0.06 : 0.04})`;
-  const borderCls = 'border-slate-700/60';
+  const borderCls = 'border-[#303030]/60';
   const textPriCls = 'text-slate-100';
   
   return (

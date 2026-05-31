@@ -109,7 +109,7 @@ export default function ColorPicker({ color, onChange }) {
         ref={btnRef} 
         onClick={handleOpen} 
         type="button"
-        className="w-5 h-5 border rounded-none border-slate-900/80 cursor-pointer hover:border-slate-600 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+        className="w-5 h-5 border rounded-none border-[#3e3e3e] cursor-pointer hover:border-[#da291c]/50 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
         style={{ backgroundColor: color }} 
         title="เลือกสี" 
       />
@@ -117,19 +117,19 @@ export default function ColorPicker({ color, onChange }) {
       {open && createPortal(
         <div 
           ref={paletteRef}
-          className="fixed z-[9999] p-3 shadow-[0_0_24px_rgba(0,0,0,0.85)] border bg-slate-950 border-slate-800 rounded-none w-[274px] flex flex-col gap-2"
+          className="fixed z-[9999] p-3 shadow-[0_0_24px_rgba(0,0,0,0.85)] border bg-[#181818] border-[#3e3e3e] rounded-none w-[274px] flex flex-col gap-2"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Swatch Header */}
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-900">
-            <span className="text-[9px] font-black tracking-widest text-slate-500 uppercase select-none">
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#303030]">
+            <span className="text-[9px] font-black tracking-widest text-[#888888] uppercase select-none">
               เฉดสีมาตรฐาน (255 สี)
             </span>
           </div>
 
           {/* Color Swatch Matrix with hairline gaps */}
           <div 
-            className="grid gap-[1px] bg-slate-800/80 p-[1px] border border-slate-900/50"
+            className="grid gap-[1px] bg-[#3e3e3e] p-[1px] border border-[#303030]/50"
             style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
           >
             {COLOR_PALETTE.map(c => {
@@ -150,16 +150,16 @@ export default function ColorPicker({ color, onChange }) {
           </div>
 
           {/* Color Preview & Custom Input Footer */}
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-900 mt-1">
+          <div className="flex items-center gap-2 pt-2 border-t border-[#303030] mt-1">
             {/* Color Preview Indicator Block */}
             <div 
-              className="w-8 h-8 rounded-none border border-slate-850 shrink-0" 
+              className="w-8 h-8 rounded-none border border-[#3e3e3e] shrink-0" 
               style={{ backgroundColor: color }}
               title="สีปัจจุบัน"
             />
             
             {/* Native Color Bucket Fallback */}
-            <div className="relative w-8 h-8 border border-slate-800 bg-slate-900 flex items-center justify-center hover:bg-slate-850 hover:border-slate-700 shrink-0 cursor-pointer">
+            <div className="relative w-8 h-8 border-[#3e3e3e] bg-[#121212] flex items-center justify-center hover:bg-[#303030] hover:border-[#da291c] shrink-0 cursor-pointer">
               <span className="text-xs select-none">🎨</span>
               <input 
                 type="color" 
@@ -171,14 +171,14 @@ export default function ColorPicker({ color, onChange }) {
             </div>
 
             {/* Custom HEX Value Editor */}
-            <div className="flex-1 flex items-center gap-1.5 bg-slate-950 border border-slate-850 px-2 py-1 h-8">
-              <span className="text-[9px] font-mono text-slate-550 font-black select-none">HEX</span>
+            <div className="flex-1 flex items-center gap-1.5 bg-[#121212] border border-[#3e3e3e] px-2 py-1 h-8">
+              <span className="text-[9px] font-mono text-[#666666] font-black select-none">HEX</span>
               <input
                 type="text"
                 value={hexInput}
                 onChange={e => handleHexInputChange(e.target.value)}
                 maxLength="7"
-                className="w-full bg-transparent text-xs font-mono font-bold text-slate-200 outline-none text-right uppercase"
+                className="w-full bg-transparent text-xs font-mono font-bold text-[#cbd5e1] outline-none text-right uppercase"
                 placeholder="#000000"
               />
             </div>

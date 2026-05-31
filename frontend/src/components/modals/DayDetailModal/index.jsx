@@ -163,22 +163,22 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   };
 
   const tokens = {
-    surface: 'bg-slate-900',
-    border: 'border-slate-700',
+    surface: 'bg-[#181818]',
+    border: 'border-[#303030]',
     textPri: 'text-slate-100',
     textMuted: 'text-slate-400',
-    closeBtn: `p-1.5 rounded-sm transition-colors absolute top-4 right-4 z-10 ${'hover:bg-slate-700 text-slate-400'}`,
+    closeBtn: `p-1.5 rounded-none transition-colors absolute top-4 right-4 z-10 hover:bg-[#303030] text-slate-400`,
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className={`${tokens.surface} rounded-sm shadow-2xl w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-t-4 border-t-[#00509E] dark:border-t-[#F43F5E] border-x border-b ${tokens.border} overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className={`${tokens.surface} rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-t-4 border-t-[#da291c] border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
 
         <button onClick={onClose} className={tokens.closeBtn}>
           <X className="w-5 h-5" />
         </button>
 
-        <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0`}>
+        <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
           <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0 pr-12`}>
             <div>
               <h2 className={`text-lg font-black ${tokens.textPri}`}>{displayDate}</h2>

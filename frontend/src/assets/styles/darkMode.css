@@ -1,159 +1,194 @@
 /* src/styles/darkMode.css                                    */
 /* ──────────────────────────────────────────────────────────  */
-/* Gundam-inspired Dark Mode Overrides (Eliminates rounded gray) */
+/* Ferrari-Inspired Cinematic Editorial Dark Mode Overrides    */
 /* ──────────────────────────────────────────────────────────  */
 
-/* Global Page Base */
+/* Global Page Base & Typography Rules */
 .dark-mode { 
-  background-color: #050507 !important; 
-  color: #f8fafc !important; 
+  background-color: #181818 !important; 
+  color: #ffffff !important; 
 }
 
-/* Force dark-mode borders to be extremely faded by default, avoiding default Tailwind white-ish borders */
+/* Force dark-mode borders to be hairline dividers by default */
 .dark-mode *,
 .dark-mode ::before,
 .dark-mode ::after {
-  border-color: rgba(35, 41, 53, 0.45);
+  border-color: #303030 !important;
 }
 
-/* Backgrounds - Deep Space Base (#050507) & Matte Metal Card (#14141A) */
+/* ────────────────────────────────────────────────────────── */
+/* SHAPE LANGUAGE - STICT ROUNDED-NONE MANDATE                */
+/* ────────────────────────────────────────────────────────── */
+.dark-mode * {
+  border-radius: 0px !important;
+}
+
+/* Exceptions: Inputs use rounded-sm (4px) */
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea,
+.dark-mode input *,
+.dark-mode select *,
+.dark-mode textarea * {
+  border-radius: 4px !important;
+}
+
+/* Exceptions: Badges, pills, and avatar plates use rounded-full (9999px) */
+.dark-mode .rounded-full,
+.dark-mode .badge-pill,
+.dark-mode [class*="badge-pill"],
+.dark-mode [class*="category-pill"],
+.dark-mode [class*="day-type-badge"],
+.dark-mode .day-type-badge {
+  border-radius: 9999px !important;
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* COLORS & SURFACES - CANVAS (#181818) & ELEVATED (#303030) */
+/* ────────────────────────────────────────────────────────── */
 .dark-mode .bg-slate-950,
 .dark-mode .bg-slate-100,
 .dark-mode .bg-slate-50 { 
-  background-color: #050507 !important; 
-  border-color: #232935 !important; 
+  background-color: #181818 !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-white,
 .dark-mode .bg-slate-900 { 
-  background-color: #14141A !important; 
-  border-color: #232935 !important; 
+  background-color: #303030 !important; 
+  border-color: #303030 !important; 
 }
 
 /* Secondary Panels & Inner Elements */
 .dark-mode .bg-slate-800 { 
-  background-color: #1a1a24 !important; 
-  border-color: #232935 !important; 
+  background-color: #303030 !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-slate-700 { 
-  background-color: #232935 !important; 
+  background-color: #404040 !important; 
 }
 
 .dark-mode .bg-slate-850 { 
-  background-color: #171720 !important; 
-  border-color: #232935 !important; 
+  background-color: #242424 !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-slate-850\/60 { 
-  background-color: rgba(23, 23, 32, 0.6) !important; 
+  background-color: rgba(36, 36, 36, 0.6) !important; 
 }
 
 .dark-mode .bg-slate-850\/40 { 
-  background-color: rgba(23, 23, 32, 0.4) !important; 
+  background-color: rgba(36, 36, 36, 0.4) !important; 
 }
 
 .dark-mode .bg-slate-900\/90 { 
-  background-color: rgba(20, 20, 26, 0.9) !important; 
-  border-color: #232935 !important; 
+  background-color: rgba(48, 48, 48, 0.9) !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-slate-800\/50 { 
-  background-color: rgba(26, 26, 36, 0.5) !important; 
-  border-color: #232935 !important; 
+  background-color: rgba(48, 48, 48, 0.5) !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-slate-50\/80 { 
-  background-color: rgba(5, 5, 7, 0.8) !important; 
-  border-color: #232935 !important; 
+  background-color: rgba(24, 24, 24, 0.8) !important; 
+  border-color: #303030 !important; 
 }
 
 .dark-mode .bg-slate-50\/50 { 
-  background-color: rgba(5, 5, 7, 0.5) !important; 
-  border-color: #232935 !important; 
+  background-color: rgba(24, 24, 24, 0.5) !important; 
+  border-color: #303030 !important; 
 }
 
-/* Accent overlays */
+/* Rosso Corsa Accent Overlays */
 .dark-mode .bg-blue-50\/50,
 .dark-mode .bg-blue-50 { 
-  background-color: rgba(244, 63, 94, 0.1) !important; /* Beam Sabre Red transparent overlay */
-  border-color: rgba(244, 63, 94, 0.3) !important; 
+  background-color: rgba(218, 41, 28, 0.08) !important; 
+  border-color: rgba(218, 41, 28, 0.25) !important; 
 }
 
-/* Text Overrides - Clean High Contrast & Gundam Red/Gold */
-.dark-mode .text-slate-900          { color: #f8fafc !important; }
-.dark-mode .text-slate-800          { color: #e2e8f0 !important; }
-.dark-mode .text-slate-700          { color: #cbd5e1 !important; }
-.dark-mode .text-slate-600          { color: #94a3b8 !important; }
-.dark-mode .text-slate-500          { color: #64748b !important; }
-.dark-mode .text-slate-400          { color: #475569 !important; }
+/* ────────────────────────────────────────────────────────── */
+/* TEXT OVERRIDES - EDITORIAL PURE WHITE & MUTED GRAY          */
+/* ────────────────────────────────────────────────────────── */
+.dark-mode .text-slate-900          { color: #ffffff !important; }
+.dark-mode .text-slate-800          { color: #ffffff !important; }
+.dark-mode .text-slate-700          { color: #ebebeb !important; }
+.dark-mode .text-slate-600          { color: #969696 !important; }
+.dark-mode .text-slate-500          { color: #666666 !important; }
+.dark-mode .text-slate-400          { color: #666666 !important; }
 
-/* Primary Accent Override (Originally Blue [#00509E]) -> Beam Sabre Red (#F43F5E) */
-.dark-mode .text-\[\#00509E\]       { color: #F43F5E !important; }
-.dark-mode .hover\:text-\[\#00509E\]:hover { color: #f472b6 !important; }
+/* Rosso Corsa Accent Overrides (#da291c) */
+.dark-mode .text-\[\#00509E\]       { color: #da291c !important; }
+.dark-mode .hover\:text-\[\#00509E\]:hover { color: #b01e0a !important; }
+.dark-mode .text-blue-400           { color: #da291c !important; }
 
-/* Borders - Desaturated Shield Slate (#232935) */
-.dark-mode .border-slate-100        { border-color: #14141A !important; }
-.dark-mode .border-slate-200        { border-color: #232935 !important; }
-.dark-mode .border-slate-300        { border-color: #232935 !important; }
-.dark-mode .border-slate-700        { border-color: #232935 !important; }
-.dark-mode .border-slate-800        { border-color: #232935 !important; }
-.dark-mode .border-slate-850        { border-color: #232935 !important; }
-.dark-mode .border-slate-850\/80     { border-color: rgba(35, 41, 53, 0.8) !important; }
-.dark-mode .border-slate-850\/60     { border-color: rgba(35, 41, 53, 0.6) !important; }
-.dark-mode .border-slate-750        { border-color: #232935 !important; }
+/* ────────────────────────────────────────────────────────── */
+/* BORDERS & DIVIDERS - HAIRLINES                             */
+/* ────────────────────────────────────────────────────────── */
+.dark-mode .border-slate-100        { border-color: #303030 !important; }
+.dark-mode .border-slate-200        { border-color: #303030 !important; }
+.dark-mode .border-slate-300        { border-color: #303030 !important; }
+.dark-mode .border-slate-700        { border-color: #303030 !important; }
+.dark-mode .border-slate-800        { border-color: #303030 !important; }
+.dark-mode .border-slate-850        { border-color: #303030 !important; }
+.dark-mode .border-slate-850\/80     { border-color: rgba(48, 48, 48, 0.8) !important; }
+.dark-mode .border-slate-850\/60     { border-color: rgba(48, 48, 48, 0.6) !important; }
+.dark-mode .border-slate-750        { border-color: #303030 !important; }
 
-/* Primary Header Accent Border [#00509E] -> Beam Sabre Red (#F43F5E) */
-.dark-mode .border-\[\#00509E\]     { border-color: #F43F5E !important; }
-.dark-mode .border-blue-200         { border-color: #232935 !important; }
+/* Primary Header Accent Border [#00509E] -> Rosso Corsa (#da291c) */
+.dark-mode .border-\[\#00509E\]     { border-color: #da291c !important; }
+.dark-mode .border-blue-200         { border-color: #303030 !important; }
 
-/* Hover States - Matte Metal Hover */
-.dark-mode .hover\:bg-slate-50:hover  { background-color: #1a1a24 !important; }
-.dark-mode .hover\:bg-slate-100:hover { background-color: #232935 !important; }
-.dark-mode .hover\:bg-slate-200:hover { background-color: #232935 !important; }
-.dark-mode .hover\:bg-slate-700:hover { background-color: #232935 !important; }
-.dark-mode .hover\:bg-slate-850:hover { background-color: #232935 !important; }
-.dark-mode .hover\:bg-slate-850\/40:hover { background-color: rgba(35, 41, 53, 0.4) !important; }
-.dark-mode .hover\:bg-slate-850\/60:hover { background-color: rgba(35, 41, 53, 0.6) !important; }
-.dark-mode .group:hover .group-hover\:bg-slate-850 { background-color: #232935 !important; }
-.dark-mode .hover\:border-slate-750:hover { border-color: #232935 !important; }
-.dark-mode .group:hover .group-hover\:border-slate-750 { border-color: #232935 !important; }
+/* ────────────────────────────────────────────────────────── */
+/* HOVER STATES - INTERACTIVE EDITORIAL                      */
+/* ────────────────────────────────────────────────────────── */
+.dark-mode .hover\:bg-slate-50:hover  { background-color: #303030 !important; }
+.dark-mode .hover\:bg-slate-100:hover { background-color: #303030 !important; }
+.dark-mode .hover\:bg-slate-200:hover { background-color: #303030 !important; }
+.dark-mode .hover\:bg-slate-700:hover { background-color: #404040 !important; }
+.dark-mode .hover\:bg-slate-850:hover { background-color: #303030 !important; }
+.dark-mode .hover\:bg-slate-850\/40:hover { background-color: rgba(48, 48, 48, 0.4) !important; }
+.dark-mode .hover\:bg-slate-850\/60:hover { background-color: rgba(48, 48, 48, 0.6) !important; }
+.dark-mode .group:hover .group-hover\:bg-slate-850 { background-color: #303030 !important; }
+.dark-mode .hover\:border-slate-750:hover { border-color: #303030 !important; }
+.dark-mode .group:hover .group-hover\:border-slate-750 { border-color: #303030 !important; }
 
 /* Form elements & Inputs */
 .dark-mode input,
 .dark-mode select:not(.day-type-badge):not(.category-select):not(.allocation-select),
 .dark-mode textarea { 
-  background-color: #050507 !important; 
-  border-color: #232935 !important; 
-  color: #f8fafc !important; 
-  border-radius: 4px !important;
+  background-color: #181818 !important; 
+  border-color: #303030 !important; 
+  color: #ffffff !important; 
 }
 
 .dark-mode select optgroup { 
-  background-color: #050507 !important; 
-  color: #F43F5E !important; 
+  background-color: #181818 !important; 
+  color: #da291c !important; 
   font-weight: bold; 
 }
 
 .dark-mode select:not(.allocation-select) option { 
-  background-color: #14141A !important; 
-  color: #f8fafc !important; 
+  background-color: #303030 !important; 
+  color: #ffffff !important; 
 }
 
 /* Tables */
 .dark-mode table thead th { 
-  background-color: #050507 !important; 
-  color: #cbd5e1 !important; 
-  border-color: #232935 !important; 
+  background-color: #181818 !important; 
+  color: #ffffff !important; 
+  border-color: #303030 !important; 
 }
 
-/* Custom Scrollbars to blend with deep black base */
+/* Custom Scrollbars to blend with near black canvas and Rosso Corsa */
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(35, 41, 53, 0.8) !important;
+  background-color: #303030 !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(244, 63, 94, 0.6) !important;
+  background-color: #da291c !important;
 }
 
 /* Category Pill Custom Text Color Override */
