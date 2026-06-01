@@ -177,9 +177,6 @@ const initSchema = () => {
   // 5. รัน Migration สำหรับกลุ่มซอฟต์แวร์/บริการรายเดือน
   runSubscriptionMigration();
 
-  // 6. รัน Migration สำหรับกลุ่มไอที
-  runITCategorySplitMigration();
-
   // บันทึกสถานะว่าได้จัดแจงความสมบูรณ์ของโครงสร้าง DB เรียบร้อยแล้ว
   try {
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
@@ -474,48 +471,6 @@ const runSubscriptionMigration = () => {
 
   } catch (err) {
     console.error('⚠️ เกิดข้อผิดพลาดขณะรัน Migration ของหมวดหมู่รายเดือน:', err.message);
-  }
-};
-
-const runITCategorySplitMigration = () => {
-  const crypto = require('crypto');
-
-  try {
-    // 1. ค้นหากลุ่มรายจ่ายผันแปร
-    let groupId;
-    const groupVar = db.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายจ่ายผันแปร'").get();
-    if (groupVar) {
-      groupId = groupVar.id;
-    } else {
-      const anyExpenseGroup = db.prepare("SELECT id FROM cashflow_groups WHERE type = 'expense' ORDER BY order_index LIMIT 1").get();
-      if (anyExpenseGroup) {
-        groupId = anyExpenseGroup.id;
-      } else {
-        console.warn('⚠️ ไม่พบกลุ่มรายจ่ายผันแปรสำหรับหมวดหมู่ไอที');
-        return;
-      }
-    }
-
-    // 2. นำเข้าหมวดหมู่ IT เฉพาะกรณีที่ไม่มีอยู่จริง (ไม่เขียนทับสี/ไอคอนเดิมหากผู้ใช้แก้ไข)
-    const newCategories = [
-      { id: 'c7_comp', name: 'ประกอบคอม & ฮาร์ดแวร์', icon: '🖥️', color: '#00509E', order_index: 10 },
-      { id: 'c7_gear', name: 'เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง', icon: '⌨️', color: '#6366F1', order_index: 11 },
-      { id: 'c7_desk', name: 'เฟอร์นิเจอร์ & จัดโต๊ะคอม', icon: '🪑', color: '#06B6D4', order_index: 12 },
-      { id: 'c7_phone', name: 'สมาร์ทโฟน & ไอทีพกพา', icon: '📱', color: '#8B5CF6', order_index: 13 }
-    ];
-
-    const insertCat = db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)");
-    
-    newCategories.forEach(cat => {
-      const exists = db.prepare("SELECT id FROM categories WHERE id = ?").get(cat.id);
-      if (!exists) {
-        insertCat.run(cat.id, cat.name, cat.icon, cat.color, cat.order_index, groupId);
-        console.log(`🌱 สร้างหมวดหมู่ย่อยใหม่เรียบร้อย: "${cat.name}"`);
-      }
-    });
-
-  } catch (err) {
-    console.error('⚠️ เกิดข้อผิดพลาดขณะรัน Migration ของหมวดหมู่ IT:', err.message);
   }
 };
 

@@ -101,9 +101,11 @@ export default function LedgerTable({
         <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[800px] bg-[#181818]">
           <thead className="sticky top-0 z-20 border-b bg-[#121212]/95 border-[#303030]/65 backdrop-blur-md">
             <tr>
-              <th className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[145px]">
-                <SortHeader label="วันที่" sortKey="date" className="w-full" />
-              </th>
+              <SortHeader 
+                label="วันที่" 
+                sortKey="date" 
+                className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[145px]" 
+              />
               <th className="px-4 py-3 font-bold w-[90px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ประเภท</th>
               <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" />
               <th className="px-4 py-3 font-bold w-[100px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>

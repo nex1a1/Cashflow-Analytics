@@ -58,7 +58,7 @@ class AnalyticsService {
       params.push(endDate.substring(0, 7));
     }
 
-    query += ` GROUP BY id ORDER BY amount DESC`;
+    query += ` GROUP BY category_id ORDER BY amount DESC`;
 
     const rows = db.prepare(query).all(...params);
     return rows.map(row => ({

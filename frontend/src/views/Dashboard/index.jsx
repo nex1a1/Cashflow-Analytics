@@ -29,21 +29,6 @@ export default function DashboardView(props) {
     }
   }, [isLoading]);
 
-  // Case 1: Initial Boot (No data object at all) -> Full Page Skeleton
-  if (showSkeleton && !analytics) {
-    return <DashboardSkeleton />;
-  }
-
-  // Case 2: Truly Empty State (Not loading and no transactions)
-  if (transactions.length === 0 && !showSkeleton) {
-    return (
-      <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${'bg-slate-800 border-slate-700'}`}>
-        <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />
-        <p className="text-lg font-bold text-slate-500">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
-      </div>
-    );
-  }
-
   // Memoize the context value to avoid recreating it on every single render
   const dashboardContextValue = useMemo(() => ({
     ...props,
@@ -67,6 +52,21 @@ export default function DashboardView(props) {
     props.dayTypes,
     showSkeleton
   ]);
+
+  // Case 1: Initial Boot (No data object at all) -> Full Page Skeleton
+  if (showSkeleton && !analytics) {
+    return <DashboardSkeleton />;
+  }
+
+  // Case 2: Truly Empty State (Not loading and no transactions)
+  if (transactions.length === 0 && !showSkeleton) {
+    return (
+      <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${'bg-slate-800 border-slate-700'}`}>
+        <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />
+        <p className="text-lg font-bold text-slate-500">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
+      </div>
+    );
+  }
 
   return (
     <DashboardProvider value={dashboardContextValue}>
