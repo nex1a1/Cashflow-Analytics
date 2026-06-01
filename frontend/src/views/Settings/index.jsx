@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Settings2, Info, Coins, Wallet } from 'lucide-react';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
@@ -8,7 +8,7 @@ import CashflowGroupsCard from './components/CashflowGroupsCard';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
 
-export default function SettingsView({
+const SettingsView = memo(function SettingsView({
   categories, handleAddCategory, handleCategoryChange, handleDeleteCategory, handleMoveCategory,
   dayTypeConfig, handleDayTypeConfigChange, handleDeleteAllData,
   cashflowGroups = [], setCashflowGroups,
@@ -182,7 +182,8 @@ export default function SettingsView({
       </div>
 
       <DangerZone transactions={transactions} handleDeleteAllData={handleDeleteAllData} />
-
     </div>
   );
-}
+});
+
+export default SettingsView;

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { PlusCircle } from 'lucide-react';
 
 const ACCENT = {
@@ -39,7 +40,7 @@ const ACCENT = {
   }
 };
 
-export default function SectionCard({ accentColor, icon, title, badge, action, children, subAction }) {
+const SectionCard = memo(function SectionCard({ accentColor, icon, title, badge, action, children, subAction }) {
   const dm = true;
   const a = ACCENT[accentColor] || ACCENT.blue;
   const mode = 'dark';
@@ -84,5 +85,8 @@ export default function SectionCard({ accentColor, icon, title, badge, action, c
       </div>
     </div>
   );
-}
+});
+
+export default SectionCard;
+
 

@@ -30,17 +30,17 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               if (item?.element?.options?.backgroundColor) {
                 return item.element.options.backgroundColor;
               }
-              return 'rgba(30, 41, 59, 0.9)';
+              return '#121212';
             },
             titleColor: (ctx) => '#FFFFFF',
             bodyColor: (ctx) => '#CBD5E1',
             borderColor: (ctx) => {
               const item = ctx.tooltipItems[0];
-              return item?.element?.options?.backgroundColor || ('#475569');
+              return item?.element?.options?.backgroundColor || ('#303030');
             },
             borderWidth: 2,
             padding: 12,
-            cornerRadius: 2,
+            cornerRadius: 0,
             callbacks: {
               label: (c) => {
                 const item = c.dataset.data[c.dataIndex];
@@ -58,7 +58,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
                 return {
                   borderColor: flowColor,
                   backgroundColor: flowColor,
-                  borderRadius: 2
+                  borderRadius: 0
                 };
               }
             }

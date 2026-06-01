@@ -3,13 +3,13 @@ import { formatMoney } from './formatters';
 
 // ─────────────────────────────────────────────────────────────
 const getTooltipOptions = (isDarkMode) => ({
-  backgroundColor: '#1e293b',
-  titleColor:      '#f1f5f9',
-  bodyColor:       '#94a3b8',
-  borderColor:     '#334155',
+  backgroundColor: '#121212',
+  titleColor:      '#ffffff',
+  bodyColor:       '#cbd5e1',
+  borderColor:     '#303030',
   borderWidth: 1,
   padding: 12,
-  cornerRadius: 2,
+  cornerRadius: 0,
 });
 
 const formatTickValue = (v) => {
@@ -121,7 +121,7 @@ export const getDoughnutChartOptions = (isDarkMode) => ({
     legend: { display: false },
     tooltip: {
       ...getTooltipOptions(isDarkMode),
-      cornerRadius: 2,
+      cornerRadius: 0,
       callbacks: {
         label: (ctx) => ` ${ctx.label}: ${formatMoney(ctx.raw)} ฿`,
       },

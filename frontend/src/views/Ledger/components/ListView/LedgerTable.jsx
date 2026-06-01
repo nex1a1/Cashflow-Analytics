@@ -97,17 +97,19 @@ export default function LedgerTable({
 
   return (
     <div className="flex flex-col w-full">
-      <div className="overflow-auto no-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
-          <thead className="sticky top-0 z-20 border-b bg-[#121212]/90 border-[#303030]/60 backdrop-blur-sm">
+      <div className="overflow-auto no-scrollbar relative" style={{ scrollbarWidth: 'thin' }}>
+        <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[800px] bg-[#181818]">
+          <thead className="sticky top-0 z-20 border-b bg-[#121212]/95 border-[#303030]/65 backdrop-blur-md">
             <tr>
-              <SortHeader label="วันที่" sortKey="date" className="w-[145px]" />
-              <th className="px-4 py-3 font-bold w-[90px] text-center text-xs uppercase tracking-wide text-slate-400">ประเภท</th>
+              <th className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[145px]">
+                <SortHeader label="วันที่" sortKey="date" className="w-full" />
+              </th>
+              <th className="px-4 py-3 font-bold w-[90px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ประเภท</th>
               <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" />
-              <th className="px-4 py-3 font-bold w-[100px] text-center text-xs uppercase tracking-wide text-slate-400">ALLOCATION</th>
-              <th className="px-4 py-3 font-bold text-xs uppercase tracking-wide text-slate-400">รายละเอียด</th>
+              <th className="px-4 py-3 font-bold w-[100px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>
+              <th className="px-4 py-3 font-bold text-[10px] font-black uppercase tracking-widest text-slate-400">รายละเอียด</th>
               <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" />
-              <th className="w-10" />
+              <th className="sticky right-0 z-30 bg-[#121212] border-l border-[#303030]/60 w-12 text-center" />
             </tr>
           </thead>
           <tbody>
@@ -117,39 +119,43 @@ export default function LedgerTable({
               const pillStyles = getCategoryPillStyles(catObj?.color, dm);
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
-              const rowBg      = isAlt ? ('bg-[#121212]/20') : 'bg-transparent';
+              const rowBg      = isAlt ? 'bg-[#121212]/20' : 'bg-[#181818]';
+              const stickyBg   = isAlt ? 'bg-[#161616]' : 'bg-[#181818]';
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
               const aColors = {
-                need: 'text-rose-400 border-rose-800/50 bg-rose-950/40 hover:bg-rose-900/30 hover:border-rose-700/60 focus:ring-1 focus:ring-rose-500/30',
-                want: 'text-sky-400 border-sky-800/50 bg-sky-950/40 hover:bg-sky-900/30 hover:border-sky-700/60 focus:ring-1 focus:ring-sky-500/30',
-                savings: 'text-emerald-400 border-emerald-800/50 bg-emerald-950/40 hover:bg-emerald-900/30 hover:border-emerald-700/60 focus:ring-1 focus:ring-emerald-500/30'
+                need: 'text-rose-400 border-rose-800/40 bg-rose-950/20 hover:bg-rose-900/25 hover:border-rose-700/50 focus:ring-1 focus:ring-rose-500/25',
+                want: 'text-sky-400 border-sky-800/40 bg-sky-950/20 hover:bg-sky-900/25 hover:border-sky-700/50 focus:ring-1 focus:ring-sky-500/25',
+                savings: 'text-emerald-400 border-emerald-800/40 bg-emerald-950/20 hover:bg-emerald-900/25 hover:border-emerald-700/50 focus:ring-1 focus:ring-emerald-500/25'
               };
 
               return (
-                <tr key={item.id} className={`group transition-colors duration-100 border-b border-[#303030]/40 hover:bg-[#303030]/10 ${rowBg}`}>
-                  <td className="px-4 py-2.5 align-middle">
+                <tr key={item.id} className="group border-b border-[#303030]/30 hover:bg-[#303030]/10 transition-colors">
+                  {/* Sticky Date Column */}
+                  <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-4 py-2.5 group-hover:bg-[#202020] transition-colors ${stickyBg}`}>
                     {isNewDate ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black tabular-nums text-slate-350">{item.date}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black tabular-nums text-slate-300">{item.date}</span>
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleOpenAddModal(item.date, 'income')} className="p-1 rounded transition-colors text-emerald-550 hover:bg-emerald-900/40" title="เพิ่มรายรับวันนี้">
-                            <PlusCircle className="w-3 h-3" />
+                          <button onClick={() => handleOpenAddModal(item.date, 'income')} className="p-0.5 rounded-none transition-colors text-emerald-400 hover:bg-emerald-950/40" title="เพิ่มรายรับวันนี้">
+                            <PlusCircle className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleOpenAddModal(item.date, 'expense')} className="p-1 rounded transition-colors text-red-500 hover:bg-red-900/40" title="เพิ่มรายจ่ายวันนี้">
-                            <PlusCircle className="w-3 h-3" />
+                          <button onClick={() => handleOpenAddModal(item.date, 'expense')} className="p-0.5 rounded-none transition-colors text-[#da291c] hover:bg-rose-950/40" title="เพิ่มรายจ่ายวันนี้">
+                            <PlusCircle className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs select-none opacity-15 text-slate-500">&quot;</span>
+                      <span className="text-xs select-none opacity-20 text-slate-500 ml-4">&quot;</span>
                     )}
                   </td>
+                  
                   <td className="px-4 py-2.5 align-middle text-center">
-                    <span className={`inline-flex items-center justify-center min-w-[52px] px-2 py-0.5 text-[11px] font-black rounded-none ${isInc ? ('bg-emerald-900/40 text-emerald-400 ring-1 ring-emerald-800/60') : ('bg-red-900/30 text-red-400 ring-1 ring-red-900/50')}`}>
+                    <span className={`inline-flex items-center justify-center min-w-[56px] px-2 py-0.5 text-[10px] font-black tracking-wider rounded-none ${isInc ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-500/20' : 'bg-rose-950/20 text-[#da291c] border border-[#da291c]/20'}`}>
                       {isInc ? 'รายรับ' : 'รายจ่าย'}
                     </span>
                   </td>
+                  
                   <td className="px-3 py-2 align-middle">
                     <div className="relative w-full flex items-center rounded-none border transition-all duration-150 focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
                       {/* Visual Custom Overlay */}
@@ -160,9 +166,9 @@ export default function LedgerTable({
                         <span className="shrink-0 mr-1.5 text-xs">
                           {catObj?.icon}
                         </span>
-                        <span className="truncate">{catObj?.name}</span>
+                        <span className="truncate" style={{ color: pillStyles.textColor }}>{catObj?.name}</span>
                         
-                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-85">
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-85" style={{ color: pillStyles.textColor }}>
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
                             <polyline points="6 9 12 15 18 9"></polyline>
                           </svg>
@@ -187,17 +193,18 @@ export default function LedgerTable({
                       </select>
                     </div>
                   </td>
+                  
                   <td className="px-3 py-2 align-middle text-center">
                     {!isInc ? (
                       <select 
                         value={aType} 
                         onChange={e => handleUpdateTransaction(item.id, 'allocation_type', e.target.value)}
-                        className={`allocation-select w-full bg-transparent outline-none appearance-none px-2 py-1 font-black border rounded-none text-[10px] text-center transition-all cursor-pointer ${aColors[aType]}`}
+                        className={`allocation-select w-full bg-[#121212] outline-none appearance-none px-2 py-1 font-black border rounded-none text-[9px] text-center tracking-wider transition-all cursor-pointer ${aColors[aType]}`}
                         style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.2rem center', backgroundSize: '0.6em' }}
                       >
-                        <option value="need" className="bg-[#121212] text-rose-400 font-extrabold">NEED</option>
+                        <option value="need" className="bg-[#121212] text-rose-450 font-extrabold">NEED</option>
                         <option value="want" className="bg-[#121212] text-sky-400 font-extrabold">WANT</option>
-                        <option value="savings" className="bg-[#121212] text-emerald-400 font-extrabold">SAVE</option>
+                        <option value="savings" className="bg-[#121212] text-emerald-450 font-extrabold">SAVE</option>
                       </select>
                     ) : (
                       <span className="inline-flex items-center justify-center px-2 py-1 text-[10px] font-black opacity-20 text-slate-500">
@@ -205,15 +212,19 @@ export default function LedgerTable({
                       </span>
                     )}
                   </td>
+                  
                   <td className="px-3 py-2 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-60 transition-all pointer-events-none z-10 text-slate-500" />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1.5 px-2 pl-7 text-sm font-medium transition-all text-slate-200 hover:bg-[#121212] hover:border-[#3e3e3e] focus:border-[#da291c] focus:bg-[#121212]" placeholder="รายละเอียด..." />
+                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 transition-all pointer-events-none z-10 text-slate-500" />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold transition-all text-slate-200 hover:bg-[#121212] hover:border-[#3e3e3e] focus:border-[#da291c] focus:bg-[#121212]" placeholder="รายละเอียด..." />
                   </td>
+                  
                   <td className="px-3 py-2 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-60 transition-all pointer-events-none z-10 text-slate-500" />
-                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-none py-1.5 px-2 text-right text-sm font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-[#121212] hover:border-[#3e3e3e] ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/70' : 'text-slate-200 focus:border-[#da291c]/70') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
+                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 transition-all pointer-events-none z-10 text-slate-500" />
+                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-[#121212] hover:border-[#3e3e3e] ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
                   </td>
-                  <td className="px-2 py-2 text-center align-middle">
+                  
+                  {/* Sticky Actions Column */}
+                  <td className={`sticky right-0 z-10 border-l border-[#303030]/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-2 group-hover:bg-[#202020] transition-colors ${stickyBg}`}>
                     <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} />
                   </td>
                 </tr>
@@ -224,11 +235,9 @@ export default function LedgerTable({
       </div>
 
       {/* Master Footer Bar (Dedicated Bottom Line) */}
-      <div className={`flex items-center justify-between px-4 py-3 border-t z-30 ${
-        'bg-[#121212]/90 border-[#303030]/60 backdrop-blur-sm'
-      }`}>
+      <div className="flex items-center justify-between px-4 py-3 border-t z-30 bg-[#121212]/95 border-[#303030]/60 backdrop-blur-md">
         {/* Left: Record Count */}
-        <div className={`text-[10px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
+        <div className="text-[9px] font-black uppercase tracking-widest text-[#888888] font-mono">
           หน้า {currentPage} • แสดง {currentData.length} จาก {sortedTransactions.length} รายการ
         </div>
 
@@ -237,26 +246,26 @@ export default function LedgerTable({
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className={`flex items-center gap-1 px-2 py-1 rounded-none border transition-all text-[10px] font-black uppercase tracking-widest ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border transition-all text-[9px] font-black uppercase tracking-widest font-mono ${
               currentPage === 1
-                ? 'opacity-20 cursor-not-allowed'
-                : 'hover:bg-[#303030] border-[#3e3e3e] bg-[#121212] text-[#cbd5e1]'
+                ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
+                : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
             }`}
           >
             <ChevronLeft className="w-3 h-3" /> ก่อนหน้า
           </button>
           
-          <div className={`text-[11px] font-black tabular-nums ${'text-[#da291c]'}`}>
+          <div className="text-[10px] font-black font-mono tabular-nums text-[#da291c] border border-[#da291c]/20 bg-[#da291c]/5 px-2 py-0.5">
             {currentPage} / {totalPages}
           </div>
 
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className={`flex items-center gap-1 px-2 py-1 rounded-none border transition-all text-[10px] font-black uppercase tracking-widest ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border transition-all text-[9px] font-black uppercase tracking-widest font-mono ${
               currentPage === totalPages
-                ? 'opacity-20 cursor-not-allowed'
-                : 'hover:bg-[#303030] border-[#3e3e3e] bg-[#121212] text-[#cbd5e1]'
+                ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
+                : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
             }`}
           >
             ถัดไป <ChevronRight className="w-3 h-3" />
@@ -266,12 +275,12 @@ export default function LedgerTable({
         {/* Right: Page Totals */}
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
-            <span className={`text-[9px] font-bold uppercase tracking-tighter ${'text-[#888888]'}`}>รายรับในหน้านี้</span>
-            <span className="text-[13px] font-black tabular-nums text-emerald-500">{formatMoney(pageInc)}</span>
+            <span className="text-[8px] font-black uppercase tracking-wider text-[#888888] font-mono">รายรับหน้านี้</span>
+            <span className="text-xs font-black tabular-nums text-emerald-400 font-mono">฿{formatMoney(pageInc)}</span>
           </div>
           <div className="flex flex-col items-end">
-            <span className={`text-[9px] font-bold uppercase tracking-tighter ${'text-[#888888]'}`}>รายจ่ายในหน้านี้</span>
-            <span className="text-[13px] font-black tabular-nums text-red-500">{formatMoney(pageExp)}</span>
+            <span className="text-[8px] font-black uppercase tracking-wider text-[#888888] font-mono">รายจ่ายหน้านี้</span>
+            <span className="text-xs font-black tabular-nums text-[#da291c] font-mono">฿{formatMoney(pageExp)}</span>
           </div>
         </div>
       </div>

@@ -83,6 +83,7 @@ export default function MainLayout({ controller }) {
     handleSaveBatch,
     handleFileUpload,
     confirmImport,
+    refreshData,
     toast,
     triggerToast
   } = controller;
@@ -91,10 +92,10 @@ export default function MainLayout({ controller }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col transition-colors duration-300 ${'dark-mode bg-slate-950'}`}
+      className={`min-h-screen flex flex-col transition-colors duration-300 ${'dark-mode bg-[#181818]'}`}
       style={{ fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" }}
     >
-      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#da291c] shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth bg-slate-900`} style={{ scrollbarGutter: 'stable' }}>
+      <div className={`max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#da291c] shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth bg-[#121212]`} style={{ scrollbarGutter: 'stable' }}>
 
         <AppHeader
           dbStatus={dbStatus} transactionCount={transactions.length}
@@ -116,7 +117,7 @@ export default function MainLayout({ controller }) {
           fileInputRef={fileInputRef}
         />
 
-        <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${'bg-slate-950'}`}>
+        <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${'bg-[#181818]'}`}>
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>

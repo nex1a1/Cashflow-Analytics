@@ -13,14 +13,14 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
   const textPriCls = 'text-slate-100';
   
   return (
-    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-all ${borderCls}`}
+    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-none border transition-all ${borderCls}`}
       style={{ backgroundColor: rowBg }}>
-      <div className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+      <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: color }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
           {tx.allocation_type && !isInc && (
-            <span className={`text-[8px] font-black px-1 rounded-[2px] border shrink-0 ${
+            <span className={`text-[8px] font-black px-1 rounded-none border shrink-0 ${
               tx.allocation_type === 'need' ? ('bg-rose-900/30 text-rose-400 border-rose-800/40') :
               tx.allocation_type === 'want' ? ('bg-sky-900/30 text-sky-400 border-sky-800/40') :
               ('bg-emerald-900/30 text-emerald-400 border-emerald-800/40')
@@ -37,7 +37,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
         {isInc ? '+' : '-'}{formatMoney(tx.amount)} ฿
       </span>
       <button onClick={() => onDeleteClick(tx.id)}
-        className={`shrink-0 px-2 py-1 rounded-sm text-xs font-bold transition-all active:scale-95 ${isConfirming ? 'bg-red-500 text-white' : ('text-slate-500 hover:text-red-400 hover:bg-red-900/30')}`}>
+        className={`shrink-0 px-2 py-1 rounded-none text-xs font-bold transition-all active:scale-95 ${isConfirming ? 'bg-red-500 text-white' : ('text-slate-500 hover:text-red-400 hover:bg-red-900/30')}`}>
         {isConfirming ? 'ยืนยัน?' : <Trash2 className="w-3.5 h-3.5" />}
       </button>
     </div>

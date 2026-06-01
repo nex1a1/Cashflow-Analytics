@@ -111,9 +111,9 @@ export default function LedgerView({
                 บัญชีแยกประเภท
               </h2>
             </div>
-            <p className="text-[10px] font-black tracking-widest mt-1.5 font-mono text-slate-400 uppercase flex items-center gap-2">
+            <p className="text-[10px] font-black tracking-widest mt-1.5 font-mono text-slate-455 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
-              <span className="text-slate-800 font-bold">•</span>
+              <span className="text-neutral-800 font-bold">•</span>
               <span className="text-[#da291c] font-extrabold">{displayTransactions.length}</span>
               <span>รายการ</span>
             </p>
@@ -123,26 +123,26 @@ export default function LedgerView({
             {viewMode === 'list' && (
               <button 
                 onClick={() => setFilterOpen(v => !v)} 
-                className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border-2 transition-all active:scale-95 font-mono ${
+                className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border transition-all active:scale-95 font-mono ${
                   filterOpen 
-                    ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_10px_rgba(218,41,28,0.15)]' 
-                    : 'bg-[#121212] border-[#303030] text-slate-450 hover:bg-[#303030]/50 hover:border-[#3e3e3e]'
-                } ${isFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/40 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : ''}`}
+                    ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.12)]' 
+                    : 'bg-[#121212] border-[#303030] text-slate-400 hover:bg-[#303030]/40 hover:border-[#404040] hover:text-white'
+                } ${isFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]' : ''}`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" /> 
                 <span>ตัวกรอง</span>
-                {isFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400 animate-pulse" />}
+                {isFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400" />}
               </button>
             )}
 
-            <div className="flex items-center rounded-none border-2 border-[#3e3e3e] overflow-hidden bg-[#121212]">
+            <div className="flex items-center rounded-none border border-[#303030] overflow-hidden bg-[#121212]">
               <button 
                 onClick={() => setViewMode('list')} 
                 title="มุมมองรายการ" 
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none font-mono ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all rounded-none font-mono ${
                   viewMode === 'list' 
-                    ? 'bg-[#303030]/60 text-[#da291c] font-extrabold shadow-inner' 
-                    : 'bg-[#121212] text-slate-450 hover:text-slate-200'
+                    ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
+                    : 'bg-[#121212] text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <LayoutList className="w-3.5 h-3.5" />
@@ -151,10 +151,10 @@ export default function LedgerView({
               <button 
                 onClick={() => setViewMode('horizontal')} 
                 title="มุมมองตารางแนวนอน" 
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-none border-l-2 border-[#3e3e3e] font-mono ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all rounded-none border-l border-[#303030] font-mono ${
                   viewMode === 'horizontal' 
-                    ? 'bg-[#303030]/60 text-[#da291c] font-extrabold shadow-inner' 
-                    : 'bg-[#121212] text-slate-450 hover:text-slate-200'
+                    ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
+                    : 'bg-[#121212] text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <TableProperties className="w-3.5 h-3.5" />
@@ -164,7 +164,7 @@ export default function LedgerView({
 
             <button 
               onClick={() => handleOpenAddModal('', 'income')} 
-              className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-emerald-400 bg-emerald-950/40 hover:bg-emerald-900/30 border-emerald-500/50 hover:border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
+              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border transition-all active:scale-95 rounded-none font-mono text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 border-emerald-500/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.04)]"
             >
               <PlusCircle className="w-3.5 h-3.5" /> 
               <span>เพิ่มรายรับ</span>
@@ -172,7 +172,7 @@ export default function LedgerView({
             
             <button 
               onClick={() => handleOpenAddModal('', 'expense')} 
-              className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-[#da291c] bg-[#da291c]/10 hover:bg-[#da291c]/20 border-[#da291c]/50 hover:border-[#da291c] shadow-[0_0_10px_rgba(218,41,28,0.05)]"
+              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border transition-all active:scale-95 rounded-none font-mono text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/40 hover:border-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.04)]"
             >
               <PlusCircle className="w-3.5 h-3.5" /> 
               <span>เพิ่มรายจ่าย</span>
@@ -181,7 +181,7 @@ export default function LedgerView({
             {displayTransactions.length > 0 && (
               <button 
                 onClick={() => { if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }} 
-                className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border-2 transition-all active:scale-95 rounded-none font-mono text-slate-500 bg-[#181818] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/50" 
+                className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border transition-all active:scale-95 rounded-none font-mono text-slate-500 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40" 
                 title="ลบข้อมูลเดือนนี้"
               >
                 <Trash2 className="w-3.5 h-3.5" /> 
@@ -194,7 +194,7 @@ export default function LedgerView({
         {/* Stats Area (Vitals) - High-Density HUD Command Panel */}
         <div className="w-full flex flex-col rounded-none overflow-hidden border shadow-lg bg-[#181818] border-[#303030]">
           {/* Header Panel */}
-          <div className="px-3.5 py-2 flex items-center justify-between border-b transition-colors bg-[#121212]/70 border-[#303030]/60">
+          <div className="px-3.5 py-2 flex items-center justify-between border-b bg-[#121212]/50 border-[#303030]/60">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-[#da291c]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono">
@@ -205,13 +205,13 @@ export default function LedgerView({
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#303030]/60">
             {/* INCOME CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 transition-all duration-300 bg-[#181818] hover:bg-[#303030]/40 hover:bg-gradient-to-br hover:from-emerald-500/[0.03]">
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
               {/* Background Icon Glow */}
-              <div className="absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none text-emerald-400">
+              <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-emerald-400">
                 <TrendingUp size={80} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
                   รายรับรวม (INCOME)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -231,13 +231,13 @@ export default function LedgerView({
             </div>
 
             {/* EXPENSE CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 transition-all duration-300 bg-[#181818] hover:bg-[#303030]/40 hover:bg-gradient-to-br hover:from-rose-500/[0.03]">
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
               {/* Background Icon Glow */}
-              <div className="absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none text-rose-455">
+              <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-rose-455">
                 <TrendingDown size={80} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
                   รายจ่ายรวม (EXPENSE)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -257,13 +257,13 @@ export default function LedgerView({
             </div>
 
             {/* NET SURPLUS CELL WITH SAVINGS RATE PILL */}
-            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] transition-all duration-300 bg-[#181818] hover:bg-[#303030]/40 ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.03]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.03]'}`}>
+            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.02]'}`}>
               {/* Background Icon Glow */}
-              <div className={`absolute -right-3 -bottom-3 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 pointer-events-none ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
+              <div className={`absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
                 <Wallet size={80} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
                   คงเหลือสุทธิ (NET CASHFLOW)
                 </span>
                 <div className="flex items-center gap-1">
@@ -271,10 +271,10 @@ export default function LedgerView({
                     <div className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest flex items-center gap-1 border ${
                       savingsRate >= 20 
                         ? 'bg-yellow-500/10 text-yellow-450 border-yellow-500/20' 
-                        : (savingsRate >= 10 ? 'bg-amber-500/10 text-amber-450 border-amber-500/20' : 'bg-rose-500/10 text-rose-450 border-rose-500/20')
+                        : (savingsRate >= 10 ? 'bg-amber-500/10 text-amber-450 border-amber-500/20' : 'bg-rose-500/10 text-rose-455 border-rose-500/20')
                     }`}>
                       <span>ออม {savingsRate}%</span>
-                      <span className="opacity-40">|</span>
+                      <span className="opacity-45">|</span>
                       <span className="font-extrabold">{savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>
                     </div>
                   )}
@@ -324,13 +324,16 @@ export default function LedgerView({
       </div>
 
       {/* Table Area */}
-      <div className="flex flex-col border rounded-none overflow-hidden shadow-lg transition-colors min-h-[400px] relative bg-[#181818] border-[#303030]">
+      <div className="flex flex-col border rounded-none overflow-hidden shadow-lg min-h-[400px] relative bg-[#181818] border-[#303030]">
         {showSkeleton ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-10 backdrop-blur-sm bg-[#121212]/50">
-            <div className="w-12 h-12 mb-4 rounded-none border border-[#3e3e3e] animate-pulse flex items-center justify-center bg-[#181818]/60 text-[#da291c]">
-              <LayoutList className="w-6 h-6" />
+          <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-50 bg-[#121212]/80 backdrop-blur-[1px]">
+            <div className="relative w-14 h-14 mb-4 flex items-center justify-center border border-[#303030] bg-[#181818]">
+              <div className="w-8 h-8 border-2 border-transparent border-t-[#da291c] border-r-[#da291c]/30 rounded-full animate-spin" />
             </div>
-            <p className="text-sm font-bold animate-pulse text-[#888888]">กำลังโหลดข้อมูล...</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#888888] font-mono flex items-center gap-1.5">
+              <span>กำลังดาวน์โหลดบัญชีแยกประเภท</span>
+              <span className="text-[#da291c] animate-pulse">...</span>
+            </p>
           </div>
         ) : null}
         

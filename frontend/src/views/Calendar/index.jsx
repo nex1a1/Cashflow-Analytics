@@ -161,7 +161,7 @@ export default function CalendarView({
     surfaceAlt: 'bg-[#121212]/70',
     border: 'border-[#303030]/80',
     textMuted: 'text-slate-400',
-    gapColor: 'bg-[#303030]/60',
+    gapColor: 'bg-neutral-800',
   };
 
   // ── Unified Render ──────────────────────────────────────────
@@ -272,7 +272,10 @@ export default function CalendarView({
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
               const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
               const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
-              const isWeekend = WEEKEND_IDX.includes(new Date(y, m, d).getDay());
+              const dow = new Date(y, m, d).getDay();
+              const isWeekend = WEEKEND_IDX.includes(dow);
+              const defType = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+              const dayType = dayTypes[dateStr] || defType;
 
               return (
                 <CalendarDayCell
@@ -283,7 +286,7 @@ export default function CalendarView({
                   isToday={isToday}
                   isWeekend={isWeekend}
                   dayTypeConfig={dayTypeConfig}
-                  dayTypes={dayTypes}
+                  dayType={dayType}
                   handleDayTypeChange={handleDayTypeChange}
                   onSelectDate={setSelectedDate}
                 />
@@ -342,10 +345,10 @@ export default function CalendarView({
             return (
               <div
                 key={dt.id}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[11px] font-bold shadow-sm transition-transform hover:scale-102"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[10px] font-black tracking-wider uppercase shadow-sm transition-all duration-100"
                 style={{
-                  backgroundColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.15 : 0.05})`,
-                  borderColor: `rgba(${hexToRgb(dt.color)}, ${isDarkMode ? 0.35 : 0.2})`,
+                  backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
+                  borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
                   color: dt.color,
                 }}
               >

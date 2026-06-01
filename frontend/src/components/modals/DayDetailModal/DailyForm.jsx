@@ -86,8 +86,8 @@ export default function DailyForm({
     surfaceAlt: 'bg-[#1c1c1c]',
     border: 'border-[#303030]',
     textMuted: 'text-slate-400',
-    input: `px-3 py-2 rounded-none border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30'}`,
-    inputError: `px-3 py-2 rounded-none border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30'}`,
+    input: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30'}`,
+    inputError: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30'}`,
     errorText: `text-[10px] font-bold text-red-500 mt-1`
   };
 

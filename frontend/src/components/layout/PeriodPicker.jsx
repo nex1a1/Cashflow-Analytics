@@ -138,7 +138,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const pillIndependentActive = 'bg-[#da291c]/30 border-[#da291c]/80 text-[#da291c] shadow-none'; 
 
   // --- UI Action Colors ---
-  const confirmBtnCls = 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-none border-none';
+  const confirmBtnCls = 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black hover:border-emerald-400 font-bold transition-all';
 
   const ModeBtn = ({ id, icon: Icon, label }) => (
     <button 

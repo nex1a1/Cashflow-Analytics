@@ -50,7 +50,7 @@ export default function QuickSuggest({
   }, [frequentItems, catMap, formType, suggCatFilter, categories, searchQuery]);
 
   const tokens = {
-    input: "w-full px-3 py-2.5 text-sm border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
+    input: "w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
     searchIcon: `absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${'text-slate-500'}`
   };
 

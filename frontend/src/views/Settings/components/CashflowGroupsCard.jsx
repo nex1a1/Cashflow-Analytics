@@ -61,7 +61,7 @@ const CashflowGroupsCard = memo(({
                   <option value="savings">ออม/ลงทุน (SAV)</option>
                 </select>
 
-                {group.type === 'expense' && (
+                {group.type === 'expense' ? (
                   <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
                     className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer transition-all ${
                       group.allocation_type === 'need' ? 'bg-rose-950/40 text-rose-400 border-rose-800/50 focus:border-rose-500/70' :
@@ -72,6 +72,8 @@ const CashflowGroupsCard = memo(({
                     <option value="want" className="bg-[#121212] text-sky-400 font-extrabold">WANT</option>
                     <option value="savings" className="bg-[#121212] text-emerald-400 font-extrabold">SAVE</option>
                   </select>
+                ) : (
+                  <div className="w-[80px] shrink-0" />
                 )}
 
                 <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}

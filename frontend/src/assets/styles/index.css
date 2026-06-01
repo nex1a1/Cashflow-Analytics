@@ -172,36 +172,36 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Zero-JS Column Hover Sync for Header & Footer (using :has) ── */
-.heatmap-table:has(tbody td.col-idx-0:hover) .col-idx-0 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-1:hover) .col-idx-1 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-2:hover) .col-idx-2 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-3:hover) .col-idx-3 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-4:hover) .col-idx-4 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-5:hover) .col-idx-5 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-6:hover) .col-idx-6 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-7:hover) .col-idx-7 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-8:hover) .col-idx-8 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-9:hover) .col-idx-9 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-10:hover) .col-idx-10 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-11:hover) .col-idx-11 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-12:hover) .col-idx-12 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-13:hover) .col-idx-13 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-14:hover) .col-idx-14 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-15:hover) .col-idx-15 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-16:hover) .col-idx-16 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-17:hover) .col-idx-17 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-18:hover) .col-idx-18 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-19:hover) .col-idx-19 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-20:hover) .col-idx-20 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-21:hover) .col-idx-21 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-22:hover) .col-idx-22 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-23:hover) .col-idx-23 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-24:hover) .col-idx-24 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-25:hover) .col-idx-25 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-26:hover) .col-idx-26 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-27:hover) .col-idx-27 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-28:hover) .col-idx-28 { background-color: #1e293b !important; }
-.heatmap-table:has(tbody td.col-idx-29:hover) .col-idx-29 { background-color: #1e293b !important; }
+.heatmap-table:has(tbody td.col-idx-0:hover) .col-idx-0 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-1:hover) .col-idx-1 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-2:hover) .col-idx-2 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-3:hover) .col-idx-3 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-4:hover) .col-idx-4 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-5:hover) .col-idx-5 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-6:hover) .col-idx-6 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-7:hover) .col-idx-7 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-8:hover) .col-idx-8 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-9:hover) .col-idx-9 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-10:hover) .col-idx-10 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-11:hover) .col-idx-11 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-12:hover) .col-idx-12 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-13:hover) .col-idx-13 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-14:hover) .col-idx-14 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-15:hover) .col-idx-15 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-16:hover) .col-idx-16 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-17:hover) .col-idx-17 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-18:hover) .col-idx-18 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-19:hover) .col-idx-19 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-20:hover) .col-idx-20 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-21:hover) .col-idx-21 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-22:hover) .col-idx-22 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-23:hover) .col-idx-23 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-24:hover) .col-idx-24 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-25:hover) .col-idx-25 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-26:hover) .col-idx-26 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-27:hover) .col-idx-27 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-28:hover) .col-idx-28 { background-color: rgba(218, 41, 28, 0.04) !important; }
+.heatmap-table:has(tbody td.col-idx-29:hover) .col-idx-29 { background-color: rgba(218, 41, 28, 0.04) !important; }
 
 /* ────────────────────────────────────────────────────────── */
 /* FERRARI LUXURY AUTOMOTIVE EDITORIAL TYPOGRAPHY & BUTTONS   */

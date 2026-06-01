@@ -249,127 +249,132 @@ export default function ActivityTimeline() {
   if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
 
   return (
-    <div className={`${cardStyles} p-4`}>
-      {/* Header & Controls */}
-      <div className={`flex items-center justify-between ${dividerStyles} gap-4 relative z-20`}>
-        <div className="flex items-center gap-4 flex-wrap">
-          <h3 className={headerTextStyles}>
-            <CalendarClock className="w-4 h-4 text-[#da291c]" />
+    <div className={cardStyles}>
+      {/* ─── HEADER (Editorial Style) ─── */}
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] w-full gap-4 relative z-20 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+          <CalendarClock className="w-3.5 h-3.5 text-neutral-400" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
             ไทม์ไลน์กิจกรรม
-          </h3>
-          <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
+          </span>
+          <div className="ml-2">
+            <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
+          </div>
         </div>
       </div>
 
-      {/* Legend Row (New Line) */}
-      <div className="mb-4 flex justify-end min-h-[20px]">
-        {showSkeleton ? (
-          <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={viewMode}
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              transition={{ duration: 0.2 }}
-            >
-              {viewMode === 'dayType' ? (
-                <TimelineDayTypeLegend 
-                  dayTypeConfig={dayTypeConfig} 
-                  dayTypeCounts={analytics.dayTypeCounts} 
-                  isDarkMode={dm} 
-                />
-              ) : (
-                <TimelineHeatmapLegend 
-                  globalMaxThreshold={globalMaxThreshold} 
-                  isDarkMode={dm} 
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
+      <div className="p-4 flex flex-col gap-3">
+        {/* Legend Row (New Line) */}
+        <div className="flex justify-end min-h-[20px]">
+          {showSkeleton ? (
+            <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                {viewMode === 'dayType' ? (
+                  <TimelineDayTypeLegend 
+                    dayTypeConfig={dayTypeConfig} 
+                    dayTypeCounts={analytics.dayTypeCounts} 
+                    isDarkMode={dm} 
+                  />
+                ) : (
+                  <TimelineHeatmapLegend 
+                    globalMaxThreshold={globalMaxThreshold} 
+                    isDarkMode={dm} 
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
 
-      {/* Timeline Grid */}
-      <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e]">
-        {showSkeleton ? (
-          <div className="py-12 px-3">
-             <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
-          </div>
-        ) : datesInPeriod.length === 0 ? (
-          <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
-        ) : (
-          <div className="overflow-x-auto pb-4 pt-10 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-            <div className="flex w-max gap-x-[3px] mx-auto">
-              
-              {/* Day Labels (Sticky) */}
-              <div className="flex flex-col gap-[3px] shrink-0 sticky left-0 z-20 pr-3 border-r"
-                style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
-                <div className="h-4" />
-                {DAY_LABELS.map((day, i) => (
-                  <div 
-                    key={day} 
-                    className={`h-3.5 flex items-center justify-end text-[9px] font-black ${
-                      i === 0 || i === 6 ? ('text-red-400/80') : ('text-slate-500')
-                    }`}
-                  >
-                    {day}
+        {/* Timeline Grid */}
+        <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e]">
+          {showSkeleton ? (
+            <div className="py-12 px-3">
+               <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
+            </div>
+          ) : datesInPeriod.length === 0 ? (
+            <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
+          ) : (
+            <div className="overflow-x-auto pb-4 pt-10 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+              <div className="flex w-max gap-x-[3px] mx-auto">
+                
+                {/* Day Labels (Sticky) */}
+                <div className="flex flex-col gap-[3px] shrink-0 sticky left-0 z-20 pr-3 border-r"
+                  style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
+                  <div className="h-4" />
+                  {DAY_LABELS.map((day, i) => (
+                    <div 
+                      key={day} 
+                      className={`h-3.5 flex items-center justify-end text-[9px] font-black ${
+                        i === 0 || i === 6 ? ('text-red-400/80') : ('text-slate-500')
+                      }`}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Weeks & Days */}
+                {weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col gap-[3px] shrink-0">
+                    {/* Month Label */}
+                    <div className="h-4 relative flex items-end pb-1">
+                      {week.monthLabel && (
+                        <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
+                          <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
+                          <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
+                            {week.monthLabel}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Days in Week */}
+                    {week.days.map((dateStr, dayIndex) => {
+                      if (!dateStr) return <div key={`empty-${weekIndex}-${dayIndex}`} className="w-3.5 h-3.5 bg-transparent" />;
+                      
+                      const isToday = dateStr === new Date().toISOString().split('T')[0];
+                      const { dayType, amount } = getDayDetails(dateStr);
+                      const level = getExpenseLevel(amount, globalMaxThreshold);
+                      
+                      const backgroundColor = viewMode === 'heatmap' 
+                        ? getHeatmapColor(level, dm) 
+                        : (dayType?.color || '#cbd5e1');
+
+                      return (
+                        <motion.div 
+                          key={dateStr} 
+                          className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors ${
+                            isToday 
+                              ? 'ring-2 ring-[#da291c] ring-offset-1 dark:ring-offset-[#121212] z-10' 
+                              : 'opacity-90 hover:opacity-100 hover:border-[#da291c]/80 dark:hover:border-[#da291c]/80'
+                          }`}
+                          style={{
+                            backgroundColor,
+                            borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
+                          }}
+                          whileHover={{ scale: 1.25 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
+                          onMouseLeave={handleMouseLeave}
+                        />
+                      );
+                    })}
                   </div>
                 ))}
               </div>
-
-              {/* Weeks & Days */}
-              {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-[3px] shrink-0">
-                  {/* Month Label */}
-                  <div className="h-4 relative flex items-end pb-1">
-                    {week.monthLabel && (
-                      <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
-                        <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
-                        <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
-                          {week.monthLabel}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Days in Week */}
-                  {week.days.map((dateStr, dayIndex) => {
-                    if (!dateStr) return <div key={`empty-${weekIndex}-${dayIndex}`} className="w-3.5 h-3.5 bg-transparent" />;
-                    
-                    const isToday = dateStr === new Date().toISOString().split('T')[0];
-                    const { dayType, amount } = getDayDetails(dateStr);
-                    const level = getExpenseLevel(amount, globalMaxThreshold);
-                    
-                    const backgroundColor = viewMode === 'heatmap' 
-                      ? getHeatmapColor(level, dm) 
-                      : (dayType?.color || '#cbd5e1');
-
-                    return (
-                      <motion.div 
-                        key={dateStr} 
-                        className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors ${
-                          isToday 
-                            ? 'ring-2 ring-[#da291c] ring-offset-1 dark:ring-offset-[#121212] z-10' 
-                            : 'opacity-90 hover:opacity-100 hover:border-[#da291c]/80 dark:hover:border-[#da291c]/80'
-                        }`}
-                        style={{
-                          backgroundColor,
-                          borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
-                        }}
-                        whileHover={{ scale: 1.25 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
-                        onMouseLeave={handleMouseLeave}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <TimelineTooltip 

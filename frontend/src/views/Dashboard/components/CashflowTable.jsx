@@ -668,10 +668,14 @@ export default function CashflowTable() {
 
   return (
     <div className={`${card} overflow-hidden`}>
-      <div className="px-4 py-3 border-b flex items-center justify-between gap-2 bg-[#121212]/70 border-[#303030]/60">
+      {/* ─── HEADER (Editorial Style) ─── */}
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
         <div className="flex items-center gap-2">
-          <FileSpreadsheet className="w-4 h-4 text-[#da291c]" />
-          <h3 className="font-bold text-sm text-slate-200">ตารางสรุปกระแสเงินสด</h3>
+          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+          <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+            ตารางสรุปกระแสเงินสด
+          </span>
         </div>
       </div>
       

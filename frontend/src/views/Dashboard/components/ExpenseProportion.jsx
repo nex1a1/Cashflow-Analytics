@@ -16,7 +16,7 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? ('bg-[#303030]/90 border-[#da291c] scale-[1.02] shadow-md z-10')
+        ? ('bg-[#303030]/90 border-[#da291c] shadow-md z-10')
         : ('bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : cat.color }}
@@ -39,7 +39,7 @@ const CatItem = React.memo(({ cat, dm, idx, isHovered, onHover }) => (
     </div>
     
     <div className="mt-auto flex flex-col gap-1">
-      <div className={`w-full rounded-full h-[4px] overflow-hidden ${'bg-[#181818]'}`}>
+      <div className={`w-full rounded-none h-[4px] overflow-hidden ${'bg-[#181818]'}`}>
         <div 
           className="h-full transition-all duration-1000" 
           style={{ 
@@ -62,7 +62,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     onMouseLeave={() => onHover(null)}
     className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
       isHovered 
-        ? ('bg-[#303030]/90 border-[#da291c] scale-[1.02] shadow-md z-10')
+        ? ('bg-[#303030]/90 border-[#da291c] shadow-md z-10')
         : ('bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]')
     }`}
     style={{ borderLeftColor: isHovered ? undefined : item.color }}
@@ -98,7 +98,7 @@ const GroupItem = React.memo(({ item, dm, idx, isHovered, onHover, isSingleMonth
     
     {/* ─── PROGRESS BAR ─── */}
     <div className="mb-3">
-      <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${'bg-[#181818]'}`}>
+      <div className={`w-full rounded-none h-[6px] overflow-hidden relative ${'bg-[#181818]'}`}>
         <div 
           className="h-full transition-all duration-1000 relative" 
           style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
@@ -157,7 +157,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       onMouseLeave={() => onHover(null)}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 transition-all ${
         isHovered 
-          ? ('bg-[#303030]/90 border-[#da291c] scale-[1.02] shadow-md z-10')
+          ? ('bg-[#303030]/90 border-[#da291c] shadow-md z-10')
           : ('bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]')
       }`}
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
@@ -173,7 +173,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
             <span className={`text-[8px] font-bold tracking-widest uppercase ${'text-slate-400'}`}>
               Target {item.target}%
             </span>
-            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider ${
+            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider ${
               isGood ? ('bg-emerald-500/10 text-emerald-400') : 
               (isOver ? ('bg-red-500/10 text-red-400') : 
               ('bg-amber-500/10 text-amber-400'))
@@ -198,7 +198,7 @@ const AllocationItem = React.memo(({ item, dm, idx, isHovered, onHover }) => {
       
       {/* ─── PROGRESS BAR ─── */}
       <div className="mb-3">
-        <div className={`w-full rounded-sm h-[6px] overflow-hidden relative ${'bg-[#181818]'}`}>
+        <div className={`w-full rounded-none h-[6px] overflow-hidden relative ${'bg-[#181818]'}`}>
           <div 
             className={`h-full transition-all duration-1000 relative ${isAlert ? 'animate-pulse' : ''}`} 
             style={{ width: `${percentage}%`, backgroundColor: item.color }}
@@ -357,7 +357,7 @@ export default function ExpenseProportion() {
     };
   }, [dm]);
   
-  const cardClass = `rounded-sm border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
+  const cardClass = `rounded-none border shadow-sm transition-all duration-300 flex flex-col w-full overflow-hidden ${
     'bg-[#181818] border-[#303030]'
   }`;
 
@@ -372,11 +372,12 @@ export default function ExpenseProportion() {
 
   return (
     <div className={cardClass}>
-      {/* ─── HEADER (Ultra Tighter) ─── */}
-      <div className="px-3 py-1.5 border-b flex items-center justify-between bg-[#181818]/40 border-[#303030]/60">
-        <div className="flex items-center gap-1.5">
-          <PieChart className="w-3 h-3 text-[#da291c]" />
-          <span className={`text-[9px] font-black uppercase tracking-widest ${'text-slate-400'}`}>
+      {/* ─── HEADER (Editorial Style) ─── */}
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
+        <div className="flex items-center gap-2">
+          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+          <PieChart className="w-3.5 h-3.5 text-neutral-400" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
             สัดส่วนรายจ่าย (Proportions)
           </span>
 

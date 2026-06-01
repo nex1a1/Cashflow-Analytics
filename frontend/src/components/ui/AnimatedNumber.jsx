@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatMoney } from '../../utils/formatters';
 
-export default function AnimatedNumber({ value }) {
+export default function AnimatedNumber({ value, integer = false }) {
   const [displayValue, setDisplayValue] = useState(value);
   const animationRef = useRef(null);
   const displayRef = useRef(displayValue); // เก็บค่าปัจจุบันไว้เทียบ
@@ -40,5 +40,9 @@ export default function AnimatedNumber({ value }) {
     };
   }, [value]);
 
-  return <span>{formatMoney(displayValue)}</span>;
+  const formatted = integer 
+    ? Math.round(displayValue).toLocaleString('th-TH', { maximumFractionDigits: 0 }) 
+    : formatMoney(displayValue);
+
+  return <span>{formatted}</span>;
 }

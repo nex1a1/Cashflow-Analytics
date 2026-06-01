@@ -36,30 +36,30 @@ export default function FilterBar({
   const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
     const getColors = () => {
       if (!active) {
-        return 'bg-[#121212] border-[#3e3e3e] text-[#888888] hover:text-[#e0e0e0] hover:bg-[#303030]';
+        return 'bg-[#121212] border-[#303030] text-[#888888] hover:text-[#cbd5e1] hover:bg-[#303030]/30';
       }
 
       switch (colorScheme) {
         case 'emerald':
-          return 'bg-emerald-950/30 border-emerald-800 text-emerald-400 font-bold';
+          return 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.06)]';
         case 'rose':
-          return 'bg-rose-950/30 border-rose-800 text-rose-455 font-bold';
+          return 'bg-rose-950/20 border-rose-500/40 text-rose-400 font-black shadow-[0_0_8px_rgba(239,68,68,0.06)]';
         case 'indigo':
-          return 'bg-indigo-950/30 border-indigo-800 text-indigo-400 font-bold';
+          return 'bg-indigo-950/20 border-indigo-500/40 text-indigo-400 font-black shadow-[0_0_8px_rgba(99,102,241,0.06)]';
         case 'amber':
-          return 'bg-amber-950/30 border-amber-850 text-amber-400 font-bold';
+          return 'bg-amber-950/20 border-amber-500/40 text-amber-400 font-black shadow-[0_0_8px_rgba(245,158,11,0.06)]';
         case 'sky':
-          return 'bg-sky-950/30 border-sky-850 text-sky-400 font-bold';
+          return 'bg-sky-950/20 border-sky-500/40 text-sky-450 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
         case 'blue':
         default:
-          return 'bg-[#da291c] border-[#da291c] text-white font-bold';
+          return 'bg-[#da291c]/15 border-[#da291c]/55 text-white font-black shadow-[0_0_8px_rgba(218,41,28,0.08)]';
       }
     };
 
     return (
       <button 
         onClick={onClick}
-        className={`flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 transition-colors ${getColors()}`}
+        className={`flex-1 px-1.5 py-1 text-[9px] font-black uppercase tracking-widest border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 transition-all ${getColors()}`}
       >
         {label}
       </button>
@@ -72,10 +72,10 @@ export default function FilterBar({
       <div className={`relative flex items-center border rounded-none bg-[#121212] transition-colors ${
         isActive 
           ? 'border-[#da291c] text-white bg-[#121212]' 
-          : 'border-[#3e3e3e] text-[#888888] hover:border-[#da291c]/50 hover:bg-[#303030]/20'
+          : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
       }`}>
         <div className={`pl-2 pr-1.5 py-1.5 border-r flex items-center justify-center shrink-0 ${
-          isActive ? 'border-[#da291c]/40 text-[#da291c]' : 'border-[#3e3e3e] text-[#666666]'
+          isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
         }`}>
           {icon}
         </div>
@@ -83,9 +83,7 @@ export default function FilterBar({
         <select
           value={value}
           onChange={onChange}
-          className={`w-full bg-transparent text-xs font-bold py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none ${
-            'text-[#cbd5e1]'
-          }`}
+          className="w-full bg-transparent text-[10px] font-black py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
         >
           {options}
         </select>
@@ -106,46 +104,34 @@ export default function FilterBar({
   };
 
   return (
-    <div 
-      className={`relative p-4 rounded-none border transition-colors mb-5 ${
-        'bg-[#181818] border-[#3e3e3e]'
-      }`}
-    >
-      {/* Grid Layout (3 Columns, High Density, Mathematical Spacing) */}
-      <div className="grid grid-cols-12 gap-8 relative z-10">
+    <div className="relative rounded-none border border-[#303030]/60 bg-[#121212] overflow-hidden mb-5">
+      {/* Grid Layout (3 Columns with hairline gaps, high density) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-10">
         
         {/* ================= COLUMN 1: SCOPE & VALUE ================= */}
-        <div className={`col-span-4 pr-8 flex flex-col gap-2.5 ${
-          'border-r border-[#303030]/80'
-        }`}>
+        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <Search className="w-3 h-3 text-[#666666]" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#888888] font-mono">
               ค้นหาและขอบเขตเงิน
             </span>
           </div>
 
           {/* Search Box */}
           <div className="relative group">
-            <Search className={`w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-              'text-[#666666] group-focus-within:text-[#da291c]'
-            }`} />
+            <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#666666] group-focus-within:text-[#da291c]" />
             <input
               type="text"
               placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={`w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-bold transition-colors ${
-                'bg-[#121212] border-[#3e3e3e] focus:border-[#da291c] text-[#e0e0e0] placeholder-[#555555]'
-              }`}
+              className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] focus:border-[#da291c] text-[#cbd5e1] placeholder-[#555555]"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')} 
-                className={`absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none transition-colors ${
-                  'hover:bg-[#303030] text-[#666666] hover:text-white'
-                }`}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none hover:bg-[#303030] text-[#666666] hover:text-white"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -154,7 +140,7 @@ export default function FilterBar({
 
           {/* Amount Limits */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
+            <span className="text-[8.5px] font-black uppercase tracking-wider text-[#888888]/80 font-mono">
               ช่วงจำนวนเงิน (฿ Baht Range)
             </span>
             <div className="flex items-center gap-1.5">
@@ -165,12 +151,10 @@ export default function FilterBar({
                   placeholder="Min" 
                   value={minAmount}
                   onChange={e => setMinAmount(e.target.value)}
-                  className={`w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-bold transition-colors ${
-                    'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] placeholder-[#555555]'
-                  }`}
+                  className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
-              <span className={`text-xs font-black ${'text-[#666666]'}`}>—</span>
+              <span className="text-xs font-black text-[#555555] font-mono">—</span>
               <div className="relative flex-1">
                 <Hash className="w-2.5 h-2.5 absolute left-2 top-1/2 -translate-y-1/2 text-[#666666]" />
                 <input 
@@ -178,9 +162,7 @@ export default function FilterBar({
                   placeholder="Max" 
                   value={maxAmount}
                   onChange={e => setMaxAmount(e.target.value)}
-                  className={`w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-bold transition-colors ${
-                    'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] placeholder-[#555555]'
-                  }`}
+                  className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -188,25 +170,21 @@ export default function FilterBar({
         </div>
 
         {/* ================= COLUMN 2: QUICK TOGGLES ================= */}
-        <div className={`col-span-4 pr-8 flex flex-col gap-2.5 ${
-          'border-r border-[#303030]/80'
-        }`}>
+        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <MousePointer2 className="w-3 h-3 text-[#666666]" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#888888] font-mono">
               คัดกรองด่วนแบบกลุ่ม
             </span>
           </div>
 
           {/* Type Toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
+            <span className="text-[8.5px] font-black uppercase tracking-wider text-[#888888]/80 font-mono">
               ประเภทรายการ
             </span>
-            <div className={`flex rounded-none p-0.5 border ${
-              'bg-[#121212] border-[#3e3e3e]'
-            }`}>
+            <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030]">
               <SegmentButton label="ทั้งหมด" active={typeFilter === 'ALL'} onClick={() => setTypeFilter('ALL')} />
               <SegmentButton label="รายรับ" active={typeFilter === 'INCOME'} onClick={() => setTypeFilter('INCOME')} colorScheme="emerald" />
               <SegmentButton label="รายจ่าย" active={typeFilter === 'EXPENSE'} onClick={() => setTypeFilter('EXPENSE')} colorScheme="rose" />
@@ -216,12 +194,10 @@ export default function FilterBar({
 
           {/* Allocation Toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
+            <span className="text-[8.5px] font-black uppercase tracking-wider text-[#888888]/80 font-mono">
               การจัดสรรเงิน (Allocation)
             </span>
-            <div className={`flex rounded-none p-0.5 border ${
-              'bg-[#121212] border-[#3e3e3e]'
-            }`}>
+            <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030]">
               <SegmentButton label="ทั้งหมด" active={allocationFilter === 'ALL'} onClick={() => setAllocationFilter('ALL')} />
               <SegmentButton label="Need" active={allocationFilter === 'need'} onClick={() => setAllocationFilter('need')} colorScheme="rose" />
               <SegmentButton label="Want" active={allocationFilter === 'want'} onClick={() => setAllocationFilter('want')} colorScheme="sky" />
@@ -231,23 +207,21 @@ export default function FilterBar({
         </div>
 
         {/* ================= COLUMN 3: STRUCTURE & CLASS ================= */}
-        <div className="col-span-4 flex flex-col gap-2.5">
+        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <CalendarDays className="w-3 h-3 text-[#666666]" />
-            <span className={`text-[9px] font-black uppercase tracking-widest ${'text-[#888888]'}`}>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#888888] font-mono">
               คัดกรองและจำแนกกลุ่ม
             </span>
           </div>
 
           {/* Day type toggle */}
           <div className="flex flex-col gap-1">
-            <span className={`text-[8.5px] font-bold uppercase tracking-wider ${'text-[#888888]/80'}`}>
+            <span className="text-[8.5px] font-black uppercase tracking-wider text-[#888888]/80 font-mono">
               วันทำงาน / วันหยุด
             </span>
-            <div className={`flex rounded-none p-0.5 border ${
-              'bg-[#121212] border-[#3e3e3e]'
-            }`}>
+            <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030]">
               <SegmentButton label="ทุกวัน" active={dayTypeFilter === 'ALL'} onClick={() => setDayTypeFilter('ALL')} />
               <SegmentButton label="Weekday" active={dayTypeFilter === 'WEEKDAY'} onClick={() => setDayTypeFilter('WEEKDAY')} colorScheme="blue" />
               <SegmentButton label="Weekend" active={dayTypeFilter === 'WEEKEND'} onClick={() => setDayTypeFilter('WEEKEND')} colorScheme="amber" />
@@ -316,11 +290,7 @@ export default function FilterBar({
 
       {/* ================= BOTTOM ROW: SHARK ACTIVE STATUS & CLEAR ACTS ================= */}
       {isFilterActive && (
-        <div 
-          className={`flex items-center justify-between border-t border-dashed mt-3 pt-2.5 relative z-10 ${
-            'border-[#303030]'
-          }`}
-        >
+        <div className="flex items-center justify-between border-t border-[#303030]/60 p-3 bg-[#121212]/30 relative z-10">
           {/* Active stats counter */}
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">
@@ -328,10 +298,10 @@ export default function FilterBar({
             </span>
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-[#da291c]" />
-              <span className={`text-[9.5px] font-black uppercase tracking-wider ${'text-[#888888]'}`}>
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-[#888888] font-mono">
                 ตัวกรองที่ทำงานอยู่:
               </span>
-              <span className="px-1.5 py-0.5 rounded-none text-[8.5px] font-black bg-[#121212] border border-[#3e3e3e] text-[#cbd5e1]">
+              <span className="px-1.5 py-0.5 rounded-none text-[8.5px] font-black bg-[#121212] border border-[#da291c]/20 text-[#cbd5e1] font-mono">
                 {activeCount} active
               </span>
             </div>
@@ -340,9 +310,7 @@ export default function FilterBar({
           {/* Clear Filters Action */}
           <button
             onClick={clearFilters}
-            className={`flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-none border transition-colors ${
-              'text-rose-450 bg-rose-950/20 hover:bg-rose-950/40 border-rose-900/40'
-            }`}
+            className="flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-none border transition-all text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/30 hover:border-[#da291c] font-mono"
           >
             <RefreshCw className="w-2.5 h-2.5" />
             ล้างการคัดกรองทั้งหมด

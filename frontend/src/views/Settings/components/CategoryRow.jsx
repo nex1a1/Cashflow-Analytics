@@ -31,7 +31,7 @@ const CategoryRow = memo(({ cat, isNew, isIncome, onMove, onChange, onDelete, fi
 
   const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none transition-all cursor-pointer w-28 rounded-sm ${
     !currentGroupValid
-      ? 'border-amber-400 bg-amber-50 text-amber-700'
+      ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
       : `bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] ${isIncome ? 'focus:border-emerald-500/70' : 'focus:border-[#da291c]/70'}`
   }`;
 
