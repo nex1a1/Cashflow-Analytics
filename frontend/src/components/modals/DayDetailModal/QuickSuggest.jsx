@@ -51,7 +51,7 @@ export default function QuickSuggest({
 
   const tokens = {
     input: "w-full px-3 py-2.5 text-sm border rounded-sm outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
-    searchIcon: `absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 ${'text-slate-500'}`
+    searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
   };
 
   return (
@@ -80,7 +80,7 @@ export default function QuickSuggest({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
         {quickSuggestions.length === 0 ? (
-          <p className={`text-sm text-center py-8 ${'text-slate-500'}`}>ยังไม่มีข้อมูล</p>
+          <p className="text-sm text-center py-8 text-slate-400">ยังไม่มีข้อมูล</p>
         ) : (
           <div className="flex flex-col gap-2">
             {quickSuggestions.slice(0, 100).map((s, idx) => {
@@ -99,7 +99,7 @@ export default function QuickSuggest({
                   key={idx} 
                   onClick={() => onApplySuggestion(s)} 
                   disabled={isProcessing}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border transition-all active:scale-95 relative overflow-hidden text-left bg-[#181818] border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-200"
+                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border transition-colors relative overflow-hidden text-left bg-[#181818] border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-200"
                 >
                   {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
                   <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: catColor }} />
@@ -126,7 +126,7 @@ export default function QuickSuggest({
                   <span className={`text-[13px] font-black ${formType === 'expense' ? ('text-red-400') : ('text-emerald-400')}`}>
                     {s.amount}฿
                   </span>
-                  <span className={`text-[9px] font-bold ${'text-slate-500'}`}>{s.count}x</span>
+                  <span className="text-[9px] font-bold text-slate-400">{s.count}x</span>
                 </div>
                 </button>
               );

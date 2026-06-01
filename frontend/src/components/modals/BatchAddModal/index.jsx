@@ -143,7 +143,10 @@ export default function BatchAddModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6">
-      <div className={`rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] flex flex-col w-full max-w-[1460px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
+      <div 
+        className={`rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] flex flex-col w-full max-w-[1460px] h-[85vh] min-h-[520px] max-h-[850px] overflow-hidden border ${tokens.surface}`}
+        style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
+      >
 
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className={`text-base font-bold flex items-center gap-2 ${'text-slate-100'}`}>
@@ -190,9 +193,14 @@ export default function BatchAddModal({
         <div className={`px-5 py-4 border-t flex flex-col sm:flex-row justify-between items-center shrink-0 gap-3 ${tokens.headerFooter}`}>
           <div className="flex items-center gap-2">
             <span className={`font-bold text-xs ${'text-slate-400'}`}>ยอดรวมในตะกร้า:</span>
-            <span className={`text-xl font-black ${'text-blue-400'}`}>
-              <AnimatedNumber value={pendingItems.reduce((acc, curr) => acc + (curr._isInc ? curr.amount : -curr.amount), 0)} /> ฿
-            </span>
+            {(() => {
+              const totalAmount = pendingItems.reduce((acc, curr) => acc + (curr._isInc ? curr.amount : -curr.amount), 0);
+              return (
+                <span className={`text-xl font-black ${totalAmount >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}>
+                  <AnimatedNumber value={totalAmount} /> ฿
+                </span>
+              );
+            })()}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button type="button" onClick={() => { onClose(); setPendingItems([]); }} disabled={isProcessing}
@@ -200,7 +208,7 @@ export default function BatchAddModal({
               ทิ้งข้อมูล
             </button>
             <button type="button" onClick={submitBatch} disabled={pendingItems.length === 0 || isProcessing}
-              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-white rounded-sm font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700">
+              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-white rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700">
               {isProcessing ? <Zap className="w-4 h-4 animate-pulse" /> : <CheckCircle className="w-4 h-4" />}
               {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมดลง DB'}
             </button>

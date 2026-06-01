@@ -172,7 +172,10 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className={`${tokens.surface} rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-t-4 border-t-[#da291c] border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}>
+      <div 
+        className={`${tokens.surface} shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}
+        style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
+      >
 
         <button onClick={onClose} className={tokens.closeBtn}>
           <X className="w-5 h-5" />
@@ -185,12 +188,12 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className={`text-xs font-medium ${tokens.textMuted}`}>วัน{dayOfWeek}</span>
                 {totalExp > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${'bg-red-900/40 text-red-400'}`}>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-red-900/40 text-red-400 border border-red-800/30">
                     ▼ {formatMoney(totalExp)} ฿
                   </span>
                 )}
                 {totalInc > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${'bg-emerald-900/40 text-emerald-400'}`}>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-emerald-900/40 text-emerald-400 border border-emerald-800/30">
                     ▲ {formatMoney(totalInc)} ฿
                   </span>
                 )}

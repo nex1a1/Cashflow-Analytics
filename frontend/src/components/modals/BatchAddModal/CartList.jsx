@@ -26,13 +26,13 @@ export default function CartList({
         ) : (
           <div className="divide-y divide-[#303030]">
             {pendingItems.map((item, idx) => (
-              <div key={item.id} className="flex items-center justify-between p-3 transition-colors animate-in fade-in slide-in-from-right-4 duration-200 hover:bg-[#303030]/20">
+              <div key={item.id} className="flex items-center justify-between p-3 transition-colors hover:bg-[#303030]/20">
                 <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
                   <div className="text-[10px] font-bold w-4 text-right shrink-0 text-slate-400">{idx + 1}.</div>
                   <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                     <div className="font-bold text-xs truncate text-slate-100" title={item.description}>{item.description}</div>
                     <div className="flex flex-wrap items-center gap-1 mt-1 overflow-hidden w-full">
-                      <span className={`text-[9px] font-black px-1 py-0.5 rounded-none shrink-0 ${item._isInc ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' : 'bg-rose-955/35 text-red-400 border border-rose-900/30'}`}>
+                      <span className={`text-[9px] font-black px-1 py-0.5 rounded-none shrink-0 ${item._isInc ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' : 'bg-rose-950/40 text-red-400 border border-rose-900/30'}`}>
                         {item._isInc ? 'รายรับ' : 'รายจ่าย'}
                       </span>
                       <span className="text-[9px] font-bold px-1 py-0.5 rounded-none border shrink min-w-0 flex items-center gap-0.5 text-slate-100"

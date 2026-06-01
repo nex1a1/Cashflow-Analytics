@@ -140,13 +140,13 @@ export default function DailyForm({
 
       <div className="flex gap-2">
         <button type="button" onClick={() => { setValue('description', ''); setValue('amount', '', { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
-          className={`px-3 py-2.5 rounded-none font-bold text-xs flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 border ${'bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]'}`}
+          className="px-3 py-2.5 rounded-none font-bold text-xs flex items-center justify-center transition-colors disabled:opacity-50 border bg-[#303030]/60 hover:bg-[#383838] text-slate-300 border-[#3e3e3e]"
           title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
         >
           ล้าง
         </button>
         <button type="submit" disabled={isProcessing}
-          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-white shadow-sm border ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600 border-red-600' : 'bg-emerald-500 hover:bg-emerald-600 border-emerald-600'}`}>
+          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-white shadow-sm border ${formType === 'expense' ? 'bg-red-600 hover:bg-red-500 border-red-700' : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-700'}`}>
           {isProcessing ? <><Zap className="w-4 h-4 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-4 h-4" /> บันทึก (Enter)</>}
         </button>
       </div>

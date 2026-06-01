@@ -37,7 +37,11 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
         {isInc ? '+' : '-'}{formatMoney(tx.amount)} ฿
       </span>
       <button onClick={() => onDeleteClick(tx.id)}
-        className={`shrink-0 px-2 py-1 rounded-none text-xs font-bold transition-all active:scale-95 ${isConfirming ? 'bg-red-500 text-white' : ('text-slate-500 hover:text-red-400 hover:bg-red-900/30')}`}>
+        className={`shrink-0 px-2 py-1 rounded-none text-xs font-bold transition-colors ${
+          isConfirming 
+            ? 'bg-red-600 text-white border border-red-500' 
+            : 'text-slate-400 hover:text-red-400 hover:bg-[#303030] border border-transparent hover:border-red-800/20'
+        }`}>
         {isConfirming ? 'ยืนยัน?' : <Trash2 className="w-3.5 h-3.5" />}
       </button>
     </div>
