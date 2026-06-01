@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'IBM Plex Sans Thai Looped', 'sans-serif'],
+        sans: ['Inter', 'Bai Jamjuree', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'Bai Jamjuree', 'monospace'],
       },
       borderRadius: {
         'sm': '2px',

@@ -177,7 +177,7 @@ export default function HorizontalLedgerView({
                             fontSize: '9px',
                             fontWeight: 900,
                             padding: '1px 5px',
-                            fontFamily: 'monospace',
+                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Bai Jamjuree', monospace",
                             letterSpacing: '0.05em',
                           }}>
                             {isNewYear ? 'YEAR' : 'MONTH'}
@@ -187,7 +187,7 @@ export default function HorizontalLedgerView({
                             fontWeight: 900,
                             color: isNewYear ? '#da291c' : '#cbd5e1',
                             letterSpacing: '0.02em',
-                            fontFamily: 'monospace',
+                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Bai Jamjuree', monospace",
                           }}>
                             {THAI_MONTHS_FULL[currentYM.monthIdx]} {currentYM.year}
                           </span>

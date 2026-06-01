@@ -143,7 +143,7 @@ export default function BatchAddModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-3 sm:p-6">
-      <div className={`rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] flex flex-col w-full max-w-[1350px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
+      <div className={`rounded-none shadow-[0_0_60px_rgba(0,0,0,0.95)] flex flex-col w-full max-w-[1460px] h-[85vh] min-h-[520px] max-h-[850px] animate-in zoom-in-95 duration-200 overflow-hidden border ${tokens.surface}`}>
 
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className={`text-base font-bold flex items-center gap-2 ${'text-slate-100'}`}>

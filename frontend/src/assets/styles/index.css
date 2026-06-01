@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', 'IBM Plex Sans Thai Looped', sans-serif;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -209,7 +209,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Typography Token Overrides */
 .font-display-mega {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 80px !important;
   font-weight: 500 !important;
   line-height: 1.05 !important;
@@ -217,7 +217,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .font-display-xl {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 56px !important;
   font-weight: 500 !important;
   line-height: 1.1 !important;
@@ -225,7 +225,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .font-display-lg {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 36px !important;
   font-weight: 500 !important;
   line-height: 1.2 !important;
@@ -233,7 +233,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .font-display-md {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 26px !important;
   font-weight: 500 !important;
   line-height: 1.5 !important;
@@ -241,7 +241,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .font-button {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   line-height: 1.0 !important;
@@ -250,7 +250,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .font-nav-link {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
@@ -264,7 +264,7 @@ button,
 [class*="button-"],
 nav a,
 .nav-link {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   letter-spacing: 1.1px;
   text-transform: uppercase;
 }

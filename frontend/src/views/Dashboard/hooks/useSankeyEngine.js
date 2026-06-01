@@ -198,7 +198,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
         size: 'max',
         labels: {
           color: '#FFFFFF',
-          font: { family: "'Inter', 'IBM Plex Sans Thai Looped', sans-serif", size: 10, weight: 'bold' },
+          font: { family: "'Inter', 'Bai Jamjuree', sans-serif", size: 10, weight: 'bold' },
           display: true
         },
         nodeWidth: 15,

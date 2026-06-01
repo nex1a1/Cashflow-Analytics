@@ -108,7 +108,7 @@ export default function DatePicker({ value, onChange, required }) {
           ${'bg-[#121212] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]'
           }`}
       >
-        <span className={value ? textMain : textMuted}>{formatDisplay(value)}</span>
+        <span className={`${value ? textMain : textMuted} whitespace-nowrap truncate`}>{formatDisplay(value)}</span>
         <Calendar className={`w-4 h-4 shrink-0 ${'text-[#888888]'}`} />
       </button>
 

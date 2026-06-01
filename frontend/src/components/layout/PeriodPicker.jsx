@@ -155,14 +155,16 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   );
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative w-full">
       {/* Trigger */}
       <button onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-2 px-3 py-1.5 border-2 rounded-none shadow-sm transition-colors text-xs font-semibold ${
+        className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 border-2 rounded-none shadow-sm transition-colors text-xs font-semibold ${
           'bg-[#121212] border-[#303030] text-white hover:bg-[#303030]/50 hover:border-[#3e3e3e]'
         }`}>
-        <CalendarDays className="w-3.5 h-3.5 text-[#da291c] shrink-0" />
-        <span className="max-w-[160px] truncate">{getFilterLabel(filterPeriod)}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <CalendarDays className="w-3.5 h-3.5 text-[#da291c] shrink-0" />
+          <span className="whitespace-nowrap">{getFilterLabel(filterPeriod)}</span>
+        </div>
         <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${'text-[#888888]'}`} />
       </button>
 

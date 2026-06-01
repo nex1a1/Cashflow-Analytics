@@ -10,11 +10,11 @@ import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
-import "@fontsource/ibm-plex-sans-thai-looped/300.css";
-import "@fontsource/ibm-plex-sans-thai-looped/400.css";
-import "@fontsource/ibm-plex-sans-thai-looped/500.css";
-import "@fontsource/ibm-plex-sans-thai-looped/600.css";
-import "@fontsource/ibm-plex-sans-thai-looped/700.css";
+import "@fontsource/bai-jamjuree/300.css";
+import "@fontsource/bai-jamjuree/400.css";
+import "@fontsource/bai-jamjuree/500.css";
+import "@fontsource/bai-jamjuree/600.css";
+import "@fontsource/bai-jamjuree/700.css";
 
 import {
   Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, 
@@ -27,7 +27,7 @@ ChartJS.register(
   LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler
 );
 
-defaults.font.family = "'Inter', 'IBM Plex Sans Thai Looped', sans-serif";
+defaults.font.family = "'Inter', 'Bai Jamjuree', sans-serif";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
