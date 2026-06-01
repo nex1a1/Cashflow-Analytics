@@ -60,7 +60,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
-            hoveredCol === 'trend' ? 'bg-[#303030] text-[#da291c]' : 'text-[#da291c] bg-[#121212]'
+            hoveredCol === 'trend' ? 'bg-[#303030] text-[#ff4d4d]' : 'text-[#ff4d4d] bg-[#121212]'
           }`}
         >
           รวมรายจ่าย (Trend)
@@ -108,7 +108,17 @@ const CashflowTableHeader = React.memo(({
           return (
             <React.Fragment key={g.id}>
               <th 
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                 onClick={() => toggleGroup(g.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleGroup(g.id);
+                  }
+                }}
                 onMouseEnter={(e) => {
                   handleMouseEnter(e, g);
                   setHoveredCol(colId);
@@ -117,7 +127,7 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''}`} 
+                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c]`} 
                 style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
@@ -150,7 +160,17 @@ const CashflowTableHeader = React.memo(({
           return (
             <React.Fragment key={g.id}>
               <th 
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                 onClick={() => toggleGroup(g.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleGroup(g.id);
+                  }
+                }}
                 onMouseEnter={(e) => {
                   handleMouseEnter(e, g);
                   setHoveredCol(colId);
@@ -159,7 +179,7 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder}`} 
+                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c]`} 
                 style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 {g.name} {isExpanded ? '«' : '»'}
@@ -227,11 +247,11 @@ const CashflowTableRow = React.memo(({
     const isUp = percent > 0;
     const isFlat = Math.abs(percent) < 0.1;
 
-    // Elite vibrant semi-transparent badge styling (rounded-none compliance)
+    // Elite vibrant semi-transparent badge styling (rounded-none compliance, high-contrast text)
     const badgeClass = isFlat 
       ? 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/30' 
       : isUp 
-        ? 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/20' 
+        ? 'bg-[#da291c]/10 text-[#ff4d4d] border-[#da291c]/25' 
         : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
     expMoMJSX = (
@@ -343,8 +363,8 @@ const CashflowTableRow = React.memo(({
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
           isTrendHovered 
-            ? 'text-[#da291c] bg-[#1c1c1c]' 
-            : (isRowHovered ? 'text-[#da291c] bg-[#1c1c1c]/80' : 'text-[#da291c] bg-[#181818] group-hover:bg-[#1c1c1c]')
+            ? 'text-[#ff4d4d] bg-[#1c1c1c]' 
+            : (isRowHovered ? 'text-[#ff4d4d] bg-[#1c1c1c]/80' : 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]')
         }`}
       >
         <div className="flex items-center justify-between gap-1">
@@ -359,7 +379,7 @@ const CashflowTableRow = React.memo(({
           isNetHovered 
             ? 'bg-[#1c1c1c]' 
             : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${(row.income - row.totalExp) >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}
+        } ${(row.income - row.totalExp) >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]'}`}
       >
         {formatMoney(row.income - row.totalExp)}
       </td>
@@ -370,7 +390,7 @@ const CashflowTableRow = React.memo(({
           isPctLeftHovered 
             ? 'bg-[#1c1c1c]' 
             : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-[#da291c]' : 'text-teal-400'}`}
+        } ${row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-[#ff4d4d]' : 'text-teal-400'}`}
       >
         {row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%
       </td>
@@ -381,7 +401,7 @@ const CashflowTableRow = React.memo(({
           isPctSpentHovered 
             ? 'bg-[#1c1c1c]' 
             : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-[#da291c]' : 'text-pink-400'}`}
+        } ${row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-[#ff4d4d]' : 'text-pink-400'}`}
       >
         {row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}
       </td>
@@ -495,7 +515,7 @@ const CashflowTableFooter = React.memo(({
         <td 
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l border-b ${thinBorder} text-[#da291c] sticky right-[250px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+          className={`px-3 py-2.5 border-l border-b ${thinBorder} text-[#ff4d4d] sticky right-[250px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
             hoveredCol === 'trend' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -506,7 +526,7 @@ const CashflowTableFooter = React.memo(({
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
             hoveredCol === 'net' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-          } ${analytics.netCashflow >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}
+          } ${analytics.netCashflow >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]'}`}
         >
           {formatMoney(analytics.netCashflow)}
         </td>
@@ -571,16 +591,23 @@ const GroupTooltip = ({ hoveredGroup, dm }) => {
 
             {/* Content List: Horizontal flow with high density and squared tags */}
             <div className="flex flex-wrap gap-1">
-              {activeCats.map(c => (
-                <div 
-                  key={c.id} 
-                  className="flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold bg-[#181818]/80 border-[#303030]/60 text-slate-300"
-                  style={{ borderLeftColor: c.color || '#64748B', borderLeftWidth: '3px' }}
-                >
-                  <span className="text-[11px] leading-none shrink-0">{c.icon || '📁'}</span>
-                  <span className="whitespace-nowrap leading-none">{c.name}</span>
-                </div>
-              ))}
+              {activeCats.map(c => {
+                const catColor = c.color || '#64748B';
+                const rgb = hexToRgb(catColor);
+                return (
+                  <div 
+                    key={c.id} 
+                    className="flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold text-slate-300"
+                    style={{ 
+                      backgroundColor: `rgba(${rgb}, 0.08)`, 
+                      borderColor: `rgba(${rgb}, 0.25)` 
+                    }}
+                  >
+                    <span className="text-[11px] leading-none shrink-0">{c.icon || '📁'}</span>
+                    <span className="whitespace-nowrap leading-none">{c.name}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           
@@ -642,15 +669,19 @@ export default function CashflowTable() {
 
   if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0)) return null;
 
-  const activeIncomeGroups = cashflowGroups
-    .filter(g => g.type === 'income')
-    .sort((a,b) => a.order_index - b.order_index)
-    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
+  const activeIncomeGroups = React.useMemo(() => {
+    return cashflowGroups
+      .filter(g => g.type === 'income')
+      .sort((a,b) => a.order_index - b.order_index)
+      .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
+  }, [cashflowGroups, analytics?.sortedCashflow, showSkeleton]);
 
-  const activeExpenseGroups = cashflowGroups
-    .filter(g => g.type === 'expense')
-    .sort((a,b) => a.order_index - b.order_index)
-    .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
+  const activeExpenseGroups = React.useMemo(() => {
+    return cashflowGroups
+      .filter(g => g.type === 'expense')
+      .sort((a,b) => a.order_index - b.order_index)
+      .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
+  }, [cashflowGroups, analytics?.sortedCashflow, showSkeleton]);
 
   const thinBorder = 'border-[#303030]/60';
   const boxBorder = 'border-[#3e3e3e]';

@@ -52,14 +52,14 @@ export default function FilterBar({
           return 'bg-sky-950/20 border-sky-500/40 text-sky-450 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
         case 'blue':
         default:
-          return 'bg-[#da291c]/15 border-[#da291c]/55 text-white font-black shadow-[0_0_8px_rgba(218,41,28,0.08)]';
+          return 'bg-[#303030] border-[#505050] text-white font-black';
       }
     };
 
     return (
       <button 
         onClick={onClick}
-        className={`flex-1 px-1.5 py-1 text-[9px] font-black uppercase tracking-widest border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 transition-all ${getColors()}`}
+        className={`flex-1 px-1.5 py-1 text-[9px] font-black uppercase tracking-widest border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
       >
         {label}
       </button>
@@ -69,7 +69,7 @@ export default function FilterBar({
   // Custom visual select box (Flat Slate HUD Style)
   const CustomSelect = ({ value, onChange, options, icon, isActive }) => {
     return (
-      <div className={`relative flex items-center border rounded-none bg-[#121212] transition-colors ${
+      <div className={`relative flex items-center border rounded-none bg-[#121212] ${
         isActive 
           ? 'border-[#da291c] text-white bg-[#121212]' 
           : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
@@ -106,7 +106,7 @@ export default function FilterBar({
   return (
     <div className="relative rounded-none border border-[#303030]/60 bg-[#121212] overflow-hidden mb-5">
       {/* Grid Layout (3 Columns with hairline gaps, high density) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-10">
+      <div className="grid grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-10">
         
         {/* ================= COLUMN 1: SCOPE & VALUE ================= */}
         <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
@@ -310,7 +310,7 @@ export default function FilterBar({
           {/* Clear Filters Action */}
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-none border transition-all text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/30 hover:border-[#da291c] font-mono"
+            className="flex items-center gap-1.5 text-[9.5px] font-black uppercase px-3 py-1 rounded-none border text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/30 hover:border-[#da291c] font-mono"
           >
             <RefreshCw className="w-2.5 h-2.5" />
             ล้างการคัดกรองทั้งหมด

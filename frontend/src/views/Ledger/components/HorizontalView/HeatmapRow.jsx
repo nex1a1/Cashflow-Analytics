@@ -56,7 +56,6 @@ const HeatmapRow = memo(function HeatmapRow({
                 width: `${sparkPct}%`,
                 background: `rgba(${typeRgb}, ${dm ? 0.18 : 0.1})`,
                 borderRadius: 0,
-                transition: 'width 0.3s ease',
               }} />
               
               <div style={{

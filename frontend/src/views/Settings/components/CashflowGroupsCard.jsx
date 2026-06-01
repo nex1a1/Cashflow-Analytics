@@ -26,18 +26,18 @@ const CashflowGroupsCard = memo(({
           const inUse    = categories.some(c => c.cashflowGroup === group.id);
           return (
             <div key={group.id} className="flex flex-col gap-1">
-              <div className={`flex items-center gap-1.5 p-1.5 border transition-all rounded-sm group/cg ${
+              <div className={`flex items-center gap-1.5 p-1.5 border rounded-none group/cg ${
                 hasError
                   ? ('border-red-850 bg-red-950/25')
                   : 'bg-[#121212]/50 border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50'
               }`}>
-                <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 transition-opacity duration-200 ${'text-[#666666]'}`}>
+                <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-[#666666]'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default transition-all ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
+                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
                     <ChevronUp className="w-3.5 h-3.5" />
                   </button>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default transition-all ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
+                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -45,7 +45,7 @@ const CashflowGroupsCard = memo(({
                 <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} />
 
                 <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength="2"
-                  className={`w-8 h-8 text-center text-base outline-none border shrink-0 transition-all rounded-sm ${
+                  className={`w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-white focus:border-[#da291c] focus:shadow-none'
                   }`} title="ไอคอน" placeholder="✨" />
 
@@ -63,12 +63,12 @@ const CashflowGroupsCard = memo(({
 
                 {group.type === 'expense' ? (
                   <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
-                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer transition-all ${
-                      group.allocation_type === 'need' ? 'bg-rose-950/40 text-rose-400 border-rose-800/50 focus:border-rose-500/70' :
-                      group.allocation_type === 'savings' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50 focus:border-emerald-500/70' :
-                      'bg-sky-950/40 text-sky-400 border-sky-800/50 focus:border-sky-500/70'
+                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer ${
+                      group.allocation_type === 'need' ? 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30 focus:border-[#da291c]/65' :
+                      group.allocation_type === 'savings' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 focus:border-emerald-500/65' :
+                      'bg-sky-500/10 text-sky-400 border-sky-500/30 focus:border-sky-500/65'
                     }`}>
-                    <option value="need" className="bg-[#121212] text-rose-400 font-extrabold">NEED</option>
+                    <option value="need" className="bg-[#121212] text-[#da291c] font-extrabold">NEED</option>
                     <option value="want" className="bg-[#121212] text-sky-400 font-extrabold">WANT</option>
                     <option value="savings" className="bg-[#121212] text-emerald-400 font-extrabold">SAVE</option>
                   </select>
@@ -77,13 +77,13 @@ const CashflowGroupsCard = memo(({
                 )}
 
                 <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
-                  className={`flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] transition-all rounded-sm ${
+                  className={`flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] focus:shadow-none placeholder-[#555555]'
                   }`} placeholder="ชื่อคอลัมน์" />
 
                 <div className="flex items-center justify-end w-[32px] shrink-0">
                   {txCount > 0 && (
-                    <span className={`text-[9px] font-black px-1.5 py-0.5 leading-none rounded-none transition-colors ${
+                    <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 leading-none rounded-none tabular-nums ${
                       'bg-[#121212] text-[#888888] border border-[#3e3e3e]'
                     }`} title={`มี ${txCount} รายการในกลุ่มนี้`}>
                       {txCount}
@@ -106,7 +106,7 @@ const CashflowGroupsCard = memo(({
 
               {hasError && (
                 <p className={`text-[11px] font-semibold px-2 py-1 border flex items-center gap-1 ${
-                  'bg-red-900/20 border-red-800/50 text-red-400'
+                  'bg-red-900/20 border-red-800/50 text-[#da291c]'
                 }`}>
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   {cashflowDeleteError.msg}

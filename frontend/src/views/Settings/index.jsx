@@ -92,15 +92,15 @@ const SettingsView = memo(function SettingsView({
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full px-1 pt-1 pb-10">
+    <div className="w-full px-1 pt-1 pb-10">
 
       <div className="flex items-center justify-between mb-4 gap-4">
         <h1 className={`text-lg font-black tracking-wide flex items-center gap-2.5 ${'text-slate-100'}`}>
           <Settings2 className={`w-5 h-5 ${'text-[#da291c] drop-shadow-[0_0_8px_rgba(218,41,28,0.35)]'}`} /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
-        <div className={`flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-sm transition-all duration-300 ${
-          'bg-[#1c1c1c] border-[#303030] text-[#cbd5e1] shadow-sm'
+        <div className={`flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-none ${
+          'bg-[#1c1c1c] border-[#303030] text-[#cbd5e1]'
         }`}>
           <Info className={`w-3.5 h-3.5 shrink-0 ${'text-[#da291c]'}`} />
           <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
@@ -114,7 +114,7 @@ const SettingsView = memo(function SettingsView({
         {/* ── LEFT COLUMN: Categories ── */}
         <div className="flex flex-col gap-4">
           <SectionCard
-            accentColor="blue"
+            accentColor="brand"
             icon={<Wallet className="w-3.5 h-3.5" />}
             title="หมวดหมู่รายจ่าย"
             badge={expenseCategories.length}

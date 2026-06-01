@@ -292,7 +292,7 @@ const MainChartLegend = ({ legendDatasets, hiddenDatasets, setHiddenDatasets, dm
           <button
             key={i}
             onClick={() => toggleDataset(ds.label)}
-            className={`flex items-center gap-1.5 transition-all duration-200 hover:opacity-80 active:scale-95 border border-transparent rounded-none px-1.5 py-0.5 ${
+            className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
               isHidden ? 'opacity-35 line-through' : 'opacity-100'
             }`}
             title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
@@ -400,43 +400,32 @@ export default function MainChart() {
               {/* Divider */}
               <span className={`w-px h-4 shrink-0 ${'bg-[#303030]'}`} />
               
-              <div className={`flex items-center gap-1 p-1 rounded-none transition-all duration-300 ${
-                'bg-[#181818] border border-[#303030]/60 shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)]'
-              }`}>
+              <div className="grid grid-cols-5 gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0 w-full xl:w-auto">
 
                 {/* 1. Breakdown Mode */}
                 <button
                   disabled={showSkeleton}
                   onClick={() => setIsBreakdown(prev => !prev)}
                   title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
-                  className={`group px-2.5 py-1 rounded-none border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isBreakdown
-                      ? ('bg-[#da291c]/20 border-[#da291c] text-[#da291c] shadow-sm')
-                      : ('bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#303030]/40')
+                      ? 'bg-[#da291c]/25 text-[#da291c] shadow-sm'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
                 >
-                  <Layers className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
-                    isBreakdown ? ('text-[#da291c]') : ''
-                  }`} />
+                  <Layers className={`w-3.5 h-3.5 ${isBreakdown ? 'text-[#da291c]' : 'text-slate-400'}`} />
                   <span>แจกแจง</span>
                   
-                  {/* Visual Hairline Divider */}
-                  <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
-                    isBreakdown
-                      ? ('bg-[#da291c]/30')
-                      : ('bg-[#303030]/60')
-                  }`} />
-
                   {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none transition-all duration-300 shrink-0 ${
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     isBreakdown 
                       ? 'bg-[#da291c] shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : ('bg-[#181818] border border-[#303030]')
+                      : 'bg-[#181818] border border-[#303030]'
                   }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none transition-all duration-300 ease-out ${
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
                       isBreakdown 
                         ? 'bg-white translate-x-3.5 shadow-md' 
-                        : ('bg-[#303030]')
+                        : 'bg-[#303030]'
                     }`} />
                   </div>
                 </button>
@@ -450,34 +439,25 @@ export default function MainChart() {
                     if (nextVal) setShowTrendLines(false);
                   }}
                   title="ดูความเร็วการใช้จ่ายเป็นกราฟยอดสะสมเทียบกับเป้าหมาย"
-                  className={`group px-2.5 py-1 rounded-none border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isCumulative
-                      ? ('bg-violet-600/20 border-violet-500/80 text-violet-300 shadow-sm')
-                      : ('bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#303030]/40')
+                      ? 'bg-violet-600/20 text-violet-300 shadow-sm'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
                 >
-                  <TrendingUp className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
-                    isCumulative ? ('text-violet-400') : ''
-                  }`} />
+                  <TrendingUp className={`w-3.5 h-3.5 ${isCumulative ? 'text-violet-400' : 'text-slate-400'}`} />
                   <span>กราฟสะสม</span>
                   
-                  {/* Visual Hairline Divider */}
-                  <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
-                    isCumulative
-                      ? ('bg-violet-500/30')
-                      : ('bg-[#303030]/60')
-                  }`} />
-
                   {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none transition-all duration-300 shrink-0 ${
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     isCumulative 
                       ? 'bg-violet-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : ('bg-[#181818] border border-[#303030]')
+                      : 'bg-[#181818] border border-[#303030]'
                   }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none transition-all duration-300 ease-out ${
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
                       isCumulative 
                         ? 'bg-white translate-x-3.5 shadow-md' 
-                        : ('bg-[#303030]')
+                        : 'bg-[#303030]'
                     }`} />
                   </div>
                 </button>
@@ -487,40 +467,31 @@ export default function MainChart() {
                   disabled={showSkeleton || isCumulative}
                   onClick={() => { if (!isCumulative) setShowTrendLines(prev => !prev); }}
                   title={isCumulative ? "ไม่สามารถใช้เส้นเทรนด์ร่วมกับกราฟสะสมได้" : "ดูแนวโน้มค่าเฉลี่ยสะสมรายวัน (MTD Average)"}
-                  className={`group px-2.5 py-1 rounded-none border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isCumulative
-                      ? ('bg-[#181818]/30 border-transparent text-slate-700 cursor-not-allowed')
+                      ? 'bg-[#181818] text-slate-700 cursor-not-allowed'
                       : showTrendLines
-                        ? ('bg-amber-600/20 border-amber-500/80 text-amber-300 shadow-sm')
-                        : ('bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#303030]/40')
+                        ? 'bg-amber-600/20 text-amber-300 shadow-sm'
+                        : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
                 >
                   {isCumulative ? (
                     <Lock className="w-3.5 h-3.5 text-slate-500" />
                   ) : (
-                    <Zap className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
-                      showTrendLines ? ('text-amber-400') : ''
-                    }`} />
+                    <Zap className={`w-3.5 h-3.5 ${showTrendLines ? 'text-amber-400' : 'text-slate-400'}`} />
                   )}
                   <span>เส้นเทรนด์</span>
                   
-                  {/* Visual Hairline Divider */}
-                  <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
-                    showTrendLines && !isCumulative
-                      ? ('bg-amber-500/30')
-                      : ('bg-[#303030]/60')
-                  }`} />
-
                   {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none transition-all duration-300 shrink-0 ${
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     showTrendLines && !isCumulative
                       ? 'bg-amber-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : ('bg-[#181818] border border-[#303030]')
+                      : 'bg-[#181818] border border-[#303030]'
                   }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none transition-all duration-300 ease-out ${
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
                       showTrendLines && !isCumulative
                         ? 'bg-white translate-x-3.5 shadow-md' 
-                        : ('bg-[#303030]')
+                        : 'bg-[#303030]'
                     }`} />
                   </div>
                 </button>
@@ -530,34 +501,25 @@ export default function MainChart() {
                   disabled={showSkeleton}
                   onClick={() => setIsLogScale(prev => !prev)}
                   title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบสัดส่วน"
-                  className={`group px-2.5 py-1 rounded-none border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isLogScale
-                      ? ('bg-emerald-600/20 border-emerald-500/80 text-emerald-300 shadow-sm')
-                      : ('bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#303030]/40')
+                      ? 'bg-emerald-600/20 text-emerald-300 shadow-sm'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
                 >
-                  <BarChart className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
-                    isLogScale ? ('text-emerald-400') : ''
-                  }`} />
+                  <BarChart className={`w-3.5 h-3.5 ${isLogScale ? 'text-emerald-400' : 'text-slate-400'}`} />
                   <span>สเกล Log</span>
                   
-                  {/* Visual Hairline Divider */}
-                  <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
-                    isLogScale
-                      ? ('bg-emerald-500/30')
-                      : ('bg-[#303030]/60')
-                  }`} />
-
                   {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none transition-all duration-300 shrink-0 ${
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     isLogScale 
                       ? 'bg-emerald-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : ('bg-[#181818] border border-[#303030]')
+                      : 'bg-[#181818] border border-[#303030]'
                   }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none transition-all duration-300 ease-out ${
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
                       isLogScale 
                         ? 'bg-white translate-x-3.5 shadow-md' 
-                        : ('bg-[#303030]')
+                        : 'bg-[#303030]'
                     }`} />
                   </div>
                 </button>
@@ -567,34 +529,25 @@ export default function MainChart() {
                   disabled={showSkeleton}
                   onClick={() => setHideFixedExpenses(prev => !prev)}
                   title="ซ่อนค่าใช้จ่ายคงที่ที่จำเป็น (Fixed Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายผันแปร"
-                  className={`group px-2.5 py-1 rounded-none border text-[11px] font-bold tracking-wide transition-all duration-300 select-none flex items-center gap-2 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     hideFixedExpenses
-                      ? ('bg-rose-600/20 border-rose-500/80 text-rose-300 shadow-sm')
-                      : ('bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#303030]/40')
+                      ? 'bg-rose-600/20 text-rose-300 shadow-sm'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
                 >
-                  <EyeOff className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${
-                    hideFixedExpenses ? ('text-rose-400') : ''
-                  }`} />
+                  <EyeOff className={`w-3.5 h-3.5 ${hideFixedExpenses ? 'text-rose-400' : 'text-slate-400'}`} />
                   <span>ซ่อน NEED</span>
                   
-                  {/* Visual Hairline Divider */}
-                  <span className={`w-px h-3 shrink-0 transition-colors duration-300 ${
-                    hideFixedExpenses
-                      ? ('bg-rose-500/30')
-                      : ('bg-[#303030]/60')
-                  }`} />
-
                   {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none transition-all duration-300 shrink-0 ${
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     hideFixedExpenses 
                       ? 'bg-rose-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : ('bg-[#181818] border border-[#303030]')
+                      : 'bg-[#181818] border border-[#303030]'
                   }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none transition-all duration-300 ease-out ${
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
                       hideFixedExpenses 
                         ? 'bg-white translate-x-3.5 shadow-md' 
-                        : ('bg-[#303030]')
+                        : 'bg-[#303030]'
                     }`} />
                   </div>
                 </button>

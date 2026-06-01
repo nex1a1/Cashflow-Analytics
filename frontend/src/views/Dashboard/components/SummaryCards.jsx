@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/SummaryCards.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   Activity, Wallet, Target, Scale, UtensilsCrossed,
   TrendingUp, Zap, Layers, Home, Award, TrendingDown, Navigation
@@ -34,7 +34,7 @@ const SectionHeader = ({ icon: Icon, title }) => (
 /**
  * SECTION 1: FINANCIAL VITALS (Income, Expense, Cashflow, Savings)
  */
-const SummaryVitals = ({ analytics, showSkeleton }) => {
+const SummaryVitals = memo(({ analytics, showSkeleton }) => {
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
     datesInPeriod
@@ -79,7 +79,7 @@ const SummaryVitals = ({ analytics, showSkeleton }) => {
             {showSkeleton ? (
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
-              <div className="text-2xl xl:text-3xl font-black text-white tabular-nums tracking-tight leading-none">
+              <div className="text-2xl xl:text-3xl font-black text-emerald-400 tabular-nums tracking-tight leading-none">
                 <AnimatedNumber value={totalIncome} />
               </div>
             )}
@@ -117,7 +117,7 @@ const SummaryVitals = ({ analytics, showSkeleton }) => {
             {showSkeleton ? (
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
-              <div className="text-2xl xl:text-3xl font-black text-white tabular-nums tracking-tight leading-none">
+              <div className="text-2xl xl:text-3xl font-black text-rose-400 tabular-nums tracking-tight leading-none">
                 <AnimatedNumber value={totalExpense} />
               </div>
             )}
@@ -160,7 +160,7 @@ const SummaryVitals = ({ analytics, showSkeleton }) => {
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
               <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                netCashflow >= 0 ? 'text-white' : 'text-[#da291c]'
+                netCashflow >= 0 ? 'text-yellow-400' : 'text-[#da291c]'
               }`}>
                 <AnimatedNumber value={netCashflow} />
               </div>
@@ -183,12 +183,12 @@ const SummaryVitals = ({ analytics, showSkeleton }) => {
       </div>
     </div>
   );
-};
+});
 
 /**
  * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
  */
-const SummaryStrategic = ({ analytics, showSkeleton }) => {
+const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
   const {
     totalIncome, netCashflow,
     dailyAvg, foodPercentage, foodDailyAvg, variableTotal,
@@ -197,6 +197,9 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
 
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
   const dailyVictory = netCashflow / periodDays;
+
+  // Safely parse decimals to numbers for stable evaluation
+  const rentPercentageNum = parseFloat(rentPercentage) || 0;
 
   // Lifestyle Ratio: (Wants / Total Income)
   const lifestyleRatio = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
@@ -211,7 +214,7 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
           
           {/* RENT CARD */}
           <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
-            rentPercentage > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
+            rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
           }`}>
             <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
               <Home size={72} />
@@ -226,8 +229,8 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
                 <Shimmer className="h-6 w-16 my-1" />
               ) : (
                 <div className="flex items-baseline gap-1.5">
-                  <div className={`text-lg font-black ${rentPercentage > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
-                    {rentPercentage}%
+                  <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
+                    {rentPercentageNum.toFixed(1)}%
                   </div>
                   <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
                     ฿{formatMoney(rentTotal)}
@@ -238,9 +241,9 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
               <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
                 <div 
                   className={`h-full absolute left-0 top-0 transition-none ${
-                    showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentage > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
+                    showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
                   }`} 
-                  style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentage)}%` }} 
+                  style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
                 />
               </div>
             </div>
@@ -315,7 +318,7 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
       </div>
 
       {/* Key Metrics */}
-      <div className="col-span-5 flex flex-col border-l border-[#2d2d2d]">
+      <div className="col-span-5 flex flex-col">
         <SectionHeader icon={Scale} title="ข้อมูลสำคัญ (Metrics)" />
         <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
           
@@ -396,12 +399,12 @@ const SummaryStrategic = ({ analytics, showSkeleton }) => {
 
     </div>
   );
-};
+});
 
 /**
  * SECTION 3: FORECAST (Opt-in predictions)
  */
-const SummaryForecasting = ({ analytics, showSkeleton }) => {
+const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
   const {
     showForecasting, projectedExpense, safeToSpend, projectedSurplus
   } = analytics;
@@ -414,7 +417,7 @@ const SummaryForecasting = ({ analytics, showSkeleton }) => {
       <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d]">
         
         {/* Projected Expense */}
-        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-indigo-950/20 hover:bg-indigo-950/30 transition-none border-l-[3px] border-l-indigo-500">
+        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-indigo-950/20 hover:bg-indigo-950/30 transition-none border-l-2 border-l-indigo-500">
           <div className="z-10">
             <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
               พยากรณ์รายจ่ายเดือนนี้
@@ -427,13 +430,13 @@ const SummaryForecasting = ({ analytics, showSkeleton }) => {
               </div>
             )}
           </div>
-          <div className="absolute -right-3 -bottom-3 opacity-[0.06] pointer-events-none text-indigo-500">
-            <TrendingUp size={76} />
+          <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-indigo-500">
+            <TrendingUp size={72} />
           </div>
         </div>
 
         {/* Safe to Spend */}
-        <div className={`group relative overflow-hidden p-4 flex items-center justify-between transition-none border-l-[3px] ${
+        <div className={`group relative overflow-hidden p-4 flex items-center justify-between transition-none border-l-2 ${
           safeToSpend > 300 
             ? 'bg-emerald-950/20 hover:bg-emerald-950/30 border-l-teal-500'
             : 'bg-red-950/20 hover:bg-red-950/30 border-l-[#da291c]'
@@ -452,15 +455,15 @@ const SummaryForecasting = ({ analytics, showSkeleton }) => {
               </div>
             )}
           </div>
-          <div className={`absolute -right-3 -bottom-3 opacity-[0.06] pointer-events-none ${
+          <div className={`absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none ${
             safeToSpend > 300 ? 'text-teal-500' : 'text-[#da291c]'
           }`}>
-            <Zap size={76} />
+            <Zap size={72} />
           </div>
         </div>
 
         {/* Projected Surplus */}
-        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-[3px] border-l-purple-500">
+        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-2 border-l-purple-500">
           <div className="z-10">
             <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
               กระแสเงินสดคาดการณ์
@@ -473,15 +476,15 @@ const SummaryForecasting = ({ analytics, showSkeleton }) => {
               </div>
             )}
           </div>
-          <div className="absolute -right-3 -bottom-3 opacity-[0.06] pointer-events-none text-purple-500">
-            <Layers size={76} />
+          <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-purple-500">
+            <Layers size={72} />
           </div>
         </div>
 
       </div>
     </div>
   );
-};
+});
 
 /**
  * SummaryCards - The mission control center for financial vitals.

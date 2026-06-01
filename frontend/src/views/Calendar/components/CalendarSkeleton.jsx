@@ -1,17 +1,17 @@
 
 export default function CalendarSkeleton() {
   const isDarkMode = true;
-  const shimmer = 'bg-[#303030] animate-pulse';
+  const shimmer = 'bg-[#2a2a2a] animate-pulse';
   const surface = 'bg-[#181818]';
-  const surfaceAlt = 'bg-[#1c1c1c]';
-  const border = 'border-[#303030]';
-  const gapColor = 'bg-[#303030]';
+  const surfaceAlt = 'bg-[#121212]';
+  const border = 'border-[#2d2d2d]';
+  const gapColor = 'bg-[#2d2d2d]';
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
   return (
     <div className="flex flex-col h-full pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
       {/* Header skeleton */}
-      <div className={`${surface} rounded-none border ${border} shadow-sm p-3 md:p-4`}>
+      <div className={`${surface} rounded-none border ${border} p-3 md:p-4`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={`h-6 w-36 rounded-none ${shimmer}`} />
@@ -27,11 +27,11 @@ export default function CalendarSkeleton() {
       </div>
 
       {/* Grid skeleton */}
-      <div className={`rounded-none border ${border} shadow-sm overflow-hidden flex-1 flex flex-col`}>
+      <div className={`rounded-none border ${border} overflow-hidden flex-1 flex flex-col`}>
         {/* Day labels */}
-        <div className={`grid grid-cols-7 ${surfaceAlt} border-b ${border}`}>
+        <div className={`grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b ${border}`}>
           {DAYS_LABEL.map(label => (
-            <div key={label} className="py-2 flex justify-center">
+            <div key={label} className={`py-2 flex justify-center ${surfaceAlt}`}>
               <div className={`h-4 w-6 rounded-none ${shimmer}`} />
             </div>
           ))}
@@ -55,7 +55,7 @@ export default function CalendarSkeleton() {
       </div>
 
       {/* Footer skeleton */}
-      <div className={`${surface} rounded-none border ${border} shadow-sm p-2 px-3 flex gap-2 items-center`}>
+      <div className={`${surface} rounded-none border ${border} p-2 px-3 flex gap-2 items-center`}>
         <div className={`h-4 w-10 rounded-none ${shimmer}`} />
         <div className={`h-5 w-16 rounded-none ${shimmer}`} />
         <div className={`h-5 w-16 rounded-none ${shimmer}`} />

@@ -158,10 +158,10 @@ export default function CalendarView({
 
   const styles = {
     surface: 'bg-[#181818]',
-    surfaceAlt: 'bg-[#121212]/70',
-    border: 'border-[#303030]/80',
+    surfaceAlt: 'bg-[#121212]',
+    border: 'border-[#2d2d2d]',
     textMuted: 'text-slate-400',
-    gapColor: 'bg-neutral-800',
+    gapColor: 'bg-[#2d2d2d]',
   };
 
   // ── Unified Render ──────────────────────────────────────────
@@ -177,9 +177,9 @@ export default function CalendarView({
     content = <CalendarSkeleton />;
   } else if (isReadOnlyView) {
     content = (
-      <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-screen-2xl mx-auto w-full">
-        <div className={`flex flex-col items-center justify-center py-20 rounded-none border-2 border-dashed h-[60vh] transition-colors shadow-sm ${'bg-[#121212]/50 border-[#3e3e3e] text-slate-400'}`}>
-          <div className={`p-4 rounded-none mb-4 ${styles.surfaceAlt}`}>
+      <div className="flex flex-col h-full max-w-screen-2xl mx-auto w-full">
+        <div className={`flex flex-col items-center justify-center py-20 rounded-none border-2 border-dashed h-[60vh] transition-colors ${'bg-[#121212] border-[#2d2d2d] text-slate-400'}`}>
+          <div className={`p-4 rounded-none mb-4 ${styles.surfaceAlt} border border-[#2d2d2d]`}>
             <CalendarDays className={`w-12 h-12 ${'text-[#da291c]'}`} />
           </div>
           <p className={`text-xl font-bold mb-2 ${'text-slate-200'}`}>โหมดปฏิทินรองรับเฉพาะรายเดือน</p>
@@ -189,7 +189,7 @@ export default function CalendarView({
           </p>
           <button 
             onClick={goToCurrentMonth}
-            className="px-5 py-2.5 rounded-none text-sm font-bold shadow-sm transition-all hover:scale-105 active:scale-95 bg-[#da291c] hover:bg-[#b01e0a] text-white"
+            className="px-5 py-2.5 rounded-none text-sm font-bold bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none"
           >
             สลับไปดูเดือนปัจจุบัน ({getFilterLabel(currentMonthStr)})
           </button>
@@ -198,9 +198,9 @@ export default function CalendarView({
     );
   } else {
     content = (
-      <div className="flex flex-col h-full space-y-3.5 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col h-full space-y-3.5 w-full">
         {/* Header */}
-        <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-[#da291c] shadow-md p-4 transition-all duration-300`}>
+        <div className={`${styles.surface} rounded-none border ${styles.border} p-4`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <h2 className={`text-xl font-black flex items-center gap-2 tracking-wide ${'text-slate-100'}`}>
@@ -209,17 +209,17 @@ export default function CalendarView({
               </h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {monthInc > 0 && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'}`}>
                     ▲ {formatValue(monthInc)} ฿
                   </span>
                 )}
                 {monthExp > 0 && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${'bg-red-950/40 text-red-400 border-red-800/40'}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${'bg-red-950/40 text-red-400 border-red-800/40'}`}>
                     ▼ {formatValue(monthExp)} ฿
                   </span>
                 )}
                 {(monthInc > 0 || monthExp > 0) && (
-                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border shadow-sm ${monthNet >= 0 ? ('bg-yellow-500/10 text-yellow-450 border-yellow-500/20') : ('bg-rose-500/10 text-rose-450 border-rose-500/20')}`}>
+                  <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${monthNet >= 0 ? ('bg-yellow-500/10 text-yellow-450 border-yellow-500/20') : ('bg-rose-500/10 text-rose-450 border-rose-500/20')}`}>
                     คงเหลือ {formatValue(monthNet)} ฿
                   </span>
                 )}
@@ -229,19 +229,19 @@ export default function CalendarView({
             <div className="flex items-center gap-2 shrink-0">
               <button 
                 onClick={prevMonth} 
-                className="p-1.5 rounded-none border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm border-[#3e3e3e] bg-[#121212]/50 hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-300"
+                className="p-1.5 rounded-none border disabled:opacity-30 disabled:cursor-not-allowed border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button 
                 onClick={goToCurrentMonth} 
-                className="px-3 py-1.5 rounded-none border text-[12px] font-bold transition-all active:scale-95 shadow-sm border-[#3e3e3e] bg-[#121212]/50 hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-300"
+                className="px-3 py-1.5 rounded-none border text-[12px] font-bold border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
               >
                 เดือนปัจจุบัน
               </button>
               <button 
                 onClick={nextMonth} 
-                className="p-1.5 rounded-none border transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm border-[#3e3e3e] bg-[#121212]/50 hover:bg-[#303030]/50 hover:border-[#da291c]/50 text-slate-300"
+                className="p-1.5 rounded-none border disabled:opacity-30 disabled:cursor-not-allowed border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -250,10 +250,10 @@ export default function CalendarView({
         </div>
 
         {/* Calendar Grid */}
-        <div className={`rounded-none border ${styles.border} shadow-md overflow-hidden flex-1 flex flex-col transition-all duration-300`}>
-          <div className={`grid grid-cols-7 ${styles.surfaceAlt} border-b ${styles.border} divide-x divide-[#121212]/30`}>
+        <div className={`rounded-none border ${styles.border} overflow-hidden flex-1 flex flex-col`}>
+          <div className={`grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b ${styles.border}`}>
             {DAYS_LABEL.map((label, i) => (
-              <div key={label} className={`py-2 text-center text-[14px] font-black tracking-wider ${WEEKEND_IDX.includes(i) ? ('text-red-400') : styles.textMuted}`}>
+              <div key={label} className={`py-2 text-center text-[14px] font-black tracking-wider ${styles.surfaceAlt} ${WEEKEND_IDX.includes(i) ? ('text-red-400') : styles.textMuted}`}>
                 {label}
               </div>
             ))}
@@ -306,13 +306,13 @@ export default function CalendarView({
 
         {/* Category Color Legend */}
         {activeCategories.length > 0 && (
-          <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-[#da291c] shadow-md p-3 px-4 transition-all duration-300`}>
+          <div className={`${styles.surface} rounded-none border ${styles.border} p-3 px-4`}>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" />
                 หมวดหมู่ธุรกรรมในเดือนนี้ (Category Colors)
               </span>
-              <div className="h-[1px] bg-[#303030] flex-1 ml-1" />
+              <div className="h-[1px] bg-[#2d2d2d] flex-1 ml-1" />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {activeCategories.map(cat => {
@@ -320,14 +320,14 @@ export default function CalendarView({
                 return (
                   <div 
                     key={cat.id} 
-                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-none border transition-all duration-200 shadow-sm cursor-default select-none"
+                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-none border cursor-default select-none"
                     style={{
                       backgroundColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
                       borderColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
                       color: color,
                     }}
                   >
-                    <div className="w-2.5 h-2.5 rounded-none shrink-0 shadow-inner" style={{ backgroundColor: color }} />
+                    <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
                     <span className="opacity-90">{cat.name}</span>
                   </div>
                 );
@@ -337,7 +337,7 @@ export default function CalendarView({
         )}
 
         {/* Summary Footer */}
-        <div className={`${styles.surface} rounded-none border ${styles.border} border-l-4 border-l-[#3e3e3e] dark:border-l-[#3e3e3e] shadow-md p-3 px-4 flex flex-wrap gap-2.5 items-center transition-all duration-300`}>
+        <div className={`${styles.surface} rounded-none border ${styles.border} p-3 px-4 flex flex-wrap gap-2.5 items-center`}>
           <span className={`text-[13px] font-bold mr-1 ${styles.textMuted}`}>สรุป:</span>
           {dayTypeConfig.map(dt => {
             const count = dayTypeCounts[dt.id] || 0;
@@ -345,19 +345,19 @@ export default function CalendarView({
             return (
               <div
                 key={dt.id}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[10px] font-black tracking-wider uppercase shadow-sm transition-all duration-100"
+                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[10px] font-black tracking-wider uppercase"
                 style={{
                   backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
                   borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
                   color: dt.color,
                 }}
               >
-                <div className="w-2 h-2 rounded-none" style={{ backgroundColor: dt.color }} />
-                <span>{dt.label} ({count})</span>
+                <div className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: dt.color }} />
+                <span>{dt.label} (<span className="tabular-nums font-mono">{count}</span>)</span>
               </div>
             );
           })}
-          <div className="ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border bg-[#121212] border-[#3e3e3e] text-slate-300 shadow-sm">
+          <div className="ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border bg-[#121212] border-[#2d2d2d] text-slate-300 tabular-nums font-mono">
             {daysInMonth} วัน
           </div>
         </div>

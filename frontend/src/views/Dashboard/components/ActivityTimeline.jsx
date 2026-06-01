@@ -37,7 +37,7 @@ const getHeatmapColor = (level, isDarkMode) => {
  */
 const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
   const modeButtons = [
-    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-[#da291c]' },
+    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-[#ff4d4d]' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: 'text-orange-400' }
   ];
 
@@ -46,11 +46,13 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }) => {
       {modeButtons.map((btn) => (
         <button
           key={btn.id}
+          type="button"
+          aria-pressed={viewMode === btn.id}
           onClick={() => setViewMode(btn.id)}
-          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 ${
+          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
             viewMode === btn.id 
               ? btn.color 
-              : ('text-slate-450 hover:text-slate-200')
+              : ('text-slate-400 hover:text-slate-200')
           }`}
         >
           <btn.icon className="w-3.5 h-3.5" /> 
@@ -149,17 +151,17 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
           style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 5 }}
+            initial={{ opacity: 0, scale: 0.96, y: 4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 2 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            exit={{ opacity: 0, scale: 0.96, y: 2 }}
+            transition={{ duration: 0.1 }}
             className="flex flex-col items-center"
           >
-            <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#1c1c1c] border-[#3e3e3e] text-white">
+            <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
               <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
               {viewMode === 'dayType' ? (
                 <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dayType?.color }} />
+                  <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: dayType?.color }} />
                   {dayType?.label || 'ไม่มีข้อมูล'}
                 </div>
               ) : (
@@ -170,7 +172,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
                 </div>
               )}
             </div>
-            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#1c1c1c]" />
+            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#121212]/95" />
           </motion.div>
         </div>
       )}
@@ -178,6 +180,49 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
     document.body
   );
 };
+
+/**
+ * INTERNAL COMPONENT: TimelineDayCell - High performance memoized grid cell
+ */
+const TimelineDayCell = React.memo(({
+  dateStr, isToday, viewMode, dm, dayType, amount, globalMaxThreshold,
+  onMouseEnter, onMouseLeave
+}) => {
+  const level = getExpenseLevel(amount, globalMaxThreshold);
+  const backgroundColor = viewMode === 'heatmap' 
+    ? getHeatmapColor(level, dm) 
+    : (dayType?.color || '#cbd5e1');
+
+  const [y, m, d] = dateStr.split('-');
+  const displayStr = `${DAY_LABELS[new Date(y, +m - 1, d).getDay()]} ${+d} ${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
+  const detailsText = viewMode === 'dayType'
+    ? `ประเภทวัน: ${dayType?.label || 'ไม่มีข้อมูล'}`
+    : `ยอดรายจ่าย: ${amount > 0 ? amount.toLocaleString('th-TH') + ' บาท' : 'ไม่มีรายจ่าย'}`;
+
+  return (
+    <button
+      type="button"
+      role="gridcell"
+      tabIndex={0}
+      aria-label={`${displayStr}, ${detailsText}`}
+      className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
+        isToday 
+          ? 'ring ring-[#da291c] z-10' 
+          : 'opacity-90 hover:opacity-100 hover:border-[#da291c] hover:z-10'
+      }`}
+      style={{
+        backgroundColor,
+        borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
+      }}
+      onMouseEnter={(e) => onMouseEnter(e, dateStr)}
+      onMouseLeave={onMouseLeave}
+      onFocus={(e) => onMouseEnter(e, dateStr)}
+      onBlur={onMouseLeave}
+    />
+  );
+});
+
+TimelineDayCell.displayName = 'TimelineDayCell';
 
 /**
  * Main Activity Timeline Component
@@ -201,7 +246,6 @@ export default function ActivityTimeline() {
 
   const weeks = useMemo(() => {
     if (datesInPeriod.length === 0) return [];
-    // ... rest of useMemo unchanged
     const result = [];
     let currentWeek = Array(7).fill(null);
     let monthLabel = null;
@@ -221,7 +265,6 @@ export default function ActivityTimeline() {
   }, [datesInPeriod]);
 
   const getDayDetails = useCallback((dateStr) => {
-    // ... rest of logic unchanged
     const [y, m, d] = dateStr.split('-');
     const dateObj = new Date(y, +m - 1, d);
     const dayOfWeek = dateObj.getDay();
@@ -234,12 +277,15 @@ export default function ActivityTimeline() {
     return { displayStr, dayType, amount, dayOfWeek };
   }, [dayTypeConfig, dayTypes, dailyExpenses]);
 
-  const handleMouseEnter = (e, dateStr) => {
+  const handleMouseEnter = useCallback((e, dateStr) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const { displayStr, dayType, amount } = getDayDetails(dateStr);
     setTooltip({ active: true, x: rect.left + rect.width / 2, y: rect.top, dateDisplay: displayStr, dayType, amount });
-  };
-  const handleMouseLeave = () => setTooltip(prev => ({ ...prev, active: false }));
+  }, [getDayDetails]);
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(prev => ({ ...prev, active: false }));
+  }, []);
 
   // Styles
   const cardStyles = `rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]`;
@@ -305,10 +351,10 @@ export default function ActivityTimeline() {
             <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
           ) : (
             <div className="overflow-x-auto pb-4 pt-10 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-              <div className="flex w-max gap-x-[3px] mx-auto">
+              <div className="flex w-max gap-x-[1px] mx-auto">
                 
                 {/* Day Labels (Sticky) */}
-                <div className="flex flex-col gap-[3px] shrink-0 sticky left-0 z-20 pr-3 border-r"
+                <div className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r"
                   style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
                   <div className="h-4" />
                   {DAY_LABELS.map((day, i) => (
@@ -325,7 +371,7 @@ export default function ActivityTimeline() {
 
                 {/* Weeks & Days */}
                 {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-[3px] shrink-0">
+                  <div key={weekIndex} className="flex flex-col gap-[1px] shrink-0">
                     {/* Month Label */}
                     <div className="h-4 relative flex items-end pb-1">
                       {week.monthLabel && (
@@ -344,27 +390,18 @@ export default function ActivityTimeline() {
                       
                       const isToday = dateStr === new Date().toISOString().split('T')[0];
                       const { dayType, amount } = getDayDetails(dateStr);
-                      const level = getExpenseLevel(amount, globalMaxThreshold);
-                      
-                      const backgroundColor = viewMode === 'heatmap' 
-                        ? getHeatmapColor(level, dm) 
-                        : (dayType?.color || '#cbd5e1');
 
                       return (
-                        <motion.div 
-                          key={dateStr} 
-                          className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors ${
-                            isToday 
-                              ? 'ring-2 ring-[#da291c] ring-offset-1 dark:ring-offset-[#121212] z-10' 
-                              : 'opacity-90 hover:opacity-100 hover:border-[#da291c]/80 dark:hover:border-[#da291c]/80'
-                          }`}
-                          style={{
-                            backgroundColor,
-                            borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
-                          }}
-                          whileHover={{ scale: 1.25 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                          onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
+                        <TimelineDayCell
+                          key={dateStr}
+                          dateStr={dateStr}
+                          isToday={isToday}
+                          viewMode={viewMode}
+                          dm={dm}
+                          dayType={dayType}
+                          amount={amount}
+                          globalMaxThreshold={globalMaxThreshold}
+                          onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                         />
                       );

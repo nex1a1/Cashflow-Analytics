@@ -100,14 +100,14 @@ export default function LedgerView({
   }, [currentData, catTypeMap]);
 
   return (
-    <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-3 duration-400 w-full pb-8">
+    <div className="flex flex-col gap-0 w-full pb-8">
       <div className="flex flex-col gap-3.5 mb-4">
         {/* Top Header Actions */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-row items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-6 bg-[#da291c] rounded-none shrink-0" />
-              <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-mono">
+              <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-mono">
                 บัญชีแยกประเภท
               </h2>
             </div>
@@ -123,7 +123,7 @@ export default function LedgerView({
             {viewMode === 'list' && (
               <button 
                 onClick={() => setFilterOpen(v => !v)} 
-                className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border transition-all active:scale-95 font-mono ${
+                className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono ${
                   filterOpen 
                     ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.12)]' 
                     : 'bg-[#121212] border-[#303030] text-slate-400 hover:bg-[#303030]/40 hover:border-[#404040] hover:text-white'
@@ -139,32 +139,32 @@ export default function LedgerView({
               <button 
                 onClick={() => setViewMode('list')} 
                 title="มุมมองรายการ" 
-                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all rounded-none font-mono ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-none font-mono ${
                   viewMode === 'list' 
                     ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
                     : 'bg-[#121212] text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <LayoutList className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">รายการ</span>
+                <span className="inline">รายการ</span>
               </button>
               <button 
                 onClick={() => setViewMode('horizontal')} 
                 title="มุมมองตารางแนวนอน" 
-                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all rounded-none border-l border-[#303030] font-mono ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-none border-l border-[#303030] font-mono ${
                   viewMode === 'horizontal' 
                     ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
                     : 'bg-[#121212] text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <TableProperties className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">ตาราง</span>
+                <span className="inline">ตาราง</span>
               </button>
             </div>
 
             <button 
               onClick={() => handleOpenAddModal('', 'income')} 
-              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border transition-all active:scale-95 rounded-none font-mono text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 border-emerald-500/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.04)]"
+              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border rounded-none font-mono text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 border-emerald-500/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.04)]"
             >
               <PlusCircle className="w-3.5 h-3.5" /> 
               <span>เพิ่มรายรับ</span>
@@ -172,7 +172,7 @@ export default function LedgerView({
             
             <button 
               onClick={() => handleOpenAddModal('', 'expense')} 
-              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border transition-all active:scale-95 rounded-none font-mono text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/40 hover:border-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.04)]"
+              className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border rounded-none font-mono text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/40 hover:border-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.04)]"
             >
               <PlusCircle className="w-3.5 h-3.5" /> 
               <span>เพิ่มรายจ่าย</span>
@@ -181,7 +181,7 @@ export default function LedgerView({
             {displayTransactions.length > 0 && (
               <button 
                 onClick={() => { if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }} 
-                className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border transition-all active:scale-95 rounded-none font-mono text-slate-500 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40" 
+                className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border rounded-none font-mono text-slate-500 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40" 
                 title="ลบข้อมูลเดือนนี้"
               >
                 <Trash2 className="w-3.5 h-3.5" /> 
@@ -203,9 +203,9 @@ export default function LedgerView({
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#303030]/60">
+          <div className="grid grid-cols-3 gap-px bg-[#303030]/60">
             {/* INCOME CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
               {/* Background Icon Glow */}
               <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-emerald-400">
                 <TrendingUp size={80} />
@@ -231,7 +231,7 @@ export default function LedgerView({
             </div>
 
             {/* EXPENSE CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
+            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
               {/* Background Icon Glow */}
               <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-rose-455">
                 <TrendingDown size={80} />
@@ -257,7 +257,7 @@ export default function LedgerView({
             </div>
 
             {/* NET SURPLUS CELL WITH SAVINGS RATE PILL */}
-            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] transition-all duration-150 bg-[#181818] hover:bg-[#1c1c1c] ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.02]'}`}>
+            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] bg-[#181818] hover:bg-[#1c1c1c] ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.02]'}`}>
               {/* Background Icon Glow */}
               <div className={`absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
                 <Wallet size={80} />
@@ -343,7 +343,7 @@ export default function LedgerView({
             <p className="text-base font-bold text-[#888888]">ไม่พบรายการบัญชี</p>
             <p className="text-xs mt-1 mb-4 text-[#555555]">ลองเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</p>
             {isFilterActive && (
-              <button onClick={clearFilters} className="px-4 py-1.5 rounded-none text-xs font-bold border transition-colors bg-[#303030]/60 border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030]">
+              <button onClick={clearFilters} className="px-4 py-1.5 rounded-none text-xs font-bold border bg-[#303030]/60 border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030]">
                 ล้างตัวกรอง
               </button>
             )}

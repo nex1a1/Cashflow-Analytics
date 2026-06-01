@@ -105,7 +105,6 @@ const HeatmapCell = memo(function HeatmapCell({
             height: 2,
             borderRadius: 0,
             background: `rgba(${hexToRgb(cat.color)}, ${dm ? 0.85 : 0.7})`,
-            transition: 'width 0.2s ease',
           }} />
         </div>
       ) : (

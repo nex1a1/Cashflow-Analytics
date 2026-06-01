@@ -78,7 +78,7 @@ export default function LedgerTable({
     const isActive = sortConfig.key === sortKey;
     return (
       <th
-        className={`px-4 py-3 font-bold cursor-pointer transition-all select-none group text-${align} ${className} ${
+        className={`px-4 py-3 font-bold cursor-pointer select-none group text-${align} ${className} ${
           `text-slate-400 hover:text-slate-200 ${isActive ? 'text-[#da291c] bg-[#121212]/60' : 'hover:bg-[#303030]/30'}`
         }`}
         onClick={() => handleSort(sortKey)}
@@ -86,7 +86,7 @@ export default function LedgerTable({
       >
         <div className={`inline-flex items-center gap-1.5 text-xs uppercase tracking-wide ${align === 'right' ? 'flex-row-reverse' : ''}`}>
           {label}
-          <span className={`flex flex-col text-[8px] leading-[0.55] transition-opacity ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`}>
+          <span className={`flex flex-col text-[8px] leading-[0.55] ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`}>
             <span className={isActive && sortConfig.direction === 'asc' ? ('text-[#da291c]') : ''}>▲</span>
             <span className={isActive && sortConfig.direction === 'desc' ? ('text-[#da291c]') : ''}>▼</span>
           </span>
@@ -130,17 +130,17 @@ export default function LedgerTable({
               };
 
               return (
-                <tr key={item.id} className="group border-b border-[#303030]/30 hover:bg-[#303030]/10 transition-colors">
+                <tr key={item.id} className="group border-b border-[#303030]/30 hover:bg-[#303030]/10">
                   {/* Sticky Date Column */}
-                  <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-4 py-2.5 group-hover:bg-[#202020] transition-colors ${stickyBg}`}>
+                  <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-4 py-2.5 group-hover:bg-[#202020] ${stickyBg}`}>
                     {isNewDate ? (
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-black tabular-nums text-slate-300">{item.date}</span>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleOpenAddModal(item.date, 'income')} className="p-0.5 rounded-none transition-colors text-emerald-400 hover:bg-emerald-950/40" title="เพิ่มรายรับวันนี้">
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+                          <button onClick={() => handleOpenAddModal(item.date, 'income')} className="p-0.5 rounded-none text-emerald-400 hover:bg-emerald-950/40" title="เพิ่มรายรับวันนี้">
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleOpenAddModal(item.date, 'expense')} className="p-0.5 rounded-none transition-colors text-[#da291c] hover:bg-rose-950/40" title="เพิ่มรายจ่ายวันนี้">
+                          <button onClick={() => handleOpenAddModal(item.date, 'expense')} className="p-0.5 rounded-none text-[#da291c] hover:bg-rose-950/40" title="เพิ่มรายจ่ายวันนี้">
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -157,10 +157,10 @@ export default function LedgerTable({
                   </td>
                   
                   <td className="px-3 py-2 align-middle">
-                    <div className="relative w-full flex items-center rounded-none border transition-all duration-150 focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
+                    <div className="relative w-full flex items-center rounded-none border focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
                       {/* Visual Custom Overlay */}
                       <div 
-                        className="category-pill-text w-full flex items-center pl-1.5 pr-7 py-1 text-xs font-extrabold select-none pointer-events-none transition-all" 
+                        className="category-pill-text w-full flex items-center pl-1.5 pr-7 py-1 text-xs font-extrabold select-none pointer-events-none" 
                         style={{ '--pill-text-color': pillStyles.textColor }}
                       >
                         <span className="shrink-0 mr-1.5 text-xs">
@@ -199,7 +199,7 @@ export default function LedgerTable({
                       <select 
                         value={aType} 
                         onChange={e => handleUpdateTransaction(item.id, 'allocation_type', e.target.value)}
-                        className={`allocation-select w-full bg-[#121212] outline-none appearance-none px-2 py-1 font-black border rounded-none text-[9px] text-center tracking-wider transition-all cursor-pointer ${aColors[aType]}`}
+                        className={`allocation-select w-full bg-[#121212] outline-none appearance-none px-2 py-1 font-black border rounded-none text-[9px] text-center tracking-wider cursor-pointer ${aColors[aType]}`}
                         style={{ backgroundImage: SELECT_ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.2rem center', backgroundSize: '0.6em' }}
                       >
                         <option value="need" className="bg-[#121212] text-rose-450 font-extrabold">NEED</option>
@@ -214,17 +214,17 @@ export default function LedgerTable({
                   </td>
                   
                   <td className="px-3 py-2 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 transition-all pointer-events-none z-10 text-slate-500" />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold transition-all text-slate-200 hover:bg-[#121212] hover:border-[#3e3e3e] focus:border-[#da291c] focus:bg-[#121212]" placeholder="รายละเอียด..." />
+                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-slate-200 hover:bg-[#121212] hover:border-[#3e3e3e] focus:border-[#da291c] focus:bg-[#121212]" placeholder="รายละเอียด..." />
                   </td>
                   
                   <td className="px-3 py-2 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 transition-all pointer-events-none z-10 text-slate-500" />
-                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 transition-all focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-[#121212] hover:border-[#3e3e3e] ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
+                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
+                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-[#121212] hover:border-[#3e3e3e] ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
                   </td>
                   
                   {/* Sticky Actions Column */}
-                  <td className={`sticky right-0 z-10 border-l border-[#303030]/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-2 group-hover:bg-[#202020] transition-colors ${stickyBg}`}>
+                  <td className={`sticky right-0 z-10 border-l border-[#303030]/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-2 group-hover:bg-[#202020] ${stickyBg}`}>
                     <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} />
                   </td>
                 </tr>
@@ -246,7 +246,7 @@ export default function LedgerTable({
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border transition-all text-[9px] font-black uppercase tracking-widest font-mono ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border text-[9px] font-black uppercase tracking-widest font-mono ${
               currentPage === 1
                 ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
                 : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
@@ -262,7 +262,7 @@ export default function LedgerTable({
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border transition-all text-[9px] font-black uppercase tracking-widest font-mono ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border text-[9px] font-black uppercase tracking-widest font-mono ${
               currentPage === totalPages
                 ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
                 : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
