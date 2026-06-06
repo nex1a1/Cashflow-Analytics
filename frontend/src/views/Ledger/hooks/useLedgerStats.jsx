@@ -70,55 +70,65 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
       .map(g => {
         const total = groupSums[g.id];
         return (
-          <div key={g.id} className="min-w-[210px] flex-1">
+          <div key={g.id} className="w-[145px] shrink-0">
             <div 
-              className="group flex items-center gap-3 px-3 py-2 border-2 transition-all duration-300 bg-[#121212] hover:bg-[#1c1c1c] border-[#303030] hover:border-[#3e3e3e] rounded-none relative overflow-hidden shadow-sm"
+              className="group flex flex-col gap-1.5 p-2 border-2 bg-[#121212] hover:bg-[#1c1c1c] border-[#303030] hover:border-[#3e3e3e] rounded-none relative overflow-hidden shadow-sm"
               style={{ borderLeftColor: g.color || '#64748b' }}
             >
               {/* Subtle background glow of group color */}
               <div 
-                className="absolute inset-0 opacity-[0.015] transition-opacity duration-300 group-hover:opacity-[0.04]"
+                className="absolute inset-0 opacity-[0.015] group-hover:opacity-[0.04]"
                 style={{ backgroundColor: g.color }}
               />
               
-              {/* Group icon with subtle background */}
-              <div 
-                className="w-7 h-7 flex items-center justify-center text-sm rounded-none border border-[#303030] shrink-0 transition-transform group-hover:scale-105"
-                style={{ 
-                  backgroundColor: `${g.color || '#64748b'}20`, 
-                  color: g.color || '#94a3b8',
-                  borderColor: `${g.color || '#64748b'}30`
-                }}
-              >
-                {g.icon || (g.type === 'income' ? '💰' : '📉')}
-              </div>
-              
-              <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex items-center justify-between gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider truncate text-[#cbd5e1]">
-                    {g.name}
-                  </span>
-                  <span 
-                    className="text-[8px] font-black uppercase tracking-widest px-1 py-0.2 rounded-none border"
+              {/* Row 1: Icon + Name (left) & Badge (right) */}
+              <div className="flex items-center justify-between gap-1 w-full min-w-0 z-10">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div 
+                    className="w-[21px] h-[21px] flex items-center justify-center text-xs rounded-none border border-[#303030] shrink-0"
                     style={{ 
-                      backgroundColor: `${g.color || '#64748b'}15`, 
-                      color: g.color || '#94a3b8', 
-                      borderColor: `${g.color || '#64748b'}30` 
+                      backgroundColor: `${g.color || '#64748b'}20`, 
+                      color: g.color || '#94a3b8',
+                      borderColor: `${g.color || '#64748b'}30`
                     }}
                   >
-                    {g.type === 'income' ? 'IN' : 'OUT'}
+                    {g.icon || (g.type === 'income' ? '💰' : '📉')}
+                  </div>
+                  <span 
+                    className="text-[9.5px] font-black uppercase tracking-wider truncate text-[#cbd5e1] leading-none"
+                    title={g.name}
+                  >
+                    {g.name}
                   </span>
                 </div>
-                <div className="flex items-baseline justify-between mt-0.5 min-w-0 font-mono">
-                  <span className="text-xs font-black tabular-nums tracking-tight text-white">
-                    ฿{formatMoney(total)}
+                <span 
+                  className="text-[7.5px] font-black uppercase tracking-widest px-1 py-0.2 rounded-none border shrink-0 leading-none"
+                  style={{ 
+                    backgroundColor: `${g.color || '#64748b'}15`, 
+                    color: g.color || '#94a3b8', 
+                    borderColor: `${g.color || '#64748b'}30` 
+                  }}
+                >
+                  {g.type === 'income' ? 'IN' : 'OUT'}
+                </span>
+              </div>
+              
+              {/* Row 2 & 3: Amounts */}
+              <div className="flex flex-col min-w-0 font-mono z-10">
+                <span 
+                  className="text-xs font-black tabular-nums tracking-tight text-white truncate"
+                  title={`฿${formatMoney(total)}`}
+                >
+                  ฿{formatMoney(total)}
+                </span>
+                {uniqueMonths > 1 && (
+                  <span 
+                    className="text-[8.5px] font-bold text-[#888888] truncate mt-0.5"
+                    title={`฿${formatMoney(total / uniqueMonths)}/เดือน`}
+                  >
+                    ฿{formatMoney(total / uniqueMonths)}/ด.
                   </span>
-                  {uniqueMonths > 1 && (
-                    <span className="text-[8.5px] font-bold text-[#888888] truncate ml-1">
-                      ฿{formatMoney(total / uniqueMonths)}/ด.
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>

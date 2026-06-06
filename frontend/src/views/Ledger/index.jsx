@@ -299,7 +299,7 @@ export default function LedgerView({
 
         {/* Group Breakdown Area (Visible in all view modes) */}
         {activeGroupCards.length > 0 && (
-          <div className="flex items-center gap-3 overflow-x-auto pb-1 px-1 no-scrollbar scroll-smooth">
+          <div className="flex items-center justify-center gap-3 overflow-x-auto pb-1 px-1 no-scrollbar scroll-smooth">
             {activeGroupCards}
           </div>
         )}
