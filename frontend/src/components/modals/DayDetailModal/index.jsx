@@ -181,7 +181,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
           <X className="w-5 h-5" />
         </button>
 
-        <div className={`flex flex-col w-full md:w-3/5 border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
+        <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
           <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0 pr-12`}>
             <div>
               <h2 className={`text-lg font-black ${tokens.textPri}`}>{displayDate}</h2>

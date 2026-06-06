@@ -10,7 +10,7 @@ export default function CartList({
   const dm = true;
 
   return (
-    <div className="w-full lg:w-[36%] flex flex-col p-5 min-h-0 bg-[#1c1c1c]">
+    <div className="w-full lg:w-[35%] flex flex-col p-5 min-h-0 bg-[#1c1c1c]">
       <div className="shrink-0 flex justify-between items-center mb-3">
         <h4 className="font-bold text-sm flex items-center gap-2 text-slate-300">
           <ClipboardList className="w-4 h-4 text-slate-400" /> ตะกร้า

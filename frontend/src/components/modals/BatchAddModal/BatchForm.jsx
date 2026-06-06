@@ -92,7 +92,7 @@ export default function BatchForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[36%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-[#1c1c1c] border-[#303030]">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[35%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-[#1c1c1c] border-[#303030]">
       
       <div className={`flex p-0.5 mb-4 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
         <button type="button" onClick={() => handleTypeChange('expense')}
