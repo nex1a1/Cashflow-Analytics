@@ -17,7 +17,7 @@ services:
       - DB_PATH=/app/data/cashflow.db
       - TZ=Asia/Bangkok
       # - USE_DEMO_DB=true
-    command: sh -c "apk add --no-cache tzdata && npm install --no-audit --no-fund && npm start"
+    command: sh -c "apk add --no-cache tzdata && npm install --no-audit --no-fund && npm run dev"
 
   # 2. Frontend (React + Vite)
   frontend:
