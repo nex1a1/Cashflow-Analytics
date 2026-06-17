@@ -28,6 +28,9 @@ class CategoryService {
     `);
         return stmt.run(id, category.name, category.icon || null, category.color || null, category.order_index || 0, category.cashflow_group_id);
     }
+    getById(id) {
+        return db_1.default.prepare("SELECT id, name FROM categories WHERE id = ?").get(id);
+    }
     delete(id) {
         return db_1.default.transaction(() => {
             // ลบรายการบัญชีทั้งหมดที่อ้างอิงหมวดหมู่นี้ออกก่อน (รวมถึงที่ถูกลบซอฟต์ลบไปแล้ว)

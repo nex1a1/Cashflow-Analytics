@@ -170,7 +170,7 @@ export default function useTransactionData({
   const handleDeleteTransaction = useCallback(async (id) => {
     if (!window.confirm('ยืนยันการลบรายการนี้?')) return;
     try {
-      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      await transactionService.deleteById(id);
       await refreshData();
     } catch (err) {
       showToast('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message, 'error');
@@ -182,7 +182,7 @@ export default function useTransactionData({
     if (!window.confirm(`ยืนยันการลบข้อมูลเดือน ${isoMonth}?`)) return;
     setIsProcessing(true);
     try {
-      await fetch(`${API_URL}/month/${isoMonth}`, { method: 'DELETE' });
+      await transactionService.deleteMonth(isoMonth);
       await refreshData();
       return true;
     } catch (err) {
@@ -197,7 +197,7 @@ export default function useTransactionData({
     if (!window.confirm('🚨 ยืนยันการลบข้อมูลทั้งหมด?')) return;
     setIsProcessing(true);
     try {
-      await fetch(RESET_API_URL, { method: 'DELETE' });
+      await transactionService.resetAll();
       showToast('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว', 'success');
       setTimeout(() => { window.location.reload(); }, 1000);
     } catch (err) { 

@@ -43,26 +43,29 @@ export default function useCategories(initialCategories, setCashflowGroups) {
       return { ...c, [field]: value };
     }));
 
-    // 2. Prepare data for backend
-    setCategories(prev => {
-      const cat = prev.find(c => c.id === catId);
-      if (!cat) return prev;
-      
+    // 2. Retrieve current category and prepare the updated version
+    const cat = categoriesRef.current.find(c => c.id === catId);
+    if (!cat) return;
+
+    const updatedCat = { ...cat, [field]: value };
+
+    // 3. Only save if name is not empty to avoid 400 errors
+    if (updatedCat.name && updatedCat.name.trim() !== '') {
       const toSave = {
-        id: cat.id,
-        name: cat.name,
-        icon: cat.icon,
-        color: cat.color,
-        cashflow_group_id: cat.cashflowGroup,
-        order_index: cat.order_index
+        id: updatedCat.id,
+        name: updatedCat.name,
+        icon: updatedCat.icon,
+        color: updatedCat.color,
+        cashflow_group_id: updatedCat.cashflowGroup,
+        order_index: updatedCat.order_index
       };
 
-      // 3. Only save if name is not empty to avoid 400 errors
-      if (toSave.name && toSave.name.trim() !== '') {
-        categoryService.save(toSave).catch(err => console.error('Failed to save category:', err));
+      try {
+        await categoryService.save(toSave);
+      } catch (err) {
+        console.error('Failed to save category:', err);
       }
-      return prev;
-    });
+    }
   }, []);
 
   const handleAddCategory = useCallback(async (type) => {

@@ -75,7 +75,6 @@ router.get('/settings', settingController.getAllSettings);
 router.post('/settings', settingController.upsertSetting);
 // Analytics
 router.get('/analytics', analyticsController.getDashboardAnalytics);
-router.get('/analytics/sankey', analyticsController.getSankeyFlow);
 // Backup
 router.post('/backup', backupController.performBackup);
 router.get('/backups', backupController.listBackups);

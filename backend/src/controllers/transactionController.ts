@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import transactionService from '../services/transactionService';
-import db from '../config/db';
+import categoryService from '../services/categoryService';
 import { upsertTransactionSchema } from '../validations/transactionValidation';
 
 export const getAllTransactions = (req: Request, res: Response) => {
@@ -115,8 +115,8 @@ export const predictCategories = (req: Request, res: Response) => {
     for (const desc of descriptions) {
       const categoryId = transactionService.suggestCategory(desc);
       if (categoryId) {
-        // Find category details
-        const cat = db.prepare("SELECT name, id FROM categories WHERE id = ?").get(categoryId) as { id: string; name: string } | undefined;
+        // Find category details via service
+        const cat = categoryService.getById(categoryId);
         predictions[desc] = cat ? { id: cat.id, name: cat.name } : null;
       } else {
         predictions[desc] = null;

@@ -21,10 +21,12 @@ import {
   LineElement, Title, Tooltip, Legend, ArcElement, Filler, defaults, 
   LineController, BarController
 } from 'chart.js';
+import { SankeyController, Flow } from 'chartjs-chart-sankey';
 
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, BarElement, PointElement, LineElement, 
-  LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler
+  LineController, BarController, Title, Tooltip, Legend, ArcElement, Filler,
+  SankeyController, Flow
 );
 
 defaults.font.family = "'Inter', 'Bai Jamjuree', sans-serif";

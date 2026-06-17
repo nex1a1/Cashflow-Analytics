@@ -30,12 +30,7 @@ interface WorkLifeAnalysisItem {
   avg_expense: number;
 }
 
-interface SankeyLink {
-  from: string;
-  to: string;
-  flow: number;
-  color?: string;
-}
+
 
 class AnalyticsService {
   /**
@@ -231,106 +226,6 @@ class AnalyticsService {
     }));
   }
 
-  /**
-   * Get Sankey Flow Map (Nodes and Links)
-   */
-  getSankeyFlow(startDate?: string, endDate?: string): SankeyLink[] {
-    const params: string[] = [];
-    let query = `
-      SELECT 
-        c.id, c.name, c.color, c.cashflow_group_id as groupId,
-        cg.name as groupName, cg.type as groupType, cg.color as groupColor,
-        SUM(t.amount) as amount
-      FROM transactions t
-      JOIN categories c ON t.category_id = c.id
-      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-      WHERE t.is_deleted = 0
-    `;
-    
-    if (startDate) {
-      query += ' AND t.date >= ?';
-      params.push(startDate);
-    }
-    if (endDate) {
-      query += ' AND t.date <= ?';
-      params.push(endDate);
-    }
-    
-    query += ' GROUP BY c.id HAVING amount > 0';
-
-    const categories = db.prepare(query).all(...params) as Array<{
-      id: string;
-      name: string;
-      color: string | null;
-      groupId: string;
-      groupName: string;
-      groupType: 'income' | 'expense' | 'savings';
-      groupColor: string | null;
-      amount: number;
-    }>;
-
-    const links: SankeyLink[] = [];
-    let totalInc = 0;
-    let totalExp = 0;
-
-    const groupTotals: Record<string, { 
-      name: string; 
-      type: 'income' | 'expense' | 'savings'; 
-      color: string | undefined; 
-      amount: number;
-      categories: any[];
-    }> = {};
-
-    categories.forEach(c => {
-      if (!groupTotals[c.groupId]) {
-        groupTotals[c.groupId] = { 
-          name: c.groupName, 
-          type: c.groupType, 
-          color: c.groupColor || undefined, 
-          amount: 0,
-          categories: []
-        };
-      }
-      groupTotals[c.groupId].amount += c.amount;
-      groupTotals[c.groupId].categories.push(c);
-      
-      if (c.groupType === 'income') totalInc += c.amount;
-      else totalExp += c.amount;
-    });
-
-    const labelTotalCash = `Total Cash`;
-    const labelTotalExp = `Outflow`;
-    const labelRemaining = `Remaining`;
-
-    // 1. Income Groups -> Total Cash
-    Object.values(groupTotals).filter(g => g.type === 'income').forEach(g => {
-      links.push({ from: g.name, to: labelTotalCash, flow: g.amount / 100, color: g.color });
-    });
-
-    // 2. Total Cash -> Outflow
-    if (totalInc > 0 && totalExp > 0) {
-      links.push({ from: labelTotalCash, to: labelTotalExp, flow: Math.min(totalInc, totalExp) / 100, color: '#64748B' });
-    }
-
-    // 3. Total Cash -> Remaining / Overspent
-    const net = totalInc - totalExp;
-    if (net > 0) {
-      links.push({ from: labelTotalCash, to: labelRemaining, flow: net / 100, color: '#10B981' });
-    } else if (net < 0) {
-      links.push({ from: 'Overspent', to: labelTotalExp, flow: Math.abs(net) / 100, color: '#EF4444' });
-    }
-
-    // 4. Outflow -> Expense Groups -> Categories
-    Object.values(groupTotals).filter(g => g.type !== 'income').forEach(g => {
-      links.push({ from: labelTotalExp, to: g.name, flow: g.amount / 100, color: g.color });
-      
-      g.categories.forEach(c => {
-        links.push({ from: g.name, to: c.name, flow: c.amount / 100, color: c.color || undefined });
-      });
-    });
-
-    return links;
-  }
 }
 
 export default new AnalyticsService();

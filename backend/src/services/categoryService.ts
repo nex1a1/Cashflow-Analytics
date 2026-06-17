@@ -39,6 +39,10 @@ class CategoryService {
     );
   }
 
+  getById(id: string): { id: string; name: string } | undefined {
+    return db.prepare("SELECT id, name FROM categories WHERE id = ?").get(id) as { id: string; name: string } | undefined;
+  }
+
   delete(id: string) {
     return db.transaction(() => {
       // ลบรายการบัญชีทั้งหมดที่อ้างอิงหมวดหมู่นี้ออกก่อน (รวมถึงที่ถูกลบซอฟต์ลบไปแล้ว)

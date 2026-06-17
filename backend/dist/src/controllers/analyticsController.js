@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSankeyFlow = exports.getDashboardAnalytics = void 0;
+exports.getDashboardAnalytics = void 0;
 const analyticsService_1 = __importDefault(require("../services/analyticsService"));
 const getDashboardAnalytics = (req, res) => {
     const { startDate, endDate } = req.query;
@@ -24,14 +24,3 @@ const getDashboardAnalytics = (req, res) => {
     }
 };
 exports.getDashboardAnalytics = getDashboardAnalytics;
-const getSankeyFlow = (req, res) => {
-    const { startDate, endDate } = req.query;
-    try {
-        const flows = analyticsService_1.default.getSankeyFlow(startDate, endDate);
-        res.json(flows);
-    }
-    catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-exports.getSankeyFlow = getSankeyFlow;

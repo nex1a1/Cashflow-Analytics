@@ -32,8 +32,10 @@ export const transactionService = {
         body: JSON.stringify(Array.isArray(items) ? items : [items])
     }).then(handleResponse),
     deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse),
+    deleteMonth: (isoMonth: string): Promise<{ success: boolean }> => fetch(`${API_URL}/month/${isoMonth}`, { method: 'DELETE' }).then(handleResponse),
     deleteAll: (): Promise<{ success: boolean }> => fetch(API_URL, { method: 'DELETE' }).then(handleResponse),
-    resetAll: (): Promise<{ success: boolean }> => fetch(RESET_API_URL, { method: 'DELETE' }).then(handleResponse)
+    resetAll: (): Promise<{ success: boolean }> => fetch(RESET_API_URL, { method: 'DELETE' }).then(handleResponse),
+    search: (query: string): Promise<any[]> => fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`).then(handleResponse)
 };
 
 export const analyticsService = {

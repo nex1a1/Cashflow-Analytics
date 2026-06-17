@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.predictCategories = exports.getFrequentItems = exports.searchTransactions = exports.getAvailablePeriods = exports.resetAllData = exports.deleteMonth = exports.deleteTransaction = exports.upsertTransactions = exports.getAllTransactions = void 0;
 const transactionService_1 = __importDefault(require("../services/transactionService"));
-const db_1 = __importDefault(require("../config/db"));
+const categoryService_1 = __importDefault(require("../services/categoryService"));
 const transactionValidation_1 = require("../validations/transactionValidation");
 const getAllTransactions = (req, res) => {
     const { startDate, endDate } = req.query;
@@ -124,8 +124,8 @@ const predictCategories = (req, res) => {
         for (const desc of descriptions) {
             const categoryId = transactionService_1.default.suggestCategory(desc);
             if (categoryId) {
-                // Find category details
-                const cat = db_1.default.prepare("SELECT name, id FROM categories WHERE id = ?").get(categoryId);
+                // Find category details via service
+                const cat = categoryService_1.default.getById(categoryId);
                 predictions[desc] = cat ? { id: cat.id, name: cat.name } : null;
             }
             else {

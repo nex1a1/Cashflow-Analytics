@@ -1,22 +1,37 @@
 import { useMemo } from 'react';
 import { formatMoney } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
+import { toISODate, isDateInFilter } from '../../../utils/dateHelpers';
 
 export function useSankeyEngine({ chartViewType, sankeySortMode }) {
-  const { analytics, categories, cashflowGroups, filterPeriod, chartGroupBy, dm } = useDashboardContext();
+  const { transactions, analytics, categories, cashflowGroups, filterPeriod, dm } = useDashboardContext();
 
   return useMemo(() => {
-    if (chartViewType !== 'sankey' || !analytics) return null;
+    if (chartViewType !== 'sankey' || !analytics || !transactions) return null;
     const flows = [];
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
-    const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
+
+    // Calculate category totals directly from transactions to include income, expenses, and savings correctly
+    const categoryTotals = {};
+    categories.forEach(cat => {
+      categoryTotals[cat.id] = 0;
+    });
+
+    transactions.forEach(t => {
+      if (t.is_deleted) return;
+      const isoDate = toISODate(t.date);
+      if (isDateInFilter(isoDate, filterPeriod)) {
+        const amt = parseFloat(t.amount) || 0;
+        const catId = t.category_id || categories.find(c => c.name === t.category)?.id;
+        if (catId && categoryTotals[catId] !== undefined) {
+          categoryTotals[catId] += amt;
+        }
+      }
+    });
 
     const groupTotals = {};
     categories.forEach(cat => {
-      const total = showMonthly
-        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[cat.id]?.[m] || 0), 0)
-        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[cat.id]?.[d] || 0), 0);
-      if (total > 0) {
+      const total = categoryTotals[cat.id];
+      if (total > 0 && cat.cashflowGroup) {
         if (!groupTotals[cat.cashflowGroup]) groupTotals[cat.cashflowGroup] = 0;
         groupTotals[cat.cashflowGroup] += total;
       }
@@ -25,6 +40,8 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
     const groupMap = cashflowGroups.reduce((acc, g) => { acc[g.id] = g; return acc; }, {});
     let totalInc = 0;
     let totalExp = 0;
+    let totalSav = 0;
+    
     const sortedGroupTotals = Object.entries(groupTotals)
       .map(([groupId, amount]) => ({ groupId, amount, g: groupMap[groupId] }))
       .filter(item => item.g)
@@ -37,12 +54,26 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
 
     sortedGroupTotals.forEach(item => {
       if (item.g.type === 'income') totalInc += item.amount;
-      else if (item.g.type === 'expense' || item.g.type === 'savings') totalExp += item.amount;
+      else if (item.g.type === 'expense') totalExp += item.amount;
+      else if (item.g.type === 'savings') totalSav += item.amount;
     });
+
+    const netSavings = totalInc - totalExp - totalSav;
+    const isSurplus = totalInc >= (totalExp + totalSav);
+    const deficitAmount = isSurplus ? 0 : (totalExp + totalSav - totalInc);
 
     const labelTotalCash = `Total Cash (${formatMoney(totalInc)})`;
     const labelTotalExp = `Expense (${formatMoney(totalExp)})`;
-    const labelRemaining = `Remaining Balance (${formatMoney(totalInc - totalExp)})`;
+    const labelTotalSav = `Savings (${formatMoney(totalSav)})`;
+    const labelRemaining = `Remaining Balance (${formatMoney(netSavings)})`;
+    const labelOverspent = `Overspent (${formatMoney(deficitAmount)})`;
+
+    // Safe percentage formatting helper to prevent RangeErrors (Infinity.toFixed) on division by zero
+    const formatPercent = (val, total, suffix = '') => {
+      if (!total || total <= 0) return '0.0' + suffix;
+      const pct = (val / total) * 100;
+      return (isFinite(pct) ? pct.toFixed(1) : '0.0') + suffix;
+    };
 
     // 1. Income Groups -> Total Cash
     sortedGroupTotals.filter(item => item.g.type === 'income').forEach(({ groupId, amount, g }) => {
@@ -52,61 +83,67 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
         to: labelTotalCash,
         flow: amount,
         color: g.color,
-        percent: ((amount / totalInc) * 100).toFixed(1) + '% of Total'
+        percent: formatPercent(amount, totalInc, '% of Total')
       });
     });
 
-    // 2. Total Cash -> Total Expense
-    if (totalInc > 0 && totalExp > 0) {
-      const flowToExpense = Math.min(totalInc, totalExp);
+    // 1.1 Overspent -> Total Cash (in case of deficit)
+    if (!isSurplus && deficitAmount > 0) {
       flows.push({
-        from: labelTotalCash,
-        to: labelTotalExp,
-        flow: flowToExpense,
-        color: '#64748B',
-        percent: ((flowToExpense / totalInc) * 100).toFixed(1) + '% of Cash used'
-      });
-    }
-
-    // 3. Total Cash -> Remaining Balance
-    const netSavings = totalInc - totalExp;
-    if (netSavings > 0) {
-      flows.push({
-        from: labelTotalCash,
-        to: labelRemaining,
-        flow: netSavings,
-        color: '#10B981',
-        percent: ((netSavings / totalInc) * 100).toFixed(1) + '% เงินไม่ได้ใช้จ่าย'
-      });
-    } else if (netSavings < 0) {
-      const debtLabel = `Overspent (${formatMoney(Math.abs(netSavings))})`;
-      flows.push({
-        from: debtLabel,
-        to: labelTotalExp,
-        flow: Math.abs(netSavings),
-        color: '#EF4444',
+        from: labelOverspent,
+        to: labelTotalCash,
+        flow: deficitAmount,
+        color: '#da291c', // Rosso Corsa accent for overspent/deficit
         percent: 'Deficit'
       });
     }
 
-    // 4. Total Expense -> Expense/Savings Groups -> Categories
-    sortedGroupTotals.filter(item => item.g.type === 'expense' || item.g.type === 'savings').forEach(({ groupId, amount, g }) => {
+    // 2. Total Cash -> Total Expense
+    if (totalExp > 0) {
+      flows.push({
+        from: labelTotalCash,
+        to: labelTotalExp,
+        flow: totalExp,
+        color: '#64748B', // Slate gray
+        percent: formatPercent(totalExp, totalInc, '% of Cash used')
+      });
+    }
+
+    // 3. Total Cash -> Total Savings
+    if (totalSav > 0) {
+      flows.push({
+        from: labelTotalCash,
+        to: labelTotalSav,
+        flow: totalSav,
+        color: '#10B981', // Emerald green
+        percent: formatPercent(totalSav, totalInc, '% of Cash saved')
+      });
+    }
+
+    // 3.1 Total Cash -> Remaining Balance
+    if (isSurplus && netSavings > 0) {
+      flows.push({
+        from: labelTotalCash,
+        to: labelRemaining,
+        flow: netSavings,
+        color: '#3B82F6', // Royal blue for Remaining Balance
+        percent: formatPercent(netSavings, totalInc, '% เงินคงเหลือสุทธิ')
+      });
+    }
+
+    // 4. Total Expense -> Expense Groups -> Categories
+    sortedGroupTotals.filter(item => item.g.type === 'expense').forEach(({ groupId, amount, g }) => {
       const groupLabel = `${g.name} (${formatMoney(amount)})`;
       flows.push({
         from: labelTotalExp,
         to: groupLabel,
         flow: amount,
         color: g.color,
-        percent: ((amount / totalExp) * 100).toFixed(1) + '% of Outflow'
+        percent: formatPercent(amount, totalExp, '% of Outflow')
       });
 
       const groupCategories = categories.filter(c => c.cashflowGroup === groupId)
-        .map(cat => {
-          const catTotal = showMonthly
-            ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[cat.id]?.[m] || 0), 0)
-            : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[cat.id]?.[d] || 0), 0);
-          return { ...cat, catTotal };
-        })
+        .map(cat => ({ ...cat, catTotal: categoryTotals[cat.id] }))
         .filter(c => c.catTotal > 0)
         .sort((a, b) => {
           if (sankeySortMode === 'index') return (a.orderIndex || 0) - (b.orderIndex || 0);
@@ -120,7 +157,38 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
           to: catLabel,
           flow: cat.catTotal,
           color: cat.color,
-          percent: ((cat.catTotal / amount) * 100).toFixed(1) + `% of ${g.name}`
+          percent: formatPercent(cat.catTotal, amount, `% of ${g.name}`)
+        });
+      });
+    });
+
+    // 4.1 Total Savings -> Savings Groups -> Categories
+    sortedGroupTotals.filter(item => item.g.type === 'savings').forEach(({ groupId, amount, g }) => {
+      const groupLabel = `${g.name} (${formatMoney(amount)})`;
+      flows.push({
+        from: labelTotalSav,
+        to: groupLabel,
+        flow: amount,
+        color: g.color,
+        percent: formatPercent(amount, totalSav, '% of Savings')
+      });
+
+      const groupCategories = categories.filter(c => c.cashflowGroup === groupId)
+        .map(cat => ({ ...cat, catTotal: categoryTotals[cat.id] }))
+        .filter(c => c.catTotal > 0)
+        .sort((a, b) => {
+          if (sankeySortMode === 'index') return (a.orderIndex || 0) - (b.orderIndex || 0);
+          return b.catTotal - a.catTotal;
+        });
+
+      groupCategories.forEach(cat => {
+        const catLabel = `${cat.name} (${formatMoney(cat.catTotal)})`;
+        flows.push({
+          from: groupLabel,
+          to: catLabel,
+          flow: cat.catTotal,
+          color: cat.color,
+          percent: formatPercent(cat.catTotal, amount, `% of ${g.name}`)
         });
       });
     });
@@ -133,18 +201,20 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
     const COL_EXP_GROUP = 3;
     const COL_CAT = 4;
 
-    priority[labelRemaining] = -1;
-    column[labelRemaining] = COL_EXP_MAIN;
-
     priority[labelTotalCash] = 1000;
     column[labelTotalCash] = COL_TOTAL;
 
     priority[labelTotalExp] = 2000;
     column[labelTotalExp] = COL_EXP_MAIN;
 
-    const overspentLabel = `Overspent (${formatMoney(Math.abs(totalInc - totalExp))})`;
-    priority[overspentLabel] = 900; 
-    column[overspentLabel] = COL_INCOME;
+    priority[labelTotalSav] = 1500;
+    column[labelTotalSav] = COL_EXP_MAIN;
+
+    priority[labelRemaining] = -1;
+    column[labelRemaining] = COL_EXP_MAIN;
+
+    priority[labelOverspent] = 900; 
+    column[labelOverspent] = COL_INCOME;
 
     const incomes = sortedGroupTotals.filter(item => item.g.type === 'income');
     incomes.forEach((item, idx) => {
@@ -168,12 +238,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
       column[groupLabel] = COL_EXP_GROUP;
 
       const cats = categories.filter(c => c.cashflowGroup === item.groupId)
-        .map(cat => {
-          const catTotal = showMonthly
-            ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[cat.id]?.[m] || 0), 0)
-            : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[cat.id]?.[d] || 0), 0);
-          return { ...cat, catTotal };
-        })
+        .map(cat => ({ ...cat, catTotal: categoryTotals[cat.id] }))
         .filter(c => c.catTotal > 0)
         .sort((a, b) => {
           if (sankeySortMode === 'index') return (a.orderIndex || 0) - (b.orderIndex || 0);
@@ -205,5 +270,5 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
         nodePadding: 22,
       }]
     };
-  }, [chartViewType, analytics, categories, cashflowGroups, filterPeriod, chartGroupBy, dm, sankeySortMode]);
+  }, [chartViewType, analytics, transactions, categories, cashflowGroups, filterPeriod, sankeySortMode]);
 }

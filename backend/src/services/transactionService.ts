@@ -240,6 +240,8 @@ class TransactionService {
       db.exec("INSERT INTO transactions_fts(rowid, id, description) SELECT rowid, id, description FROM transactions WHERE is_deleted = 0");
     }
 
+    const searchToken = query.replace(/"/g, '""');
+
     const rows = db.prepare(`
       SELECT 
         t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
@@ -250,7 +252,7 @@ class TransactionService {
       JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
       WHERE transactions_fts MATCH ? AND t.is_deleted = 0
       ORDER BY rank
-    `).all(query);
+    `).all(`"${searchToken}"*`);
 
     return rows;
   }

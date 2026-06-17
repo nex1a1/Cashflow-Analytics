@@ -1,6 +1,7 @@
 // src/hooks/useFilters.js
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
+import { transactionService } from '../services/api';
 
 export default function useFilters({ transactions, categories, masterPeriods = [] }) {
   // ── Period ───────────────────────────────────────────────────
@@ -28,6 +29,32 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     const handler = setTimeout(() => setDebouncedSearch(searchQuery), 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  // State to hold FTS5 search results from database
+  const [searchResults, setSearchResults] = useState([]);
+
+  // Fetch FTS5 search results from backend when debouncedSearch is active
+  useEffect(() => {
+    if (!debouncedSearch.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    let active = true;
+    transactionService.search(debouncedSearch.trim())
+      .then(results => {
+        if (active) {
+          setSearchResults(results);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to search using FTS5:', err);
+      });
+      
+    return () => {
+      active = false;
+    };
+  }, [debouncedSearch]);
 
   // reset filters when period changes
   useEffect(() => { 
@@ -121,7 +148,9 @@ export default function useFilters({ transactions, categories, masterPeriods = [
 
   // ── displayTransactions: filtered list สำหรับ LedgerView ────
   const displayTransactions = useMemo(() => {
-    let filtered = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
+    // Start with FTS5 search results if search query is active, otherwise use all transactions
+    const baseTransactions = debouncedSearch.trim() ? searchResults : transactions;
+    let filtered = baseTransactions.filter(t => isDateInFilter(t.date, filterPeriod));
 
     // Helper: Find accurate category object even during optimistic updates
     const getCat = (t) => categories.find(c => c.id === t.category_id) || categories.find(c => c.name === t.category);
@@ -183,17 +212,8 @@ export default function useFilters({ transactions, categories, masterPeriods = [
       });
     }
 
-    // 7. Debounced Search (Description & Category)
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase();
-      filtered = filtered.filter(t => {
-        const catName = getCat(t)?.name || t.category || '';
-        return (t.description || '').toLowerCase().includes(q) || catName.toLowerCase().includes(q);
-      });
-    }
-
     return filtered;
-  }, [transactions, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, allocationFilter, minAmount, maxAmount, dayTypeFilter, categories]);
+  }, [transactions, searchResults, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, allocationFilter, minAmount, maxAmount, dayTypeFilter, categories]);
 
   const isFilterActive = searchQuery || 
     advancedFilterDate !== 'ALL' || 

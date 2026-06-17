@@ -20,12 +20,4 @@ export const getDashboardAnalytics = (req: Request, res: Response) => {
   }
 };
 
-export const getSankeyFlow = (req: Request, res: Response) => {
-  const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
-  try {
-    const flows = analyticsService.getSankeyFlow(startDate, endDate);
-    res.json(flows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-};
+
