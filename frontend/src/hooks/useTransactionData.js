@@ -105,7 +105,8 @@ export default function useTransactionData({
           setCategories(categories.map(c => ({
             id: c.id, name: c.name, icon: c.icon, color: c.color,
             cashflowGroup: c.cashflow_group_id,
-            type: c.group_type, order_index: c.order_index || 0
+            type: c.group_type, allocation_type: c.allocation_type,
+            order_index: c.order_index || 0
           })));
         }
       } catch (err) { console.error('Categories load failed'); }

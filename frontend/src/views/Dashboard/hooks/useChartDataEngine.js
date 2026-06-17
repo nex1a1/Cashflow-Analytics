@@ -7,7 +7,7 @@ const makeCumulative = (dataArr) => {
 };
 
 export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, chartGroupMode, hiddenDatasets }) {
-  const { analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, chartGroupBy, dm } = useDashboardContext();
+  const { analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy, dm } = useDashboardContext();
 
   const categoriesWithData = useMemo(() => {
     if (!analytics) return new Set();
@@ -33,8 +33,8 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
     if (isBreakdown) {
       const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
       let catsToRender = activeCats.includes('ALL')
-        ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed))
-        : categories.filter(c => (activeCats.includes(c.name) || activeCats.includes(c.id)) && categoriesWithData.has(c.name) && (!hideFixedExpenses || !c.isFixed));
+        ? categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name))
+        : categories.filter(c => (activeCats.includes(c.name) || activeCats.includes(c.id)) && categoriesWithData.has(c.name));
 
       const datasets = catsToRender.map(catObj => {
         const catName = catObj.name;
@@ -182,7 +182,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
     }
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, dm, sankeyData, hiddenDatasets]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, dm, sankeyData, hiddenDatasets]);
 
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];

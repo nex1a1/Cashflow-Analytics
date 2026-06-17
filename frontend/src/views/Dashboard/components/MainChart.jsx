@@ -144,7 +144,7 @@ const MainChartFilterMenu = ({
       </button>
 
       {showCatMenu && (
-        <div className={`absolute right-0 top-full mt-2 w-[340px] max-w-[90vw] rounded-none shadow-2xl border z-45 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+        <div className={`absolute right-0 top-full mt-2 w-[520px] max-w-[90vw] rounded-none shadow-2xl border z-45 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
           'bg-[#181818] border-[#303030] shadow-black/60'
         }`}>
           {/* Header */}
@@ -169,7 +169,7 @@ const MainChartFilterMenu = ({
                   }
                 };
                 const selectAllVariable = () => {
-                  const variableCats = categories.filter(c => c.type === 'expense' && !c.isFixed && categoriesWithData.has(c.name)).map(c => c.name);
+                  const variableCats = categories.filter(c => c.type === 'expense' && c.allocation_type !== 'need' && categoriesWithData.has(c.name)).map(c => c.name);
                   setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
                 };
 
@@ -224,7 +224,7 @@ const MainChartFilterMenu = ({
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-1.5 mt-1 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="flex flex-wrap gap-1.5 mt-1">
                       {filteredCategories.length > 0 ? (
                         filteredCategories.map(c => {
                           const isActive = activeCats.includes(c.name);
@@ -324,13 +324,11 @@ MainChartLegend.propTypes = {
   dm: PropTypes.bool.isRequired
 };
 
-/**
- * MainChart - The central analytical engine for visual cashflow tracking.
- */
 export default function MainChart() {
   const { 
     analytics, categories, filterPeriod, 
     hideFixedExpenses, setHideFixedExpenses,
+    hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
     dm,
@@ -400,7 +398,7 @@ export default function MainChart() {
               {/* Divider */}
               <span className={`w-px h-4 shrink-0 ${'bg-[#303030]'}`} />
               
-              <div className="grid grid-cols-5 gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0 w-full xl:w-auto">
+              <div className="grid grid-cols-6 gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0 w-auto">
 
                 {/* 1. Breakdown Mode */}
                 <button
@@ -552,6 +550,34 @@ export default function MainChart() {
                   </div>
                 </button>
 
+                {/* 6. Hide WANT Mode */}
+                <button
+                  disabled={showSkeleton}
+                  onClick={() => setHideWantExpenses(prev => !prev)}
+                  title="ซ่อนค่าใช้จ่ายผันแปรทั่วไป (Lifestyle Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายคงที่"
+                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                    hideWantExpenses
+                      ? 'bg-blue-600/20 text-blue-300 shadow-sm'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+                  }`}
+                >
+                  <EyeOff className={`w-3.5 h-3.5 ${hideWantExpenses ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <span>ซ่อน WANT</span>
+                  
+                  {/* Tactical Micro-Switch */}
+                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
+                    hideWantExpenses 
+                      ? 'bg-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
+                      : 'bg-[#181818] border border-[#303030]'
+                  }`}>
+                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
+                      hideWantExpenses 
+                        ? 'bg-white translate-x-3.5 shadow-md' 
+                        : 'bg-[#303030]'
+                    }`} />
+                  </div>
+                </button>
+
               </div>
             </div>
           ) : (
@@ -560,7 +586,7 @@ export default function MainChart() {
 
           {/* Right controls */}
           {chartViewType !== 'sankey' && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap ml-auto">
                {chartViewType === 'line' && (
                 <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]'}`}>
                   <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${!isSmoothLine ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}>

@@ -14,6 +14,7 @@ export default function useAnalytics({
   cashflowGroups = [], 
   filterPeriod,
   hideFixedExpenses,
+  hideWantExpenses,
   dashboardCategory = 'ALL', 
   chartGroupBy = 'monthly',
   topXLimit = 7,
@@ -130,6 +131,7 @@ export default function useAnalytics({
       // Smart Allocation Type: Transaction-level > Group default
       const aType = t.allocation_type || groupObj.allocation_type || (isInc ? 'savings' : 'want');
       const isNeed = aType === 'need';
+      const isWant = aType === 'want';
 
       // a) Global Stats (for Heatmap)
       if (isExp) {
@@ -202,13 +204,14 @@ export default function useAnalytics({
 
           // Apply UI Filters for Chart/Proportion Breakdown
           const passFixedFilter = !hideFixedExpenses || !isNeed;
+          const passWantFilter = !hideWantExpenses || !isWant;
           const passCategoryFilter = activeFilters.includes('ALL') || 
                                     (activeFilters.includes('FIXED') && isNeed) || 
                                     (activeFilters.includes('VARIABLE') && !isNeed) || 
                                     activeFilters.includes(catId) || 
                                     activeFilters.includes(catObj.name);
 
-          if (passFixedFilter && passCategoryFilter) {
+          if (passFixedFilter && passWantFilter && passCategoryFilter) {
             dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
             monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
             chartTotal += amt;
@@ -216,6 +219,12 @@ export default function useAnalytics({
 
             // Per-Category Breakdown (Filtered)
             catMapData[catId] = (catMapData[catId] || 0) + amt;
+
+            // Per-Category Time Breakdown (Filtered)
+            if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
+            dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
+            if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
+            monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
 
             // Allocation Maps (Filtered)
             allocTotals[aType] = (allocTotals[aType] || 0) + amt;
@@ -239,11 +248,6 @@ export default function useAnalytics({
           }
         }
 
-        // Per-Category Time Breakdown
-        if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
-        dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
-        if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
-        monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
 
         // Weekend/Weekday Logic
         if (isExp) {
@@ -279,33 +283,11 @@ export default function useAnalytics({
     const savingsRate = totals.income > 0 ? parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
 
     // ─── CATEGORY BREAKDOWN ───────────────────────────────────────────────────
-    const sortedCats = useBackendTotals && summaryData.categories 
-      ? summaryData.categories
-          .filter(c => {
-            if (c.type !== 'expense') return false;
-            const catMeta = catMapLookup[c.id] || {};
-            const isNeedCat = catMeta.allocation_type === 'need';
-            if (hideFixedExpenses && isNeedCat) return false;
-            
-            if (activeFilters.includes('ALL')) return true;
-            if (activeFilters.includes('FIXED') && isNeedCat) return true;
-            if (activeFilters.includes('VARIABLE') && !isNeedCat) return true;
-            return activeFilters.includes(c.id) || activeFilters.includes(c.name) || activeFilters.includes(catMeta.name);
-          })
-          .map(c => {
-            const catMeta = catMapLookup[c.id] || {};
-            return {
-              ...c,
-              percentage: chartTotal > 0 ? ((c.amount / chartTotal) * 100).toFixed(1) : 0,
-              avgPerMonth: c.amount / (summaryData.monthly?.length || 1),
-              order_index: catMeta.order_index || 999
-            };
-          })
-      : Object.entries(catMapData)
+    const sortedCats = Object.entries(catMapData)
           .filter(([catId]) => {
             const catObj = catMapLookup[catId] || {};
             const isNeedCat = catObj.allocation_type === 'need';
-            if (hideFixedExpenses && isNeedCat) return false;
+
             
             if (activeFilters.includes('ALL')) return true;
             if (activeFilters.includes('FIXED') && isNeedCat) return true;
@@ -437,7 +419,7 @@ export default function useAnalytics({
 
     const { chartData: mainChartData, chartType: mainChartType } = generateMainChartData({
       chartGroupBy, filterPeriod, sortedMonthsKeys, cashflowMap, 
-      datesInPeriod, dailyAllMap, hideFixedExpenses, isDarkMode,
+      datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
       dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap: catMapLookup
     });
 
@@ -518,7 +500,7 @@ export default function useAnalytics({
       sortedGroups, groupChartData,
       sortedAllocation, allocationChartData
     };
-  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
+  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
 
   return analytics;
 }

@@ -43,6 +43,7 @@ export function useAppController() {
 
   // 4. View Preferences
   const [hideFixedExpenses, setHideFixedExpenses] = useState(false);
+  const [hideWantExpenses, setHideWantExpenses] = useState(false);
   const [dashboardCategory, setDashboardCategory] = useState(['ALL']);
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
@@ -115,7 +116,7 @@ export function useAppController() {
   const analytics = useAnalytics({
     transactions: validAnalyticsTxs, categories, filterPeriod,
     cashflowGroups, 
-    hideFixedExpenses, dashboardCategory, chartGroupBy,
+    hideFixedExpenses, hideWantExpenses, dashboardCategory, chartGroupBy,
     topXLimit, dayTypes, dayTypeConfig, isDarkMode,
     summaryData
   });
@@ -305,6 +306,7 @@ export function useAppController() {
     summaryData,
     analytics,
     hideFixedExpenses, setHideFixedExpenses,
+    hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
     topXLimit, setTopXLimit,

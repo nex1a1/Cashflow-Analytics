@@ -48,6 +48,7 @@ export default function MainLayout({ controller }) {
     analytics,
     summaryData,
     hideFixedExpenses, setHideFixedExpenses,
+    hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
     topXLimit, setTopXLimit,
@@ -127,6 +128,7 @@ export default function MainLayout({ controller }) {
                   filterPeriod={filterPeriod}
                   getFilterLabel={getFilterLabel}
                   hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
+                  hideWantExpenses={hideWantExpenses} setHideWantExpenses={setHideWantExpenses}
                   dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
                   chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
                   topXLimit={topXLimit} setTopXLimit={setTopXLimit}

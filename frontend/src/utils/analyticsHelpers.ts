@@ -67,7 +67,7 @@ export const generateCashflowMap = (
 
   filteredTx.forEach(item => {
     const amt = parseFloat(item.amount) || 0;
-    const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, isFixed: false };
+    const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, allocation_type: 'want' };
     
     // Determine type from catMap or lookup group
     const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
@@ -84,7 +84,7 @@ export const generateCashflowMap = (
     const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
 
     const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
-    const isFixed = catObj.isFixed || false;
+    const isFixed = (item.allocation_type || groupObj.allocation_type || catObj.allocation_type) === 'need';
 
     if (!item.date) return;
     let y: string, m: string, d: string;
@@ -160,7 +160,7 @@ export const calculateCategoryStats = (
   const chartTx = filteredTx.filter(t => {
     const catObj = catMap[t.category_id] || catMap[t.category] || { type: 'expense' };
     if (catObj.type === 'income') return false;
-    if (hideFixedExpenses && catObj.isFixed) return false;
+    if (hideFixedExpenses && (t.allocation_type || catObj.allocation_type) === 'need') return false;
     return true;
   });
 
@@ -211,6 +211,7 @@ interface MainChartDataParams {
   datesInPeriod: string[];
   dailyAllMap: Record<string, number>;
   hideFixedExpenses: boolean;
+  hideWantExpenses: boolean;
   isDarkMode: boolean;
   dashboardCategory: string | string[];
   monthlyAllMap: Record<string, number>;
@@ -224,7 +225,7 @@ interface MainChartDataParams {
  */
 export const generateMainChartData = ({
   chartGroupBy, filterPeriod, sortedMonthsKeys, cashflowMap, 
-  datesInPeriod, dailyAllMap, hideFixedExpenses, isDarkMode,
+  datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
   dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap
 }: MainChartDataParams) => {
   const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
@@ -247,7 +248,7 @@ export const generateMainChartData = ({
   let chartType = 'line';
   let chartData: any = null;
 
-  if (showMonthly && isOnlyAll && !hideFixedExpenses) {
+  if (showMonthly && isOnlyAll && !hideFixedExpenses && !hideWantExpenses) {
     chartType = 'combo';
     chartData = {
       labels: xLabels,
@@ -280,9 +281,9 @@ export const generateMainChartData = ({
           borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
         },
         {
-          type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : 'รายจ่ายจริง', data: datesInPeriod.map(d => dailyAllMap[d] || 0),
-          backgroundColor: hideFixedExpenses ? ('rgba(216,26,33,0.6)') : ('rgba(239,68,68,0.6)'),
-          borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444', borderWidth: 2, borderRadius: 0, order: 3
+          type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : (hideWantExpenses ? 'รายจ่ายจำเป็น' : 'รายจ่ายจริง'), data: datesInPeriod.map(d => dailyAllMap[d] || 0),
+          backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.6)' : (hideWantExpenses ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'),
+          borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'), borderWidth: 2, borderRadius: 0, order: 3
         }
       ]
     };
@@ -293,10 +294,10 @@ export const generateMainChartData = ({
     activeCats.forEach(catName => {
       if (catName === 'ALL') {
         datasets.push({
-          label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)',
+          label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : (hideWantExpenses ? 'รายจ่ายจำเป็น (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)'),
           data: showMonthly ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0) : datesInPeriod.map(d => dailyAllMap[d] || 0),
-          borderColor: hideFixedExpenses ? '#D81A21' : '#EF4444',
-          backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : 'rgba(239,68,68,0.1)',
+          borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'),
+          backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : (hideWantExpenses ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)'),
           borderWidth: activeCats.length > 1 ? 3 : 2, borderDash: activeCats.length > 1 ? [5, 5] : [], fill: activeCats.length === 1,
           tension: 0.3, pointRadius: isSingleMonthView ? 3 : 0, pointHitRadius: 10,
         });

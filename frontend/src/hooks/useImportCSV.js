@@ -106,7 +106,7 @@ export default function useImportCSV({
             color: isIncome ? '#10B981' : '#64748B',
             type: isIncome ? 'income' : 'expense',
             cashflowGroup: isIncome ? 'bonus' : 'variable',
-            isFixed: false,
+            allocation_type: isIncome ? 'savings' : 'want',
           };
           updatedCategories.push(found);
           isCategoryChanged = true;

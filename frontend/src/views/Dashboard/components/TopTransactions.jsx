@@ -134,6 +134,7 @@ export default function TopTransactions() {
     filterPeriod, 
     dashboardCategory, 
     hideFixedExpenses, 
+    hideWantExpenses,
     categories, 
     topXLimit, 
     setTopXLimit,
@@ -183,7 +184,17 @@ export default function TopTransactions() {
     if (hideFixedExpenses) {
       filtered = filtered.filter(tx => {
         const catDef = getCat(tx);
-        return catDef ? !catDef.isFixed : true;
+        const aType = tx.allocation_type || (catDef ? catDef.allocation_type : null) || 'want';
+        return aType !== 'need';
+      });
+    }
+
+    // Want/Lifestyle Expenses Filter
+    if (hideWantExpenses) {
+      filtered = filtered.filter(tx => {
+        const catDef = getCat(tx);
+        const aType = tx.allocation_type || (catDef ? catDef.allocation_type : null) || 'want';
+        return aType !== 'want';
       });
     }
 
@@ -209,7 +220,7 @@ export default function TopTransactions() {
     const sum = results.reduce((acc, tx) => acc + Math.abs(tx.amount), 0);
 
     return { displayTransactions: results, maxAmount: max, topSum: sum };
-  }, [transactions, categories, hideFixedExpenses, dashboardCategory, topXLimit, filterPeriod]);
+  }, [transactions, categories, hideFixedExpenses, hideWantExpenses, dashboardCategory, topXLimit, filterPeriod]);
 
   return (
     <div className={cardStyles}>
