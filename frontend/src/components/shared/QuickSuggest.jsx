@@ -30,8 +30,8 @@ export default function QuickSuggest({
   const [amountFilter, setAmountFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('frequent');
   
-  // Default limitCount to 10
-  const [limitCount, setLimitCount] = useState('10');
+  // Default limitCount to 12
+  const [limitCount, setLimitCount] = useState('12');
 
   // Mouse hover states for dynamic category coloring and list-item glowing
   const [hoveredChipId, setHoveredChipId] = useState(null);
@@ -44,7 +44,7 @@ export default function QuickSuggest({
     setAllocationFilter('ALL');
     setAmountFilter('ALL');
     setSortBy('frequent');
-    setLimitCount('10');
+    setLimitCount('12');
     setShowFilterMenu(false);
   }, [formType]);
 
@@ -67,7 +67,7 @@ export default function QuickSuggest({
     if (allocationFilter !== 'ALL' && formType === 'expense') count++;
     if (amountFilter !== 'ALL') count++;
     if (sortBy !== 'frequent') count++;
-    if (limitCount !== '10') count++;
+    if (limitCount !== '12') count++;
     return count;
   }, [activeCatFilter, allocationFilter, amountFilter, sortBy, limitCount, formType]);
 
@@ -154,16 +154,16 @@ export default function QuickSuggest({
     setAllocationFilter('ALL');
     setAmountFilter('ALL');
     setSortBy('frequent');
-    setLimitCount('10');
+    setLimitCount('12');
   };
 
   const tokens = {
     input: "w-full px-3 py-2 text-sm border rounded-sm outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
-    select: "w-full px-2 py-1 text-xs border rounded-sm outline-none bg-[#181818] border-[#3e3e3e] text-slate-200 focus:border-[#da291c] focus:ring-[#da291c]/30 cursor-pointer",
+    select: "w-full px-2.5 py-1.5 text-xs border rounded-sm outline-none bg-[#181818] border-[#3e3e3e] text-slate-200 focus:border-[#da291c] focus:ring-[#da291c]/30 cursor-pointer",
     searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
-    label: "block text-[10px] font-black uppercase text-slate-400 tracking-wide mb-1",
-    filterTab: "py-1 text-[10px] font-bold text-center border border-transparent transition-all duration-75 hover:bg-[#303030]/20 hover:text-white cursor-pointer rounded-none",
-    filterTabActive: "py-1 text-[10px] font-black text-center border transition-all duration-75 cursor-pointer rounded-none",
+    label: "block text-[11px] font-black uppercase text-slate-400 tracking-wide mb-1.5",
+    filterTab: "py-1.5 text-xs font-bold text-center border border-transparent transition-all duration-75 hover:bg-[#303030]/20 hover:text-white cursor-pointer rounded-none",
+    filterTabActive: "py-1.5 text-xs font-black text-center border transition-all duration-75 cursor-pointer rounded-none",
   };
 
   return (
@@ -222,7 +222,7 @@ export default function QuickSuggest({
 
         {/* Dropdown Filter Panel (MainChart style) */}
         {showFilterMenu && (
-          <div className="absolute right-0 top-full mt-2 w-[320px] max-w-[90vw] rounded-none shadow-2xl border z-[100] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 bg-[#1c1c1c] border-[#3e3e3e] shadow-black/80 p-4 space-y-3">
+          <div className="absolute left-0 right-0 top-full mt-2 rounded-none shadow-2xl border z-[100] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 bg-[#1c1c1c] border-[#3e3e3e] shadow-black/80 p-4 space-y-3">
             {/* Popover Header */}
             <div className="pb-2 border-b border-[#303030] flex items-center gap-1.5 text-slate-200">
               <SlidersHorizontal className="w-3.5 h-3.5 text-[#da291c]" />
@@ -232,11 +232,11 @@ export default function QuickSuggest({
             {/* Category Quick Chips */}
             <div>
               <span className={tokens.label}>หมวดหมู่</span>
-              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar pr-1">
+              <div className="flex flex-wrap gap-1 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                 <button
                   type="button"
                   onClick={() => setActiveCatFilter('ALL')}
-                  className={`px-2 py-0.5 text-[10px] font-bold border transition-all duration-75 ${
+                  className={`px-2.5 py-1 text-[11px] font-bold border transition-all duration-75 ${
                     activeCatFilter === 'ALL'
                       ? 'border-[#da291c] bg-[#da291c]/10 text-white font-extrabold'
                       : 'border-[#3e3e3e] bg-[#181818] text-slate-400 hover:text-slate-200 hover:border-[#da291c]/50 hover:bg-[#da291c]/5'
@@ -261,7 +261,7 @@ export default function QuickSuggest({
                           : (isHovered ? `rgba(${hexToRgb(c.color)}, 0.05)` : '#181818'),
                         color: isActive ? '#fff' : (isHovered ? '#fff' : 'rgba(203, 213, 225, 0.8)')
                       }}
-                      className="px-2 py-0.5 text-[10px] font-bold border transition-all duration-75 flex items-center gap-1 rounded-none cursor-pointer"
+                      className="px-2.5 py-1 text-[11px] font-bold border transition-all duration-75 flex items-center gap-1 rounded-none cursor-pointer"
                     >
                       <span>{c.icon}</span>
                       <span>{c.name}</span>
@@ -348,7 +348,7 @@ export default function QuickSuggest({
                   onChange={e => setLimitCount(e.target.value)}
                   className={tokens.select}
                 >
-                  <option value="10">10 รายการ</option>
+                  <option value="12">12 รายการ</option>
                   <option value="25">25 รายการ</option>
                   <option value="50">50 รายการ</option>
                   <option value="100">100 รายการ</option>
@@ -362,7 +362,7 @@ export default function QuickSuggest({
               <button
                 type="button"
                 onClick={handleResetAll}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase transition-all duration-75 rounded-none border border-[#3e3e3e] bg-[#1c1c1c] text-slate-400 hover:text-white hover:bg-[#303030]/50"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase transition-all duration-75 rounded-none border border-[#3e3e3e] bg-[#1c1c1c] text-slate-400 hover:text-white hover:bg-[#303030]/50"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-red-500" />
                 <span>รีเซ็ตตัวกรองทั้งหมด</span>
