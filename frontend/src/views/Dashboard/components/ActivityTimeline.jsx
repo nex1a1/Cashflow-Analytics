@@ -3,9 +3,14 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  CalendarClock, CalendarDays, Flame, Info 
+  CalendarClock, CalendarDays, Flame, Info, TableProperties 
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
+
+const THAI_MONTHS_FULL = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
 
 // --- Constants ---
 const MONTH_LABELS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -186,7 +191,7 @@ const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode,
  */
 const TimelineDayCell = React.memo(({
   dateStr, isToday, viewMode, dm, dayType, amount, globalMaxThreshold,
-  onMouseEnter, onMouseLeave
+  onMouseEnter, onMouseLeave, className = "w-3.5 h-3.5"
 }) => {
   const level = getExpenseLevel(amount, globalMaxThreshold);
   const backgroundColor = viewMode === 'heatmap' 
@@ -205,7 +210,7 @@ const TimelineDayCell = React.memo(({
       role="gridcell"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
-      className={`w-3.5 h-3.5 rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
+      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
         isToday 
           ? 'ring ring-[#da291c] z-10' 
           : 'opacity-90 hover:opacity-100 hover:border-[#da291c] hover:z-10'
@@ -225,11 +230,50 @@ const TimelineDayCell = React.memo(({
 TimelineDayCell.displayName = 'TimelineDayCell';
 
 /**
+ * INTERNAL COMPONENT: TimelineLayoutToggle
+ */
+const TimelineLayoutToggle = ({ layoutMode, setLayoutMode }) => {
+  const layoutButtons = [
+    { id: 'github', label: 'GitHub แนวนอน', icon: TableProperties },
+    { id: 'calendar', label: 'ปฏิทินทั่วไป', icon: CalendarDays }
+  ];
+
+  return (
+    <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
+      {layoutButtons.map((btn) => (
+        <button
+          key={btn.id}
+          type="button"
+          aria-pressed={layoutMode === btn.id}
+          onClick={() => setLayoutMode(btn.id)}
+          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
+            layoutMode === btn.id 
+              ? 'text-slate-100' 
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <btn.icon className="w-3.5 h-3.5" /> 
+          <span>{btn.label}</span>
+          {layoutMode === btn.id && (
+            <motion.div
+              layoutId="activeLayoutTab"
+              className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+/**
  * Main Activity Timeline Component
  */
 export default function ActivityTimeline() {
   const { analytics, dayTypeConfig, dayTypes, dm, showSkeleton } = useDashboardContext();
   const [viewMode, setViewMode] = useState('dayType');
+  const [layoutMode, setLayoutMode] = useState('github');
   
   const [tooltip, setTooltip] = useState({
     active: false,
@@ -243,6 +287,7 @@ export default function ActivityTimeline() {
   const datesInPeriod = useMemo(() => analytics.datesInPeriod || [], [analytics.datesInPeriod]);
   const dailyExpenses = useMemo(() => analytics.dailyAllMap || {}, [analytics.dailyAllMap]);
   const globalMaxThreshold = analytics.globalMaxThreshold || 100;
+  const datesInPeriodSet = useMemo(() => new Set(datesInPeriod), [datesInPeriod]);
 
   const weeks = useMemo(() => {
     if (datesInPeriod.length === 0) return [];
@@ -262,6 +307,50 @@ export default function ActivityTimeline() {
       }
     });
     return result;
+  }, [datesInPeriod]);
+
+  const calendarMonths = useMemo(() => {
+    if (datesInPeriod.length === 0) return [];
+    
+    const groups = {};
+    datesInPeriod.forEach(dateStr => {
+      const parts = dateStr.split('-');
+      if (parts.length < 2) return;
+      const key = `${parts[0]}-${parts[1]}`;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(dateStr);
+    });
+
+    const monthKeys = Object.keys(groups).sort();
+
+    return monthKeys.map(key => {
+      const [yearStr, monthStr] = key.split('-');
+      const year = parseInt(yearStr, 10);
+      const monthIdx = parseInt(monthStr, 10) - 1;
+      
+      const dates = groups[key];
+      const firstDateObj = new Date(year, monthIdx, 1);
+      const startDayOfWeek = firstDateObj.getDay();
+      const totalDays = new Date(year, monthIdx + 1, 0).getDate();
+
+      const gridCells = [];
+      for (let i = 0; i < startDayOfWeek; i++) {
+        gridCells.push(null);
+      }
+      for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+        const dateStr = `${yearStr}-${monthStr}-${dayNum.toString().padStart(2, '0')}`;
+        gridCells.push(dateStr);
+      }
+
+      return {
+        key,
+        year,
+        monthIdx,
+        gridCells
+      };
+    });
   }, [datesInPeriod]);
 
   const getDayDetails = useCallback((dateStr) => {
@@ -289,8 +378,6 @@ export default function ActivityTimeline() {
 
   // Styles
   const cardStyles = `rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]`;
-  const headerTextStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
-  const dividerStyles = `border-b mb-3 pb-3 border-[#303030]/60`;
 
   if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
 
@@ -307,6 +394,9 @@ export default function ActivityTimeline() {
           <div className="ml-2">
             <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
           </div>
+        </div>
+        <div className="flex items-center">
+          <TimelineLayoutToggle layoutMode={layoutMode} setLayoutMode={setLayoutMode} />
         </div>
       </div>
 
@@ -342,15 +432,72 @@ export default function ActivityTimeline() {
         </div>
 
         {/* Timeline Grid */}
-        <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e]">
+        <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] min-h-[164px] flex flex-col justify-center">
           {showSkeleton ? (
             <div className="py-12 px-3">
                <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
             </div>
           ) : datesInPeriod.length === 0 ? (
             <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
+          ) : layoutMode === 'calendar' ? (
+            <div className="p-2 w-full flex items-center justify-center">
+              <div className="flex flex-wrap gap-1.5 justify-center w-full">
+                {calendarMonths.map(month => (
+                  <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] p-1 pb-1.5 flex flex-col items-center w-[126px] shrink-0 select-none">
+                    {/* Month Title */}
+                    <div className="text-[11px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-0.5 w-full text-center flex items-center justify-center gap-0.5">
+                      <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
+                      <span>{MONTH_LABELS[month.monthIdx]} {month.year.toString().slice(-2)}</span>
+                    </div>
+
+                    {/* Week Day Header */}
+                    <div className="grid grid-cols-7 gap-[1px] mb-1 w-[118px]">
+                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
+                        <div key={i} className={`w-4 text-center text-[7.5px] font-black ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Days Grid */}
+                    <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[118px]">
+                      {month.gridCells.map((dateStr, idx) => {
+                        if (!dateStr) {
+                          return <div key={`empty-${idx}`} className="w-4 h-4 bg-transparent" />;
+                        }
+
+                        const inPeriod = datesInPeriodSet.has(dateStr);
+                        if (!inPeriod) {
+                          return <div key={dateStr} className="w-4 h-4 bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
+                        }
+
+                        const isToday = dateStr === new Date().toISOString().split('T')[0];
+                        const { dayType, amount } = getDayDetails(dateStr);
+
+                        return (
+                          <div key={dateStr} className="w-4 h-4 flex items-center justify-center">
+                            <TimelineDayCell
+                              dateStr={dateStr}
+                              isToday={isToday}
+                              viewMode={viewMode}
+                              dm={dm}
+                              dayType={dayType}
+                              amount={amount}
+                              globalMaxThreshold={globalMaxThreshold}
+                              onMouseEnter={handleMouseEnter}
+                              onMouseLeave={handleMouseLeave}
+                              className="w-full h-full"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
-            <div className="overflow-x-auto pb-4 pt-10 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+            <div className="overflow-x-auto pb-4 pt-6 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
               <div className="flex w-max gap-x-[1px] mx-auto">
                 
                 {/* Day Labels (Sticky) */}
