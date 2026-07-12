@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,10 +49,23 @@ export default function BatchForm({
   const formDate = watch('date');
   const allocationType = watch('allocation_type');
 
+  const isApplyingSuggestionRef = useRef(false);
+
+  const customSetValue = useCallback((name, value, options) => {
+    if (name === 'categoryId' && options?.skipAllocationDefault) {
+      isApplyingSuggestionRef.current = true;
+    }
+    setValue(name, value, options);
+  }, [setValue]);
+
   const selectedCatId = watch('categoryId');
   useEffect(() => {
     if (formType === 'income') {
       setValue('allocation_type', null);
+      return;
+    }
+    if (isApplyingSuggestionRef.current) {
+      isApplyingSuggestionRef.current = false;
       return;
     }
     const cat = categories.find(c => c.id === selectedCatId);
@@ -63,9 +76,9 @@ export default function BatchForm({
 
   useEffect(() => {
     if (externalFormSetter) {
-      externalFormSetter({ setValue, setFocus });
+      externalFormSetter({ setValue: customSetValue, setFocus });
     }
-  }, [externalFormSetter, setValue, setFocus]);
+  }, [externalFormSetter, customSetValue, setFocus]);
 
   useEffect(() => {
     if (onTypeChange) onTypeChange(formType);

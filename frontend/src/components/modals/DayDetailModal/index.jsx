@@ -110,7 +110,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   const applySuggestion = (s) => {
     if (formMethodsRef.current) {
       const { setValue, setFocus } = formMethodsRef.current;
-      setValue('categoryId', s.categoryId);
+      setValue('categoryId', s.categoryId, { skipAllocationDefault: !!s.allocation_type });
       setValue('description', s.description || '');
       setValue('amount', Number(s.amount), { shouldValidate: true });
       if (s.allocation_type) {

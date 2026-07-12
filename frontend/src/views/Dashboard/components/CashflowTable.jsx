@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
 
@@ -13,7 +13,8 @@ const CashflowTableHeader = React.memo(({
   activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
   getActiveCatsForGroup, dm, thinBorder, boundaryBorder, boxBorder,
   handleMouseEnter, handleMouseLeave,
-  hoveredCol, setHoveredCol
+  hoveredCol, setHoveredCol,
+  excludedGroups, toggleGroupExclusion
 }) => {
   const getHighlightBg = (group, isHovered) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
@@ -104,6 +105,7 @@ const CashflowTableHeader = React.memo(({
           const isLastIncome = idx === activeIncomeGroups.length - 1;
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
+          const isExcluded = excludedGroups.has(g.id);
 
           return (
             <React.Fragment key={g.id}>
@@ -127,10 +129,28 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c]`} 
-                style={{ color: g.color || ('#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
+                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40' : ''}`} 
+                style={{ color: isExcluded ? undefined : (g.color || '#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
-                {g.name} {isExpanded ? '«' : '»'}
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className={isExcluded ? 'line-through text-neutral-500' : ''}>
+                    {g.name} {isExpanded ? '«' : '»'}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroupExclusion(g.id);
+                    }}
+                    className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                      isExcluded 
+                        ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]' 
+                        : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
+                    }`}
+                    title={isExcluded ? "นำกลับมารวมคำนวณ" : "ยกเว้นกลุ่มนี้จากการคำนวณ"}
+                  >
+                    {isExcluded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                </div>
               </th>
               {isExpanded && cats.map((c, cIdx) => {
                 const catColId = `c-${c.id}`;
@@ -140,8 +160,8 @@ const CashflowTableHeader = React.memo(({
                     key={c.id} 
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65`} 
-                    style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isExcluded ? 'opacity-30 line-through' : ''}`} 
+                    style={{ color: isExcluded ? '#64748B' : c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
                   >
                     {c.name}
                   </th>
@@ -156,6 +176,7 @@ const CashflowTableHeader = React.memo(({
           const cats = getActiveCatsForGroup(g.id);
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
+          const isExcluded = excludedGroups.has(g.id);
 
           return (
             <React.Fragment key={g.id}>
@@ -179,10 +200,28 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c]`} 
-                style={{ color: g.color || ('#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
+                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40' : ''}`} 
+                style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
-                {g.name} {isExpanded ? '«' : '»'}
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className={isExcluded ? 'line-through text-neutral-500' : ''}>
+                    {g.name} {isExpanded ? '«' : '»'}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroupExclusion(g.id);
+                    }}
+                    className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                      isExcluded 
+                        ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]' 
+                        : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
+                    }`}
+                    title={isExcluded ? "นำกลับมารวมคำนวณ" : "ยกเว้นกลุ่มนี้จากการคำนวณ"}
+                  >
+                    {isExcluded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                </div>
               </th>
               {isExpanded && cats.map((c) => {
                 const catColId = `c-${c.id}`;
@@ -192,8 +231,8 @@ const CashflowTableHeader = React.memo(({
                     key={c.id} 
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65`} 
-                    style={{ color: c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isExcluded ? 'opacity-30 line-through' : ''}`} 
+                    style={{ color: isExcluded ? '#64748B' : c.color, backgroundColor: getSubHighlightBg(g, c.color, isCatColHovered) }}
                   >
                     {c.name}
                   </th>
@@ -218,7 +257,8 @@ const CashflowTableRow = React.memo(({
   handleMouseEnter, handleMouseLeave,
   hoveredCol, setHoveredCol,
   isRowHovered, setHoveredRow,
-  isExcluded, excludedMonths, toggleMonth
+  isExcluded, excludedMonths, toggleMonth,
+  excludedGroups
 }) => {
   const getHighlightBg = (group, isColHovered) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
@@ -250,10 +290,28 @@ const CashflowTableRow = React.memo(({
     }
   }
 
+  const getAdjustedIncome = (r) => {
+    if (!r) return 0;
+    return activeIncomeGroups
+      .filter(g => !excludedGroups.has(g.id))
+      .reduce((sum, g) => sum + (r.groups[g.id] || 0), 0);
+  };
+
+  const getAdjustedExpense = (r) => {
+    if (!r) return 0;
+    return activeExpenseGroups
+      .filter(g => !excludedGroups.has(g.id))
+      .reduce((sum, g) => sum + (r.groups[g.id] || 0), 0);
+  };
+
+  const currentAdjustedIncome = getAdjustedIncome(row);
+  const currentAdjustedExpense = getAdjustedExpense(row);
+  const prevAdjustedExpense = getAdjustedExpense(prevMonth);
+
   let expMoMJSX = null;
-  if (!isExcluded && prevMonth && prevMonth.totalExp > 0) {
-    const diff = row.totalExp - prevMonth.totalExp;
-    const percent = (diff / prevMonth.totalExp) * 100;
+  if (!isExcluded && prevMonth && prevAdjustedExpense > 0) {
+    const diff = currentAdjustedExpense - prevAdjustedExpense;
+    const percent = (diff / prevAdjustedExpense) * 100;
     const isUp = percent > 0;
     const isFlat = Math.abs(percent) < 0.1;
 
@@ -305,6 +363,8 @@ const CashflowTableRow = React.memo(({
         const isLastIncome = idx === activeIncomeGroups.length - 1;
         const colId = `g-${g.id}`;
         const isColHovered = hoveredCol === colId;
+        const isGroupExcluded = excludedGroups.has(g.id);
+        const isCellFaded = isExcluded || isGroupExcluded;
 
         return (
           <React.Fragment key={g.id}>
@@ -312,9 +372,9 @@ const CashflowTableRow = React.memo(({
               onMouseEnter={() => setHoveredCol(colId)}
               onMouseLeave={() => setHoveredCol(null)}
               className={`px-3 py-2 font-semibold border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
-                isExcluded ? 'opacity-40 select-none text-neutral-500' : ''
+                isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
               }`} 
-              style={{ color: isExcluded ? undefined : (g.color || '#34d399'), backgroundColor: isExcluded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
+              style={{ color: isCellFaded ? undefined : (g.color || '#34d399'), backgroundColor: isCellFaded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
             >
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
@@ -328,9 +388,9 @@ const CashflowTableRow = React.memo(({
                   onMouseEnter={() => setHoveredCol(catColId)}
                   onMouseLeave={() => setHoveredCol(null)}
                   className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
-                    isExcluded ? 'opacity-40 select-none text-neutral-500' : ''
+                    isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
                   }`} 
-                  style={{ color: isExcluded ? undefined : c.color, backgroundColor: isExcluded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
+                  style={{ color: isCellFaded ? undefined : c.color, backgroundColor: isCellFaded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
                 >
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
@@ -345,6 +405,8 @@ const CashflowTableRow = React.memo(({
         const cats = getActiveCatsForGroup(g.id);
         const colId = `g-${g.id}`;
         const isColHovered = hoveredCol === colId;
+        const isGroupExcluded = excludedGroups.has(g.id);
+        const isCellFaded = isExcluded || isGroupExcluded;
 
         return (
           <React.Fragment key={g.id}>
@@ -352,9 +414,9 @@ const CashflowTableRow = React.memo(({
               onMouseEnter={() => setHoveredCol(colId)}
               onMouseLeave={() => setHoveredCol(null)}
               className={`px-3 py-2 font-medium border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
-                isExcluded ? 'opacity-40 select-none text-neutral-500' : ''
+                isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
               }`} 
-              style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1'), backgroundColor: isExcluded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
+              style={{ color: isCellFaded ? undefined : (g.color || '#cbd5e1'), backgroundColor: isCellFaded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
             >
               {row.groups[g.id] > 0 ? formatMoney(row.groups[g.id]) : '-'}
             </td>
@@ -368,9 +430,9 @@ const CashflowTableRow = React.memo(({
                   onMouseEnter={() => setHoveredCol(catColId)}
                   onMouseLeave={() => setHoveredCol(null)}
                   className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${thinBorder} ${
-                    isExcluded ? 'opacity-40 select-none text-neutral-500' : ''
+                    isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
                   }`} 
-                  style={{ color: isExcluded ? undefined : c.color, backgroundColor: isExcluded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
+                  style={{ color: isCellFaded ? undefined : c.color, backgroundColor: isCellFaded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
                 >
                   {amt > 0 ? formatMoney(amt) : '-'}
                 </td>
@@ -393,7 +455,7 @@ const CashflowTableRow = React.memo(({
       >
         <div className="flex items-center justify-between gap-1">
           <div className="shrink-0">{!isExcluded && expMoMJSX}</div>
-          <span className="text-[11px] tabular-nums">{formatMoney(row.totalExp)}</span>
+          <span className="text-[11px] tabular-nums">{formatMoney(currentAdjustedExpense)}</span>
         </div>
       </td>
       <td 
@@ -405,9 +467,9 @@ const CashflowTableRow = React.memo(({
             : isNetHovered 
               ? 'bg-[#1c1c1c]' 
               : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? ((row.income - row.totalExp) >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]') : ''}`}
+        } ${!isExcluded ? ((currentAdjustedIncome - currentAdjustedExpense) >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]') : ''}`}
       >
-        {formatMoney(row.income - row.totalExp)}
+        {formatMoney(currentAdjustedIncome - currentAdjustedExpense)}
       </td>
       <td 
         onMouseEnter={() => setHoveredCol('pct-left')}
@@ -418,9 +480,9 @@ const CashflowTableRow = React.memo(({
             : isPctLeftHovered 
               ? 'bg-[#1c1c1c]' 
               : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? (row.income > 0 && (row.income - row.totalExp) < 0 ? 'text-[#ff4d4d]' : 'text-teal-400') : ''}`}
+        } ${!isExcluded ? (currentAdjustedIncome > 0 && (currentAdjustedIncome - currentAdjustedExpense) < 0 ? 'text-[#ff4d4d]' : 'text-teal-400') : ''}`}
       >
-        {row.income > 0 ? ((row.income - row.totalExp) / row.income * 100).toFixed(1) : '0.0'}%
+        {currentAdjustedIncome > 0 ? ((currentAdjustedIncome - currentAdjustedExpense) / currentAdjustedIncome * 100).toFixed(1) : '0.0'}%
       </td>
       <td 
         onMouseEnter={() => setHoveredCol('pct-spent')}
@@ -431,9 +493,9 @@ const CashflowTableRow = React.memo(({
             : isPctSpentHovered 
               ? 'bg-[#1c1c1c]' 
               : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? (row.income > 0 && (row.totalExp / row.income * 100) > 100 ? 'text-[#ff4d4d]' : 'text-pink-400') : ''}`}
+        } ${!isExcluded ? (currentAdjustedIncome > 0 && (currentAdjustedExpense / currentAdjustedIncome * 100) > 100 ? 'text-[#ff4d4d]' : 'text-pink-400') : ''}`}
       >
-        {row.income > 0 ? (row.totalExp / row.income * 100).toFixed(1) + '%' : '-'}
+        {currentAdjustedIncome > 0 ? (currentAdjustedExpense / currentAdjustedIncome * 100).toFixed(1) + '%' : '-'}
       </td>
     </tr>
   );
@@ -449,13 +511,28 @@ const CashflowTableFooter = React.memo(({
   getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
   handleMouseEnter, handleMouseLeave,
   hoveredCol, setHoveredCol,
-  excludedMonths
+  excludedMonths, excludedGroups
 }) => {
   if (analytics.numMonths <= 1) return null;
 
   const activeMonths = analytics.sortedCashflow.filter(r => !excludedMonths.has(r.monthStr));
-  const totalActiveIncome = activeMonths.reduce((s, r) => s + r.income, 0);
-  const totalActiveExpense = activeMonths.reduce((s, r) => s + r.totalExp, 0);
+
+  const getAdjustedIncome = (r) => {
+    if (!r) return 0;
+    return activeIncomeGroups
+      .filter(g => !excludedGroups.has(g.id))
+      .reduce((sum, g) => sum + (r.groups[g.id] || 0), 0);
+  };
+
+  const getAdjustedExpense = (r) => {
+    if (!r) return 0;
+    return activeExpenseGroups
+      .filter(g => !excludedGroups.has(g.id))
+      .reduce((sum, g) => sum + (r.groups[g.id] || 0), 0);
+  };
+
+  const totalActiveIncome = activeMonths.reduce((s, r) => s + getAdjustedIncome(r), 0);
+  const totalActiveExpense = activeMonths.reduce((s, r) => s + getAdjustedExpense(r), 0);
   const totalActiveNet = totalActiveIncome - totalActiveExpense;
   const activeSavingsRate = totalActiveIncome > 0 ? ((totalActiveNet / totalActiveIncome) * 100).toFixed(1) : '0.0';
   const activePctSpent = totalActiveIncome > 0 ? ((totalActiveExpense / totalActiveIncome) * 100).toFixed(1) : '0.0';
@@ -478,6 +555,7 @@ const CashflowTableFooter = React.memo(({
           const isLastIncome = idx === activeIncomeGroups.length - 1;
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
+          const isGroupExcluded = excludedGroups.has(g.id);
 
           return (
             <React.Fragment key={g.id}>
@@ -486,8 +564,8 @@ const CashflowTableFooter = React.memo(({
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                }`} 
-                style={{ color: g.color || ('#34d399') }}
+                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
+                style={{ color: isGroupExcluded ? undefined : (g.color || '#34d399') }}
               >
                 {formatMoney(activeMonths.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
@@ -501,8 +579,8 @@ const CashflowTableFooter = React.memo(({
                     onMouseLeave={() => setHoveredCol(null)}
                     className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                    }`} 
-                    style={{ color: c.color }}
+                    } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
+                    style={{ color: isGroupExcluded ? '#64748B' : c.color }}
                   >
                     {formatMoney(activeMonths.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
                   </td>
@@ -517,6 +595,7 @@ const CashflowTableFooter = React.memo(({
           const cats = getActiveCatsForGroup(g.id);
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
+          const isGroupExcluded = excludedGroups.has(g.id);
 
           return (
             <React.Fragment key={g.id}>
@@ -525,8 +604,8 @@ const CashflowTableFooter = React.memo(({
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                }`} 
-                style={{ color: g.color || ('#cbd5e1') }}
+                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
+                style={{ color: isGroupExcluded ? undefined : (g.color || '#cbd5e1') }}
               >
                 {formatMoney(activeMonths.reduce((s, r) => s + (r.groups[g.id] || 0), 0))}
               </td>
@@ -540,8 +619,8 @@ const CashflowTableFooter = React.memo(({
                     onMouseLeave={() => setHoveredCol(null)}
                     className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${thinBorder} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                    }`} 
-                    style={{ color: c.color }}
+                    } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
+                    style={{ color: isGroupExcluded ? '#64748B' : c.color }}
                   >
                     {formatMoney(activeMonths.reduce((s, r) => s + (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0), 0))}
                   </td>
@@ -671,12 +750,22 @@ export default function CashflowTable() {
   const [hoveredRow, setHoveredRow] = useState(null);
 
   const [excludedMonths, setExcludedMonths] = useState(new Set());
+  const [excludedGroups, setExcludedGroups] = useState(new Set());
 
   const toggleMonth = useCallback((monthStr) => {
     setExcludedMonths(prev => {
       const next = new Set(prev);
       if (next.has(monthStr)) next.delete(monthStr);
       else next.add(monthStr);
+      return next;
+    });
+  }, []);
+
+  const toggleGroupExclusion = useCallback((groupId) => {
+    setExcludedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
       return next;
     });
   }, []);
@@ -744,7 +833,8 @@ export default function CashflowTable() {
     getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
     handleMouseEnter, handleMouseLeave,
     hoveredCol, setHoveredCol,
-    excludedMonths, toggleMonth
+    excludedMonths, toggleMonth,
+    excludedGroups, toggleGroupExclusion
   };
 
   return (

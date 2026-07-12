@@ -51,11 +51,11 @@ export default function useAnalytics({
     );
     const foodGroupId = foodGroup?.id;
     const rentGroupId = rentGroup?.id;
-
     // 2. Variables for Aggregation
     let totals = {
       income: 0, expense: 0, savings: 0,
       fixed: 0, variable: 0, food: 0, rent: 0,
+      rentSub: { rent: 0, electricity: 0, internet: 0, water: 0 },
       weekend: 0, weekday: 0,
       dayOfWeekMap: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
     };
@@ -196,7 +196,14 @@ export default function useAnalytics({
           dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
           
           // Semantic Grouping
-          if (isRent) totals.rent += amt;
+          if (isRent) {
+            totals.rent += amt;
+            const cName = catObj.name;
+            if (cName === 'ค่าเช่า/ค่าหอพัก') totals.rentSub.rent += amt;
+            else if (cName === 'ค่าไฟ') totals.rentSub.electricity += amt;
+            else if (cName === 'ค่าเน็ต') totals.rentSub.internet += amt;
+            else if (cName === 'ค่าน้ำ') totals.rentSub.water += amt;
+          }
           else if (isFood) totals.food += amt;
 
           if (isNeed) totals.fixed += amt;
@@ -488,6 +495,7 @@ export default function useAnalytics({
       foodTotal: totals.food, foodDailyAvg: adjustedFoodDailyAvg,
       foodPercentage: totals.expense > 0 ? ((totals.food / totals.expense) * 100).toFixed(1) : 0,
       rentTotal: totals.rent, rentPercentage: totals.income > 0 ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,
+      rentSub: totals.rentSub,
       fixedTotal: totals.fixed, variableTotal: totals.variable,
       fixedPercentage: totals.expense > 0 ? ((totals.fixed / totals.expense) * 100).toFixed(1) : 0,
       variablePercentage: totals.expense > 0 ? ((totals.variable / totals.expense) * 100).toFixed(1) : 0,

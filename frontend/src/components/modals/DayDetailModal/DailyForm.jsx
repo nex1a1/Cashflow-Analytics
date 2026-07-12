@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { CheckCircle, Zap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,12 +37,21 @@ export default function DailyForm({
   const formType = watch('type');
   const allocationType = watch('allocation_type');
 
+  const isApplyingSuggestionRef = useRef(false);
+
+  const customSetValue = useCallback((name, value, options) => {
+    if (name === 'categoryId' && options?.skipAllocationDefault) {
+      isApplyingSuggestionRef.current = true;
+    }
+    setValue(name, value, options);
+  }, [setValue]);
+
   // 1. Expose form methods to parent (for hotkeys & QuickSuggest)
   useEffect(() => {
     if (externalFormSetter) {
-      externalFormSetter({ setValue, setFocus, watch });
+      externalFormSetter({ setValue: customSetValue, setFocus, watch });
     }
-  }, [externalFormSetter, setValue, setFocus, watch]);
+  }, [externalFormSetter, customSetValue, setFocus, watch]);
 
   // 2. Notify parent of type changes to filter suggestions
   useEffect(() => {
@@ -54,6 +63,10 @@ export default function DailyForm({
   useEffect(() => {
     if (formType === 'income') {
       setValue('allocation_type', null);
+      return;
+    }
+    if (isApplyingSuggestionRef.current) {
+      isApplyingSuggestionRef.current = false;
       return;
     }
     const cat = categories.find(c => c.id === selectedCatId);

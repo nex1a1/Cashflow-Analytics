@@ -192,7 +192,7 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
   const {
     totalIncome, netCashflow,
     dailyAvg, foodPercentage, foodDailyAvg, variableTotal,
-    rentPercentage, rentTotal, datesInPeriod
+    rentPercentage, rentTotal, rentSub, datesInPeriod
   } = analytics;
 
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
@@ -213,44 +213,76 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
         <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
           
           {/* RENT CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
+          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[120px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
             rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
           }`}>
             <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
               <Home size={72} />
             </div>
 
-            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-              ภาระที่พักอาศัย (Rent Ratio)
-            </span>
-            
-            <div className="mt-auto z-10">
-              {showSkeleton ? (
-                <Shimmer className="h-6 w-16 my-1" />
-              ) : (
-                <div className="flex items-baseline gap-1.5">
-                  <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
-                    {rentPercentageNum.toFixed(1)}%
-                  </div>
-                  <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
-                    ฿{formatMoney(rentTotal)}
-                  </div>
-                </div>
-              )}
+            {/* Original Content (Blurs and fades on hover) */}
+            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+                ภาระที่พักอาศัย (Rent Ratio)
+              </span>
               
-              <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-                <div 
-                  className={`h-full absolute left-0 top-0 transition-none ${
-                    showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
-                  }`} 
-                  style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
-                />
+              <div className="mt-auto z-10">
+                {showSkeleton ? (
+                  <Shimmer className="h-6 w-16 my-1" />
+                ) : (
+                  <div className="flex items-baseline gap-1.5">
+                    <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
+                      {rentPercentageNum.toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
+                      ฿{formatMoney(rentTotal)}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
+                  <div 
+                    className={`h-full absolute left-0 top-0 transition-none ${
+                      showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
+                    }`} 
+                    style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Hover Breakdown Overlay */}
+            {!showSkeleton && rentSub && (
+              <div className="absolute inset-0 p-2.5 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-between">
+                <div className="text-[8px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0">
+                  <span>รายละเอียดที่พัก</span>
+                  <span className="text-sky-400 font-extrabold text-[7px] border border-sky-400/30 px-1 py-0.5 rounded-none leading-none">4 หมวด</span>
+                </div>
+                
+                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 overflow-hidden">
+                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🏢 ค่าเช่า</span>
+                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
+                  </div>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">⚡ ค่าไฟ</span>
+                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
+                  </div>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🌐 ค่าเน็ต</span>
+                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
+                  </div>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">💧 ค่าน้ำ</span>
+                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.water)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* WANT RATIO CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
+          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[120px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
             lifestyleRatio > 35 ? 'border-l-[#da291c]' : 'border-l-orange-500'
           }`}>
             <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
@@ -287,7 +319,7 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
           </div>
 
           {/* VICTORY CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
+          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[120px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
             dailyVictory >= 0 ? 'border-l-lime-500' : 'border-l-[#da291c]'
           }`}>
             <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
