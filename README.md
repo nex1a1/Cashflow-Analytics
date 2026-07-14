@@ -2,7 +2,7 @@
 
 [![Vibe Coding](https://img.shields.io/badge/Vibe_Coding-100%25_AI_Built-ff69b4?style=for-the-badge&logo=probot)](https://github.com/)
 [![Platform](https://img.shields.io/badge/Platform-PC--First_/_Desktop-blue?style=for-the-badge&logo=windows)](https://github.com/)
-[![Tech Stack](https://img.shields.io/badge/Stack-React_|_Node_|_SQLite-61DAFB?style=for-the-badge&logo=react)](https://github.com/)
+[![Tech Stack](https://img.shields.io/badge/Stack-React_TS_|_Node_TS_|_SQLite-3178C6?style=for-the-badge&logo=typescript)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **Cashflow Shark** คือระบบบริหารจัดการการเงินส่วนบุคคลและบันทึกชั่วโมงการทำงานประสิทธิภาพสูง (High-Performance Personal/Small Business Financial Tracker & Work-Day Logger) ที่ถูกออกแบบด้วยปรัชญา **PC-First (Desktop-Only)** เพื่อรีดประสิทธิภาพการใช้งานหน้าจอระดับสูงสุด มอบหน้าต่างข้อมูลที่หนาแน่น เจาะลึก และแม่นยำตามมาตรฐานบัญชีระดับมืออาชีพ
@@ -41,19 +41,24 @@
 *   **Zero-Gap Layout:** ตารางแสดงผลรายการธุรกรรมหนาแน่นระดับสูงแบบไม่มีช่องว่างรบกวนสายตา
 *   **Cell Splitters & Dynamic Headers:** ยุบ/ขยาย คอลัมน์ตามประเภทธุรกรรม และซ่อนข้อมูลที่เป็นศูนย์ (Zero-Totals) โดยอัตโนมัติเมื่อทำการกรองข้อมูล
 
+### 🎛️ Advanced Analytics & Filtering
+*   **Future Transaction Filter:** ระบบคัดกรองข้อมูลธุรกรรมล่วงหน้าแบบเรียลไทม์ ป้องกันข้อมูลในอนาคตบิดเบือนสถิติในปัจจุบัน พร้อมรองรับข้อยกเว้นสำหรับรายการจำเป็นประจำเดือน (เช่น เงินเดือน และค่าเช่า/ที่พัก) ควบคุมง่ายด้วยปุ่มสลับบน Header และจดจำสถานะผ่าน `localStorage`
+*   **Hide WANT Toggle:** ฟิลเตอร์แยกกลุ่มค่าใช้จ่ายฟุ่มเฟือยออกจากระบบคำนวณ ช่วยให้สามารถวิเคราะห์ความจำเป็น (Needs) และการออม (Savings) ได้มีประสิทธิภาพสูงสุด
+*   **Wrapped 12-Month Calendar:** ปฏิทินแสดงผล Timeline 12 เดือนแบบสลับโหมดแนวตั้ง/แนวนอนได้ ล็อกมิติหน้าจอที่ 118px เพื่อตัดปัญหา browser subpixel spacing ทำให้การแสดงผลกริดเนียนเรียบไม่มีสะดุด
+
 ---
 
 ## 🛠️ Tech Stack & Constraints
 
 ### Frontend (Client Side)
-*   **Core Framework:** `React v18.2.0` (ขับเคลื่อนด้วย `Vite v5.0.8`)
+*   **Core Framework:** `React v18.2.0` พัฒนาด้วย `TypeScript` (ขับเคลื่อนด้วย `Vite v5.0.8`)
 *   **Styling & Themes:** `Tailwind CSS v3.4.1` (สไตล์หรูหราพรีเมียมแบบ Ferrari Rosso Corsa Cinematic Editorial, พื้นหลัง Near-Black `#181818`, ขอบเหลี่ยมคม 0px `rounded-none`, พิมพ์ใหญ่และระยะห่างอักษรแบบมีเอกลักษณ์, **Ignore mobile breakpoints**)
 *   **Visualization:** `Chart.js v4.4.1` & `react-chartjs-2 v5.2.0`
 *   **Motion & Interaction:** `Framer Motion v12.38.0` และไอคอนคุณภาพจาก `Lucide React`
 
 ### Backend (Server Side)
 *   **Runtime:** `Node.js v20 (LTS)`
-*   **API Framework:** `Express.js v4.18.2`
+*   **API Framework:** `Express.js v4.18.2` พัฒนาด้วย `TypeScript`
 *   **Database Engine:** `better-sqlite3 v12.9.0` (SQLite ที่มีความเร็วสูงสุดในการเชื่อมต่อแบบ Synchronous)
 *   **Data Validation:** `Zod v4.4.2` (ควบคุมความปลอดภัยและความถูกต้องของข้อมูลตั้งแต่หน้าบ้านถึงหลังบ้าน)
 
