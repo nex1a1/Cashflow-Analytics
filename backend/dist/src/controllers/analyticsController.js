@@ -6,12 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardAnalytics = void 0;
 const analyticsService_1 = __importDefault(require("../services/analyticsService"));
 const getDashboardAnalytics = (req, res) => {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, excludeFuture } = req.query;
+    const isExcludeFuture = excludeFuture === 'true';
     try {
-        const summary = analyticsService_1.default.getSummary(startDate, endDate);
-        const categories = analyticsService_1.default.getCategoryBreakdown(startDate, endDate);
-        const monthly = analyticsService_1.default.getMonthlyAggregation(startDate, endDate);
-        const workLife = analyticsService_1.default.getWorkLifeAnalysis(startDate, endDate);
+        const summary = analyticsService_1.default.getSummary(startDate, endDate, isExcludeFuture);
+        const categories = analyticsService_1.default.getCategoryBreakdown(startDate, endDate, isExcludeFuture);
+        const monthly = analyticsService_1.default.getMonthlyAggregation(startDate, endDate, isExcludeFuture);
+        const workLife = analyticsService_1.default.getWorkLifeAnalysis(startDate, endDate, isExcludeFuture);
         res.json({
             summary,
             categories,

@@ -29,6 +29,7 @@ export default function MainLayout({ controller }) {
     activeTab, setActiveTab,
     dbStatus, isProcessing,
     transactions, categories, cashflowGroups,
+    excludeFuture, dashboardTransactions,
     dayTypes, dayTypeConfig,
     filterPeriod, setFilterPeriod,
     groupedOptions, rawAvailableMonths, isReadOnlyView,
@@ -86,7 +87,8 @@ export default function MainLayout({ controller }) {
     confirmImport,
     refreshData,
     toast,
-    triggerToast
+    triggerToast,
+    handleToggleExcludeFuture
   } = controller;
 
   const showSuccess = () => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
@@ -116,6 +118,8 @@ export default function MainLayout({ controller }) {
           onFileUpload={handleFileUpload}
           onClickImportGuide={() => setShowImportGuide(true)}
           fileInputRef={fileInputRef}
+          excludeFuture={excludeFuture}
+          onToggleExcludeFuture={handleToggleExcludeFuture}
         />
 
         <div className={`p-6 relative z-0 flex-grow transition-colors duration-300 ${'bg-[#181818]'}`}>
@@ -123,7 +127,7 @@ export default function MainLayout({ controller }) {
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
                 <DashboardView
-                  analytics={analytics} transactions={transactions}
+                  analytics={analytics} transactions={dashboardTransactions}
                   cashflowGroups={cashflowGroups}
                   filterPeriod={filterPeriod}
                   getFilterLabel={getFilterLabel}

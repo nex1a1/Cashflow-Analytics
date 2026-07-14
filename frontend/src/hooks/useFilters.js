@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
 import { transactionService } from '../services/api';
 
-export default function useFilters({ transactions, categories, masterPeriods = [] }) {
+export default function useFilters({ transactions, categories, masterPeriods = [], excludeFuture }) {
   // ── Period ───────────────────────────────────────────────────
   const [filterPeriod, setFilterPeriod] = useState(() => {
     const now = new Date();
@@ -73,10 +73,19 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     setDayTypeFilter('ALL');
   };
 
+  const filteredMasterPeriods = useMemo(() => {
+    if (excludeFuture) {
+      const d = new Date();
+      const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return masterPeriods.filter(p => p <= currentMonthStr);
+    }
+    return masterPeriods;
+  }, [masterPeriods, excludeFuture]);
+
   // ── Period picker options (Using Master List from DB) ────────
   const groupedOptions = useMemo(() => {
     const yearsMap = {};
-    masterPeriods.forEach(periodStr => { // periodStr is YYYY-MM
+    filteredMasterPeriods.forEach(periodStr => { // periodStr is YYYY-MM
       const [y, mStr] = periodStr.split('-');
       const m = parseInt(mStr, 10);
       
@@ -90,12 +99,12 @@ export default function useFilters({ transactions, categories, masterPeriods = [
       if (m >= 7  && m <= 12) yearsMap[y].halves.add(`${y}-H2`);
     });
     return { yearsMap, sortedYears: Object.keys(yearsMap).sort().reverse() };
-  }, [masterPeriods]);
+  }, [filteredMasterPeriods]);
 
   // ── เดือนที่มีข้อมูล (Master List) ──
   const rawAvailableMonths = useMemo(() => {
-    return [...masterPeriods].sort().reverse();
-  }, [masterPeriods]);
+    return [...filteredMasterPeriods].sort().reverse();
+  }, [filteredMasterPeriods]);
 
   // ── Derived booleans ─────────────────────────────────────────
   // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → Enforced only in components that require single-month context (like Calendar)

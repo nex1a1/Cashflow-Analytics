@@ -27,7 +27,8 @@ export default function useTransactionData({
   setDayTypes,
   setDayTypeConfig,
   setDbStatus,
-  setCashflowGroups
+  setCashflowGroups,
+  excludeFuture
 }) {
   const [transactions, setTransactions] = useState([]);
   const [summaryData, setSummaryData] = useState(null); // Aggregated analytics from backend
@@ -59,12 +60,12 @@ export default function useTransactionData({
    */
   const loadAnalytics = useCallback(async (startDate, endDate) => {
     try {
-      const data = await analyticsService.getDashboardData(startDate, endDate);
+      const data = await analyticsService.getDashboardData(startDate, endDate, excludeFuture);
       setSummaryData(data);
     } catch (err) {
       console.error('Failed to load analytics:', err);
     }
-  }, []);
+  }, [excludeFuture]);
 
   const refreshData = useCallback(async () => {
     try {

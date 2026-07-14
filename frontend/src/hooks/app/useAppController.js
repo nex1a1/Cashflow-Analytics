@@ -47,6 +47,9 @@ export function useAppController() {
   const [dashboardCategory, setDashboardCategory] = useState(['ALL']);
   const [chartGroupBy, setChartGroupBy] = useState('monthly');
   const [topXLimit, setTopXLimit] = useState(7);
+  const [excludeFuture, setExcludeFuture] = useState(() => {
+    return localStorage.getItem('excludeFuture') !== 'false';
+  });
 
   // ─── CORE HOOKS (Definitions must come before derived effects) ───
   const {
@@ -74,7 +77,7 @@ export function useAppController() {
     handleDeleteMonth,
     handleDeleteAllData,
     refreshData,
-  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups });
+  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups, excludeFuture });
 
   const {
     filterPeriod, setFilterPeriod,
@@ -95,7 +98,7 @@ export function useAppController() {
     activeCategoryNames,
     isFilterActive,
     clearFilters,
-  } = useFilters({ transactions, categories, masterPeriods });
+  } = useFilters({ transactions, categories, masterPeriods, excludeFuture });
 
   const {
     importPreview, setImportPreview,
@@ -109,9 +112,50 @@ export function useAppController() {
     setCategories, saveToDb,
   });
 
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${date}`;
+  }, []);
+
+  const currentMonthStr = useMemo(() => todayStr.substring(0, 7), [todayStr]);
+
+  const dashboardTransactions = useMemo(() => {
+    if (excludeFuture) {
+      return transactions.filter(t => {
+        const isoDate = toISODate(t.date);
+        if (isoDate <= todayStr) return true;
+        
+        // Include future income and rent/accommodation in the current month
+        if (isoDate.substring(0, 7) === currentMonthStr) {
+          const cat = categories.find(c => c.id === t.category_id || c.name === t.category);
+          if (cat) {
+            const group = cashflowGroups.find(g => g.id === cat.cashflowGroup);
+            const type = group?.type || cat.type;
+            if (type === 'income') return true;
+
+            const groupName = (group?.name || '').toLowerCase();
+            const catName = (cat.name || '').toLowerCase();
+            const isRent = groupName.includes('หอ') || 
+                           groupName.includes('ที่พัก') || 
+                           groupName.includes('rent') || 
+                           groupName.includes('เช่า') || 
+                           catName.includes('ค่าเช่า') || 
+                           catName.includes('ค่าหอพัก');
+            if (isRent) return true;
+          }
+        }
+        return false;
+      });
+    }
+    return transactions;
+  }, [transactions, excludeFuture, todayStr, currentMonthStr, categories, cashflowGroups]);
+
   const validAnalyticsTxs = useMemo(() =>
-    transactions.filter(t => categories.find(c => c.name === t.category)?.cashflowGroup !== 'debt'),
-  [transactions, categories]);
+    dashboardTransactions.filter(t => categories.find(c => c.name === t.category)?.cashflowGroup !== 'debt'),
+  [dashboardTransactions, categories]);
 
   const analytics = useAnalytics({
     transactions: validAnalyticsTxs, categories, filterPeriod,
@@ -264,6 +308,28 @@ export function useAppController() {
     }
   };
 
+  const handleToggleExcludeFuture = useCallback(() => {
+    setExcludeFuture(prev => {
+      const newVal = !prev;
+      localStorage.setItem('excludeFuture', String(newVal));
+      if (newVal) {
+        const d = new Date();
+        const curMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (filterPeriod.match(/^\d{4}-\d{2}$/) && filterPeriod > curMonth) {
+          setFilterPeriod(curMonth);
+        } else if (filterPeriod.match(/^\d{4}$/) && parseInt(filterPeriod) > d.getFullYear()) {
+          setFilterPeriod(curMonth);
+        } else if (filterPeriod.includes('-Q') || filterPeriod.includes('-H')) {
+          const [y] = filterPeriod.split('-');
+          if (parseInt(y) > d.getFullYear()) {
+            setFilterPeriod(curMonth);
+          }
+        }
+      }
+      return newVal;
+    });
+  }, [filterPeriod, setFilterPeriod]);
+
   // ─── DATA LOADING ───
   useEffect(() => {
     const triggerLoads = async () => {
@@ -318,6 +384,8 @@ export function useAppController() {
     fileInputRef,
     frequentItems,
     isCsvProcessing,
+    excludeFuture,
+    dashboardTransactions,
     
     // Handlers
     getFilterLabel,
@@ -345,6 +413,7 @@ export function useAppController() {
     confirmImport,
     refreshData,
     triggerToast,
-    toast
+    toast,
+    handleToggleExcludeFuture
   };
 }

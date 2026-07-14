@@ -39,12 +39,14 @@ export const transactionService = {
 };
 
 export const analyticsService = {
-    getDashboardData: (startDate?: string, endDate?: string): Promise<any> => {
+    getDashboardData: (startDate?: string, endDate?: string, excludeFuture?: boolean): Promise<any> => {
         let url = ANALYTICS_API_URL;
-        if (startDate || endDate) {
-            const params = new URLSearchParams();
-            if (startDate) params.append('startDate', startDate);
-            if (endDate) params.append('endDate', endDate);
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (excludeFuture) params.append('excludeFuture', 'true');
+        
+        if (params.toString()) {
             url += `?${params.toString()}`;
         }
         return fetch(url).then(handleResponse);
