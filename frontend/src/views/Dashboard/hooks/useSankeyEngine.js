@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { formatMoney } from '../../../utils/formatters';
+import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { toISODate, isDateInFilter } from '../../../utils/dateHelpers';
 
@@ -257,8 +257,22 @@ export function useSankeyEngine({ chartViewType, sankeySortMode }) {
         data: flows,
         priority,
         column,
-        colorFrom: (c) => c.dataset?.data?.[c.dataIndex]?.color || ('#475569'),
-        colorTo: (c) => c.dataset?.data?.[c.dataIndex]?.color || ('#475569'),
+        colorFrom: (c) => {
+          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          return `rgba(${hexToRgb(color)}, 0.45)`;
+        },
+        colorTo: (c) => {
+          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          return `rgba(${hexToRgb(color)}, 0.45)`;
+        },
+        hoverColorFrom: (c) => {
+          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          return `rgba(${hexToRgb(color)}, 0.9)`;
+        },
+        hoverColorTo: (c) => {
+          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          return `rgba(${hexToRgb(color)}, 0.9)`;
+        },
         colorMode: 'gradient',
         size: 'max',
         labels: {

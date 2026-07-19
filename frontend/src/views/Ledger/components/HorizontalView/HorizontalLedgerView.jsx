@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Inbox } from 'lucide-react';
 
 // Hooks & Logic
@@ -39,14 +39,20 @@ const parseYearMonth = (dateStr) => {
   return { year, monthIdx };
 };
 
+const DEFAULT_DAY_TYPES = {};
+const DEFAULT_DAY_TYPE_CONFIG = [];
+const DEFAULT_ALL_DATES = [];
+
 export default function HorizontalLedgerView({
-  displayTransactions, categories, formatMoney, dayTypes = {}, dayTypeConfig = [], allDates = []
+  displayTransactions, categories, formatMoney, 
+  dayTypes = DEFAULT_DAY_TYPES, 
+  dayTypeConfig = DEFAULT_DAY_TYPE_CONFIG, 
+  allDates = DEFAULT_ALL_DATES
 }) {
   const dm = true;
   
   // UI State
   const [tooltip, setTooltip] = useState(null);
-  const tooltipRef = useRef(null);
 
   // ─── 1. Engine: Pure Data Logic ───
   const {
@@ -67,18 +73,14 @@ export default function HorizontalLedgerView({
       setTooltip(null);
       return;
     }
-    setTooltip({ date, cat, items });
-    if (tooltipRef.current) {
-      tooltipRef.current.style.left = `${e.clientX + 14}px`;
-      tooltipRef.current.style.top = `${e.clientY - 8}px`;
-    }
-  }, []);
-
-  const handleCellMouseMove = useCallback((e) => {
-    if (tooltipRef.current) {
-      tooltipRef.current.style.left = `${e.clientX + 14}px`;
-      tooltipRef.current.style.top = `${e.clientY - 8}px`;
-    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      date,
+      cat,
+      items,
+      x: rect.left + rect.width / 2,
+      y: rect.top
+    });
   }, []);
 
   const handleCellLeave = useCallback(() => {
@@ -111,7 +113,7 @@ export default function HorizontalLedgerView({
     <div className="relative">
       
       {/* ── Tooltip ── */}
-      <HeatmapTooltip tooltip={tooltip} tooltipRef={tooltipRef} dm={dm} />
+      <HeatmapTooltip tooltip={tooltip} dm={dm} />
 
       {/* ── Table ── */}
       <div className="w-full" style={{ overflowX: 'auto' }}>
@@ -201,7 +203,7 @@ export default function HorizontalLedgerView({
                     dailyTotal={dailyTotal} grandTotal={grandTotal} cellMap={cellMap}
                     activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
                     handleCellLeave={handleCellLeave}
-                    handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove}
+                    handleCellHover={handleCellHover}
                     dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
                     fmtCell={fmtCell}
                   />

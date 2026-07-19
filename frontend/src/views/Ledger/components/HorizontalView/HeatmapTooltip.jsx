@@ -1,15 +1,16 @@
 import React, { memo } from 'react';
 
-const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, tooltipRef, dm }) {
+const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, dm }) {
   const isVisible = !!tooltip;
 
   return (
     <div
-      ref={tooltipRef}
       className="fixed z-[9999] pointer-events-none"
       style={{ 
         display: isVisible ? 'block' : 'none', 
-        transform: 'translateY(-100%)',
+        left: tooltip ? `${tooltip.x}px` : 0,
+        top: tooltip ? `${tooltip.y - 8}px` : 0,
+        transform: 'translate(-50%, -100%)',
         position: 'fixed'
       }}
     >

@@ -59,7 +59,7 @@ const SummaryVitals = memo(({ analytics, showSkeleton }) => {
   const gradeInfo = getSavingsGradeInfo(savingsRate);
 
   return (
-    <div className="flex flex-col border-b border-[#2d2d2d]">
+    <div className="flex flex-col">
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก (Core Vitals)" />
       <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d]">
         
@@ -444,7 +444,7 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
   if (!showForecasting) return null;
 
   return (
-    <div className="flex flex-col border-t border-[#2d2d2d]">
+    <div className="flex flex-col">
       <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน (Projection & Safe Zone)" />
       <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d]">
         
@@ -498,7 +498,7 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
         <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-2 border-l-purple-500">
           <div className="z-10">
             <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
-              กระแสเงินสดคาดการณ์
+              กระแสเงินสุทธิสดคาดการณ์
             </span>
             {showSkeleton ? (
               <Shimmer className="h-6 w-24 mt-2" />
@@ -527,10 +527,23 @@ export default function SummaryCards() {
   if (!analytics) return null;
 
   return (
-    <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
-      <SummaryVitals analytics={analytics} showSkeleton={showSkeleton} />
-      <SummaryStrategic analytics={analytics} showSkeleton={showSkeleton} />
-      <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+    <div className="w-full flex flex-col gap-4">
+      {/* 1. Core Vitals Card */}
+      <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
+        <SummaryVitals analytics={analytics} showSkeleton={showSkeleton} />
+      </div>
+
+      {/* 2. Strategic & Key Metrics Card */}
+      <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
+        <SummaryStrategic analytics={analytics} showSkeleton={showSkeleton} />
+      </div>
+
+      {/* 3. Forecasting Predictions Card */}
+      {analytics.showForecasting && (
+        <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
+          <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { hexToRgb } from '../../../../utils/formatters';
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity, 
   dm, border, ROW_H, maxCellValue,
-  handleCellHover, handleCellMouseMove, fmtCell
+  handleCellHover, fmtCell
 }) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
@@ -26,7 +26,6 @@ const HeatmapCell = memo(function HeatmapCell({
         '--cat-color-rgb': hexToRgb(cat.color),
       }}
       onMouseEnter={(e) => handleCellHover(e, date, cat.id, cat, items)}
-      onMouseMove={hasData ? handleCellMouseMove : undefined}
     >
       {hasData ? (
         <div style={{

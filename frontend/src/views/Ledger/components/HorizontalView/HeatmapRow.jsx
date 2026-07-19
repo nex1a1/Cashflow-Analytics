@@ -2,11 +2,13 @@ import React, { memo } from 'react';
 import { hexToRgb } from '../../../../utils/formatters';
 import HeatmapCell from './HeatmapCell';
 
+const EMPTY_ARRAY = [];
+
 const HeatmapRow = memo(function HeatmapRow({
   date, rowIdx, day, month, dayName, isWeekend,
   dailyTotal, grandTotal, cellMap, activeCategories,
   dayTypes, dayTypeConfig,
-  handleCellLeave, handleCellHover, handleCellMouseMove,
+  handleCellLeave, handleCellHover,
   dm, bgBase, border, ROW_H, maxCellValue, fmtCell
 }) {
   const total = dailyTotal[date] || 0;
@@ -102,7 +104,7 @@ const HeatmapRow = memo(function HeatmapRow({
       </td>
 
       {activeCategories.map((cat, idx) => {
-        const items    = cellMap[date]?.[cat.name] || [];
+        const items    = cellMap[date]?.[cat.name] || EMPTY_ARRAY;
         const cellSum  = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
         const intensity = items.length > 0 ? Math.max(0.07, Math.min(0.78, (cellSum / maxCellValue) * 0.72)) : 0;
         
@@ -112,7 +114,7 @@ const HeatmapRow = memo(function HeatmapRow({
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
             dm={dm} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-            handleCellHover={handleCellHover} handleCellMouseMove={handleCellMouseMove} fmtCell={fmtCell}
+            handleCellHover={handleCellHover} fmtCell={fmtCell}
           />
         );
       })}

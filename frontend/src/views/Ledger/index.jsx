@@ -79,10 +79,20 @@ export default function LedgerView({
     sumExp,
     net,
     savingsRate,
-    activeGroupCards,
+    activeIncomeCards,
+    activeSavingsCards,
+    activeExpenseCards,
     getSubValue,
     catTypeMap
-  } = useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm);
+  } = useLedgerStats(
+    displayTransactions,
+    categories,
+    cashflowGroups,
+    formatMoney,
+    dm,
+    advancedFilterGroup,
+    setAdvancedFilterGroup
+  );
 
   const totalPages = pages.length || 1;
   const currentData = pages[currentPage - 1] || [];
@@ -298,9 +308,62 @@ export default function LedgerView({
         </div>
 
         {/* Group Breakdown Area (Visible in all view modes) */}
-        {activeGroupCards.length > 0 && (
-          <div className="flex items-center justify-center gap-3 overflow-x-auto pb-1 px-1 no-scrollbar scroll-smooth">
-            {activeGroupCards}
+        {(activeIncomeCards.length > 0 || activeSavingsCards.length > 0 || activeExpenseCards.length > 0) && (
+          <div className="flex flex-col gap-4 pb-2">
+            
+            {/* Row 1: Income and Savings/Investments */}
+            {(activeIncomeCards.length > 0 || activeSavingsCards.length > 0) && (
+              <div className="flex flex-wrap justify-center items-stretch gap-6 pb-2">
+                
+                {/* Left Column: Income */}
+                {activeIncomeCards.length > 0 && (
+                  <div className="flex flex-col gap-1.5 items-center">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-[#10b981] font-mono justify-center">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>รายรับ (Income)</span>
+                    </div>
+                    <div className="flex flex-wrap items-stretch justify-center gap-3">
+                      {activeIncomeCards}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vertical Divider */}
+                {activeIncomeCards.length > 0 && activeSavingsCards.length > 0 && (
+                  <div className="flex items-center justify-center px-2 self-stretch shrink-0">
+                    <div className="w-[1px] h-full min-h-[48px] bg-neutral-800" />
+                  </div>
+                )}
+
+                {/* Right Column: Savings */}
+                {activeSavingsCards.length > 0 && (
+                  <div className="flex flex-col gap-1.5 items-center">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-amber-500 font-mono justify-center">
+                      <Wallet className="w-3.5 h-3.5" />
+                      <span>การออมและลงทุน (Savings & Investments)</span>
+                    </div>
+                    <div className="flex flex-wrap items-stretch justify-center gap-3">
+                      {activeSavingsCards}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* Row 2: Expenses */}
+            {activeExpenseCards.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-center gap-2 px-1 text-[10.5px] font-black uppercase tracking-wider text-[#da291c] font-mono">
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  <span>รายจ่าย (Expenses)</span>
+                </div>
+                <div className="flex flex-wrap items-stretch justify-center gap-3 pb-1 px-1">
+                  {activeExpenseCards}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 

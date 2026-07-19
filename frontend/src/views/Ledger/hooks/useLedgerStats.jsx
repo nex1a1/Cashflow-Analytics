@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
-import StatCard from '../../../components/shared/StatCard';
 
-export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm) {
+export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm, advancedFilterGroup, setAdvancedFilterGroup) {
   const catTypeMap = useMemo(() => {
     const map = {};
     categories.forEach(c => map[c.name] = c.type);
@@ -25,20 +23,44 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     return sumInc > 0 ? Math.round((net / sumInc) * 100) : 0;
   }, [sumInc, net]);
 
-  // ─── Logic: Aggregate Data by Cashflow Groups ───
-  const groupSums = useMemo(() => {
-    const sums = {};
+  // ─── Logic: Aggregate Data by Cashflow Groups & Categories ───
+  const groupBreakdowns = useMemo(() => {
+    const breakdowns = {};
+    
+    // Pre-initialize breakdowns for all cashflowGroups
+    cashflowGroups.forEach(g => {
+      breakdowns[g.id] = {
+        total: 0,
+        txCount: 0,
+        categories: {}
+      };
+    });
+
     displayTransactions.forEach(t => {
       const cat = categories.find(c => c.name === t.category);
       if (cat) {
         const groupId = cat.cashflow_group_id || cat.cashflowGroup;
-        if (groupId) {
-          sums[groupId] = (sums[groupId] || 0) + (parseFloat(t.amount) || 0);
+        if (groupId && breakdowns[groupId]) {
+          const amt = parseFloat(t.amount) || 0;
+          breakdowns[groupId].total += amt;
+          breakdowns[groupId].txCount += 1;
+          
+          if (!breakdowns[groupId].categories[cat.id]) {
+            breakdowns[groupId].categories[cat.id] = {
+              id: cat.id,
+              name: cat.name,
+              icon: cat.icon,
+              color: cat.color,
+              amount: 0
+            };
+          }
+          breakdowns[groupId].categories[cat.id].amount += amt;
         }
       }
     });
-    return sums;
-  }, [displayTransactions, categories]);
+
+    return breakdowns;
+  }, [displayTransactions, categories, cashflowGroups]);
 
   // Calculate Monthly Average if period is long
   const uniqueMonths = useMemo(() => {
@@ -60,88 +82,213 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     return null;
   };
 
-  const activeGroupCards = useMemo(() => {
-    return cashflowGroups
-      .filter(g => groupSums[g.id] > 0)
-      .sort((a, b) => {
-        if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
-        return (a.order_index || 0) - (b.order_index || 0);
-      })
-      .map(g => {
-        const total = groupSums[g.id];
-        return (
-          <div key={g.id} className="w-[145px] shrink-0">
-            <div 
-              className="group flex flex-col gap-1.5 p-2 border-2 bg-[#121212] hover:bg-[#1c1c1c] border-[#303030] hover:border-[#3e3e3e] rounded-none relative overflow-hidden shadow-sm"
-              style={{ borderLeftColor: g.color || '#64748b' }}
-            >
-              {/* Subtle background glow of group color */}
+  const renderCard = (g) => {
+    const breakdown = groupBreakdowns[g.id];
+    const total = breakdown?.total || 0;
+    const txCount = breakdown?.txCount || 0;
+
+    const isIncome = g.type === 'income';
+    const isSavings = g.type === 'savings' || g.name.includes('ลงทุน') || g.name.includes('ออม');
+
+    let pctOfTotal = 0;
+    if (isIncome) {
+      pctOfTotal = sumInc > 0 ? ((total / sumInc) * 100).toFixed(1) : '0.0';
+    } else if (isSavings) {
+      pctOfTotal = sumInc > 0 ? ((total / sumInc) * 100).toFixed(1) : '0.0';
+    } else {
+      pctOfTotal = sumExp > 0 ? ((total / sumExp) * 100).toFixed(1) : '0.0';
+    }
+
+    const sortedCats = Object.values(breakdown?.categories || {})
+      .filter(c => c.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+
+    const isActive = advancedFilterGroup === g.id;
+
+    const handleCardClick = () => {
+      if (setAdvancedFilterGroup) {
+        setAdvancedFilterGroup(isActive ? 'ALL' : g.id);
+      }
+    };
+    
+    let activeBorderColor = 'border-[#da291c]';
+    let activeBgColor = 'bg-[#1c1212]/95';
+    let activeGlowColor = 'rgba(218,41,28,0.15)';
+    
+    if (isIncome) {
+      activeBorderColor = 'border-[#10b981]';
+      activeBgColor = 'bg-[#121c12]/95';
+      activeGlowColor = 'rgba(16,185,129,0.15)';
+    } else if (isSavings) {
+      activeBorderColor = 'border-[#f59e0b]';
+      activeBgColor = 'bg-[#1c1912]/95';
+      activeGlowColor = 'rgba(245,158,11,0.15)';
+    }
+
+    const defaultColor = isIncome ? '#10b981' : (isSavings ? '#f59e0b' : (g.color || '#64748b'));
+
+    return (
+      <div key={g.id} className="w-[235px] shrink-0 flex flex-col">
+        <div 
+          onClick={handleCardClick}
+          className={`group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden shadow-sm cursor-pointer select-none transition-all duration-150 ${
+            isActive 
+              ? `${activeBgColor} ${activeBorderColor} shadow-[0_0_12px_${activeGlowColor}] z-10` 
+              : 'bg-[#121212] hover:bg-[#1a1a1a] border-[#303030] hover:border-[#444444]'
+          }`}
+          style={{ borderLeftColor: isActive ? undefined : defaultColor }}
+        >
+          {/* Subtle background glow of group color */}
+          <div 
+            className="absolute inset-0 opacity-[0.015] group-hover:opacity-[0.04]"
+            style={{ backgroundColor: g.color || defaultColor }}
+          />
+          
+          {/* Row 1: Icon + Name (left) & Badge (right) */}
+          <div className="flex items-center justify-between gap-2 w-full min-w-0 z-10">
+            <div className="flex items-center gap-2 min-w-0">
               <div 
-                className="absolute inset-0 opacity-[0.015] group-hover:opacity-[0.04]"
-                style={{ backgroundColor: g.color }}
-              />
-              
-              {/* Row 1: Icon + Name (left) & Badge (right) */}
-              <div className="flex items-center justify-between gap-1 w-full min-w-0 z-10">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div 
-                    className="w-[21px] h-[21px] flex items-center justify-center text-xs rounded-none border border-[#303030] shrink-0"
-                    style={{ 
-                      backgroundColor: `${g.color || '#64748b'}20`, 
-                      color: g.color || '#94a3b8',
-                      borderColor: `${g.color || '#64748b'}30`
-                    }}
-                  >
-                    {g.icon || (g.type === 'income' ? '💰' : '📉')}
-                  </div>
-                  <span 
-                    className="text-[9.5px] font-black uppercase tracking-wider truncate text-[#cbd5e1] leading-none"
-                    title={g.name}
-                  >
-                    {g.name}
-                  </span>
-                </div>
-                <span 
-                  className="text-[7.5px] font-black uppercase tracking-widest px-1 py-0.2 rounded-none border shrink-0 leading-none"
-                  style={{ 
-                    backgroundColor: `${g.color || '#64748b'}15`, 
-                    color: g.color || '#94a3b8', 
-                    borderColor: `${g.color || '#64748b'}30` 
-                  }}
-                >
-                  {g.type === 'income' ? 'IN' : 'OUT'}
-                </span>
+                className="w-[26px] h-[26px] flex items-center justify-center text-[14px] rounded-none border shrink-0"
+                style={{ 
+                  backgroundColor: `${g.color || defaultColor}20`, 
+                  color: g.color || defaultColor,
+                  borderColor: isActive ? (isIncome ? '#10b981/40' : (isSavings ? '#f59e0b/40' : '#da291c/40')) : `${g.color || defaultColor}30`
+                }}
+              >
+                {g.icon || (isIncome ? '💰' : (isSavings ? '💼' : '📉'))}
               </div>
-              
-              {/* Row 2 & 3: Amounts */}
-              <div className="flex flex-col min-w-0 font-mono z-10">
-                <span 
-                  className="text-xs font-black tabular-nums tracking-tight text-white truncate"
-                  title={`฿${formatMoney(total)}`}
-                >
-                  ฿{formatMoney(total)}
-                </span>
-                {uniqueMonths > 1 && (
-                  <span 
-                    className="text-[8.5px] font-bold text-[#888888] truncate mt-0.5"
-                    title={`฿${formatMoney(total / uniqueMonths)}/เดือน`}
-                  >
-                    ฿{formatMoney(total / uniqueMonths)}/ด.
-                  </span>
-                )}
-              </div>
+              <span 
+                className={`text-[12.5px] font-black uppercase tracking-wider truncate leading-none ${
+                  isActive ? 'text-white' : 'text-[#cbd5e1]'
+                }`}
+                title={g.name}
+              >
+                {g.name}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isActive && (
+                <span className={`w-1.5 h-1.5 rounded-none bg-${isIncome ? '[#10b981]' : (isSavings ? '[#f59e0b]' : '[#da291c]')} animate-pulse shrink-0`} />
+              )}
+              <span 
+                className="text-[9.5px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border shrink-0 leading-none"
+                style={{ 
+                  backgroundColor: `${g.color || defaultColor}15`, 
+                  color: g.color || defaultColor, 
+                  borderColor: `${g.color || defaultColor}30` 
+                }}
+              >
+                {isIncome ? 'IN' : (isSavings ? 'SAVE' : 'OUT')}
+              </span>
             </div>
           </div>
-        );
-      });
-  }, [cashflowGroups, groupSums, uniqueMonths, formatMoney, dm]);
+          
+          {/* Row 2: Amounts */}
+          <div className="flex flex-col min-w-0 font-mono z-10">
+            <div className="flex items-baseline justify-between gap-1">
+              <span 
+                className={`text-[17px] font-black tabular-nums tracking-tight truncate ${
+                  isActive ? 'text-white' : 'text-slate-100'
+                }`}
+                title={`฿${formatMoney(total)}`}
+              >
+                ฿{formatMoney(total)}
+              </span>
+              <span className="text-[11.5px] font-black text-neutral-400 tabular-nums">
+                {pctOfTotal}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-[10.5px] text-[#888888] mt-0.5 font-bold">
+              <span>{txCount} รายการ</span>
+              {uniqueMonths > 1 && (
+                <span 
+                  className="truncate ml-1"
+                  title={`฿${formatMoney(total / uniqueMonths)}/เดือน`}
+                >
+                  ฿{formatMoney(total / uniqueMonths)}/ด.
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Inline Category List (Always Visible) */}
+          {sortedCats.length > 0 && (
+            <div className="mt-2.5 pt-2.5 border-t border-dashed border-[#2d2d2d] flex flex-col gap-2 z-10">
+              {sortedCats.map(cat => {
+                const relativePct = total > 0 ? Math.round((cat.amount / total) * 100) : 0;
+                const catColor = cat.color || defaultColor;
+                return (
+                  <div key={cat.id} className="flex items-center justify-between gap-2 w-full font-bold transition-all duration-75">
+                    <span className="truncate flex items-center gap-2 min-w-0">
+                      <span 
+                        className="w-[21px] h-[21px] flex items-center justify-center shrink-0 text-[11px] rounded-none border"
+                        style={{ 
+                          backgroundColor: `${catColor}15`, 
+                          borderColor: `${catColor}30` 
+                        }}
+                      >
+                        {cat.icon || '✨'}
+                      </span>
+                      <span 
+                        className="truncate uppercase tracking-tight text-[11px] font-black"
+                        style={{ color: catColor }}
+                      >
+                        {cat.name}
+                      </span>
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 font-mono text-[10.5px]">
+                      <span 
+                        className="font-bold opacity-80 text-[10px]"
+                        style={{ color: catColor }}
+                      >
+                        {relativePct}%
+                      </span>
+                      <span className="text-white font-extrabold">฿{formatMoney(cat.amount)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const isSavingsGroup = (g) => g.type === 'savings' || g.name.includes('ลงทุน') || g.name.includes('ออม');
+  const isIncomeGroup = (g) => g.type === 'income';
+  const isExpenseGroup = (g) => !isIncomeGroup(g) && !isSavingsGroup(g);
+
+  const activeIncomeCards = useMemo(() => {
+    return cashflowGroups
+      .filter(g => isIncomeGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+      .map(g => renderCard(g));
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
+
+  const activeSavingsCards = useMemo(() => {
+    return cashflowGroups
+      .filter(g => isSavingsGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+      .map(g => renderCard(g));
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
+
+  const activeExpenseCards = useMemo(() => {
+    return cashflowGroups
+      .filter(g => isExpenseGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+      .map(g => renderCard(g));
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
 
   return {
     sumInc,
     sumExp,
     net,
     savingsRate,
-    activeGroupCards,
+    activeIncomeCards,
+    activeSavingsCards,
+    activeExpenseCards,
     getSubValue,
     catTypeMap
   };
