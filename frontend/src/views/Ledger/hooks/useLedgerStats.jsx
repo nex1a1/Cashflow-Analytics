@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm, advancedFilterGroup, setAdvancedFilterGroup) {
+export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm, advancedFilterGroup, setAdvancedFilterGroup, allDatesInPeriod = []) {
   const catTypeMap = useMemo(() => {
     const map = {};
     categories.forEach(c => map[c.name] = c.type);
@@ -72,14 +72,13 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     return months.size;
   }, [displayTransactions]);
 
+  const periodDays = Math.max(1, allDatesInPeriod?.length || 1);
+
   const getSubValue = (total, isGroup = false, groupType = 'expense') => {
     if (uniqueMonths > 1) {
-      return `เฉลี่ย ${formatMoney(total / uniqueMonths)} / เดือน`;
+      return `เฉลี่ย ฿${formatMoney(total / uniqueMonths)} / เดือน`;
     }
-    if (isGroup) {
-      return groupType === 'income' ? 'รายรับ (Income)' : 'รายจ่าย (Expense)';
-    }
-    return null;
+    return `เฉลี่ย ฿${formatMoney(total / periodDays)} / วัน`;
   };
 
   const renderCard = (g) => {
@@ -126,6 +125,16 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     }
 
     const defaultColor = isIncome ? '#10b981' : (isSavings ? '#f59e0b' : (g.color || '#64748b'));
+
+    let amtColor = 'text-red-400';
+    let amtSign = '-';
+    if (isIncome) {
+      amtColor = 'text-emerald-400';
+      amtSign = '+';
+    } else if (isSavings) {
+      amtColor = 'text-amber-400';
+      amtSign = '±';
+    }
 
     return (
       <div key={g.id} className="w-[235px] shrink-0 flex flex-col">
@@ -188,12 +197,10 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
           <div className="flex flex-col min-w-0 font-mono z-10">
             <div className="flex items-baseline justify-between gap-1">
               <span 
-                className={`text-[17px] font-black tabular-nums tracking-tight truncate ${
-                  isActive ? 'text-white' : 'text-slate-100'
-                }`}
-                title={`฿${formatMoney(total)}`}
+                className={`text-[17px] font-black tabular-nums tracking-tight truncate ${amtColor}`}
+                title={`${amtSign}฿${formatMoney(total)}`}
               >
-                ฿{formatMoney(total)}
+                {amtSign}฿{formatMoney(total)}
               </span>
               <span className="text-[11.5px] font-black text-neutral-400 tabular-nums">
                 {pctOfTotal}%
@@ -244,7 +251,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
                       >
                         {relativePct}%
                       </span>
-                      <span className="text-white font-extrabold">฿{formatMoney(cat.amount)}</span>
+                      <span className="font-extrabold" style={{ color: catColor }}>฿{formatMoney(cat.amount)}</span>
                     </div>
                   </div>
                 );

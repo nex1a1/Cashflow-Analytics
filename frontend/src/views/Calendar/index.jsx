@@ -21,6 +21,25 @@ export default function CalendarView({
 }) {
   const isDarkMode = true;
   const [selectedDate, setSelectedDate] = useState(null);
+  const [excludedCategoryIds, setExcludedCategoryIds] = useState(new Set());
+  const [legendSortMode, setLegendSortMode] = useState(() => localStorage.getItem('shark_calendar_legend_sort') || 'structure');
+
+  const handleSetSortMode = (mode) => {
+    setLegendSortMode(mode);
+    localStorage.setItem('shark_calendar_legend_sort', mode);
+  };
+
+  const toggleCategory = (catId) => {
+    setExcludedCategoryIds(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  };
   
   // ── Logic: Smooth Loading Transition ───────────────────────
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
@@ -70,6 +89,9 @@ export default function CalendarView({
       const txD = parseInt(t.date.split('-')[2], 10);
       if (dayData[txD]) {
         const catObj = categories.find(c => c.name === t.category);
+        const catId = catObj ? catObj.id : t.category;
+        if (excludedCategoryIds.has(catId)) return;
+
         const amt = parseFloat(t.amount) || 0;
         
         if (catObj?.type === 'income') {
@@ -90,7 +112,7 @@ export default function CalendarView({
     }
     
     return { dayData, monthInc: tInc, monthExp: tExp };
-  }, [transactions, y, m, daysInMonth, categories]);
+  }, [transactions, y, m, daysInMonth, categories, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
     const counts = {};
@@ -107,33 +129,106 @@ export default function CalendarView({
     return counts;
   }, [dayTypes, daysInMonth, m, y, dayTypeConfig]);
 
-  const activeCategories = useMemo(() => {
+  const groupedLegendData = useMemo(() => {
     const targetMonthYear = `${y}-${(m + 1).toString().padStart(2, '0')}`;
     const catsMap = new Map();
+    const catAmounts = {};
     
     transactions.forEach(t => {
       if (!t.date || !t.date.startsWith(targetMonthYear)) return;
       
       const catObj = categories.find(c => c.name === t.category);
-      if (catObj) {
-        catsMap.set(catObj.id, catObj);
-      } else if (t.category) {
-        catsMap.set(t.category, {
-          id: t.category,
-          name: t.category,
-          color: '#94a3b8',
-          type: 'expense'
-        });
+      const amt = parseFloat(t.amount) || 0;
+      const catId = catObj ? catObj.id : t.category;
+
+      if (!catsMap.has(catId)) {
+        if (catObj) {
+          catsMap.set(catId, catObj);
+        } else {
+          catsMap.set(catId, {
+            id: t.category,
+            name: t.category,
+            color: '#94a3b8',
+            type: 'expense',
+            cashflowGroup: null
+          });
+        }
       }
+      catAmounts[catId] = (catAmounts[catId] || 0) + amt;
     });
-    
-    return Array.from(catsMap.values()).sort((a, b) => {
-      if (a.type !== b.type) {
-        return a.type === 'income' ? -1 : 1;
+
+    const activeCatsArray = Array.from(catsMap.values());
+    if (activeCatsArray.length === 0) {
+      return { sortedGroups: [], catAmounts: {} };
+    }
+
+    const groupsMap = {};
+
+    const getGroupObj = (groupId, categoryType) => {
+      if (groupId) {
+        const found = cashflowGroups.find(g => g.id === groupId);
+        if (found) return found;
       }
-      return a.name.localeCompare(b.name, 'th');
+      return {
+        id: groupId || 'uncategorized',
+        name: categoryType === 'income' ? 'รายรับอื่นๆ' : 'หมวดหมู่อื่นๆ',
+        type: categoryType || 'expense',
+        icon: categoryType === 'income' ? '💰' : '📌',
+        color: '#64748b',
+        order_index: 9999
+      };
+    };
+
+    activeCatsArray.forEach(cat => {
+      const groupId = cat.cashflowGroup || 'uncategorized';
+      const groupKey = `${cat.type}_${groupId}`;
+      const amt = catAmounts[cat.id] || 0;
+
+      if (!groupsMap[groupKey]) {
+        groupsMap[groupKey] = {
+          groupObj: getGroupObj(cat.cashflowGroup, cat.type),
+          categories: [],
+          groupTotal: 0
+        };
+      }
+      groupsMap[groupKey].categories.push(cat);
+      groupsMap[groupKey].groupTotal += amt;
     });
-  }, [transactions, y, m, categories]);
+
+    Object.values(groupsMap).forEach(gData => {
+      gData.categories.sort((a, b) => {
+        if (legendSortMode === 'amount') {
+          const amtA = catAmounts[a.id] || 0;
+          const amtB = catAmounts[b.id] || 0;
+          if (amtB !== amtA) return amtB - amtA;
+          return a.name.localeCompare(b.name, 'th');
+        } else {
+          const catIdxA = a.order_index ?? 999;
+          const catIdxB = b.order_index ?? 999;
+          if (catIdxA !== catIdxB) return catIdxA - catIdxB;
+          return a.name.localeCompare(b.name, 'th');
+        }
+      });
+    });
+
+    const sortedGroups = Object.values(groupsMap).sort((a, b) => {
+      const typeOrder = { income: 0, savings: 1, expense: 2 };
+      const typeA = typeOrder[a.groupObj.type] ?? 9;
+      const typeB = typeOrder[b.groupObj.type] ?? 9;
+      if (typeA !== typeB) return typeA - typeB;
+
+      const idxA = a.groupObj.order_index ?? 9999;
+      const idxB = b.groupObj.order_index ?? 9999;
+      if (idxA !== idxB) return idxA - idxB;
+
+      return a.groupObj.name.localeCompare(b.groupObj.name, 'th');
+    });
+
+    return {
+      sortedGroups,
+      catAmounts
+    };
+  }, [transactions, y, m, categories, cashflowGroups, legendSortMode]);
 
   const prevMonth = () => {
     const d = new Date(y, m - 1, 1);
@@ -305,30 +400,119 @@ export default function CalendarView({
         </div>
 
         {/* Category Color Legend */}
-        {activeCategories.length > 0 && (
-          <div className={`${styles.surface} rounded-none border ${styles.border} p-3 px-4`}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5">
+        {groupedLegendData.sortedGroups && groupedLegendData.sortedGroups.length > 0 && (
+          <div className={`${styles.surface} rounded-none border ${styles.border} p-3.5 px-4 space-y-4`}>
+            <div className="flex items-center gap-3 mb-1 flex-wrap sm:flex-nowrap">
+              <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" />
                 หมวดหมู่ธุรกรรมในเดือนนี้ (Category Colors)
               </span>
-              <div className="h-[1px] bg-[#2d2d2d] flex-1 ml-1" />
+              
+              <div className="flex items-center gap-1.5 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5 text-[10px] font-black tracking-wider">
+                <button
+                  onClick={() => handleSetSortMode('structure')}
+                  className={`px-2 py-0.5 rounded-none transition-none cursor-pointer ${
+                    legendSortMode === 'structure'
+                      ? 'bg-[#da291c] text-white font-bold'
+                      : 'text-slate-400 hover:text-slate-200 bg-transparent'
+                  }`}
+                >
+                  เรียงตามกลุ่ม
+                </button>
+                <button
+                  onClick={() => handleSetSortMode('amount')}
+                  className={`px-2 py-0.5 rounded-none transition-none cursor-pointer ${
+                    legendSortMode === 'amount'
+                      ? 'bg-[#da291c] text-white font-bold'
+                      : 'text-slate-400 hover:text-slate-200 bg-transparent'
+                  }`}
+                >
+                  เรียงตามยอดเงิน
+                </button>
+              </div>
+
+              <div className="h-[1px] bg-[#2d2d2d] flex-1 min-w-[20px]" />
+              
+              {excludedCategoryIds.size > 0 && (
+                <button
+                  onClick={() => setExcludedCategoryIds(new Set())}
+                  className="px-2 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-none border border-[#da291c] bg-[#da291c]/10 text-[#da291c] hover:bg-[#da291c]/20 transition-none cursor-pointer shrink-0"
+                >
+                  แสดงทั้งหมด (Show All)
+                </button>
+              )}
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {activeCategories.map(cat => {
-                const color = cat.color || '#94a3b8';
+
+            {/* Groups Grid */}
+            <div className="flex flex-col gap-3">
+              {groupedLegendData.sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
+                const groupColor = groupObj.color || '#64748b';
+                
+                let amtColor = 'text-red-400';
+                let amtPrefix = '-';
+                if (groupObj.type === 'income') {
+                  amtColor = 'text-emerald-400';
+                  amtPrefix = '+';
+                } else if (groupObj.type === 'savings') {
+                  amtColor = 'text-amber-400';
+                  amtPrefix = '±';
+                }
+                
                 return (
-                  <div 
-                    key={cat.id} 
-                    className="flex items-center gap-2 text-[12px] font-bold px-2 py-1 rounded-none border cursor-default select-none"
-                    style={{
-                      backgroundColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
-                      borderColor: `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
-                      color: color,
-                    }}
-                  >
-                    <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
-                    <span className="opacity-90">{cat.name}</span>
+                  <div key={groupObj.id} className="flex flex-row items-center gap-4 py-2 border-b border-[#2d2d2d]/30 pb-3 last:border-b-0 last:pb-0">
+                    {/* Group Header & Total Column */}
+                    <div className="flex items-center justify-between w-[270px] shrink-0 pr-4 border-r border-[#2d2d2d]/50">
+                      <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
+                        <span className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
+                        {groupObj.icon && <span className="text-[12px] shrink-0">{groupObj.icon}</span>}
+                        <span className="truncate">{groupObj.name}</span>
+                      </span>
+                      <span className={`text-[11px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
+                        {amtPrefix}{formatValue(groupTotal)} ฿
+                      </span>
+                    </div>
+
+                    {/* Group Categories Column */}
+                    <div className="flex flex-wrap gap-2 flex-grow pl-1">
+                      {groupCats.map(cat => {
+                        const color = cat.color || '#94a3b8';
+                        const isExcluded = excludedCategoryIds.has(cat.id);
+                        const amt = groupedLegendData.catAmounts[cat.id] || 0;
+                        
+                        return (
+                          <button 
+                            key={cat.id} 
+                            onClick={() => toggleCategory(cat.id)}
+                            className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
+                              isExcluded 
+                                ? 'opacity-35 hover:opacity-60' 
+                                : 'hover:brightness-110'
+                            }`}
+                            style={{
+                              backgroundColor: isExcluded 
+                                ? 'transparent' 
+                                : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
+                              borderColor: isExcluded 
+                                ? `rgba(${hexToRgb(color)}, 0.1)` 
+                                : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
+                              color: color,
+                            }}
+                          >
+                            <div 
+                              className="w-2 h-2 rounded-none shrink-0" 
+                              style={{ 
+                                backgroundColor: color,
+                                opacity: isExcluded ? 0.4 : 1
+                              }} 
+                            />
+                            <span className="opacity-90">{cat.name}</span>
+                            <span className="text-[10px] opacity-75 font-mono font-bold tabular-nums ml-1.5">
+                              {formatValue(amt)} ฿
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}

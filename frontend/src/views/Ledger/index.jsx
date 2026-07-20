@@ -91,7 +91,8 @@ export default function LedgerView({
     formatMoney,
     dm,
     advancedFilterGroup,
-    setAdvancedFilterGroup
+    setAdvancedFilterGroup,
+    allDatesInPeriod
   );
 
   const totalPages = pages.length || 1;
@@ -117,11 +118,11 @@ export default function LedgerView({
           <div>
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-6 bg-[#da291c] rounded-none shrink-0" />
-              <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-mono">
+              <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-sans">
                 บัญชีแยกประเภท
               </h2>
             </div>
-            <p className="text-[10px] font-black tracking-widest mt-1.5 font-mono text-slate-455 uppercase flex items-center gap-2">
+            <p className="text-[10px] font-black tracking-widest mt-1.5 font-sans text-slate-455 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
               <span className="text-neutral-800 font-bold">•</span>
               <span className="text-[#da291c] font-extrabold">{displayTransactions.length}</span>
@@ -207,7 +208,7 @@ export default function LedgerView({
           <div className="px-3.5 py-2 flex items-center justify-between border-b bg-[#121212]/50 border-[#303030]/60">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-[#da291c]" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-sans">
                 แผงวิเคราะห์รายรับ-รายจ่าย (TRANSACTION COMMAND PANEL)
               </span>
             </div>
@@ -215,65 +216,65 @@ export default function LedgerView({
           
           <div className="grid grid-cols-3 gap-px bg-[#303030]/60">
             {/* INCOME CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-emerald-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
+            <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-emerald-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
               {/* Background Icon Glow */}
-              <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-emerald-400">
-                <TrendingUp size={80} />
+              <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-emerald-400">
+                <TrendingUp size={64} />
               </div>
-              <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
+              <div className="relative z-10 flex justify-between items-center mb-0.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
                   รายรับรวม (INCOME)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   + INFLOW
                 </span>
               </div>
-              <div className="relative z-10 mt-1">
+              <div className="relative z-10 mt-0.5">
                 <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-emerald-400 font-mono">
                   {formatMoney(sumInc)}
                 </div>
               </div>
-              <div className="relative z-10 mt-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
-                  {getSubValue(sumInc) || 'ข้อมูลในรอบบิลปัจจุบัน'}
+              <div className="relative z-10 mt-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-sans">
+                  {getSubValue(sumInc)}
                 </span>
               </div>
             </div>
 
             {/* EXPENSE CELL */}
-            <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] border-l-rose-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
+            <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-rose-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
               {/* Background Icon Glow */}
-              <div className="absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none text-rose-455">
-                <TrendingDown size={80} />
+              <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-rose-455">
+                <TrendingDown size={64} />
               </div>
-              <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
+              <div className="relative z-10 flex justify-between items-center mb-0.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
                   รายจ่ายรวม (EXPENSE)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20">
                   - OUTFLOW
                 </span>
               </div>
-              <div className="relative z-10 mt-1">
+              <div className="relative z-10 mt-0.5">
                 <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-rose-400 font-mono">
                   {formatMoney(sumExp)}
                 </div>
               </div>
-              <div className="relative z-10 mt-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
-                  {getSubValue(sumExp) || 'ข้อมูลในรอบบิลปัจจุบัน'}
+              <div className="relative z-10 mt-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-sans">
+                  {getSubValue(sumExp)}
                 </span>
               </div>
             </div>
 
             {/* NET SURPLUS CELL WITH SAVINGS RATE PILL */}
-            <div className={`group relative overflow-hidden p-4 flex flex-col justify-between min-h-[96px] border-l-[3px] bg-[#181818] hover:bg-[#1c1c1c] ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.02]'}`}>
+            <div className={`group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] bg-[#181818] hover:bg-[#1c1c1c] ${net >= 0 ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' : 'border-l-rose-500 hover:bg-gradient-to-br hover:from-rose-500/[0.02]'}`}>
               {/* Background Icon Glow */}
-              <div className={`absolute -right-3 -bottom-3 opacity-[0.02] pointer-events-none ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
-                <Wallet size={80} />
+              <div className={`absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                <Wallet size={64} />
               </div>
-              <div className="relative z-10 flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-mono">
+              <div className="relative z-10 flex justify-between items-center mb-0.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
                   คงเหลือสุทธิ (NET CASHFLOW)
                 </span>
                 <div className="flex items-center gap-1">
@@ -293,14 +294,14 @@ export default function LedgerView({
                   </span>
                 </div>
               </div>
-              <div className="relative z-10 mt-1">
+              <div className="relative z-10 mt-0.5">
                 <div className={`text-2xl font-black tabular-nums tracking-tight leading-none font-mono ${net >= 0 ? 'text-yellow-400' : 'text-rose-400'}`}>
                   {formatMoney(net)}
                 </div>
               </div>
-              <div className="relative z-10 mt-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-mono">
-                  {getSubValue(net) || (net >= 0 ? 'สถานะ: ยอดสะสมเป็นบวก' : 'สถานะ: ยอดสะสมติดลบ')}
+              <div className="relative z-10 mt-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold opacity-80 tabular-nums text-slate-500 font-sans">
+                  {getSubValue(net)}
                 </span>
               </div>
             </div>
@@ -318,7 +319,7 @@ export default function LedgerView({
                 {/* Left Column: Income */}
                 {activeIncomeCards.length > 0 && (
                   <div className="flex flex-col gap-1.5 items-center">
-                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-[#10b981] font-mono justify-center">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-[#10b981] font-sans justify-center">
                       <TrendingUp className="w-3.5 h-3.5" />
                       <span>รายรับ (Income)</span>
                     </div>
@@ -338,7 +339,7 @@ export default function LedgerView({
                 {/* Right Column: Savings */}
                 {activeSavingsCards.length > 0 && (
                   <div className="flex flex-col gap-1.5 items-center">
-                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-amber-500 font-mono justify-center">
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider text-amber-500 font-sans justify-center">
                       <Wallet className="w-3.5 h-3.5" />
                       <span>การออมและลงทุน (Savings & Investments)</span>
                     </div>
@@ -354,7 +355,7 @@ export default function LedgerView({
             {/* Row 2: Expenses */}
             {activeExpenseCards.length > 0 && (
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-center gap-2 px-1 text-[10.5px] font-black uppercase tracking-wider text-[#da291c] font-mono">
+                <div className="flex items-center justify-center gap-2 px-1 text-[10.5px] font-black uppercase tracking-wider text-[#da291c] font-sans">
                   <TrendingDown className="w-3.5 h-3.5" />
                   <span>รายจ่าย (Expenses)</span>
                 </div>
@@ -393,7 +394,7 @@ export default function LedgerView({
             <div className="relative w-14 h-14 mb-4 flex items-center justify-center border border-[#303030] bg-[#181818]">
               <div className="w-8 h-8 border-2 border-transparent border-t-[#da291c] border-r-[#da291c]/30 rounded-full animate-spin" />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#888888] font-mono flex items-center gap-1.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#888888] font-sans flex items-center gap-1.5">
               <span>กำลังดาวน์โหลดบัญชีแยกประเภท</span>
               <span className="text-[#da291c] animate-pulse">...</span>
             </p>
