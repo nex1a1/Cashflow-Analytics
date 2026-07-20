@@ -1,7 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
-import { CalendarDays, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  CalendarDays, Calendar as CalendarIcon, ChevronLeft, ChevronRight,
+  List, Rows, Folders, Coins
+} from 'lucide-react';
 import { hexToRgb } from '../../utils/formatters';
+import sharkWhite from '../../assets/images/shark-white.svg';
 import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarDayCell from './components/CalendarDayCell';
 
@@ -23,10 +27,16 @@ export default function CalendarView({
   const [selectedDate, setSelectedDate] = useState(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState(new Set());
   const [legendSortMode, setLegendSortMode] = useState(() => localStorage.getItem('shark_calendar_legend_sort') || 'structure');
+  const [legendLayoutMode, setLegendLayoutMode] = useState(() => localStorage.getItem('shark_calendar_legend_layout') || 'compact');
 
   const handleSetSortMode = (mode) => {
     setLegendSortMode(mode);
     localStorage.setItem('shark_calendar_legend_sort', mode);
+  };
+
+  const handleSetLayoutMode = (mode) => {
+    setLegendLayoutMode(mode);
+    localStorage.setItem('shark_calendar_legend_layout', mode);
   };
 
   const toggleCategory = (catId) => {
@@ -73,9 +83,11 @@ export default function CalendarView({
     return remainder === 0 ? 0 : 7 - remainder;
   }, [firstDayOfMonth, daysInMonth]);
 
-  const { dayData: calendarData, monthInc, monthExp } = useMemo(() => {
+  const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts } = useMemo(() => {
     let dayData = {};
     let tInc = 0, tExp = 0;
+    let tNeed = 0, tWant = 0;
+    const catAllocAmounts = {};
     
     for (let i = 1; i <= daysInMonth; i++) {
       dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
@@ -102,6 +114,21 @@ export default function CalendarView({
           dayData[txD].exp += amt;
           dayData[txD].items.push({ ...t, _catObj: catObj });
           tExp += amt;
+          
+          // Determine Need / Want / Savings at transaction level matching useAnalytics.js
+          const groupObj = catObj ? cashflowGroups.find(g => g.id === catObj.cashflowGroup) : null;
+          const aType = t.allocation_type || (groupObj?.type === 'savings' ? 'savings' : (groupObj?.allocation_type || 'want'));
+          
+          if (!catAllocAmounts[catId]) {
+            catAllocAmounts[catId] = { need: 0, want: 0, savings: 0 };
+          }
+          catAllocAmounts[catId][aType] += amt;
+
+          if (aType === 'need') {
+            tNeed += amt;
+          } else if (aType === 'want') {
+            tWant += amt;
+          }
         }
       }
     });
@@ -111,8 +138,8 @@ export default function CalendarView({
       dayData[i].incItems.sort((a, b) => b.amount - a.amount);
     }
     
-    return { dayData, monthInc: tInc, monthExp: tExp };
-  }, [transactions, y, m, daysInMonth, categories, excludedCategoryIds]);
+    return { dayData, monthInc: tInc, monthExp: tExp, monthNeed: tNeed, monthWant: tWant, catAllocAmounts };
+  }, [transactions, y, m, daysInMonth, categories, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
     const counts = {};
@@ -229,6 +256,100 @@ export default function CalendarView({
       catAmounts
     };
   }, [transactions, y, m, categories, cashflowGroups, legendSortMode]);
+
+  const allocationTotals = useMemo(() => {
+    const needCats = [];
+    const wantCats = [];
+    const savingsCats = [];
+
+    categories.forEach(cat => {
+      // Skip if category is excluded
+      if (excludedCategoryIds.has(cat.id)) return;
+
+      const allocs = catAllocAmounts[cat.id];
+      if (!allocs) return;
+
+      const groupObj = cashflowGroups.find(g => g.id === cat.cashflowGroup);
+      const groupName = groupObj ? groupObj.name : 'หมวดหมู่อื่นๆ';
+      const groupOrder = groupObj?.order_index ?? 9999;
+      const catOrder = cat.order_index ?? 9999;
+
+      // Needs portion
+      if (allocs.need > 0) {
+        needCats.push({
+          name: cat.name,
+          groupName,
+          amount: allocs.need,
+          color: cat.color || groupObj?.color || '#EF4444',
+          groupOrder,
+          catOrder
+        });
+      }
+
+      // Wants portion
+      if (allocs.want > 0) {
+        wantCats.push({
+          name: cat.name,
+          groupName,
+          amount: allocs.want,
+          color: cat.color || groupObj?.color || '#F59E0B',
+          groupOrder,
+          catOrder
+        });
+      }
+
+      // Savings portion
+      if (allocs.savings > 0) {
+        savingsCats.push({
+          name: cat.name,
+          groupName,
+          amount: allocs.savings,
+          color: cat.color || groupObj?.color || '#10B981',
+          groupOrder,
+          catOrder
+        });
+      }
+    });
+
+    const netCashflow = monthInc - monthExp;
+    const netSavingsActual = Math.max(0, netCashflow);
+    const totalAllocation = monthNeed + monthWant + netSavingsActual;
+
+    if (netSavingsActual > 0) {
+      savingsCats.push({
+        name: 'เงินเหลือสะสม (Surplus)',
+        groupName: 'กระแสเงินสด',
+        amount: netSavingsActual,
+        color: '#10B981',
+        groupOrder: -1, // Keep surplus at the top of savings when sorted by structure
+        catOrder: -1
+      });
+    }
+
+    // Dynamic sort helper
+    const sortFn = (a, b) => {
+      if (legendSortMode === 'amount') {
+        return b.amount - a.amount;
+      } else {
+        if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder;
+        if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
+        return a.name.localeCompare(b.name, 'th');
+      }
+    };
+
+    return {
+      need: monthNeed,
+      want: monthWant,
+      savings: netSavingsActual,
+      totalExpense: totalAllocation,
+      needPct: totalAllocation > 0 ? Math.round((monthNeed / totalAllocation) * 100) : 0,
+      wantPct: totalAllocation > 0 ? Math.round((monthWant / totalAllocation) * 100) : 0,
+      savingsPct: totalAllocation > 0 ? Math.round((netSavingsActual / totalAllocation) * 100) : 0,
+      needCats: needCats.sort(sortFn),
+      wantCats: wantCats.sort(sortFn),
+      savingsCats: savingsCats.sort(sortFn),
+    };
+  }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
   const prevMonth = () => {
     const d = new Date(y, m - 1, 1);
@@ -408,26 +529,55 @@ export default function CalendarView({
                 หมวดหมู่ธุรกรรมในเดือนนี้ (Category Colors)
               </span>
               
-              <div className="flex items-center gap-1.5 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5 text-[10px] font-black tracking-wider">
+              {/* Layout Switcher (Icons) */}
+              <div className="flex items-center gap-1 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5" title="รูปแบบการแสดงผล">
+                <button
+                  onClick={() => handleSetLayoutMode('compact')}
+                  className={`p-1 rounded-none transition-none cursor-pointer ${
+                    legendLayoutMode === 'compact'
+                      ? 'bg-[#da291c] text-white font-bold'
+                      : 'text-slate-400 hover:text-slate-200 bg-transparent'
+                  }`}
+                  title="แบบย่อ (Compact list)"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleSetLayoutMode('grouped')}
+                  className={`p-1 rounded-none transition-none cursor-pointer ${
+                    legendLayoutMode === 'grouped'
+                      ? 'bg-[#da291c] text-white font-bold'
+                      : 'text-slate-400 hover:text-slate-200 bg-transparent'
+                  }`}
+                  title="แยกกลุ่มกระแสเงินสด (Grouped list)"
+                >
+                  <Rows className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Sort Switcher (Icons) */}
+              <div className="flex items-center gap-1 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5" title="การจัดเรียง">
                 <button
                   onClick={() => handleSetSortMode('structure')}
-                  className={`px-2 py-0.5 rounded-none transition-none cursor-pointer ${
+                  className={`p-1 rounded-none transition-none cursor-pointer ${
                     legendSortMode === 'structure'
                       ? 'bg-[#da291c] text-white font-bold'
                       : 'text-slate-400 hover:text-slate-200 bg-transparent'
                   }`}
+                  title="เรียงตามกลุ่มโครงสร้าง (Sort by groups)"
                 >
-                  เรียงตามกลุ่ม
+                  <Folders className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => handleSetSortMode('amount')}
-                  className={`px-2 py-0.5 rounded-none transition-none cursor-pointer ${
+                  className={`p-1 rounded-none transition-none cursor-pointer ${
                     legendSortMode === 'amount'
                       ? 'bg-[#da291c] text-white font-bold'
                       : 'text-slate-400 hover:text-slate-200 bg-transparent'
                   }`}
+                  title="เรียงตามยอดเงินสูงสุด (Sort by total amount)"
                 >
-                  เรียงตามยอดเงิน
+                  <Coins className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -443,82 +593,243 @@ export default function CalendarView({
               )}
             </div>
 
-            {/* Groups Grid */}
-            <div className="flex flex-col gap-3">
-              {groupedLegendData.sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
-                const groupColor = groupObj.color || '#64748b';
-                
-                let amtColor = 'text-red-400';
-                let amtPrefix = '-';
-                if (groupObj.type === 'income') {
-                  amtColor = 'text-emerald-400';
-                  amtPrefix = '+';
-                } else if (groupObj.type === 'savings') {
-                  amtColor = 'text-amber-400';
-                  amtPrefix = '±';
-                }
-                
-                return (
-                  <div key={groupObj.id} className="flex flex-row items-center gap-4 py-2 border-b border-[#2d2d2d]/30 pb-3 last:border-b-0 last:pb-0">
-                    {/* Group Header & Total Column */}
-                    <div className="flex items-center justify-between w-[270px] shrink-0 pr-4 border-r border-[#2d2d2d]/50">
-                      <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
-                        <span className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
-                        {groupObj.icon && <span className="text-[12px] shrink-0">{groupObj.icon}</span>}
-                        <span className="truncate">{groupObj.name}</span>
-                      </span>
-                      <span className={`text-[11px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
-                        {amtPrefix}{formatValue(groupTotal)} ฿
-                      </span>
-                    </div>
-
-                    {/* Group Categories Column */}
-                    <div className="flex flex-wrap gap-2 flex-grow pl-1">
-                      {groupCats.map(cat => {
-                        const color = cat.color || '#94a3b8';
-                        const isExcluded = excludedCategoryIds.has(cat.id);
-                        const amt = groupedLegendData.catAmounts[cat.id] || 0;
-                        
-                        return (
-                          <button 
-                            key={cat.id} 
-                            onClick={() => toggleCategory(cat.id)}
-                            className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
-                              isExcluded 
-                                ? 'opacity-35 hover:opacity-60' 
-                                : 'hover:brightness-110'
-                            }`}
-                            style={{
-                              backgroundColor: isExcluded 
-                                ? 'transparent' 
-                                : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
-                              borderColor: isExcluded 
-                                ? `rgba(${hexToRgb(color)}, 0.1)` 
-                                : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
-                              color: color,
-                            }}
-                          >
-                            <div 
-                              className="w-2 h-2 rounded-none shrink-0" 
-                              style={{ 
-                                backgroundColor: color,
-                                opacity: isExcluded ? 0.4 : 1
-                              }} 
-                            />
-                            <span className="opacity-90">{cat.name}</span>
-                            <span className="text-[10px] opacity-75 font-mono font-bold tabular-nums ml-1.5">
-                              {formatValue(amt)} ฿
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+            {/* Split Layout Container */}
+            <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
+              {/* Left Column: Categories */}
+              <div className="flex-grow flex flex-col min-w-0">
+                {legendLayoutMode === 'compact' ? (
+                  <div className="flex flex-wrap gap-x-3 gap-y-2 content-start">
+                    {groupedLegendData.sortedGroups.flatMap(g => g.categories).map(cat => {
+                      const color = cat.color || '#94a3b8';
+                      const isExcluded = excludedCategoryIds.has(cat.id);
+                      const amt = groupedLegendData.catAmounts[cat.id] || 0;
+                      
+                      return (
+                        <button 
+                          key={cat.id} 
+                          onClick={() => toggleCategory(cat.id)}
+                          className={`flex items-center gap-1.5 text-[11.5px] font-bold px-2.5 py-1 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
+                            isExcluded 
+                              ? 'opacity-35 hover:opacity-60' 
+                              : 'hover:brightness-110'
+                          }`}
+                          style={{
+                            backgroundColor: isExcluded 
+                              ? 'transparent' 
+                              : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
+                            borderColor: isExcluded 
+                              ? `rgba(${hexToRgb(color)}, 0.1)` 
+                              : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
+                            color: color,
+                          }}
+                        >
+                          <div 
+                            className="w-2 h-2 rounded-none shrink-0" 
+                            style={{ 
+                              backgroundColor: color,
+                              opacity: isExcluded ? 0.4 : 1
+                            }} 
+                          />
+                          <span className="opacity-90">{cat.name}</span>
+                          <span className="text-[10.5px] opacity-75 font-mono font-bold tabular-nums ml-1.5">
+                            {formatValue(amt)} ฿
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                ) : (
+                  /* Groups Grid */
+                  <div className="flex-grow flex flex-col justify-between gap-y-1">
+                    {groupedLegendData.sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
+                      const groupColor = groupObj.color || '#64748b';
+                      
+                      let amtColor = 'text-red-400';
+                      let amtPrefix = '-';
+                      if (groupObj.type === 'income') {
+                        amtColor = 'text-emerald-400';
+                        amtPrefix = '+';
+                      } else if (groupObj.type === 'savings') {
+                        amtColor = 'text-amber-400';
+                        amtPrefix = '±';
+                      }
+                      
+                      return (
+                        <div key={groupObj.id} className="flex-1 flex flex-row items-center gap-4 py-1.5 border-b border-[#2d2d2d]/30 last:border-b-0">
+                          {/* Group Header & Total Column */}
+                          <div className="flex items-center justify-between w-[200px] shrink-0 pr-4 border-r border-[#2d2d2d]/50">
+                            <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
+                              <span className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
+                              {groupObj.icon && <span className="text-[12px] shrink-0">{groupObj.icon}</span>}
+                              <span className="truncate">{groupObj.name}</span>
+                            </span>
+                            <span className={`text-[11px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
+                              {amtPrefix}{formatValue(groupTotal)} ฿
+                            </span>
+                          </div>
+
+                          {/* Group Categories Column */}
+                          <div className="flex flex-wrap gap-2 flex-grow pl-1">
+                            {groupCats.map(cat => {
+                              const color = cat.color || '#94a3b8';
+                              const isExcluded = excludedCategoryIds.has(cat.id);
+                              const amt = groupedLegendData.catAmounts[cat.id] || 0;
+                              
+                              return (
+                                <button 
+                                  key={cat.id} 
+                                  onClick={() => toggleCategory(cat.id)}
+                                  className={`flex items-center gap-1.5 text-[11.5px] font-bold px-2.5 py-1 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
+                                    isExcluded 
+                                      ? 'opacity-35 hover:opacity-60' 
+                                      : 'hover:brightness-110'
+                                  }`}
+                                  style={{
+                                    backgroundColor: isExcluded 
+                                      ? 'transparent' 
+                                      : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.08 : 0.03})`,
+                                    borderColor: isExcluded 
+                                      ? `rgba(${hexToRgb(color)}, 0.1)` 
+                                      : `rgba(${hexToRgb(color)}, ${isDarkMode ? 0.25 : 0.15})`,
+                                    color: color,
+                                  }}
+                                >
+                                  <div 
+                                    className="w-2 h-2 rounded-none shrink-0" 
+                                    style={{ 
+                                      backgroundColor: color,
+                                      opacity: isExcluded ? 0.4 : 1
+                                    }} 
+                                  />
+                                  <span className="opacity-90">{cat.name}</span>
+                                  <span className="text-[10.5px] opacity-75 font-mono font-bold tabular-nums ml-1.5">
+                                    {formatValue(amt)} ฿
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Allocation Overview */}
+              <div className="w-full lg:w-[320px] shrink-0 pl-0 lg:pl-5 border-t lg:border-t-0 lg:border-l border-[#2d2d2d]/50 flex flex-col gap-2.5 pt-1 justify-start relative overflow-hidden select-none">
+                <span className="text-[10px] font-black text-slate-500 tracking-wider uppercase flex items-center gap-1.5 z-10">
+                  สัดส่วนการใช้จ่าย (Allocation)
+                </span>
+                
+                <div className="flex flex-col gap-1.5 text-[11px] font-bold text-slate-350 z-10">
+                  {/* Needs */}
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-none bg-[#EF4444]" />
+                      จำเป็น (Needs)
+                    </span>
+                    <span className="font-mono tabular-nums text-white">
+                      {formatValue(allocationTotals.need)} ฿ ({allocationTotals.needPct}%)
+                    </span>
+                  </div>
+                  {legendLayoutMode === 'grouped' && allocationTotals.needCats.length > 0 && (
+                    <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
+                      {allocationTotals.needCats.map((cat, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
+                            <span className="truncate">
+                              {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
+                            </span>
+                          </span>
+                          <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Wants */}
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-none bg-[#F59E0B]" />
+                      ทั่วไป (Wants)
+                    </span>
+                    <span className="font-mono tabular-nums text-white">
+                      {formatValue(allocationTotals.want)} ฿ ({allocationTotals.wantPct}%)
+                    </span>
+                  </div>
+                  {legendLayoutMode === 'grouped' && allocationTotals.wantCats.length > 0 && (
+                    <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
+                      {allocationTotals.wantCats.map((cat, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
+                            <span className="truncate">
+                              {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
+                            </span>
+                          </span>
+                          <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Savings */}
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-none bg-[#10B981]" />
+                      เงินออม (Savings)
+                    </span>
+                    <span className="font-mono tabular-nums text-white">
+                      {formatValue(allocationTotals.savings)} ฿ ({allocationTotals.savingsPct}%)
+                    </span>
+                  </div>
+                  {legendLayoutMode === 'grouped' && allocationTotals.savingsCats.length > 0 && (
+                    <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
+                      {allocationTotals.savingsCats.map((cat, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
+                            <span className="truncate">
+                              {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
+                            </span>
+                          </span>
+                          <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stacked Progress Bar */}
+                {allocationTotals.totalExpense > 0 && (
+                  <div className="h-1.5 w-full bg-[#121212] border border-[#2d2d2d] flex rounded-none overflow-hidden mt-1 shrink-0 z-10">
+                    <div 
+                      style={{ width: `${allocationTotals.needPct}%`, backgroundColor: '#EF4444' }} 
+                      title={`Needs: ${allocationTotals.needPct}%`} 
+                    />
+                    <div 
+                      style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: '#F59E0B' }} 
+                      title={`Wants: ${allocationTotals.wantPct}%`} 
+                    />
+                    <div 
+                      style={{ width: `${allocationTotals.savingsPct}%`, backgroundColor: '#10B981' }} 
+                      title={`Savings: ${allocationTotals.savingsPct}%`} 
+                    />
+                  </div>
+                )}
+
+                {/* Subtle watermark logo in background */}
+                <img 
+                  src={sharkWhite} 
+                  alt="" 
+                  className="absolute -bottom-8 -right-8 w-36 h-36 opacity-[0.02] pointer-events-none select-none z-0" 
+                />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Summary Footer */}
         <div className={`${styles.surface} rounded-none border ${styles.border} p-3 px-4 flex flex-wrap gap-2.5 items-center`}>
