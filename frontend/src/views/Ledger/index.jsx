@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
-  TrendingUp, TrendingDown, Wallet, Inbox, Activity
+  TrendingUp, TrendingDown, Wallet, Inbox, Activity, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { formatMoney } from '../../utils/formatters';
 
@@ -44,6 +44,7 @@ export default function LedgerView({
   const dm = true;
   const [filterOpen, setFilterOpen] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
+  const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
 
   // ── Logic: Smooth Loading Transition ───────────────────────
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
@@ -306,11 +307,32 @@ export default function LedgerView({
               </div>
             </div>
           </div>
+
+          {/* Full-Width Awning Bar (แถบขยายยาวแบบกันสาด) */}
+          {(activeIncomeCards.length > 0 || activeSavingsCards.length > 0 || activeExpenseCards.length > 0) && (
+            <button
+              onClick={() => setShowGroupBreakdown(v => !v)}
+              className="w-full py-1.5 px-4 bg-[#121212] hover:bg-[#1f1f1f] border-t border-[#303030]/80 flex items-center justify-center gap-2 text-[10.5px] font-black uppercase tracking-widest font-mono text-slate-400 hover:text-slate-100 transition-colors group cursor-pointer"
+              title="ขยาย/หุบ แผงจำแนกหมวดหมู่ย่อย"
+            >
+              {showGroupBreakdown ? (
+                <>
+                  <ChevronUp className="w-3.5 h-3.5 text-[#da291c] group-hover:-translate-y-0.5 transition-transform" />
+                  <span>หุบการจำแนกตามกลุ่มรายรับ-รายจ่าย</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-[#da291c] group-hover:translate-y-0.5 transition-transform" />
+                  <span>ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย ({activeIncomeCards.length + activeSavingsCards.length + activeExpenseCards.length} กลุ่ม)</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Group Breakdown Area (Visible in all view modes) */}
-        {(activeIncomeCards.length > 0 || activeSavingsCards.length > 0 || activeExpenseCards.length > 0) && (
-          <div className="flex flex-col gap-4 pb-2">
+        {/* Group Breakdown Area (Collapsible, hidden by default) */}
+        {showGroupBreakdown && (activeIncomeCards.length > 0 || activeSavingsCards.length > 0 || activeExpenseCards.length > 0) && (
+          <div className="flex flex-col gap-4 pb-2 mt-2">
             
             {/* Row 1: Income and Savings/Investments */}
             {(activeIncomeCards.length > 0 || activeSavingsCards.length > 0) && (

@@ -66,7 +66,7 @@ function CategoryLegendSection({
   return (
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
-        <span className="text-[12px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
+        <span className="text-[13.5px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
           <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" />
           หมวดหมู่ธุรกรรม (Categories)
         </span>
@@ -146,7 +146,7 @@ function CategoryLegendSection({
               <button 
                 key={cat.id} 
                 onClick={() => toggleCategory(cat.id)}
-                className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
+                className={`flex items-center gap-1.5 text-[12px] font-bold px-2.5 py-1 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
                   isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
                 }`}
                 style={{
@@ -157,27 +157,27 @@ function CategoryLegendSection({
               >
                 <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                 <span className="opacity-90">{cat.name}</span>
-                <span className="text-[10px] opacity-75 font-mono font-bold ml-1">{formatValue(amt)} ฿</span>
+                <span className="text-[11px] opacity-75 font-mono font-bold ml-1">{formatValue(amt)} ฿</span>
               </button>
             );
           })}
         </div>
       ) : (
-        <div className="flex flex-col gap-y-1">
+        <div className="flex flex-col flex-grow justify-between gap-y-1">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || '#64748b';
             const amtColor = groupObj.type === 'income' ? 'text-emerald-400' : groupObj.type === 'savings' ? 'text-amber-400' : 'text-red-400';
             const amtPrefix = groupObj.type === 'income' ? '+' : groupObj.type === 'savings' ? '±' : '-';
             
             return (
-              <div key={groupObj.id} className="flex flex-row items-center gap-4 py-1.5 border-b border-[#2d2d2d]/30 last:border-b-0">
-                <div className="flex items-center justify-between w-[180px] shrink-0 pr-4 border-r border-[#2d2d2d]/50">
-                  <span className="text-[11px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
+              <div key={groupObj.id} className="flex flex-row items-stretch gap-4 py-2 border-b border-[#2d2d2d]/30 last:border-b-0 shrink-0">
+                <div className="flex items-start justify-between w-[280px] shrink-0 pr-4 border-r border-[#2d2d2d]/50 pt-1">
+                  <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
                     <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
-                    {groupObj.icon && <span className="text-[11px] shrink-0">{groupObj.icon}</span>}
+                    {groupObj.icon && <span className="text-[11.5px] shrink-0">{groupObj.icon}</span>}
                     <span className="truncate">{groupObj.name}</span>
                   </span>
-                  <span className={`text-[10.5px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
+                  <span className={`text-[13px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor} pt-[0.5px]`}>
                     {amtPrefix}{formatValue(groupTotal)} ฿
                   </span>
                 </div>
