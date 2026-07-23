@@ -3,6 +3,7 @@ import {
   Search, X, Hash, CalendarDays, MousePointer2, Target, 
   Calendar, Folder, Tag, ChevronDown, RefreshCw, Sparkles
 } from 'lucide-react';
+import DatePicker from '../../../../components/ui/DatePicker';
 
 export default function FilterBar({
   searchQuery, setSearchQuery,
@@ -15,7 +16,8 @@ export default function FilterBar({
   maxAmount, setMaxAmount,
   dayTypeFilter, setDayTypeFilter,
   availableDatesInPeriod, cashflowGroups, activeCashflowGroupIds, activeCategoryNames, categories,
-  clearFilters, isFilterActive
+  clearFilters, isFilterActive,
+  filterPeriod
 }) {
   const dm = true;
 
@@ -23,9 +25,8 @@ export default function FilterBar({
   const activeCount = [
     searchQuery !== '',
     typeFilter !== 'ALL',
-    dayTypeFilter !== 'ALL',
     allocationFilter !== 'ALL',
-    advancedFilterDate !== 'ALL',
+    (advancedFilterDate !== 'ALL' || dayTypeFilter !== 'ALL'),
     advancedFilterGroup !== 'ALL',
     advancedFilterCategory !== 'ALL',
     minAmount !== '',
@@ -59,7 +60,7 @@ export default function FilterBar({
     return (
       <button 
         onClick={onClick}
-        className={`flex-1 px-2 py-1.5 text-[10.5px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
+        className={`flex-1 px-1.5 py-1 text-[10px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
       >
         {label}
       </button>
@@ -74,7 +75,7 @@ export default function FilterBar({
           ? 'border-[#da291c] text-white bg-[#121212]' 
           : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
       }`}>
-        <div className={`pl-2 pr-1.5 py-1.5 border-r flex items-center justify-center shrink-0 ${
+        <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
           isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
         }`}>
           {icon}
@@ -83,7 +84,7 @@ export default function FilterBar({
         <select
           value={value}
           onChange={onChange}
-          className="w-full bg-transparent text-[11px] font-black py-1.5 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
+          className="w-full bg-transparent text-[11px] font-black py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
         >
           {options}
         </select>
@@ -104,12 +105,12 @@ export default function FilterBar({
   };
 
   return (
-    <div className="relative rounded-none border border-[#303030]/60 bg-[#121212] overflow-hidden mb-5">
+    <div className="relative rounded-none border border-[#303030]/60 bg-[#121212] mb-5 z-50">
       {/* Grid Layout (3 Columns with hairline gaps, high density) */}
-      <div className="grid grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-10">
+      <div className="grid grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-20">
         
         {/* ================= COLUMN 1: SCOPE & VALUE ================= */}
-        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
+        <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <Search className="w-3.5 h-3.5 text-[#666666]" />
@@ -119,23 +120,28 @@ export default function FilterBar({
           </div>
 
           {/* Search Box */}
-          <div className="relative group">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#666666] group-focus-within:text-[#da291c]" />
-            <input
-              type="text"
-              placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] focus:border-[#da291c] text-[#cbd5e1] placeholder-[#555555]"
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none hover:bg-[#303030] text-[#666666] hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+              คำค้นหารายละเอียด
+            </span>
+            <div className="relative group">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#666666] group-focus-within:text-[#da291c]" />
+              <input
+                type="text"
+                placeholder="ค้นหารายรายละเอียด หรือหมวดหมู่..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-8 py-1 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] focus:border-[#da291c] text-[#cbd5e1] placeholder-[#555555]"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none hover:bg-[#303030] text-[#666666] hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Amount Limits */}
@@ -151,7 +157,7 @@ export default function FilterBar({
                   placeholder="Min" 
                   value={minAmount}
                   onChange={e => setMinAmount(e.target.value)}
-                  className="w-full pl-6 pr-1 py-1.5 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               <span className="text-xs font-black text-[#555555] font-mono">—</span>
@@ -162,7 +168,7 @@ export default function FilterBar({
                   placeholder="Max" 
                   value={maxAmount}
                   onChange={e => setMaxAmount(e.target.value)}
-                  className="w-full pl-6 pr-1 py-1.5 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -170,7 +176,7 @@ export default function FilterBar({
         </div>
 
         {/* ================= COLUMN 2: QUICK TOGGLES ================= */}
-        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
+        <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <MousePointer2 className="w-3.5 h-3.5 text-[#666666]" />
@@ -207,7 +213,7 @@ export default function FilterBar({
         </div>
 
         {/* ================= COLUMN 3: STRUCTURE & CLASS ================= */}
-        <div className="bg-[#181818] p-4 flex flex-col gap-2.5">
+        <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2 relative z-30">
           {/* Label Header */}
           <div className="flex items-center gap-1.5">
             <CalendarDays className="w-3.5 h-3.5 text-[#666666]" />
@@ -216,73 +222,76 @@ export default function FilterBar({
             </span>
           </div>
 
-          {/* Day type toggle */}
-          <div className="flex flex-col gap-1">
+          {/* Date Selector Row */}
+          <div className="flex flex-col gap-1 relative z-50">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
-              วันทำงาน / วันหยุด
+              ตัวกรองวันที่ ( Mini Calendar & Range )
             </span>
-            <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030]">
-              <SegmentButton label="ทุกวัน" active={dayTypeFilter === 'ALL'} onClick={() => setDayTypeFilter('ALL')} />
-              <SegmentButton label="Weekday" active={dayTypeFilter === 'WEEKDAY'} onClick={() => setDayTypeFilter('WEEKDAY')} colorScheme="blue" />
-              <SegmentButton label="Weekend" active={dayTypeFilter === 'WEEKEND'} onClick={() => setDayTypeFilter('WEEKEND')} colorScheme="amber" />
-            </div>
+            <DatePicker
+              value={advancedFilterDate !== 'ALL' ? advancedFilterDate : dayTypeFilter}
+              onChange={(val) => {
+                if (val === 'WEEKDAY' || val === 'WEEKEND') {
+                  setAdvancedFilterDate('ALL');
+                  setDayTypeFilter(val);
+                } else {
+                  setAdvancedFilterDate(val);
+                  setDayTypeFilter('ALL');
+                }
+              }}
+              variant="hud"
+              placeholder="วันที่"
+              allowAll={true}
+              availableDates={availableDatesInPeriod}
+              filterPeriod={filterPeriod}
+            />
           </div>
 
-          {/* Dropdown Selects */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {/* Date Select */}
-            <CustomSelect
-              value={advancedFilterDate}
-              onChange={e => setAdvancedFilterDate(e.target.value)}
-              isActive={advancedFilterDate !== 'ALL'}
-              icon={<Calendar className="w-3 h-3" />}
-              options={
-                <>
-                  <option value="ALL">🗓️ วันที่</option>
-                  {availableDatesInPeriod.map(d => <option key={d} value={d}>วันที่ {d}</option>)}
-                </>
-              }
-            />
+          {/* Group & Category Row */}
+          <div className="flex flex-col gap-1 relative z-40">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+              จำแนกตามกลุ่ม / หมวดหมู่
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {/* Group Select */}
+              <CustomSelect
+                value={advancedFilterGroup}
+                onChange={e => setAdvancedFilterGroup(e.target.value)}
+                isActive={advancedFilterGroup !== 'ALL'}
+                icon={<Folder className="w-3 h-3" />}
+                options={
+                  <>
+                    <option value="ALL">📦 กลุ่ม</option>
+                    {cashflowGroups?.length > 0 && (
+                      <optgroup label="แยกตามกลุ่ม">
+                        {cashflowGroups
+                          .filter(g => (activeCashflowGroupIds?.has ? activeCashflowGroupIds.has(g.id) : false) || advancedFilterGroup === g.id)
+                          .map(g => (
+                            <option key={g.id} value={g.id}>
+                              {g.icon ? g.icon : (g.type === 'income' ? '🟢' : '🔴')} {g.name}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
+                  </>
+                }
+              />
 
-            {/* Group Select */}
-            <CustomSelect
-              value={advancedFilterGroup}
-              onChange={e => setAdvancedFilterGroup(e.target.value)}
-              isActive={advancedFilterGroup !== 'ALL'}
-              icon={<Folder className="w-3 h-3" />}
-              options={
-                <>
-                  <option value="ALL">📦 กลุ่ม</option>
-                  {cashflowGroups?.length > 0 && (
-                    <optgroup label="แยกตามกลุ่ม">
-                      {cashflowGroups
-                        .filter(g => (activeCashflowGroupIds?.has ? activeCashflowGroupIds.has(g.id) : false) || advancedFilterGroup === g.id)
-                        .map(g => (
-                          <option key={g.id} value={g.id}>
-                            {g.icon ? g.icon : (g.type === 'income' ? '🟢' : '🔴')} {g.name}
-                          </option>
-                        ))}
-                    </optgroup>
-                  )}
-                </>
-              }
-            />
-
-            {/* Category Select */}
-            <CustomSelect
-              value={advancedFilterCategory}
-              onChange={e => setAdvancedFilterCategory(e.target.value)}
-              isActive={advancedFilterCategory !== 'ALL'}
-              icon={<Tag className="w-3 h-3" />}
-              options={
-                <>
-                  <option value="ALL">🏷️ หมวดหมู่</option>
-                  {categories
-                    .filter(c => (activeCategoryNames?.has ? activeCategoryNames.has(c.name) : false) || advancedFilterCategory === c.name)
-                    .map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
-                </>
-              }
-            />
+              {/* Category Select */}
+              <CustomSelect
+                value={advancedFilterCategory}
+                onChange={e => setAdvancedFilterCategory(e.target.value)}
+                isActive={advancedFilterCategory !== 'ALL'}
+                icon={<Tag className="w-3 h-3" />}
+                options={
+                  <>
+                    <option value="ALL">🏷️ หมวดหมู่</option>
+                    {categories
+                      .filter(c => (activeCategoryNames?.has ? activeCategoryNames.has(c.name) : false) || advancedFilterCategory === c.name)
+                      .map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                  </>
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -290,7 +299,7 @@ export default function FilterBar({
 
       {/* ================= BOTTOM ROW: SHARK ACTIVE STATUS & CLEAR ACTS ================= */}
       {isFilterActive && (
-        <div className="flex items-center justify-between border-t border-[#303030]/60 p-3 bg-[#121212]/30 relative z-10">
+        <div className="flex items-center justify-between border-t border-[#303030]/60 p-3 bg-[#121212]/30 relative z-1">
           {/* Active stats counter */}
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">

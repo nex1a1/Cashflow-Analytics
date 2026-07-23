@@ -177,7 +177,25 @@ export default function useFilters({ transactions, categories, masterPeriods = [
 
     // 2. Date Filter
     if (advancedFilterDate !== 'ALL') {
-      filtered = filtered.filter(t => t.date === advancedFilterDate);
+      if (advancedFilterDate === 'WEEKDAY') {
+        filtered = filtered.filter(t => {
+          const day = new Date(t.date).getDay();
+          return day !== 0 && day !== 6;
+        });
+      } else if (advancedFilterDate === 'WEEKEND') {
+        filtered = filtered.filter(t => {
+          const day = new Date(t.date).getDay();
+          return day === 0 || day === 6;
+        });
+      } else if (advancedFilterDate.includes(',')) {
+        const dateSet = new Set(advancedFilterDate.split(','));
+        filtered = filtered.filter(t => dateSet.has(t.date));
+      } else if (advancedFilterDate.includes(':')) {
+        const [start, end] = advancedFilterDate.split(':');
+        filtered = filtered.filter(t => t.date >= start && t.date <= end);
+      } else {
+        filtered = filtered.filter(t => t.date === advancedFilterDate);
+      }
     }
 
     // 3. Category Filter

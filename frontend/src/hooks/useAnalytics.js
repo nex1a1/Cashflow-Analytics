@@ -21,7 +21,8 @@ export default function useAnalytics({
   dayTypes,
   dayTypeConfig,
   isDarkMode,
-  summaryData // Added from useTransactionData
+  summaryData, // Added from useTransactionData
+  excludeFuture = false
 }) {
   const analytics = useMemo(() => {
     // 1. Setup Maps
@@ -452,11 +453,10 @@ export default function useAnalytics({
       });
     }
 
-    // ─── FORECASTING ─────────────────────────────────────────────────────────
+    // ─── FORECASTING & DAILY METRICS ─────────────────────────────────────────
     let projectedExpense = 0, safeToSpend = 0, projectedSurplus = 0, showForecasting = false;
     let periodDays = datesInPeriod.length || 1;
-    let adjustedDailyAvg = totals.expense / periodDays;
-    let adjustedFoodDailyAvg = totals.food / periodDays;
+    let effectiveDays = periodDays;
 
     if (isCurrentMonth && datesInPeriod.length > 0) {
       showForecasting = true;
@@ -464,8 +464,8 @@ export default function useAnalytics({
       const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
       const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
       
-      adjustedDailyAvg = expenseUpToToday / currentDay;
-      adjustedFoodDailyAvg = foodUpToToday / currentDay;
+      // If excludeFuture is active in current month, average across days elapsed so far (currentDay)
+      effectiveDays = excludeFuture ? currentDay : periodDays;
       
       const variableRunRate = variableUpToToday / currentDay;
       projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
@@ -475,6 +475,9 @@ export default function useAnalytics({
       const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
       safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
     }
+
+    const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
+    const adjustedFoodDailyAvg = totals.food / Math.max(1, effectiveDays);
 
     // ─── GLOBAL HEATMAP THRESHOLD ─────────────────────────────────────────────
     const globalValues = Object.values(globalDailySum).filter(v => v > 0).sort((a, b) => a - b);
@@ -508,7 +511,7 @@ export default function useAnalytics({
       sortedGroups, groupChartData,
       sortedAllocation, allocationChartData
     };
-  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData]);
+  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, chartGroupBy, topXLimit, dayTypes, dayTypeConfig, isDarkMode, summaryData, excludeFuture]);
 
   return analytics;
 }

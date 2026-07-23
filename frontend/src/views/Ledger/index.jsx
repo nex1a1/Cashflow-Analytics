@@ -113,7 +113,7 @@ export default function LedgerView({
 
   return (
     <div className="flex flex-col gap-0 w-full pb-8">
-      <div className="flex flex-col gap-3.5 mb-4">
+      <div className="flex flex-col gap-3.5 mb-4 relative z-20">
         {/* Top Header Actions */}
         <div className="flex flex-row items-center justify-between gap-4">
           <div>
@@ -405,12 +405,13 @@ export default function LedgerView({
             availableDatesInPeriod={availableDatesInPeriod} cashflowGroups={cashflowGroups}
             activeCashflowGroupIds={activeCashflowGroupIds} activeCategoryNames={activeCategoryNames}
             categories={categories} clearFilters={clearFilters} isFilterActive={isFilterActive}
+            filterPeriod={filterPeriod}
           />
         )}
       </div>
 
       {/* Table Area */}
-      <div className="flex flex-col border rounded-none overflow-hidden shadow-lg min-h-[400px] relative bg-[#181818] border-[#303030]">
+      <div className="flex flex-col border rounded-none overflow-hidden shadow-lg min-h-[400px] relative z-0 bg-[#181818] border-[#303030]">
         {showSkeleton ? (
           <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-50 bg-[#121212]/80 backdrop-blur-[1px]">
             <div className="relative w-14 h-14 mb-4 flex items-center justify-center border border-[#303030] bg-[#181818]">

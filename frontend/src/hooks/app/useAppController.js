@@ -162,7 +162,7 @@ export function useAppController() {
     cashflowGroups, 
     hideFixedExpenses, hideWantExpenses, dashboardCategory, chartGroupBy,
     topXLimit, dayTypes, dayTypeConfig, isDarkMode,
-    summaryData
+    summaryData, excludeFuture
   });
 
   // ─── EFFECTS & PERSISTENCE (Safe now that all variables are initialized) ───

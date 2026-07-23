@@ -163,26 +163,26 @@ function CategoryLegendSection({
           })}
         </div>
       ) : (
-        <div className="flex flex-col flex-grow justify-between gap-y-1">
+        <div className="flex flex-col flex-grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || '#64748b';
             const amtColor = groupObj.type === 'income' ? 'text-emerald-400' : groupObj.type === 'savings' ? 'text-amber-400' : 'text-red-400';
             const amtPrefix = groupObj.type === 'income' ? '+' : groupObj.type === 'savings' ? '±' : '-';
             
             return (
-              <div key={groupObj.id} className="flex flex-row items-stretch gap-4 py-2 border-b border-[#2d2d2d]/30 last:border-b-0 shrink-0">
-                <div className="flex items-start justify-between w-[280px] shrink-0 pr-4 border-r border-[#2d2d2d]/50 pt-1">
+              <div key={groupObj.id} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
+                <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-[#2d2d2d]/50">
                   <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
                     <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
                     {groupObj.icon && <span className="text-[11.5px] shrink-0">{groupObj.icon}</span>}
                     <span className="truncate">{groupObj.name}</span>
                   </span>
-                  <span className={`text-[13px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor} pt-[0.5px]`}>
+                  <span className={`text-[13px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
                     {amtPrefix}{formatValue(groupTotal)} ฿
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 flex-grow pl-1">
+                <div className="flex flex-wrap items-center gap-1.5 flex-grow pl-1 py-3">
                   {groupCats.map(cat => {
                     const color = cat.color || '#94a3b8';
                     const isExcluded = excludedCategoryIds.has(cat.id);
