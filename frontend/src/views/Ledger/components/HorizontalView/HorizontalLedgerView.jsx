@@ -79,7 +79,8 @@ export default function HorizontalLedgerView({
       cat,
       items,
       x: rect.left + rect.width / 2,
-      y: rect.top
+      y: rect.top,
+      bottom: rect.bottom
     });
   }, []);
 
