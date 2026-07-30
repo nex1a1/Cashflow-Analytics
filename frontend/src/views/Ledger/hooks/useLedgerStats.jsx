@@ -3,14 +3,17 @@ import React, { useMemo } from 'react';
 export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm, advancedFilterGroup, setAdvancedFilterGroup, allDatesInPeriod = []) {
   const catTypeMap = useMemo(() => {
     const map = {};
-    categories.forEach(c => map[c.name] = c.type);
+    categories.forEach(c => {
+      map[c.id] = c.type;
+      map[c.name] = c.type;
+    });
     return map;
   }, [categories]);
 
   const { sumInc, sumExp } = useMemo(() => {
     let inc = 0, exp = 0;
     displayTransactions.forEach(t => {
-      const type = catTypeMap[t.category];
+      const type = catTypeMap[t.category_id] || catTypeMap[t.category];
       const amt = parseFloat(t.amount) || 0;
       if (type === 'income') inc += amt;
       else exp += amt;
@@ -37,7 +40,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     });
 
     displayTransactions.forEach(t => {
-      const cat = categories.find(c => c.name === t.category);
+      const cat = categories.find(c => c.id === t.category_id) || categories.find(c => c.name === t.category);
       if (cat) {
         const groupId = cat.cashflow_group_id || cat.cashflowGroup;
         if (groupId && breakdowns[groupId]) {

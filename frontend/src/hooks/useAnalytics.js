@@ -357,6 +357,7 @@ export default function useAnalytics({
         avgPerMonth: groupTotals[g.id] / numMonths,
         icon: g.icon,
         color: g.color || '#64748B',
+        allocation_type: g.allocation_type,
         order_index: g.order_index || 999,
         categories: groupCatsMap[g.id] || []
       }))

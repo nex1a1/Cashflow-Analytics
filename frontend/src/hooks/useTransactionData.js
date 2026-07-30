@@ -23,6 +23,7 @@ const sortTransactions = (dataArr) =>
   });
 
 export default function useTransactionData({
+  categories,
   setCategories,
   setDayTypes,
   setDayTypeConfig,
@@ -150,6 +151,19 @@ export default function useTransactionData({
       const item = transactions[itemIndex];
       const updatedItem = { ...item, [field]: value };
 
+      if (field === 'category_id') {
+        const catObj = (categories || []).find(c => c.id === value);
+        if (catObj) {
+          updatedItem.category = catObj.name;
+          updatedItem.category_icon = catObj.icon;
+          if (catObj.type === 'income') {
+            updatedItem.allocation_type = null;
+          } else if (catObj.allocation_type) {
+            updatedItem.allocation_type = catObj.allocation_type;
+          }
+        }
+      }
+
       // 1. Optimistic UI Update (ตอบสนองทันที)
       const newTransactions = [...transactions];
       newTransactions[itemIndex] = updatedItem;
@@ -166,7 +180,7 @@ export default function useTransactionData({
         setTransactions(transactions);
       }
     }
-  }, [transactions, saveToDb, refreshData]);
+  }, [transactions, categories, saveToDb, refreshData]);
 
   const handleDeleteTransaction = useCallback(async (id) => {
     if (!window.confirm('ยืนยันการลบรายการนี้?')) return;

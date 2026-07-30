@@ -70,7 +70,7 @@ export default function LedgerView({
     isDateSorted
   } = useLedgerData(displayTransactions, filterPeriod, searchQuery, {
     advancedFilterCategory, advancedFilterGroup, advancedFilterDate,
-    typeFilter, minAmount, maxAmount, dayTypeFilter,
+    typeFilter, allocationFilter, minAmount, maxAmount, dayTypeFilter,
     categories, cashflowGroups // Pass these in for order_index lookup
   });
 
@@ -406,6 +406,7 @@ export default function LedgerView({
             activeCashflowGroupIds={activeCashflowGroupIds} activeCategoryNames={activeCategoryNames}
             categories={categories} clearFilters={clearFilters} isFilterActive={isFilterActive}
             filterPeriod={filterPeriod}
+            dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
           />
         )}
       </div>

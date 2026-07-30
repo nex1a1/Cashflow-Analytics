@@ -111,7 +111,7 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
   }, [
     filterPeriod, searchQuery, sortConfig,
     filters.advancedFilterCategory, filters.advancedFilterGroup, 
-    filters.advancedFilterDate, filters.typeFilter, 
+    filters.advancedFilterDate, filters.typeFilter, filters.allocationFilter,
     filters.minAmount, filters.maxAmount, filters.dayTypeFilter
   ]);
 

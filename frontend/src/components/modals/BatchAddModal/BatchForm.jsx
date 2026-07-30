@@ -29,7 +29,9 @@ export default function BatchForm({
   defaultCategoryId,
   isProcessing,
   externalFormSetter,
-  onTypeChange
+  onTypeChange,
+  dayTypes = {},
+  dayTypeConfig = []
 }) {
   const dm = true;
   
@@ -121,7 +123,13 @@ export default function BatchForm({
       <div className="flex gap-3 mb-4">
         <div className="flex-1">
           <label className={tokens.label}>วันที่</label>
-          <DatePicker value={formDate} onChange={(v) => setValue('date', v, { shouldValidate: true })} required />
+          <DatePicker 
+            value={formDate} 
+            onChange={(v) => setValue('date', v, { shouldValidate: true })} 
+            required 
+            dayTypes={dayTypes}
+            dayTypeConfig={dayTypeConfig}
+          />
           {errors.date && <p className={tokens.errorText}>{errors.date.message}</p>}
         </div>
         <div className="flex-1">

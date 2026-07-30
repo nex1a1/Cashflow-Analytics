@@ -77,7 +77,7 @@ export function useAppController() {
     handleDeleteMonth,
     handleDeleteAllData,
     refreshData,
-  } = useTransactionData({ setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups, excludeFuture });
+  } = useTransactionData({ categories, setCategories, setDayTypes, setDayTypeConfig, setDbStatus, setCashflowGroups, excludeFuture });
 
   const {
     filterPeriod, setFilterPeriod,

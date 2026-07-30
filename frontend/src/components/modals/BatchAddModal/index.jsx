@@ -10,7 +10,9 @@ export default function BatchAddModal({
   isOpen, onClose, onSaveBatch,
   categories, transactions,
   defaultDate, defaultType, defaultCategory,
-  frequentItems = [] // Added frequentItems prop
+  frequentItems = [],
+  dayTypes = {},
+  dayTypeConfig = []
 }) {
   const dm = true;
   const { showToast } = useToast();
@@ -168,6 +170,8 @@ export default function BatchAddModal({
             isProcessing={isProcessing}
             externalFormSetter={(methods) => { formMethodsRef.current = methods; }}
             onTypeChange={setCurrentFormType}
+            dayTypes={dayTypes}
+            dayTypeConfig={dayTypeConfig}
           />
 
           <QuickSuggest

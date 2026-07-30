@@ -57,102 +57,12 @@ CatItem.displayName = 'CatItem';
 /**
  * Sub-component for Group cell (With Category breakdown)
  */
-const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView }) => (
-  <div 
-    onMouseEnter={() => onHover(idx)}
-    onMouseLeave={() => onHover(null)}
-    className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
-      isHovered 
-        ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
-        : 'bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]'
-    }`}
-    style={{ borderLeftColor: isHovered ? undefined : item.color }}
-  >
-    {/* ─── HEADER ─── */}
-    <div className="flex justify-between items-start gap-2 mb-3">
-      <div className="flex flex-col min-w-0 gap-1.5">
-        <span className="text-[16px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
-          <span className="shrink-0 opacity-80">{item.icon || '📁'}</span>
-          <span className="truncate group-hover:brightness-125">{item.name}</span>
-        </span>
-        <div className="flex items-center gap-1.5">
-          {!isSingleMonthView && (
-            <span className="text-[8.5px] font-bold tracking-widest uppercase text-slate-400">
-              เฉลี่ย  ฿{formatMoney(item.avgPerMonth)} / เดือน
-            </span>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex flex-col items-end shrink-0 gap-0.5">
-        <div className="flex items-baseline gap-0.5">
-          <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: item.color }}>
-            {item.percentage}
-          </span>
-          <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
-        </div>
-        <span className="text-[9px] font-bold tabular-nums opacity-60 text-slate-300">
-          ฿ {formatMoney(item.amount)}
-        </span>
-      </div>
-    </div>
-    
-    {/* ─── PROGRESS BAR ─── */}
-    <div className="mb-3">
-      <div className="w-full rounded-none h-[6px] overflow-hidden relative bg-[#181818]">
-        <div 
-          className="h-full relative" 
-          style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
-        >
-           {/* Premium Gradient Overlay */}
-           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20" />
-        </div>
-      </div>
-    </div>
-
-    {/* ─── CONSTITUENT CATEGORIES ─── */}
-    <div className="flex-1 flex flex-col min-w-0 pt-2 border-t border-dashed border-[#303030]/60">
-      <div className="flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden min-w-0 pr-1 custom-scrollbar h-[72px]">
-        {(item.categories || []).map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[9px] shrink-0 opacity-70">{c.icon || '✨'}</span>
-              <span className="text-[9px] font-bold truncate text-slate-400 group-hover/item:text-slate-200">
-                {c.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[8.5px] font-bold tabular-nums text-slate-500 group-hover/item:text-slate-400">
-                {formatMoney(c.amount)}
-              </span>
-              <span className="text-[9px] font-black tabular-nums w-8 text-right text-slate-300 group-hover/item:text-slate-100">
-                {c.relativePercentage}%
-              </span>
-            </div>
-          </div>
-        ))}
-        {(!item.categories || item.categories.length === 0) && (
-           <div className="flex-1 flex items-center justify-center py-1">
-              <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
-           </div>
-        )}
-      </div>
-    </div>
-  </div>
-));
-
-GroupItem.displayName = 'GroupItem';
-
-/**
- * Sub-component for Allocation Ratio cell (Special UX)
- */
-const AllocationItem = React.memo(({ item, idx, isHovered, onHover }) => {
-  const percentage = parseFloat(item.percentage) || 0;
-  const diff = percentage - item.target;
-  const isOver = item.id !== 'savings' && diff > 5;
-  const isUnder = item.id === 'savings' && diff < -5;
-  const isGood = !isOver && !isUnder;
-  const isAlert = isOver || isUnder;
+const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView }) => {
+  const categories = item.categories || [];
+  const topCats = categories.slice(0, 4);
+  const remainingCats = categories.slice(4);
+  const remainingCount = remainingCats.length;
+  const remainingAmount = remainingCats.reduce((acc, c) => acc + c.amount, 0);
 
   return (
     <div 
@@ -166,23 +76,20 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover }) => {
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
     >
       {/* ─── HEADER ─── */}
-      <div className="flex justify-between items-start gap-2 mb-3">
-        <div className="flex flex-col min-w-0 gap-1.5">
-          <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
-            <span className="shrink-0 opacity-80">{item.icon}</span>
-            <span className="truncate">{item.name}</span>
-          </span>
+      <div className="flex justify-between items-start gap-2 mb-2">
+        <div className="flex flex-col min-w-0 gap-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+              <span className="shrink-0 opacity-80">{item.icon || '📁'}</span>
+              <span className="truncate group-hover:brightness-125">{item.name}</span>
+            </span>
+          </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[8px] font-bold tracking-widest uppercase text-slate-400">
-              Target {item.target}%
-            </span>
-            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
-              isGood ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' : 
-              isOver ? 'bg-red-500/10 text-red-400 border border-red-500/25' : 
-              'bg-amber-500/10 text-amber-400 border border-amber-500/25'
-            }`}>
-              {isGood ? 'Optimal' : (isOver ? 'Over Limit' : 'Below')}
-            </span>
+            {!isSingleMonthView && (
+              <span className="text-[8.5px] font-bold tracking-widest uppercase text-slate-400">
+                เฉลี่ย ฿{formatMoney(item.avgPerMonth)} / เดือน
+              </span>
+            )}
           </div>
         </div>
         
@@ -199,74 +106,494 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover }) => {
         </div>
       </div>
       
-      {/* ─── PROGRESS BAR ─── */}
-      <div className="mb-3">
-        <div className="w-full rounded-none h-[6px] overflow-hidden relative bg-[#181818]">
-          <div 
-            className={`h-full relative ${isAlert ? 'border border-[#da291c]/50' : ''}`} 
-            style={{ width: `${percentage}%`, backgroundColor: item.color }}
-          >
-             {/* Premium Gradient Overlay */}
-             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20" />
-          </div>
-          {/* Target Marker */}
-          <div 
-            className="absolute top-0 bottom-0 w-[2px] shadow-sm z-10" 
-            style={{ left: `${item.target}%`, backgroundColor: '#fff', opacity: 0.8 }} 
-          />
+      {/* ─── STACKED SEGMENT PROGRESS BAR ─── */}
+      <div className="mb-2.5">
+        <div className="w-full rounded-none h-[7px] flex gap-[1px] bg-[#181818] p-[1px] border border-[#303030]/60 relative z-20">
+          {categories.length > 0 ? (
+            (() => {
+              let cumulativePct = 0;
+              return categories.map((c, cIdx) => {
+                const relPct = parseFloat(c.relativePercentage) || 0;
+                if (relPct <= 0) return null;
+                const startPct = cumulativePct;
+                cumulativePct += relPct;
+
+                // Smart tooltip alignment to prevent edge clipping
+                let alignClass = "left-1/2 -translate-x-1/2";
+                if (startPct > 65 || cIdx === categories.length - 1) {
+                  alignClass = "right-0 translate-x-0";
+                } else if (startPct < 20 || cIdx === 0) {
+                  alignClass = "left-0 translate-x-0";
+                }
+
+                return (
+                  <div 
+                    key={c.id} 
+                    className="h-full relative group/seg transition-all duration-150 hover:brightness-125 cursor-pointer" 
+                    style={{ 
+                      width: `${c.relativePercentage}%`, 
+                      backgroundColor: c.color || item.color 
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
+                    
+                    {/* Segment Hover Popover Tooltip (Smart Aligned & High Elevation) */}
+                    <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-50 text-[8.5px] pointer-events-none`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color || item.color }} />
+                        <span className="font-bold text-slate-200">{c.icon || '✨'} {c.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-[8px]">
+                        <span className="text-slate-400">฿{formatMoney(c.amount)}</span>
+                        <span className="font-black text-[#da291c]">{c.relativePercentage}% ของกลุ่ม</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()
+          ) : (
+            <div className="h-full w-full opacity-30" style={{ backgroundColor: item.color }} />
+          )}
         </div>
       </div>
 
-      {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className="flex-1 flex flex-col min-w-0 pt-2 border-t border-dashed border-[#303030]/60">
-        <div className="flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden min-w-0 pr-1 custom-scrollbar h-[72px]">
-          {(item.groups || []).map(g => (
-            <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[9px] shrink-0 opacity-70">{g.icon || '✨'}</span>
-                <span className="text-[9px] font-bold truncate text-slate-400 group-hover/item:text-slate-200">
-                  {g.name}
+      {/* ─── CONSTITUENT CATEGORIES (Top Contributors - Clean No-Scroll Layout) ─── */}
+      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-0.5 justify-start">
+        {topCats.map(c => (
+          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || item.color }} />
+              <span className="text-[9px] shrink-0 opacity-70">{c.icon || '✨'}</span>
+              <span className="text-[9px] font-bold truncate text-slate-400 group-hover/item:text-slate-200">
+                {c.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[8.5px] font-bold tabular-nums text-slate-500 group-hover/item:text-slate-400">
+                {formatMoney(c.amount)}
+              </span>
+              <span className="text-[9px] font-black tabular-nums w-8 text-right text-slate-300 group-hover/item:text-slate-100">
+                {c.relativePercentage}%
+              </span>
+            </div>
+          </div>
+        ))}
+
+        {/* ─── REMAINING SUB-CATEGORIES WITH HOVER POPOVER TOOLTIP ─── */}
+        {remainingCount > 0 && (
+          <div className="relative group/popover z-20">
+            <div className="flex items-center justify-between gap-2 py-0.5 min-w-0 text-slate-400 hover:text-slate-200 cursor-pointer">
+              <span className="text-[8.5px] font-semibold italic truncate flex items-center gap-1">
+                <span>+ อีก {remainingCount} หมวดหมู่</span>
+                <span className="text-[7.5px] text-slate-500 font-mono opacity-80">(ส่องดู)</span>
+              </span>
+              <span className="text-[8.5px] font-bold tabular-nums">
+                ฿{formatMoney(remainingAmount)}
+              </span>
+            </div>
+
+            {/* FLOATING POPOVER TOOLTIP (Elevated & High Z-index) */}
+            <div className="absolute bottom-full left-0 mb-2 w-60 p-2 rounded-none bg-[#121212] border border-[#303030] shadow-2xl opacity-0 pointer-events-none group-hover/popover:opacity-100 group-hover/popover:pointer-events-auto transition-all duration-150 z-50 flex flex-col gap-1">
+              <div className="flex items-center justify-between border-b border-[#303030] pb-1 mb-0.5">
+                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-300">
+                  หมวดหมู่ย่อยอื่น ({remainingCount})
+                </span>
+                <span className="text-[8.5px] font-bold tabular-nums text-slate-400">
+                  ฿{formatMoney(remainingAmount)}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[8.5px] font-bold tabular-nums text-slate-500 group-hover/item:text-slate-400">
-                  {formatMoney(g.amount)}
-                </span>
-                <span className="text-[9px] font-black tabular-nums w-8 text-right text-slate-300 group-hover/item:text-slate-100">
-                  {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
-                </span>
+              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar pr-0.5">
+                {remainingCats.map(rc => (
+                  <div key={rc.id} className="flex items-center justify-between gap-1.5 py-0.5 border-b border-dashed border-[#303030]/40 last:border-0">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: rc.color || item.color }} />
+                      <span className="text-[8.5px] shrink-0 opacity-70">{rc.icon || '✨'}</span>
+                      <span className="text-[8.5px] font-medium truncate text-slate-300">
+                        {rc.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[8px] font-semibold tabular-nums text-slate-400">
+                        ฿{formatMoney(rc.amount)}
+                      </span>
+                      <span className="text-[8.5px] font-black tabular-nums text-slate-200 w-7 text-right">
+                        {rc.relativePercentage}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+        )}
 
-          {/* ─── NET SURPLUS (Remainder) ─── */}
-          {item.id === 'savings' && (() => {
-            const sumGroups = (item.groups || []).reduce((acc, g) => acc + g.amount, 0);
-            const surplus = item.amount - sumGroups;
-            if (surplus <= 10) return null; // Ignore tiny floating point diffs
+        {categories.length === 0 && (
+          <div className="flex-1 flex items-center justify-center py-1">
+            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
 
-            const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
+GroupItem.displayName = 'GroupItem';
+
+/**
+ * Sub-component for Allocation Ratio cell (Special UX)
+ */
+/**
+ * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
+ */
+const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal = 0 }) => {
+  const percentage = parseFloat(item.percentage) || 0;
+  const targetAmount = activeTotal * (item.target / 100);
+  
+  const isSavings = item.id === 'savings';
+  const isNeedsOrWants = !isSavings;
+
+  // Quota / Variance calculation in Baht
+  let varianceAmount = 0;
+  let isGood = false;
+  let isOver = false;
+  let isUnder = false;
+
+  if (isNeedsOrWants) {
+    varianceAmount = targetAmount - item.amount;
+    isOver = varianceAmount < 0;
+    isGood = !isOver;
+  } else {
+    varianceAmount = item.amount - targetAmount;
+    isUnder = varianceAmount < 0;
+    isGood = !isUnder;
+  }
+
+  const groups = item.groups || [];
+  const topGroups = groups.slice(0, 4);
+  const remainingGroups = groups.slice(4);
+  const remainingCount = remainingGroups.length;
+  const remainingAmount = remainingGroups.reduce((acc, g) => acc + g.amount, 0);
+
+  return (
+    <div 
+      onMouseEnter={() => onHover(idx)}
+      onMouseLeave={() => onHover(null)}
+      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
+        isHovered 
+          ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
+          : 'bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]'
+      }`}
+      style={{ borderLeftColor: isHovered ? undefined : item.color }}
+    >
+      {/* ─── HEADER ─── */}
+      <div className="flex justify-between items-start gap-2 mb-2">
+        <div className="flex flex-col min-w-0 gap-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+              <span className="shrink-0 opacity-80">{item.icon}</span>
+              <span className="truncate">{item.name}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10.5px] font-bold tracking-wide uppercase text-slate-300">
+              เป้า {item.target}% (฿{formatMoney(targetAmount)})
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-end shrink-0 gap-0.5">
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: item.color }}>
+              {item.percentage}
+            </span>
+            <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
+          </div>
+          <span className="text-[10px] font-bold tabular-nums text-slate-300">
+            ฿ {formatMoney(item.amount)}
+          </span>
+        </div>
+      </div>
+
+      {/* ─── QUOTA VARIANCE BADGE ─── */}
+      <div className="mb-2">
+        <span className={`inline-flex items-center gap-1 text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+          isGood 
+            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40' 
+            : isOver 
+              ? 'bg-red-500/20 text-red-300 border border-red-500/50'
+              : 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
+        }`}>
+          {isNeedsOrWants ? (
+            varianceAmount >= 0 
+              ? `+฿${formatMoney(varianceAmount)} ในโควตา` 
+              : `-฿${formatMoney(Math.abs(varianceAmount))} เกินโควตา`
+          ) : (
+            varianceAmount >= 0 
+              ? `+฿${formatMoney(varianceAmount)} เกินเป้าออม` 
+              : `ขาดอีก ฿${formatMoney(Math.abs(varianceAmount))}`
+          )}
+        </span>
+      </div>
+      
+      {/* ─── MULTI-SEGMENT STACKED PROGRESS BAR + LABELED TARGET PIN ABOVE BAR ─── */}
+      <div className="mb-2.5">
+        {groups.length > 0 ? (
+          (() => {
+            // Calculate scale relative to maxDisplay for exact 100% alignment
+            const maxDisplay = Math.max(percentage, item.target);
+            const targetPinPos = maxDisplay > 0 ? (item.target / maxDisplay) * 100 : item.target;
+            const actualSpentPos = maxDisplay > 0 ? (percentage / maxDisplay) * 100 : 0;
+
+            const isOverBudget = isNeedsOrWants && percentage > item.target;
+            const isUnderSavings = isSavings && percentage < item.target;
+
+            // Portion of actual spent that fits within target budget vs over budget
+            const withinBudgetPct = isOverBudget ? targetPinPos : actualSpentPos;
+            const overBudgetPct = isOverBudget ? (actualSpentPos - targetPinPos) : 0;
+            const savingsDeficitPct = isUnderSavings ? (targetPinPos - actualSpentPos) : 0;
+
+            // Smart badge alignment to prevent overflow at 0% or 100% edges
+            let pinTranslateClass = "-translate-x-1/2 items-center";
+            let arrowAlignClass = "items-center";
+            if (targetPinPos >= 90) {
+              pinTranslateClass = "-translate-x-full items-end";
+              arrowAlignClass = "items-end pr-1";
+            } else if (targetPinPos <= 10) {
+              pinTranslateClass = "translate-x-0 items-start";
+              arrowAlignClass = "items-start pl-1";
+            }
+
+            let cumulativePct = 0;
 
             return (
-              <div className="flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted border-[#303030]/50 min-w-0 group/item">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[9px] shrink-0 opacity-80">🌊</span>
-                  <span className="text-[9px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
-                    Net Surplus (เหลือสุทธิ)
-                  </span>
+              <div className="flex flex-col w-full relative">
+                {/* ─── DEDICATED PIN TRACK (ABOVE BAR - z-10) ─── */}
+                <div className="h-5 relative w-full pointer-events-none mb-0.5 z-10">
+                  <div 
+                    className={`absolute bottom-0 flex flex-col z-10 ${pinTranslateClass}`}
+                    style={{ left: `${targetPinPos}%` }}
+                  >
+                    <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider whitespace-nowrap shadow-xl ${
+                      isOverBudget 
+                        ? 'bg-[#da291c] text-white border border-white shadow-red-950' 
+                        : 'bg-[#0d0d0d] text-amber-300 border border-amber-400/80 shadow-black'
+                    }`}>
+                      {isOverBudget ? `📍 LIMIT ${item.target}%` : `📍 เป้า ${item.target}%`}
+                    </span>
+                    <div className={`w-full flex ${arrowAlignClass}`}>
+                      <span 
+                        className={`text-[8px] leading-none -mt-0.5 font-bold ${
+                          isOverBudget ? 'text-[#da291c]' : 'text-amber-400'
+                        }`}
+                      >
+                        ▼
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[8.5px] font-bold tabular-nums opacity-70 text-emerald-400 group-hover/item:text-emerald-300">
-                    {formatMoney(surplus)}
-                  </span>
-                  <span className="text-[9px] font-black tabular-nums w-8 text-right text-emerald-400 group-hover/item:text-emerald-300">
-                    {surplusPercent}%
-                  </span>
+
+                {/* ─── CLEAN PROGRESS BAR (z-30 so child tooltips z-50 stack above Pin badge) ─── */}
+                <div className="w-full rounded-none h-[10px] flex gap-[1px] bg-[#181818] p-[1px] border border-[#303030]/60 relative z-30">
+                  {/* WITHIN-BUDGET GROUP SEGMENTS */}
+                  <div className="h-full flex gap-[1px] min-w-0" style={{ width: `${withinBudgetPct}%` }}>
+                    {groups.map((g, gIdx) => {
+                      const relPct = item.amount > 0 ? (g.amount / item.amount) * 100 : 0;
+                      if (relPct <= 0) return null;
+                      const startPct = cumulativePct;
+                      cumulativePct += relPct;
+
+                      let alignClass = "left-1/2 -translate-x-1/2";
+                      if (startPct > 65 || gIdx === groups.length - 1) {
+                        alignClass = "right-0 translate-x-0";
+                      } else if (startPct < 20 || gIdx === 0) {
+                        alignClass = "left-0 translate-x-0";
+                      }
+
+                      return (
+                        <div 
+                          key={g.id} 
+                          className="h-full relative group/seg transition-all duration-150 hover:brightness-125 cursor-pointer" 
+                          style={{ 
+                            width: `${relPct}%`, 
+                            backgroundColor: g.color || item.color 
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
+                          
+                          {/* Segment Hover Tooltip */}
+                          <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-50 text-[9px] pointer-events-none`}>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color || item.color }} />
+                              <span className="font-bold text-slate-200">{g.icon || '✨'} {g.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
+                              <span className="text-slate-400">฿{formatMoney(g.amount)}</span>
+                              <span className="font-black text-[#da291c]">
+                                {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}% ของส่วนนี้
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* OVER-BUDGET RED ALERT ZONE (Rosso Corsa Red Warning Segment) */}
+                  {overBudgetPct > 0 && (
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#da291c] to-red-600 animate-pulse relative group/over cursor-pointer"
+                      style={{ width: `${overBudgetPct}%` }}
+                    >
+                      <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_6px)]" />
+                      
+                      {/* Over-budget Hover Tooltip */}
+                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#da291c] shadow-2xl rounded-none z-50 text-[9px] pointer-events-none">
+                        <div className="flex items-center gap-1.5 text-red-400 font-black">
+                          <span>🚨 เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
+                        </div>
+                        <div className="text-[8.5px] text-slate-300 mt-0.5">
+                          ส่วนที่เกิน: ฿{formatMoney(Math.abs(varianceAmount))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SAVINGS DEFICIT BUFFER */}
+                  {savingsDeficitPct > 0 && (
+                    <div 
+                      className="h-full bg-amber-500/10 border-r border-dashed border-amber-500/40 relative group/under cursor-pointer"
+                      style={{ width: `${savingsDeficitPct}%` }}
+                    >
+                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-amber-500/50 shadow-2xl rounded-none z-50 text-[9px] pointer-events-none">
+                        <div className="flex items-center gap-1.5 text-amber-400 font-black">
+                          <span>⚠️ ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
+                        </div>
+                        <div className="text-[8.5px] text-slate-300 mt-0.5">
+                          ยอดออมที่ขาด: ฿{formatMoney(Math.abs(varianceAmount))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* VERTICAL TICK LINE AT TARGET PIN POSITION */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-[2px] z-30 pointer-events-none" 
+                    style={{ 
+                      left: targetPinPos >= 99.5 ? 'calc(100% - 2px)' : `${targetPinPos}%`, 
+                      backgroundColor: isOverBudget ? '#da291c' : '#fbbf24', 
+                      boxShadow: isOverBudget ? '0 0 8px #da291c' : '0 0 6px #fbbf24'
+                    }} 
+                  />
                 </div>
               </div>
             );
-          })()}
-        </div>
+          })()
+        ) : (
+          <div className="w-full rounded-none h-[10px] opacity-30" style={{ backgroundColor: item.color }} />
+        )}
+      </div>
+
+      {/* ─── CONSTITUENT GROUPS (NO INNER SCROLLBAR!) ─── */}
+      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-0.5 justify-start">
+        {topGroups.map(g => (
+          <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: g.color || item.color }} />
+              <span className="text-[10px] shrink-0 opacity-70">{g.icon || '✨'}</span>
+              <span className="text-[10.5px] font-bold truncate text-slate-300 group-hover/item:text-slate-100">
+                {g.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] font-bold tabular-nums text-slate-400 group-hover/item:text-slate-300">
+                {formatMoney(g.amount)}
+              </span>
+              <span className="text-[10.5px] font-black tabular-nums w-8 text-right text-slate-200 group-hover/item:text-white">
+                {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
+              </span>
+            </div>
+          </div>
+        ))}
+
+        {/* ─── REMAINING GROUPS WITH HOVER POPOVER TOOLTIP ─── */}
+        {remainingCount > 0 && (
+          <div className="relative group/popover z-20">
+            <div className="flex items-center justify-between gap-2 py-0.5 min-w-0 text-slate-400 hover:text-slate-200 cursor-pointer">
+              <span className="text-[9.5px] font-semibold italic truncate flex items-center gap-1">
+                <span>+ อีก {remainingCount} กลุ่มรายจ่าย</span>
+                <span className="text-[8.5px] text-slate-400 font-mono opacity-90">(ส่องดู)</span>
+              </span>
+              <span className="text-[9.5px] font-bold tabular-nums">
+                ฿{formatMoney(remainingAmount)}
+              </span>
+            </div>
+
+            {/* FLOATING POPOVER TOOLTIP */}
+            <div className="absolute bottom-full left-0 mb-2 w-64 p-2.5 rounded-none bg-[#121212] border border-[#303030] shadow-2xl opacity-0 pointer-events-none group-hover/popover:opacity-100 group-hover/popover:pointer-events-auto transition-all duration-150 z-50 flex flex-col gap-1">
+              <div className="flex items-center justify-between border-b border-[#303030] pb-1 mb-0.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-200">
+                  กลุ่มรายจ่ายอื่น ({remainingCount})
+                </span>
+                <span className="text-[9.5px] font-bold tabular-nums text-slate-300">
+                  ฿{formatMoney(remainingAmount)}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto custom-scrollbar pr-0.5">
+                {remainingGroups.map(rg => (
+                  <div key={rg.id} className="flex items-center justify-between gap-1.5 py-0.5 border-b border-dashed border-[#303030]/40 last:border-0">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: rg.color || item.color }} />
+                      <span className="text-[9.5px] shrink-0 opacity-70">{rg.icon || '✨'}</span>
+                      <span className="text-[9.5px] font-medium truncate text-slate-200">
+                        {rg.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[9px] font-semibold tabular-nums text-slate-400">
+                        ฿{formatMoney(rg.amount)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── NET SURPLUS (Remainder) ─── */}
+        {isSavings && (() => {
+          const sumGroups = groups.reduce((acc, g) => acc + g.amount, 0);
+          const surplus = item.amount - sumGroups;
+          if (surplus <= 10) return null;
+
+          const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
+
+          return (
+            <div className="flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted border-[#303030]/50 min-w-0 group/item">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[9px] shrink-0 opacity-80">🌊</span>
+                <span className="text-[9px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
+                  Net Surplus (เหลือสุทธิ)
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[8.5px] font-bold tabular-nums opacity-70 text-emerald-400 group-hover/item:text-emerald-300">
+                  {formatMoney(surplus)}
+                </span>
+                <span className="text-[9px] font-black tabular-nums w-8 text-right text-emerald-400 group-hover/item:text-emerald-300">
+                  {surplusPercent}%
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {groups.length === 0 && (
+          <div className="flex-1 flex items-center justify-center py-1">
+            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -317,8 +644,70 @@ function ExpenseProportion() {
     }
   }, [rawItems, sortMode, isAllocationMode]);
 
-  // Sync Chart Data with Sorted Items
+  // Sync Chart Data with Sorted Items (Dual-Ring Donut Chart in Group Mode)
   const activeChartData = useMemo(() => {
+    if (isGroupMode) {
+      // DUAL-RING DONUT CHART:
+      // Outer Ring (datasets[0]): Constituent Categories under each group
+      // Inner Ring (datasets[1]): Cashflow Groups
+      const outerCategories = [];
+      activeItems.forEach((group, gIdx) => {
+        (group.categories || []).forEach(cat => {
+          outerCategories.push({
+            ...cat,
+            groupIdx: gIdx,
+            groupColor: group.color
+          });
+        });
+      });
+
+      const outerData = outerCategories.map(c => c.amount);
+      const outerColors = outerCategories.map(c => {
+        if (hoveredIdx === null || hoveredIdx === c.groupIdx) {
+          return c.color || c.groupColor;
+        }
+        return `${c.color || c.groupColor}35`; // Fade non-hovered categories
+      });
+      const outerBorders = outerCategories.map(c => (hoveredIdx === c.groupIdx ? '#da291c' : '#181818'));
+      const outerBorderWidths = outerCategories.map(c => (hoveredIdx === c.groupIdx ? 2 : 1));
+
+      const innerData = activeItems.map(g => g.amount);
+      const innerColors = activeItems.map((g, idx) => {
+        if (hoveredIdx === null || hoveredIdx === idx) {
+          return g.color;
+        }
+        return `${g.color}40`; // Fade non-hovered inner groups
+      });
+      const innerBorders = activeItems.map((_, idx) => (hoveredIdx === idx ? '#da291c' : '#181818'));
+      const innerBorderWidths = activeItems.map((_, idx) => (hoveredIdx === idx ? 2 : 1));
+
+      return {
+        labels: [...outerCategories.map(c => `${c.name} (${c.relativePercentage}%)`), ...activeItems.map(g => g.name)],
+        datasets: [
+          {
+            label: 'หมวดหมู่ย่อย (Outer)',
+            data: outerData,
+            backgroundColor: outerColors,
+            borderColor: outerBorders,
+            borderWidth: outerBorderWidths,
+            spacing: 0, // Continuous slices inside outer ring
+            offset: 4, // Radial offset creates 4px empty space between Donut 1 & Donut 2
+            weight: 0.85,
+          },
+          {
+            label: 'กลุ่มรายจ่าย (Inner)',
+            data: innerData,
+            backgroundColor: innerColors,
+            borderColor: innerBorders,
+            borderWidth: innerBorderWidths,
+            spacing: 0, // Continuous slices inside inner ring
+            offset: 0,
+            weight: 1.15,
+          }
+        ]
+      };
+    }
+
     return {
       labels: activeItems.map(i => i.name),
       datasets: [{
@@ -327,7 +716,6 @@ function ExpenseProportion() {
           if (hoveredIdx === null || hoveredIdx === idx) {
             return i.color;
           }
-          // Elite styling: Fade out non-hovered segments
           return `${i.color}40`;
         }),
         borderWidth: activeItems.map((_, idx) => hoveredIdx === idx ? 3 : 2),
@@ -337,7 +725,7 @@ function ExpenseProportion() {
         }),
       }],
     };
-  }, [activeItems, hoveredIdx]);
+  }, [activeItems, isGroupMode, hoveredIdx]);
 
   const activeTotal = useMemo(() => {
     if (isGroupMode) return chartTotal; // FIXED: use chartTotal (filtered) to match sorted groups
@@ -357,15 +745,15 @@ function ExpenseProportion() {
     const baseOptions = getDoughnutChartOptions(dm);
     return {
       ...baseOptions,
-      cutout: '75%', 
+      cutout: isGroupMode ? '48%' : '75%', 
       plugins: {
         ...baseOptions.plugins,
         tooltip: { enabled: false }
       }
     };
-  }, [dm]);
+  }, [dm, isGroupMode]);
   
-  const cardClass = "rounded-none border shadow-sm flex flex-col w-full overflow-hidden bg-[#181818] border-[#303030]";
+  const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
 
   if (itemCount === 0 && !showSkeleton) {
     return (
@@ -492,7 +880,7 @@ function ExpenseProportion() {
           <div className={`flex-1 grid ${gridColsClass} gap-px bg-[#303030]/50`}>
              {activeItems.map((item, idx) => {
                const isHovered = hoveredIdx === idx;
-               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
+               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} activeTotal={activeTotal} />;
                if (isGroupMode) return <GroupItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} />;
                return <CatItem key={item.id || idx} cat={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
              })}

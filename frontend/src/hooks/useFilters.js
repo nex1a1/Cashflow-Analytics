@@ -56,6 +56,16 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     };
   }, [debouncedSearch]);
 
+  // Sync searchResults when transactions state updates (e.g. inline edits)
+  useEffect(() => {
+    if (debouncedSearch.trim() && searchResults.length > 0) {
+      setSearchResults(prevResults => prevResults.map(r => {
+        const updated = transactions.find(t => t.id === r.id);
+        return updated || r;
+      }));
+    }
+  }, [transactions]);
+
   // reset filters when period changes
   useEffect(() => { 
     setAdvancedFilterDate('ALL'); 
@@ -234,7 +244,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
       filtered = filtered.filter(t => {
         const cat = getCat(t);
         if (cat?.type === 'income') return false; // Income transactions do not have Need/Want/Save allocation types in UI
-        const aType = t.allocation_type || 'want';
+        const aType = t.allocation_type || cat?.allocation_type || 'want';
         return aType === allocationFilter;
       });
     }

@@ -17,7 +17,9 @@ export default function FilterBar({
   dayTypeFilter, setDayTypeFilter,
   availableDatesInPeriod, cashflowGroups, activeCashflowGroupIds, activeCategoryNames, categories,
   clearFilters, isFilterActive,
-  filterPeriod
+  filterPeriod,
+  dayTypes = {},
+  dayTypeConfig = []
 }) {
   const dm = true;
 
@@ -243,6 +245,8 @@ export default function FilterBar({
               allowAll={true}
               availableDates={availableDatesInPeriod}
               filterPeriod={filterPeriod}
+              dayTypes={dayTypes}
+              dayTypeConfig={dayTypeConfig}
             />
           </div>
 

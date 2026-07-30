@@ -130,8 +130,11 @@ export default function DatePicker({
   variant = 'default',
   placeholder = 'เลือกวันที่',
   allowAll = false,
+  isMulti = allowAll,
   availableDates = [],
-  filterPeriod
+  filterPeriod,
+  dayTypes = {},
+  dayTypeConfig = []
 }) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
@@ -264,6 +267,12 @@ export default function DatePicker({
     const dayStr = String(d).padStart(2, '0');
     const dateStr = `${y}-${monthStr}-${dayStr}`;
 
+    if (!isMulti) {
+      onChange(dateStr);
+      setOpen(false);
+      return;
+    }
+
     const alreadySelected = draftDates.has(dateStr);
     const mode = !alreadySelected; // true = add range, false = remove range
 
@@ -276,7 +285,7 @@ export default function DatePicker({
 
   // Mouse Enter handler on day cell (Update drag range)
   const handleMouseEnter = (d) => {
-    if (!isDragging) return;
+    if (!isMulti || !isDragging) return;
     const monthStr = String(m + 1).padStart(2, '0');
     const dayStr = String(d).padStart(2, '0');
     const dateStr = `${y}-${monthStr}-${dayStr}`;
@@ -324,7 +333,12 @@ export default function DatePicker({
     const t = new Date();
     const tStr = toValueStr(t);
     setViewDate(t);
-    setDraftDates(new Set([tStr]));
+    if (!isMulti) {
+      onChange(tStr);
+      setOpen(false);
+    } else {
+      setDraftDates(new Set([tStr]));
+    }
   };
 
   const isActive = value && value !== 'ALL';
@@ -508,6 +522,27 @@ export default function DatePicker({
                 dayStyle = `text-red-400 ${hoverDay}`;
               }
 
+              let dayTypeObj = null;
+              if (dayTypeConfig && dayTypeConfig.length > 0) {
+                const explicitTypeId = dayTypes[dateStr];
+                if (explicitTypeId) {
+                  dayTypeObj = dayTypeConfig.find(dt => dt.id === explicitTypeId);
+                }
+                if (!dayTypeObj) {
+                  const dow = new Date(y, m, d).getDay();
+                  const isWknd = (dow === 0 || dow === 6);
+                  if (isWknd) {
+                    dayTypeObj = dayTypeConfig.find(dt => 
+                      dt.id === 'HOLIDAY' || dt.id === 'OFF' || dt.name === 'HOLIDAY' || dt.label?.includes('หยุด')
+                    ) || dayTypeConfig[1] || dayTypeConfig[0];
+                  } else {
+                    dayTypeObj = dayTypeConfig.find(dt => 
+                      dt.id === 'WORK' || dt.name === 'WORK' || dt.label?.includes('ทำงาน')
+                    ) || dayTypeConfig[0];
+                  }
+                }
+              }
+
               return (
                 <button
                   key={d}
@@ -515,7 +550,14 @@ export default function DatePicker({
                   onMouseDown={(e) => handleMouseDown(d, e)}
                   onMouseEnter={() => handleMouseEnter(d)}
                   className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
+                  title={dayTypeObj ? `ชนิดวัน: ${dayTypeObj.label || dayTypeObj.name}` : undefined}
                 >
+                  {dayTypeObj && (
+                    <span 
+                      className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-10" 
+                      style={{ backgroundColor: dayTypeObj.color }}
+                    />
+                  )}
                   <span>{d}</span>
                   {dayHasData && !dayIsSelected && !isDimmed && (
                     <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
@@ -527,51 +569,53 @@ export default function DatePicker({
             })}
           </div>
 
-          {/* Smart Grouped Selected Dates Summary Box (No Scrollbar!) */}
-          <div className="mt-2.5 pt-2 border-t border-[#303030]">
-            <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-[10px] font-black uppercase text-slate-400 font-mono">
-                สรุปวันที่เลือก ({draftDates.size} วัน):
-              </span>
-              <span className="text-[9.5px] text-[#666666] font-mono">
-                คลิก หรือลากค้างเพื่อเลือก
-              </span>
-            </div>
-
-            <div className="bg-[#121212] border border-[#303030] p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
-              {dateRanges.length === 0 ? (
-                <span className="text-[10px] text-[#555555] font-mono pl-1">
-                  ยังไม่ได้เลือกวัน
+          {/* Smart Grouped Selected Dates Summary Box (Only shown in Multi-Selection Mode) */}
+          {isMulti && (
+            <div className="mt-2.5 pt-2 border-t border-[#303030]">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 font-mono">
+                  สรุปวันที่เลือก ({draftDates.size} วัน):
                 </span>
-              ) : (
-                dateRanges.map((range, idx) => {
-                  const [y1, m1, d1] = range[0].split('-').map(Number);
-                  const [, , d2] = range[range.length - 1].split('-').map(Number);
-                  
-                  const label = range.length === 1
-                    ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
-                    : `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} (${range.length} วัน)`;
+                <span className="text-[9.5px] text-[#666666] font-mono">
+                  คลิก หรือลากค้างเพื่อเลือก
+                </span>
+              </div>
 
-                  return (
-                    <span 
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
-                    >
-                      {label}
-                      <button 
-                        type="button" 
-                        onClick={() => removeRange(range)} 
-                        className="hover:text-white text-[#da291c]/70 transition-colors"
-                        title="ลบช่วงนี้"
+              <div className="bg-[#121212] border border-[#303030] p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
+                {dateRanges.length === 0 ? (
+                  <span className="text-[10px] text-[#555555] font-mono pl-1">
+                    ยังไม่ได้เลือกวัน
+                  </span>
+                ) : (
+                  dateRanges.map((range, idx) => {
+                    const [y1, m1, d1] = range[0].split('-').map(Number);
+                    const [, , d2] = range[range.length - 1].split('-').map(Number);
+                    
+                    const label = range.length === 1
+                      ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
+                      : `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} (${range.length} วัน)`;
+
+                    return (
+                      <span 
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                })
-              )}
+                        {label}
+                        <button 
+                          type="button" 
+                          onClick={() => removeRange(range)} 
+                          className="hover:text-white text-[#da291c]/70 transition-colors"
+                          title="ลบช่วงนี้"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action & Confirmation Footer */}
           <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#303030] gap-1.5">
@@ -586,14 +630,16 @@ export default function DatePicker({
               </button>
             </div>
 
-            <button 
-              type="button" 
-              onClick={handleConfirm}
-              className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-[#da291c] bg-[#da291c] text-white hover:bg-[#b81d13] transition-colors shadow-sm font-mono"
-            >
-              <Check className="w-3 h-3" />
-              {draftDates.size > 0 ? `ยืนยัน (${draftDates.size})` : 'ยืนยัน'}
-            </button>
+            {isMulti && (
+              <button 
+                type="button" 
+                onClick={handleConfirm}
+                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-[#da291c] bg-[#da291c] text-white hover:bg-[#b81d13] transition-colors shadow-sm font-mono"
+              >
+                <Check className="w-3 h-3" />
+                {draftDates.size > 0 ? `ยืนยัน (${draftDates.size})` : 'ยืนยัน'}
+              </button>
+            )}
           </div>
         </div>
       )}

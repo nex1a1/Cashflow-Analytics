@@ -232,6 +232,7 @@ export default function MainLayout({ controller }) {
         transactions={transactions} frequentItems={frequentItems}
         defaultDate={addForm.date} defaultType={addForm.type}
         defaultCategory={addForm.category}
+        dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
       />
       <ImportPreviewModal
         importPreview={importPreview} setImportPreview={setImportPreview}
