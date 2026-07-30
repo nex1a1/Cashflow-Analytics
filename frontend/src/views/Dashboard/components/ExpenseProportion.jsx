@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { PieChart, Inbox, ArrowDownWideNarrow, ListOrdered } from 'lucide-react';
+import { PieChart, Inbox, ArrowDownWideNarrow, ListOrdered, EyeOff, Sparkles, RotateCcw } from 'lucide-react';
 import { formatMoney } from '../../../utils/formatters';
 import { getDoughnutChartOptions } from '../../../utils/chartOptions';
 import { useDashboardContext } from '../context/DashboardContext';
@@ -59,10 +59,6 @@ CatItem.displayName = 'CatItem';
  */
 const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView }) => {
   const categories = item.categories || [];
-  const topCats = categories.slice(0, 4);
-  const remainingCats = categories.slice(4);
-  const remainingCount = remainingCats.length;
-  const remainingAmount = remainingCats.reduce((acc, c) => acc + c.amount, 0);
 
   return (
     <div 
@@ -77,7 +73,7 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
     >
       {/* ─── HEADER ─── */}
       <div className="flex justify-between items-start gap-2 mb-2">
-        <div className="flex flex-col min-w-0 gap-1">
+        <div className="flex flex-col min-w-0 gap-0.5">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
               <span className="shrink-0 opacity-80">{item.icon || '📁'}</span>
@@ -86,7 +82,7 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
           </div>
           <div className="flex items-center gap-1.5">
             {!isSingleMonthView && (
-              <span className="text-[8.5px] font-bold tracking-widest uppercase text-slate-400">
+              <span className="text-[9.5px] font-bold tracking-wide uppercase text-slate-300">
                 เฉลี่ย ฿{formatMoney(item.avgPerMonth)} / เดือน
               </span>
             )}
@@ -100,7 +96,7 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
             </span>
             <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
           </div>
-          <span className="text-[9px] font-bold tabular-nums opacity-60 text-slate-300">
+          <span className="text-[11px] font-black tabular-nums text-slate-200">
             ฿ {formatMoney(item.amount)}
           </span>
         </div>
@@ -138,12 +134,12 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
                     
                     {/* Segment Hover Popover Tooltip (Smart Aligned & High Elevation) */}
-                    <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-50 text-[8.5px] pointer-events-none`}>
+                    <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-50 text-[9px] pointer-events-none`}>
                       <div className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color || item.color }} />
                         <span className="font-bold text-slate-200">{c.icon || '✨'} {c.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[8px]">
+                      <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
                         <span className="text-slate-400">฿{formatMoney(c.amount)}</span>
                         <span className="font-black text-[#da291c]">{c.relativePercentage}% ของกลุ่ม</span>
                       </div>
@@ -158,79 +154,31 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
         </div>
       </div>
 
-      {/* ─── CONSTITUENT CATEGORIES (Top Contributors - Clean No-Scroll Layout) ─── */}
-      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-0.5 justify-start">
-        {topCats.map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
+      {/* ─── CONSTITUENT CATEGORIES (Fully Expanded - Crisp Typography) ─── */}
+      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-[2px] justify-start">
+        {categories.map(c => (
+          <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 px-1 min-w-0 group/item hover:bg-[#282828] transition-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || item.color }} />
-              <span className="text-[9px] shrink-0 opacity-70">{c.icon || '✨'}</span>
-              <span className="text-[9px] font-bold truncate text-slate-400 group-hover/item:text-slate-200">
+              <span className="text-[11px] shrink-0 opacity-80">{c.icon || '✨'}</span>
+              <span className="text-[11px] font-bold truncate text-slate-200 group-hover/item:text-white">
                 {c.name}
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[8.5px] font-bold tabular-nums text-slate-500 group-hover/item:text-slate-400">
+              <span className="text-[10.5px] font-bold tabular-nums text-slate-300 group-hover/item:text-slate-100">
                 {formatMoney(c.amount)}
               </span>
-              <span className="text-[9px] font-black tabular-nums w-8 text-right text-slate-300 group-hover/item:text-slate-100">
+              <span className="text-[11px] font-black tabular-nums w-8 text-right text-slate-100 group-hover/item:text-white">
                 {c.relativePercentage}%
               </span>
             </div>
           </div>
         ))}
 
-        {/* ─── REMAINING SUB-CATEGORIES WITH HOVER POPOVER TOOLTIP ─── */}
-        {remainingCount > 0 && (
-          <div className="relative group/popover z-20">
-            <div className="flex items-center justify-between gap-2 py-0.5 min-w-0 text-slate-400 hover:text-slate-200 cursor-pointer">
-              <span className="text-[8.5px] font-semibold italic truncate flex items-center gap-1">
-                <span>+ อีก {remainingCount} หมวดหมู่</span>
-                <span className="text-[7.5px] text-slate-500 font-mono opacity-80">(ส่องดู)</span>
-              </span>
-              <span className="text-[8.5px] font-bold tabular-nums">
-                ฿{formatMoney(remainingAmount)}
-              </span>
-            </div>
-
-            {/* FLOATING POPOVER TOOLTIP (Elevated & High Z-index) */}
-            <div className="absolute bottom-full left-0 mb-2 w-60 p-2 rounded-none bg-[#121212] border border-[#303030] shadow-2xl opacity-0 pointer-events-none group-hover/popover:opacity-100 group-hover/popover:pointer-events-auto transition-all duration-150 z-50 flex flex-col gap-1">
-              <div className="flex items-center justify-between border-b border-[#303030] pb-1 mb-0.5">
-                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-300">
-                  หมวดหมู่ย่อยอื่น ({remainingCount})
-                </span>
-                <span className="text-[8.5px] font-bold tabular-nums text-slate-400">
-                  ฿{formatMoney(remainingAmount)}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar pr-0.5">
-                {remainingCats.map(rc => (
-                  <div key={rc.id} className="flex items-center justify-between gap-1.5 py-0.5 border-b border-dashed border-[#303030]/40 last:border-0">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: rc.color || item.color }} />
-                      <span className="text-[8.5px] shrink-0 opacity-70">{rc.icon || '✨'}</span>
-                      <span className="text-[8.5px] font-medium truncate text-slate-300">
-                        {rc.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[8px] font-semibold tabular-nums text-slate-400">
-                        ฿{formatMoney(rc.amount)}
-                      </span>
-                      <span className="text-[8.5px] font-black tabular-nums text-slate-200 w-7 text-right">
-                        {rc.relativePercentage}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {categories.length === 0 && (
           <div className="flex-1 flex items-center justify-center py-1">
-            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
           </div>
         )}
       </div>
@@ -246,7 +194,7 @@ GroupItem.displayName = 'GroupItem';
 /**
  * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
  */
-const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal = 0 }) => {
+const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal = 0, excludedGroupIds = [], onToggleGroup }) => {
   const percentage = parseFloat(item.percentage) || 0;
   const targetAmount = activeTotal * (item.target / 100);
   
@@ -270,10 +218,7 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
   }
 
   const groups = item.groups || [];
-  const topGroups = groups.slice(0, 4);
-  const remainingGroups = groups.slice(4);
-  const remainingCount = remainingGroups.length;
-  const remainingAmount = remainingGroups.reduce((acc, g) => acc + g.amount, 0);
+  const activeGroups = groups.filter(g => !excludedGroupIds.includes(g.id));
 
   return (
     <div 
@@ -338,7 +283,7 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
       
       {/* ─── MULTI-SEGMENT STACKED PROGRESS BAR + LABELED TARGET PIN ABOVE BAR ─── */}
       <div className="mb-2.5">
-        {groups.length > 0 ? (
+        {activeGroups.length > 0 ? (
           (() => {
             // Calculate scale relative to maxDisplay for exact 100% alignment
             const maxDisplay = Math.max(percentage, item.target);
@@ -397,14 +342,14 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
                 <div className="w-full rounded-none h-[10px] flex gap-[1px] bg-[#181818] p-[1px] border border-[#303030]/60 relative z-30">
                   {/* WITHIN-BUDGET GROUP SEGMENTS */}
                   <div className="h-full flex gap-[1px] min-w-0" style={{ width: `${withinBudgetPct}%` }}>
-                    {groups.map((g, gIdx) => {
+                    {activeGroups.map((g, gIdx) => {
                       const relPct = item.amount > 0 ? (g.amount / item.amount) * 100 : 0;
                       if (relPct <= 0) return null;
                       const startPct = cumulativePct;
                       cumulativePct += relPct;
 
                       let alignClass = "left-1/2 -translate-x-1/2";
-                      if (startPct > 65 || gIdx === groups.length - 1) {
+                      if (startPct > 65 || gIdx === activeGroups.length - 1) {
                         alignClass = "right-0 translate-x-0";
                       } else if (startPct < 20 || gIdx === 0) {
                         alignClass = "left-0 translate-x-0";
@@ -494,94 +439,74 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
         )}
       </div>
 
-      {/* ─── CONSTITUENT GROUPS (NO INNER SCROLLBAR!) ─── */}
+      {/* ─── CONSTITUENT GROUPS (Fully Expanded with What-If Interactive Toggle) ─── */}
       <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-0.5 justify-start">
-        {topGroups.map(g => (
-          <div key={g.id} className="flex items-center justify-between gap-2 py-0.5 min-w-0 group/item">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: g.color || item.color }} />
-              <span className="text-[10px] shrink-0 opacity-70">{g.icon || '✨'}</span>
-              <span className="text-[10.5px] font-bold truncate text-slate-300 group-hover/item:text-slate-100">
-                {g.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[10px] font-bold tabular-nums text-slate-400 group-hover/item:text-slate-300">
-                {formatMoney(g.amount)}
-              </span>
-              <span className="text-[10.5px] font-black tabular-nums w-8 text-right text-slate-200 group-hover/item:text-white">
-                {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}%
-              </span>
-            </div>
-          </div>
-        ))}
+        {groups.map(g => {
+          const isExcluded = excludedGroupIds.includes(g.id);
+          const relPct = item.amount > 0 && !isExcluded ? ((g.amount / item.amount) * 100).toFixed(0) : 0;
 
-        {/* ─── REMAINING GROUPS WITH HOVER POPOVER TOOLTIP ─── */}
-        {remainingCount > 0 && (
-          <div className="relative group/popover z-20">
-            <div className="flex items-center justify-between gap-2 py-0.5 min-w-0 text-slate-400 hover:text-slate-200 cursor-pointer">
-              <span className="text-[9.5px] font-semibold italic truncate flex items-center gap-1">
-                <span>+ อีก {remainingCount} กลุ่มรายจ่าย</span>
-                <span className="text-[8.5px] text-slate-400 font-mono opacity-90">(ส่องดู)</span>
-              </span>
-              <span className="text-[9.5px] font-bold tabular-nums">
-                ฿{formatMoney(remainingAmount)}
-              </span>
-            </div>
-
-            {/* FLOATING POPOVER TOOLTIP */}
-            <div className="absolute bottom-full left-0 mb-2 w-64 p-2.5 rounded-none bg-[#121212] border border-[#303030] shadow-2xl opacity-0 pointer-events-none group-hover/popover:opacity-100 group-hover/popover:pointer-events-auto transition-all duration-150 z-50 flex flex-col gap-1">
-              <div className="flex items-center justify-between border-b border-[#303030] pb-1 mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-200">
-                  กลุ่มรายจ่ายอื่น ({remainingCount})
-                </span>
-                <span className="text-[9.5px] font-bold tabular-nums text-slate-300">
-                  ฿{formatMoney(remainingAmount)}
+          return (
+            <div 
+              key={g.id} 
+              onClick={() => onToggleGroup && onToggleGroup(g.id)}
+              className={`flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none ${
+                isExcluded 
+                  ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
+                  : 'hover:bg-[#282828]'
+              }`}
+              title={isExcluded ? 'คลิกเพื่อเปิดหมวดหมู่นี้กลับมา' : 'คลิกเพื่อทดลองปิดหมวดหมู่นี้'}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span 
+                  className="w-1.5 h-1.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: isExcluded ? '#525252' : (g.color || item.color) }} 
+                />
+                <span className="text-[10px] shrink-0 opacity-70">{g.icon || '✨'}</span>
+                <span className={`text-[10.5px] font-bold truncate ${
+                  isExcluded ? 'line-through text-slate-500' : 'text-slate-300 group-hover/item:text-slate-100'
+                }`}>
+                  {g.name}
                 </span>
               </div>
-              <div className="flex flex-col gap-1 max-h-44 overflow-y-auto custom-scrollbar pr-0.5">
-                {remainingGroups.map(rg => (
-                  <div key={rg.id} className="flex items-center justify-between gap-1.5 py-0.5 border-b border-dashed border-[#303030]/40 last:border-0">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: rg.color || item.color }} />
-                      <span className="text-[9.5px] shrink-0 opacity-70">{rg.icon || '✨'}</span>
-                      <span className="text-[9.5px] font-medium truncate text-slate-200">
-                        {rg.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[9px] font-semibold tabular-nums text-slate-400">
-                        ฿{formatMoney(rg.amount)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[10px] font-bold tabular-nums ${
+                  isExcluded ? 'line-through text-slate-600' : 'text-slate-400 group-hover/item:text-slate-300'
+                }`}>
+                  {formatMoney(g.amount)}
+                </span>
+                <span className="text-[10.5px] font-black tabular-nums w-8 text-right">
+                  {isExcluded ? (
+                    <EyeOff className="w-3 h-3 text-red-400/80 inline" />
+                  ) : (
+                    <span className="text-slate-200 group-hover/item:text-white">{relPct}%</span>
+                  )}
+                </span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })}
 
         {/* ─── NET SURPLUS (Remainder) ─── */}
         {isSavings && (() => {
-          const sumGroups = groups.reduce((acc, g) => acc + g.amount, 0);
+          const sumGroups = activeGroups.reduce((acc, g) => acc + g.amount, 0);
           const surplus = item.amount - sumGroups;
           if (surplus <= 10) return null;
 
           const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
 
           return (
-            <div className="flex items-center justify-between gap-2 py-1 mt-1 border-t border-dotted border-[#303030]/50 min-w-0 group/item">
+            <div className="flex items-center justify-between gap-2 py-1 px-1.5 mt-1 border-t border-dotted border-[#303030]/50 min-w-0 group/item">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[9px] shrink-0 opacity-80">🌊</span>
-                <span className="text-[9px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
+                <span className="text-[10px] shrink-0 opacity-80">🌊</span>
+                <span className="text-[10.5px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
                   Net Surplus (เหลือสุทธิ)
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[8.5px] font-bold tabular-nums opacity-70 text-emerald-400 group-hover/item:text-emerald-300">
+                <span className="text-[10px] font-bold tabular-nums text-emerald-400 group-hover/item:text-emerald-300">
                   {formatMoney(surplus)}
                 </span>
-                <span className="text-[9px] font-black tabular-nums w-8 text-right text-emerald-400 group-hover/item:text-emerald-300">
+                <span className="text-[10.5px] font-black tabular-nums w-8 text-right text-emerald-400 group-hover/item:text-emerald-300">
                   {surplusPercent}%
                 </span>
               </div>
@@ -589,9 +514,9 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
           );
         })()}
 
-        {groups.length === 0 && (
+        {groups.length === 0 && !isSavings && (
           <div className="flex-1 flex items-center justify-center py-1">
-            <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
           </div>
         )}
       </div>
@@ -609,6 +534,7 @@ function ExpenseProportion() {
   const [displayMode, setDisplayMode] = useState('category'); // 'category', 'group', or 'allocation'
   const [sortMode, setSortMode] = useState('amount'); // 'amount' or 'order'
   const [hoveredIdx, setHoveredIdx] = useState(null); // Track hovered item for visual highlighting
+  const [excludedGroupIds, setExcludedGroupIds] = useState([]); // Track excluded groups in What-If simulation mode
 
   const { 
     sortedCats = [], chartTotal = 0,
@@ -619,17 +545,73 @@ function ExpenseProportion() {
   // Select data based on mode
   const isGroupMode = displayMode === 'group';
   const isAllocationMode = displayMode === 'allocation';
+
+  const toggleGroupExclusion = useCallback((groupId) => {
+    setExcludedGroupIds(prev => 
+      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
+    );
+  }, []);
+
+  const resetExclusions = useCallback(() => {
+    setExcludedGroupIds([]);
+  }, []);
   
   const changeDisplayMode = (mode) => {
     setDisplayMode(mode);
     setHoveredIdx(null); // Reset hovered item when changing tabs
+    setExcludedGroupIds([]); // Reset simulation when switching tabs
   };
+
+  // Recalculate allocation amounts and percentages for What-If simulation
+  const { simulatedAllocation, totalReduced } = useMemo(() => {
+    if (!isAllocationMode || excludedGroupIds.length === 0) {
+      return { simulatedAllocation: sortedAllocation, totalReduced: 0 };
+    }
+
+    const excludedSet = new Set(excludedGroupIds);
+    const needsItem = sortedAllocation.find(a => a.id === 'needs');
+    const wantsItem = sortedAllocation.find(a => a.id === 'wants');
+    const savingsItem = sortedAllocation.find(a => a.id === 'savings');
+
+    const needsGroups = needsItem?.groups || [];
+    const wantsGroups = wantsItem?.groups || [];
+    const savingsGroups = savingsItem?.groups || [];
+
+    const activeNeedsTotal = needsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
+    const activeWantsTotal = wantsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
+    const activeSavingsTotal = savingsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
+
+    const origNeedsTotal = needsItem?.amount || 0;
+    const origWantsTotal = wantsItem?.amount || 0;
+
+    const reducedSum = (origNeedsTotal - activeNeedsTotal) + (origWantsTotal - activeWantsTotal);
+
+    const baseIncome = totalIncome || (totalExpense + Math.max(0, analytics.netCashflow || 0));
+    const simNetSavings = Math.max(0, baseIncome - (activeNeedsTotal + activeWantsTotal));
+
+    const updatedAllocation = sortedAllocation.map(item => {
+      let simAmount = item.amount;
+      if (item.id === 'needs') simAmount = activeNeedsTotal;
+      if (item.id === 'wants') simAmount = activeWantsTotal;
+      if (item.id === 'savings') simAmount = simNetSavings;
+
+      const simPercentage = baseIncome > 0 ? ((simAmount / baseIncome) * 100).toFixed(1) : '0';
+
+      return {
+        ...item,
+        amount: simAmount,
+        percentage: simPercentage,
+      };
+    });
+
+    return { simulatedAllocation: updatedAllocation, totalReduced: reducedSum };
+  }, [isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, analytics.netCashflow]);
 
   const rawItems = useMemo(() => {
     if (isGroupMode) return sortedGroups;
-    if (isAllocationMode) return sortedAllocation;
+    if (isAllocationMode) return simulatedAllocation;
     return sortedCats;
-  }, [isGroupMode, isAllocationMode, sortedGroups, sortedAllocation, sortedCats]);
+  }, [isGroupMode, isAllocationMode, sortedGroups, simulatedAllocation, sortedCats]);
 
   // Apply Dynamic Sorting (Skip for allocation mode as it has fixed needs/wants/savings order)
   const activeItems = useMemo(() => {
@@ -768,7 +750,7 @@ function ExpenseProportion() {
     <div className={cardClass}>
       {/* ─── HEADER (Editorial Style) ─── */}
       <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <PieChart className="w-3.5 h-3.5 text-neutral-400" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
@@ -836,6 +818,24 @@ function ExpenseProportion() {
               </button>
             </div>
           )}
+
+          {/* What-If Simulation Active Badge & Reset Button */}
+          {isAllocationMode && excludedGroupIds.length > 0 && (
+            <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-none text-[9.5px]">
+              <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+              <span className="font-black text-amber-300 uppercase tracking-wider">
+                จำลองลด {excludedGroupIds.length} หมวด (-฿{formatMoney(totalReduced)})
+              </span>
+              <button
+                onClick={resetExclusions}
+                className="ml-1 px-1.5 py-0.2 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none"
+                title="คืนค่าหมวดหมู่ทั้งหมด"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                <span>คืนค่า</span>
+              </button>
+            </div>
+          )}
         </div>
         <span className="text-[9px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
           {showSkeleton ? '...' : `${itemCount} ${isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่')}`}
@@ -880,7 +880,20 @@ function ExpenseProportion() {
           <div className={`flex-1 grid ${gridColsClass} gap-px bg-[#303030]/50`}>
              {activeItems.map((item, idx) => {
                const isHovered = hoveredIdx === idx;
-               if (isAllocationMode) return <AllocationItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} activeTotal={activeTotal} />;
+               if (isAllocationMode) {
+                 return (
+                   <AllocationItem 
+                     key={item.id || idx} 
+                     item={item} 
+                     idx={idx} 
+                     isHovered={isHovered} 
+                     onHover={setHoveredIdx} 
+                     activeTotal={activeTotal} 
+                     excludedGroupIds={excludedGroupIds}
+                     onToggleGroup={toggleGroupExclusion}
+                   />
+                 );
+               }
                if (isGroupMode) return <GroupItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} />;
                return <CatItem key={item.id || idx} cat={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
              })}
