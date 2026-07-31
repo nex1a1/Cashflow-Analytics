@@ -300,13 +300,13 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
 
             // Smart badge alignment to prevent overflow at 0% or 100% edges
             let pinTranslateClass = "-translate-x-1/2 items-center";
-            let arrowAlignClass = "items-center";
+            let arrowAlignClass = "justify-center";
             if (targetPinPos >= 90) {
               pinTranslateClass = "-translate-x-full items-end";
-              arrowAlignClass = "items-end pr-1";
+              arrowAlignClass = "justify-end pr-1";
             } else if (targetPinPos <= 10) {
               pinTranslateClass = "translate-x-0 items-start";
-              arrowAlignClass = "items-start pl-1";
+              arrowAlignClass = "justify-start pl-1";
             }
 
             let cumulativePct = 0;
