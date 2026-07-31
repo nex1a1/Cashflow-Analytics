@@ -3,8 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import db from '../config/db';
 
-// Since we compile to CommonJS, __dirname is globally available.
-const BACKUP_DIR = path.join(__dirname, '../../backups');
+// Determine base directory depending on whether running in PKG executable mode
+const isPkg = Boolean((process as any).pkg);
+const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
+const BACKUP_DIR = path.join(baseDir, 'backups');
 
 export const performBackup = async (req: Partial<Request>, res: Partial<Response>) => {
     try {

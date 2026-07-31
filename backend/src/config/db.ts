@@ -2,8 +2,10 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-// Since we are compiling to CommonJS, __dirname is globally available.
-let DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../data/cashflow.db');
+// Determine base directory depending on whether running in PKG executable mode
+const isPkg = Boolean((process as any).pkg);
+const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
+let DB_PATH = process.env.DB_PATH || path.join(baseDir, 'data/cashflow.db');
 
 // Override for Demo Mode
 if (process.env.USE_DEMO_DB === 'true') {

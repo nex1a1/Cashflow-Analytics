@@ -11,6 +11,10 @@ backend/backups/
 
 # Build outputs
 frontend/dist/
+backend/dist/
+CashflowShark-Portable/
+*.exe
+*.tar.gz
 
 # Environment variables
 .env

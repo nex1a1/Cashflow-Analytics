@@ -6,8 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-// Since we are compiling to CommonJS, __dirname is globally available.
-let DB_PATH = process.env.DB_PATH || path_1.default.join(__dirname, '../../data/cashflow.db');
+// Determine base directory depending on whether running in PKG executable mode
+const isPkg = Boolean(process.pkg);
+const baseDir = isPkg ? path_1.default.dirname(process.execPath) : path_1.default.join(__dirname, '../../');
+let DB_PATH = process.env.DB_PATH || path_1.default.join(baseDir, 'data/cashflow.db');
 // Override for Demo Mode
 if (process.env.USE_DEMO_DB === 'true') {
     const dbDir = path_1.default.dirname(DB_PATH);

@@ -7,8 +7,10 @@ exports.listBackups = exports.performBackup = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const db_1 = __importDefault(require("../config/db"));
-// Since we compile to CommonJS, __dirname is globally available.
-const BACKUP_DIR = path_1.default.join(__dirname, '../../backups');
+// Determine base directory depending on whether running in PKG executable mode
+const isPkg = Boolean(process.pkg);
+const baseDir = isPkg ? path_1.default.dirname(process.execPath) : path_1.default.join(__dirname, '../../');
+const BACKUP_DIR = path_1.default.join(baseDir, 'backups');
 const performBackup = async (req, res) => {
     try {
         // สร้าง directory ถ้ายังไม่มี

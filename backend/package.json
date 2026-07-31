@@ -2,12 +2,23 @@
   "name": "expense-backend",
   "version": "1.0.0",
   "main": "dist/server.js",
+  "bin": "dist/server.js",
   "type": "commonjs",
   "scripts": {
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "build": "tsc",
+    "build:exe": "node scripts/build_exe.js",
     "seed:demo": "tsx src/scripts/seedMockupDb.ts"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "dist/frontend_dist/**/*",
+      "node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+    ]
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
@@ -19,7 +30,9 @@
     "@types/better-sqlite3": "^7.6.9",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.24",
+    "fs-extra": "^11.4.0",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   }
