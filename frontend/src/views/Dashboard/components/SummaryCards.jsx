@@ -2,7 +2,8 @@
 import React, { memo } from 'react';
 import { 
   Activity, Wallet, Target, Scale, UtensilsCrossed,
-  TrendingUp, Zap, Layers, Home, Award, TrendingDown, Navigation
+  TrendingUp, Zap, Layers, Home, Award, TrendingDown, Navigation,
+  ShieldCheck, Gauge, AlertTriangle
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney } from '../../../utils/formatters';
@@ -253,28 +254,36 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
 
             {/* Hover Breakdown Overlay */}
             {!showSkeleton && rentSub && (
-              <div className="absolute inset-0 p-2.5 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-between">
+              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
                 <div className="text-[8px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0">
                   <span>รายละเอียดที่พัก</span>
                   <span className="text-sky-400 font-extrabold text-[7px] border border-sky-400/30 px-1 py-0.5 rounded-none leading-none">4 หมวด</span>
                 </div>
                 
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 overflow-hidden">
-                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🏢 ค่าเช่า</span>
-                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
+                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+                  <div className="bg-[#181818] p-1 flex flex-col justify-center text-left">
+                    <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1">
+                      <span>🏢</span> ค่าเช่า
+                    </span>
+                    <span className="text-[12px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
                   </div>
-                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">⚡ ค่าไฟ</span>
-                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-center text-left">
+                    <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1">
+                      <span>⚡</span> ค่าไฟ
+                    </span>
+                    <span className="text-[12px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
                   </div>
-                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🌐 ค่าเน็ต</span>
-                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-center text-left">
+                    <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1">
+                      <span>🌐</span> ค่าเน็ต
+                    </span>
+                    <span className="text-[12px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
                   </div>
-                  <div className="bg-[#181818] p-1 flex flex-col justify-between text-left">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">💧 ค่าน้ำ</span>
-                    <span className="text-[12px] font-black text-slate-200 tabular-nums">฿{formatMoney(rentSub.water)}</span>
+                  <div className="bg-[#181818] p-1 flex flex-col justify-center text-left">
+                    <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1">
+                      <span>💧</span> ค่าน้ำ
+                    </span>
+                    <span className="text-[12px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
                   </div>
                 </div>
               </div>
@@ -434,82 +443,294 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
 });
 
 /**
- * SECTION 3: FORECAST (Opt-in predictions)
+ * SECTION 3: FORECAST (Opt-in predictions & Elite Safe Zone Center)
+ */
+/**
+ * SECTION 3: FORECAST (Opt-in predictions & Elite Safe Zone Center)
  */
 const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
   const {
-    showForecasting, projectedExpense, safeToSpend, projectedSurplus
+    showForecasting, projectedExpense, safeToSpend, projectedSurplus, forecastingDetails
   } = analytics;
 
   if (!showForecasting) return null;
 
+  const details = forecastingDetails || {};
+  const currentDay = details.currentDay || 1;
+  const lastDayOfMonth = details.lastDayOfMonth || 30;
+  const remainingDays = details.remainingDays || 0;
+  const monthProgressPct = details.monthProgressPct || 0;
+  const fixedTotal = details.fixedTotal || 0;
+  const variableUpToToday = details.variableUpToToday || 0;
+  const projectedVariableRemaining = details.projectedVariableRemaining || 0;
+  const variableRunRate = details.variableRunRate || 0;
+  const actualDailyVariableAvg = details.actualDailyVariableAvg || 0;
+  const projectedSurplusPct = details.projectedSurplusPct || 0;
+  const maxAllowedExpense = details.maxAllowedExpense || 0;
+  const requiredReduction = details.requiredReduction || 0;
+  const requiredDailyReduction = details.requiredDailyReduction || 0;
+  const isEarlyMonth = details.isEarlyMonth || false;
+  const paceStatus = details.paceStatus || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
+  const eomStatus = details.eomStatus || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+
+  const headroom = safeToSpend - actualDailyVariableAvg;
+
+  // Stacked Expense proportions
+  const totalProj = Math.max(1, projectedExpense);
+  const fixedPct = Math.min(100, Math.max(0, (fixedTotal / totalProj) * 100));
+  const varSpentPct = Math.min(100, Math.max(0, (variableUpToToday / totalProj) * 100));
+  const varRemPct = Math.min(100, Math.max(0, (projectedVariableRemaining / totalProj) * 100));
+
+  // Daily Headroom pace ratio
+  const safePaceRatio = safeToSpend > 0 ? Math.min(100, (actualDailyVariableAvg / safeToSpend) * 100) : 100;
+
   return (
     <div className="flex flex-col">
-      <SectionHeader icon={TrendingUp} title="พยากรณ์สิ้นเดือน (Projection & Safe Zone)" />
-      <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d]">
+      {/* 1. Top Section Header with EOM Safety Grade */}
+      <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#2d2d2d] bg-[#121212]/90">
+        <div className="flex items-center gap-2">
+          <div className="w-[3px] h-3.5 bg-[#da291c] shrink-0" />
+          <TrendingUp className="w-4 h-4 text-neutral-300" />
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-neutral-100">
+            พยากรณ์สิ้นเดือน (Projection & Safe Zone Center)
+          </span>
+        </div>
+        <div className={`px-2.5 py-1 border text-[10px] font-black tracking-wider uppercase flex items-center gap-1.5 ${eomStatus.bg} ${eomStatus.border}`}
+          style={{ color: eomStatus.color }}>
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+          <span>{eomStatus.label}</span>
+        </div>
+      </div>
+
+      {/* 2. Burn-Rate & Calendar Pace Bar with Monthly Ceiling */}
+      <div className="px-4 py-3 bg-[#151515] border-b border-[#2d2d2d] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-neutral-300 font-bold text-xs uppercase tracking-wider">
+            <Gauge className="w-4 h-4 text-indigo-400" />
+            <span>ความเร็วใช้จ่าย (Burn Pace):</span>
+          </div>
+          <span className="text-xs font-black uppercase px-2.5 py-0.5 border" style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}>
+            {paceStatus.label}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="text-xs text-neutral-300 font-mono bg-neutral-900 px-2 py-0.5 border border-neutral-800">
+            เพดานงบรวมไม่ติดลบ: <span className="text-emerald-400 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
+          </div>
+          <div className="text-xs text-neutral-300 font-mono">
+            วันในเดือน: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span> ({monthProgressPct}%)
+          </div>
+          <div className="w-28 h-2 bg-neutral-800 rounded-none overflow-hidden relative border border-neutral-700/60">
+            <div 
+              className="h-full transition-all duration-300"
+              style={{ 
+                width: `${Math.min(100, monthProgressPct)}%`,
+                backgroundColor: paceStatus.color 
+              }} 
+            />
+          </div>
+          <div className="text-xs text-neutral-300 font-mono">
+            คงเหลือ <span className="text-neutral-100 font-bold">{remainingDays} วัน</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. High-Density 3-Column HUD Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d]">
         
-        {/* Projected Expense */}
-        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-indigo-950/20 hover:bg-indigo-950/30 transition-none border-l-2 border-l-indigo-500">
-          <div className="z-10">
-            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
-              พยากรณ์รายจ่ายเดือนนี้
-            </span>
+        {/* Card 1: พยากรณ์รายจ่ายเดือนนี้ (Projected Expense vs Monthly Ceiling) */}
+        <div className="group relative overflow-hidden p-5 flex flex-col gap-4 bg-indigo-950/20 hover:bg-indigo-950/30 transition-none border-l-2 border-l-indigo-500">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
+                พยากรณ์รายจ่ายเดือนนี้
+              </span>
+              <span className="text-[10px] font-mono font-bold text-teal-300 bg-teal-950/90 px-2 py-0.5 border border-teal-700/80">
+                เพดานเดือนนี้: ฿{formatMoney(maxAllowedExpense)}
+              </span>
+            </div>
             {showSkeleton ? (
-              <Shimmer className="h-6 w-24 mt-2" />
+              <Shimmer className="h-8 w-32 mt-2" />
             ) : (
-              <div className="text-xl font-black text-indigo-400 tabular-nums tracking-tight leading-none mt-2">
-                <AnimatedNumber value={projectedExpense} />
+              <div>
+                <div className="text-2xl lg:text-3xl font-black text-indigo-400 tabular-nums tracking-tight leading-none mt-2">
+                  <AnimatedNumber value={projectedExpense} />
+                </div>
+                <div className="text-[11px] font-mono text-neutral-400 mt-1.5 flex items-center justify-between">
+                  <span>เพดานงบทั้งเดือน (รายรับ):</span>
+                  <span className="text-emerald-400 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Stacked Proportions Progress Bar */}
+          <div className="space-y-1">
+            <div className="h-1.5 w-full bg-neutral-800 flex overflow-hidden border border-indigo-900/40">
+              <div style={{ width: `${fixedPct}%` }} className="bg-slate-400" title="Fixed" />
+              <div style={{ width: `${varSpentPct}%` }} className="bg-indigo-500" title="Var Spent" />
+              <div style={{ width: `${varRemPct}%` }} className="bg-indigo-800/80" title="Var Projected" />
+            </div>
+            <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+              <span className="text-slate-300">Fixed ({fixedPct.toFixed(0)}%)</span>
+              <span className="text-indigo-300">Spent ({varSpentPct.toFixed(0)}%)</span>
+              <span className="text-indigo-400">Est Rem ({varRemPct.toFixed(0)}%)</span>
+            </div>
+          </div>
+
+          {/* Math Breakdown: Exclusive home for expense components */}
+          <div className="pt-3 border-t border-indigo-900/50 text-xs font-mono text-neutral-300 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-400">• ค่าใช้จ่ายคงที่ (Fixed):</span>
+              <span className="text-white font-bold">฿{formatMoney(fixedTotal)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-400">• แปรผันจ่ายแล้ว ({currentDay} วัน):</span>
+              <span className="text-white font-bold">฿{formatMoney(variableUpToToday)}</span>
+            </div>
+            <div className="flex justify-between items-center text-indigo-300">
+              <span>• ประเมินคงเหลือ ({remainingDays} วัน):</span>
+              <span className="font-bold">฿{formatMoney(projectedVariableRemaining)}</span>
+            </div>
+          </div>
+
           <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-indigo-500">
-            <TrendingUp size={72} />
+            <TrendingUp size={80} />
           </div>
         </div>
 
-        {/* Safe to Spend */}
-        <div className={`group relative overflow-hidden p-4 flex items-center justify-between transition-none border-l-2 ${
+        {/* Card 2: งบเหลือใช้จ่ายรายวัน (Daily Spending Ceiling) */}
+        <div className={`group relative overflow-hidden p-5 flex flex-col gap-4 transition-none border-l-2 ${
           safeToSpend > 300 
             ? 'bg-emerald-950/20 hover:bg-emerald-950/30 border-l-teal-500'
             : 'bg-red-950/20 hover:bg-red-950/30 border-l-[#da291c]'
         }`}>
-          <div className="z-10">
-            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
-              งบเหลือใช้จ่ายรายวัน (Safe to Spend)
-            </span>
-            {showSkeleton ? (
-              <Shimmer className="h-6 w-24 mt-2" />
-            ) : (
-              <div className={`text-xl font-black tabular-nums tracking-tight leading-none mt-2 ${
-                safeToSpend > 300 ? 'text-emerald-400' : 'text-[#da291c]'
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
+                เพดานใช้วันละไม่เกิน (Safe to Spend)
+              </span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 border ${
+                headroom >= 0 
+                  ? 'text-teal-300 bg-teal-950/80 border-teal-700/60' 
+                  : 'text-red-300 bg-red-950/80 border-red-700/60'
               }`}>
-                <AnimatedNumber value={safeToSpend} />
+                {headroom >= 0 ? 'SAFE ZONE' : 'OVER PACED'}
+              </span>
+            </div>
+            {showSkeleton ? (
+              <Shimmer className="h-8 w-32 mt-2" />
+            ) : (
+              <div>
+                <div className={`text-2xl lg:text-3xl font-black tabular-nums tracking-tight leading-none mt-2 ${
+                  safeToSpend > 300 ? 'text-emerald-400' : 'text-[#da291c]'
+                }`}>
+                  <AnimatedNumber value={safeToSpend} />
+                  <span className="text-sm text-neutral-400 ml-1 font-normal">/วัน</span>
+                </div>
+                <div className="text-[11px] font-mono text-neutral-400 mt-1.5">
+                  เพดานงบแปรผันต่อวันที่เหลือห้ามเกินนี้
+                </div>
               </div>
             )}
           </div>
+
+          {/* Daily Headroom Gauge Bar */}
+          <div className="space-y-1">
+            <div className="h-1.5 w-full bg-neutral-800 overflow-hidden relative border border-neutral-700/60">
+              <div 
+                className={`h-full ${headroom >= 0 ? 'bg-teal-400' : 'bg-[#da291c]'}`}
+                style={{ width: `${Math.min(100, safePaceRatio)}%` }} 
+              />
+            </div>
+            <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+              <span>สปีดใช้จริง: ฿{formatMoney(actualDailyVariableAvg)}/วัน</span>
+              <span>อีก {remainingDays} วันที่เหลือ</span>
+            </div>
+          </div>
+
+          {/* Math Breakdown: Exclusive home for daily pace & headroom */}
+          <div className="pt-3 border-t border-neutral-800/80 text-xs font-mono text-neutral-300 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-400">• สปีดใช้จริงแปรผันปัจจุบัน:</span>
+              <span className="text-white font-bold">฿{formatMoney(actualDailyVariableAvg)}/วัน</span>
+            </div>
+            {headroom >= 0 ? (
+              <div className="flex justify-between items-center">
+                <span className="text-neutral-400">• ส่วนต่างปลอดภัย (Headroom):</span>
+                <span className="font-black text-emerald-400">+฿{formatMoney(headroom)}/วัน</span>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-amber-300 font-bold">
+                <span>• ต้องปรับลดสปีดลงอีก:</span>
+                <span>-฿{formatMoney(requiredDailyReduction)}/วัน</span>
+              </div>
+            )}
+          </div>
+
           <div className={`absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none ${
             safeToSpend > 300 ? 'text-teal-500' : 'text-[#da291c]'
           }`}>
-            <Zap size={72} />
+            <Zap size={80} />
           </div>
         </div>
 
-        {/* Projected Surplus */}
-        <div className="group relative overflow-hidden p-4 flex items-center justify-between bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-2 border-l-purple-500">
-          <div className="z-10">
-            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400">
-              กระแสเงินสุทธิสดคาดการณ์
-            </span>
+        {/* Card 3: กระแสเงินสดสุทธิคาดการณ์ & เป้าหมายไม่ติดลบ (Projected Net Cashflow) */}
+        <div className="group relative overflow-hidden p-5 flex flex-col gap-4 bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-2 border-l-purple-500">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
+                กระแสเงินสดสุทธิคาดการณ์
+              </span>
+              <span className="text-[10px] font-mono font-bold text-purple-300 bg-purple-950/80 px-2 py-0.5 border border-purple-700/60">
+                EOM SURPLUS / DEFICIT
+              </span>
+            </div>
             {showSkeleton ? (
-              <Shimmer className="h-6 w-24 mt-2" />
+              <Shimmer className="h-8 w-32 mt-2" />
             ) : (
-              <div className="text-xl font-black text-purple-400 tabular-nums tracking-tight leading-none mt-2">
+              <div className="text-2xl lg:text-3xl font-black text-purple-400 tabular-nums tracking-tight leading-none mt-2">
                 <AnimatedNumber value={projectedSurplus} />
               </div>
             )}
           </div>
+
+          {/* Retention Ratio Progress Bar */}
+          <div className="space-y-1">
+            <div className="h-1.5 w-full bg-neutral-800 overflow-hidden relative border border-purple-900/40">
+              <div 
+                className={`h-full ${projectedSurplus >= 0 ? 'bg-purple-500' : 'bg-[#da291c]'}`}
+                style={{ width: `${Math.min(100, Math.max(0, projectedSurplusPct))}%` }} 
+              />
+            </div>
+            <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+              <span>เงินสดคงเหลือคาดการณ์:</span>
+              <span className="text-purple-300 font-bold">{projectedSurplusPct}% ของรายรับ</span>
+            </div>
+          </div>
+
+          {/* Math Breakdown: Exclusive home for income ceiling & break-even targets */}
+          <div className="pt-3 border-t border-purple-900/50 text-xs font-mono text-neutral-300 space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-neutral-400">• เพดานรายรับรวมทั้งเดือน:</span>
+              <span className="text-purple-300 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
+            </div>
+            {requiredReduction > 0 ? (
+              <div className="flex justify-between items-center text-[#da291c] font-black border-t border-purple-900/30 pt-1">
+                <span>• ต้องคุมรายจ่ายลงอีกรวม:</span>
+                <span>-฿{formatMoney(requiredReduction)}</span>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-emerald-400 font-bold border-t border-purple-900/30 pt-1">
+                <span>• อัตราเงินสดคงเหลือสะสม:</span>
+                <span>+{projectedSurplusPct}%</span>
+              </div>
+            )}
+          </div>
+
           <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-purple-500">
-            <Layers size={72} />
+            <Layers size={80} />
           </div>
         </div>
 

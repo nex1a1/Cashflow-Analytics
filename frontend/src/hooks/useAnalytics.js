@@ -458,6 +458,7 @@ export default function useAnalytics({
     let projectedExpense = 0, safeToSpend = 0, projectedSurplus = 0, showForecasting = false;
     let periodDays = datesInPeriod.length || 1;
     let effectiveDays = periodDays;
+    let forecastingDetails = null;
 
     if (isCurrentMonth && datesInPeriod.length > 0) {
       showForecasting = true;
@@ -468,13 +469,62 @@ export default function useAnalytics({
       // If excludeFuture is active in current month, average across days elapsed so far (currentDay)
       effectiveDays = excludeFuture ? currentDay : periodDays;
       
+      const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
       const variableRunRate = variableUpToToday / currentDay;
-      projectedExpense = totals.fixed + variableUpToToday + (variableRunRate * remainingDays);
+      const projectedVariableRemaining = variableRunRate * remainingDays;
+      projectedExpense = totals.fixed + variableUpToToday + projectedVariableRemaining;
       projectedSurplus = totals.income - projectedExpense;
+      const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
       
       const remainingBudget = totals.income - totals.fixed - variableUpToToday;
       const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
       safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
+
+      // Pace analysis (Compare daily variable spending pace vs safe daily target)
+      let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
+      if (projectedSurplus < 0) {
+        paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ (Critical)', color: '#da291c', bg: 'bg-red-950/40' };
+      } else if (safeToSpend > 0 && variableRunRate > safeToSpend * 1.15) {
+        paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า (High Pace)', color: '#f59e0b', bg: 'bg-amber-950/30' };
+      } else if (safeToSpend > 0 && variableRunRate > safeToSpend) {
+        paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์ (Moderate)', color: '#3b82f6', bg: 'bg-blue-950/30' };
+      }
+
+      // End of Month Financial Safety Grade
+      let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง (Surplus Safe)', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+      if (projectedSurplus < 0) {
+        eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล (Deficit Risk)', color: '#da291c', bg: 'bg-red-950/40', border: 'border-[#da291c]' };
+      } else if (projectedSurplusPct < 5) {
+        eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว (Tight Buffer)', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
+      } else if (projectedSurplusPct < 20) {
+        eomStatus = { code: 'STABLE', label: 'โซนสมดุล (Stable)', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
+      }
+
+      // Break-even & Deficit Control Targets
+      const maxAllowedExpense = totals.income;
+      const requiredReduction = projectedExpense > totals.income ? projectedExpense - totals.income : 0;
+      const requiredDailyReduction = variableRunRate > safeToSpend ? variableRunRate - safeToSpend : 0;
+
+      forecastingDetails = {
+        currentDay,
+        lastDayOfMonth,
+        remainingDays,
+        monthProgressPct: Number(monthProgressPct.toFixed(1)),
+        variableUpToToday,
+        variableRunRate,
+        projectedVariableRemaining,
+        fixedTotal: totals.fixed,
+        projectedExpense,
+        projectedSurplus,
+        projectedSurplusPct: Number(projectedSurplusPct.toFixed(1)),
+        safeToSpend,
+        actualDailyVariableAvg: variableRunRate,
+        maxAllowedExpense,
+        requiredReduction,
+        requiredDailyReduction,
+        paceStatus,
+        eomStatus
+      };
     }
 
     const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
@@ -490,7 +540,7 @@ export default function useAnalytics({
     const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes, dayTypeConfig);
 
     return {
-      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus,
+      isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus, forecastingDetails,
       prevTotals, totalExpense: totals.expense, totalIncome: totals.income,
       totalSavings: totals.savings || 0, actualSavings, explicitSavings,
       netCashflow, savingsRate, chartTotal, numMonths, sortedCats,
