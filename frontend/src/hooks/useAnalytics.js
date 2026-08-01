@@ -58,6 +58,7 @@ export default function useAnalytics({
       fixed: 0, variable: 0, food: 0, rent: 0,
       rentSub: { rent: 0, electricity: 0, internet: 0, water: 0 },
       weekend: 0, weekday: 0,
+      foodWeekend: 0, foodWeekday: 0, foodDailyMap: {},
       dayOfWeekMap: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
     };
 
@@ -262,8 +263,16 @@ export default function useAnalytics({
           const dateObj = parseDateStrToObj(isoDate);
           const dow = dateObj.getDay();
           totals.dayOfWeekMap[dow] += amt;
-          if (dow === 0 || dow === 6) totals.weekend += amt;
-          else totals.weekday += amt;
+          if (dow === 0 || dow === 6) {
+            totals.weekend += amt;
+            if (isFood) totals.foodWeekend += amt;
+          } else {
+            totals.weekday += amt;
+            if (isFood) totals.foodWeekday += amt;
+          }
+          if (isFood) {
+            totals.foodDailyMap[isoDate] = (totals.foodDailyMap[isoDate] || 0) + amt;
+          }
         }
 
         // Forecasting Logic
@@ -536,8 +545,44 @@ export default function useAnalytics({
       ? (globalValues[Math.floor(globalValues.length * 0.9)] || globalValues[globalValues.length - 1])
       : 100;
 
-    // ─── DAY TYPE DISTRIBUTION ───────────────────────────────────────────────
+    // ─── DAY TYPE & WORKDAY VS HOLIDAY BREAKDOWN ──────────────────────────────
     const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes, dayTypeConfig);
+
+    let weekendDaysCount = 0;
+    datesInPeriod.forEach(d => {
+      const dateObj = parseDateStrToObj(d);
+      const dow = dateObj.getDay();
+      if (dow === 0 || dow === 6) weekendDaysCount++;
+    });
+    const weekdayDaysCount = Math.max(1, datesInPeriod.length - weekendDaysCount);
+    const validWeekendDays = Math.max(1, weekendDaysCount);
+
+    const foodWorkdayAvg = totals.foodWeekday / weekdayDaysCount;
+    const foodHolidayAvg = totals.foodWeekend / validWeekendDays;
+    const dailyWorkdayAvg = totals.weekday / weekdayDaysCount;
+    const dailyHolidayAvg = totals.weekend / validWeekendDays;
+    
+    const maxFoodDayAmount = Object.keys(totals.foodDailyMap).length > 0 
+      ? Math.max(...Object.values(totals.foodDailyMap)) 
+      : 0;
+
+    // Top Want Categories for Hover Overlay
+    const topWantCategories = Object.entries(catMapData)
+      .map(([catId, amount]) => {
+        const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '🛍️', color: '#f59e0b' };
+        return {
+          id: catId,
+          name: catObj.name,
+          icon: catObj.icon || '🛍️',
+          color: catObj.color || '#f59e0b',
+          amount,
+          allocation_type: catObj.allocation_type || (catObj.cashflowGroup ? 'want' : 'want'),
+          pctOfWant: totals.variable > 0 ? ((amount / totals.variable) * 100).toFixed(0) : 0
+        };
+      })
+      .filter(c => c.allocation_type === 'want' || c.allocation_type === 'VARIABLE' || !c.allocation_type || c.allocation_type !== 'need')
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 4);
 
     return {
       isSingleMonthView, showForecasting, projectedExpense, safeToSpend, projectedSurplus, forecastingDetails,
@@ -548,6 +593,9 @@ export default function useAnalytics({
       dailyAvg: adjustedDailyAvg,
       foodTotal: totals.food, foodDailyAvg: adjustedFoodDailyAvg,
       foodPercentage: totals.expense > 0 ? ((totals.food / totals.expense) * 100).toFixed(1) : 0,
+      foodPctOfIncome: totals.income > 0 ? ((totals.food / totals.income) * 100).toFixed(1) : 0,
+      foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
+      topWantCategories,
       rentTotal: totals.rent, rentPercentage: totals.income > 0 ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,
       rentSub: totals.rentSub,
       fixedTotal: totals.fixed, variableTotal: totals.variable,
