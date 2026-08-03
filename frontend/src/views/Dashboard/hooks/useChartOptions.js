@@ -45,12 +45,42 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               label: (c) => {
                 const item = c.dataset.data[c.dataIndex];
                 if (!item) return '';
-                return [`จำนวน: ${formatMoney(item.flow)} ฿`, `สัดส่วน: ${item.percent || '-'}`];
+                const lines = [
+                  `฿${formatMoney(item.flow)} (${item.percent || '-'})`
+                ];
+
+                if (item.allocBreakdown) {
+                  const { need = 0, want = 0, savings = 0, total = item.flow } = item.allocBreakdown;
+                  const allocCount = (need > 0 ? 1 : 0) + (want > 0 ? 1 : 0) + (savings > 0 ? 1 : 0);
+                  if (allocCount > 1) {
+                    lines.push('──────────────────────');
+                    lines.push(`รวมทั้งหมวด: ฿${formatMoney(total)}`);
+                    const isNeedFlow = item.from?.includes('Need');
+                    const isWantFlow = item.from?.includes('Want');
+                    const isSavFlow = item.from?.includes('Savings');
+
+                    if (need > 0) {
+                      const pct = total > 0 ? ((need / total) * 100).toFixed(1) : '0.0';
+                      lines.push(`  Need: ฿${formatMoney(need)} (${pct}%)${isNeedFlow ? ' ◄ (สายธารนี้)' : ''}`);
+                    }
+                    if (want > 0) {
+                      const pct = total > 0 ? ((want / total) * 100).toFixed(1) : '0.0';
+                      lines.push(`  Want: ฿${formatMoney(want)} (${pct}%)${isWantFlow ? ' ◄ (สายธารนี้)' : ''}`);
+                    }
+                    if (savings > 0) {
+                      const pct = total > 0 ? ((savings / total) * 100).toFixed(1) : '0.0';
+                      lines.push(`  Savings: ฿${formatMoney(savings)} (${pct}%)${isSavFlow ? ' ◄ (สายธารนี้)' : ''}`);
+                    }
+                  }
+                }
+
+                return lines;
               },
               title: (tooltipItems) => {
-                const item = tooltipItems[0].raw;
+                const item = tooltipItems[0]?.raw;
                 if (!item) return '';
-                return `${item.from} → ${item.to}`;
+                const cleanName = (str) => str ? str.replace(/\s*\([\d,.]+\)$/, '') : '';
+                return `${cleanName(item.from)} → ${cleanName(item.to)}`;
               },
               labelColor: (context) => {
                 const item = context.raw;

@@ -20,6 +20,7 @@ const MainChartHeader = ({
   chartViewType, setChartViewType,
   chartGroupBy, setChartGroupBy,
   sankeySortMode, setSankeySortMode,
+  sankeyMode, setSankeyMode,
   setIsBreakdown, filterPeriod, dm,
   mainChartType, mainChartData, showTrendLines
 }) => {
@@ -72,19 +73,32 @@ const MainChartHeader = ({
         </div>
 
         {chartViewType === 'sankey' && (
-          <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
-            <button 
-              onClick={() => setSankeySortMode('value')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'value' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-            >
-              เรียงตามยอดเงิน
-            </button>
-            <button 
-              onClick={() => setSankeySortMode('index')} 
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'index' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-            >
-              เรียงตามลำดับ (Settings)
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
+              <button 
+                onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')} 
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeyMode === 'allocation' ? ('bg-[#da291c] text-white shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
+                title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
+              >
+                <Layers className="w-3 h-3" />
+                {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
+              </button>
+            </div>
+
+            <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
+              <button 
+                onClick={() => setSankeySortMode('value')} 
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'value' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
+              >
+                เรียงตามยอดเงิน
+              </button>
+              <button 
+                onClick={() => setSankeySortMode('index')} 
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'index' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
+              >
+                เรียงตามลำดับ (Settings)
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -99,6 +113,8 @@ MainChartHeader.propTypes = {
   setChartGroupBy: PropTypes.func.isRequired,
   sankeySortMode: PropTypes.string.isRequired,
   setSankeySortMode: PropTypes.func.isRequired,
+  sankeyMode: PropTypes.string,
+  setSankeyMode: PropTypes.func,
   setIsBreakdown: PropTypes.func.isRequired,
   filterPeriod: PropTypes.string.isRequired,
   dm: PropTypes.bool.isRequired,
@@ -429,6 +445,7 @@ export default function MainChart() {
   // UI State
   const [chartViewType, setChartViewType] = useState('bar'); 
   const [sankeySortMode, setSankeySortMode] = useState('value');
+  const [sankeyMode, setSankeyMode] = useState('standard');
   const [isBreakdown, setIsBreakdown] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
   const [isLogScale, setIsLogScale] = useState(false);
@@ -454,7 +471,7 @@ export default function MainChart() {
   }, [showCatMenu]);
 
   // The Logic Engines
-  const sankeyData = useSankeyEngine({ chartViewType, sankeySortMode });
+  const sankeyData = useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode });
   const { displayChartData, legendDatasets, categoriesWithData } = useChartDataEngine({
     chartViewType, isBreakdown, isSmoothLine, sankeyData, hiddenDatasets
   });
@@ -468,6 +485,7 @@ export default function MainChart() {
         chartViewType={chartViewType} setChartViewType={setChartViewType}
         chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
         sankeySortMode={sankeySortMode} setSankeySortMode={setSankeySortMode}
+        sankeyMode={sankeyMode} setSankeyMode={setSankeyMode}
         setIsBreakdown={setIsBreakdown} filterPeriod={filterPeriod} dm={dm}
         mainChartType={analytics.mainChartType} mainChartData={analytics.mainChartData}
         showTrendLines={false}
