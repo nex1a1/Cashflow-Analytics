@@ -107,6 +107,18 @@ MainChartHeader.propTypes = {
   showTrendLines: PropTypes.bool.isRequired
 };
 
+const getContrastTextColor = (hexColor) => {
+  if (!hexColor) return '#ffffff';
+  let hex = hexColor.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (hex.length !== 6) return '#ffffff';
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 145 ? '#0f172a' : '#ffffff';
+};
+
 /**
  * INTERNAL COMPONENT: MainChartFilterMenu
  */
@@ -158,14 +170,22 @@ const MainChartFilterMenu = ({
             <div className="flex flex-col gap-3 animate-in fade-in duration-200">
               {(() => {
                 const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+                const allExpenseCatNames = categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)).map(c => c.name);
+
                 const toggleCategory = (catName) => {
                   if (catName === 'ALL') { setDashboardCategory(['ALL']); }
                   else {
-                    let newCats = activeCats.filter(c => c !== 'ALL');
-                    if (newCats.includes(catName)) newCats = newCats.filter(c => c !== catName);
-                    else newCats.push(catName);
-                    if (newCats.length === 0) newCats = ['ALL'];
-                    setDashboardCategory(newCats);
+                    let currentActive = activeCats.includes('ALL') ? [...allExpenseCatNames] : [...activeCats];
+                    if (currentActive.includes(catName)) {
+                      currentActive = currentActive.filter(c => c !== catName);
+                    } else {
+                      currentActive.push(catName);
+                    }
+                    if (currentActive.length === 0 || currentActive.length === allExpenseCatNames.length) {
+                      setDashboardCategory(['ALL']);
+                    } else {
+                      setDashboardCategory(currentActive);
+                    }
                   }
                 };
                 const selectAllVariable = () => {
@@ -185,7 +205,7 @@ const MainChartFilterMenu = ({
                       <button 
                         onClick={() => setDashboardCategory(['ALL'])} 
                         className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-none text-[11px] font-bold transition-all border ${
-                          activeCats.includes('ALL') && activeCats.length === 1 
+                          activeCats.includes('ALL') || activeCats.length === allExpenseCatNames.length
                             ? ('bg-[#da291c]/20 border-[#da291c] text-[#da291c]') 
                             : ('bg-[#181818]/50 border-[#303030] text-slate-300 hover:bg-[#303030]')
                         }`}
@@ -227,16 +247,19 @@ const MainChartFilterMenu = ({
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {filteredCategories.length > 0 ? (
                         filteredCategories.map(c => {
-                          const isActive = activeCats.includes(c.name);
+                          const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
+                          const textColor = isActive ? getContrastTextColor(c.color) : '#94a3b8';
                           return (
                             <button 
                               key={c.id} 
                               onClick={() => toggleCategory(c.name)} 
-                              className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-none text-[10px] font-bold transition-all border shadow-sm" 
+                              className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-none text-[10px] font-bold transition-all border shadow-sm ${
+                                !isActive ? 'opacity-40 line-through bg-[#181818] border-[#303030]' : ''
+                              }`} 
                               style={{ 
-                                backgroundColor: isActive ? c.color : ('#181818'), 
-                                borderColor: isActive ? c.color : ('#303030'), 
-                                color: isActive ? '#ffffff' : ('#cbd5e1') 
+                                backgroundColor: isActive ? c.color : '#181818', 
+                                borderColor: isActive ? c.color : '#303030', 
+                                color: textColor 
                               }}
                             >
                               <span className="opacity-90">{c.icon}</span> 
@@ -275,7 +298,70 @@ MainChartFilterMenu.propTypes = {
 /**
  * INTERNAL COMPONENT: MainChartLegend
  */
-const MainChartLegend = ({ legendDatasets, hiddenDatasets, setHiddenDatasets, dm }) => {
+const MainChartLegend = ({ 
+  legendDatasets, 
+  hiddenDatasets, 
+  setHiddenDatasets, 
+  isBreakdown,
+  dashboardCategory,
+  setDashboardCategory,
+  categories,
+  categoriesWithData,
+  dm 
+}) => {
+  // In Breakdown mode, sync legend items directly with global dashboardCategory filter state
+  if (isBreakdown) {
+    const catsWithDataList = categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name));
+    if (catsWithDataList.length === 0) return null;
+
+    const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+
+    const toggleCategory = (catName) => {
+      const allCatNames = catsWithDataList.map(c => c.name);
+      let currentActive = activeCats.includes('ALL') ? [...allCatNames] : [...activeCats];
+
+      if (currentActive.includes(catName)) {
+        currentActive = currentActive.filter(c => c !== catName);
+      } else {
+        currentActive.push(catName);
+      }
+
+      if (currentActive.length === 0 || currentActive.length === allCatNames.length) {
+        setDashboardCategory(['ALL']);
+      } else {
+        setDashboardCategory(currentActive);
+      }
+    };
+
+    return (
+      <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${'border-[#303030]/60'}`}>
+        {catsWithDataList.map(c => {
+          const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
+          const isHidden = !isActive;
+          return (
+            <button
+              key={c.id}
+              onClick={() => toggleCategory(c.name)}
+              className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
+                isHidden ? 'opacity-35 line-through' : 'opacity-100'
+              }`}
+              title="คลิกเพื่อเปิด/ซ่อนหมวดหมู่นี้"
+            >
+              <span
+                className="inline-block rounded-none shrink-0 w-2.5 h-2.5"
+                style={{ backgroundColor: c.color || '#64748B' }}
+              />
+              <span className={`text-[10px] font-medium leading-none ${'text-slate-400'}`}>
+                {c.icon && <span className="mr-1 opacity-90">{c.icon}</span>}
+                {c.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   if (legendDatasets.length === 0) return null;
 
   const toggleDataset = (label) => {
@@ -321,6 +407,11 @@ MainChartLegend.propTypes = {
   legendDatasets: PropTypes.array.isRequired,
   hiddenDatasets: PropTypes.array.isRequired,
   setHiddenDatasets: PropTypes.func.isRequired,
+  isBreakdown: PropTypes.bool,
+  dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
+  setDashboardCategory: PropTypes.func,
+  categories: PropTypes.array,
+  categoriesWithData: PropTypes.object,
   dm: PropTypes.bool.isRequired
 };
 
@@ -339,9 +430,7 @@ export default function MainChart() {
   const [chartViewType, setChartViewType] = useState('bar'); 
   const [sankeySortMode, setSankeySortMode] = useState('value');
   const [isBreakdown, setIsBreakdown] = useState(false);
-  const [showTrendLines, setShowTrendLines] = useState(false);
   const [isSmoothLine, setIsSmoothLine] = useState(true);
-  const [isCumulative, setIsCumulative] = useState(false);
   const [isLogScale, setIsLogScale] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
   
@@ -367,12 +456,11 @@ export default function MainChart() {
   // The Logic Engines
   const sankeyData = useSankeyEngine({ chartViewType, sankeySortMode });
   const { displayChartData, legendDatasets, categoriesWithData } = useChartDataEngine({
-    chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, hiddenDatasets
+    chartViewType, isBreakdown, isSmoothLine, sankeyData, hiddenDatasets
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
   const card = `rounded-none border shadow-sm transition-colors h-full flex flex-col ${'bg-[#181818] border-[#303030]'}`;
-  const breakdownLabel = isBreakdown ? (chartViewType === 'line' ? 'แยกเส้น ✓' : 'ซ้อนแท่ง ✓') : 'แจกแจง';
 
   return (
     <div className={`${card} min-h-0`}>
@@ -382,7 +470,7 @@ export default function MainChart() {
         sankeySortMode={sankeySortMode} setSankeySortMode={setSankeySortMode}
         setIsBreakdown={setIsBreakdown} filterPeriod={filterPeriod} dm={dm}
         mainChartType={analytics.mainChartType} mainChartData={analytics.mainChartData}
-        showTrendLines={showTrendLines}
+        showTrendLines={false}
       />
 
       <div className="p-4 flex flex-col flex-1 min-h-0 gap-3">
@@ -390,22 +478,22 @@ export default function MainChart() {
           {chartViewType !== 'sankey' ? (
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className={`text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none ${
-                'text-slate-650'
+                'text-slate-500'
               }`}>
-                <Activity className="w-3 h-3 text-blue-500 animate-pulse" /> MODES
+                <Activity className="w-3 h-3 text-[#da291c] animate-pulse" /> MODES
               </span>
 
               {/* Divider */}
               <span className={`w-px h-4 shrink-0 ${'bg-[#303030]'}`} />
               
-              <div className="grid grid-cols-6 gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0 w-auto">
-
+              {/* Group 1: View Modes (Breakdown + Log Scale) */}
+              <div className="flex gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0">
                 {/* 1. Breakdown Mode */}
                 <button
                   disabled={showSkeleton}
                   onClick={() => setIsBreakdown(prev => !prev)}
                   title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isBreakdown
                       ? 'bg-[#da291c]/25 text-[#da291c] shadow-sm'
                       : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
@@ -413,8 +501,6 @@ export default function MainChart() {
                 >
                   <Layers className={`w-3.5 h-3.5 ${isBreakdown ? 'text-[#da291c]' : 'text-slate-400'}`} />
                   <span>แจกแจง</span>
-                  
-                  {/* Tactical Micro-Switch */}
                   <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     isBreakdown 
                       ? 'bg-[#da291c] shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
@@ -428,78 +514,12 @@ export default function MainChart() {
                   </div>
                 </button>
 
-                {/* 2. Cumulative Mode */}
-                <button
-                  disabled={showSkeleton}
-                  onClick={() => {
-                    const nextVal = !isCumulative;
-                    setIsCumulative(nextVal);
-                    if (nextVal) setShowTrendLines(false);
-                  }}
-                  title="ดูความเร็วการใช้จ่ายเป็นกราฟยอดสะสมเทียบกับเป้าหมาย"
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                    isCumulative
-                      ? 'bg-violet-600/20 text-violet-300 shadow-sm'
-                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-                  }`}
-                >
-                  <TrendingUp className={`w-3.5 h-3.5 ${isCumulative ? 'text-violet-400' : 'text-slate-400'}`} />
-                  <span>กราฟสะสม</span>
-                  
-                  {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-                    isCumulative 
-                      ? 'bg-violet-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : 'bg-[#181818] border border-[#303030]'
-                  }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                      isCumulative 
-                        ? 'bg-white translate-x-3.5 shadow-md' 
-                        : 'bg-[#303030]'
-                    }`} />
-                  </div>
-                </button>
-
-                {/* 3. Trend Lines Mode */}
-                <button
-                  disabled={showSkeleton || isCumulative}
-                  onClick={() => { if (!isCumulative) setShowTrendLines(prev => !prev); }}
-                  title={isCumulative ? "ไม่สามารถใช้เส้นเทรนด์ร่วมกับกราฟสะสมได้" : "ดูแนวโน้มค่าเฉลี่ยสะสมรายวัน (MTD Average)"}
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                    isCumulative
-                      ? 'bg-[#181818] text-slate-700 cursor-not-allowed'
-                      : showTrendLines
-                        ? 'bg-amber-600/20 text-amber-300 shadow-sm'
-                        : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-                  }`}
-                >
-                  {isCumulative ? (
-                    <Lock className="w-3.5 h-3.5 text-slate-500" />
-                  ) : (
-                    <Zap className={`w-3.5 h-3.5 ${showTrendLines ? 'text-amber-400' : 'text-slate-400'}`} />
-                  )}
-                  <span>เส้นเทรนด์</span>
-                  
-                  {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-                    showTrendLines && !isCumulative
-                      ? 'bg-amber-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : 'bg-[#181818] border border-[#303030]'
-                  }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                      showTrendLines && !isCumulative
-                        ? 'bg-white translate-x-3.5 shadow-md' 
-                        : 'bg-[#303030]'
-                    }`} />
-                  </div>
-                </button>
-
-                {/* 4. Logarithmic Scale Mode */}
+                {/* 2. Logarithmic Scale Mode */}
                 <button
                   disabled={showSkeleton}
                   onClick={() => setIsLogScale(prev => !prev)}
-                  title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบสัดส่วน"
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
+                  className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                     isLogScale
                       ? 'bg-emerald-600/20 text-emerald-300 shadow-sm'
                       : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
@@ -507,8 +527,6 @@ export default function MainChart() {
                 >
                   <BarChart className={`w-3.5 h-3.5 ${isLogScale ? 'text-emerald-400' : 'text-slate-400'}`} />
                   <span>สเกล Log</span>
-                  
-                  {/* Tactical Micro-Switch */}
                   <div className={`relative w-7 h-4 rounded-none shrink-0 ${
                     isLogScale 
                       ? 'bg-emerald-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
@@ -521,63 +539,49 @@ export default function MainChart() {
                     }`} />
                   </div>
                 </button>
+              </div>
 
-                {/* 5. Hide NEED Mode */}
+              {/* Divider */}
+              <span className={`w-px h-4 shrink-0 ${'bg-[#303030]'}`} />
+
+              {/* Group 2: Allocation Focus Selector (NEED vs WANT) */}
+              <div className="flex p-[1px] bg-[#303030]/60 gap-[1px] bg-neutral-900 rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] shrink-0">
                 <button
                   disabled={showSkeleton}
-                  onClick={() => setHideFixedExpenses(prev => !prev)}
-                  title="ซ่อนค่าใช้จ่ายคงที่ที่จำเป็น (Fixed Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายผันแปร"
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                    hideFixedExpenses
-                      ? 'bg-rose-600/20 text-rose-300 shadow-sm'
+                  onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(false); }}
+                  className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    !hideFixedExpenses && !hideWantExpenses
+                      ? 'bg-[#303030] text-white shadow-sm'
                       : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
+                  title="แสดงค่าใช้จ่ายทั้งหมด (NEED + WANT)"
                 >
-                  <EyeOff className={`w-3.5 h-3.5 ${hideFixedExpenses ? 'text-rose-400' : 'text-slate-400'}`} />
-                  <span>ซ่อน NEED</span>
-                  
-                  {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-                    hideFixedExpenses 
-                      ? 'bg-rose-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : 'bg-[#181818] border border-[#303030]'
-                  }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                      hideFixedExpenses 
-                        ? 'bg-white translate-x-3.5 shadow-md' 
-                        : 'bg-[#303030]'
-                    }`} />
-                  </div>
+                  ทั้งหมด
                 </button>
-
-                {/* 6. Hide WANT Mode */}
                 <button
                   disabled={showSkeleton}
-                  onClick={() => setHideWantExpenses(prev => !prev)}
-                  title="ซ่อนค่าใช้จ่ายผันแปรทั่วไป (Lifestyle Expenses) เพื่อวิเคราะห์ค่าใช้จ่ายคงที่"
-                  className={`group px-3 py-2 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                    hideWantExpenses
-                      ? 'bg-blue-600/20 text-blue-300 shadow-sm'
+                  onClick={() => { setHideFixedExpenses(true); setHideWantExpenses(false); }}
+                  className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    hideFixedExpenses && !hideWantExpenses
+                      ? 'bg-amber-950/40 text-amber-400 shadow-sm border border-amber-500/30'
                       : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
                   }`}
+                  title="ดูเฉพาะค่าใช้จ่ายผันแปร / ไลฟ์สไตล์ (WANT)"
                 >
-                  <EyeOff className={`w-3.5 h-3.5 ${hideWantExpenses ? 'text-blue-400' : 'text-slate-400'}`} />
-                  <span>ซ่อน WANT</span>
-                  
-                  {/* Tactical Micro-Switch */}
-                  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-                    hideWantExpenses 
-                      ? 'bg-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                      : 'bg-[#181818] border border-[#303030]'
-                  }`}>
-                    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                      hideWantExpenses 
-                        ? 'bg-white translate-x-3.5 shadow-md' 
-                        : 'bg-[#303030]'
-                    }`} />
-                  </div>
+                  เฉพาะ WANT
                 </button>
-
+                <button
+                  disabled={showSkeleton}
+                  onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(true); }}
+                  className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    !hideFixedExpenses && hideWantExpenses
+                      ? 'bg-blue-950/40 text-blue-400 shadow-sm border border-blue-500/30'
+                      : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+                  }`}
+                  title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น (NEED)"
+                >
+                  เฉพาะ NEED
+                </button>
               </div>
             </div>
           ) : (
@@ -623,6 +627,11 @@ export default function MainChart() {
           legendDatasets={legendDatasets} 
           hiddenDatasets={hiddenDatasets} 
           setHiddenDatasets={setHiddenDatasets} 
+          isBreakdown={isBreakdown}
+          dashboardCategory={dashboardCategory}
+          setDashboardCategory={setDashboardCategory}
+          categories={categories}
+          categoriesWithData={categoriesWithData}
           dm={dm} 
         />
       </div>

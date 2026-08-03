@@ -196,7 +196,6 @@ export default function FilterBar({
               <SegmentButton label="ทั้งหมด" active={typeFilter === 'ALL'} onClick={() => setTypeFilter('ALL')} />
               <SegmentButton label="รายรับ" active={typeFilter === 'INCOME'} onClick={() => setTypeFilter('INCOME')} colorScheme="emerald" />
               <SegmentButton label="รายจ่าย" active={typeFilter === 'EXPENSE'} onClick={() => setTypeFilter('EXPENSE')} colorScheme="rose" />
-              <SegmentButton label="เงินออม" active={typeFilter === 'SAVINGS'} onClick={() => setTypeFilter('SAVINGS')} colorScheme="indigo" />
             </div>
           </div>
 

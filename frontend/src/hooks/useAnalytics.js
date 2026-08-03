@@ -71,6 +71,7 @@ export default function useAnalytics({
     let uniqueMonthsSet = new Set();
     let cashflowMap = {};
     let catMapData = {}; // Keyed by category_id
+    let wantCatMapData = {}; // Keyed by category_id (WANT transactions only)
     let dailyAllMap = {}, monthlyAllMap = {};
     let dailyCatMap = {}, monthlyCatMap = {}; // Keyed by [catId][date/month]
     let chartTotal = 0;
@@ -228,6 +229,9 @@ export default function useAnalytics({
 
             // Per-Category Breakdown (Filtered)
             catMapData[catId] = (catMapData[catId] || 0) + amt;
+            if (isWant) {
+              wantCatMapData[catId] = (wantCatMapData[catId] || 0) + amt;
+            }
 
             // Per-Category Time Breakdown (Filtered)
             if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
@@ -566,8 +570,8 @@ export default function useAnalytics({
       ? Math.max(...Object.values(totals.foodDailyMap)) 
       : 0;
 
-    // Top Want Categories for Hover Overlay
-    const topWantCategories = Object.entries(catMapData)
+    // Top Want Categories for Hover Overlay (Strictly WANT transactions only)
+    const topWantCategories = Object.entries(wantCatMapData)
       .map(([catId, amount]) => {
         const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '🛍️', color: '#f59e0b' };
         return {
@@ -576,11 +580,11 @@ export default function useAnalytics({
           icon: catObj.icon || '🛍️',
           color: catObj.color || '#f59e0b',
           amount,
-          allocation_type: catObj.allocation_type || (catObj.cashflowGroup ? 'want' : 'want'),
+          allocation_type: 'want',
           pctOfWant: totals.variable > 0 ? ((amount / totals.variable) * 100).toFixed(0) : 0
         };
       })
-      .filter(c => c.allocation_type === 'want' || c.allocation_type === 'VARIABLE' || !c.allocation_type || c.allocation_type !== 'need')
+      .filter(c => c.amount > 0)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 4);
 

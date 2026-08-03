@@ -1,27 +1,35 @@
 import { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
 
-const makeCumulative = (dataArr) => {
-  let sum = 0;
-  return dataArr.map(val => { sum += (val || 0); return sum; });
-};
-
-export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, sankeyData, chartGroupMode, hiddenDatasets }) {
-  const { analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy, dm } = useDashboardContext();
+export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, sankeyData, chartGroupMode, hiddenDatasets }) {
+  const { transactions, analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy, dm } = useDashboardContext();
 
   const categoriesWithData = useMemo(() => {
-    if (!analytics) return new Set();
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
-    const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
+    if (!categories) return new Set();
     const withData = new Set();
-    categories.forEach(c => {
-      const total = showMonthly
-        ? analytics.sortedMonthsKeys?.reduce((sum, m) => sum + (analytics.monthlyCatMap?.[c.id]?.[m] || 0), 0)
-        : analytics.datesInPeriod?.reduce((sum, d) => sum + (analytics.dailyCatMap?.[c.id]?.[d] || 0), 0);
-      if (total > 0) withData.add(c.name);
+    const catLookup = new Map();
+    categories.forEach(c => catLookup.set(c.id, c.name));
+
+    const activeTx = transactions || [];
+    activeTx.forEach(t => {
+      if (!t.date) return;
+      let match = false;
+      if (!filterPeriod || filterPeriod === 'ALL') match = true;
+      else if (filterPeriod.length === 4) match = t.date.startsWith(filterPeriod);
+      else if (filterPeriod.length === 7) match = t.date.startsWith(filterPeriod);
+      else match = true;
+
+      if (match && parseFloat(t.amount) > 0) {
+        const catName = catLookup.get(t.category_id) || t.category;
+        if (catName) withData.add(catName);
+      }
     });
+
+    if (withData.size === 0) {
+      categories.filter(c => c.type === 'expense').forEach(c => withData.add(c.name));
+    }
     return withData;
-  }, [analytics, filterPeriod, chartGroupBy, categories]);
+  }, [transactions, categories, filterPeriod]);
 
   const displayChartData = useMemo(() => {
     if (chartViewType === 'sankey') return sankeyData;
@@ -43,7 +51,6 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
         let data = showMonthly
           ? analytics.sortedMonthsKeys.map(m => analytics.monthlyCatMap[catId]?.[m] || 0)
           : analytics.datesInPeriod.map(d => analytics.dailyCatMap[catId]?.[d] || 0);
-        if (isCumulative) data = makeCumulative(data);
 
         return {
           type: chartViewType === 'line' ? 'line' : 'bar',
@@ -63,76 +70,21 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
         };
       });
 
-      if (showTrendLines && !showMonthly && !isCumulative) {
-        const mtdDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยสะสม'));
-        const avgDataset = analytics.mainChartData.datasets.find(ds => ds.label?.includes('เฉลี่ยทั้งเดือน'));
-        if (mtdDataset) {
-          datasets.push({
-            ...mtdDataset,
-            type: 'line',
-            tension: isSmoothLine ? 0.4 : 0,
-            borderWidth: 4,
-            hidden: hiddenDatasets?.includes(mtdDataset.label)
-          });
-        }
-        if (avgDataset) {
-          datasets.push({
-            ...avgDataset,
-            type: 'line',
-            borderWidth: 2,
-            hidden: hiddenDatasets?.includes(avgDataset.label)
-          });
-        }
-      }
-
-      // Add target pacing line if cumulative pacing is active
-      if (isCumulative) {
-        const timeSteps = showMonthly ? analytics.sortedMonthsKeys : analytics.datesInPeriod;
-        const N = timeSteps.length || 1;
-        const targetBudget = analytics.totalIncome > 0 ? analytics.totalIncome : (analytics.totalExpense > 0 ? analytics.totalExpense : 30000);
-        
-        const pacingTargetData = timeSteps.map((_, idx) => (targetBudget / N) * (idx + 1));
-        
-        datasets.push({
-          type: 'line',
-          label: 'เป้าหมายความเร็วเงิน (Pacing Target)',
-          data: pacingTargetData,
-          borderColor: 'rgba(148, 163, 184, 0.4)',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [6, 6],
-          tension: 0,
-          pointRadius: 0,
-          pointHitRadius: 0,
-          hidden: hiddenDatasets?.includes('เป้าหมายความเร็วเงิน (Pacing Target)'),
-          order: -1
-        });
-      }
-
       return { labels: xLabels, datasets };
     }
 
-    let filteredDatasets = [...analytics.mainChartData.datasets];
-    if (analytics.mainChartType === 'combo' && !showTrendLines) {
-      filteredDatasets = filteredDatasets.filter(ds => ds.type !== 'line' || ds.label === 'Cashflow');
-    }
-    if (isCumulative) {
-       filteredDatasets = filteredDatasets.filter(ds => !(ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน'))));
-    }
+    let filteredDatasets = analytics.mainChartData.datasets.filter(ds => ds.type !== 'line' || ds.label === 'Cashflow');
 
     const processedDatasets = filteredDatasets.map(ds => {
-      const isTrendLine = ds.label && (ds.label.includes('เฉลี่ยสะสม') || ds.label.includes('เฉลี่ยทั้งเดือน') || ds.label === 'Cashflow');
+      const isTrendLine = ds.label === 'Cashflow';
       let finalData = ds.data;
-      if (isCumulative && !isTrendLine && ds.label !== 'Cashflow') {
-         finalData = makeCumulative(ds.data);
-      }
-      if (isTrendLine && !isCumulative) {
+      if (isTrendLine) {
         return {
           ...ds,
           data: finalData,
           type: 'line',
           tension: isSmoothLine ? 0.4 : 0,
-          borderWidth: ds.label.includes('เฉลี่ยทั้งเดือน') ? 2 : 4,
+          borderWidth: 4,
           hidden: hiddenDatasets?.includes(ds.label)
         };
       }
@@ -158,31 +110,8 @@ export function useChartDataEngine({ chartViewType, isBreakdown, showTrendLines,
       };
     });
 
-    // Add target pacing line if cumulative pacing is active (Non-Breakdown mode)
-    if (isCumulative) {
-      const timeSteps = showMonthly ? analytics.sortedMonthsKeys : analytics.datesInPeriod;
-      const N = timeSteps.length || 1;
-      const targetBudget = analytics.totalIncome > 0 ? analytics.totalIncome : (analytics.totalExpense > 0 ? analytics.totalExpense : 30000);
-      
-      const pacingTargetData = timeSteps.map((_, idx) => (targetBudget / N) * (idx + 1));
-      
-      processedDatasets.push({
-        type: 'line',
-        label: 'เป้าหมายความเร็วเงิน (Pacing Target)',
-        data: pacingTargetData,
-        borderColor: 'rgba(148, 163, 184, 0.4)',
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        borderDash: [6, 6],
-        tension: 0,
-        pointRadius: 0,
-        pointHitRadius: 0,
-        hidden: hiddenDatasets?.includes('เป้าหมายความเร็วเงิน (Pacing Target)')
-      });
-    }
-
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, showTrendLines, isSmoothLine, isCumulative, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, dm, sankeyData, hiddenDatasets]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, dm, sankeyData, hiddenDatasets]);
 
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];
