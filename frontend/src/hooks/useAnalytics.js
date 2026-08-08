@@ -109,7 +109,7 @@ export default function useAnalytics({
     }
 
     // Variables for Forecasting
-    let expenseUpToToday = 0, variableUpToToday = 0, foodUpToToday = 0;
+    let expenseUpToToday = 0, variableUpToToday = 0, foodUpToToday = 0, rentUpToToday = 0;
 
     const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
     
@@ -248,12 +248,12 @@ export default function useAnalytics({
 
             // Track individual group totals within this allocation (Filtered)
             if (cGroup) {
-              let groupEntry = allocGroupsMap[aType].find(g => g.id === cGroup);
+              let groupEntry = allocGroupsMap[aType]?.find(g => g.id === cGroup);
               if (!groupEntry) {
                 groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
-                allocGroupsMap[aType].push(groupEntry);
+                if (allocGroupsMap[aType]) allocGroupsMap[aType].push(groupEntry);
               }
-              groupEntry.amount += amt;
+              if (groupEntry) groupEntry.amount += amt;
 
               // Also update group totals for Group Mode (Filtered)
               groupTotals[cGroup] = (groupTotals[cGroup] || 0) + amt;
@@ -279,10 +279,11 @@ export default function useAnalytics({
           }
         }
 
-        // Forecasting Logic
+        // Forecasting Logic: Track actual expenses up to today
         if (isCurrentMonth && isoDate <= todayStr && isExp) {
           expenseUpToToday += amt;
           if (!isNeed) variableUpToToday += amt;
+          if (isRent) rentUpToToday += amt;
           if (isFood) foodUpToToday += amt;
         }
       }
@@ -298,37 +299,38 @@ export default function useAnalytics({
     }
 
     const netCashflow = totals.income - totals.expense;
-    const actualSavings = netCashflow;
-    const explicitSavings = totals.savings || 0;
+    const actualSavings = totals.income - totals.expense;
+    const explicitSavings = totals.savings;
     const numMonths = uniqueMonthsSet.size || 1;
     const savingsRate = totals.income > 0 ? parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
 
-    // ─── CATEGORY BREAKDOWN ───────────────────────────────────────────────────
-    const sortedCats = Object.entries(catMapData)
-          .filter(([catId]) => {
-            const catObj = catMapLookup[catId] || {};
-            const isNeedCat = catObj.allocation_type === 'need';
+    // Filter categories based on activeFilters
+    const filteredCats = categories.filter(c => {
+      if (activeFilters.includes('ALL')) return true;
+      const catGroupObj = cashflowGroups?.find(g => g.id === c.cashflow_group_id) || {};
+      const isNeedCat = (c.allocation_type || catGroupObj.allocation_type) === 'need';
+      const isWantCat = (c.allocation_type || catGroupObj.allocation_type) === 'want';
+      if (activeFilters.includes('FIXED') && isNeedCat) return true;
+      if (activeFilters.includes('VARIABLE') && isWantCat) return true;
+      if (activeFilters.includes(c.id) || activeFilters.includes(c.name)) return true;
+      return false;
+    });
 
-            
-            if (activeFilters.includes('ALL')) return true;
-            if (activeFilters.includes('FIXED') && isNeedCat) return true;
-            if (activeFilters.includes('VARIABLE') && !isNeedCat) return true;
-            return activeFilters.includes(catId) || activeFilters.includes(catObj.name);
-          })
-          .sort((a, b) => b[1] - a[1])
-          .map(([catId, amount]) => {
-            const catObj = catMapLookup[catId] || { name: 'Unknown', id: catId };
-            return {
-              id: catId,
-              name: catObj.name,
-              amount: amount,
-              percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
-              avgPerMonth: amount / numMonths,
-              icon: catObj.icon,
-              color: catObj.color || '#64748B',
-              order_index: catObj.order_index || 999
-            };
-          });
+    const sortedCats = Object.entries(catMapData)
+      .map(([catId, amount]) => {
+        const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '📦', color: '#94a3b8' };
+        return {
+          id: catId,
+          name: catObj.name,
+          icon: catObj.icon || '📦',
+          color: catObj.color || '#94a3b8',
+          amount,
+          percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
+          cashflow_group_id: catObj.cashflowGroup
+        };
+      })
+      .filter(c => filteredCats.some(fc => fc.id === c.id))
+      .sort((a, b) => b.amount - a.amount);
 
     // ─── GROUP BREAKDOWN (CashflowTable Mode) ─────────────────────────────────
     // Link categories to their respective groups using the catMapData aggregated in main loop
@@ -483,23 +485,29 @@ export default function useAnalytics({
       effectiveDays = excludeFuture ? currentDay : periodDays;
       
       const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
-      const variableRunRate = variableUpToToday / currentDay;
-      const projectedVariableRemaining = variableRunRate * remainingDays;
-      projectedExpense = totals.fixed + variableUpToToday + projectedVariableRemaining;
+      
+      // Smart Daily Living Run-Rate:
+      // Separate one-off monthly bills (Rent/Housing) from daily living expenses (Food, Laundry, Transport, Wants)
+      const fixedCommitment = totals.rent;
+      const dailyLivingUpToToday = Math.max(0, expenseUpToToday - rentUpToToday);
+      const dailyLivingRunRate = dailyLivingUpToToday / currentDay;
+      const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
+
+      projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
       projectedSurplus = totals.income - projectedExpense;
       const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
       
-      const remainingBudget = totals.income - totals.fixed - variableUpToToday;
+      const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
       const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
       safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
-      // Pace analysis (Compare daily variable spending pace vs safe daily target)
+      // Pace analysis
       let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
       if (projectedSurplus < 0) {
         paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ (Critical)', color: '#da291c', bg: 'bg-red-950/40' };
-      } else if (safeToSpend > 0 && variableRunRate > safeToSpend * 1.15) {
+      } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
         paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า (High Pace)', color: '#f59e0b', bg: 'bg-amber-950/30' };
-      } else if (safeToSpend > 0 && variableRunRate > safeToSpend) {
+      } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
         paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์ (Moderate)', color: '#3b82f6', bg: 'bg-blue-950/30' };
       }
 
@@ -516,22 +524,22 @@ export default function useAnalytics({
       // Break-even & Deficit Control Targets
       const maxAllowedExpense = totals.income;
       const requiredReduction = projectedExpense > totals.income ? projectedExpense - totals.income : 0;
-      const requiredDailyReduction = variableRunRate > safeToSpend ? variableRunRate - safeToSpend : 0;
+      const requiredDailyReduction = dailyLivingRunRate > safeToSpend ? dailyLivingRunRate - safeToSpend : 0;
 
       forecastingDetails = {
         currentDay,
         lastDayOfMonth,
         remainingDays,
         monthProgressPct: Number(monthProgressPct.toFixed(1)),
-        variableUpToToday,
-        variableRunRate,
-        projectedVariableRemaining,
-        fixedTotal: totals.fixed,
+        variableUpToToday: dailyLivingUpToToday,
+        variableRunRate: dailyLivingRunRate,
+        projectedVariableRemaining: projectedLivingRemaining,
+        fixedTotal: fixedCommitment,
         projectedExpense,
         projectedSurplus,
         projectedSurplusPct: Number(projectedSurplusPct.toFixed(1)),
         safeToSpend,
-        actualDailyVariableAvg: variableRunRate,
+        actualDailyVariableAvg: dailyLivingRunRate,
         maxAllowedExpense,
         requiredReduction,
         requiredDailyReduction,

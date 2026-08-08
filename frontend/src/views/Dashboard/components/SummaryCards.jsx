@@ -755,8 +755,8 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
               <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
                 พยากรณ์รายจ่ายเดือนนี้
               </span>
-              <span className="text-[10px] font-mono font-bold text-teal-300 bg-teal-950/90 px-2 py-0.5 border border-teal-700/80">
-                เพดานเดือนนี้: ฿{formatMoney(maxAllowedExpense)}
+              <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 border border-indigo-700/60">
+                MONTHLY FORECAST
               </span>
             </div>
             {showSkeleton ? (
@@ -782,24 +782,24 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
               <div style={{ width: `${varRemPct}%` }} className="bg-indigo-800/80" title="Var Projected" />
             </div>
             <div className="flex justify-between text-[10px] font-mono text-neutral-400">
-              <span className="text-slate-300">Fixed ({fixedPct.toFixed(0)}%)</span>
-              <span className="text-indigo-300">Spent ({varSpentPct.toFixed(0)}%)</span>
-              <span className="text-indigo-400">Est Rem ({varRemPct.toFixed(0)}%)</span>
+              <span className="text-slate-300">ภาระคงที่ ({fixedPct.toFixed(0)}%)</span>
+              <span className="text-indigo-300">จ่ายประจำวันแล้ว ({varSpentPct.toFixed(0)}%)</span>
+              <span className="text-indigo-400">ประเมินรายวัน ({varRemPct.toFixed(0)}%)</span>
             </div>
           </div>
 
           {/* Math Breakdown: Exclusive home for expense components */}
           <div className="pt-3 border-t border-indigo-900/50 text-xs font-mono text-neutral-300 space-y-1.5">
             <div className="flex justify-between items-center">
-              <span className="text-neutral-400">• ค่าใช้จ่ายคงที่ (Fixed):</span>
+              <span className="text-neutral-400">• ภาระคงที่/ที่พัก (Fixed/Rent):</span>
               <span className="text-white font-bold">฿{formatMoney(fixedTotal)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-neutral-400">• แปรผันจ่ายแล้ว ({currentDay} วัน):</span>
+              <span className="text-neutral-400">• รายจ่ายประจำวันแล้ว ({currentDay} วัน):</span>
               <span className="text-white font-bold">฿{formatMoney(variableUpToToday)}</span>
             </div>
             <div className="flex justify-between items-center text-indigo-300">
-              <span>• ประเมินคงเหลือ ({remainingDays} วัน):</span>
+              <span>• ประเมินรายวันคงเหลือ ({remainingDays} วัน):</span>
               <span className="font-bold">฿{formatMoney(projectedVariableRemaining)}</span>
             </div>
           </div>
@@ -839,7 +839,7 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
                   <span className="text-sm text-neutral-400 ml-1 font-normal">/วัน</span>
                 </div>
                 <div className="text-[11px] font-mono text-neutral-400 mt-1.5">
-                  เพดานงบแปรผันต่อวันที่เหลือห้ามเกินนี้
+                  เพดานงบรายวัน (รวมทุกหมวดประจำวัน) ห้ามเกินนี้
                 </div>
               </div>
             )}
@@ -854,7 +854,7 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
               />
             </div>
             <div className="flex justify-between text-[10px] font-mono text-neutral-400">
-              <span>สปีดใช้จริง: ฿{formatMoney(actualDailyVariableAvg)}/วัน</span>
+              <span>อัตราใช้จริง: {safePaceRatio.toFixed(0)}% ของเพดาน</span>
               <span>อีก {remainingDays} วันที่เหลือ</span>
             </div>
           </div>
@@ -862,7 +862,7 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
           {/* Math Breakdown: Exclusive home for daily pace & headroom */}
           <div className="pt-3 border-t border-neutral-800/80 text-xs font-mono text-neutral-300 space-y-1.5">
             <div className="flex justify-between items-center">
-              <span className="text-neutral-400">• สปีดใช้จริงแปรผันปัจจุบัน:</span>
+              <span className="text-neutral-400">• สปีดใช้จ่ายรายวันปัจจุบัน:</span>
               <span className="text-white font-bold">฿{formatMoney(actualDailyVariableAvg)}/วัน</span>
             </div>
             {headroom >= 0 ? (
