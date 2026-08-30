@@ -45,6 +45,22 @@ export default function LedgerView({
   const [filterOpen, setFilterOpen] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
+  const [confirmDeleteMonth, setConfirmDeleteMonth] = useState(false);
+
+  useEffect(() => {
+    if (!confirmDeleteMonth) return;
+    const timer = setTimeout(() => setConfirmDeleteMonth(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmDeleteMonth]);
+
+  const handleDeleteMonthClick = () => {
+    if (confirmDeleteMonth) {
+      handleDeleteMonth(filterPeriod);
+      setConfirmDeleteMonth(false);
+    } else {
+      setConfirmDeleteMonth(true);
+    }
+  };
 
   // ── Logic: Smooth Loading Transition ───────────────────────
   const [showSkeleton, setShowSkeleton] = useState(isLoading);
@@ -123,7 +139,7 @@ export default function LedgerView({
                 บัญชีแยกประเภท
               </h2>
             </div>
-            <p className="text-[10px] font-black tracking-widest mt-1.5 font-sans text-slate-455 uppercase flex items-center gap-2">
+            <p className="text-[10px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
               <span className="text-neutral-800 font-bold">•</span>
               <span className="text-[#da291c] font-extrabold">{displayTransactions.length}</span>
@@ -192,12 +208,16 @@ export default function LedgerView({
             
             {displayTransactions.length > 0 && (
               <button 
-                onClick={() => { if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดในเดือนนี้?')) handleDeleteMonth(filterPeriod); }} 
-                className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border rounded-none font-mono text-slate-500 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40" 
-                title="ลบข้อมูลเดือนนี้"
+                onClick={handleDeleteMonthClick} 
+                className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border rounded-none font-mono transition-all select-none ${
+                  confirmDeleteMonth
+                    ? 'text-white bg-[#da291c] border-[#da291c] animate-pulse shadow-[0_0_12px_rgba(218,41,28,0.4)]'
+                    : 'text-slate-400 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40'
+                }`} 
+                title={confirmDeleteMonth ? "คลิกอีกครั้งเพื่อยืนยันการลบข้อมูลทั้งหมดในเดือนนี้" : "ลบข้อมูลเดือนนี้"}
               >
                 <Trash2 className="w-3.5 h-3.5" /> 
-                <span>ลบเดือนนี้</span>
+                <span>{confirmDeleteMonth ? 'กดยืนยันลบ!' : 'ลบเดือนนี้'}</span>
               </button>
             )}
           </div>
@@ -223,7 +243,7 @@ export default function LedgerView({
                 <TrendingUp size={64} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-sans">
                   รายรับรวม (INCOME)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -245,11 +265,11 @@ export default function LedgerView({
             {/* EXPENSE CELL */}
             <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-rose-500 bg-[#181818] hover:bg-[#1c1c1c] hover:bg-gradient-to-br hover:from-rose-500/[0.02]">
               {/* Background Icon Glow */}
-              <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-rose-455">
+              <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-rose-400">
                 <TrendingDown size={64} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-sans">
                   รายจ่ายรวม (EXPENSE)
                 </span>
                 <span className="px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -275,22 +295,22 @@ export default function LedgerView({
                 <Wallet size={64} />
               </div>
               <div className="relative z-10 flex justify-between items-center mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-455 font-sans">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-sans">
                   คงเหลือสุทธิ (NET CASHFLOW)
                 </span>
                 <div className="flex items-center gap-1">
                   {sumInc > 0 && (
                     <div className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest flex items-center gap-1 border ${
                       savingsRate >= 20 
-                        ? 'bg-yellow-500/10 text-yellow-450 border-yellow-500/20' 
-                        : (savingsRate >= 10 ? 'bg-amber-500/10 text-amber-450 border-amber-500/20' : 'bg-rose-500/10 text-rose-455 border-rose-500/20')
+                        ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' 
+                        : (savingsRate >= 10 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')
                     }`}>
                       <span>ออม {savingsRate}%</span>
                       <span className="opacity-45">|</span>
                       <span className="font-extrabold">{savingsRate >= 20 ? 'A+' : (savingsRate >= 10 ? 'B' : (savingsRate > 0 ? 'C' : 'F'))}</span>
                     </div>
                   )}
-                  <span className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest border ${net >= 0 ? 'bg-yellow-500/10 text-yellow-450 border-yellow-500/20' : 'bg-rose-500/10 text-rose-455 border-rose-500/20'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-widest border ${net >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                     {net >= 0 ? 'SURPLUS' : 'DEFICIT'}
                   </span>
                 </div>

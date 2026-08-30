@@ -11,7 +11,8 @@ const formatValue = (val) => {
 
 const CalendarDayCell = memo(function CalendarDayCell({ 
   day, data, dateStr, isToday, isWeekend, 
-  dayTypeConfig, dayType, handleDayTypeChange, onSelectDate
+  dayTypeConfig, dayType, handleDayTypeChange, onSelectDate,
+  maxDailyExpense = 0
 }) {
   const isDarkMode = true;
 
@@ -19,11 +20,24 @@ const CalendarDayCell = memo(function CalendarDayCell({
     return dayTypeConfig.find(dt => dt.id === dayType) || dayTypeConfig[0];
   }, [dayType, dayTypeConfig]);
 
+  const burnIntensity = useMemo(() => {
+    if (!maxDailyExpense || maxDailyExpense <= 0 || !data.exp || data.exp <= 0) return 0;
+    return data.exp / maxDailyExpense;
+  }, [data.exp, maxDailyExpense]);
+
   const cellBg = useMemo(() => {
     if (isToday) return 'bg-red-950/10 ring-1 ring-inset ring-[#da291c]/50 z-20';
+    if (burnIntensity >= 0.75) {
+      // Peak Burn Tier: Rosso Corsa glow with top highlight
+      return 'bg-[#221313] border-t-2 !border-t-[#da291c]';
+    }
+    if (burnIntensity >= 0.40) {
+      // Medium Burn Tier: Warm amber tint with subtle top highlight
+      return 'bg-[#1e1915] border-t !border-t-amber-500/40';
+    }
     if (isWeekend && !(data.inc > 0 || data.exp > 0)) return 'bg-[#121212]';
     return 'bg-[#181818]';
-  }, [isToday, isWeekend, data]);
+  }, [isToday, isWeekend, data, burnIntensity]);
 
   const displayedInc = useMemo(() => data.incItems?.slice(0, 1) || [], [data.incItems]);
   const hiddenIncItems = useMemo(() => data.incItems?.slice(1) || [], [data.incItems]);
@@ -151,7 +165,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[2.5px] h-3 rounded-none shrink-0" style={{ backgroundColor: color }} />
-              <span className="truncate font-medium text-slate-350 flex-1 group-hover/tx:text-white transition-none">
+              <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 text-red-400 tabular-nums font-mono">

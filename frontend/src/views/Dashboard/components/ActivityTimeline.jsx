@@ -440,42 +440,42 @@ export default function ActivityTimeline() {
           ) : datesInPeriod.length === 0 ? (
             <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
           ) : layoutMode === 'calendar' ? (
-            <div className="p-2 w-full flex items-center justify-center">
-              <div className="flex flex-wrap gap-1.5 justify-center w-full">
+            <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
+              <div className="grid grid-cols-6 gap-2.5 mx-auto">
                 {calendarMonths.map(month => (
-                  <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] p-1 pb-1.5 flex flex-col items-center w-[126px] shrink-0 select-none">
+                  <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
                     {/* Month Title */}
-                    <div className="text-[11px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-0.5 w-full text-center flex items-center justify-center gap-0.5">
+                    <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-1 w-full text-center flex items-center justify-center gap-1.5">
                       <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
                       <span>{MONTH_LABELS[month.monthIdx]} {month.year.toString().slice(-2)}</span>
                     </div>
 
                     {/* Week Day Header */}
-                    <div className="grid grid-cols-7 gap-[1px] mb-1 w-[118px]">
+                    <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
                       {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
-                        <div key={i} className={`w-4 text-center text-[7.5px] font-black ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
+                        <div key={i} className={`w-[20px] text-center text-[8.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
                           {day}
                         </div>
                       ))}
                     </div>
 
                     {/* Days Grid */}
-                    <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[118px]">
+                    <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[146px]">
                       {month.gridCells.map((dateStr, idx) => {
                         if (!dateStr) {
-                          return <div key={`empty-${idx}`} className="w-4 h-4 bg-transparent" />;
+                          return <div key={`empty-${idx}`} className="w-[20px] h-[20px] bg-transparent" />;
                         }
 
                         const inPeriod = datesInPeriodSet.has(dateStr);
                         if (!inPeriod) {
-                          return <div key={dateStr} className="w-4 h-4 bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
+                          return <div key={dateStr} className="w-[20px] h-[20px] bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
                         }
 
                         const isToday = dateStr === new Date().toISOString().split('T')[0];
                         const { dayType, amount } = getDayDetails(dateStr);
 
                         return (
-                          <div key={dateStr} className="w-4 h-4 flex items-center justify-center">
+                          <div key={dateStr} className="w-[20px] h-[20px] flex items-center justify-center">
                             <TimelineDayCell
                               dateStr={dateStr}
                               isToday={isToday}

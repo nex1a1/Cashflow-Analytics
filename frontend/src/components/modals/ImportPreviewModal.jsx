@@ -75,7 +75,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         {/* Rows */}
         <div className="flex-grow overflow-y-auto min-h-0 scrollbar-tactical bg-[#121212]">
           {pageItems.length === 0 ? (
-            <div className="p-8 text-center text-xs font-mono text-slate-550">ไม่มีรายการข้อมูล</div>
+            <div className="p-8 text-center text-xs font-mono text-slate-500">ไม่มีรายการข้อมูล</div>
           ) : (
             pageItems.map((item, idx) => {
               const catObj = allCats.find(c => c.name === item.category);
@@ -92,8 +92,8 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                   <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2 items-center border-b transition-colors border-[#303030]/50 hover:bg-[#1c1c1c]/50">
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-none text-center truncate ${
                       isInc 
-                        ? 'bg-emerald-950/40 text-emerald-450 border border-emerald-900/30' 
-                        : 'bg-rose-955/20 text-rose-455 border border-rose-900/30'
+                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
+                        : 'bg-rose-950/20 text-rose-400 border border-rose-900/30'
                     }`}>
                       {isInc ? 'รายรับ' : 'รายจ่าย'}
                     </span>
@@ -143,7 +143,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-mono text-slate-450">หน้า {previewPage}/{totalPages} ({allItems.length} รายการ)</span>
+            <span className="text-xs font-mono text-slate-400">หน้า {previewPage}/{totalPages} ({allItems.length} รายการ)</span>
             <button 
               onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))} 
               disabled={previewPage === totalPages || totalPages === 0}

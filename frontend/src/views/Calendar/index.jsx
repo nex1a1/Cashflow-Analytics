@@ -1,10 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
-import { CalendarDays } from 'lucide-react';
 import { hexToRgb } from '../../utils/formatters';
 import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock from './components/LegendAllocationBlock';
+import PeriodOverview from './components/PeriodOverview/index';
 
 export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
@@ -349,6 +349,32 @@ export default function CalendarView({
     setFilterPeriod(currentMonthStr);
   };
 
+  // Desktop Keyboard Shortcuts (←, →, T)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if modal is open or if user is typing in form inputs
+      if (selectedDate) return;
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || document.activeElement?.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevMonth();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextMonth();
+      } else if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        goToCurrentMonth();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedDate, y, m]);
+
   const monthNet = monthInc - monthExp;
   const now = new Date();
   const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
@@ -359,24 +385,19 @@ export default function CalendarView({
     content = <CalendarSkeleton />;
   } else if (isReadOnlyView) {
     content = (
-      <div className="flex flex-col h-full max-w-screen-2xl mx-auto w-full">
-        <div className="flex flex-col items-center justify-center py-20 rounded-none border-2 border-dashed h-[60vh] bg-[#121212] border-[#2d2d2d] text-slate-400">
-          <div className="p-4 rounded-none mb-4 bg-[#121212] border border-[#2d2d2d]">
-            <CalendarDays className="w-12 h-12 text-[#da291c]" />
-          </div>
-          <p className="text-xl font-bold mb-2 text-slate-200">โหมดปฏิทินรองรับเฉพาะรายเดือน</p>
-          <p className="text-sm px-6 text-center max-w-md leading-relaxed mb-6 text-slate-400">
-            ตอนนี้คุณกำลังดูข้อมูลแบบ <strong>{getFilterLabel(filterPeriod)}</strong><br/>
-            ปฏิทินจะแสดงผลได้ดีที่สุดเมื่อดูเป็นรายเดือนครับ
-          </p>
-          <button 
-            onClick={goToCurrentMonth}
-            className="px-5 py-2.5 rounded-none text-sm font-bold bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none"
-          >
-            สลับไปดูเดือนปัจจุบัน ({getFilterLabel(currentMonthStr)})
-          </button>
-        </div>
-      </div>
+      <PeriodOverview
+        filterPeriod={filterPeriod}
+        setFilterPeriod={setFilterPeriod}
+        transactions={transactions}
+        categories={categories}
+        cashflowGroups={cashflowGroups}
+        dayTypes={dayTypes}
+        dayTypeConfig={dayTypeConfig}
+        getFilterLabel={getFilterLabel}
+        goToCurrentMonth={goToCurrentMonth}
+        currentMonthStr={currentMonthStr}
+        onSelectDate={setSelectedDate}
+      />
     );
   } else {
     content = (
@@ -401,6 +422,8 @@ export default function CalendarView({
           handleDayTypeChange={handleDayTypeChange}
           onSelectDate={setSelectedDate}
           hexToRgb={hexToRgb}
+          excludedCategoryIds={excludedCategoryIds}
+          toggleCategory={toggleCategory}
         />
 
         {/* 2. Legend & Allocation Block */}

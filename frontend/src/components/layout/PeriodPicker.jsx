@@ -130,9 +130,9 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const pillBase    = `w-full text-[10px] py-1.5 px-0.5 rounded-none transition-all font-bold border border-transparent flex items-center justify-center gap-1 leading-none`; 
   const pillIdle    = 'bg-[#121212] border-[#303030] hover:bg-[#303030] hover:border-[#da291c]/50 text-[#cbd5e1]';
 
-  // Dark: ฟ้าโปร่งแสงนุ่มๆ | Light: ฟ้าสว่างขอบคมชัด
-  const pillRangeActive  = 'bg-[#da291c]/20 border-[#da291c]/50 text-[#da291c]';
-  const pillRangeBetween = 'bg-[#da291c]/10 border-transparent text-[#da291c]/60';
+  // Blueprint Sky Tone for range selection
+  const pillRangeActive  = 'bg-sky-500/20 border-sky-500/60 text-sky-400 font-black shadow-sm';
+  const pillRangeBetween = 'bg-sky-500/10 border-sky-500/20 text-sky-300';
 
   // Dark: แดงเข้มหม่น | Light: แดงกุหลาบทึบ ตัดกับจอขาว
   const pillIndependentActive = 'bg-[#da291c]/30 border-[#da291c]/80 text-[#da291c] shadow-none'; 

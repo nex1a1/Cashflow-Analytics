@@ -227,12 +227,9 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase !important;
 }
 
-/* Enforce uppercase letter spacing on all dashboard navigation and CTAs */
-button, 
-.btn, 
-[class*="button-"],
-nav a,
-.nav-link {
+/* Scoped Tactical Navigation and CTA Utility Styling */
+.btn-tactical,
+.nav-tactical {
   font-family: 'Inter', 'Bai Jamjuree', sans-serif !important;
   letter-spacing: 1.1px;
   text-transform: uppercase;

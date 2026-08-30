@@ -47,10 +47,10 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }) => {
 
   const getCardBorderClass = () => {
     if (!isDarkMode) {
-      if (index === 0) return 'border-amber-250 hover:border-amber-400 bg-amber-50/30 hover:bg-amber-50/50 shadow-sm';
+      if (index === 0) return 'border-amber-400/60 hover:border-amber-400 bg-amber-50/30 hover:bg-amber-50/50 shadow-sm';
       if (index === 1) return 'border-slate-200 hover:border-slate-300 bg-slate-50/30 hover:bg-slate-50/50 shadow-sm';
-      if (index === 2) return 'border-orange-250 hover:border-orange-400 bg-orange-50/30 hover:bg-orange-50/50 shadow-sm';
-      return 'border-slate-150 hover:border-slate-250 bg-white hover:bg-slate-50 shadow-sm';
+      if (index === 2) return 'border-orange-400/60 hover:border-orange-400 bg-orange-50/30 hover:bg-orange-50/50 shadow-sm';
+      return 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 shadow-sm';
     }
     // Dark Mode card styles: more subtle backgrounds to prevent visual distraction
     if (index === 0) return 'border-amber-500/20 hover:border-amber-500/40 bg-amber-950/10 hover:bg-amber-950/20';

@@ -318,7 +318,7 @@ export default function useAnalytics({
 
     const sortedCats = Object.entries(catMapData)
       .map(([catId, amount]) => {
-        const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '📦', color: '#94a3b8' };
+        const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '📦', color: '#94a3b8', order_index: 999 };
         return {
           id: catId,
           name: catObj.name,
@@ -326,7 +326,8 @@ export default function useAnalytics({
           color: catObj.color || '#94a3b8',
           amount,
           percentage: chartTotal > 0 ? ((amount / chartTotal) * 100).toFixed(1) : 0,
-          cashflow_group_id: catObj.cashflowGroup
+          cashflow_group_id: catObj.cashflowGroup || catObj.cashflow_group_id,
+          order_index: catObj.order_index ?? 999
         };
       })
       .filter(c => filteredCats.some(fc => fc.id === c.id))

@@ -26,7 +26,9 @@ export default function CalendarBlock({
   dayTypeCounts,
   handleDayTypeChange,
   onSelectDate,
-  hexToRgb
+  hexToRgb,
+  excludedCategoryIds,
+  toggleCategory
 }) {
   const thaiMonths = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -36,12 +38,15 @@ export default function CalendarBlock({
   const WEEKEND_IDX = [0, 6];
   const today = new Date();
 
+  // Peak daily expense calculation for the month (used by heatmap glow in cells)
+  const maxDailyExpense = Object.values(calendarData || {}).reduce((max, d) => Math.max(max, d.exp || 0), 0);
+
   return (
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Header (Navigation & Stats Summary) */}
       <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap">
             <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
               <CalendarIcon className="w-5 h-5 text-[#da291c]" />
               {thaiMonths[m]} {y}
@@ -58,9 +63,19 @@ export default function CalendarBlock({
                 </span>
               )}
               {(monthInc > 0 || monthExp > 0) && (
-                <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-450 border-yellow-500/20' : 'bg-rose-500/10 text-rose-450 border-rose-500/20'}`}>
+                <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                   คงเหลือ {formatValue(monthNet)} ฿
                 </span>
+              )}
+              {excludedCategoryIds?.size > 0 && (
+                <button
+                  onClick={() => toggleCategory?.('CLEAR_ALL')}
+                  className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-none"
+                  title="คลิกเพื่อแสดงทุกหมวดหมู่"
+                >
+                  <span>⚠️ ซ่อน {excludedCategoryIds.size} หมวดหมู่</span>
+                  <span className="underline ml-0.5">[แสดงทั้งหมด]</span>
+                </button>
               )}
             </div>
           </div>
@@ -131,6 +146,7 @@ export default function CalendarBlock({
                 dayType={dayType}
                 handleDayTypeChange={handleDayTypeChange}
                 onSelectDate={onSelectDate}
+                maxDailyExpense={maxDailyExpense}
               />
             );
           })}

@@ -57,8 +57,29 @@ CatItem.displayName = 'CatItem';
 /**
  * Sub-component for Group cell (With Category breakdown)
  */
-const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView }) => {
-  const categories = item.categories || [];
+const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView, sortMode = 'amount-desc' }) => {
+  const rawCategories = item.categories || [];
+
+  const categories = useMemo(() => {
+    const cats = [...rawCategories];
+    return cats.sort((a, b) => {
+      const orderA = a.order_index ?? 999;
+      const orderB = b.order_index ?? 999;
+
+      if (sortMode.startsWith('amount')) {
+        return sortMode === 'amount-asc' ? (a.amount - b.amount) : (b.amount - a.amount);
+      }
+      if (sortMode.startsWith('order')) {
+        return sortMode === 'order-desc' ? (orderB - orderA) : (orderA - orderB);
+      }
+      if (sortMode.startsWith('name')) {
+        return sortMode === 'name-desc'
+          ? (b.name || '').localeCompare(a.name || '', 'th')
+          : (a.name || '').localeCompare(b.name || '', 'th');
+      }
+      return (orderA - orderB) || (b.amount - a.amount);
+    });
+  }, [rawCategories, sortMode]);
 
   return (
     <div 
@@ -532,7 +553,7 @@ AllocationItem.displayName = 'AllocationItem';
 function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
   const [displayMode, setDisplayMode] = useState('category'); // 'category', 'group', or 'allocation'
-  const [sortMode, setSortMode] = useState('amount'); // 'amount' or 'order'
+  const [sortMode, setSortMode] = useState('amount-desc'); // 'amount-desc', 'amount-asc', 'order-asc', 'order-desc', 'name-asc', 'name-desc'
   const [hoveredIdx, setHoveredIdx] = useState(null); // Track hovered item for visual highlighting
   const [excludedGroupIds, setExcludedGroupIds] = useState([]); // Track excluded groups in What-If simulation mode
 
@@ -613,17 +634,47 @@ function ExpenseProportion() {
     return sortedCats;
   }, [isGroupMode, isAllocationMode, sortedGroups, simulatedAllocation, sortedCats]);
 
+  const handleSortToggle = useCallback((targetType) => {
+    setSortMode(prev => {
+      if (targetType === 'amount') {
+        return prev === 'amount-desc' ? 'amount-asc' : 'amount-desc';
+      }
+      if (targetType === 'order') {
+        return prev === 'order-asc' ? 'order-desc' : 'order-asc';
+      }
+      return 'amount-desc';
+    });
+  }, []);
+
   // Apply Dynamic Sorting (Skip for allocation mode as it has fixed needs/wants/savings order)
   const activeItems = useMemo(() => {
     const items = [...rawItems];
     if (isAllocationMode) return items; // Keep original order
     
-    if (sortMode === 'amount') {
-      return items.sort((a, b) => b.amount - a.amount);
-    } else {
-      // Sort by order_index, then by amount as fallback
-      return items.sort((a, b) => (a.order_index - b.order_index) || (b.amount - a.amount));
-    }
+    return items.sort((a, b) => {
+      const orderA = a.order_index ?? 999;
+      const orderB = b.order_index ?? 999;
+
+      if (sortMode === 'amount-desc' || sortMode === 'amount') {
+        return (b.amount - a.amount) || (orderA - orderB);
+      }
+      if (sortMode === 'amount-asc') {
+        return (a.amount - b.amount) || (orderA - orderB);
+      }
+      if (sortMode === 'order-asc' || sortMode === 'order') {
+        return (orderA - orderB) || (b.amount - a.amount);
+      }
+      if (sortMode === 'order-desc') {
+        return (orderB - orderA) || (b.amount - a.amount);
+      }
+      if (sortMode === 'name-asc') {
+        return (a.name || '').localeCompare(b.name || '', 'th') || (b.amount - a.amount);
+      }
+      if (sortMode === 'name-desc') {
+        return (b.name || '').localeCompare(a.name || '', 'th') || (b.amount - a.amount);
+      }
+      return (b.amount - a.amount);
+    });
   }, [rawItems, sortMode, isAllocationMode]);
 
   // Sync Chart Data with Sorted Items (Dual-Ring Donut Chart in Group Mode)
@@ -728,12 +779,48 @@ function ExpenseProportion() {
     return {
       ...baseOptions,
       cutout: isGroupMode ? '48%' : '75%', 
+      onHover: (event, elements) => {
+        if (elements && elements.length > 0) {
+          const el = elements[0];
+          if (isGroupMode && el.datasetIndex === 0) {
+            let count = 0;
+            for (let gIdx = 0; gIdx < activeItems.length; gIdx++) {
+              count += (activeItems[gIdx].categories || []).length;
+              if (el.index < count) {
+                setHoveredIdx(gIdx);
+                break;
+              }
+            }
+          } else {
+            setHoveredIdx(el.index);
+          }
+        } else {
+          setHoveredIdx(null);
+        }
+      },
       plugins: {
         ...baseOptions.plugins,
-        tooltip: { enabled: false }
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#121212',
+          titleColor: '#ffffff',
+          bodyColor: '#cbd5e1',
+          borderColor: '#da291c',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 0,
+          displayColors: true,
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.raw || 0;
+              const pct = activeTotal > 0 ? ((val / activeTotal) * 100).toFixed(1) : 0;
+              return ` ฿${formatMoney(val)} (${pct}%)`;
+            }
+          }
+        }
       }
     };
-  }, [dm, isGroupMode]);
+  }, [dm, isGroupMode, activeItems, activeTotal]);
   
   const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
 
@@ -795,26 +882,33 @@ function ExpenseProportion() {
           {!isAllocationMode && (
             <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
               <button 
-                onClick={() => setSortMode('amount')}
-                title="เรียงตามยอดเงิน (มากไปน้อย)"
-                className={`px-1.5 py-0.5 rounded-none transition-none ${
-                  sortMode === 'amount' 
+                onClick={() => handleSortToggle('amount')}
+                title={sortMode.startsWith('amount') ? (sortMode === 'amount-desc' ? "เรียงตามยอดเงิน: มากไปน้อย (คลิกเพื่อสลับ)" : "เรียงตามยอดเงิน: น้อยไปมาก (คลิกเพื่อสลับ)") : "เรียงตามยอดเงิน"}
+                className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+                  sortMode.startsWith('amount') 
                   ? 'bg-amber-500/20 text-amber-400 shadow-sm' 
                   : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <ArrowDownWideNarrow className="w-3.5 h-3.5" />
+                <ArrowDownWideNarrow className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
+                {sortMode.startsWith('amount') && (
+                  <span className="text-[9px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>
+                )}
               </button>
+
               <button 
-                onClick={() => setSortMode('order')}
-                title="เรียงตามลำดับหมวดหมู่"
-                className={`px-1.5 py-0.5 rounded-none transition-none ${
-                  sortMode === 'order' 
+                onClick={() => handleSortToggle('order')}
+                title={sortMode.startsWith('order') ? (sortMode === 'order-asc' ? "เรียงตามลำดับหมวดหมู่: น้อยไปมาก (คลิกเพื่อสลับ)" : "เรียงตามลำดับหมวดหมู่: มากไปน้อย (คลิกเพื่อสลับ)") : "เรียงตามลำดับหมวดหมู่"}
+                className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+                  sortMode.startsWith('order') 
                   ? 'bg-[#da291c]/20 text-[#da291c] shadow-sm' 
                   : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <ListOrdered className="w-3.5 h-3.5" />
+                <ListOrdered className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
+                {sortMode.startsWith('order') && (
+                  <span className="text-[9px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>
+                )}
               </button>
             </div>
           )}
@@ -894,7 +988,7 @@ function ExpenseProportion() {
                    />
                  );
                }
-               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} />;
+               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} sortMode={sortMode} />;
                return <CatItem key={item.id || idx} cat={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
              })}
              {/* Fill empty cells to maintain grid borders if needed */}

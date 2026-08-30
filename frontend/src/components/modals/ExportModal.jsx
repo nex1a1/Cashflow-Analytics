@@ -360,11 +360,11 @@ export default function ExportModal({
             <div className="mt-auto p-4 border border-[#3e3e3e] bg-[#121212]/30 rounded-none text-[10px] font-mono space-y-2.5">
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-bold uppercase">จำนวนรายการทั้งหมด:</span>
-                <span className="text-slate-350 font-bold">{stats.rowCount.toLocaleString()} แถว</span>
+                <span className="text-slate-300 font-bold">{stats.rowCount.toLocaleString()} แถว</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-bold uppercase">ขนาดไฟล์โดยประมาณ:</span>
-                <span className="text-slate-350 font-bold">{stats.estKB} KB</span>
+                <span className="text-slate-300 font-bold">{stats.estKB} KB</span>
               </div>
               <div className="h-[1px] bg-[#303030] w-full" />
               <div className="flex justify-between items-center">
@@ -423,11 +423,11 @@ export default function ExportModal({
               {/* Data loading or empty states */}
               {isFetching ? (
                 <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-slate-500">
-                  <Loader2 className="w-6 h-6 text-slate-450 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
                   <span className="uppercase tracking-widest text-[#888888]">กำลังอ่านข้อมูลจากฐานข้อมูล...</span>
                 </div>
               ) : !stats.hasData && exportFormat !== 'full' ? (
-                <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-slate-550">
+                <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-slate-500">
                   <AlertTriangle className="w-6 h-6 text-[#da291c] animate-pulse" />
                   <span className="text-[#888888]">ไม่พบบันทึกข้อมูลในช่วงเวลาและเงื่อนไขที่กำหนด</span>
                 </div>

@@ -74,8 +74,8 @@ export default function ImportGuideModal({ isOpen, onClose }) {
     } else {
       switch (header) {
         case 'Date': return 'text-[#888888]';
-        case 'อาหารและเครื่องดื่ม': return 'text-rose-455 text-right';
-        case 'ช้อปปิ้งออนไลน์': return 'text-amber-455 text-right';
+        case 'อาหารและเครื่องดื่ม': return 'text-rose-400 text-right';
+        case 'ช้อปปิ้งออนไลน์': return 'text-amber-400 text-right';
         case 'การเดินทาง': return 'text-sky-400 text-right';
         case 'ซักผ้า': return 'text-purple-400 text-right';
         case 'รวม (Total)': return 'text-[#555555] font-normal italic text-right';
@@ -227,7 +227,7 @@ export default function ImportGuideModal({ isOpen, onClose }) {
             <div className="mt-auto p-4 border border-[#3e3e3e] bg-[#121212]/30 rounded-none text-[10px] font-mono space-y-2.5">
               <div className="flex justify-between items-center">
                 <span className="text-[#888888] font-bold uppercase">จำนวนคอลัมน์:</span>
-                <span className="text-slate-350 font-bold">{selectedFormat === 'long' ? '6 คอลัมน์หลัก' : 'ไม่จำกัด (อิงตามหมวดหมู่)'}</span>
+                <span className="text-slate-300 font-bold">{selectedFormat === 'long' ? '6 คอลัมน์หลัก' : 'ไม่จำกัด (อิงตามหมวดหมู่)'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[#888888] font-bold uppercase">สเปกวิเคราะห์:</span>
@@ -292,13 +292,13 @@ export default function ImportGuideModal({ isOpen, onClose }) {
                         <tr className="hover:bg-[#1c1c1c] transition-colors">
                           <td className="p-3 text-slate-400">01/03/2026</td>
                           <td className="p-3">
-                            <span className="text-[10px] text-rose-455 bg-rose-955/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               วันหยุด
                             </span>
                           </td>
                           <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
                           <td className="p-3">
-                            <span className="text-[10px] text-rose-455 bg-rose-955/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               อาหารและเครื่องดื่ม
                             </span>
                           </td>
@@ -309,13 +309,13 @@ export default function ImportGuideModal({ isOpen, onClose }) {
                         <tr className="hover:bg-[#1c1c1c] transition-colors">
                           <td className="p-3 text-slate-400">01/03/2026</td>
                           <td className="p-3">
-                            <span className="text-[10px] text-rose-455 bg-rose-955/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               วันหยุด
                             </span>
                           </td>
                           <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
                           <td className="p-3">
-                            <span className="text-[10px] text-amber-400 bg-amber-955/20 border border-amber-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               ช้อปปิ้งออนไลน์
                             </span>
                           </td>
@@ -326,13 +326,13 @@ export default function ImportGuideModal({ isOpen, onClose }) {
                         <tr className="hover:bg-[#1c1c1c] transition-colors">
                           <td className="p-3 text-slate-400">02/03/2026</td>
                           <td className="p-3">
-                            <span className="text-[10px] text-emerald-450 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               ทำงาน
                             </span>
                           </td>
                           <td className="p-3"><span className="text-emerald-500 font-bold">รายรับ</span></td>
                           <td className="p-3">
-                            <span className="text-[10px] text-emerald-450 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
                               เงินเดือน
                             </span>
                           </td>

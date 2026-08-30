@@ -228,7 +228,7 @@ function AllocationOverviewSection({
         สัดส่วนการใช้จ่าย (Allocation)
       </span>
       
-      <div className="flex flex-col gap-1.5 text-[11px] font-bold text-slate-350 z-10">
+      <div className="flex flex-col gap-1.5 text-[11px] font-bold text-slate-300 z-10">
         {/* Needs */}
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-1.5">
