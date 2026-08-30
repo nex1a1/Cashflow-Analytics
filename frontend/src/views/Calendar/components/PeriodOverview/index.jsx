@@ -1,10 +1,9 @@
 // src/views/Calendar/components/PeriodOverview/index.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import PeriodExecutiveHUD from './PeriodExecutiveHUD';
 import MultiMonthGrid from './MultiMonthGrid';
 import TemporalInsights from './TemporalInsights';
-import AllocationRhythm from './AllocationRhythm';
 import PeakOutlierDays from './PeakOutlierDays';
 import {
   getMonthsForPeriod,
@@ -27,6 +26,8 @@ export default function PeriodOverview({
   currentMonthStr,
   onSelectDate
 }) {
+  const [excludeRentOutliers, setExcludeRentOutliers] = useState(true);
+
   // 1. Compute active months list strictly for the period
   const monthsList = useMemo(() => {
     return getMonthsForPeriod(filterPeriod, transactions);
@@ -44,7 +45,7 @@ export default function PeriodOverview({
     });
   }, [monthsList, transactions, categories, cashflowGroups, dayTypes, dayTypeConfig]);
 
-  // 3. Compute Temporal Distributions (Work vs Rest & Day-of-Week)
+  // 3. Compute Temporal Distributions (Work vs Rest)
   const temporalData = useMemo(() => {
     return calculateTemporalInsights({
       monthsList,
@@ -66,16 +67,18 @@ export default function PeriodOverview({
   }, [monthsList, transactions, categories, cashflowGroups]);
 
   // 5. Compute Peak Spend Outlier Days
-  const peakOutliers = useMemo(() => {
+  const peakOutliersData = useMemo(() => {
     return calculatePeakOutliers({
       monthsList,
       transactions,
       categories,
+      cashflowGroups,
       dayTypes,
       dayTypeConfig,
-      limit: 5
+      limit: 5,
+      excludeRent: excludeRentOutliers
     });
-  }, [monthsList, transactions, categories, dayTypes, dayTypeConfig]);
+  }, [monthsList, transactions, categories, cashflowGroups, dayTypes, dayTypeConfig, excludeRentOutliers]);
 
   const filterLabel = getFilterLabel ? getFilterLabel(filterPeriod) : filterPeriod;
   const currentMonthLabel = getFilterLabel ? getFilterLabel(currentMonthStr) : currentMonthStr;
@@ -90,8 +93,11 @@ export default function PeriodOverview({
             <h2 className="text-xl font-black text-slate-100 tracking-wide">
               ภาพรวมปฏิทิน: {filterLabel}
             </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 border border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c]">
-              พบข้อมูล {metrics.displayMonths.length} เดือน
+            <span className="text-[10px] font-black tracking-wider px-2 py-0.5 border border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c] uppercase">
+              PERIOD OVERVIEW
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 border border-slate-700 bg-slate-800 text-slate-300 font-mono">
+              {metrics.displayMonths.length} เดือน
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -102,9 +108,13 @@ export default function PeriodOverview({
         <button
           onClick={goToCurrentMonth}
           className="px-4 py-2 rounded-none text-xs font-bold bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+          title="กดแป้นพิมพ์ 'T' เพื่อกลับสู่เดือนปัจจุบัน"
         >
           <CalendarDays className="w-3.5 h-3.5" />
           <span>ไปเดือนปัจจุบัน ({currentMonthLabel})</span>
+          <kbd className="hidden md:inline-block px-1 py-0.2 text-[9px] font-mono bg-black/40 border border-white/20 text-white rounded-none">
+            T
+          </kbd>
         </button>
       </div>
 
@@ -123,7 +133,7 @@ export default function PeriodOverview({
         onSelectDate={onSelectDate}
       />
 
-      {/* 3. Multi-Month Matrix & Mini Heatmaps Grid */}
+      {/* 3. Condensed Financial Matrix Table (Monthly Flow) */}
       <MultiMonthGrid
         displayMonths={metrics.displayMonths}
         currentMonthStr={currentMonthStr}
@@ -133,23 +143,21 @@ export default function PeriodOverview({
         filterPeriodLabel={filterLabel}
       />
 
-      {/* 4. Temporal Work-Life & Day-of-Week Insights */}
+      {/* 4. Temporal Work-Life & Allocation Rhythm (2-Col Side-by-Side) */}
       <TemporalInsights
-        dayOfWeekStats={temporalData.dayOfWeekStats}
         activeDayTypes={temporalData.activeDayTypes}
         workVsRest={temporalData.workVsRest}
-        monthCycleStats={temporalData.monthCycleStats}
-      />
-
-      {/* 5. Allocation Rhythm Breakdown */}
-      <AllocationRhythm
         allocationData={allocationData}
       />
 
-      {/* 6. Peak Outlier Spend Days */}
+      {/* 5. Peak Outlier Spend Days */}
       <PeakOutlierDays
-        peakOutliers={peakOutliers}
+        peakOutliers={peakOutliersData.outliers}
+        rentTransactionsCount={peakOutliersData.rentTransactionsCount}
+        excludeRent={excludeRentOutliers}
+        setExcludeRent={setExcludeRentOutliers}
         onSelectDate={onSelectDate}
+        setFilterPeriod={setFilterPeriod}
       />
     </div>
   );

@@ -555,9 +555,11 @@ export function calculateAllocationBreakdown({
     const groupObj = catObj ? cashflowGroups.find(g => g.id === catObj.cashflowGroup) : null;
     const aType = t.allocation_type || (groupObj?.type === 'savings' ? 'savings' : (groupObj?.allocation_type || 'want'));
 
-    if (!catSums[catId]) {
-      catSums[catId] = {
-        id: catId,
+    const key = `${catId}__${aType}`;
+    if (!catSums[key]) {
+      catSums[key] = {
+        id: key,
+        categoryId: catId,
         name: catObj ? catObj.name : (t.category || 'อื่นๆ'),
         icon: catObj?.icon || '📌',
         color: catObj?.color || groupObj?.color || '#94a3b8',
@@ -565,7 +567,7 @@ export function calculateAllocationBreakdown({
         total: 0
       };
     }
-    catSums[catId].total += amt;
+    catSums[key].total += amt;
 
     if (aType === 'need') needTotal += amt;
     else if (aType === 'want') wantTotal += amt;
@@ -581,21 +583,56 @@ export function calculateAllocationBreakdown({
   const wantPct = grandTotal > 0 ? Math.round((wantTotal / grandTotal) * 100) : 0;
   const savingsPct = grandTotal > 0 ? Math.max(0, 100 - needPct - wantPct) : 0;
 
-  const allCatList = Object.values(catSums);
-  const topNeedCats = allCatList.filter(c => c.allocation === 'need').sort((a, b) => b.total - a.total).slice(0, 3);
-  const topWantCats = allCatList.filter(c => c.allocation === 'want').sort((a, b) => b.total - a.total).slice(0, 3);
+  const allCatList = Object.values(catSums).sort((a, b) => b.total - a.total);
+  const topNeedCats = allCatList.filter(c => c.allocation === 'need').slice(0, 3);
+  const topWantCats = allCatList.filter(c => c.allocation === 'want').slice(0, 3);
+
+  // Ranked categories with percentage of total allocation
+  const rankedCategories = allCatList.slice(0, 7).map(c => {
+    const groupTotal = c.allocation === 'need' ? needTotal : (c.allocation === 'want' ? wantTotal : (savingsGroupTotal > 0 ? savingsGroupTotal : totalSavings));
+    const pctOfGroup = groupTotal > 0 ? Math.round((c.total / groupTotal) * 100) : 0;
+    const pctOfGrand = grandTotal > 0 ? Math.round((c.total / grandTotal) * 100) : 0;
+    return {
+      ...c,
+      pctOfGroup,
+      pctOfGrand
+    };
+  });
 
   return {
     needTotal,
     wantTotal,
     savingsTotal: totalSavings,
+    savingsGroupTotal,
     netSurplus,
+    grandTotal,
     needPct,
     wantPct,
     savingsPct,
     topNeedCats,
-    topWantCats
+    topWantCats,
+    rankedCategories,
+    benchmarks: {
+      needDelta: needPct - 50,
+      wantDelta: wantPct - 30,
+      savingsDelta: savingsPct - 20
+    }
   };
+}
+
+/**
+ * Checks if a transaction is Rent / Dormitory / Fixed housing
+ */
+export function isRentTransaction(t, categories = [], cashflowGroups = []) {
+  const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
+  const groupObj = catObj ? cashflowGroups.find(g => g.id === catObj.cashflowGroup) : null;
+
+  const desc = (t.description || '').toLowerCase();
+  const catName = (catObj?.name || t.category || '').toLowerCase();
+  const groupName = (groupObj?.name || '').toLowerCase();
+
+  const rentKeywords = ['หอ', 'ค่าหอ', 'ค่าเช่า', 'เช่าห้อง', 'เช่าบ้าน', 'หอพัก', 'ที่พัก', 'rent', 'dorm', 'condo', 'คอนโด', 'ห้องพัก'];
+  return rentKeywords.some(kw => desc.includes(kw) || catName.includes(kw) || groupName.includes(kw));
 }
 
 /**
@@ -605,12 +642,15 @@ export function calculatePeakOutliers({
   monthsList,
   transactions,
   categories,
+  cashflowGroups = [],
   dayTypes = {},
   dayTypeConfig = [],
-  limit = 6
+  limit = 6,
+  excludeRent = true
 }) {
   const validMonthSet = new Set(monthsList.map(m => m.monthStr));
   const dailyMap = {};
+  let rentTransactionsCount = 0;
 
   transactions.forEach(t => {
     if (!t.date || t.date.length < 10) return;
@@ -619,6 +659,12 @@ export function calculatePeakOutliers({
 
     const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
     if (catObj?.type === 'income') return;
+
+    const isRent = isRentTransaction(t, categories, cashflowGroups);
+    if (isRent) {
+      rentTransactionsCount++;
+      if (excludeRent) return; // skip rent transactions when filter is active
+    }
 
     const amt = parseFloat(t.amount) || 0;
     if (!dailyMap[t.date]) {
@@ -637,7 +683,7 @@ export function calculatePeakOutliers({
     .sort((a, b) => b.totalExpense - a.totalExpense)
     .slice(0, limit);
 
-  return sortedDays.map(item => {
+  const formattedOutliers = sortedDays.map(item => {
     const [yStr, mStr, dStr] = item.dateStr.split('-');
     const y = parseInt(yStr, 10);
     const m = parseInt(mStr, 10) - 1;
@@ -666,4 +712,9 @@ export function calculatePeakOutliers({
       topItemAmount: topItem?.amount || 0
     };
   });
+
+  return {
+    outliers: formattedOutliers,
+    rentTransactionsCount
+  };
 }

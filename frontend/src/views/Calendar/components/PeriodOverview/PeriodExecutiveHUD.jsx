@@ -1,5 +1,5 @@
 // src/views/Calendar/components/PeriodOverview/PeriodExecutiveHUD.jsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DollarSign, Flame, ShieldCheck, Zap, Award } from 'lucide-react';
 
 const formatVal = (val) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -17,6 +17,21 @@ export default function PeriodExecutiveHUD({
   peakSpendDay,
   onSelectDate
 }) {
+  // Burn Pace Status evaluation
+  const burnPace = useMemo(() => {
+    if (!periodIncome || periodIncome <= 0) {
+      return { text: 'ไม่มีข้อมูลรายรับ', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)', border: 'rgba(148, 163, 184, 0.3)' };
+    }
+    const ratio = (periodExpense / periodIncome) * 100;
+    if (ratio <= 60) {
+      return { text: 'ความเร็วปลอดภัย', color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)' };
+    }
+    if (ratio <= 85) {
+      return { text: 'ความเร็วปานกลาง', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)' };
+    }
+    return { text: 'เผาเงินเร็ว', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)' };
+  }, [periodIncome, periodExpense]);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#2d2d2d] border border-[#2d2d2d]">
       {/* 1. Inflow, Outflow & CPA Savings Grade */}
@@ -60,8 +75,11 @@ export default function PeriodExecutiveHUD({
             <Flame className="w-3.5 h-3.5 text-orange-400" />
             อัตราเผาเงินเฉลี่ยต่อวัน (DAILY BURN)
           </span>
-          <span className="text-[10px] font-mono text-slate-500">
-            {totalPeriodDays} วันปฏิทิน
+          <span
+            className="px-1.5 py-0.2 text-[9px] font-bold border rounded-none"
+            style={{ color: burnPace.color, backgroundColor: burnPace.bg, borderColor: burnPace.border }}
+          >
+            {burnPace.text}
           </span>
         </div>
 
