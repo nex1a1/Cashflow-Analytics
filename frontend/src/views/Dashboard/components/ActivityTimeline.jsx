@@ -441,7 +441,7 @@ export default function ActivityTimeline() {
             <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
           ) : layoutMode === 'calendar' ? (
             <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
-              <div className="grid grid-cols-6 gap-2.5 mx-auto">
+              <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
                 {calendarMonths.map(month => (
                   <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
                     {/* Month Title */}
