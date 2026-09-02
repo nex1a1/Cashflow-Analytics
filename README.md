@@ -186,33 +186,6 @@ docker-compose logs -f
 docker-compose down
 ```
 
----
-
-## 🏗️ Architectural Decisions & Guidelines
-
-1. **3-Column HUD Cards:** ผสาน Net Cashflow และอัตราการออม CPA (% พร้อม Grade A-F pill) เข้าด้วยกันเพื่อความหนาแน่นสูงสุดของพื้นที่หน้าจอ
-2. **Elite Sankey Flow Engine:** วางโครงสร้างแผนภาพ 5 คอลัมน์ด้วย Node priority เพื่อให้การจัดวางนิ่งและคงที่ตลอดเวลา
-3. **Monolithic UI Density:** ใช้การแยกเซลล์ย่อย (Cell splitters) และซ่อนคอลัมน์ที่เป็นศูนย์อัตโนมัติเพื่อลดช่องว่างแนวตั้ง
-4. **Pure CSS Heatmap Hover System:** ไฮไลต์แกนตัดตารางบัญชีด้วย CSS pseudo-elements ไร้ภาระการประมวลผลของ JavaScript
-5. **Memoization Discipline:** ใช้ `React.memo` และ `useCallback` ในทุก View ที่มีการประมวลผลข้อมูลหนาแน่น
-6. **Satang-First Mandate:** บันทึกและคำนวณเงินในระบบด้วยจำนวนเต็มสตางค์ แปลงเป็นบาทเฉพาะจุดแสดงผลบนหน้าจอเท่านั้น
-7. **Search Mandate:** ค้นหาคำอธิบายรายการธุรกรรมผ่าน FTS5 Virtual Table เสมอ
-8. **Automated Backups & Clean Exports:** สำรองข้อมูลอัตโนมัติเมื่อเริ่มระบบ และดึงข้อมูลดิบจาก DB ตรงเมื่อทำการส่งออกไฟล์
-9. **Static Performance Engine:** ปิด Transition และ Keyframe animations ทั้งหมดใน `index.css` เพื่อขจัดอาการกระตุกของหน้าจอ
-10. **Flat Border & Hairline Grid:** ห้ามใช้ขอบโค้งมนใหญ่ (`rounded-none` เป็นค่าเริ่มต้น, `rounded-sm` 4px สำหรับช่องกรอกข้อมูล, `rounded-full` สำหรับ Badge) และสร้างเส้นแบ่งด้วย `gap-[1px]`
-11. **Sticky Excel-Style Ledger:** ล็อกคอลัมน์วันที่และยอดรวมรายวันไว้กับที่ขณะเลื่อนตารางแนวนอน
-12. **Vibrant Semi-Transparent Badges:** ป้ายสถานะประเภทวันและหมวดหมู่ใช้พื้นหลังโปร่งแสง `rgba(hex, 0.08)` และขอบ `rgba(hex, 0.25)` เพื่อความคมชัดบนพื้นหลังสีดำ
-
----
-
-## 🔒 Git Mastery & Safe Commits Policy
-
-*   **NO AUTO-STAGING:** ห้ามใช้คำสั่ง `git add .` หรือการ stage แบบ wildcard เด็ดขาด ผู้ใช้จะเป็นผู้เลือก stage ไฟล์ด้วยตนเอง
-*   **NO AUTO-COMMITTING:** ห้ามสั่ง commit อัตโนมัติผ่าน terminal โดยไม่ได้รับคำสั่งโดยตรงจากผู้ใช้
-*   **Suggested Commits:** ให้แสดงคำสั่ง git commit ใน code block อย่างชัดเจนเพื่อให้ผู้ใช้ตรวจสอบและนำไปรันเอง
-
----
-
 ## 📝 License
 
 โปรเจกต์นี้เผยแพร่ภายใต้สัญญาอนุญาต **MIT License** สามารถดูรายละเอียดเพิ่มเติมได้ที่ไฟล์ [LICENSE](LICENSE)
