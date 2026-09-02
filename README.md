@@ -3,7 +3,6 @@
 [![Vibe Coding](https://img.shields.io/badge/Vibe_Coding-100%25_AI_Built-ff69b4?style=for-the-badge&logo=probot)](https://github.com/)
 [![Platform](https://img.shields.io/badge/Platform-PC--First_/_Desktop-blue?style=for-the-badge&logo=windows)](https://github.com/)
 [![Tech Stack](https://img.shields.io/badge/Stack-React_TS_|_Node_TS_|_SQLite-3178C6?style=for-the-badge&logo=typescript)](https://github.com/)
-[![Edition](https://img.shields.io/badge/Edition-Standalone_Portable_.exe-red?style=for-the-badge&logo=electron)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **Cashflow Shark** คือระบบบริหารจัดการการเงินส่วนบุคคลและบันทึกชั่วโมงการทำงานประสิทธิภาพสูง (High-Performance Personal/Small Business Financial Tracker & Work-Day Logger) ที่ถูกออกแบบด้วยปรัชญา **PC-First (Desktop-Only)** เพื่อรีดประสิทธิภาพการใช้งานหน้าจอระดับสูงสุด มอบหน้าต่างข้อมูลที่หนาแน่น เจาะลึก และแม่นยำตามมาตรฐานบัญชีระดับมืออาชีพ พร้อมดีไซน์พรีเมียมสไตล์ **Scuderia Ferrari Luxury Editorial** ที่เฉียบคมและดุดัน
@@ -54,10 +53,10 @@
 *   **Hide WANT Toggle:** ฟิลเตอร์แยกกลุ่มค่าใช้จ่ายฟุ่มเฟือยออกจากระบบคำนวณ ช่วยให้สามารถวิเคราะห์ความจำเป็น (Needs) และการออม (Savings) ได้อย่างแม่นยำ
 *   **Recurring Services Classification:** จัดหมวดหมู่บริการรายเดือนอัตโนมัติเป็น 'ซอฟต์แวร์ & AI', 'สมาชิกช้อปปิ้ง', และ 'ความบันเทิง & สตรีมมิ่ง'
 
-### 📦 7. Automated Backup Engine & Standalone Portable Edition
-*   **Startup Auto-Backup:** สำรองฐานข้อมูลอัตโนมัติทุกครั้งที่เปิดโปรแกรมลงในโฟลเดอร์ `/backups/`
-*   **On-Demand Terminal Hotkey:** กดปุ่ม `[B]` บนหน้าต่าง Terminal เพื่อสั่ง Backup ด่วนได้ทันที หรือเรียกผ่าน API `/api/backup`
-*   **Zero-Install Portable Executable:** รวมเป็นไฟล์ `.exe` เดียวใน `CashflowShark-Portable/CashflowShark.exe` ไม่ต้องติดตั้ง Node.js หรือโปรแกรมใดๆ เพิ่มเติม
+### 📦 7. Automated Database Backup Engine & Mutation Tracking
+*   **Startup Auto-Backup:** สำรองฐานข้อมูลอัตโนมัติทุกครั้งที่เริ่มรันเซิร์ฟเวอร์ลงในโฟลเดอร์ `/backups/`
+*   **On-Demand Terminal Hotkey & API:** กดปุ่ม `[B]` บนหน้าต่าง Terminal เพื่อสั่งสร้างไฟล์ Backup ด่วนได้ทันที หรือเรียกสั่งการผ่าน REST API Endpoint `/api/backup`
+*   **Real-time DB Mutation Logger:** ระบบดักจับคำสั่ง SQL และแสดง Log การเปลี่ยนแปลงข้อมูล (เพิ่ม/แก้ไข/ลบ) ในรูปแบบไอคอนภาษาไทยที่อ่านเข้าใจง่ายทันทีบน Terminal
 
 ---
 
@@ -69,10 +68,9 @@
 | **Styling & Theme** | `Tailwind CSS v3.4.1`, `@fontsource/inter`, `@fontsource/bai-jamjuree` | Ferrari Cinematic Editorial Palette (`#181818`, `#da291c`), `.tabular-nums` |
 | **Data Visualization** | `Chart.js v4.4.1`, `react-chartjs-2 v5.2.0`, `chartjs-chart-sankey v0.14.0` | Custom 5-column Sankey, multi-axis burn charts |
 | **Form & Validation** | `react-hook-form v7.75.0`, `zod v4.4.3`, `@hookform/resolvers v5.2.2` | Client-side strict validation with Satang conversion |
-| **Backend Runtime** | `Node.js v20 (LTS)` / `Node.js v18 (Standalone Executable)` | Fast asynchronous runtime |
+| **Backend Runtime** | `Node.js v20 (LTS)` | Fast asynchronous runtime |
 | **API Framework** | `Express.js v4.18.2`, `TypeScript v5.3.3`, `tsx v4.7.1` | RESTful API, typed controllers and services |
 | **Database Engine** | `better-sqlite3 v12.9.0` (SQLite C++ bindings) | Ultra-fast synchronous SQLite access, FTS5 full-text search |
-| **Portable Packaging** | `pkg@5.8.1`, `Node 18 (ABI 108) better_sqlite3.node`, `fs-extra` | Single-file Windows distribution with embedded UI & DB |
 
 ---
 
@@ -118,35 +116,19 @@
 
 ---
 
-## 🚀 Getting Started & Usage (คู่มือการใช้งาน)
+## 🚀 Getting Started & Usage (คู่มือการเริ่มใช้งาน)
 
-คุณสามารถเลือกใช้งาน Cashflow Shark ได้ 3 รูปแบบตามความสะดวก:
-
----
-
-### รูปแบบที่ 1: 📦 Standalone Portable Edition (ง่ายที่สุด - ดับเบิ้ลคลิกใช้งานได้ทันที)
-
-เหมาะสำหรับผู้ใช้ทั่วไปบน Windows โดยไม่ต้องติดตั้งโปรแกรมหรือ Dependencies ใดๆ:
-
-1. เข้าไปที่โฟลเดอร์ `CashflowShark-Portable/`
-2. ดับเบิ้ลคลิกไฟล์ **`CashflowShark.exe`**
-3. โปรแกรมจะเปิดหน้าต่าง Terminal และเปิดบราว์เซอร์ไปยัง [http://localhost:3000](http://localhost:3000) ให้อัตโนมัติ!
-4. **คีย์ลัดในหน้าต่าง Terminal:**
-   * กด `[O]` : เปิดหน้าต่าง Browser อีกครั้ง
-   * กด `[B]` : สั่งสร้างไฟล์สำรองข้อมูล (Manual Backup) ทันที
-   * กด `[Q]` : ปิดการทำงานของโปรแกรมอย่างปลอดภัย
-
-> 💾 ข้อมูลทั้งหมดจะถูกบันทึกไว้ในโฟลเดอร์ `CashflowShark-Portable/data/cashflow.db` คุณสามารถ Copy โฟลเดอร์นี้เพื่อสำรองข้อมูลหรือย้ายเครื่องได้ทันที
+คุณสามารถเลือกใช้งาน Cashflow Shark ได้ 2 รูปแบบตามความสะดวก:
 
 ---
 
-### รูปแบบที่ 2: ⚡ Local TypeScript Development (สำหรับนักพัฒนา)
+### รูปแบบที่ 1: ⚡ Local TypeScript Development (แนะนำสำหรับการพัฒนาและใช้งานบนเครื่อง)
 
 #### ความต้องการขั้นต่ำ:
 *   [Node.js v20 (LTS)](https://nodejs.org/) ขึ้นไป
 *   `npm` หรือ `yarn`
 
-#### ขั้นตอนการรัน:
+#### ขั้นตอนการติดตั้งและรันระบบ:
 ```bash
 # 1. ติดตั้ง Dependencies และสตาร์ท Backend API (Port 3000)
 cd backend
@@ -161,19 +143,11 @@ npm run dev
 
 *   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173)
 *   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
-
-#### คำสั่ง Build ตัว Standalone Executable (.exe):
-```bash
-cd backend
-npm run build:exe
-# ผลลัพธ์จะถูกประกอบร่างและบันทึกไว้ในโฟลเดอร์ CashflowShark-Portable/
-```
-
 ---
 
-### รูปแบบที่ 3: 🐳 Docker Compose (คอนเทนเนอร์)
+### รูปแบบที่ 2: 🐳 Docker Compose (สำหรับรันผ่าน Container แบบเบ็ดเสร็จ)
 
-เหมาะสำหรับการรันแบบ Isolated Environment:
+เหมาะสำหรับการรันแบบ Isolated Environment โดยไม่ต้องลง Node.js บนเครื่องโฮสต์:
 
 ```bash
 # สตาร์ท Container ในโหมด Background
@@ -185,6 +159,10 @@ docker-compose logs -f
 # ปิดการทำงานของระบบ
 docker-compose down
 ```
+
+*   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173)
+*   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
+
 
 ## 📝 License
 
