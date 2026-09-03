@@ -118,7 +118,7 @@ export default function PeriodOverview({
         </button>
       </div>
 
-      {/* 2. Executive Temporal HUD (4 Metric Cards) */}
+      {/* 2. Executive Temporal HUD (3 Metric Cards) */}
       <PeriodExecutiveHUD
         periodIncome={metrics.periodIncome}
         periodExpense={metrics.periodExpense}
@@ -129,8 +129,7 @@ export default function PeriodOverview({
         zeroSpendDaysCount={metrics.zeroSpendDaysCount}
         zeroSpendPct={metrics.zeroSpendPct}
         totalPeriodDays={metrics.totalPeriodDays}
-        peakSpendDay={metrics.peakSpendDay}
-        onSelectDate={onSelectDate}
+        workVsRest={temporalData.workVsRest}
       />
 
       {/* 3. Condensed Financial Matrix Table (Monthly Flow) */}

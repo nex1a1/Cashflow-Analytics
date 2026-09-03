@@ -35,12 +35,24 @@ export default function TemporalInsights({
                 ความสัมพันธ์ประเภทวัน vs รายจ่าย (WORK-LIFE FINANCIALS)
               </h3>
             </div>
-            <span className="text-[10px] font-mono text-slate-400">
-              อัตราส่วน {workVsRest.ratio}x
-            </span>
+            {workVsRest.workAvgExpense > 0 && workVsRest.restAvgExpense > 0 && (
+              <span className="text-[10px] font-mono px-2 py-0.5 border border-[#3B82F6]/30 bg-[#3B82F6]/10 text-blue-400">
+                วันหยุด : วันทำงาน = {workVsRest.ratio}x
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน
+            {workVsRest.workAvgExpense > 0 && workVsRest.restAvgExpense > 0 ? (
+              parseFloat(workVsRest.ratio) >= 1.05 ? (
+                <>วันพักผ่อนมีอัตราใช้จ่ายเฉลี่ย <span className="text-emerald-400 font-bold">สูงกว่าวันทำงาน {workVsRest.ratio} เท่า</span></>
+              ) : parseFloat(workVsRest.ratio) <= 0.95 ? (
+                <>วันทำงานมีอัตราใช้จ่ายเฉลี่ย <span className="text-blue-400 font-bold">สูงกว่าวันพักผ่อน {(1 / parseFloat(workVsRest.ratio)).toFixed(1)} เท่า</span></>
+              ) : (
+                <>อัตราการใช้จ่ายเฉลี่ยต่อวัน <span className="text-slate-200 font-bold">ใกล้เคียงกัน</span> ทั้งวันทำงานและวันพักผ่อน</>
+              )
+            ) : (
+              'เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน'
+            )}
           </p>
         </div>
 

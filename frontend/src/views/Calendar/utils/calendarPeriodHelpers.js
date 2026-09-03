@@ -334,6 +334,26 @@ export function calculatePeriodMetrics({
 }
 
 /**
+ * Identifies if a given day-type object or string is work-related (Work, OT, Company Act, Shift)
+ */
+export function isWorkDayType(dt) {
+  if (!dt) return false;
+  const name = (dt.name || '').toLowerCase();
+  const label = (dt.label || '').toLowerCase();
+  const id = (dt.id || '').toLowerCase();
+
+  // Explicit code / name / id identifiers
+  if (name === 'workday' || name === 'work' || name === 'ot' || name === 'company_act') return true;
+  if (id === 'workday' || id === 'work' || id === 'ot') return true;
+
+  // Keyword matches in label (Thai / English)
+  if (label.includes('ทำงาน') || label.includes('ot') || label.includes('โอที') || label.includes('กะ')) return true;
+  if (label.includes('กิจกรรม บ') || label.includes('กิจกรรมบริษัท') || label.includes('สัมมนา')) return true;
+
+  return false;
+}
+
+/**
  * Calculates Day-of-Week and Work vs Rest Day Correlations
  */
 export function calculateTemporalInsights({
@@ -489,12 +509,21 @@ export function calculateTemporalInsights({
     }))
     .sort((a, b) => b.totalExpense - a.totalExpense);
 
-  // Quick Work vs Rest Day Summary
-  const workStats = activeDayTypes.find(dt => dt.id === 'work' || dt.name === 'work' || dt.label.includes('ทำงาน'));
-  const restStatsList = activeDayTypes.filter(dt => dt !== workStats);
-  const restTotalDays = restStatsList.reduce((acc, dt) => acc + dt.daysCount, 0);
-  const restTotalExpense = restStatsList.reduce((acc, dt) => acc + dt.totalExpense, 0);
+  // Work vs Rest Day Summary (Accurately group all work-related and rest-related day types)
+  const workDayTypes = activeDayTypes.filter(isWorkDayType);
+  const restDayTypes = activeDayTypes.filter(dt => !isWorkDayType(dt));
+
+  const workTotalDays = workDayTypes.reduce((acc, dt) => acc + dt.daysCount, 0);
+  const workTotalExpense = workDayTypes.reduce((acc, dt) => acc + dt.totalExpense, 0);
+  const workAvgExpense = workTotalDays > 0 ? Math.round(workTotalExpense / workTotalDays) : 0;
+
+  const restTotalDays = restDayTypes.reduce((acc, dt) => acc + dt.daysCount, 0);
+  const restTotalExpense = restDayTypes.reduce((acc, dt) => acc + dt.totalExpense, 0);
   const restAvgExpense = restTotalDays > 0 ? Math.round(restTotalExpense / restTotalDays) : 0;
+
+  const ratio = workAvgExpense > 0
+    ? (restAvgExpense / workAvgExpense).toFixed(1)
+    : (restAvgExpense > 0 ? '∞' : '1.0');
 
   // Month cycle ratios
   Object.values(monthCycleStats).forEach(c => {
@@ -506,13 +535,15 @@ export function calculateTemporalInsights({
     dayOfWeekStats,
     activeDayTypes,
     workVsRest: {
-      workDays: workStats?.daysCount || 0,
-      workTotalExpense: workStats?.totalExpense || 0,
-      workAvgExpense: workStats?.avgExpense || 0,
+      workDays: workTotalDays,
+      workTotalExpense: workTotalExpense,
+      workAvgExpense: workAvgExpense,
       restDays: restTotalDays,
       restTotalExpense: restTotalExpense,
       restAvgExpense: restAvgExpense,
-      ratio: workStats?.avgExpense > 0 ? (restAvgExpense / workStats.avgExpense).toFixed(1) : '1.0'
+      ratio,
+      workDayTypes,
+      restDayTypes
     },
     monthCycleStats
   };
