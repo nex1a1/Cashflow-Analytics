@@ -10,16 +10,18 @@ const fs_1 = __importDefault(require("fs"));
 const child_process_1 = require("child_process");
 const schema_1 = require("./src/models/schema");
 const api_1 = __importDefault(require("./src/routes/api"));
-const backupController_1 = require("./src/controllers/backupController");
+const backupService_1 = __importDefault(require("./src/services/backupService"));
 const app = (0, express_1.default)();
 // Middlewares
 app.use((0, cors_1.default)());
 app.use(express_1.default.json({ limit: '50mb' }));
 // Initialize Database Schema
 (0, schema_1.initSchema)();
-// Auto-backup on startup (optional but recommended)
+// Auto-backup on startup
 console.log('📦 Initializing auto-backup...');
-(0, backupController_1.performBackup)({}, { status: () => ({ json: () => { } }) });
+backupService_1.default.createBackup().catch(err => {
+    console.warn('⚠️ Startup auto-backup failed:', err.message);
+});
 // Routes
 app.use('/api', api_1.default);
 // Static Frontend Asset Serving
@@ -91,7 +93,9 @@ if (process.stdin.isTTY) {
             }
             else if (k === 'b') {
                 console.log('\n📦 Triggering manual database backup...');
-                (0, backupController_1.performBackup)({}, { status: () => ({ json: (data) => console.log('✅ Backup result:', data) }) });
+                backupService_1.default.createBackup()
+                    .then(data => console.log('✅ Backup result:', data))
+                    .catch(err => console.error('❌ Backup failed:', err.message));
             }
             else if (k === 'q' || key === '\u0003') { // q or Ctrl+C
                 console.log('\n👋 Shutting down Cashflow Shark. Goodbye!');

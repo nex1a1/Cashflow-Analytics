@@ -30,7 +30,11 @@ interface WorkLifeAnalysisItem {
   avg_expense: number;
 }
 
-
+/**
+ * Common SQL filter clause when excludeFuture is enabled:
+ * Includes transactions up to today, or current month's income and essential housing/rent expenses.
+ */
+const FUTURE_EXCLUSION_SQL = `(t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
 
 class AnalyticsService {
   /**
@@ -60,7 +64,7 @@ class AnalyticsService {
         query += ` AND t.date <= ?`;
         params.push(endDate);
       }
-      query += ` AND (t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
+      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
     } else {
       query = `
         SELECT 
@@ -123,7 +127,7 @@ class AnalyticsService {
         query += ` AND t.date <= ?`;
         params.push(endDate);
       }
-      query += ` AND (t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
+      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
       query += ` GROUP BY c.id ORDER BY amount DESC`;
     } else {
       query = `
@@ -196,7 +200,7 @@ class AnalyticsService {
         query += ` AND t.date <= ?`;
         params.push(endDate);
       }
-      query += ` AND (t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
+      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
       query += ` GROUP BY month ORDER BY month ASC`;
     } else {
       query = `
@@ -246,7 +250,7 @@ class AnalyticsService {
         groupQuery += ` AND t.date <= ?`;
         groupParams.push(endDate);
       }
-      groupQuery += ` AND (t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
+      groupQuery += ` AND ${FUTURE_EXCLUSION_SQL}`;
       groupQuery += ` GROUP BY month, group_id`;
     } else {
       groupQuery = `

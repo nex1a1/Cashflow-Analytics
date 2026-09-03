@@ -181,10 +181,11 @@ class TransactionService {
         return rows.map(r => r.period);
     }
     /**
-     * Search transactions using Full-Text Search (FTS5)
+     * Search transactions using Full-Text Search (FTS5) with safe sanitization and fallback
      */
     search(query) {
-        if (!query)
+        const raw = (query || '').trim();
+        if (!raw)
             return [];
         // Check if FTS index is empty but transactions exist (need first-time sync)
         const ftsCount = db_1.default.prepare("SELECT COUNT(*) as count FROM transactions_fts").get().count;
@@ -193,19 +194,55 @@ class TransactionService {
             console.log('🔄 Rebuilding Search Index (FTS5)...');
             db_1.default.exec("INSERT INTO transactions_fts(rowid, id, description) SELECT rowid, id, description FROM transactions WHERE is_deleted = 0");
         }
-        const searchToken = query.replace(/"/g, '""');
-        const rows = db_1.default.prepare(`
-      SELECT 
-        t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
-        c.name as category, cg.type as group_type
-      FROM transactions_fts f
-      JOIN transactions t ON f.rowid = t.rowid
-      JOIN categories c ON t.category_id = c.id
-      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-      WHERE transactions_fts MATCH ? AND t.is_deleted = 0
-      ORDER BY rank
-    `).all(`"${searchToken}"*`);
-        return rows;
+        // Sanitize query to avoid FTS5 syntax errors
+        const sanitized = raw
+            .replace(/["'*(){}\[\]^:?+\-~]/g, ' ')
+            .replace(/\b(AND|OR|NOT|NEAR)\b/gi, ' ')
+            .trim();
+        const tokens = sanitized.split(/\s+/).filter(Boolean);
+        if (tokens.length === 0) {
+            // If only symbols were entered, fallback directly to LIKE
+            return db_1.default.prepare(`
+        SELECT 
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          c.name as category, cg.type as group_type
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+        WHERE (t.description LIKE ? OR c.name LIKE ?) AND t.is_deleted = 0
+        ORDER BY t.date DESC
+        LIMIT 50
+      `).all(`%${raw}%`, `%${raw}%`);
+        }
+        const ftsQuery = tokens.map(t => `"${t}"*`).join(' ');
+        try {
+            const rows = db_1.default.prepare(`
+        SELECT 
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          c.name as category, cg.type as group_type
+        FROM transactions_fts f
+        JOIN transactions t ON f.rowid = t.rowid
+        JOIN categories c ON t.category_id = c.id
+        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+        WHERE transactions_fts MATCH ? AND t.is_deleted = 0
+        ORDER BY rank
+      `).all(ftsQuery);
+            return rows;
+        }
+        catch (ftsErr) {
+            console.warn('⚠️ FTS5 search query error, falling back to LIKE:', ftsErr.message);
+            return db_1.default.prepare(`
+        SELECT 
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          c.name as category, cg.type as group_type
+        FROM transactions t
+        JOIN categories c ON t.category_id = c.id
+        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+        WHERE (t.description LIKE ? OR c.name LIKE ?) AND t.is_deleted = 0
+        ORDER BY t.date DESC
+        LIMIT 50
+      `).all(`%${raw}%`, `%${raw}%`);
+        }
     }
     /**
      * Returns aggregated frequent transactions for all-time suggestions.

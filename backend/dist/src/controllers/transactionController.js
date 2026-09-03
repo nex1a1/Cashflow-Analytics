@@ -45,7 +45,10 @@ exports.upsertTransactions = upsertTransactions;
 const deleteTransaction = (req, res) => {
     const { id } = req.params;
     try {
-        transactionService_1.default.delete(id);
+        const result = transactionService_1.default.delete(id);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
         res.json({ success: true });
     }
     catch (err) {

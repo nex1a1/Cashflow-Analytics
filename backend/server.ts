@@ -5,7 +5,7 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { initSchema } from './src/models/schema';
 import apiRoutes from './src/routes/api';
-import { performBackup } from './src/controllers/backupController';
+import backupService from './src/services/backupService';
 
 const app = express();
 
@@ -16,9 +16,11 @@ app.use(express.json({ limit: '50mb' }));
 // Initialize Database Schema
 initSchema();
 
-// Auto-backup on startup (optional but recommended)
+// Auto-backup on startup
 console.log('📦 Initializing auto-backup...');
-performBackup({}, { status: () => ({ json: () => {} }) } as any);
+backupService.createBackup().catch(err => {
+  console.warn('⚠️ Startup auto-backup failed:', err.message);
+});
 
 // Routes
 app.use('/api', apiRoutes);
@@ -94,7 +96,9 @@ if (process.stdin.isTTY) {
         console.log(`\n🌐 Opening browser at ${serverUrl}...`);
       } else if (k === 'b') {
         console.log('\n📦 Triggering manual database backup...');
-        performBackup({}, { status: () => ({ json: (data: any) => console.log('✅ Backup result:', data) }) } as any);
+        backupService.createBackup()
+          .then(data => console.log('✅ Backup result:', data))
+          .catch(err => console.error('❌ Backup failed:', err.message));
       } else if (k === 'q' || key === '\u0003') { // q or Ctrl+C
         console.log('\n👋 Shutting down Cashflow Shark. Goodbye!');
         process.exit(0);
