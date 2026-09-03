@@ -45,16 +45,17 @@ export default function PeriodOverview({
     });
   }, [monthsList, transactions, categories, cashflowGroups, dayTypes, dayTypeConfig]);
 
-  // 3. Compute Temporal Distributions (Work vs Rest)
+  // 3. Compute Temporal Distributions (Work vs Rest) & Food Stats
   const temporalData = useMemo(() => {
     return calculateTemporalInsights({
       monthsList,
       transactions,
       categories,
+      cashflowGroups,
       dayTypes,
       dayTypeConfig
     });
-  }, [monthsList, transactions, categories, dayTypes, dayTypeConfig]);
+  }, [monthsList, transactions, categories, cashflowGroups, dayTypes, dayTypeConfig]);
 
   // 4. Compute Need vs Want vs Savings Allocation Rhythm
   const allocationData = useMemo(() => {
@@ -118,7 +119,7 @@ export default function PeriodOverview({
         </button>
       </div>
 
-      {/* 2. Executive Temporal HUD (3 Metric Cards) */}
+      {/* 2. Executive Temporal HUD (3 Metric Cards: Net/Savings, Daily Burn, Daily Food) */}
       <PeriodExecutiveHUD
         periodIncome={metrics.periodIncome}
         periodExpense={metrics.periodExpense}
@@ -126,10 +127,8 @@ export default function PeriodOverview({
         savingsRate={metrics.savingsRate}
         cpaGrade={metrics.cpaGrade}
         averageDailyBurn={metrics.averageDailyBurn}
-        zeroSpendDaysCount={metrics.zeroSpendDaysCount}
-        zeroSpendPct={metrics.zeroSpendPct}
-        totalPeriodDays={metrics.totalPeriodDays}
         workVsRest={temporalData.workVsRest}
+        foodStats={temporalData.foodStats}
       />
 
       {/* 3. Condensed Financial Matrix Table (Monthly Flow) */}
@@ -146,6 +145,7 @@ export default function PeriodOverview({
       <TemporalInsights
         activeDayTypes={temporalData.activeDayTypes}
         workVsRest={temporalData.workVsRest}
+        dayOfWeekStats={temporalData.dayOfWeekStats}
         allocationData={allocationData}
       />
 

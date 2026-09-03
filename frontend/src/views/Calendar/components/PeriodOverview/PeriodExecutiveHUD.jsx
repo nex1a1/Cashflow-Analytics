@@ -1,6 +1,6 @@
 // src/views/Calendar/components/PeriodOverview/PeriodExecutiveHUD.jsx
 import React, { useMemo } from 'react';
-import { DollarSign, Flame, ShieldCheck, Award } from 'lucide-react';
+import { DollarSign, Flame, Award, UtensilsCrossed } from 'lucide-react';
 
 const formatVal = (val) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
@@ -11,10 +11,8 @@ export default function PeriodExecutiveHUD({
   savingsRate,
   cpaGrade,
   averageDailyBurn,
-  zeroSpendDaysCount,
-  zeroSpendPct,
-  totalPeriodDays,
-  workVsRest
+  workVsRest,
+  foodStats
 }) {
   // Burn Pace Status evaluation
   const burnPace = useMemo(() => {
@@ -75,7 +73,7 @@ export default function PeriodExecutiveHUD({
         </div>
       </div>
 
-      {/* 2. Average Daily Burn Rate with Work vs Rest Context */}
+      {/* 2. Total Daily Burn Rate with Work vs Rest Context */}
       <div className="bg-[#181818] p-4 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -99,11 +97,11 @@ export default function PeriodExecutiveHUD({
             <div className="flex items-center justify-between text-[11px]">
               <div className="text-blue-400 flex items-center gap-1">
                 <span className="text-[10px] text-slate-500 font-sans">วันทำงาน</span>
-                <span>฿{formatVal(workVsRest?.workAvgExpense || 0)}/ว.</span>
+                <span>฿{formatVal(workVsRest?.workAvgExpense || 0)} / วัน</span>
               </div>
               <div className="text-emerald-400 flex items-center gap-1">
                 <span className="text-[10px] text-slate-500 font-sans">วันพักผ่อน</span>
-                <span>฿{formatVal(workVsRest?.restAvgExpense || 0)}/ว.</span>
+                <span>฿{formatVal(workVsRest?.restAvgExpense || 0)} / วัน</span>
               </div>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#202020] text-slate-400">
@@ -114,33 +112,37 @@ export default function PeriodExecutiveHUD({
         </div>
       </div>
 
-      {/* 3. Zero-Spend Days Discipline */}
+      {/* 3. Daily Food & Dining Burn Rate */}
       <div className="bg-[#181818] p-4 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            วันปลอดค่าใช้จ่าย (ZERO-SPEND)
+            <UtensilsCrossed className="w-3.5 h-3.5 text-amber-400" />
+            ค่าอาหารเฉลี่ยต่อวัน (DAILY FOOD)
           </span>
-          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.2 bg-emerald-950/40 border border-emerald-800/40">
-            {zeroSpendPct}% ของรอบ
+          <span className="text-[10px] font-mono font-bold text-amber-400 px-1.5 py-0.2 bg-amber-950/40 border border-amber-800/40">
+            {foodStats?.foodPctOfExpense || 0}% ของรายจ่าย
           </span>
         </div>
 
         <div className="mt-2.5">
-          <div className="text-2xl font-black text-emerald-400 font-mono tabular-nums tracking-tight">
-            {zeroSpendDaysCount} <span className="text-xs font-normal text-slate-400">วัน (จาก {totalPeriodDays} วัน)</span>
+          <div className="text-2xl font-black text-amber-400 font-mono tabular-nums tracking-tight">
+            ฿{formatVal(foodStats?.foodDailyAvg || 0)} <span className="text-xs font-normal text-slate-400">/ วัน</span>
           </div>
 
           <div className="mt-2 flex flex-col gap-1 border-t border-[#252525] pt-2 text-xs font-mono">
-            <div className="flex items-center justify-between text-[11px] text-slate-400">
-              <span className="font-sans">วันที่มีการจ่ายเงิน</span>
-              <span className="font-bold text-slate-200">{totalPeriodDays - zeroSpendDaysCount} วัน ({100 - zeroSpendPct}%)</span>
+            <div className="flex items-center justify-between text-[11px]">
+              <div className="text-blue-400 flex items-center gap-1">
+                <span className="text-[10px] text-slate-500 font-sans">วันทำงาน</span>
+                <span>฿{formatVal(foodStats?.foodWorkDailyAvg || 0)} / วัน</span>
+              </div>
+              <div className="text-emerald-400 flex items-center gap-1">
+                <span className="text-[10px] text-slate-500 font-sans">วันพักผ่อน</span>
+                <span>฿{formatVal(foodStats?.foodRestDailyAvg || 0)} / วัน</span>
+              </div>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#202020] text-slate-400">
-              <span className="font-sans">วินัยการใช้จ่าย</span>
-              <span className="font-bold text-emerald-400 font-sans">
-                {zeroSpendPct >= 40 ? 'ดีเยี่ยม (ปลอดจ่ายสูง)' : (zeroSpendPct >= 20 ? 'มาตรฐานดี' : 'จ่ายเกือบทุกวัน')}
-              </span>
+              <span className="font-sans">งบกินรวมทั้งรอบ</span>
+              <span className="font-bold text-amber-400 font-mono">฿{formatVal(foodStats?.totalFoodExpense || 0)}</span>
             </div>
           </div>
         </div>

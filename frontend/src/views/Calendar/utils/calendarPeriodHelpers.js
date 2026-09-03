@@ -354,12 +354,26 @@ export function isWorkDayType(dt) {
 }
 
 /**
+ * Identifies if a category or transaction is Food / Dining related
+ */
+export function isFoodCategory(catObj, groupObj, tx) {
+  const catName = (catObj?.name || tx?.category || '').toLowerCase();
+  const groupName = (groupObj?.name || '').toLowerCase();
+
+  // Match keywords in group or category
+  if (groupName.includes('อาหาร') || groupName.includes('กิน') || groupName.includes('food') || groupName.includes('dining')) return true;
+  if (catName.includes('อาหาร') || catName.includes('กิน') || catName.includes('food') || catName.includes('เครื่องดื่ม') || catName.includes('กาแฟ') || catName.includes('cafe') || catName.includes('ขนม')) return true;
+  return false;
+}
+
+/**
  * Calculates Day-of-Week and Work vs Rest Day Correlations
  */
 export function calculateTemporalInsights({
   monthsList,
   transactions,
   categories,
+  cashflowGroups = [],
   dayTypes = {},
   dayTypeConfig = []
 }) {
@@ -444,6 +458,9 @@ export function calculateTemporalInsights({
 
   // Tally expenses into day-of-week, cycle, and day-type
   let totalPeriodExpense = 0;
+  let totalFoodExpense = 0;
+  let workFoodExpense = 0;
+  let restFoodExpense = 0;
 
   transactions.forEach(t => {
     if (!t.date || t.date.length < 7) return;
@@ -485,6 +502,18 @@ export function calculateTemporalInsights({
     if (dayTypeMap[assignedTypeId]) {
       dayTypeMap[assignedTypeId].totalExpense += amt;
       dayTypeMap[assignedTypeId].txCount += 1;
+    }
+
+    // Food expense tracking
+    const groupObj = cashflowGroups.find(g => g.id === catObj?.cashflowGroup);
+    if (isFoodCategory(catObj, groupObj, t)) {
+      totalFoodExpense += amt;
+      const dtObj = dayTypeMap[assignedTypeId];
+      if (isWorkDayType(dtObj)) {
+        workFoodExpense += amt;
+      } else {
+        restFoodExpense += amt;
+      }
     }
   });
 
@@ -531,6 +560,12 @@ export function calculateTemporalInsights({
     c.pctOfTotal = totalPeriodExpense > 0 ? Math.round((c.totalExpense / totalPeriodExpense) * 100) : 0;
   });
 
+  const totalDays = workTotalDays + restTotalDays;
+  const foodDailyAvg = totalDays > 0 ? Math.round(totalFoodExpense / totalDays) : 0;
+  const foodPctOfExpense = totalPeriodExpense > 0 ? Math.round((totalFoodExpense / totalPeriodExpense) * 100) : 0;
+  const foodWorkDailyAvg = workTotalDays > 0 ? Math.round(workFoodExpense / workTotalDays) : 0;
+  const foodRestDailyAvg = restTotalDays > 0 ? Math.round(restFoodExpense / restTotalDays) : 0;
+
   return {
     dayOfWeekStats,
     activeDayTypes,
@@ -544,6 +579,15 @@ export function calculateTemporalInsights({
       ratio,
       workDayTypes,
       restDayTypes
+    },
+    foodStats: {
+      totalFoodExpense,
+      foodDailyAvg,
+      foodPctOfExpense,
+      workFoodExpense,
+      restFoodExpense,
+      foodWorkDailyAvg,
+      foodRestDailyAvg
     },
     monthCycleStats
   };
@@ -619,7 +663,7 @@ export function calculateAllocationBreakdown({
   const topWantCats = allCatList.filter(c => c.allocation === 'want').slice(0, 3);
 
   // Ranked categories with percentage of total allocation
-  const rankedCategories = allCatList.slice(0, 7).map(c => {
+  const rankedCategories = allCatList.slice(0, 10).map(c => {
     const groupTotal = c.allocation === 'need' ? needTotal : (c.allocation === 'want' ? wantTotal : (savingsGroupTotal > 0 ? savingsGroupTotal : totalSavings));
     const pctOfGroup = groupTotal > 0 ? Math.round((c.total / groupTotal) * 100) : 0;
     const pctOfGrand = grandTotal > 0 ? Math.round((c.total / grandTotal) * 100) : 0;

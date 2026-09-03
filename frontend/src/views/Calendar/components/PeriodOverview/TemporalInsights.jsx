@@ -1,12 +1,13 @@
 // src/views/Calendar/components/PeriodOverview/TemporalInsights.jsx
 import React from 'react';
-import { Briefcase, Coffee, PieChart, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react';
+import { Briefcase, Coffee, PieChart } from 'lucide-react';
 
 const formatVal = (val) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 export default function TemporalInsights({
   activeDayTypes,
   workVsRest,
+  dayOfWeekStats = [],
   allocationData
 }) {
   const {
@@ -21,12 +22,51 @@ export default function TemporalInsights({
     benchmarks = { needDelta: 0, wantDelta: 0, savingsDelta: 0 }
   } = allocationData || {};
 
+  const workAvg = workVsRest?.workAvgExpense || 0;
+  const restAvg = workVsRest?.restAvgExpense || 0;
+
+  // Peak Day of Week Calculation
+  const maxDowAvg = dayOfWeekStats && dayOfWeekStats.length > 0
+    ? Math.max(...dayOfWeekStats.map(d => d.avgExpense || 0), 0)
+    : 0;
+  const peakDow = dayOfWeekStats && dayOfWeekStats.length > 0
+    ? dayOfWeekStats.find(d => d.avgExpense === maxDowAvg && d.avgExpense > 0)
+    : null;
+
+  let humanInsightText = 'เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน';
+  if (workAvg > 0 && restAvg > 0) {
+    if (restAvg > workAvg) {
+      const diffPct = Math.round(((restAvg - workAvg) / workAvg) * 100);
+      humanInsightText = (
+        <span>
+          วันหยุด/พักผ่อน ใช้จ่ายสูงกว่าวันทำงาน{' '}
+          <span className="text-emerald-400 font-bold">+{diffPct}% ({workVsRest.ratio} เท่า)</span>
+        </span>
+      );
+    } else if (workAvg > restAvg) {
+      const diffPct = Math.round(((workAvg - restAvg) / restAvg) * 100);
+      const ratioInvert = (workAvg / restAvg).toFixed(1);
+      humanInsightText = (
+        <span>
+          วันทำงาน ใช้จ่ายสูงกว่าวันหยุด/พักผ่อน{' '}
+          <span className="text-blue-400 font-bold">+{diffPct}% ({ratioInvert} เท่า)</span>
+        </span>
+      );
+    } else {
+      humanInsightText = (
+        <span>
+          อัตราการใช้จ่ายเฉลี่ยต่อวัน <span className="text-slate-200 font-bold">เท่ากัน</span> ทั้งวันทำงานและวันพักผ่อน
+        </span>
+      );
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-stretch">
       {/* ─────────────────────────────────────────────────────────────
           1. LEFT CARD: WORK-LIFE FINANCIALS
       ────────────────────────────────────────────────────────────── */}
-      <div className="bg-[#181818] border border-[#2d2d2d] p-4 flex flex-col justify-between space-y-3.5">
+      <div className="bg-[#181818] border border-[#2d2d2d] p-4 flex flex-col justify-start space-y-3.5">
         <div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -35,24 +75,14 @@ export default function TemporalInsights({
                 ความสัมพันธ์ประเภทวัน vs รายจ่าย (WORK-LIFE FINANCIALS)
               </h3>
             </div>
-            {workVsRest.workAvgExpense > 0 && workVsRest.restAvgExpense > 0 && (
+            {workAvg > 0 && restAvg > 0 && (
               <span className="text-[10px] font-mono px-2 py-0.5 border border-[#3B82F6]/30 bg-[#3B82F6]/10 text-blue-400">
                 วันหยุด : วันทำงาน = {workVsRest.ratio}x
               </span>
             )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            {workVsRest.workAvgExpense > 0 && workVsRest.restAvgExpense > 0 ? (
-              parseFloat(workVsRest.ratio) >= 1.05 ? (
-                <>วันพักผ่อนมีอัตราใช้จ่ายเฉลี่ย <span className="text-emerald-400 font-bold">สูงกว่าวันทำงาน {workVsRest.ratio} เท่า</span></>
-              ) : parseFloat(workVsRest.ratio) <= 0.95 ? (
-                <>วันทำงานมีอัตราใช้จ่ายเฉลี่ย <span className="text-blue-400 font-bold">สูงกว่าวันพักผ่อน {(1 / parseFloat(workVsRest.ratio)).toFixed(1)} เท่า</span></>
-              ) : (
-                <>อัตราการใช้จ่ายเฉลี่ยต่อวัน <span className="text-slate-200 font-bold">ใกล้เคียงกัน</span> ทั้งวันทำงานและวันพักผ่อน</>
-              )
-            ) : (
-              'เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน'
-            )}
+            {humanInsightText}
           </p>
         </div>
 
@@ -105,6 +135,63 @@ export default function TemporalInsights({
           </div>
         </div>
 
+        {/* 7-Day Day-of-Week Compact Strip (จันทร์ - อาทิตย์) */}
+        {dayOfWeekStats && dayOfWeekStats.length === 7 && (
+          <div className="space-y-1.5 border-t border-[#252525] pt-2.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-[#da291c] rounded-none shrink-0" />
+                สัดส่วนการใช้จ่าย 7 วัน (จันทร์ - อาทิตย์)
+              </span>
+              {peakDow && peakDow.avgExpense > 0 && (
+                <span className="font-mono text-slate-400">
+                  พีคสุด: <strong className="text-[#da291c]">{peakDow.fullLabel}</strong> (฿{formatVal(peakDow.avgExpense)}/วัน)
+                </span>
+              )}
+            </div>
+
+            {/* 7-Day Hairline Matrix Strip */}
+            <div className="grid grid-cols-7 gap-px bg-[#252525] border border-[#252525]">
+              {[1, 2, 3, 4, 5, 6, 0].map((dowIdx) => {
+                const item = dayOfWeekStats[dowIdx];
+                if (!item) return null;
+                const isPeak = peakDow && peakDow.dow === item.dow && item.avgExpense > 0;
+                const isWeekend = item.dow === 0 || item.dow === 6;
+
+                return (
+                  <div
+                    key={item.dow}
+                    className={`py-1.5 px-1 flex flex-col items-center justify-center text-center transition-none cursor-default select-none ${
+                      isPeak
+                        ? 'bg-[#221313] border-t-2 border-t-[#da291c]'
+                        : isWeekend
+                          ? 'bg-[#161616]'
+                          : 'bg-[#131313]'
+                    }`}
+                    title={`วัน${item.fullLabel}: เฉลี่ย ฿${formatVal(item.avgExpense)}/วัน (รวม ฿${formatVal(item.totalExpense)}, ${item.dayOccurrences} วัน, ${item.pctOfTotal}% ของรอบ)`}
+                  >
+                    <span className={`text-[10px] font-black leading-none ${
+                      isPeak ? 'text-[#da291c]' : isWeekend ? 'text-red-400' : 'text-slate-300'
+                    }`}>
+                      {item.label}
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold tabular-nums mt-1 leading-none ${
+                      isPeak ? 'text-rose-300' : 'text-slate-200'
+                    }`}>
+                      ฿{formatVal(item.avgExpense)}
+                    </span>
+                    {item.pctOfTotal > 0 && (
+                      <span className="text-[8.5px] font-mono text-slate-500 mt-0.5 leading-none">
+                        {item.pctOfTotal}%
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Detailed Breakdown of Active Day Types */}
         <div className="space-y-1.5 border-t border-[#252525] pt-3">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -134,7 +221,7 @@ export default function TemporalInsights({
       {/* ─────────────────────────────────────────────────────────────
           2. RIGHT CARD: ALLOCATION RHYTHM (DENSE & BALANCED)
       ────────────────────────────────────────────────────────────── */}
-      <div className="bg-[#181818] border border-[#2d2d2d] p-4 flex flex-col justify-between space-y-3.5">
+      <div className="bg-[#181818] border border-[#2d2d2d] p-4 flex flex-col justify-start space-y-3.5">
         <div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
