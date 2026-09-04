@@ -14,7 +14,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
     let inc = 0, exp = 0;
     displayTransactions.forEach(t => {
       const type = catTypeMap[t.category_id] || catTypeMap[t.category];
-      const amt = parseFloat(t.amount) || 0;
+      const amt = Number.parseFloat(t.amount) || 0;
       if (type === 'income') inc += amt;
       else exp += amt;
     });
@@ -44,7 +44,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
       if (cat) {
         const groupId = cat.cashflow_group_id || cat.cashflowGroup;
         if (groupId && breakdowns[groupId]) {
-          const amt = parseFloat(t.amount) || 0;
+          const amt = Number.parseFloat(t.amount) || 0;
           breakdowns[groupId].total += amt;
           breakdowns[groupId].txCount += 1;
           
@@ -141,9 +141,10 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
 
     return (
       <div key={g.id} className="w-[235px] shrink-0 flex flex-col">
-        <div 
+        <button 
+          type="button"
           onClick={handleCardClick}
-          className={`group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden shadow-sm cursor-pointer select-none transition-all duration-150 ${
+          className={`text-left group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden shadow-sm cursor-pointer select-none transition-all duration-150 ${
             isActive 
               ? `${activeBgColor} ${activeBorderColor} shadow-[0_0_12px_${activeGlowColor}] z-10` 
               : 'bg-[#121212] hover:bg-[#1a1a1a] border-[#303030] hover:border-[#444444]'
@@ -261,7 +262,7 @@ export function useLedgerStats(displayTransactions, categories, cashflowGroups, 
               })}
             </div>
           )}
-        </div>
+        </button>
       </div>
     );
   };

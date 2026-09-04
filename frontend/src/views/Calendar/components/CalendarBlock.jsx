@@ -119,7 +119,7 @@ export default function CalendarBlock({
         </div>
 
         <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] flex-1">
-          {Array(firstDayOfMonth).fill(null).map((_, i) => (
+          {new Array(firstDayOfMonth).fill(null).map((_, i) => (
             <div 
               key={`blank-${i}`} 
               className="min-h-[120px] 2xl:min-h-[140px] bg-[#121212] bg-[radial-gradient(rgba(218,41,28,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 

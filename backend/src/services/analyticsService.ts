@@ -175,8 +175,7 @@ class AnalyticsService {
    * Get monthly aggregated data including group breakdown.
    * Utilizes v_monthly_summary and v_category_monthly.
    */
-  getMonthlyAggregation(startDate?: string, endDate?: string, excludeFuture?: boolean): MonthlyAggregationItem[] {
-    // 1. Get monthly totals
+  private fetchMonthlyTotals(startDate?: string, endDate?: string, excludeFuture?: boolean) {
     let query: string;
     const params: string[] = [];
 
@@ -220,14 +219,15 @@ class AnalyticsService {
       query += ` ORDER BY month ASC`;
     }
     
-    const rows = db.prepare(query).all(...params) as Array<{
+    return db.prepare(query).all(...params) as Array<{
       month: string;
       income: number | null;
       expense: number | null;
       savings: number | null;
     }>;
+  }
 
-    // 2. Get group totals per month
+  private fetchMonthlyGroupTotals(startDate?: string, endDate?: string, excludeFuture?: boolean) {
     let groupQuery: string;
     const groupParams: string[] = [];
 
@@ -270,14 +270,22 @@ class AnalyticsService {
       groupQuery += ` GROUP BY month, group_id`;
     }
     
-    const groupRows = db.prepare(groupQuery).all(...groupParams) as Array<{
+    return db.prepare(groupQuery).all(...groupParams) as Array<{
       month: string;
       group_id: string;
       amount: number;
     }>;
+  }
 
-    // Map group amounts into the main rows
-    const result = rows.map(row => {
+  /**
+   * Get monthly aggregated data including group breakdown.
+   * Utilizes v_monthly_summary and v_category_monthly.
+   */
+  getMonthlyAggregation(startDate?: string, endDate?: string, excludeFuture?: boolean): MonthlyAggregationItem[] {
+    const rows = this.fetchMonthlyTotals(startDate, endDate, excludeFuture);
+    const groupRows = this.fetchMonthlyGroupTotals(startDate, endDate, excludeFuture);
+
+    return rows.map(row => {
       const groups: Record<string, number> = {};
       groupRows.filter(g => g.month === row.month).forEach(g => {
         groups[g.group_id] = g.amount / 100;
@@ -291,8 +299,6 @@ class AnalyticsService {
         groups: groups
       };
     });
-
-    return result;
   }
 
   /**

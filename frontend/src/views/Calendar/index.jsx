@@ -50,7 +50,7 @@ export default function CalendarView({
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
       const [yearStr, monthStr] = filterPeriod.split('-');
-      return new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+      return new Date(Number.parseInt(yearStr, 10), Number.parseInt(monthStr, 10) - 1, 1);
     }
     return new Date();
   }, [filterPeriod]);
@@ -84,13 +84,13 @@ export default function CalendarView({
     }
 
     currentMonthTransactions.forEach(t => {
-      const txD = parseInt(t.date.split('-')[2], 10);
+      const txD = Number.parseInt(t.date.split('-')[2], 10);
       if (dayData[txD]) {
         const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
         const catId = catObj ? catObj.id : (t.category_id || t.category);
         if (excludedCategoryIds.has(catId)) return;
 
-        const amt = parseFloat(t.amount) || 0;
+        const amt = Number.parseFloat(t.amount) || 0;
         
         if (catObj?.type === 'income') {
           dayData[txD].inc += amt;
@@ -148,7 +148,7 @@ export default function CalendarView({
     
     currentMonthTransactions.forEach(t => {
       const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
-      const amt = parseFloat(t.amount) || 0;
+      const amt = Number.parseFloat(t.amount) || 0;
       const catId = catObj ? catObj.id : (t.category_id || t.category);
 
       if (!catsMap.has(catId)) {

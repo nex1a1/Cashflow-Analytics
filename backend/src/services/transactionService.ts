@@ -116,6 +116,57 @@ class TransactionService {
     return fuzzy ? fuzzy.category_id : null;
   }
 
+  private normalizeDate(dateStr?: string): string {
+    if (dateStr && dateStr.includes('/')) {
+      const [d, m, y] = dateStr.split('/');
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return dateStr || '';
+  }
+
+  private resolveCategoryId(tx: any): string | undefined {
+    let categoryId = tx.category_id;
+    if (!categoryId || categoryId === '') {
+      if (tx.category) {
+        categoryId = this.getCategoryIdByName(tx.category);
+      }
+      if (!categoryId) {
+        categoryId = this.suggestCategory(tx.description);
+      }
+    }
+    if (!categoryId) {
+      const fallback = db.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get() as { id: string } | undefined
+                    || db.prepare("SELECT id FROM categories LIMIT 1").get() as { id: string } | undefined;
+      categoryId = fallback?.id;
+    }
+    return categoryId;
+  }
+
+  private resolveAllocationType(categoryId?: string, currentAlloc?: string | null): string | null {
+    if (!categoryId) return currentAlloc ?? 'want';
+    const categoryGroup = db.prepare(`
+      SELECT cg.type 
+      FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `).get(categoryId) as { type: string } | undefined;
+
+    if (categoryGroup?.type === 'income') {
+      return null;
+    }
+    if (currentAlloc) {
+      return currentAlloc;
+    }
+    const groupDefault = db.prepare(`
+      SELECT cg.allocation_type 
+      FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `).get(categoryId) as { allocation_type: string } | undefined;
+    
+    return groupDefault?.allocation_type || 'want';
+  }
+
   upsertMany(transactions: any[]): void {
     const stmt = db.prepare(`
       INSERT INTO transactions (id, date, description, amount, category_id, allocation_type, updated_at)
@@ -132,55 +183,10 @@ class TransactionService {
 
     const transactionAction = db.transaction((txs: any[]) => {
       for (const tx of txs) {
-        // Convert date to YYYY-MM-DD if in DD/MM/YYYY
-        let date = tx.date;
-        if (date && date.includes('/')) {
-          const [d, m, y] = date.split('/');
-          date = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        }
-
-        // Amount to Satang (integer)
+        const date = this.normalizeDate(tx.date);
         const amountSatang = Math.round(tx.amount * 100);
-
-        // Category mapping logic
-        let categoryId = tx.category_id;
-        
-        if (!categoryId || categoryId === '') {
-          if (tx.category) {
-            categoryId = this.getCategoryIdByName(tx.category);
-          }
-          if (!categoryId) {
-            categoryId = this.suggestCategory(tx.description);
-          }
-        }
-
-        if (!categoryId) {
-          const fallback = db.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get() as { id: string } | undefined
-                        || db.prepare("SELECT id FROM categories LIMIT 1").get() as { id: string } | undefined;
-          categoryId = fallback?.id;
-        }
-
-        // Smart Allocation Type logic: 
-        let allocationType = tx.allocation_type;
-        const categoryGroup = db.prepare(`
-          SELECT cg.type 
-          FROM cashflow_groups cg
-          JOIN categories c ON c.cashflow_group_id = cg.id
-          WHERE c.id = ?
-        `).get(categoryId) as { type: string } | undefined;
-
-        if (categoryGroup?.type === 'income') {
-          allocationType = null;
-        } else if (!allocationType) {
-          const groupDefault = db.prepare(`
-            SELECT cg.allocation_type 
-            FROM cashflow_groups cg
-            JOIN categories c ON c.cashflow_group_id = cg.id
-            WHERE c.id = ?
-          `).get(categoryId) as { allocation_type: string } | undefined;
-          
-          allocationType = groupDefault?.allocation_type || 'want';
-        }
+        const categoryId = this.resolveCategoryId(tx);
+        const allocationType = this.resolveAllocationType(categoryId, tx.allocation_type);
 
         stmt.run(
           tx.id || crypto.randomUUID(),

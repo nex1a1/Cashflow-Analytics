@@ -50,7 +50,7 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     });
     expenseTransactions.forEach(t => {
       if (totals[t.date] !== undefined) {
-        totals[t.date] += parseFloat(t.amount) || 0;
+        totals[t.date] += Number.parseFloat(t.amount) || 0;
       }
     });
     return totals;
@@ -63,14 +63,14 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     });
     expenseTransactions.forEach(t => {
       if (totals[t.category] !== undefined) {
-        totals[t.category] += parseFloat(t.amount) || 0;
+        totals[t.category] += Number.parseFloat(t.amount) || 0;
       }
     });
     return totals;
   }, [activeCategories, expenseTransactions]);
 
   const grandTotal = useMemo(() =>
-    expenseTransactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0),
+    expenseTransactions.reduce((sum, t) => sum + (Number.parseFloat(t.amount) || 0), 0),
     [expenseTransactions]);
 
   const maxCellValue = useMemo(() => {
@@ -78,7 +78,7 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     sortedDates.forEach(date => {
       activeCategories.forEach(cat => {
         const items = cellMap[date]?.[cat.name] || [];
-        const sum = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+        const sum = items.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
         if (sum > max) max = sum;
       });
     });
@@ -90,15 +90,15 @@ export function useHeatmapEngine(displayTransactions, categories, allDates) {
     if (dateStr.includes('-')) {
       const parts = dateStr.split('-');
       if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
-      yearNum  = parseInt(parts[0], 10);
-      monthIdx = parseInt(parts[1], 10) - 1;
-      dayNum   = parseInt(parts[2], 10);
+      yearNum  = Number.parseInt(parts[0], 10);
+      monthIdx = Number.parseInt(parts[1], 10) - 1;
+      dayNum   = Number.parseInt(parts[2], 10);
     } else {
       const parts = dateStr.split('/');
       if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
-      dayNum   = parseInt(parts[0], 10);
-      monthIdx = parseInt(parts[1], 10) - 1;
-      yearNum  = parseInt(parts[2], 10);
+      dayNum   = Number.parseInt(parts[0], 10);
+      monthIdx = Number.parseInt(parts[1], 10) - 1;
+      yearNum  = Number.parseInt(parts[2], 10);
     }
     if (yearNum > 2500) yearNum -= 543;
     const dateObj = new Date(yearNum, monthIdx, dayNum);

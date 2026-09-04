@@ -33,10 +33,10 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
     }
     return sorted.map(ym => {
       const [y, m] = ym.split('-');
-      const mIdx = parseInt(m, 10) - 1;
+      const mIdx = Number.parseInt(m, 10) - 1;
       return {
         monthStr: ym,
-        year: parseInt(y, 10),
+        year: Number.parseInt(y, 10),
         monthIndex: mIdx,
         monthLabel: `${THAI_MONTHS[mIdx]} ${y}`,
         shortLabel: `${THAI_SHORT_MONTHS[mIdx]} ${y.slice(-2)}`
@@ -46,7 +46,7 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
 
   // Full Year e.g. "2026"
   if (filterPeriod.match(/^\d{4}$/)) {
-    const y = parseInt(filterPeriod, 10);
+    const y = Number.parseInt(filterPeriod, 10);
     return Array.from({ length: 12 }, (_, i) => {
       const mNum = (i + 1).toString().padStart(2, '0');
       return {
@@ -62,7 +62,7 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
   // Half-Year e.g. "2026-H1", "2026-H2"
   if (filterPeriod.match(/^\d{4}-H[12]$/)) {
     const [yStr, hStr] = filterPeriod.split('-');
-    const y = parseInt(yStr, 10);
+    const y = Number.parseInt(yStr, 10);
     const startM = hStr === 'H1' ? 0 : 6;
     return Array.from({ length: 6 }, (_, idx) => {
       const i = startM + idx;
@@ -80,8 +80,8 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
   // Quarter e.g. "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"
   if (filterPeriod.match(/^\d{4}-Q[1-4]$/)) {
     const [yStr, qStr] = filterPeriod.split('-Q');
-    const y = parseInt(yStr, 10);
-    const q = parseInt(qStr, 10);
+    const y = Number.parseInt(yStr, 10);
+    const q = Number.parseInt(qStr, 10);
     const startM = (q - 1) * 3;
     return Array.from({ length: 3 }, (_, idx) => {
       const i = startM + idx;
@@ -101,10 +101,10 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
     const months = filterPeriod.split(',').filter(Boolean).sort((a, b) => a.localeCompare(b));
     return months.map(ym => {
       const [y, m] = ym.split('-');
-      const mIdx = parseInt(m, 10) - 1;
+      const mIdx = Number.parseInt(m, 10) - 1;
       return {
         monthStr: ym,
-        year: parseInt(y, 10),
+        year: Number.parseInt(y, 10),
         monthIndex: mIdx,
         monthLabel: `${THAI_MONTHS[mIdx]} ${y}`,
         shortLabel: `${THAI_SHORT_MONTHS[mIdx]} ${y.slice(-2)}`
@@ -198,8 +198,8 @@ export function calculatePeriodMetrics({
   // Month matrices map: monthStr -> monthly stats
   const monthlyMatrices = monthsList.map(item => {
     const [yStr, mStr] = item.monthStr.split('-');
-    const y = parseInt(yStr, 10);
-    const m = parseInt(mStr, 10) - 1;
+    const y = Number.parseInt(yStr, 10);
+    const m = Number.parseInt(mStr, 10) - 1;
     const daysInMonth = new Date(y, m + 1, 0).getDate();
     const firstDayOfMonth = new Date(y, m, 1).getDay();
 
@@ -223,7 +223,7 @@ export function calculatePeriodMetrics({
     const ym = t.date.substring(0, 7);
     const dStr = t.date;
     const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
-    const amt = parseFloat(t.amount) || 0;
+    const amt = Number.parseFloat(t.amount) || 0;
     const isInc = catObj?.type === 'income';
 
     if (!dailyMap.has(dStr)) {
@@ -232,7 +232,7 @@ export function calculatePeriodMetrics({
     const dayRecord = dailyMap.get(dStr);
 
     const mObj = monthLookup.get(ym);
-    const dayNum = parseInt(dStr.split('-')[2], 10);
+    const dayNum = Number.parseInt(dStr.split('-')[2], 10);
 
     if (isInc) {
       dayRecord.income += amt;
@@ -420,8 +420,8 @@ export function calculateTemporalInsights({
   // Count calendar days distribution for every month in period
   monthsList.forEach(item => {
     const [yStr, mStr] = item.monthStr.split('-');
-    const y = parseInt(yStr, 10);
-    const m = parseInt(mStr, 10) - 1;
+    const y = Number.parseInt(yStr, 10);
+    const m = Number.parseInt(mStr, 10) - 1;
     const daysInMonth = new Date(y, m + 1, 0).getDate();
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -470,13 +470,13 @@ export function calculateTemporalInsights({
     const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
     if (catObj?.type === 'income') return; // only track expenses for burn analytics
 
-    const amt = parseFloat(t.amount) || 0;
+    const amt = Number.parseFloat(t.amount) || 0;
     totalPeriodExpense += amt;
 
     const [yStr, mStr, dStr] = t.date.split('-');
-    const y = parseInt(yStr, 10);
-    const m = parseInt(mStr, 10) - 1;
-    const d = parseInt(dStr, 10);
+    const y = Number.parseInt(yStr, 10);
+    const m = Number.parseInt(mStr, 10) - 1;
+    const d = Number.parseInt(dStr, 10);
     const dow = new Date(y, m, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
 
@@ -616,7 +616,7 @@ export function calculateAllocationBreakdown({
     const ym = t.date.substring(0, 7);
     if (!validMonthSet.has(ym)) return;
 
-    const amt = parseFloat(t.amount) || 0;
+    const amt = Number.parseFloat(t.amount) || 0;
     const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
     const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
 
@@ -741,7 +741,7 @@ export function calculatePeakOutliers({
       if (excludeRent) return; // skip rent transactions when filter is active
     }
 
-    const amt = parseFloat(t.amount) || 0;
+    const amt = Number.parseFloat(t.amount) || 0;
     if (!dailyMap[t.date]) {
       dailyMap[t.date] = {
         dateStr: t.date,
@@ -760,9 +760,9 @@ export function calculatePeakOutliers({
 
   const formattedOutliers = sortedDays.map(item => {
     const [yStr, mStr, dStr] = item.dateStr.split('-');
-    const y = parseInt(yStr, 10);
-    const m = parseInt(mStr, 10) - 1;
-    const d = parseInt(dStr, 10);
+    const y = Number.parseInt(yStr, 10);
+    const m = Number.parseInt(mStr, 10) - 1;
+    const d = Number.parseInt(dStr, 10);
     const dow = new Date(y, m, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
 

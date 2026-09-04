@@ -165,6 +165,7 @@ export default function useTransactionData({
       }
 
       // 1. Optimistic UI Update (ตอบสนองทันที)
+      const previousTransactions = [...transactions];
       const newTransactions = [...transactions];
       newTransactions[itemIndex] = updatedItem;
       setTransactions(sortTransactions(newTransactions));
@@ -177,7 +178,7 @@ export default function useTransactionData({
       } catch (err) {
         console.error("Update failed:", err);
         // Rollback on failure
-        setTransactions(transactions);
+        setTransactions(previousTransactions);
       }
     }
   }, [transactions, categories, saveToDb, refreshData]);

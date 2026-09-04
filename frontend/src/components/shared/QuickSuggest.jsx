@@ -35,7 +35,7 @@ export default function QuickSuggest({
 
   // Mouse hover states for dynamic category coloring and list-item glowing
   const [hoveredChipId, setHoveredChipId] = useState(null);
-  const [hoveredItemKey, setHoveredItemKey] = useState(null);
+  const [hoveredItemKey, setHoveredItemKey] = useState('');
 
   // Reset filters when formType (income/expense) changes
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function QuickSuggest({
 
     // 1. Filter by Form Type (Income/Expense/Savings)
     sourceItems = sourceItems.filter(s => {
-      const c = catMap[s.categoryId] || categories.find(cat => String(cat.id) === String(s.categoryId) || cat.name === s.categoryName);
+      const c = catMap[s.categoryId] || categories.find(cat => cat.id == s.categoryId || cat.name === s.categoryName);
       return c?.type === formType;
     });
 
@@ -98,7 +98,7 @@ export default function QuickSuggest({
 
     // 3. Filter by Category
     if (activeCatFilter !== 'ALL') {
-      sourceItems = sourceItems.filter(s => String(s.categoryId) === String(activeCatFilter));
+      sourceItems = sourceItems.filter(s => s.categoryId == activeCatFilter);
     }
 
     // 4. Filter by Allocation Type (Only relevant for expenses)
@@ -245,8 +245,8 @@ export default function QuickSuggest({
                   ทุกหมวดหมู่
                 </button>
                 {activeCategories.map(c => {
-                  const isActive = String(activeCatFilter) === String(c.id);
-                  const isHovered = String(hoveredChipId) === String(c.id);
+                  const isActive = activeCatFilter == c.id;
+                  const isHovered = hoveredChipId == c.id;
                   return (
                     <button
                       key={c.id}
@@ -381,7 +381,7 @@ export default function QuickSuggest({
         ) : (
           <div className="flex flex-col gap-1.5">
             {quickSuggestions.map((s, idx) => {
-              const catObj = catMap[s.categoryId] || catMap[s.categoryName] || categories.find(c => String(c.id) === String(s.categoryId) || c.name === s.categoryName);
+              const catObj = catMap[s.categoryId] || catMap[s.categoryName] || categories.find(c => c.id == s.categoryId || c.name === s.categoryName);
               const catColor = catObj?.color || '#cbd5e1';
               const bgAlpha = dm ? 0.2 : 0.15;
               
@@ -398,7 +398,7 @@ export default function QuickSuggest({
                   type="button" 
                   key={itemKey} 
                   onMouseEnter={() => setHoveredItemKey(itemKey)}
-                  onMouseLeave={() => setHoveredItemKey(null)}
+                  onMouseLeave={() => setHoveredItemKey('')}
                   onClick={() => onApplySuggestion(s)} 
                   disabled={isProcessing}
                   style={{

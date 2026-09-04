@@ -6,6 +6,42 @@ import {
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 
+const LONG_HEADER_COLORS = {
+  'วันที่': 'text-[#888888]',
+  'ชนิดวัน': 'text-indigo-400',
+  'ประเภท': 'text-rose-400',
+  'หมวดหมู่': 'text-emerald-400',
+  'รายละเอียด': 'text-[#cbd5e1]',
+  'จำนวนเงิน': 'text-cyan-400',
+};
+
+const WIDE_HEADER_COLORS = {
+  'Date': 'text-[#888888]',
+  'อาหารและเครื่องดื่ม': 'text-rose-400 text-right',
+  'ช้อปปิ้งออนไลน์': 'text-amber-400 text-right',
+  'การเดินทาง': 'text-sky-400 text-right',
+  'ซักผ้า': 'text-purple-400 text-right',
+  'รวม (Total)': 'text-[#555555] font-normal italic text-right',
+  'Notes': 'text-[#888888]',
+};
+
+const LONG_SAMPLE_CONTENT = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n01/03/2026,ทำงาน,รายรับ,เงินเดือน,เงินเดือนประจำเดือนมีนาคม,25000\n01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเที่ยง,65\n";
+const WIDE_SAMPLE_CONTENT = '"Date","อาหารและเครื่องดื่ม","ช้อปปิ้งออนไลน์","การเดินทาง","ซักผ้า","รวม (Total)","Notes"\n"01/03/2026","฿ 110.00","฿ -","฿ 45.00","฿ -","฿ 155.00",""\n"02/03/2026","฿ -","฿ 299.00","฿ -","฿ -","฿ 299.00","Shopee"\n';
+
+function getHeaderColorClass(header, format) {
+  if (format === 'long') return LONG_HEADER_COLORS[header] || 'text-[#888888]';
+  return WIDE_HEADER_COLORS[header] || 'text-[#888888]';
+}
+
+function downloadSampleFile(filename, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 export default function ImportGuideModal({ isOpen, onClose }) {
   const { showToast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState('long'); // 'long' | 'wide'
@@ -39,49 +75,11 @@ export default function ImportGuideModal({ isOpen, onClose }) {
 
   const handleDownloadSample = () => {
     if (selectedFormat === 'long') {
-      const s = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n01/03/2026,ทำงาน,รายรับ,เงินเดือน,เงินเดือนประจำเดือนมีนาคม,25000\n01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเที่ยง,65\n";
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(['\ufeff' + s], { type: 'text/csv;charset=utf-8;' }));
-      a.download = 'sample_long_format.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadSampleFile('sample_long_format.csv', LONG_SAMPLE_CONTENT);
       showToast('ดาวน์โหลดไฟล์ตัวอย่าง Long Format สำเร็จ', 'success');
     } else {
-      const s = '"Date","อาหารและเครื่องดื่ม","ช้อปปิ้งออนไลน์","การเดินทาง","ซักผ้า","รวม (Total)","Notes"\n"01/03/2026","฿ 110.00","฿ -","฿ 45.00","฿ -","฿ 155.00",""\n"02/03/2026","฿ -","฿ 299.00","฿ -","฿ -","฿ 299.00","Shopee"\n';
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(['\ufeff' + s], { type: 'text/csv;charset=utf-8;' }));
-      a.download = 'sample_wide_format.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadSampleFile('sample_wide_format.csv', WIDE_SAMPLE_CONTENT);
       showToast('ดาวน์โหลดไฟล์ตัวอย่าง Wide Format สำเร็จ', 'success');
-    }
-  };
-
-  // Color mappings for Table Headers
-  const getHeaderColorClass = (header, format) => {
-    if (format === 'long') {
-      switch (header) {
-        case 'วันที่': return 'text-[#888888]';
-        case 'ชนิดวัน': return 'text-indigo-400';
-        case 'ประเภท': return 'text-rose-400';
-        case 'หมวดหมู่': return 'text-emerald-400';
-        case 'รายละเอียด': return 'text-[#cbd5e1]';
-        case 'จำนวนเงิน': return 'text-cyan-400';
-        default: return 'text-[#888888]';
-      }
-    } else {
-      switch (header) {
-        case 'Date': return 'text-[#888888]';
-        case 'อาหารและเครื่องดื่ม': return 'text-rose-400 text-right';
-        case 'ช้อปปิ้งออนไลน์': return 'text-amber-400 text-right';
-        case 'การเดินทาง': return 'text-sky-400 text-right';
-        case 'ซักผ้า': return 'text-purple-400 text-right';
-        case 'รวม (Total)': return 'text-[#555555] font-normal italic text-right';
-        case 'Notes': return 'text-[#888888]';
-        default: return 'text-[#888888]';
-      }
     }
   };
 

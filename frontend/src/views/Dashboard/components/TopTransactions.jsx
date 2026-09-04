@@ -265,7 +265,7 @@ export default function TopTransactions() {
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-[300px]">
           {showSkeleton ? (
             <div className="flex flex-col gap-2">
-              {[...Array(topXLimit || 7)].map((_, i) => (
+              {[...new Array(topXLimit || 7)].map((_, i) => (
                 <div key={i} className={`h-16 w-full rounded-none border animate-pulse ${'bg-[#303030]/40 border-[#303030]/50'}`} />
               ))}
             </div>

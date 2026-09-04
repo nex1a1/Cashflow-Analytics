@@ -67,8 +67,7 @@ function CategoryLegendSection({
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" />
-          หมวดหมู่ธุรกรรม (Categories)
+          <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" /> หมวดหมู่ธุรกรรม (Categories)
         </span>
         
         {/* Layout Switcher */}
@@ -232,8 +231,7 @@ function AllocationOverviewSection({
         {/* Needs */}
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#EF4444]" />
-            จำเป็น (Needs)
+            <span className="w-2 h-2 rounded-none bg-[#EF4444]" /> จำเป็น (Needs)
           </span>
           <span className="font-mono tabular-nums text-white">
             {formatValue(allocationTotals.need)} ฿ ({allocationTotals.needPct}%)
@@ -258,8 +256,7 @@ function AllocationOverviewSection({
         {/* Wants */}
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#F59E0B]" />
-            ทั่วไป (Wants)
+            <span className="w-2 h-2 rounded-none bg-[#F59E0B]" /> ทั่วไป (Wants)
           </span>
           <span className="font-mono tabular-nums text-white">
             {formatValue(allocationTotals.want)} ฿ ({allocationTotals.wantPct}%)
@@ -284,8 +281,7 @@ function AllocationOverviewSection({
         {/* Savings */}
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#10B981]" />
-            เงินออม (Savings)
+            <span className="w-2 h-2 rounded-none bg-[#10B981]" /> เงินออม (Savings)
           </span>
           <span className="font-mono tabular-nums text-white">
             {formatValue(allocationTotals.savings)} ฿ ({allocationTotals.savingsPct}%)

@@ -48,8 +48,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
 
   return (
     <div 
-      onClick={() => onSelectDate(dateStr)}
-      className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group cursor-pointer select-none border-b border-[#2d2d2d]/30 ${cellBg} hover:bg-[#1d1d1d] transition-none`}
+      className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-[#2d2d2d]/30 ${cellBg} hover:bg-[#1d1d1d] transition-none`}
     >
       {isToday && (
         <>
@@ -60,7 +59,12 @@ const CalendarDayCell = memo(function CalendarDayCell({
 
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
       <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-[#2d2d2d]/30 bg-[#121212]">
-        <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onSelectDate(dateStr)}
+          aria-label={`เลือกวันที่ ${day} ${dateStr}`}
+          className="flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0 text-left"
+        >
           <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums font-mono ${
             isToday
               ? 'bg-[#da291c] text-white font-black'
@@ -71,7 +75,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             {day}
           </span>
           <PlusCircle className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 pointer-events-none text-[#da291c]" />
-        </div>
+        </button>
 
         <select
           onClick={(e) => e.stopPropagation()} 
@@ -93,7 +97,12 @@ const CalendarDayCell = memo(function CalendarDayCell({
       </div>
 
       {/* ส่วนแสดงรายการธุรกรรม */}
-      <div className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10">
+      <button 
+        type="button"
+        onClick={() => onSelectDate(dateStr)}
+        aria-label={`ดูรายการวันที่ ${day} ${dateStr}`}
+        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full cursor-pointer bg-transparent border-0 font-normal select-none"
+      >
         {(data.exp > 0 || data.inc > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-[#2d2d2d]/20 pb-0.5">
              {data.exp > 0 ? (
@@ -174,7 +183,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             </div>
           );
         })}
-      </div>
+      </button>
     </div>
   );
 });

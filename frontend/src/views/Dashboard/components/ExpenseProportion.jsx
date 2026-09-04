@@ -12,7 +12,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 const CatItem = React.memo(({ cat, idx, isHovered, onHover }) => (
   <div 
     onMouseEnter={() => onHover(idx)}
-    onMouseLeave={() => onHover(null)}
+    onMouseLeave={() => onHover(-1)}
     className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${
       isHovered 
         ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
@@ -84,7 +84,7 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
   return (
     <div 
       onMouseEnter={() => onHover(idx)}
-      onMouseLeave={() => onHover(null)}
+      onMouseLeave={() => onHover(-1)}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
         isHovered 
           ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
@@ -130,7 +130,7 @@ const GroupItem = React.memo(({ item, idx, isHovered, onHover, isSingleMonthView
             (() => {
               let cumulativePct = 0;
               return categories.map((c, cIdx) => {
-                const relPct = parseFloat(c.relativePercentage) || 0;
+                const relPct = Number.parseFloat(c.relativePercentage) || 0;
                 if (relPct <= 0) return null;
                 const startPct = cumulativePct;
                 cumulativePct += relPct;
@@ -216,7 +216,7 @@ GroupItem.displayName = 'GroupItem';
  * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
  */
 const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal = 0, excludedGroupIds = [], onToggleGroup }) => {
-  const percentage = parseFloat(item.percentage) || 0;
+  const percentage = Number.parseFloat(item.percentage) || 0;
   const targetAmount = activeTotal * (item.target / 100);
   
   const isSavings = item.id === 'savings';
@@ -244,7 +244,7 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
   return (
     <div 
       onMouseEnter={() => onHover(idx)}
-      onMouseLeave={() => onHover(null)}
+      onMouseLeave={() => onHover(-1)}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
         isHovered 
           ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
@@ -467,10 +467,11 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
           const relPct = item.amount > 0 && !isExcluded ? ((g.amount / item.amount) * 100).toFixed(0) : 0;
 
           return (
-            <div 
+            <button 
+              type="button"
               key={g.id} 
               onClick={() => onToggleGroup && onToggleGroup(g.id)}
-              className={`flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none ${
+              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal ${
                 isExcluded 
                   ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
                   : 'hover:bg-[#282828]'
@@ -503,7 +504,7 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
                   )}
                 </span>
               </div>
-            </div>
+            </button>
           );
         })}
 
@@ -554,7 +555,7 @@ function ExpenseProportion() {
   const { analytics, dm, showSkeleton } = useDashboardContext();
   const [displayMode, setDisplayMode] = useState('category'); // 'category', 'group', or 'allocation'
   const [sortMode, setSortMode] = useState('amount-desc'); // 'amount-desc', 'amount-asc', 'order-asc', 'order-desc', 'name-asc', 'name-desc'
-  const [hoveredIdx, setHoveredIdx] = useState(null); // Track hovered item for visual highlighting
+  const [hoveredIdx, setHoveredIdx] = useState(-1); // Track hovered item for visual highlighting (-1 for none)
   const [excludedGroupIds, setExcludedGroupIds] = useState([]); // Track excluded groups in What-If simulation mode
 
   const { 
@@ -579,7 +580,7 @@ function ExpenseProportion() {
   
   const changeDisplayMode = (mode) => {
     setDisplayMode(mode);
-    setHoveredIdx(null); // Reset hovered item when changing tabs
+    setHoveredIdx(-1); // Reset hovered item when changing tabs
     setExcludedGroupIds([]); // Reset simulation when switching tabs
   };
 
@@ -696,7 +697,7 @@ function ExpenseProportion() {
 
       const outerData = outerCategories.map(c => c.amount);
       const outerColors = outerCategories.map(c => {
-        if (hoveredIdx === null || hoveredIdx === c.groupIdx) {
+        if (hoveredIdx === -1 || hoveredIdx === c.groupIdx) {
           return c.color || c.groupColor;
         }
         return `${c.color || c.groupColor}35`; // Fade non-hovered categories
@@ -706,7 +707,7 @@ function ExpenseProportion() {
 
       const innerData = activeItems.map(g => g.amount);
       const innerColors = activeItems.map((g, idx) => {
-        if (hoveredIdx === null || hoveredIdx === idx) {
+        if (hoveredIdx === -1 || hoveredIdx === idx) {
           return g.color;
         }
         return `${g.color}40`; // Fade non-hovered inner groups
@@ -746,7 +747,7 @@ function ExpenseProportion() {
       datasets: [{
         data: activeItems.map(i => i.amount),
         backgroundColor: activeItems.map((i, idx) => {
-          if (hoveredIdx === null || hoveredIdx === idx) {
+          if (hoveredIdx === -1 || hoveredIdx === idx) {
             return i.color;
           }
           return `${i.color}40`;
@@ -795,7 +796,7 @@ function ExpenseProportion() {
             setHoveredIdx(el.index);
           }
         } else {
-          setHoveredIdx(null);
+          setHoveredIdx(-1);
         }
       },
       plugins: {
@@ -943,7 +944,7 @@ function ExpenseProportion() {
              <div className="w-20 h-24 rounded-full animate-pulse bg-[#303030]" />
           </div>
           <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
-             {[...Array(5)].map((_, i) => (
+             {[...new Array(5)].map((_, i) => (
                 <div key={i} className="p-2 animate-pulse bg-[#303030]/40">
                    <div className="h-2 w-12 mb-2 rounded-sm bg-[#303030]" />
                    <div className="h-4 w-16 mb-2 rounded-sm bg-[#303030]" />
@@ -992,10 +993,10 @@ function ExpenseProportion() {
                return <CatItem key={item.id || idx} cat={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
              })}
              {/* Fill empty cells to maintain grid borders if needed */}
-             {![isAllocationMode, isGroupMode].some(Boolean) && [...Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
+             {![isAllocationMode, isGroupMode].some(Boolean) && [...new Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
                 <div key={`empty-${i}`} className="bg-[#181818]/10" />
                ))}
-             {(isAllocationMode || isGroupMode) && [...Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
+             {(isAllocationMode || isGroupMode) && [...new Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
                 <div key={`empty-grid3-${i}`} className="bg-[#181818]/10" />
                ))}
           </div>

@@ -8,6 +8,232 @@ import {
   calculateDayTypeCounts 
 } from '../utils/analyticsHelpers';
 
+function resolveTransactionContext(t, catMapLookup, cashflowGroups, fallbackExpId) {
+  const amt = Number.parseFloat(t.amount) || 0;
+  const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
+  const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: fallbackExpId };
+  
+  const cGroupId = catObj.cashflowGroup;
+  const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+  const groupType = groupObj.type || catObj.type || 'expense';
+  const groupName = (groupObj.name || '').toLowerCase();
+  
+  const isInc = groupType === 'income';
+  const isSav = groupType === 'savings';
+  const isExp = !isInc && !isSav;
+
+  const aType = t.allocation_type || groupObj.allocation_type || (isInc ? 'savings' : 'want');
+  const isNeed = aType === 'need';
+  const isWant = aType === 'want';
+
+  return { amt, catId, catObj, cGroupId, groupObj, groupType, groupName, isInc, isSav, isExp, aType, isNeed, isWant };
+}
+
+function accumulateRentAndFoodTotals(amt, catName, isRent, isFood, totals) {
+  if (isRent) {
+    totals.rent += amt;
+    if (catName === 'ค่าเช่า/ค่าหอพัก') totals.rentSub.rent += amt;
+    else if (catName === 'ค่าไฟ') totals.rentSub.electricity += amt;
+    else if (catName === 'ค่าเน็ต') totals.rentSub.internet += amt;
+    else if (catName === 'ค่าน้ำ') totals.rentSub.water += amt;
+  } else if (isFood) {
+    totals.food += amt;
+  }
+}
+
+function matchesDashboardFilter(catId, catName, isNeed, activeFilters) {
+  if (activeFilters.includes('ALL')) return true;
+  if (activeFilters.includes('FIXED') && isNeed) return true;
+  if (activeFilters.includes('VARIABLE') && !isNeed) return true;
+  if (activeFilters.includes(catId) || activeFilters.includes(catName)) return true;
+  return false;
+}
+
+function accumulateFilteredExpense(t, txContext, ym, isoDate, state) {
+  const { amt, catId, aType, isWant, cGroup, groupObj } = txContext;
+  const {
+    dailyAllMap, monthlyAllMap, chartTx, catMapData, wantCatMapData,
+    dailyCatMap, monthlyCatMap, allocTotals, dailyAllocMap, monthlyAllocMap,
+    allocGroupsMap, groupTotals,
+  } = state;
+
+  dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
+  monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
+  state.chartTotal += amt;
+  chartTx.push(t);
+
+  catMapData[catId] = (catMapData[catId] || 0) + amt;
+  if (isWant) {
+    wantCatMapData[catId] = (wantCatMapData[catId] || 0) + amt;
+  }
+
+  if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
+  dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
+  if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
+  monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
+
+  allocTotals[aType] = (allocTotals[aType] || 0) + amt;
+  if (aType !== 'savings') {
+    dailyAllocMap[aType][isoDate] = (dailyAllocMap[aType][isoDate] || 0) + amt;
+    monthlyAllocMap[aType][ym] = (monthlyAllocMap[aType][ym] || 0) + amt;
+  }
+
+  if (cGroup) {
+    let groupEntry = allocGroupsMap[aType]?.find(g => g.id === cGroup);
+    if (!groupEntry) {
+      groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+      if (allocGroupsMap[aType]) allocGroupsMap[aType].push(groupEntry);
+    }
+    if (groupEntry) groupEntry.amount += amt;
+    groupTotals[cGroup] = (groupTotals[cGroup] || 0) + amt;
+  }
+}
+
+function accumulateSavingsItem(amt, isoDate, ym, cGroup, groupObj, state) {
+  state.totals.savings += amt;
+  state.cashflowMap[ym].totalSav += amt;
+  state.allocTotals.savings += amt;
+
+  state.dailyAllocMap.savings[isoDate] = (state.dailyAllocMap.savings[isoDate] || 0) + amt;
+  state.monthlyAllocMap.savings[ym] = (state.monthlyAllocMap.savings[ym] || 0) + amt;
+
+  if (cGroup) {
+    let groupEntry = state.allocGroupsMap.savings.find(g => g.id === cGroup);
+    if (!groupEntry) {
+      groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
+      state.allocGroupsMap.savings.push(groupEntry);
+    }
+    groupEntry.amount += amt;
+  }
+}
+
+function accumulateDayOfWeekStats(amt, isoDate, isFood, totals) {
+  const dateObj = parseDateStrToObj(isoDate);
+  const dow = dateObj.getDay();
+  totals.dayOfWeekMap[dow] += amt;
+  if (dow === 0 || dow === 6) {
+    totals.weekend += amt;
+    if (isFood) totals.foodWeekend += amt;
+  } else {
+    totals.weekday += amt;
+    if (isFood) totals.foodWeekday += amt;
+  }
+  if (isFood) {
+    totals.foodDailyMap[isoDate] = (totals.foodDailyMap[isoDate] || 0) + amt;
+  }
+}
+
+function calculateSparklines({ useBackendTotals, summaryData, isSingleMonthView, datesInPeriod, dayIncomeMap, dayExpenseMap, sortedMonthsKeys, cashflowMap }) {
+  const sparklineIncome = [];
+  const sparklineExpense = [];
+  const sparklineNet = [];
+
+  if (useBackendTotals && summaryData.monthly && !isSingleMonthView) {
+    summaryData.monthly.forEach(m => {
+      sparklineIncome.push(m.income);
+      sparklineExpense.push(m.expense);
+      sparklineNet.push(m.income - m.expense);
+    });
+  } else if (isSingleMonthView) {
+    datesInPeriod.forEach(d => {
+      const inc = dayIncomeMap[d] || 0;
+      const exp = dayExpenseMap[d] || 0;
+      sparklineIncome.push(inc);
+      sparklineExpense.push(exp);
+      sparklineNet.push(inc - exp);
+    });
+  } else {
+    sortedMonthsKeys.forEach(m => {
+      const inc = cashflowMap[m].income;
+      const exp = cashflowMap[m].totalExp;
+      sparklineIncome.push(inc);
+      sparklineExpense.push(exp);
+      sparklineNet.push(inc - exp);
+    });
+  }
+  return { sparklineIncome, sparklineExpense, sparklineNet };
+}
+
+function calculateForecastingDetails({
+  isCurrentMonth,
+  datesInPeriod,
+  filterYear,
+  filterMonth,
+  excludeFuture,
+  totals,
+  expenseUpToToday,
+  rentUpToToday,
+}) {
+  if (!isCurrentMonth || datesInPeriod.length === 0) {
+    return { showForecasting: false, effectiveDays: datesInPeriod.length || 1, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
+  }
+
+  const periodDays = datesInPeriod.length || 1;
+  const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
+  const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
+  const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
+  const effectiveDays = excludeFuture ? currentDay : periodDays;
+  const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
+
+  const fixedCommitment = totals.rent;
+  const dailyLivingUpToToday = Math.max(0, expenseUpToToday - rentUpToToday);
+  const dailyLivingRunRate = dailyLivingUpToToday / currentDay;
+  const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
+
+  const projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
+  const projectedSurplus = totals.income - projectedExpense;
+  const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
+
+  const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
+  const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
+  const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
+
+  let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
+  if (projectedSurplus < 0) {
+    paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ (Critical)', color: '#da291c', bg: 'bg-red-950/40' };
+  } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
+    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า (High Pace)', color: '#f59e0b', bg: 'bg-amber-950/30' };
+  } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
+    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์ (Moderate)', color: '#3b82f6', bg: 'bg-blue-950/30' };
+  }
+
+  let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง (Surplus Safe)', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+  if (projectedSurplus < 0) {
+    eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล (Deficit Risk)', color: '#da291c', bg: 'bg-red-950/40', border: 'border-[#da291c]' };
+  } else if (projectedSurplusPct < 5) {
+    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว (Tight Buffer)', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
+  } else if (projectedSurplusPct < 20) {
+    eomStatus = { code: 'STABLE', label: 'โซนสมดุล (Stable)', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
+  }
+
+  const maxAllowedExpense = totals.income;
+  const requiredReduction = projectedExpense > totals.income ? projectedExpense - totals.income : 0;
+  const requiredDailyReduction = dailyLivingRunRate > safeToSpend ? dailyLivingRunRate - safeToSpend : 0;
+
+  const forecastingDetails = {
+    currentDay,
+    lastDayOfMonth,
+    remainingDays,
+    monthProgressPct: Number(monthProgressPct.toFixed(1)),
+    variableUpToToday: dailyLivingUpToToday,
+    variableRunRate: dailyLivingRunRate,
+    projectedVariableRemaining: projectedLivingRemaining,
+    fixedTotal: fixedCommitment,
+    projectedExpense,
+    projectedSurplus,
+    projectedSurplusPct: Number(projectedSurplusPct.toFixed(1)),
+    safeToSpend,
+    actualDailyVariableAvg: dailyLivingRunRate,
+    maxAllowedExpense,
+    requiredReduction,
+    requiredDailyReduction,
+    paceStatus,
+    eomStatus
+  };
+
+  return { showForecasting: true, effectiveDays, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus };
+}
+
 export default function useAnalytics({
   transactions,
   categories,
@@ -113,28 +339,31 @@ export default function useAnalytics({
 
     const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
     
+    const stateRef = {
+      totals,
+      allocTotals,
+      allocGroupsMap,
+      groupTotals,
+      dailyAllMap,
+      monthlyAllMap,
+      chartTx,
+      catMapData,
+      wantCatMapData,
+      dailyCatMap,
+      monthlyCatMap,
+      dailyAllocMap,
+      monthlyAllocMap,
+      cashflowMap,
+      chartTotal: 0,
+    };
+
     // ─── SINGLE PASS AGGREGATION ──────────────────────────────────────────────
     transactions.forEach(t => {
       const isoDate = toISODate(t.date);
       if (!isoDate) return;
 
-      const amt = parseFloat(t.amount) || 0;
-      const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
-      const catObj = catMapLookup[catId] || { type: 'expense', cashflowGroup: fallbackExpId };
-      
-      const cGroupId = catObj.cashflowGroup;
-      const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
-      const groupType = groupObj.type || catObj.type || 'expense';
-      const groupName = (groupObj.name || '').toLowerCase();
-      
-      const isInc = groupType === 'income';
-      const isSav = groupType === 'savings';
-      const isExp = !isInc && !isSav;
-
-      // Smart Allocation Type: Transaction-level > Group default
-      const aType = t.allocation_type || groupObj.allocation_type || (isInc ? 'savings' : 'want');
-      const isNeed = aType === 'need';
-      const isWant = aType === 'want';
+      const txContext = resolveTransactionContext(t, catMapLookup, cashflowGroups, fallbackExpId);
+      const { amt, catId, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp, aType, isNeed, isWant } = txContext;
 
       // a) Global Stats (for Heatmap)
       if (isExp) {
@@ -148,146 +377,65 @@ export default function useAnalytics({
       }
 
       // c) Main Period Filter
-      if (isDateInFilter(isoDate, filterPeriod)) {
-        // Month Key
-        const ym = isoDate.substring(0, 7);
-        uniqueMonthsSet.add(ym);
+      if (!isDateInFilter(isoDate, filterPeriod)) return;
 
-        // Initialize cashflowMap for the month if it doesn't exist (Global)
-        if (!cashflowMap[ym]) {
-          cashflowMap[ym] = { 
-            monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
-          };
-          cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
-        }
+      const ym = isoDate.substring(0, 7);
+      uniqueMonthsSet.add(ym);
 
-        const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
-        if (cashflowMap[ym].groups[cGroup] !== undefined) {
-          cashflowMap[ym].groups[cGroup] += amt;
-        }
+      if (!cashflowMap[ym]) {
+        cashflowMap[ym] = { 
+          monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
+        };
+        cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
+      }
 
-        const isFood = cGroupId === foodGroupId || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
-        const isRent = cGroupId === rentGroupId || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
+      const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
+      if (cashflowMap[ym].groups[cGroup] !== undefined) {
+        cashflowMap[ym].groups[cGroup] += amt;
+      }
 
-        // Totals
-        if (isInc) {
-          totals.income += amt;
-          cashflowMap[ym].income += amt;
-          dayIncomeMap[isoDate] = (dayIncomeMap[isoDate] || 0) + amt;
-        } else if (isSav) {
-          totals.savings += amt;
-          cashflowMap[ym].totalSav += amt;
-          allocTotals.savings += amt;
-          
-          // Allocation Maps for Savings
-          dailyAllocMap.savings[isoDate] = (dailyAllocMap.savings[isoDate] || 0) + amt;
-          monthlyAllocMap.savings[ym] = (monthlyAllocMap.savings[ym] || 0) + amt;
+      const isFood = cGroupId === foodGroupId || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
+      const isRent = cGroupId === rentGroupId || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
 
-          // Track individual savings groups for the 50/30/20 breakdown
-          if (cGroup) {
-            let groupEntry = allocGroupsMap.savings.find(g => g.id === cGroup);
-            if (!groupEntry) {
-              groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
-              allocGroupsMap.savings.push(groupEntry);
-            }
-            groupEntry.amount += amt;
-          }
-        } else {
-          // --- EXPENSE LOGIC ---
-          totals.expense += amt;
-          cashflowMap[ym].totalExp += amt;
-          dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
-          
-          // Semantic Grouping
-          if (isRent) {
-            totals.rent += amt;
-            const cName = catObj.name;
-            if (cName === 'ค่าเช่า/ค่าหอพัก') totals.rentSub.rent += amt;
-            else if (cName === 'ค่าไฟ') totals.rentSub.electricity += amt;
-            else if (cName === 'ค่าเน็ต') totals.rentSub.internet += amt;
-            else if (cName === 'ค่าน้ำ') totals.rentSub.water += amt;
-          }
-          else if (isFood) totals.food += amt;
+      if (isInc) {
+        totals.income += amt;
+        cashflowMap[ym].income += amt;
+        dayIncomeMap[isoDate] = (dayIncomeMap[isoDate] || 0) + amt;
+      } else if (isSav) {
+        accumulateSavingsItem(amt, isoDate, ym, cGroup, groupObj, stateRef);
+      } else {
+        totals.expense += amt;
+        cashflowMap[ym].totalExp += amt;
+        dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
+        
+        accumulateRentAndFoodTotals(amt, catObj.name, isRent, isFood, totals);
 
-          if (isNeed) totals.fixed += amt;
-          else totals.variable += amt;
+        if (isNeed) totals.fixed += amt;
+        else totals.variable += amt;
 
-          // Apply UI Filters for Chart/Proportion Breakdown
-          const passFixedFilter = !hideFixedExpenses || !isNeed;
-          const passWantFilter = !hideWantExpenses || !isWant;
-          const passCategoryFilter = activeFilters.includes('ALL') || 
-                                    (activeFilters.includes('FIXED') && isNeed) || 
-                                    (activeFilters.includes('VARIABLE') && !isNeed) || 
-                                    activeFilters.includes(catId) || 
-                                    activeFilters.includes(catObj.name);
+        const passFilter = (!hideFixedExpenses || !isNeed) &&
+          (!hideWantExpenses || !isWant) &&
+          matchesDashboardFilter(catId, catObj.name, isNeed, activeFilters);
 
-          if (passFixedFilter && passWantFilter && passCategoryFilter) {
-            dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
-            monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
-            chartTotal += amt;
-            chartTx.push(t);
-
-            // Per-Category Breakdown (Filtered)
-            catMapData[catId] = (catMapData[catId] || 0) + amt;
-            if (isWant) {
-              wantCatMapData[catId] = (wantCatMapData[catId] || 0) + amt;
-            }
-
-            // Per-Category Time Breakdown (Filtered)
-            if (!dailyCatMap[catId]) dailyCatMap[catId] = {};
-            dailyCatMap[catId][isoDate] = (dailyCatMap[catId][isoDate] || 0) + amt;
-            if (!monthlyCatMap[catId]) monthlyCatMap[catId] = {};
-            monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
-
-            // Allocation Maps (Filtered)
-            allocTotals[aType] = (allocTotals[aType] || 0) + amt;
-            if (aType !== 'savings') {
-              dailyAllocMap[aType][isoDate] = (dailyAllocMap[aType][isoDate] || 0) + amt;
-              monthlyAllocMap[aType][ym] = (monthlyAllocMap[aType][ym] || 0) + amt;
-            }
-
-            // Track individual group totals within this allocation (Filtered)
-            if (cGroup) {
-              let groupEntry = allocGroupsMap[aType]?.find(g => g.id === cGroup);
-              if (!groupEntry) {
-                groupEntry = { id: cGroup, name: groupObj.name, icon: groupObj.icon, amount: 0, color: groupObj.color };
-                if (allocGroupsMap[aType]) allocGroupsMap[aType].push(groupEntry);
-              }
-              if (groupEntry) groupEntry.amount += amt;
-
-              // Also update group totals for Group Mode (Filtered)
-              groupTotals[cGroup] = (groupTotals[cGroup] || 0) + amt;
-            }
-          }
-        }
-
-
-        // Weekend/Weekday Logic
-        if (isExp) {
-          const dateObj = parseDateStrToObj(isoDate);
-          const dow = dateObj.getDay();
-          totals.dayOfWeekMap[dow] += amt;
-          if (dow === 0 || dow === 6) {
-            totals.weekend += amt;
-            if (isFood) totals.foodWeekend += amt;
-          } else {
-            totals.weekday += amt;
-            if (isFood) totals.foodWeekday += amt;
-          }
-          if (isFood) {
-            totals.foodDailyMap[isoDate] = (totals.foodDailyMap[isoDate] || 0) + amt;
-          }
-        }
-
-        // Forecasting Logic: Track actual expenses up to today
-        if (isCurrentMonth && isoDate <= todayStr && isExp) {
-          expenseUpToToday += amt;
-          if (!isNeed) variableUpToToday += amt;
-          if (isRent) rentUpToToday += amt;
-          if (isFood) foodUpToToday += amt;
+        if (passFilter) {
+          accumulateFilteredExpense(t, { amt, catId, aType, isWant, cGroup, groupObj }, ym, isoDate, stateRef);
         }
       }
+
+      if (isExp) {
+        accumulateDayOfWeekStats(amt, isoDate, isFood, totals);
+      }
+
+      // Forecasting Logic: Track actual expenses up to today
+      if (isCurrentMonth && isoDate <= todayStr && isExp) {
+        expenseUpToToday += amt;
+        if (!isNeed) variableUpToToday += amt;
+        if (isRent) rentUpToToday += amt;
+        if (isFood) foodUpToToday += amt;
+      }
     });
+
+    chartTotal = stateRef.chartTotal;
 
     prevTotals.net = prevTotals.income - prevTotals.expense;
 
@@ -302,7 +450,7 @@ export default function useAnalytics({
     const actualSavings = totals.income - totals.expense;
     const explicitSavings = totals.savings;
     const numMonths = uniqueMonthsSet.size || 1;
-    const savingsRate = totals.income > 0 ? parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
+    const savingsRate = totals.income > 0 ? Number.parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
 
     // Filter categories based on activeFilters
     const filteredCats = categories.filter(c => {
@@ -449,105 +597,35 @@ export default function useAnalytics({
     });
 
     // ─── SPARKLINES ───────────────────────────────────────────────────────────
-    const sparklineIncome = [], sparklineExpense = [], sparklineNet = [];
-    if (useBackendTotals && summaryData.monthly && !isSingleMonthView) {
-      summaryData.monthly.forEach(m => {
-        sparklineIncome.push(m.income);
-        sparklineExpense.push(m.expense);
-        sparklineNet.push(m.income - m.expense);
-      });
-    } else if (isSingleMonthView) {
-      datesInPeriod.forEach(d => {
-        sparklineIncome.push(dayIncomeMap[d] || 0);
-        sparklineExpense.push(dayExpenseMap[d] || 0);
-        sparklineNet.push((dayIncomeMap[d] || 0) - (dayExpenseMap[d] || 0));
-      });
-    } else {
-      sortedMonthsKeys.forEach(m => {
-        sparklineIncome.push(cashflowMap[m].income);
-        sparklineExpense.push(cashflowMap[m].totalExp);
-        sparklineNet.push(cashflowMap[m].income - cashflowMap[m].totalExp);
-      });
-    }
+    const { sparklineIncome, sparklineExpense, sparklineNet } = calculateSparklines({
+      useBackendTotals,
+      summaryData,
+      isSingleMonthView,
+      datesInPeriod,
+      dayIncomeMap,
+      dayExpenseMap,
+      sortedMonthsKeys,
+      cashflowMap,
+    });
 
     // ─── FORECASTING & DAILY METRICS ─────────────────────────────────────────
-    let projectedExpense = 0, safeToSpend = 0, projectedSurplus = 0, showForecasting = false;
-    let periodDays = datesInPeriod.length || 1;
-    let effectiveDays = periodDays;
-    let forecastingDetails = null;
-
-    if (isCurrentMonth && datesInPeriod.length > 0) {
-      showForecasting = true;
-      const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
-      const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
-      const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
-      
-      // If excludeFuture is active in current month, average across days elapsed so far (currentDay)
-      effectiveDays = excludeFuture ? currentDay : periodDays;
-      
-      const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
-      
-      // Smart Daily Living Run-Rate:
-      // Separate one-off monthly bills (Rent/Housing) from daily living expenses (Food, Laundry, Transport, Wants)
-      const fixedCommitment = totals.rent;
-      const dailyLivingUpToToday = Math.max(0, expenseUpToToday - rentUpToToday);
-      const dailyLivingRunRate = dailyLivingUpToToday / currentDay;
-      const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
-
-      projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
-      projectedSurplus = totals.income - projectedExpense;
-      const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
-      
-      const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
-      const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
-      safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
-
-      // Pace analysis
-      let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
-      if (projectedSurplus < 0) {
-        paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ (Critical)', color: '#da291c', bg: 'bg-red-950/40' };
-      } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
-        paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า (High Pace)', color: '#f59e0b', bg: 'bg-amber-950/30' };
-      } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
-        paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์ (Moderate)', color: '#3b82f6', bg: 'bg-blue-950/30' };
-      }
-
-      // End of Month Financial Safety Grade
-      let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง (Surplus Safe)', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
-      if (projectedSurplus < 0) {
-        eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล (Deficit Risk)', color: '#da291c', bg: 'bg-red-950/40', border: 'border-[#da291c]' };
-      } else if (projectedSurplusPct < 5) {
-        eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว (Tight Buffer)', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
-      } else if (projectedSurplusPct < 20) {
-        eomStatus = { code: 'STABLE', label: 'โซนสมดุล (Stable)', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
-      }
-
-      // Break-even & Deficit Control Targets
-      const maxAllowedExpense = totals.income;
-      const requiredReduction = projectedExpense > totals.income ? projectedExpense - totals.income : 0;
-      const requiredDailyReduction = dailyLivingRunRate > safeToSpend ? dailyLivingRunRate - safeToSpend : 0;
-
-      forecastingDetails = {
-        currentDay,
-        lastDayOfMonth,
-        remainingDays,
-        monthProgressPct: Number(monthProgressPct.toFixed(1)),
-        variableUpToToday: dailyLivingUpToToday,
-        variableRunRate: dailyLivingRunRate,
-        projectedVariableRemaining: projectedLivingRemaining,
-        fixedTotal: fixedCommitment,
-        projectedExpense,
-        projectedSurplus,
-        projectedSurplusPct: Number(projectedSurplusPct.toFixed(1)),
-        safeToSpend,
-        actualDailyVariableAvg: dailyLivingRunRate,
-        maxAllowedExpense,
-        requiredReduction,
-        requiredDailyReduction,
-        paceStatus,
-        eomStatus
-      };
-    }
+    const {
+      showForecasting,
+      effectiveDays,
+      forecastingDetails,
+      projectedExpense,
+      safeToSpend,
+      projectedSurplus,
+    } = calculateForecastingDetails({
+      isCurrentMonth,
+      datesInPeriod,
+      filterYear,
+      filterMonth,
+      excludeFuture,
+      totals,
+      expenseUpToToday,
+      rentUpToToday,
+    });
 
     const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
     const adjustedFoodDailyAvg = totals.food / Math.max(1, effectiveDays);

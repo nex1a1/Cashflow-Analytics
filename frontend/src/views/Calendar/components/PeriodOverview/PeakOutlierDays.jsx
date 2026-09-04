@@ -76,11 +76,15 @@ export default function PeakOutlierDays({
           return (
             <div
               key={item.dateStr}
-              onClick={() => onSelectDate && onSelectDate(item.dateStr)}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-[#141414] hover:bg-[#1f1f1f] border border-[#252525] hover:border-[#da291c]/50 transition-none cursor-pointer gap-2"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-[#141414] hover:bg-[#1f1f1f] border border-[#252525] hover:border-[#da291c]/50 transition-none gap-2"
             >
               {/* Left: Rank, Date, Day-Type */}
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onSelectDate && onSelectDate(item.dateStr)}
+                aria-label={`ดูรายการของวันที่ ${item.formattedDate}`}
+                className="flex items-center gap-3 text-left cursor-pointer flex-1 min-w-0 bg-transparent border-0 p-0"
+              >
                 <span className={`w-6 h-6 flex items-center justify-center text-xs font-black font-mono ${
                   idx === 0 ? 'bg-[#da291c] text-white' : (idx === 1 ? 'bg-orange-600 text-white' : 'bg-[#262626] text-slate-400')
                 }`}>
@@ -113,7 +117,7 @@ export default function PeakOutlierDays({
                     <span className="font-mono text-[11px] text-slate-500">{item.transactions.length} รายการ</span>
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Right: Amount & Action Buttons */}
               <div className="flex items-center justify-between sm:justify-end gap-2.5 self-end sm:self-auto w-full sm:w-auto border-t sm:border-t-0 border-[#202020] pt-2 sm:pt-0">

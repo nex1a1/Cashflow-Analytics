@@ -292,7 +292,7 @@ export default function ActivityTimeline() {
   const weeks = useMemo(() => {
     if (datesInPeriod.length === 0) return [];
     const result = [];
-    let currentWeek = Array(7).fill(null);
+    let currentWeek = new Array(7).fill(null);
     let monthLabel = null;
     datesInPeriod.forEach((dateStr, index) => {
       const [y, m, d] = dateStr.split('-');
@@ -302,7 +302,7 @@ export default function ActivityTimeline() {
       currentWeek[dayOfWeek] = dateStr;
       if (dayOfWeek === 6 || index === datesInPeriod.length - 1) {
         result.push({ days: [...currentWeek], monthLabel });
-        currentWeek = Array(7).fill(null);
+        currentWeek = new Array(7).fill(null);
         monthLabel = null;
       }
     });
@@ -327,8 +327,8 @@ export default function ActivityTimeline() {
 
     return monthKeys.map(key => {
       const [yearStr, monthStr] = key.split('-');
-      const year = parseInt(yearStr, 10);
-      const monthIdx = parseInt(monthStr, 10) - 1;
+      const year = Number.parseInt(yearStr, 10);
+      const monthIdx = Number.parseInt(monthStr, 10) - 1;
       
       const dates = groups[key];
       const firstDateObj = new Date(year, monthIdx, 1);

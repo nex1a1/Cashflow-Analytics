@@ -22,14 +22,14 @@ const parseYearMonth = (dateStr) => {
   if (dateStr.includes('-')) {
     const parts = dateStr.split('-');
     if (parts.length === 3) {
-      year = parseInt(parts[0], 10);
-      monthIdx = parseInt(parts[1], 10) - 1;
+      year = Number.parseInt(parts[0], 10);
+      monthIdx = Number.parseInt(parts[1], 10) - 1;
     }
   } else {
     const parts = dateStr.split('/');
     if (parts.length === 3) {
-      monthIdx = parseInt(parts[1], 10) - 1;
-      year = parseInt(parts[2], 10);
+      monthIdx = Number.parseInt(parts[1], 10) - 1;
+      year = Number.parseInt(parts[2], 10);
     }
   }
   

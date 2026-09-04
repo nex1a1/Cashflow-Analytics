@@ -63,15 +63,7 @@ function parseSqlValues(cleanSql: string): string[] {
     });
 }
 
-function formatDbMutationLog(msgStr: string): string | null {
-    const clean = msgStr.replace(/\s+/g, ' ').trim();
-
-    // 0. Mute internal FTS index trigger sync noise
-    if (/transactions_fts/i.test(clean)) {
-        return null;
-    }
-
-    // 1. 💳 Transactions (INSERT / UPSERT / DELETE)
+function formatTransactionMutation(clean: string): string | null {
     if (/INSERT INTO transactions\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 4) {
@@ -91,19 +83,23 @@ function formatDbMutationLog(msgStr: string): string | null {
         const shortId = idMatch ? idMatch[1].substring(0, 8) : '';
         return `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${shortId}...)`;
     }
+    return null;
+}
 
-    // 2. ⚙️ Settings (INSERT / UPDATE)
+function formatSettingsMutation(clean: string): string | null {
     if (/INSERT INTO settings\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
             const key = args[0];
             const val = args[1];
-            if (key === 'schema_verified') return null; // ข้าม log ตั้งค่าภายใน
+            if (key === 'schema_verified') return ''; // Mute internal flag
             return `⚙️ [การตั้งค่า] อัปเดตค่า: ${key} = "${val}"`;
         }
     }
+    return null;
+}
 
-    // 3. 📅 Calendar Days (INSERT / UPDATE)
+function formatCalendarMutation(clean: string): string | null {
     if (/INSERT INTO calendar_days\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
@@ -112,8 +108,10 @@ function formatDbMutationLog(msgStr: string): string | null {
             return `📅 [ปฏิทิน] บันทึกประเภทวัน: ${date} (ประเภท: ${dayTypeId})`;
         }
     }
+    return null;
+}
 
-    // 4. 📆 Day Types (INSERT / UPDATE / DELETE)
+function formatDayTypeMutation(clean: string): string | null {
     if (/INSERT INTO day_types\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 3) {
@@ -127,8 +125,10 @@ function formatDbMutationLog(msgStr: string): string | null {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
     }
+    return null;
+}
 
-    // 5. 🏷️ Categories (INSERT / UPDATE / DELETE)
+function formatCategoryMutation(clean: string): string | null {
     if (/INSERT INTO categories\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
@@ -142,8 +142,10 @@ function formatDbMutationLog(msgStr: string): string | null {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
     }
+    return null;
+}
 
-    // 6. 📁 Cashflow Groups (INSERT / UPDATE / DELETE)
+function formatCashflowGroupMutation(clean: string): string | null {
     if (/INSERT INTO cashflow_groups\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 3) {
@@ -157,6 +159,27 @@ function formatDbMutationLog(msgStr: string): string | null {
     if (/DELETE FROM cashflow_groups/i.test(clean)) {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
+    }
+    return null;
+}
+
+function formatDbMutationLog(msgStr: string): string | null {
+    const clean = msgStr.replace(/\s+/g, ' ').trim();
+
+    // 0. Mute internal FTS index trigger sync noise
+    if (/transactions_fts/i.test(clean)) {
+        return null;
+    }
+
+    const formatted = formatTransactionMutation(clean)
+        ?? formatSettingsMutation(clean)
+        ?? formatCalendarMutation(clean)
+        ?? formatDayTypeMutation(clean)
+        ?? formatCategoryMutation(clean)
+        ?? formatCashflowGroupMutation(clean);
+
+    if (formatted !== null) {
+        return formatted === '' ? null : formatted;
     }
 
     // Fallback: Clean single line truncated if too long

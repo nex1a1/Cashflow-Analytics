@@ -29,6 +29,102 @@ interface MockCal {
     note: string;
 }
 
+function buildCatMap(categories: Array<{ cat_id: string; cat_name: string; group_name: string; group_type: string }>): Record<string, string | undefined> {
+    const catMap: Record<string, string | undefined> = {
+        salary: categories.find(c => c.group_name === 'รายได้หลัก' || c.group_type === 'income')?.cat_id,
+        food: categories.find(c => c.cat_name.includes('อาหาร') || c.cat_name === 'ค่าอาหาร')?.cat_id,
+        transport: categories.find(c => c.cat_name.includes('เดินทาง') || c.cat_name.includes('BTS'))?.cat_id,
+        shopping: categories.find(c => c.cat_name.includes('ช้อปปิ้ง'))?.cat_id,
+        entertainment: categories.find(c => c.cat_name.includes('บันเทิง'))?.cat_id,
+        rent: categories.find(c => c.cat_name.includes('เช่า') || c.cat_name.includes('หอพัก'))?.cat_id,
+        internet: categories.find(c => c.cat_name.includes('อินเทอร์เน็ต') || c.cat_name.includes('เน็ต'))?.cat_id,
+        water_elec: categories.find(c => c.cat_name.includes('น้ำ') || c.cat_name.includes('ไฟ'))?.cat_id,
+        coffee: categories.find(c => c.cat_name.includes('กาแฟ') || c.cat_name.includes('เครื่องดื่ม'))?.cat_id,
+    };
+
+    const genericExpenseCat = categories.find(c => c.group_type === 'expense')?.cat_id;
+    Object.keys(catMap).forEach(key => {
+        if (!catMap[key] && key !== 'salary') catMap[key] = genericExpenseCat;
+    });
+
+    return catMap;
+}
+
+function generateFixedExpenses(dateStr: string, catMap: Record<string, string | undefined>): MockTx[] {
+    const txs: MockTx[] = [];
+    if (catMap.rent) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'ค่าเช่าคอนโด',
+            amount: 12000 * 100, category_id: catMap.rent, allocation_type: 'need', timestamp: `${dateStr} 10:00:00`
+        });
+    }
+    if (catMap.internet) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'ค่าเน็ตบ้าน AIS',
+            amount: 699 * 100, category_id: catMap.internet, allocation_type: 'need', timestamp: `${dateStr} 10:05:00`
+        });
+    }
+    if (catMap.water_elec) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'ค่าไฟ',
+            amount: getRandomInt(1200, 2500) * 100, category_id: catMap.water_elec, allocation_type: 'need', timestamp: `${dateStr} 10:10:00`
+        });
+    }
+    if (catMap.entertainment) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'Netflix / Spotify',
+            amount: 548 * 100, category_id: catMap.entertainment, allocation_type: 'want', timestamp: `${dateStr} 10:15:00`
+        });
+    }
+    return txs;
+}
+
+function generateDailyExpenses(dateStr: string, isWeekend: boolean, catMap: Record<string, string | undefined>): MockTx[] {
+    const txs: MockTx[] = [];
+
+    // Food (Lunch + optional Dinner)
+    if (catMap.food) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
+            amount: getRandomInt(60, 150) * 100, category_id: catMap.food, allocation_type: 'need', timestamp: `${dateStr} 12:30:00`
+        });
+        
+        if (getRandomInt(1, 100) > 20) { // 80% chance of dinner expense
+            txs.push({
+                id: crypto.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
+                amount: isWeekend ? getRandomInt(500, 1500) * 100 : getRandomInt(80, 200) * 100, 
+                category_id: catMap.food, allocation_type: isWeekend ? 'want' : 'need', timestamp: `${dateStr} 19:00:00`
+            });
+        }
+    }
+
+    // Transport (Workdays mostly)
+    if (!isWeekend && catMap.transport) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
+            amount: getRandomInt(88, 120) * 100, category_id: catMap.transport, allocation_type: 'need', timestamp: `${dateStr} 08:30:00`
+        });
+    }
+
+    // Coffee (Random)
+    if (catMap.coffee && getRandomInt(1, 100) > 40) { // 60% chance
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'กาแฟสด',
+            amount: getRandomInt(50, 150) * 100, category_id: catMap.coffee, allocation_type: 'want', timestamp: `${dateStr} 09:00:00`
+        });
+    }
+
+    // Shopping (Weekends mostly)
+    if (isWeekend && catMap.shopping && getRandomInt(1, 100) > 50) { // 50% chance on weekends
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
+            amount: getRandomInt(500, 3500) * 100, category_id: catMap.shopping, allocation_type: 'want', timestamp: `${dateStr} 15:00:00`
+        });
+    }
+
+    return txs;
+}
+
 const generateMockupData = () => {
     // 1. Clean existing data
     db.exec("DELETE FROM transactions");
@@ -44,25 +140,7 @@ const generateMockupData = () => {
         group_type: string;
     }>;
     
-    // Build category maps for quick access
-    const catMap: Record<string, string | undefined> = {
-        salary: categories.find(c => c.group_name === 'รายได้หลัก' || c.group_type === 'income')?.cat_id,
-        food: categories.find(c => c.cat_name.includes('อาหาร') || c.cat_name === 'ค่าอาหาร')?.cat_id,
-        transport: categories.find(c => c.cat_name.includes('เดินทาง') || c.cat_name.includes('BTS'))?.cat_id,
-        shopping: categories.find(c => c.cat_name.includes('ช้อปปิ้ง'))?.cat_id,
-        entertainment: categories.find(c => c.cat_name.includes('บันเทิง'))?.cat_id,
-        rent: categories.find(c => c.cat_name.includes('เช่า') || c.cat_name.includes('หอพัก'))?.cat_id,
-        internet: categories.find(c => c.cat_name.includes('อินเทอร์เน็ต') || c.cat_name.includes('เน็ต'))?.cat_id,
-        water_elec: categories.find(c => c.cat_name.includes('น้ำ') || c.cat_name.includes('ไฟ'))?.cat_id,
-        coffee: categories.find(c => c.cat_name.includes('กาแฟ') || c.cat_name.includes('เครื่องดื่ม'))?.cat_id,
-    };
-
-    // Use a generic expense category if specific ones aren't found
-    const genericExpenseCat = categories.find(c => c.group_type === 'expense')?.cat_id;
-    // Fallback missing categories to generic
-    Object.keys(catMap).forEach(key => {
-        if (!catMap[key] && key !== 'salary') catMap[key] = genericExpenseCat;
-    });
+    const catMap = buildCatMap(categories);
 
     const dayTypes = db.prepare("SELECT id, name FROM day_types").all() as Array<{ id: string; name: string }>;
     const dtMap: Record<string, string | undefined> = {
@@ -132,72 +210,11 @@ const generateMockupData = () => {
 
         // 3.3 Add Fixed Expenses (1st of month)
         if (isStartOfMonth) {
-            if (catMap.rent) {
-                transactionsToInsert.push({
-                    id: crypto.randomUUID(), date: dateStr, description: 'ค่าเช่าคอนโด',
-                    amount: 12000 * 100, category_id: catMap.rent, allocation_type: 'need', timestamp: `${dateStr} 10:00:00`
-                });
-            }
-            if (catMap.internet) {
-                transactionsToInsert.push({
-                    id: crypto.randomUUID(), date: dateStr, description: 'ค่าเน็ตบ้าน AIS',
-                    amount: 699 * 100, category_id: catMap.internet, allocation_type: 'need', timestamp: `${dateStr} 10:05:00`
-                });
-            }
-            if (catMap.water_elec) {
-                transactionsToInsert.push({
-                    id: crypto.randomUUID(), date: dateStr, description: 'ค่าไฟ',
-                    amount: getRandomInt(1200, 2500) * 100, category_id: catMap.water_elec, allocation_type: 'need', timestamp: `${dateStr} 10:10:00`
-                });
-            }
-            if (catMap.entertainment) {
-                transactionsToInsert.push({
-                    id: crypto.randomUUID(), date: dateStr, description: 'Netflix / Spotify',
-                    amount: 548 * 100, category_id: catMap.entertainment, allocation_type: 'want', timestamp: `${dateStr} 10:15:00`
-                });
-            }
+            transactionsToInsert.push(...generateFixedExpenses(dateStr, catMap));
         }
 
         // 3.4 Add Daily Variable Expenses
-        // Food (2-3 meals)
-        if (catMap.food) {
-            transactionsToInsert.push({
-                id: crypto.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
-                amount: getRandomInt(60, 150) * 100, category_id: catMap.food, allocation_type: 'need', timestamp: `${dateStr} 12:30:00`
-            });
-            
-            if (getRandomInt(1, 100) > 20) { // 80% chance of dinner expense
-                transactionsToInsert.push({
-                    id: crypto.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
-                    amount: isWeekend ? getRandomInt(500, 1500) * 100 : getRandomInt(80, 200) * 100, 
-                    category_id: catMap.food, allocation_type: isWeekend ? 'want' : 'need', timestamp: `${dateStr} 19:00:00`
-                });
-            }
-        }
-
-        // Transport (Workdays mostly)
-        if (!isWeekend && catMap.transport) {
-            transactionsToInsert.push({
-                id: crypto.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
-                amount: getRandomInt(88, 120) * 100, category_id: catMap.transport, allocation_type: 'need', timestamp: `${dateStr} 08:30:00`
-            });
-        }
-
-        // Coffee (Random)
-        if (catMap.coffee && getRandomInt(1, 100) > 40) { // 60% chance
-            transactionsToInsert.push({
-                id: crypto.randomUUID(), date: dateStr, description: 'กาแฟสด',
-                amount: getRandomInt(50, 150) * 100, category_id: catMap.coffee, allocation_type: 'want', timestamp: `${dateStr} 09:00:00`
-            });
-        }
-
-        // Shopping (Weekends mostly)
-        if (isWeekend && catMap.shopping && getRandomInt(1, 100) > 50) { // 50% chance on weekends
-            transactionsToInsert.push({
-                id: crypto.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
-                amount: getRandomInt(500, 3500) * 100, category_id: catMap.shopping, allocation_type: 'want', timestamp: `${dateStr} 15:00:00`
-            });
-        }
+        transactionsToInsert.push(...generateDailyExpenses(dateStr, isWeekend, catMap));
 
         currentDate.setDate(currentDate.getDate() + 1); // Next day
     }

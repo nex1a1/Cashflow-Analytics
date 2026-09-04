@@ -105,7 +105,7 @@ const HeatmapRow = memo(function HeatmapRow({
 
       {activeCategories.map((cat, idx) => {
         const items    = cellMap[date]?.[cat.name] || EMPTY_ARRAY;
-        const cellSum  = items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+        const cellSum  = items.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
         const intensity = items.length > 0 ? Math.max(0.07, Math.min(0.78, (cellSum / maxCellValue) * 0.72)) : 0;
         
         return (

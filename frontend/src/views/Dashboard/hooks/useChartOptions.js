@@ -78,8 +78,13 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               },
               title: (tooltipItems) => {
                 const item = tooltipItems[0]?.raw;
-                if (!item) return '';
-                const cleanName = (str) => str ? str.replace(/\s*\([\d,.]+\)$/, '') : '';
+                const cleanName = (str) => {
+                  if (!str) return '';
+                  const lastOpen = str.lastIndexOf('(');
+                  return (lastOpen !== -1 && str.endsWith(')'))
+                    ? str.slice(0, lastOpen).trimEnd()
+                    : str;
+                };
                 return `${cleanName(item.from)} → ${cleanName(item.to)}`;
               },
               labelColor: (context) => {

@@ -207,7 +207,7 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
   const dailySavings = totalSavings / periodDays;
 
   // Safely parse decimals to numbers for stable evaluation
-  const rentPercentageNum = parseFloat(rentPercentage) || 0;
+  const rentPercentageNum = Number.parseFloat(rentPercentage) || 0;
 
   // Lifestyle Ratio: (Wants / Total Income)
   const lifestyleRatio = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
@@ -497,13 +497,13 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
                 <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
                   <span className="truncate">เจาะลึกงบอาหาร</span>
                   <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${
-                    parseFloat(foodPctOfIncome) <= 20 
+                    Number.parseFloat(foodPctOfIncome) <= 20 
                       ? 'text-emerald-400 border-emerald-400/30' 
-                      : parseFloat(foodPctOfIncome) <= 30 
+                      : Number.parseFloat(foodPctOfIncome) <= 30 
                         ? 'text-amber-400 border-amber-400/30' 
                         : 'text-rose-400 border-rose-400/30'
                   }`}>
-                    {parseFloat(foodPctOfIncome) <= 20 ? 'สมดุลดี' : parseFloat(foodPctOfIncome) <= 30 ? 'ปานกลาง' : 'สัดส่วนสูง'}
+                    {Number.parseFloat(foodPctOfIncome) <= 20 ? 'สมดุลดี' : Number.parseFloat(foodPctOfIncome) <= 30 ? 'ปานกลาง' : 'สัดส่วนสูง'}
                   </span>
                 </div>
                 

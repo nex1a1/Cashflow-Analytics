@@ -9,6 +9,73 @@ import { isDateInFilter, fromISODate } from '../../utils/dateHelpers';
 import { transactionService } from '../../services/api';
 import { formatMoney } from '../../utils/formatters';
 
+function calculateCategoryTotal(transactions, date, categoryName) {
+  return transactions
+    .filter(t => t.date === date && t.category === categoryName)
+    .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
+}
+
+function buildLongCsv(dataToExport, categories, getDayTypeInfo, dlm) {
+  const headers = ['Date', 'DayType', 'Type', 'Category', 'Description', 'Amount', 'Note'];
+  let content = headers.join(dlm) + '\n';
+  dataToExport.forEach(t => {
+    const cat = categories.find(c => c.name === t.category);
+    const dt = getDayTypeInfo(t.date);
+
+    const row = [
+      t.date,
+      dt.label,
+      cat?.type || 'expense',
+      t.category,
+      `"${(t.description || '').replaceAll('"', '""')}"`,
+      t.amount,
+      `"${(t.dayNote || '').replaceAll('"', '""')}"`
+    ];
+    content += row.join(dlm) + '\n';
+  });
+  return content;
+}
+
+function buildWideCsv(dataToExport, categories, getDayTypeInfo, dlm) {
+  const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => a.localeCompare(b));
+  const cats = categories.filter(c => dataToExport.some(t => t.category === c.name));
+  const headers = ['Date', 'DayType', ...cats.map(c => c.name)];
+  let content = headers.join(dlm) + '\n';
+  
+  dates.forEach(date => {
+    const dt = getDayTypeInfo(date);
+    const row = [date, dt.label];
+    cats.forEach(cat => {
+      const amount = calculateCategoryTotal(dataToExport, date, cat.name);
+      row.push(amount || 0);
+    });
+    content += row.join(dlm) + '\n';
+  });
+  return content;
+}
+
+function buildFullCsv(localTransactions, categories, dayTypes, dayTypeConfig, dlm) {
+  let content = 'SECTION' + dlm + 'DATA\n';
+  content += `TRANSACTIONS${dlm}"${JSON.stringify(localTransactions).replaceAll('"', '""')}"\n`;
+  content += `CATEGORIES${dlm}"${JSON.stringify(categories).replaceAll('"', '""')}"\n`;
+  content += `DAY_TYPES${dlm}"${JSON.stringify(dayTypes).replaceAll('"', '""')}"\n`;
+  content += `CONFIG${dlm}"${JSON.stringify(dayTypeConfig).replaceAll('"', '""')}"\n`;
+  return content;
+}
+
+function downloadCsvBlob(csvContent, filename) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function ExportModal({
   isOpen, onClose, transactions: filteredTransactions, categories, dayTypes, dayTypeConfig,
   groupedOptions, getFilterLabel, initialPeriod
@@ -119,63 +186,16 @@ export default function ExportModal({
     setTimeout(() => {
       try {
         let csvContent = '\uFEFF'; // BOM
-        const dlm = delimiter;
-
         if (exportFormat === 'long') {
-          const headers = ['Date', 'DayType', 'Type', 'Category', 'Description', 'Amount', 'Note'];
-          csvContent += headers.join(dlm) + '\n';
-          dataToExport.forEach(t => {
-            const cat = categories.find(c => c.name === t.category);
-            const dt = getDayTypeInfo(t.date);
-
-            const row = [
-              t.date,
-              dt.label,
-              cat?.type || 'expense',
-              t.category,
-              `"${(t.description || '').replace(/"/g, '""')}"`,
-              t.amount,
-              `"${(t.dayNote || '').replace(/"/g, '""')}"`
-            ];
-            csvContent += row.join(dlm) + '\n';
-          });
+          csvContent += buildLongCsv(dataToExport, categories, getDayTypeInfo, delimiter);
         } else if (exportFormat === 'wide') {
-          const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => a.localeCompare(b));
-          const cats = categories.filter(c => dataToExport.some(t => t.category === c.name));
-          const headers = ['Date', 'DayType', ...cats.map(c => c.name)];
-          csvContent += headers.join(dlm) + '\n';
-          
-          dates.forEach(date => {
-            const dt = getDayTypeInfo(date);
-            const row = [date, dt.label];
-            cats.forEach(cat => {
-              const amount = dataToExport
-                .filter(t => t.date === date && t.category === cat.name)
-                .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
-              row.push(amount || 0);
-            });
-            csvContent += row.join(dlm) + '\n';
-          });
+          csvContent += buildWideCsv(dataToExport, categories, getDayTypeInfo, delimiter);
         } else if (exportFormat === 'full') {
-          csvContent += 'SECTION' + dlm + 'DATA\n';
-          csvContent += `TRANSACTIONS${dlm}"${JSON.stringify(localTransactions).replace(/"/g, '""')}"\n`;
-          csvContent += `CATEGORIES${dlm}"${JSON.stringify(categories).replace(/"/g, '""')}"\n`;
-          csvContent += `DAY_TYPES${dlm}"${JSON.stringify(dayTypes).replace(/"/g, '""')}"\n`;
-          csvContent += `CONFIG${dlm}"${JSON.stringify(dayTypeConfig).replace(/"/g, '""')}"\n`;
+          csvContent += buildFullCsv(localTransactions, categories, dayTypes, dayTypeConfig, delimiter);
         }
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
         const filename = `CashflowShark_${exportFormat}_${exportPeriod}_${new Date().toISOString().split('T')[0]}.csv`;
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadCsvBlob(csvContent, filename);
       } catch (err) {
         console.error('Export compilation failed:', err);
       } finally {
@@ -184,7 +204,7 @@ export default function ExportModal({
           onClose();
         }, 500);
       }
-    }, 800);
+    }, 400);
   };
 
   return (
@@ -540,9 +560,7 @@ export default function ExportModal({
                                   </span>
                                 </td>
                                 {cats.slice(0, 6).map(cat => {
-                                  const total = dataToExport
-                                    .filter(t => t.date === date && t.category === cat.name)
-                                    .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
+                                  const total = calculateCategoryTotal(dataToExport, date, cat.name);
                                   
                                   return (
                                     <td 

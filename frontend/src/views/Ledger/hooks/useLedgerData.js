@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 
 export function useLedgerData(displayTransactions, filterPeriod, searchQuery, filters = {}) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
 
   // Map for fast lookup of order_index
   const catOrderMap = useMemo(() => {
@@ -28,8 +28,8 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
     return [...displayTransactions].sort((a, b) => {
       // 1. Primary Sort: Manual Selection or Date (Default)
       if (sortConfig.key === 'amount') {
-        const valA = parseFloat(a.amount) || 0;
-        const valB = parseFloat(b.amount) || 0;
+        const valA = Number.parseFloat(a.amount) || 0;
+        const valB = Number.parseFloat(b.amount) || 0;
         if (valA !== valB) return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
       } else if (sortConfig.key === 'category') {
         const valA = a.category || '';
@@ -60,8 +60,8 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
       if (catAOrder !== catBOrder) return catAOrder - catBOrder;
 
       // 4. Final Tie-breaker: Amount (Highest to Lowest)
-      const amtA = parseFloat(a.amount) || 0;
-      const amtB = parseFloat(b.amount) || 0;
+      const amtA = Number.parseFloat(a.amount) || 0;
+      const amtB = Number.parseFloat(b.amount) || 0;
       return amtB - amtA;
     });
   }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap]);

@@ -17,9 +17,9 @@ const getCategoryPillStyles = (hexColor, dm) => {
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
   let r = 148, g = 163, b = 184;
   if (hex.length === 6) {
-    r = parseInt(hex.substring(0, 2), 16);
-    g = parseInt(hex.substring(2, 4), 16);
-    b = parseInt(hex.substring(4, 6), 16);
+    r = Number.parseInt(hex.substring(0, 2), 16);
+    g = Number.parseInt(hex.substring(2, 4), 16);
+    b = Number.parseInt(hex.substring(4, 6), 16);
   }
   
   let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
@@ -81,8 +81,8 @@ export default function LedgerTable({
   }, [currentPage]);
 
   const handlePageSubmit = () => {
-    let p = parseInt(pageInput, 10);
-    if (isNaN(p) || p < 1) p = 1;
+    let p = Number.parseInt(pageInput, 10);
+    if (Number.isNaN(p) || p < 1) p = 1;
     if (p > totalPages) p = totalPages;
     setCurrentPage(p);
     setPageInput(String(p));

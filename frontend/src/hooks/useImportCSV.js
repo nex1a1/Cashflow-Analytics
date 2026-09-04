@@ -3,6 +3,122 @@ import { CALENDAR_API_URL, PREDICT_API_URL } from '../constants';
 import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
 import { useToast } from '../context/ToastContext';
 
+function extractUniqueDescriptions(parsedRows, isCsvLong, headers) {
+  const uniqueDescriptions = new Set();
+  for (let i = 1; i < parsedRows.length; i++) {
+    const row = parsedRows[i];
+    if (row.length < 2) continue;
+    let desc = '';
+    if (isCsvLong) {
+      if (headers[1] === 'ชนิดวัน' && row.length >= 6) desc = row[4];
+      else if (headers[1] === 'ประเภท' && row.length >= 5) desc = row[3];
+      else desc = row[2];
+    } else {
+      desc = row[row.length - 1];
+    }
+    if (desc) uniqueDescriptions.add(desc);
+  }
+  return uniqueDescriptions;
+}
+
+async function fetchSharkBrainPredictions(uniqueDescriptions) {
+  if (!uniqueDescriptions || uniqueDescriptions.size === 0) return {};
+  try {
+    const res = await fetch(PREDICT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descriptions: Array.from(uniqueDescriptions) }),
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.warn('Shark Brain Prediction failed, falling back to local logic:', e);
+  }
+  return {};
+}
+
+function parseLongCsvRow(row, headers, context) {
+  const { dateStr, predictions, getOrCreateDayType, getOrCreateCategory, newDayTypes } = context;
+  let catName;
+  let desc;
+  let amtStr;
+  let typeStr = 'รายจ่าย';
+
+  if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
+    const typeId = getOrCreateDayType(row[1]);
+    if (typeId) newDayTypes[dateStr] = typeId;
+    typeStr = row[2];
+    catName = row[3];
+    desc = row[4];
+    amtStr = row[5];
+  } else if (headers[1] === 'ประเภท' && row.length >= 5) {
+    typeStr = row[1];
+    catName = row[2];
+    desc = row[3];
+    amtStr = row[4];
+  } else {
+    catName = row[1];
+    desc = row[2];
+    amtStr = row[3];
+  }
+
+  if ((!catName || catName === 'อื่นๆ') && predictions[desc]) {
+    catName = predictions[desc].name;
+  }
+
+  const finalCatName = getOrCreateCategory(catName, typeStr);
+  const amount = cleanNumber(amtStr);
+  if (amount === 0) return null;
+
+  return {
+    id: crypto.randomUUID(),
+    date: dateStr,
+    category: finalCatName,
+    description: desc || finalCatName,
+    amount: Math.abs(amount),
+    dayNote: '',
+  };
+}
+
+const EXCLUDE_CATEGORIES = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
+
+function parseWideCsvRow(row, headers, context) {
+  const { dateStr, predictions, getOrCreateCategory, updatedCategories } = context;
+  const noteColIndex = headers.length - 1;
+  const note = row.length === headers.length ? row[noteColIndex] || '' : '';
+  const rowItems = [];
+
+  for (let j = 1; j < Math.min(row.length, headers.length); j++) {
+    if (j === noteColIndex) continue;
+    const rawHeader = headers[j];
+    if (!rawHeader || EXCLUDE_CATEGORIES.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
+
+    const amount = cleanNumber(row[j]);
+    if (amount === 0) continue;
+
+    const cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
+    const rawBase = cleanStr.split('(')[0].trim();
+    const enIndex = rawBase.search(/[a-zA-Z]/);
+    const catName = (enIndex !== -1 ? rawBase.slice(0, enIndex).trim() : rawBase) || cleanStr;
+    const description = note?.trim() ? `${catName} · ${note.trim()}` : catName;
+
+    const predicted = predictions[description] || predictions[note?.trim()];
+    const finalCatName = predicted
+      ? getOrCreateCategory(predicted.name, 'รายจ่าย')
+      : autoCategorize(description, catName, updatedCategories);
+
+    rowItems.push({
+      id: crypto.randomUUID(),
+      date: dateStr,
+      category: finalCatName,
+      description,
+      amount: Math.abs(amount),
+      dayNote: note,
+    });
+  }
+
+  return rowItems;
+}
+
 export default function useImportCSV({
   categories,
   dayTypes,
@@ -33,40 +149,10 @@ export default function useImportCSV({
         return;
       }
 
-      // 1. Collect all descriptions to predict categories from backend
       const headers = parsedRows[0];
       const isCsvLong = headers.length >= 4 && (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
-      
-      const uniqueDescriptions = new Set();
-      for (let i = 1; i < parsedRows.length; i++) {
-        const row = parsedRows[i];
-        if (row.length < 2) continue;
-        
-        let desc = '';
-        if (isCsvLong) {
-          // Date, [DayType], [Type], Category, Description, Amount
-          if (headers[1] === 'ชนิดวัน' && row.length >= 6) desc = row[4];
-          else if (headers[1] === 'ประเภท' && row.length >= 5) desc = row[3];
-          else desc = row[2];
-        } else {
-          // Wide Format: Date, Cat1, Cat2..., Notes
-          desc = row[row.length - 1]; // Notes
-        }
-        if (desc) uniqueDescriptions.add(desc);
-      }
-
-      // 2. Fetch Predictions from Shark Brain (Backend)
-      let predictions = {};
-      try {
-        const res = await fetch(PREDICT_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ descriptions: Array.from(uniqueDescriptions) }),
-        });
-        if (res.ok) predictions = await res.json();
-      } catch (e) {
-        console.warn('Shark Brain Prediction failed, falling back to local logic:', e);
-      }
+      const uniqueDescriptions = extractUniqueDescriptions(parsedRows, isCsvLong, headers);
+      const predictions = await fetchSharkBrainPredictions(uniqueDescriptions);
 
       let newList = [];
       let newDayTypes = { ...dayTypes };
@@ -77,12 +163,12 @@ export default function useImportCSV({
 
       const getOrCreateDayType = (label) => {
         if (!label || label.trim() === '') return null;
-        label = label.trim();
-        let found = updatedDayTypeConfig.find(dt => dt.label === label);
+        const trimmed = label.trim();
+        let found = updatedDayTypeConfig.find(dt => dt.label === trimmed);
         if (!found) {
           found = {
             id: crypto.randomUUID(),
-            label,
+            label: trimmed,
             color: '#64748B',
           };
           updatedDayTypeConfig.push(found);
@@ -95,13 +181,13 @@ export default function useImportCSV({
         if (!name || name.trim() === '') {
           return updatedCategories.filter(c => c.type === 'expense')[0]?.name || 'อื่นๆ';
         }
-        name = name.trim();
-        let found = updatedCategories.find(c => c.name === name);
+        const trimmed = name.trim();
+        let found = updatedCategories.find(c => c.name === trimmed);
         if (!found) {
           const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
           found = {
             id: crypto.randomUUID(),
-            name,
+            name: trimmed,
             icon: '📌',
             color: isIncome ? '#10B981' : '#64748B',
             type: isIncome ? 'income' : 'expense',
@@ -114,74 +200,27 @@ export default function useImportCSV({
         return found.name;
       };
 
-      const dateColIndex = 0;
-      const noteColIndex = headers.length - 1;
-      const excludeCategories = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
-
       for (let i = 1; i < parsedRows.length; i++) {
         const row = parsedRows[i];
         if (row.length < 2) continue;
-        const dateStr = row[dateColIndex];
+        const dateStr = row[0];
         if (!dateStr || !dateStr.includes('/')) continue;
 
+        const rowContext = {
+          dateStr,
+          predictions,
+          getOrCreateDayType,
+          getOrCreateCategory,
+          newDayTypes,
+          updatedCategories,
+        };
+
         if (isCsvLong) {
-          let catName, desc, amtStr, typeStr = 'รายจ่าย';
-
-          if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
-            const typeId = getOrCreateDayType(row[1]);
-            if (typeId) newDayTypes[dateStr] = typeId;
-            typeStr = row[2]; catName = row[3]; desc = row[4]; amtStr = row[5];
-          } else if (headers[1] === 'ประเภท' && row.length >= 5) {
-            typeStr = row[1]; catName = row[2]; desc = row[3]; amtStr = row[4];
-          } else {
-            catName = row[1]; desc = row[2]; amtStr = row[3];
-          }
-
-          // Use Prediction if category is generic or missing
-          if ((!catName || catName === 'อื่นๆ') && predictions[desc]) {
-            catName = predictions[desc].name;
-          }
-
-          const finalCatName = getOrCreateCategory(catName, typeStr);
-          const amount = cleanNumber(amtStr);
-          if (amount !== 0) {
-            newList.push({
-              id: crypto.randomUUID(),
-              date: dateStr,
-              category: finalCatName,
-              description: desc || finalCatName,
-              amount: Math.abs(amount),
-              dayNote: '',
-            });
-          }
-          continue;
-        }
-
-        const note = row.length === headers.length ? row[noteColIndex] || '' : '';
-        for (let j = 1; j < Math.min(row.length, headers.length); j++) {
-          if (j === noteColIndex) continue;
-          const rawHeader = headers[j];
-          if (!rawHeader || excludeCategories.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
-
-          const amount = cleanNumber(row[j]);
-          if (amount !== 0) {
-            let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
-            let catName = cleanStr.split('(')[0].trim().replace(/[a-zA-Z].*$/, '').trim() || cleanStr;
-            let description = note?.trim() ? `${catName} · ${note.trim()}` : catName;
-            
-            // Intelligence Sync: Try backend prediction first for Wide Format too
-            const predicted = predictions[description] || predictions[note?.trim()];
-            const finalCatName = predicted ? getOrCreateCategory(predicted.name, 'รายจ่าย') : autoCategorize(description, catName, updatedCategories);
-
-            newList.push({
-              id: crypto.randomUUID(),
-              date: dateStr,
-              category: finalCatName,
-              description,
-              amount: Math.abs(amount),
-              dayNote: note,
-            });
-          }
+          const item = parseLongCsvRow(row, headers, rowContext);
+          if (item) newList.push(item);
+        } else {
+          const items = parseWideCsvRow(row, headers, rowContext);
+          if (items.length > 0) newList.push(...items);
         }
       }
 

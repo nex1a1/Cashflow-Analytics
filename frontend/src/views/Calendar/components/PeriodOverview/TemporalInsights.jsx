@@ -55,7 +55,7 @@ export default function TemporalInsights({
     } else {
       humanInsightText = (
         <span>
-          อัตราการใช้จ่ายเฉลี่ยต่อวัน <span className="text-slate-200 font-bold">เท่ากัน</span> ทั้งวันทำงานและวันพักผ่อน
+          อัตราการใช้จ่ายเฉลี่ยต่อวัน{' '}<span className="text-slate-200 font-bold">เท่ากัน</span>{' '}ทั้งวันทำงานและวันพักผ่อน
         </span>
       );
     }
@@ -102,8 +102,7 @@ export default function TemporalInsights({
 
             <div className="mt-2">
               <div className="text-xl font-black text-slate-100 font-mono tabular-nums">
-                ฿{formatVal(workVsRest.workAvgExpense)}
-                <span className="text-[10px] font-normal text-slate-500 ml-1">/ วัน</span>
+                ฿{formatVal(workVsRest.workAvgExpense)} <span className="text-[10px] font-normal text-slate-500 ml-1">/ วัน</span>
               </div>
               <div className="text-[10px] font-mono text-slate-400 mt-0.5">
                 รวม ฿{formatVal(workVsRest.workTotalExpense)}
@@ -125,8 +124,7 @@ export default function TemporalInsights({
 
             <div className="mt-2">
               <div className="text-xl font-black text-emerald-400 font-mono tabular-nums">
-                ฿{formatVal(workVsRest.restAvgExpense)}
-                <span className="text-[10px] font-normal text-slate-500 ml-1">/ วัน</span>
+                ฿{formatVal(workVsRest.restAvgExpense)} <span className="text-[10px] font-normal text-slate-500 ml-1">/ วัน</span>
               </div>
               <div className="text-[10px] font-mono text-slate-400 mt-0.5">
                 รวม ฿{formatVal(workVsRest.restTotalExpense)}
@@ -140,8 +138,7 @@ export default function TemporalInsights({
           <div className="space-y-1.5 border-t border-[#252525] pt-2.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-[#da291c] rounded-none shrink-0" />
-                สัดส่วนการใช้จ่าย 7 วัน (จันทร์ - อาทิตย์)
+                <span className="w-1.5 h-1.5 bg-[#da291c] rounded-none shrink-0" /> สัดส่วนการใช้จ่าย 7 วัน (จันทร์ - อาทิตย์)
               </span>
               {peakDow && peakDow.avgExpense > 0 && (
                 <span className="font-mono text-slate-400">
@@ -245,8 +242,7 @@ export default function TemporalInsights({
           <div className="bg-[#121212] border border-[#252525] p-2.5 flex flex-col justify-between min-h-[88px]">
             <div className="flex items-center justify-between gap-1 flex-wrap">
               <span className="text-[10px] font-black text-rose-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-rose-500 rounded-none inline-block" />
-                จำเป็น (50%)
+                <span className="w-2 h-2 bg-rose-500 rounded-none inline-block" /> จำเป็น (50%)
               </span>
               <span className={`text-[8px] font-bold px-1.5 py-0.2 border rounded-none ${
                 benchmarks.needDelta <= 0
@@ -270,8 +266,7 @@ export default function TemporalInsights({
           <div className="bg-[#121212] border border-[#252525] p-2.5 flex flex-col justify-between min-h-[88px]">
             <div className="flex items-center justify-between gap-1 flex-wrap">
               <span className="text-[10px] font-black text-amber-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-amber-500 rounded-none inline-block" />
-                ตามใจ (30%)
+                <span className="w-2 h-2 bg-amber-500 rounded-none inline-block" /> ตามใจ (30%)
               </span>
               <span className={`text-[8px] font-bold px-1.5 py-0.2 border rounded-none ${
                 benchmarks.wantDelta <= 0
@@ -295,8 +290,7 @@ export default function TemporalInsights({
           <div className="bg-[#121212] border border-[#252525] p-2.5 flex flex-col justify-between min-h-[88px]">
             <div className="flex items-center justify-between gap-1 flex-wrap">
               <span className="text-[10px] font-black text-emerald-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-emerald-500 rounded-none inline-block" />
-                เงินออม (20%)
+                <span className="w-2 h-2 bg-emerald-500 rounded-none inline-block" /> เงินออม (20%)
               </span>
               <span className={`text-[8px] font-bold px-1.5 py-0.2 border rounded-none ${
                 benchmarks.savingsDelta >= 0

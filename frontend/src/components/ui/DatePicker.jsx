@@ -125,6 +125,129 @@ function formatDisplay(v, placeholder = 'เลือกวันที่') {
   return `📅 ${summaryParts.join(', ')} ${THAI_MONTHS_SHORT[lm - 1]}`;
 }
 
+function resolveDayStyle({
+  dayIsSelected,
+  hasPrev,
+  hasNext,
+  value,
+  draftDatesSize,
+  weekend,
+  isToday,
+  textMain,
+  hoverDay,
+}) {
+  if (dayIsSelected) {
+    if (hasPrev && hasNext) {
+      return { dayStyle: 'bg-[#da291c]/35 text-white font-bold border-y border-[#da291c]/60 shadow-none', isDimmed: false };
+    }
+    return { dayStyle: 'bg-[#da291c] text-white font-black shadow-sm ring-1 ring-[#da291c]', isDimmed: false };
+  }
+  if (value === 'WEEKDAY' && draftDatesSize === 0) {
+    return weekend
+      ? { dayStyle: 'text-[#555555] opacity-40', isDimmed: true }
+      : { dayStyle: 'bg-blue-950/50 text-blue-300 font-bold border border-blue-500/40', isDimmed: false };
+  }
+  if (value === 'WEEKEND' && draftDatesSize === 0) {
+    return weekend
+      ? { dayStyle: 'bg-amber-950/50 text-amber-300 font-bold border border-amber-500/40', isDimmed: false }
+      : { dayStyle: 'text-[#555555] opacity-40', isDimmed: true };
+  }
+  if (isToday) {
+    return { dayStyle: `ring-1 ring-[#da291c] ${textMain} ${hoverDay}`, isDimmed: false };
+  }
+  if (weekend) {
+    return { dayStyle: `text-red-400 ${hoverDay}`, isDimmed: false };
+  }
+  return { dayStyle: `${textMain} ${hoverDay}`, isDimmed: false };
+}
+
+function resolveDayTypeObj(y, m, d, dateStr, dayTypes, dayTypeConfig) {
+  if (!dayTypeConfig || dayTypeConfig.length === 0) return null;
+  const explicitTypeId = dayTypes[dateStr];
+  if (explicitTypeId) {
+    const found = dayTypeConfig.find(dt => dt.id === explicitTypeId);
+    if (found) return found;
+  }
+  const dow = new Date(y, m, d).getDay();
+  const isWknd = (dow === 0 || dow === 6);
+  if (isWknd) {
+    return dayTypeConfig.find(dt => 
+      dt.id === 'HOLIDAY' || dt.id === 'OFF' || dt.name === 'HOLIDAY' || dt.label?.includes('หยุด')
+    ) || dayTypeConfig[1] || dayTypeConfig[0];
+  }
+  return dayTypeConfig.find(dt => 
+    dt.id === 'WORK' || dt.name === 'WORK' || dt.label?.includes('ทำงาน')
+  ) || dayTypeConfig[0];
+}
+
+function DatePickerDayCell({
+  d,
+  y,
+  m,
+  activeDraftDates,
+  draftDatesSize,
+  hasData,
+  isToday,
+  value,
+  dayTypes,
+  dayTypeConfig,
+  textMain,
+  hoverDay,
+  onMouseDown,
+  onMouseEnter,
+}) {
+  const monthStr = String(m + 1).padStart(2, '0');
+  const dayStr = String(d).padStart(2, '0');
+  const dateStr = `${y}-${monthStr}-${dayStr}`;
+
+  const weekend = new Date(y, m, d).getDay() === 0 || new Date(y, m, d).getDay() === 6;
+  const dayHasData = hasData(d);
+  const dayIsSelected = activeDraftDates.has(dateStr);
+
+  const prevDateStr = toValueStr(new Date(y, m, d - 1));
+  const nextDateStr = toValueStr(new Date(y, m, d + 1));
+  const hasPrev = activeDraftDates.has(prevDateStr);
+  const hasNext = activeDraftDates.has(nextDateStr);
+
+  const { dayStyle, isDimmed } = resolveDayStyle({
+    dayIsSelected,
+    hasPrev,
+    hasNext,
+    value,
+    draftDatesSize,
+    weekend,
+    isToday: isToday(d),
+    textMain,
+    hoverDay,
+  });
+
+  const dayTypeObj = resolveDayTypeObj(y, m, d, dateStr, dayTypes, dayTypeConfig);
+
+  return (
+    <button
+      key={d}
+      type="button"
+      onMouseDown={(e) => onMouseDown(d, e)}
+      onMouseEnter={() => onMouseEnter(d)}
+      className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
+      title={dayTypeObj ? `ชนิดวัน: ${dayTypeObj.label || dayTypeObj.name}` : undefined}
+    >
+      {dayTypeObj && (
+        <span 
+          className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-10" 
+          style={{ backgroundColor: dayTypeObj.color }}
+        />
+      )}
+      <span>{d}</span>
+      {dayHasData && !dayIsSelected && !isDimmed && (
+        <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+          value === 'WEEKDAY' ? 'bg-blue-400' : value === 'WEEKEND' ? 'bg-amber-400' : 'bg-[#da291c]'
+        }`} />
+      )}
+    </button>
+  );
+}
+
 export default function DatePicker({
   value,
   onChange,
@@ -242,7 +365,7 @@ export default function DatePicker({
 
   const firstDay = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const blanks = Array(firstDay).fill(null);
+  const blanks = new Array(firstDay).fill(null);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const isToday = (d) =>
@@ -470,106 +593,25 @@ export default function DatePicker({
           {/* Calendar Day Grid with Connected Range Styling */}
           <div className="grid grid-cols-7 gap-y-0.5">
             {blanks.map((_, i) => <div key={`b${i}`} />)}
-            {days.map(d => {
-              const monthStr = String(m + 1).padStart(2, '0');
-              const dayStr = String(d).padStart(2, '0');
-              const dateStr = `${y}-${monthStr}-${dayStr}`;
-
-              const weekend = new Date(y, m, d).getDay() === 0 || new Date(y, m, d).getDay() === 6;
-              const dayHasData = hasData(d);
-              const dayIsSelected = activeDraftDates.has(dateStr);
-
-              // Check contiguous neighbors
-              const prevDateObj = new Date(y, m, d - 1);
-              const nextDateObj = new Date(y, m, d + 1);
-              const prevDateStr = toValueStr(prevDateObj);
-              const nextDateStr = toValueStr(nextDateObj);
-
-              const hasPrev = activeDraftDates.has(prevDateStr);
-              const hasNext = activeDraftDates.has(nextDateStr);
-
-              let dayStyle = `${textMain} ${hoverDay}`;
-              let isDimmed = false;
-
-              if (dayIsSelected) {
-                if (hasPrev && hasNext) {
-                  // Middle of range
-                  dayStyle = 'bg-[#da291c]/35 text-white font-bold border-y border-[#da291c]/60 shadow-none';
-                } else if (!hasPrev && hasNext) {
-                  // Start of range
-                  dayStyle = 'bg-[#da291c] text-white font-black shadow-sm ring-1 ring-[#da291c]';
-                } else if (hasPrev && !hasNext) {
-                  // End of range
-                  dayStyle = 'bg-[#da291c] text-white font-black shadow-sm ring-1 ring-[#da291c]';
-                } else {
-                  // Single isolated date
-                  dayStyle = 'bg-[#da291c] text-white font-black shadow-sm ring-1 ring-[#da291c]';
-                }
-              } else if (value === 'WEEKDAY' && draftDates.size === 0) {
-                if (!weekend) {
-                  dayStyle = 'bg-blue-950/50 text-blue-300 font-bold border border-blue-500/40';
-                } else {
-                  isDimmed = true;
-                  dayStyle = 'text-[#555555] opacity-40';
-                }
-              } else if (value === 'WEEKEND' && draftDates.size === 0) {
-                if (weekend) {
-                  dayStyle = 'bg-amber-950/50 text-amber-300 font-bold border border-amber-500/40';
-                } else {
-                  isDimmed = true;
-                  dayStyle = 'text-[#555555] opacity-40';
-                }
-              } else if (isToday(d)) {
-                dayStyle = `ring-1 ring-[#da291c] ${textMain} ${hoverDay}`;
-              } else if (weekend) {
-                dayStyle = `text-red-400 ${hoverDay}`;
-              }
-
-              let dayTypeObj = null;
-              if (dayTypeConfig && dayTypeConfig.length > 0) {
-                const explicitTypeId = dayTypes[dateStr];
-                if (explicitTypeId) {
-                  dayTypeObj = dayTypeConfig.find(dt => dt.id === explicitTypeId);
-                }
-                if (!dayTypeObj) {
-                  const dow = new Date(y, m, d).getDay();
-                  const isWknd = (dow === 0 || dow === 6);
-                  if (isWknd) {
-                    dayTypeObj = dayTypeConfig.find(dt => 
-                      dt.id === 'HOLIDAY' || dt.id === 'OFF' || dt.name === 'HOLIDAY' || dt.label?.includes('หยุด')
-                    ) || dayTypeConfig[1] || dayTypeConfig[0];
-                  } else {
-                    dayTypeObj = dayTypeConfig.find(dt => 
-                      dt.id === 'WORK' || dt.name === 'WORK' || dt.label?.includes('ทำงาน')
-                    ) || dayTypeConfig[0];
-                  }
-                }
-              }
-
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  onMouseDown={(e) => handleMouseDown(d, e)}
-                  onMouseEnter={() => handleMouseEnter(d)}
-                  className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
-                  title={dayTypeObj ? `ชนิดวัน: ${dayTypeObj.label || dayTypeObj.name}` : undefined}
-                >
-                  {dayTypeObj && (
-                    <span 
-                      className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-10" 
-                      style={{ backgroundColor: dayTypeObj.color }}
-                    />
-                  )}
-                  <span>{d}</span>
-                  {dayHasData && !dayIsSelected && !isDimmed && (
-                    <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-                      value === 'WEEKDAY' ? 'bg-blue-400' : value === 'WEEKEND' ? 'bg-amber-400' : 'bg-[#da291c]'
-                    }`} />
-                  )}
-                </button>
-              );
-            })}
+            {days.map(d => (
+              <DatePickerDayCell
+                key={d}
+                d={d}
+                y={y}
+                m={m}
+                activeDraftDates={activeDraftDates}
+                draftDatesSize={draftDates.size}
+                hasData={hasData}
+                isToday={isToday}
+                value={value}
+                dayTypes={dayTypes}
+                dayTypeConfig={dayTypeConfig}
+                textMain={textMain}
+                hoverDay={hoverDay}
+                onMouseDown={handleMouseDown}
+                onMouseEnter={handleMouseEnter}
+              />
+            ))}
           </div>
 
           {/* Smart Grouped Selected Dates Summary Box (Only shown in Multi-Selection Mode) */}

@@ -66,7 +66,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, dm }) {
                 {item.description || <span style={{ opacity: 0.3, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
               </p>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: '#f87171', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
-                ฿{(parseFloat(item.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ฿{(Number.parseFloat(item.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           ))}
@@ -84,7 +84,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, dm }) {
               รวม {tooltip.items.length} รายการ
             </p>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#f87171', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
-              ฿{tooltip.items.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ฿{tooltip.items.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         )}

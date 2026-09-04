@@ -35,6 +35,69 @@ export interface CashflowMonthData {
   groups: Record<string, number>;
 }
 
+export const extractYearMonth = (dateStr: string): string | null => {
+  if (!dateStr) return null;
+  let y: string, m: string;
+  if (dateStr.includes('-')) {
+    [y, m] = dateStr.split('-');
+  } else {
+    const parts = dateStr.split('/');
+    if (parts.length < 3) return null;
+    [y, m] = [parts[2], parts[1]];
+  }
+  return (y && m) ? `${y}-${m.padStart(2, '0')}` : null;
+};
+
+const accumulateExpenseTotals = (
+  amt: number,
+  itemDate: string,
+  groupName: string,
+  isFixed: boolean,
+  totals: CashflowTotals
+) => {
+  totals.expense += amt;
+  const dateObj = parseDateStrToObj(itemDate);
+  const dayOfWeek = dateObj.getDay();
+
+  if (dayOfWeek === 0 || dayOfWeek === 6) totals.weekend += amt;
+  else totals.weekday += amt;
+
+  totals.dayOfWeekMap[dayOfWeek] += amt;
+
+  const isRent = groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
+  const isFood = groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
+  const isIT   = groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it');
+  const isInv  = groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest');
+
+  if (isRent) totals.rent += amt;
+  else if (isFood) totals.food += amt;
+  else if (isIT) totals.it += amt;
+  else if (isInv) totals.invest += amt;
+
+  if (isFixed) totals.fixed += amt;
+  else totals.variable += amt;
+};
+
+const resolveCashflowContext = (item: any, catMap: Record<string, any>, cashflowGroups: any[]) => {
+  const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, allocation_type: 'want' };
+  const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
+  const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
+  const groupType = groupObj.type || catObj.type || 'expense';
+  const groupName = (groupObj.name || '').toLowerCase();
+
+  const isInc = groupType === 'income';
+  const isSav = groupType === 'savings';
+
+  const fallbackIncId = cashflowGroups?.find(g => g.type === 'income')?.id || 'cg_bonus';
+  const fallbackSavId = cashflowGroups?.find(g => g.type === 'savings')?.id || 'cg_savings';
+  const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
+
+  const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
+  const isFixed = (item.allocation_type || groupObj.allocation_type || catObj.allocation_type) === 'need';
+
+  return { isInc, isSav, cGroup, isFixed, groupName };
+};
+
 /**
  * Groups and aggregates transaction data into a cashflow map by month.
  */
@@ -66,36 +129,13 @@ export const generateCashflowMap = (
   };
 
   filteredTx.forEach(item => {
-    const amt = parseFloat(item.amount) || 0;
-    const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, allocation_type: 'want' };
-    
-    // Determine type from catMap or lookup group
-    const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
-    const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
-    const groupType = groupObj.type || catObj.type || 'expense'; 
-    const groupName = (groupObj.name || '').toLowerCase();
-    
-    const isInc = groupType === 'income';
-    const isSav = groupType === 'savings';
-    
-    // UUID-safe fallbacks based on group type
-    const fallbackIncId = cashflowGroups?.find(g => g.type === 'income')?.id || 'cg_bonus';
-    const fallbackSavId = cashflowGroups?.find(g => g.type === 'savings')?.id || 'cg_savings';
-    const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
-
-    const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
-    const isFixed = (item.allocation_type || groupObj.allocation_type || catObj.allocation_type) === 'need';
-
     if (!item.date) return;
-    let y: string, m: string, d: string;
-    if (item.date.includes('-')) {
-      [y, m, d] = item.date.split('-');
-    } else {
-      [d, m, y] = item.date.split('/');
-    }
-    if (!y || !m || !d) return;
+    const ym = extractYearMonth(item.date);
+    if (!ym) return;
 
-    const ym = `${y}-${m.padStart(2, '0')}`;
+    const amt = Number.parseFloat(item.amount) || 0;
+    const { isInc, isSav, cGroup, isFixed, groupName } = resolveCashflowContext(item, catMap, cashflowGroups);
+
     uniqueMonthsSet.add(ym);
 
     if (!cashflowMap[ym]) {
@@ -115,34 +155,33 @@ export const generateCashflowMap = (
       totals.savings += amt;
       cashflowMap[ym].totalSav += amt;
     } else {
-      totals.expense += amt;
       cashflowMap[ym].totalExp += amt;
       dayExpenseMap[item.date] = (dayExpenseMap[item.date] || 0) + amt;
-      
-      const dateObj = parseDateStrToObj(item.date);
-      const dayOfWeek = dateObj.getDay();
-      
-      if (dayOfWeek === 0 || dayOfWeek === 6) totals.weekend += amt; 
-      else totals.weekday += amt;
-      
-      totals.dayOfWeekMap[dayOfWeek] += amt;
-
-      const isRent = groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
-      const isFood = groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
-      const isIT   = groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it');
-      const isInv  = groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest');
-
-      if (isRent) totals.rent += amt;   
-      else if (isFood) totals.food += amt;   
-      else if (isIT) totals.it += amt;     
-      else if (isInv) totals.invest += amt; 
-
-      if (isFixed) totals.fixed += amt; 
-      else totals.variable += amt;
+      accumulateExpenseTotals(amt, item.date, groupName, isFixed, totals);
     }
   });
 
   return { cashflowMap, dayIncomeMap, dayExpenseMap, uniqueMonthsSet, totals, filteredTx };
+};
+
+const accumulateCategoryItem = (item: any, catMap: Record<string, any>, stats: any) => {
+  if (!item.date) return;
+  const amt = Number.parseFloat(item.amount) || 0;
+  const catId = item.category_id || (catMap[item.category]?.id) || 'unknown';
+  const ym = extractYearMonth(item.date);
+
+  stats.catMapData[catId] = (stats.catMapData[catId] || 0) + amt;
+  stats.dailyAllMap[item.date] = (stats.dailyAllMap[item.date] || 0) + amt;
+  if (ym) stats.monthlyAllMap[ym] = (stats.monthlyAllMap[ym] || 0) + amt;
+
+  if (!stats.dailyCatMap[catId]) stats.dailyCatMap[catId] = {};
+  stats.dailyCatMap[catId][item.date] = (stats.dailyCatMap[catId][item.date] || 0) + amt;
+
+  if (ym) {
+    if (!stats.monthlyCatMap[catId]) stats.monthlyCatMap[catId] = {};
+    stats.monthlyCatMap[catId][ym] = (stats.monthlyCatMap[catId][ym] || 0) + amt;
+  }
+  stats.chartTotal += amt;
 };
 
 /**
@@ -174,30 +213,7 @@ export const calculateCategoryStats = (
   };
 
   chartTx.forEach(item => {
-    if (!item.date) return;
-    const amt = parseFloat(item.amount) || 0;
-    const catId = item.category_id || (catMap[item.category]?.id) || 'unknown';
-
-    let y: string, m: string, d: string;
-    if (item.date.includes('-')) {
-      [y, m, d] = item.date.split('-');
-    } else {
-      [d, m, y] = item.date.split('/');
-    }
-    const ym = (y && m) ? `${y}-${m.padStart(2, '0')}` : null;
-
-    stats.catMapData[catId] = (stats.catMapData[catId] || 0) + amt;
-    stats.dailyAllMap[item.date] = (stats.dailyAllMap[item.date] || 0) + amt;
-    if (ym) stats.monthlyAllMap[ym] = (stats.monthlyAllMap[ym] || 0) + amt;
-
-    if (!stats.dailyCatMap[catId]) stats.dailyCatMap[catId] = {};
-    stats.dailyCatMap[catId][item.date] = (stats.dailyCatMap[catId][item.date] || 0) + amt;
-
-    if (ym) {
-      if (!stats.monthlyCatMap[catId]) stats.monthlyCatMap[catId] = {};
-      stats.monthlyCatMap[catId][ym] = (stats.monthlyCatMap[catId][ym] || 0) + amt;
-    }
-    stats.chartTotal += amt;
+    accumulateCategoryItem(item, catMap, stats);
   });
 
   return { ...stats, chartTx };
@@ -219,6 +235,71 @@ interface MainChartDataParams {
   dailyCatMap: Record<string, Record<string, number>>;
   catMap: Record<string, any>;
 }
+
+const buildCategoryDataset = (
+  catName: string,
+  params: {
+    activeCatsCount: number;
+    showMonthly: boolean;
+    isSingleMonthView: boolean;
+    sortedMonthsKeys: string[];
+    datesInPeriod: string[];
+    monthlyAllMap: Record<string, number>;
+    dailyAllMap: Record<string, number>;
+    monthlyCatMap: Record<string, Record<string, number>>;
+    dailyCatMap: Record<string, Record<string, number>>;
+    hideFixedExpenses: boolean;
+    hideWantExpenses: boolean;
+    catMap: Record<string, any>;
+  }
+) => {
+  const {
+    activeCatsCount,
+    showMonthly,
+    isSingleMonthView,
+    sortedMonthsKeys,
+    datesInPeriod,
+    monthlyAllMap,
+    dailyAllMap,
+    monthlyCatMap,
+    dailyCatMap,
+    hideFixedExpenses,
+    hideWantExpenses,
+    catMap
+  } = params;
+
+  if (catName === 'ALL') {
+    return {
+      label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : (hideWantExpenses ? 'รายจ่ายจำเป็น (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)'),
+      data: showMonthly ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0) : datesInPeriod.map(d => dailyAllMap[d] || 0),
+      borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'),
+      backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : (hideWantExpenses ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)'),
+      borderWidth: activeCatsCount > 1 ? 3 : 2,
+      borderDash: activeCatsCount > 1 ? [5, 5] : [],
+      fill: activeCatsCount === 1,
+      tension: 0.3,
+      pointRadius: isSingleMonthView ? 3 : 0,
+      pointHitRadius: 10,
+    };
+  }
+
+  const catObj = catMap[catName] || {};
+  const catId = catObj.id || catName;
+  const catColor = catObj.color || '#64748B';
+  const rgb = hexToRgb(catColor);
+
+  return {
+    label: catName,
+    data: showMonthly ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0) : datesInPeriod.map(d => dailyCatMap[catId]?.[d] || 0),
+    borderColor: catColor,
+    backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent',
+    borderWidth: 2,
+    fill: activeCatsCount === 1,
+    tension: 0.3,
+    pointRadius: isSingleMonthView || showMonthly ? 3 : 0,
+    pointHitRadius: 10,
+  };
+};
 
 /**
  * Generates datasets for the main dashboard chart (Combo or Line).
@@ -289,31 +370,22 @@ export const generateMainChartData = ({
     };
   } else {
     chartType = 'line';
-    const datasets: any[] = [];
-
-    activeCats.forEach(catName => {
-      if (catName === 'ALL') {
-        datasets.push({
-          label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : (hideWantExpenses ? 'รายจ่ายจำเป็น (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)'),
-          data: showMonthly ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0) : datesInPeriod.map(d => dailyAllMap[d] || 0),
-          borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'),
-          backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : (hideWantExpenses ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)'),
-          borderWidth: activeCats.length > 1 ? 3 : 2, borderDash: activeCats.length > 1 ? [5, 5] : [], fill: activeCats.length === 1,
-          tension: 0.3, pointRadius: isSingleMonthView ? 3 : 0, pointHitRadius: 10,
-        });
-      } else {
-        const catObj = catMap[catName] || {};
-        const catId = catObj.id || catName;
-        const catColor = catObj.color || '#64748B';
-        const rgb = hexToRgb(catColor);
-        datasets.push({
-          label: catName, 
-          data: showMonthly ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0) : datesInPeriod.map(d => dailyCatMap[catId]?.[d] || 0),
-          borderColor: catColor, backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent', borderWidth: 2, fill: activeCats.length === 1,
-          tension: 0.3, pointRadius: isSingleMonthView || showMonthly ? 3 : 0, pointHitRadius: 10,
-        });
-      }
-    });
+    const datasets = activeCats.map(catName =>
+      buildCategoryDataset(catName, {
+        activeCatsCount: activeCats.length,
+        showMonthly,
+        isSingleMonthView,
+        sortedMonthsKeys,
+        datesInPeriod,
+        monthlyAllMap,
+        dailyAllMap,
+        monthlyCatMap,
+        dailyCatMap,
+        hideFixedExpenses,
+        hideWantExpenses,
+        catMap,
+      })
+    );
     chartData = { labels: xLabels, datasets };
   }
 
@@ -338,7 +410,7 @@ export const calculateDayTypeCounts = (
     } else {
       [d, m, y] = dateStr.split('/');
     }
-    const dayOfWeek = new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getDay();
+    const dayOfWeek = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
     const defaultType = (dayOfWeek === 0 || dayOfWeek === 6)
       ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id)
       : dayTypeConfig[0]?.id;

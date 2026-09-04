@@ -25,7 +25,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
       if (t.is_deleted) return;
       const isoDate = toISODate(t.date);
       if (isDateInFilter(isoDate, filterPeriod)) {
-        const amt = parseFloat(t.amount) || 0;
+        const amt = Number.parseFloat(t.amount) || 0;
         const catId = t.category_id || categories.find(c => c.name === t.category)?.id;
         if (catId && categoryTotals[catId] !== undefined) {
           categoryTotals[catId] += amt;
@@ -92,7 +92,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
     const formatPercent = (val, total, suffix = '') => {
       if (!total || total <= 0) return '0.0' + suffix;
       const pct = (val / total) * 100;
-      return (isFinite(pct) ? pct.toFixed(1) : '0.0') + suffix;
+      return (Number.isFinite(pct) ? pct.toFixed(1) : '0.0') + suffix;
     };
 
     const priority = {};

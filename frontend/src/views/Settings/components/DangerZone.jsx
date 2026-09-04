@@ -17,10 +17,10 @@ const DangerZone = memo(({ transactions, handleDeleteAllData }) => {
               ล้างข้อมูลทั้งหมด (Factory Reset)
             </h3>
             <p className={`text-xs leading-relaxed font-semibold text-[#888888]`}>
-              จะลบ<strong className="text-[#da291c] mx-1">รายการบัญชีทั้งหมด</strong>,
-              <strong className="text-[#da291c] mx-1">ประวัติปฏิทิน</strong> และ
+              จะลบ <strong className="text-[#da291c] mx-1">รายการบัญชีทั้งหมด</strong>,{' '}
+              <strong className="text-[#da291c] mx-1">ประวัติปฏิทิน</strong>{' '}และ{' '}
               <strong className="text-[#da291c] mx-1">รีเซ็ตการตั้งค่า</strong>กลับเป็นค่าเริ่มต้น
-              —{' '}
+              {' '}—{' '}
               {transactions?.length > 0 && (
                 <span className={`font-black mr-1 text-amber-400`}>
                   มีข้อมูล {transactions.length} รายการที่จะหายไป

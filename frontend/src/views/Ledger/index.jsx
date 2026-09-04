@@ -112,7 +112,7 @@ export default function LedgerView({
     let inc = 0, exp = 0;
     currentData.forEach(t => {
       const type = catTypeMap[t.category];
-      const amt = parseFloat(t.amount) || 0;
+      const amt = Number.parseFloat(t.amount) || 0;
       if (type === 'income') inc += amt;
       else exp += amt;
     });

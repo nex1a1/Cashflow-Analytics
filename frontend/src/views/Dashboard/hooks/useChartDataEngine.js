@@ -19,7 +19,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
       else if (filterPeriod.length === 7) match = t.date.startsWith(filterPeriod);
       else match = true;
 
-      if (match && parseFloat(t.amount) > 0) {
+      if (match && Number.parseFloat(t.amount) > 0) {
         const catName = catLookup.get(t.category_id) || t.category;
         if (catName) withData.add(catName);
       }
