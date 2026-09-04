@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, ClipboardList, FileSpreadsheet, ShieldCheck, 
-  Info, FileText, CheckCircle, FileDown, Layers, Copy
+  FileText, CheckCircle, FileDown, Layers, Copy
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
@@ -24,6 +24,9 @@ const WIDE_HEADER_COLORS = {
   'รวม (Total)': 'text-[#555555] font-normal italic text-right',
   'Notes': 'text-[#888888]',
 };
+
+const LONG_FORMAT_HEADERS = ['วันที่', 'ชนิดวัน', 'ประเภท', 'หมวดหมู่', 'รายละเอียด', 'จำนวนเงิน'];
+const WIDE_FORMAT_HEADERS = ['Date', 'อาหารและเครื่องดื่ม', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซักผ้า', 'รวม (Total)', 'Notes'];
 
 const LONG_SAMPLE_CONTENT = "วันที่,ชนิดวัน,ประเภท,หมวดหมู่,รายละเอียด,จำนวนเงิน\n01/03/2026,ทำงาน,รายรับ,เงินเดือน,เงินเดือนประจำเดือนมีนาคม,25000\n01/03/2026,ทำงาน,รายจ่าย,อาหารและเครื่องดื่ม,ข้าวเที่ยง,65\n";
 const WIDE_SAMPLE_CONTENT = '"Date","อาหารและเครื่องดื่ม","ช้อปปิ้งออนไลน์","การเดินทาง","ซักผ้า","รวม (Total)","Notes"\n"01/03/2026","฿ 110.00","฿ -","฿ 45.00","฿ -","฿ 155.00",""\n"02/03/2026","฿ -","฿ 299.00","฿ -","฿ -","฿ 299.00","Shopee"\n';
@@ -132,54 +135,79 @@ function WideTablePreview() {
 }
 
 function GuideSpecsPanel({ selectedFormat }) {
-  if (selectedFormat === 'long') {
-    return (
-      <div className="border border-[#303030] p-5 rounded-none space-y-4 shrink-0 bg-[#121212]">
-        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#da291c]" />
-          กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-200">ซิงค์ปฏิทินตามชนิดวัน (Calendar Sync)</span>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                คอลัมน์ <span className="text-[#da291c] font-bold">"ชนิดวัน"</span> (ทำงาน/วันหยุด) จะถูกเชื่อมโยงและบันทึกสถิติประเภทวันลงในหน้าปฏิทินระบบโดยตรงอัตโนมัติ
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-200">การจัดการประเภทธุรกรรมที่หลากหลาย</span>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                ระบบถอดรหัสจากคอลัมน์ <span className="text-[#da291c] font-bold">"ประเภท"</span> รองรับ รายรับ รายจ่าย และเงินออม เพื่อประมวลผลกระแสเงินสดหลากรูปแบบในครั้งเดียว
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-200">สร้างหมวดหมู่อัตโนมัติ (Auto-Provision)</span>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                หากคอลัมน์ <span className="text-[#da291c] font-bold">"หมวดหมู่"</span> ยังไม่เคยนิยามไว้ เอ็นจิ้นจะทำการสร้างหมวดหมู่ใหม่ขึ้นมาให้อัตโนมัติโดยที่โครงสร้างระบบไม่เสียหาย
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-200">สเปกจำนวนเงิน Satang-First</span>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                ตัวเลขในช่อง <span className="text-[#da291c] font-bold">"จำนวนเงิน"</span> จะถูกนำไปคูณ 100 เพื่อแปลงเป็นสตางค์ในการประมวลผลเก็บข้อมูลระบบ (Satang Integer Map) เพื่อความแม่นยำทางบัญชี
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isLong = selectedFormat === 'long';
+
+  const longSpecs = [
+    {
+      title: 'ซิงค์ปฏิทินตามชนิดวัน (Calendar Sync)',
+      desc: (
+        <>
+          คอลัมน์ <span className="text-[#da291c] font-bold">"ชนิดวัน"</span> (ทำงาน/วันหยุด) จะถูกเชื่อมโยงและบันทึกสถิติประเภทวันลงในหน้าปฏิทินระบบโดยตรงอัตโนมัติ
+        </>
+      ),
+    },
+    {
+      title: 'การจัดการประเภทธุรกรรมที่หลากหลาย',
+      desc: (
+        <>
+          ระบบถอดรหัสจากคอลัมน์ <span className="text-[#da291c] font-bold">"ประเภท"</span> รองรับ รายรับ รายจ่าย และเงินออม เพื่อประมวลผลกระแสเงินสดหลากรูปแบบในครั้งเดียว
+        </>
+      ),
+    },
+    {
+      title: 'สร้างหมวดหมู่อัตโนมัติ (Auto-Provision)',
+      desc: (
+        <>
+          หากคอลัมน์ <span className="text-[#da291c] font-bold">"หมวดหมู่"</span> ยังไม่เคยนิยามไว้ เอ็นจิ้นจะทำการสร้างหมวดหมู่ใหม่ขึ้นมาให้อัตโนมัติโดยที่โครงสร้างระบบไม่เสียหาย
+        </>
+      ),
+    },
+    {
+      title: 'สเปกจำนวนเงิน Satang-First',
+      desc: (
+        <>
+          ตัวเลขในช่อง <span className="text-[#da291c] font-bold">"จำนวนเงิน"</span> จะถูกนำไปคูณ 100 เพื่อแปลงเป็นสตางค์ในการประมวลผลเก็บข้อมูลระบบ (Satang Integer Map) เพื่อความแม่นยำทางบัญชี
+        </>
+      ),
+    },
+  ];
+
+  const wideSpecs = [
+    {
+      title: 'สแกนหัวตารางจับคู่ค่าใช้จ่ายแนวนอน',
+      desc: (
+        <>
+          ระบบจะจับคู่ชื่อคอลัมน์ภาษาไทย เช่น <span className="text-[#da291c] font-bold">"อาหารและเครื่องดื่ม"</span> หรือ <span className="text-[#da291c] font-bold">"การเดินทาง"</span> เข้ากับหมวดหมู่ที่คุณตั้งค่าไว้โดยตรง
+        </>
+      ),
+    },
+    {
+      title: 'กรองข้ามคอลัมน์สรุปเพื่อความปลอดภัย',
+      desc: (
+        <>
+          คอลัมน์อย่างเช่น <span className="text-[#da291c] font-bold">"รวม (Total)", "Date", "Notes"</span> จะถูกตัดออกและเพิกเฉยอัตโนมัติในการสร้างยอดเงิน เพื่อกันปัญหาตัวเลขเบิ้ลสะสม
+        </>
+      ),
+    },
+    {
+      title: 'ถอดคอลัมน์ Notes เป็นคำอธิบาย',
+      desc: (
+        <>
+          ข้อความในช่อง <span className="text-[#da291c] font-bold">"Notes"</span> ของวันนั้นๆ จะถูกนำไปใช้เป็นรายละเอียดธุรกรรม (Description) ของรายการในหมวดที่ระบบกรอก
+        </>
+      ),
+    },
+    {
+      title: 'ระบบทนทานต่อช่องว่าง (Null Tolerance)',
+      desc: (
+        <>
+          กรณีมีช่องว่างหรือมีสัญลักษณ์ลบ <span className="text-[#da291c] font-bold">"฿ -"</span> ระบบจะประเมินค่าเป็นศูนย์และข้ามไปอย่างไร้ปัญหา ไม่เกิดการหยุดประมวลผลกระทันหัน
+        </>
+      ),
+    },
+  ];
+
+  const specs = isLong ? longSpecs : wideSpecs;
 
   return (
     <div className="border border-[#303030] p-5 rounded-none space-y-4 shrink-0 bg-[#121212]">
@@ -188,43 +216,246 @@ function GuideSpecsPanel({ selectedFormat }) {
         กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-slate-200">สแกนหัวตารางจับคู่ค่าใช้จ่ายแนวนอน</span>
-            <p className="text-[10px] text-slate-500 leading-normal">
-              ระบบจะจับคู่ชื่อคอลัมน์ภาษาไทย เช่น <span className="text-[#da291c] font-bold">"อาหารและเครื่องดื่ม"</span> หรือ <span className="text-[#da291c] font-bold">"การเดินทาง"</span> เข้ากับหมวดหมู่ที่คุณตั้งค่าไว้โดยตรง
+        {specs.map((item, index) => (
+          <div key={index} className="flex gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-200">{item.title}</span>
+              <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GuideHeader({ onClose }) {
+  return (
+    <div className="px-6 py-4 border-b border-[#303030] bg-[#121212] flex justify-between items-center shrink-0">
+      <div>
+        <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
+          <FileText className="w-4 h-4 text-slate-400" />
+          คู่มือนำเข้าข้อมูลผ่านไฟล์ <span className="text-slate-500 font-normal">/ CSV Import Specification Manual</span>
+        </h3>
+        <p className="text-xs text-slate-500 mt-1 font-mono">ศึกษาข้อกำหนดและวิเคราะห์ประเภทของตารางข้อมูลเพื่อให้ระบบประมวลผลได้อย่างราบรื่นไร้รอยต่อ</p>
+      </div>
+      <button 
+        onClick={onClose} 
+        className="p-1 text-[#888888] hover:text-white transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+  );
+}
+
+function GuideFormatChooser({ selectedFormat, onSelectFormat }) {
+  const isLong = selectedFormat === 'long';
+  const isWide = selectedFormat === 'wide';
+
+  const longBtnClass = isLong
+    ? 'border-[#da291c] bg-[#da291c]/10 text-white'
+    : 'border-[#303030] bg-[#121212] hover:border-[#da291c]/50 text-[#888888] hover:text-[#cbd5e1]';
+
+  const wideBtnClass = isWide
+    ? 'border-[#da291c] bg-[#da291c]/10 text-white'
+    : 'border-[#303030] bg-[#121212] hover:border-[#da291c]/50 text-[#888888] hover:text-[#cbd5e1]';
+
+  return (
+    <section className="space-y-2.5">
+      <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+        01. เลือกรูปแบบโครงสร้างไฟล์ (Format Type)
+      </h4>
+      
+      <div className="space-y-2.5">
+        <button
+          onClick={() => onSelectFormat('long')}
+          className={`w-full flex items-center gap-3.5 p-3.5 rounded-none border transition-colors text-left ${longBtnClass}`}
+        >
+          <ClipboardList className={`w-4.5 h-4.5 shrink-0 ${isLong ? 'text-white' : 'text-[#555555]'}`} />
+          <div className="flex-1">
+            <h5 className={`text-xs font-bold uppercase tracking-wide ${isLong ? 'text-white' : 'text-slate-200'}`}>
+              รายงานแยกตามรายการ (Long)
+            </h5>
+            <p className="text-[10px] text-slate-500 mt-1 leading-tight font-mono">
+              แถวรายการเรียงตามลำดับวันที่ รองรับประเภทวัน รายรับ รายจ่าย คละในตารางเดียว
             </p>
           </div>
+          {isLong && <div className="w-1.5 h-1.5 rounded-none bg-[#da291c] shrink-0" />}
+        </button>
+
+        <button
+          onClick={() => onSelectFormat('wide')}
+          className={`w-full flex items-center gap-3.5 p-3.5 rounded-none border transition-colors text-left ${wideBtnClass}`}
+        >
+          <FileSpreadsheet className={`w-4.5 h-4.5 shrink-0 ${isWide ? 'text-white' : 'text-[#555555]'}`} />
+          <div className="flex-1">
+            <h5 className={`text-xs font-bold uppercase tracking-wide ${isWide ? 'text-white' : 'text-slate-200'}`}>
+              ตารางเปรียบเทียบรายวัน (Wide)
+            </h5>
+            <p className="text-[10px] text-slate-500 mt-1 leading-tight font-mono">
+              คอลัมน์แนวนอนแยกตามหมวดหมู่ค่าใช้จ่าย เหมาะสำหรับย้ายข้อมูลตรงจาก Excel ประจำวัน
+            </p>
+          </div>
+          {isWide && <div className="w-1.5 h-1.5 rounded-none bg-[#da291c] shrink-0" />}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function GuideTechSpecs() {
+  return (
+    <section className="space-y-3.5 bg-[#121212] p-4 rounded-none border border-[#303030]">
+      <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+        02. ข้อกำหนดทางโครงสร้างระบบ
+      </h4>
+
+      <div className="space-y-3 text-[10px] font-mono leading-normal text-slate-400 divide-y divide-[#303030]">
+        <div className="pt-2 first:pt-0">
+          <span className="text-[#888888] font-bold block mb-0.5">เครื่องหมายคั่นไฟล์ (DELIMITER):</span>
+          <span>ตรวจจับและแยกด้วยเครื่องหมายคั่น <code className="text-[#da291c] bg-[#da291c]/10 border border-[#da291c]/30 px-1.5 py-0.5 rounded-none font-bold">จุลภาค ( , )</code> หรือ <code className="text-[#da291c] bg-[#da291c]/10 border border-[#da291c]/30 px-1.5 py-0.5 rounded-none font-bold">อัฒภาค ( ; )</code> อัตโนมัติ</span>
         </div>
-        <div className="flex gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-slate-200">กรองข้ามคอลัมน์สรุปเพื่อความปลอดภัย</span>
-            <p className="text-[10px] text-slate-500 leading-normal">
-              คอลัมน์อย่างเช่น <span className="text-[#da291c] font-bold">"รวม (Total)", "Date", "Notes"</span> จะถูกตัดออกและเพิกเฉยอัตโนมัติในการสร้างยอดเงิน เพื่อกันปัญหาตัวเลขเบิ้ลสะสม
-            </p>
-          </div>
+
+        <div className="pt-2">
+          <span className="text-[#888888] font-bold block mb-0.5">รูปแบบฟอร์แมตวันที่ (DATE SYNTAX):</span>
+          <span>รองรับคีย์วันที่แบบสากลคลาสสิก <code className="text-cyan-455 bg-cyan-950/20 border border-cyan-900/30 px-1.5 py-0.5 rounded-none font-bold">YYYY-MM-DD</code> หรือสไตล์ตารางไทย <code className="text-cyan-455 bg-cyan-950/20 border border-cyan-900/30 px-1.5 py-0.5 rounded-none font-bold">DD/MM/YYYY</code></span>
         </div>
-        <div className="flex gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-slate-200">ถอดคอลัมน์ Notes เป็นคำอธิบาย</span>
-            <p className="text-[10px] text-slate-500 leading-normal">
-              ข้อความในช่อง <span className="text-[#da291c] font-bold">"Notes"</span> ของวันนั้นๆ จะถูกนำไปใช้เป็นรายละเอียดธุรกรรม (Description) ของรายการในหมวดที่ระบบกรอก
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-slate-200">ระบบทนทานต่อช่องว่าง (Null Tolerance)</span>
-            <p className="text-[10px] text-slate-500 leading-normal">
-              กรณีมีช่องว่างหรือมีสัญลักษณ์ลบ <span className="text-[#da291c] font-bold">"฿ -"</span> ระบบจะประเมินค่าเป็นศูนย์และข้ามไปอย่างไร้ปัญหา ไม่เกิดการหยุดประมวลผลกระทันหัน
-            </p>
-          </div>
+
+        <div className="pt-2">
+          <span className="text-[#888888] font-bold block mb-0.5">ระบบความเที่ยงตรง (PRECISION):</span>
+          <span>แปลงทศนิยมเป็นหน่วย <code className="text-indigo-400 bg-indigo-950/20 border border-indigo-900/30 px-1.5 py-0.5 rounded-none font-bold">Satang Integer</code> หลังบ้านโดยมีเสถียรภาพไร้ความคลาดเคลื่อน</span>
         </div>
       </div>
+    </section>
+  );
+}
+
+function GuideTemplateTools({ copied, onCopy, onDownload }) {
+  return (
+    <section className="space-y-2.5">
+      <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+        03. เครื่องมือจัดการเทมเพลต (Tools)
+      </h4>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onCopy}
+          className="flex items-center justify-center gap-2 py-2 px-3 rounded-none border text-[11px] font-bold transition-colors border-[#3e3e3e] bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] hover:border-[#da291c]"
+        >
+          {copied ? <CheckCircle className="w-3.5 h-3.5 text-emerald-450" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+          {copied ? 'คัดลอกสำเร็จ' : 'คัดลอกหัวคอลัมน์'}
+        </button>
+        <button
+          onClick={onDownload}
+          className="flex items-center justify-center gap-2 py-2 px-3 rounded-none border text-[11px] font-bold transition-colors border-[#3e3e3e] bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] hover:border-[#da291c]"
+        >
+          <FileDown className="w-3.5 h-3.5 text-slate-400" />
+          โหลดตัวอย่าง CSV
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function GuideFormatSummary({ selectedFormat }) {
+  const isLong = selectedFormat === 'long';
+  return (
+    <div className="mt-auto p-4 border border-[#3e3e3e] bg-[#121212]/30 rounded-none text-[10px] font-mono space-y-2.5">
+      <div className="flex justify-between items-center">
+        <span className="text-[#888888] font-bold uppercase">จำนวนคอลัมน์:</span>
+        <span className="text-slate-300 font-bold">{isLong ? '6 คอลัมน์หลัก' : 'ไม่จำกัด (อิงตามหมวดหมู่)'}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-[#888888] font-bold uppercase">สเปกวิเคราะห์:</span>
+        <span className={`font-bold ${isLong ? 'text-rose-500' : 'text-[#da291c]'}`}>
+          {isLong ? 'LONG_DECODER' : 'WIDE_DECODER'}
+        </span>
+      </div>
+      <div className="h-[1px] bg-[#303030] w-full" />
+      <div className="flex justify-between items-center">
+        <span className="text-[#888888] font-bold uppercase">การรองรับภาษาไทย:</span>
+        <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> UTF-8 BOM
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function GuidePreviewSheet({ selectedFormat }) {
+  const isLong = selectedFormat === 'long';
+  const headers = isLong ? LONG_FORMAT_HEADERS : WIDE_FORMAT_HEADERS;
+  const colCountText = isLong ? `${headers.length}` : 'Date, Categories, Notes';
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-4 shrink-0 select-none">
+        <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+          โครงสร้างเทมเพลตและตัวอย่างข้อมูล (Structure Previewer)
+        </span>
+        <span className="text-[10px] font-mono border px-2.5 py-0.5 rounded-none font-bold text-[#da291c] bg-[#da291c]/10 border-[#da291c]/30">
+          ACTIVE: {selectedFormat.toUpperCase()}_TEMPLATE
+        </span>
+      </div>
+
+      <div className="flex-1 rounded-none border border-[#303030] flex flex-col relative overflow-hidden bg-[#121212] mb-6">
+        <div className="px-4 py-2.5 border-b border-[#303030] bg-[#1c1c1c] flex justify-between items-center text-[10px] font-mono text-[#cbd5e1] tracking-widest select-none">
+          <span>CASHFLOW SHARK IMPORT PROTOCOL</span>
+          <span>COLUMNS: {colCountText} {'//'} TYPE: SIMULATION</span>
+        </div>
+
+        <div className="flex-grow overflow-auto scrollbar-tactical relative">
+          <table className="w-full text-left font-mono text-[11px] leading-relaxed border-collapse">
+            <thead className="sticky top-0 bg-[#1c1c1c] text-[#cbd5e1] z-10 select-none">
+              <tr className="border-b border-[#303030]">
+                {headers.map((header, idx) => (
+                  <th 
+                    key={idx} 
+                    className={`p-3 font-bold uppercase tracking-wider ${getHeaderColorClass(header, selectedFormat)}`}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#303030]">
+              {isLong ? <LongTablePreview /> : <WideTablePreview />}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function GuideFooter({ selectedFormat, onClose }) {
+  const isLong = selectedFormat === 'long';
+
+  return (
+    <div className="px-6 py-4 border-t border-[#303030] bg-[#121212] flex justify-between items-center shrink-0 select-none">
+      <div className="flex gap-6 text-xs font-mono">
+        <div className="flex flex-col">
+          <span className="text-[#888888] font-bold block text-[9px] uppercase">รูปแบบเทมเพลตที่ตรวจจับ</span>
+          <span className={`mt-0.5 font-bold ${isLong ? 'text-rose-500' : 'text-[#da291c]'}`}>
+            {isLong ? 'Long Format (แยกบรรทัดรายการเดี่ยว)' : 'Wide Format (ตารางแยกคอลัมน์รายวัน)'}
+          </span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[#888888] font-bold block text-[9px] uppercase">การรองรับไฟล์สำรอง</span>
+          <span className="text-slate-400 mt-0.5">
+            {isLong ? 'ระบบจัดเก็บแบบ Satang Integer เต็มรูปแบบ' : 'จับคู่และจัดหมวดหมู่ระบบปัญญาประดิษฐ์อัตโนมัติ'}
+          </span>
+        </div>
+      </div>
+      
+      <button 
+        onClick={onClose} 
+        className="px-6 py-2.5 rounded-none font-bold text-xs uppercase transition-colors bg-[#da291c] hover:bg-[#b01e0a] text-white"
+      >
+        เข้าใจแล้ว & ปิดคู่มือ
+      </button>
     </div>
   );
 }
@@ -234,7 +465,6 @@ export default function ImportGuideModal({ isOpen, onClose }) {
   const [selectedFormat, setSelectedFormat] = useState('long'); // 'long' | 'wide'
   const [copied, setCopied] = useState(false);
 
-  // ESC key handler
   useEffect(() => {
     const handleEsc = (e) => { 
       if (e.key === 'Escape' && isOpen) onClose(); 
@@ -245,15 +475,10 @@ export default function ImportGuideModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Format Headers & Contents
-  const longFormatHeaders = ['วันที่', 'ชนิดวัน', 'ประเภท', 'หมวดหมู่', 'รายละเอียด', 'จำนวนเงิน'];
-  const longCopyText = longFormatHeaders.join(',');
-
-  const wideFormatHeaders = ['Date', 'อาหารและเครื่องดื่ม', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซักผ้า', 'รวม (Total)', 'Notes'];
-  const wideCopyText = wideFormatHeaders.map(h => `"${h}"`).join(',');
-
   const handleCopyHeaders = () => {
-    const text = selectedFormat === 'long' ? longCopyText : wideCopyText;
+    const text = selectedFormat === 'long' 
+      ? LONG_FORMAT_HEADERS.join(',') 
+      : WIDE_FORMAT_HEADERS.map(h => `"${h}"`).join(',');
     navigator.clipboard.writeText(text);
     setCopied(true);
     showToast('คัดลอกรายชื่อหัวตารางลงคลิปบอร์ดแล้ว', 'success');
@@ -264,10 +489,10 @@ export default function ImportGuideModal({ isOpen, onClose }) {
     if (selectedFormat === 'long') {
       downloadSampleFile('sample_long_format.csv', LONG_SAMPLE_CONTENT);
       showToast('ดาวน์โหลดไฟล์ตัวอย่าง Long Format สำเร็จ', 'success');
-    } else {
-      downloadSampleFile('sample_wide_format.csv', WIDE_SAMPLE_CONTENT);
-      showToast('ดาวน์โหลดไฟล์ตัวอย่าง Wide Format สำเร็จ', 'success');
+      return;
     }
+    downloadSampleFile('sample_wide_format.csv', WIDE_SAMPLE_CONTENT);
+    showToast('ดาวน์โหลดไฟล์ตัวอย่าง Wide Format สำเร็จ', 'success');
   };
 
   return (
@@ -278,233 +503,20 @@ export default function ImportGuideModal({ isOpen, onClose }) {
         exit={{ opacity: 0 }}
         className="relative rounded-none shadow-xl flex flex-col w-full max-w-[1240px] h-[85vh] border border-[#3e3e3e] bg-[#181818] overflow-hidden"
       >
-        {/* Header - Minimalist Document Title */}
-        <div className="px-6 py-4 border-b border-[#303030] bg-[#121212] flex justify-between items-center shrink-0">
-          <div>
-            <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-400" />
-              คู่มือนำเข้าข้อมูลผ่านไฟล์ <span className="text-slate-500 font-normal">/ CSV Import Specification Manual</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 font-mono">ศึกษาข้อกำหนดและวิเคราะห์ประเภทของตารางข้อมูลเพื่อให้ระบบประมวลผลได้อย่างราบรื่นไร้รอยต่อ</p>
-          </div>
-          <button 
-            onClick={onClose} 
-            className="p-1 text-[#888888] hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Modal Core Layout */}
+        <GuideHeader onClose={onClose} />
         <div className="flex-1 flex overflow-hidden">
-          
-          {/* Left Side: Parameters Form (Format Chooser & Specifics) */}
           <div className="w-[340px] shrink-0 border-r border-[#303030] flex flex-col bg-[#1c1c1c] p-6 overflow-y-auto scrollbar-tactical space-y-6 rounded-none">
-            
-            {/* Section 1: Template Selection */}
-            <section className="space-y-2.5">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
-                01. เลือกรูปแบบโครงสร้างไฟล์ (Format Type)
-              </h4>
-              
-              <div className="space-y-2.5">
-                {/* Long Format */}
-                <button
-                  onClick={() => setSelectedFormat('long')}
-                  className={`w-full flex items-center gap-3.5 p-3.5 rounded-none border transition-colors text-left ${
-                    selectedFormat === 'long'
-                      ? 'border-[#da291c] bg-[#da291c]/10 text-white'
-                      : 'border-[#303030] bg-[#121212] hover:border-[#da291c]/50 text-[#888888] hover:text-[#cbd5e1]'
-                  }`}
-                >
-                  <ClipboardList className={`w-4.5 h-4.5 shrink-0 ${selectedFormat === 'long' ? 'text-white' : 'text-[#555555]'}`} />
-                  <div className="flex-1">
-                    <h5 className={`text-xs font-bold uppercase tracking-wide ${selectedFormat === 'long' ? 'text-white' : 'text-slate-200'}`}>
-                      รายงานแยกตามรายการ (Long)
-                    </h5>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-tight font-mono">
-                      แถวรายการเรียงตามลำดับวันที่ รองรับประเภทวัน รายรับ รายจ่าย คละในตารางเดียว
-                    </p>
-                  </div>
-                  {selectedFormat === 'long' && (
-                    <div className="w-1.5 h-1.5 rounded-none bg-[#da291c] shrink-0" />
-                  )}
-                </button>
-
-                {/* Wide Format */}
-                <button
-                  onClick={() => setSelectedFormat('wide')}
-                  className={`w-full flex items-center gap-3.5 p-3.5 rounded-none border transition-colors text-left ${
-                    selectedFormat === 'wide'
-                      ? 'border-[#da291c] bg-[#da291c]/10 text-white'
-                      : 'border-[#303030] bg-[#121212] hover:border-[#da291c]/50 text-[#888888] hover:text-[#cbd5e1]'
-                  }`}
-                >
-                  <FileSpreadsheet className={`w-4.5 h-4.5 shrink-0 ${selectedFormat === 'wide' ? 'text-white' : 'text-[#555555]'}`} />
-                  <div className="flex-1">
-                    <h5 className={`text-xs font-bold uppercase tracking-wide ${selectedFormat === 'wide' ? 'text-white' : 'text-slate-200'}`}>
-                      ตารางเปรียบเทียบรายวัน (Wide)
-                    </h5>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-tight font-mono">
-                      คอลัมน์แนวนอนแยกตามหมวดหมู่ค่าใช้จ่าย เหมาะสำหรับย้ายข้อมูลตรงจาก Excel ประจำวัน
-                    </p>
-                  </div>
-                  {selectedFormat === 'wide' && (
-                    <div className="w-1.5 h-1.5 rounded-none bg-[#da291c] shrink-0" />
-                  )}
-                </button>
-              </div>
-            </section>
-
-            {/* Section 2: Technical Specifications */}
-            <section className="space-y-3.5 bg-[#121212] p-4 rounded-none border border-[#303030]">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
-                02. ข้อกำหนดทางโครงสร้างระบบ
-              </h4>
-
-              <div className="space-y-3 text-[10px] font-mono leading-normal text-slate-400 divide-y divide-[#303030]">
-                
-                {/* Row 1: Delimiter */}
-                <div className="pt-2 first:pt-0">
-                  <span className="text-[#888888] font-bold block mb-0.5">เครื่องหมายคั่นไฟล์ (DELIMITER):</span>
-                  <span>ตรวจจับและแยกด้วยเครื่องหมายคั่น <code className="text-[#da291c] bg-[#da291c]/10 border border-[#da291c]/30 px-1.5 py-0.5 rounded-none font-bold">จุลภาค ( , )</code> หรือ <code className="text-[#da291c] bg-[#da291c]/10 border border-[#da291c]/30 px-1.5 py-0.5 rounded-none font-bold">อัฒภาค ( ; )</code> อัตโนมัติ</span>
-                </div>
-
-                {/* Row 2: Date format */}
-                <div className="pt-2">
-                  <span className="text-[#888888] font-bold block mb-0.5">รูปแบบฟอร์แมตวันที่ (DATE SYNTAX):</span>
-                  <span>รองรับคีย์วันที่แบบสากลคลาสสิก <code className="text-cyan-455 bg-cyan-950/20 border border-cyan-900/30 px-1.5 py-0.5 rounded-none font-bold">YYYY-MM-DD</code> หรือสไตล์ตารางไทย <code className="text-cyan-455 bg-cyan-950/20 border border-cyan-900/30 px-1.5 py-0.5 rounded-none font-bold">DD/MM/YYYY</code></span>
-                </div>
-
-                {/* Row 3: Precision conversion */}
-                <div className="pt-2">
-                  <span className="text-[#888888] font-bold block mb-0.5">ระบบความเที่ยงตรง (PRECISION):</span>
-                  <span>แปลงทศนิยมเป็นหน่วย <code className="text-indigo-400 bg-indigo-950/20 border border-indigo-900/30 px-1.5 py-0.5 rounded-none font-bold">Satang Integer</code> หลังบ้านโดยมีเสถียรภาพไร้ความคลาดเคลื่อน</span>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 3: File Utilities */}
-            <section className="space-y-2.5">
-              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
-                03. เครื่องมือจัดการเทมเพลต (Tools)
-              </h4>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={handleCopyHeaders}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-none border text-[11px] font-bold transition-colors border-[#3e3e3e] bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] hover:border-[#da291c]"
-                >
-                  {copied ? <CheckCircle className="w-3.5 h-3.5 text-emerald-450" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                  {copied ? 'คัดลอกสำเร็จ' : 'คัดลอกหัวคอลัมน์'}
-                </button>
-                <button
-                  onClick={handleDownloadSample}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-none border text-[11px] font-bold transition-colors border-[#3e3e3e] bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] hover:border-[#da291c]"
-                >
-                  <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                  โหลดตัวอย่าง CSV
-                </button>
-              </div>
-            </section>
-
-            {/* Document summary detail */}
-            <div className="mt-auto p-4 border border-[#3e3e3e] bg-[#121212]/30 rounded-none text-[10px] font-mono space-y-2.5">
-              <div className="flex justify-between items-center">
-                <span className="text-[#888888] font-bold uppercase">จำนวนคอลัมน์:</span>
-                <span className="text-slate-300 font-bold">{selectedFormat === 'long' ? '6 คอลัมน์หลัก' : 'ไม่จำกัด (อิงตามหมวดหมู่)'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#888888] font-bold uppercase">สเปกวิเคราะห์:</span>
-                <span className={`font-bold ${selectedFormat === 'long' ? 'text-rose-500' : 'text-[#da291c]'}`}>
-                  {selectedFormat === 'long' ? 'LONG_DECODER' : 'WIDE_DECODER'}
-                </span>
-              </div>
-              <div className="h-[1px] bg-[#303030] w-full" />
-              <div className="flex justify-between items-center">
-                <span className="text-[#888888] font-bold uppercase">การรองรับภาษาไทย:</span>
-                <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> UTF-8 BOM
-                </span>
-              </div>
-            </div>
-
+            <GuideFormatChooser selectedFormat={selectedFormat} onSelectFormat={setSelectedFormat} />
+            <GuideTechSpecs />
+            <GuideTemplateTools copied={copied} onCopy={handleCopyHeaders} onDownload={handleDownloadSample} />
+            <GuideFormatSummary selectedFormat={selectedFormat} />
           </div>
-
-          {/* Right Side: Elegant Spreadsheet Preview & Deep Specifications */}
           <div className="flex-grow flex flex-col p-6 bg-[#181818] overflow-hidden">
-            
-            {/* Action Bar */}
-            <div className="flex justify-between items-center mb-4 shrink-0 select-none">
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                โครงสร้างเทมเพลตและตัวอย่างข้อมูล (Structure Previewer)
-              </span>
-              <span className={`text-[10px] font-mono border px-2.5 py-0.5 rounded-none font-bold text-[#da291c] bg-[#da291c]/10 border-[#da291c]/30`}>
-                ACTIVE: {selectedFormat.toUpperCase()}_TEMPLATE
-              </span>
-            </div>
-
-            {/* Document Sheet Simulator */}
-            <div className="flex-1 rounded-none border border-[#303030] flex flex-col relative overflow-hidden bg-[#121212] mb-6">
-              
-              {/* Paper Watermark / Header */}
-              <div className="px-4 py-2.5 border-b border-[#303030] bg-[#1c1c1c] flex justify-between items-center text-[10px] font-mono text-[#cbd5e1] tracking-widest select-none">
-                <span>CASHFLOW SHARK IMPORT PROTOCOL</span>
-                <span>COLUMNS: {selectedFormat === 'long' ? longFormatHeaders.length : 'Date, Categories, Notes'} {'//'} TYPE: SIMULATION</span>
-              </div>
-
-              {/* Simulated Sheet Table */}
-              <div className="flex-grow overflow-auto scrollbar-tactical relative">
-                <table className="w-full text-left font-mono text-[11px] leading-relaxed border-collapse">
-                  <thead className="sticky top-0 bg-[#1c1c1c] text-[#cbd5e1] z-10 select-none">
-                    <tr className="border-b border-[#303030]">
-                      {(selectedFormat === 'long' ? longFormatHeaders : wideFormatHeaders).map((header, idx) => (
-                        <th 
-                          key={idx} 
-                          className={`p-3 font-bold uppercase tracking-wider ${getHeaderColorClass(header, selectedFormat)}`}
-                        >
-                          {header}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#303030]">
-                    {selectedFormat === 'long' ? <LongTablePreview /> : <WideTablePreview />}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Import rules & Mapping features inspector */}
+            <GuidePreviewSheet selectedFormat={selectedFormat} />
             <GuideSpecsPanel selectedFormat={selectedFormat} />
-
           </div>
         </div>
-
-        {/* Footer actions */}
-        <div className="px-6 py-4 border-t border-[#303030] bg-[#121212] flex justify-between items-center shrink-0 select-none">
-          <div className="flex gap-6 text-xs font-mono">
-            <div className="flex flex-col">
-              <span className="text-[#888888] font-bold uppercase block text-[9px]">รูปแบบเทมเพลตที่ตรวจจับ</span>
-              <span className={`mt-0.5 font-bold ${selectedFormat === 'long' ? 'text-rose-500' : 'text-[#da291c]'}`}>
-                {selectedFormat === 'long' ? 'Long Format (แยกบรรทัดรายการเดี่ยว)' : 'Wide Format (ตารางแยกคอลัมน์รายวัน)'}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[#888888] font-bold uppercase block text-[9px]">การรองรับไฟล์สำรอง</span>
-              <span className="text-slate-400 mt-0.5">
-                {selectedFormat === 'long' ? 'ระบบจัดเก็บแบบ Satang Integer เต็มรูปแบบ' : 'จับคู่และจัดหมวดหมู่ระบบปัญญาประดิษฐ์อัตโนมัติ'}
-              </span>
-            </div>
-          </div>
-          
-          <button 
-            onClick={onClose} 
-            className="px-6 py-2.5 rounded-none font-bold text-xs uppercase transition-colors bg-[#da291c] hover:bg-[#b01e0a] text-white"
-          >
-            เข้าใจแล้ว & ปิดคู่มือ
-          </button>
-        </div>
+        <GuideFooter selectedFormat={selectedFormat} onClose={onClose} />
       </motion.div>
     </div>
   );

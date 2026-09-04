@@ -236,6 +236,118 @@ interface MainChartDataParams {
   catMap: Record<string, any>;
 }
 
+function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolean) {
+  if (hideFixedExpenses) {
+    return {
+      label: 'รายจ่ายไลฟ์สไตล์ (บาท)',
+      borderColor: '#D81A21',
+      backgroundColor: 'rgba(216,26,33,0.1)',
+    };
+  }
+  if (hideWantExpenses) {
+    return {
+      label: 'รายจ่ายจำเป็น (บาท)',
+      borderColor: '#3B82F6',
+      backgroundColor: 'rgba(59,130,246,0.1)',
+    };
+  }
+  return {
+    label: 'รายจ่ายรวมทั้งหมด (บาท)',
+    borderColor: '#EF4444',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+  };
+}
+
+function buildAllCategoryDataset(params: {
+  activeCatsCount: number;
+  showMonthly: boolean;
+  isSingleMonthView: boolean;
+  sortedMonthsKeys: string[];
+  datesInPeriod: string[];
+  monthlyAllMap: Record<string, number>;
+  dailyAllMap: Record<string, number>;
+  hideFixedExpenses: boolean;
+  hideWantExpenses: boolean;
+}) {
+  const {
+    activeCatsCount,
+    showMonthly,
+    isSingleMonthView,
+    sortedMonthsKeys,
+    datesInPeriod,
+    monthlyAllMap,
+    dailyAllMap,
+    hideFixedExpenses,
+    hideWantExpenses,
+  } = params;
+
+  const style = getAllDatasetStyle(hideFixedExpenses, hideWantExpenses);
+  const data = showMonthly
+    ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0)
+    : datesInPeriod.map(d => dailyAllMap[d] || 0);
+
+  return {
+    label: style.label,
+    data,
+    borderColor: style.borderColor,
+    backgroundColor: style.backgroundColor,
+    borderWidth: activeCatsCount > 1 ? 3 : 2,
+    borderDash: activeCatsCount > 1 ? [5, 5] : [],
+    fill: activeCatsCount === 1,
+    tension: 0.3,
+    pointRadius: isSingleMonthView ? 3 : 0,
+    pointHitRadius: 10,
+  };
+}
+
+function buildSpecificCategoryDataset(
+  catName: string,
+  params: {
+    activeCatsCount: number;
+    showMonthly: boolean;
+    isSingleMonthView: boolean;
+    sortedMonthsKeys: string[];
+    datesInPeriod: string[];
+    monthlyCatMap: Record<string, Record<string, number>>;
+    dailyCatMap: Record<string, Record<string, number>>;
+    catMap: Record<string, any>;
+  }
+) {
+  const {
+    activeCatsCount,
+    showMonthly,
+    isSingleMonthView,
+    sortedMonthsKeys,
+    datesInPeriod,
+    monthlyCatMap,
+    dailyCatMap,
+    catMap,
+  } = params;
+
+  const catObj = catMap[catName] || {};
+  const catId = catObj.id || catName;
+  const catColor = catObj.color || '#64748B';
+  const rgb = hexToRgb(catColor);
+
+  const data = showMonthly
+    ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0)
+    : datesInPeriod.map(d => dailyCatMap[catId]?.[d] || 0);
+
+  const pointRadius = (isSingleMonthView || showMonthly) ? 3 : 0;
+
+  return {
+    label: catName,
+    data,
+    borderColor: catColor,
+    backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent',
+    borderWidth: 2,
+    fill: activeCatsCount === 1,
+    tension: 0.3,
+    pointRadius,
+    pointHitRadius: 10,
+  };
+}
+
 const buildCategoryDataset = (
   catName: string,
   params: {
@@ -253,52 +365,10 @@ const buildCategoryDataset = (
     catMap: Record<string, any>;
   }
 ) => {
-  const {
-    activeCatsCount,
-    showMonthly,
-    isSingleMonthView,
-    sortedMonthsKeys,
-    datesInPeriod,
-    monthlyAllMap,
-    dailyAllMap,
-    monthlyCatMap,
-    dailyCatMap,
-    hideFixedExpenses,
-    hideWantExpenses,
-    catMap
-  } = params;
-
   if (catName === 'ALL') {
-    return {
-      label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์ (บาท)' : (hideWantExpenses ? 'รายจ่ายจำเป็น (บาท)' : 'รายจ่ายรวมทั้งหมด (บาท)'),
-      data: showMonthly ? sortedMonthsKeys.map(m => monthlyAllMap[m] || 0) : datesInPeriod.map(d => dailyAllMap[d] || 0),
-      borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'),
-      backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.1)' : (hideWantExpenses ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)'),
-      borderWidth: activeCatsCount > 1 ? 3 : 2,
-      borderDash: activeCatsCount > 1 ? [5, 5] : [],
-      fill: activeCatsCount === 1,
-      tension: 0.3,
-      pointRadius: isSingleMonthView ? 3 : 0,
-      pointHitRadius: 10,
-    };
+    return buildAllCategoryDataset(params);
   }
-
-  const catObj = catMap[catName] || {};
-  const catId = catObj.id || catName;
-  const catColor = catObj.color || '#64748B';
-  const rgb = hexToRgb(catColor);
-
-  return {
-    label: catName,
-    data: showMonthly ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0) : datesInPeriod.map(d => dailyCatMap[catId]?.[d] || 0),
-    borderColor: catColor,
-    backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent',
-    borderWidth: 2,
-    fill: activeCatsCount === 1,
-    tension: 0.3,
-    pointRadius: isSingleMonthView || showMonthly ? 3 : 0,
-    pointHitRadius: 10,
-  };
+  return buildSpecificCategoryDataset(catName, params);
 };
 
 const buildMainChartXLabels = (

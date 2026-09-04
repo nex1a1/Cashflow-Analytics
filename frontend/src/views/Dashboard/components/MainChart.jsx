@@ -16,90 +16,158 @@ import { useChartOptions } from '../hooks/useChartOptions';
 /**
  * INTERNAL COMPONENT: MainChartHeader
  */
+function getMainChartTitle(chartViewType, mainChartType, mainChartData, showTrendLines) {
+  if (chartViewType === 'sankey') {
+    return 'โครงสร้างกระแสเงินสด (Sankey Flow)';
+  }
+  const isMtd = mainChartType === 'combo' && mainChartData?.datasets?.some(ds => ds.label?.includes('เฉลี่ยสะสม')) && showTrendLines;
+  if (isMtd) {
+    return 'เทรนด์รายจ่ายรายวัน (MTD Average)';
+  }
+  if (mainChartType === 'combo') {
+    return 'วิเคราะห์กระแสเงินสด';
+  }
+  if (mainChartType === 'bar') {
+    return 'เทรนด์เปรียบเทียบ';
+  }
+  return 'รายจ่ายรายวัน';
+}
+
+function ChartGroupBySwitcher({ chartGroupBy, setChartGroupBy }) {
+  return (
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+      <button 
+        onClick={() => setChartGroupBy('monthly')} 
+        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+      >
+        รายเดือน
+      </button>
+      <button 
+        onClick={() => setChartGroupBy('daily')} 
+        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+      >
+        รายวัน
+      </button>
+    </div>
+  );
+}
+
+function ViewTypeSwitcher({ chartViewType, setChartViewType, setIsBreakdown }) {
+  const views = [
+    { id: 'line', label: 'เส้น', icon: TrendingUp },
+    { id: 'bar', label: 'แท่ง', icon: BarChart },
+    { id: 'sankey', label: 'Sankey', icon: Network },
+  ];
+
+  return (
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+      {views.map(v => {
+        const Icon = v.icon;
+        const isActive = chartViewType === v.id;
+        return (
+          <button
+            key={v.id}
+            onClick={() => {
+              setChartViewType(v.id);
+              if (v.id !== 'bar') setIsBreakdown(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
+              isActive ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> {v.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SankeyControls({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode }) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+        <button 
+          onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')} 
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
+            sankeyMode === 'allocation' ? 'bg-[#da291c] text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          }`}
+          title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
+        >
+          <Layers className="w-3 h-3" />
+          {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
+        </button>
+      </div>
+
+      <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+        <button 
+          onClick={() => setSankeySortMode('value')} 
+          className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
+            sankeySortMode === 'value' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          }`}
+        >
+          เรียงตามยอดเงิน
+        </button>
+        <button 
+          onClick={() => setSankeySortMode('index')} 
+          className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
+            sankeySortMode === 'index' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          }`}
+        >
+          เรียงตามลำดับ (Settings)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * INTERNAL COMPONENT: MainChartHeader
+ */
 const MainChartHeader = ({
   chartViewType, setChartViewType,
   chartGroupBy, setChartGroupBy,
   sankeySortMode, setSankeySortMode,
   sankeyMode, setSankeyMode,
-  setIsBreakdown, filterPeriod, dm,
+  setIsBreakdown, filterPeriod,
   mainChartType, mainChartData, showTrendLines
 }) => {
+  const isSingleMonth = filterPeriod.match(/^\d{4}-\d{2}$/);
+  const showGroupBy = chartViewType !== 'sankey' && !isSingleMonth;
+  const title = getMainChartTitle(chartViewType, mainChartType, mainChartData, showTrendLines);
+
   return (
     <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] flex-wrap relative z-20 w-full gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+        <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
         {chartViewType === 'sankey' ? (
           <Network className="w-3.5 h-3.5 text-neutral-400" />
         ) : (
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400" />
         )}
         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
-          {chartViewType === 'sankey' ? 'โครงสร้างกระแสเงินสด (Sankey Flow)' : 
-           mainChartType === 'combo' && mainChartData?.datasets?.some(ds => ds.label?.includes('เฉลี่ยสะสม')) && showTrendLines
-            ? 'เทรนด์รายจ่ายรายวัน (MTD Average)'
-            : mainChartType === 'combo' ? 'วิเคราะห์กระแสเงินสด'
-            : mainChartType === 'bar' ? 'เทรนด์เปรียบเทียบ' : 'รายจ่ายรายวัน'}
+          {title}
         </span>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-
-        {chartViewType !== 'sankey' && !filterPeriod.match(/^\d{4}-\d{2}$/) && (
-          <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
-            <button onClick={() => setChartGroupBy('monthly')} className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}>รายเดือน</button>
-            <button onClick={() => setChartGroupBy('daily')} className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}>รายวัน</button>
-          </div>
+        {showGroupBy && (
+          <ChartGroupBySwitcher chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} />
         )}
 
-        <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
-          <button
-            onClick={() => { setChartViewType('line'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartViewType === 'line' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" /> เส้น
-          </button>
-          <button
-            onClick={() => setChartViewType('bar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartViewType === 'bar' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-          >
-            <BarChart className="w-3.5 h-3.5" /> แท่ง
-          </button>
-          <button
-            onClick={() => { setChartViewType('sankey'); setIsBreakdown(false); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartViewType === 'sankey' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-          >
-            <Network className="w-3.5 h-3.5" /> Sankey
-          </button>
-        </div>
+        <ViewTypeSwitcher 
+          chartViewType={chartViewType} 
+          setChartViewType={setChartViewType} 
+          setIsBreakdown={setIsBreakdown} 
+        />
 
         {chartViewType === 'sankey' && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
-              <button 
-                onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')} 
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeyMode === 'allocation' ? ('bg-[#da291c] text-white shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-                title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
-              >
-                <Layers className="w-3 h-3" />
-                {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
-              </button>
-            </div>
-
-            <div className={`flex p-0.5 rounded-none border shadow-sm ${'bg-[#181818] border-[#303030]/60'}`}>
-              <button 
-                onClick={() => setSankeySortMode('value')} 
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'value' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-              >
-                เรียงตามยอดเงิน
-              </button>
-              <button 
-                onClick={() => setSankeySortMode('index')} 
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${sankeySortMode === 'index' ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}
-              >
-                เรียงตามลำดับ (Settings)
-              </button>
-            </div>
-          </div>
+          <SankeyControls 
+            sankeyMode={sankeyMode} 
+            setSankeyMode={setSankeyMode} 
+            sankeySortMode={sankeySortMode} 
+            setSankeySortMode={setSankeySortMode} 
+          />
         )}
       </div>
     </div>
@@ -324,6 +392,139 @@ MainChartFilterMenu.propTypes = {
   categoriesWithData: PropTypes.object.isRequired
 };
 
+function updateActiveCategories(catName, activeCats, allCatNames) {
+  const base = activeCats.includes('ALL') ? [...allCatNames] : [...activeCats];
+  const next = base.includes(catName) ? base.filter(c => c !== catName) : [...base, catName];
+  return (next.length === 0 || next.length === allCatNames.length) ? ['ALL'] : next;
+}
+
+const BreakdownLegendItem = ({ category, isActive, onToggle }) => {
+  const isHidden = !isActive;
+  return (
+    <button
+      onClick={() => onToggle(category.name)}
+      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
+        isHidden ? 'opacity-35 line-through' : 'opacity-100'
+      }`}
+      title="คลิกเพื่อเปิด/ซ่อนหมวดหมู่นี้"
+    >
+      <span
+        className="inline-block rounded-none shrink-0 w-2.5 h-2.5"
+        style={{ backgroundColor: category.color || '#64748B' }}
+      />
+      <span className="text-[10px] font-medium leading-none text-slate-400">
+        {category.icon && <span className="mr-1 opacity-90">{category.icon}</span>}
+        {category.name}
+      </span>
+    </button>
+  );
+};
+
+BreakdownLegendItem.propTypes = {
+  category: PropTypes.object.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired
+};
+
+const BreakdownLegend = ({ categories, categoriesWithData, dashboardCategory, setDashboardCategory }) => {
+  const catsWithDataList = categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name));
+  if (catsWithDataList.length === 0) return null;
+
+  const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
+  const allCatNames = catsWithDataList.map(c => c.name);
+
+  const handleToggle = (catName) => {
+    setDashboardCategory(updateActiveCategories(catName, activeCats, allCatNames));
+  };
+
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
+      {catsWithDataList.map(c => {
+        const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
+        return (
+          <BreakdownLegendItem
+            key={c.id}
+            category={c}
+            isActive={isActive}
+            onToggle={handleToggle}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+BreakdownLegend.propTypes = {
+  categories: PropTypes.array.isRequired,
+  categoriesWithData: PropTypes.object.isRequired,
+  dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
+  setDashboardCategory: PropTypes.func.isRequired
+};
+
+function getDatasetIndicatorStyle(ds) {
+  const isLine = ds.type === 'line';
+  return {
+    width: isLine ? 16 : 10,
+    height: isLine ? 3 : 10,
+    backgroundColor: isLine
+      ? (ds.borderColor || ds.backgroundColor)
+      : (ds.backgroundColor || ds.borderColor),
+  };
+}
+
+const StandardLegendItem = ({ dataset, isHidden, onToggle }) => (
+  <button
+    onClick={() => onToggle(dataset.label)}
+    className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
+      isHidden ? 'opacity-35 line-through' : 'opacity-100'
+    }`}
+    title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
+  >
+    <span
+      className="inline-block rounded-none shrink-0"
+      style={getDatasetIndicatorStyle(dataset)}
+    />
+    <span className="text-[10px] font-medium leading-none text-slate-400">
+      {dataset.label}
+    </span>
+  </button>
+);
+
+StandardLegendItem.propTypes = {
+  dataset: PropTypes.object.isRequired,
+  isHidden: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired
+};
+
+const StandardLegend = ({ legendDatasets, hiddenDatasets, setHiddenDatasets }) => {
+  if (legendDatasets.length === 0) return null;
+
+  const toggleDataset = (label) => {
+    setHiddenDatasets(prev => 
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  };
+
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
+      {legendDatasets.map((ds, i) => (
+        <StandardLegendItem
+          key={ds.label || i}
+          dataset={ds}
+          isHidden={hiddenDatasets.includes(ds.label)}
+          onToggle={toggleDataset}
+        />
+      ))}
+    </div>
+  );
+};
+
+StandardLegend.propTypes = {
+  legendDatasets: PropTypes.array.isRequired,
+  hiddenDatasets: PropTypes.array.isRequired,
+  setHiddenDatasets: PropTypes.func.isRequired
+};
+
 /**
  * INTERNAL COMPONENT: MainChartLegend
  */
@@ -335,100 +536,25 @@ const MainChartLegend = ({
   dashboardCategory,
   setDashboardCategory,
   categories,
-  categoriesWithData,
-  dm 
+  categoriesWithData
 }) => {
-  // In Breakdown mode, sync legend items directly with global dashboardCategory filter state
   if (isBreakdown) {
-    const catsWithDataList = categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name));
-    if (catsWithDataList.length === 0) return null;
-
-    const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-
-    const toggleCategory = (catName) => {
-      const allCatNames = catsWithDataList.map(c => c.name);
-      let currentActive = activeCats.includes('ALL') ? [...allCatNames] : [...activeCats];
-
-      if (currentActive.includes(catName)) {
-        currentActive = currentActive.filter(c => c !== catName);
-      } else {
-        currentActive.push(catName);
-      }
-
-      if (currentActive.length === 0 || currentActive.length === allCatNames.length) {
-        setDashboardCategory(['ALL']);
-      } else {
-        setDashboardCategory(currentActive);
-      }
-    };
-
     return (
-      <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${'border-[#303030]/60'}`}>
-        {catsWithDataList.map(c => {
-          const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
-          const isHidden = !isActive;
-          return (
-            <button
-              key={c.id}
-              onClick={() => toggleCategory(c.name)}
-              className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
-                isHidden ? 'opacity-35 line-through' : 'opacity-100'
-              }`}
-              title="คลิกเพื่อเปิด/ซ่อนหมวดหมู่นี้"
-            >
-              <span
-                className="inline-block rounded-none shrink-0 w-2.5 h-2.5"
-                style={{ backgroundColor: c.color || '#64748B' }}
-              />
-              <span className={`text-[10px] font-medium leading-none ${'text-slate-400'}`}>
-                {c.icon && <span className="mr-1 opacity-90">{c.icon}</span>}
-                {c.name}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <BreakdownLegend
+        categories={categories}
+        categoriesWithData={categoriesWithData}
+        dashboardCategory={dashboardCategory}
+        setDashboardCategory={setDashboardCategory}
+      />
     );
   }
 
-  if (legendDatasets.length === 0) return null;
-
-  const toggleDataset = (label) => {
-    setHiddenDatasets(prev => 
-      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
-    );
-  };
-
   return (
-    <div className={`flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t ${'border-[#303030]/60'}`}>
-      {legendDatasets.map((ds, i) => {
-        const isHidden = hiddenDatasets.includes(ds.label);
-        return (
-          <button
-            key={i}
-            onClick={() => toggleDataset(ds.label)}
-            className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
-              isHidden ? 'opacity-35 line-through' : 'opacity-100'
-            }`}
-            title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
-          >
-            <span
-              className="inline-block rounded-none shrink-0"
-              style={{
-                width: ds.type === 'line' ? 16 : 10,
-                height: ds.type === 'line' ? 3 : 10,
-                backgroundColor: ds.type === 'line'
-                  ? (ds.borderColor || ds.backgroundColor)
-                  : (ds.backgroundColor || ds.borderColor),
-              }}
-            />
-            <span className={`text-[10px] font-medium leading-none ${'text-slate-400'}`}>
-              {ds.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+    <StandardLegend
+      legendDatasets={legendDatasets}
+      hiddenDatasets={hiddenDatasets}
+      setHiddenDatasets={setHiddenDatasets}
+    />
   );
 };
 
@@ -441,8 +567,150 @@ MainChartLegend.propTypes = {
   setDashboardCategory: PropTypes.func,
   categories: PropTypes.array,
   categoriesWithData: PropTypes.object,
-  dm: PropTypes.bool.isRequired
+  dm: PropTypes.bool
 };
+
+const ToolbarToggleSwitch = ({ isActive, activeColor = 'bg-[#da291c]' }) => (
+  <div className={`relative w-7 h-4 rounded-none shrink-0 ${
+    isActive ? `${activeColor} shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]` : 'bg-[#181818] border border-[#303030]'
+  }`}>
+    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
+      isActive ? 'bg-white translate-x-3.5 shadow-md' : 'bg-[#303030]'
+    }`} />
+  </div>
+);
+
+ToolbarToggleSwitch.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  activeColor: PropTypes.string
+};
+
+const ToolbarViewModes = ({ showSkeleton, isBreakdown, setIsBreakdown, isLogScale, setIsLogScale }) => (
+  <div className="flex gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0">
+    <button
+      disabled={showSkeleton}
+      onClick={() => setIsBreakdown(prev => !prev)}
+      title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
+      className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+        isBreakdown
+          ? 'bg-[#da291c]/25 text-[#da291c] shadow-sm'
+          : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+      }`}
+    >
+      <Layers className={`w-3.5 h-3.5 ${isBreakdown ? 'text-[#da291c]' : 'text-slate-400'}`} />
+      <span>แจกแจง</span>
+      <ToolbarToggleSwitch isActive={isBreakdown} activeColor="bg-[#da291c]" />
+    </button>
+
+    <button
+      disabled={showSkeleton}
+      onClick={() => setIsLogScale(prev => !prev)}
+      title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
+      className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+        isLogScale
+          ? 'bg-emerald-600/20 text-emerald-300 shadow-sm'
+          : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+      }`}
+    >
+      <BarChart className={`w-3.5 h-3.5 ${isLogScale ? 'text-emerald-400' : 'text-slate-400'}`} />
+      <span>สเกล Log</span>
+      <ToolbarToggleSwitch isActive={isLogScale} activeColor="bg-emerald-500" />
+    </button>
+  </div>
+);
+
+ToolbarViewModes.propTypes = {
+  showSkeleton: PropTypes.bool,
+  isBreakdown: PropTypes.bool.isRequired,
+  setIsBreakdown: PropTypes.func.isRequired,
+  isLogScale: PropTypes.bool.isRequired,
+  setIsLogScale: PropTypes.func.isRequired
+};
+
+const ToolbarAllocationSelector = ({
+  showSkeleton,
+  hideFixedExpenses, setHideFixedExpenses,
+  hideWantExpenses, setHideWantExpenses
+}) => {
+  const isAll = !hideFixedExpenses && !hideWantExpenses;
+  const isWantOnly = hideFixedExpenses && !hideWantExpenses;
+  const isNeedOnly = !hideFixedExpenses && hideWantExpenses;
+
+  return (
+    <div className="flex p-[1px] bg-[#303030]/60 gap-[1px] bg-neutral-900 rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] shrink-0">
+      <button
+        disabled={showSkeleton}
+        onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(false); }}
+        className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+          isAll ? 'bg-[#303030] text-white shadow-sm' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+        title="แสดงค่าใช้จ่ายทั้งหมด (NEED + WANT)"
+      >
+        ทั้งหมด
+      </button>
+      <button
+        disabled={showSkeleton}
+        onClick={() => { setHideFixedExpenses(true); setHideWantExpenses(false); }}
+        className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+          isWantOnly ? 'bg-amber-950/40 text-amber-400 shadow-sm border border-amber-500/30' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+        title="ดูเฉพาะค่าใช้จ่ายผันแปร / ไลฟ์สไตล์ (WANT)"
+      >
+        เฉพาะ WANT
+      </button>
+      <button
+        disabled={showSkeleton}
+        onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(true); }}
+        className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
+          isNeedOnly ? 'bg-blue-950/40 text-blue-400 shadow-sm border border-blue-500/30' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+        title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น (NEED)"
+      >
+        เฉพาะ NEED
+      </button>
+    </div>
+  );
+};
+
+ToolbarAllocationSelector.propTypes = {
+  showSkeleton: PropTypes.bool,
+  hideFixedExpenses: PropTypes.bool.isRequired,
+  setHideFixedExpenses: PropTypes.func.isRequired,
+  hideWantExpenses: PropTypes.bool.isRequired,
+  setHideWantExpenses: PropTypes.func.isRequired
+};
+
+const ToolbarLineStyleSelector = ({ showSkeleton, isSmoothLine, setIsSmoothLine }) => (
+  <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]">
+    <button
+      disabled={showSkeleton}
+      onClick={() => setIsSmoothLine(false)}
+      className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
+        !isSmoothLine ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+      }`}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
+      เส้นตรง
+    </button>
+    <button
+      disabled={showSkeleton}
+      onClick={() => setIsSmoothLine(true)}
+      className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
+        isSmoothLine ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+      }`}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
+      เส้นโค้ง
+    </button>
+  </div>
+);
+
+ToolbarLineStyleSelector.propTypes = {
+  showSkeleton: PropTypes.bool,
+  isSmoothLine: PropTypes.bool.isRequired,
+  setIsSmoothLine: PropTypes.func.isRequired
+};
+
 const MainChartToolbar = ({
   chartViewType, showSkeleton, isBreakdown, setIsBreakdown,
   isLogScale, setIsLogScale,
@@ -466,114 +734,32 @@ const MainChartToolbar = ({
 
         <span className="w-px h-4 shrink-0 bg-[#303030]" />
 
-        {/* Group 1: View Modes (Breakdown + Log Scale) */}
-        <div className="flex gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0">
-          <button
-            disabled={showSkeleton}
-            onClick={() => setIsBreakdown(prev => !prev)}
-            title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
-            className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-              isBreakdown
-                ? 'bg-[#da291c]/25 text-[#da291c] shadow-sm'
-                : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-            }`}
-          >
-            <Layers className={`w-3.5 h-3.5 ${isBreakdown ? 'text-[#da291c]' : 'text-slate-400'}`} />
-            <span>แจกแจง</span>
-            <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-              isBreakdown 
-                ? 'bg-[#da291c] shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                : 'bg-[#181818] border border-[#303030]'
-            }`}>
-              <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                isBreakdown 
-                  ? 'bg-white translate-x-3.5 shadow-md' 
-                  : 'bg-[#303030]'
-              }`} />
-            </div>
-          </button>
-
-          <button
-            disabled={showSkeleton}
-            onClick={() => setIsLogScale(prev => !prev)}
-            title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
-            className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-              isLogScale
-                ? 'bg-emerald-600/20 text-emerald-300 shadow-sm'
-                : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-            }`}
-          >
-            <BarChart className={`w-3.5 h-3.5 ${isLogScale ? 'text-emerald-400' : 'text-slate-400'}`} />
-            <span>สเกล Log</span>
-            <div className={`relative w-7 h-4 rounded-none shrink-0 ${
-              isLogScale 
-                ? 'bg-emerald-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]' 
-                : 'bg-[#181818] border border-[#303030]'
-            }`}>
-              <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
-                isLogScale 
-                  ? 'bg-white translate-x-3.5 shadow-md' 
-                  : 'bg-[#303030]'
-              }`} />
-            </div>
-          </button>
-        </div>
+        <ToolbarViewModes
+          showSkeleton={showSkeleton}
+          isBreakdown={isBreakdown}
+          setIsBreakdown={setIsBreakdown}
+          isLogScale={isLogScale}
+          setIsLogScale={setIsLogScale}
+        />
 
         <span className="w-px h-4 shrink-0 bg-[#303030]" />
 
-        {/* Group 2: Allocation Focus Selector (NEED vs WANT) */}
-        <div className="flex p-[1px] bg-[#303030]/60 gap-[1px] bg-neutral-900 rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] shrink-0">
-          <button
-            disabled={showSkeleton}
-            onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(false); }}
-            className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-              !hideFixedExpenses && !hideWantExpenses
-                ? 'bg-[#303030] text-white shadow-sm'
-                : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-            }`}
-            title="แสดงค่าใช้จ่ายทั้งหมด (NEED + WANT)"
-          >
-            ทั้งหมด
-          </button>
-          <button
-            disabled={showSkeleton}
-            onClick={() => { setHideFixedExpenses(true); setHideWantExpenses(false); }}
-            className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-              hideFixedExpenses && !hideWantExpenses
-                ? 'bg-amber-950/40 text-amber-400 shadow-sm border border-amber-500/30'
-                : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-            }`}
-            title="ดูเฉพาะค่าใช้จ่ายผันแปร / ไลฟ์สไตล์ (WANT)"
-          >
-            เฉพาะ WANT
-          </button>
-          <button
-            disabled={showSkeleton}
-            onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(true); }}
-            className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-              !hideFixedExpenses && hideWantExpenses
-                ? 'bg-blue-950/40 text-blue-400 shadow-sm border border-blue-500/30'
-                : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-            }`}
-            title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น (NEED)"
-          >
-            เฉพาะ NEED
-          </button>
-        </div>
+        <ToolbarAllocationSelector
+          showSkeleton={showSkeleton}
+          hideFixedExpenses={hideFixedExpenses}
+          setHideFixedExpenses={setHideFixedExpenses}
+          hideWantExpenses={hideWantExpenses}
+          setHideWantExpenses={setHideWantExpenses}
+        />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap ml-auto">
         {chartViewType === 'line' && (
-          <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]">
-            <button disabled={showSkeleton} onClick={() => setIsSmoothLine(false)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${!isSmoothLine ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 10 14 15 21 6" /></svg>
-              เส้นตรง
-            </button>
-            <button disabled={showSkeleton} onClick={() => setIsSmoothLine(true)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${isSmoothLine ? ('bg-[#303030] text-[#da291c] shadow-sm') : ('text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50')}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17c3-6 4-7 6-7s4 5 6 5 4-8 6-9" /></svg>
-              เส้นโค้ง
-            </button>
-          </div>
+          <ToolbarLineStyleSelector
+            showSkeleton={showSkeleton}
+            isSmoothLine={isSmoothLine}
+            setIsSmoothLine={setIsSmoothLine}
+          />
         )}
 
         <MainChartFilterMenu 

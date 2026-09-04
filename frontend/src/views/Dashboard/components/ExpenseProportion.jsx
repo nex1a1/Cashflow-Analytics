@@ -712,6 +712,264 @@ function resolveDoughnutHoverIndex(elements, isGroupMode, activeItems) {
   return el.index;
 }
 
+function ExpenseProportionEmpty() {
+  return (
+    <div className="rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10 p-10 items-center justify-center text-center opacity-60">
+      <Inbox className="w-10 h-10 mb-2 opacity-20" />
+      <p className="text-sm font-bold uppercase tracking-widest">No Expense Data</p>
+    </div>
+  );
+}
+
+function ExpenseProportionSkeleton() {
+  return (
+    <div className="flex flex-row items-stretch h-32">
+      <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-[#303030]/40 bg-[#303030]/30">
+        <div className="w-20 h-24 rounded-full animate-pulse bg-[#303030]" />
+      </div>
+      <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
+        {[...new Array(5)].map((_, i) => (
+          <div key={i} className="p-2 animate-pulse bg-[#303030]/40">
+            <div className="h-2 w-12 mb-2 rounded-sm bg-[#303030]" />
+            <div className="h-4 w-16 mb-2 rounded-sm bg-[#303030]" />
+            <div className="h-1 w-full rounded-sm bg-[#303030]" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ModeSwitcher({ displayMode, onChangeMode }) {
+  const modes = [
+    { id: 'category', label: 'รายหมวด' },
+    { id: 'group', label: 'ตามกลุ่ม' },
+    { id: 'allocation', label: 'สัดส่วน 50/30/20' },
+  ];
+
+  return (
+    <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
+      {modes.map(m => (
+        <button
+          key={m.id}
+          onClick={() => onChangeMode(m.id)}
+          className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none ${
+            displayMode === m.id
+              ? 'bg-[#da291c] text-white shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SortSwitcher({ sortMode, onToggleSort }) {
+  const isAmount = sortMode.startsWith('amount');
+  const isOrder = sortMode.startsWith('order');
+  const amountTitle = isAmount
+    ? (sortMode === 'amount-desc' ? 'เรียงตามยอดเงิน: มากไปน้อย (คลิกเพื่อสลับ)' : 'เรียงตามยอดเงิน: น้อยไปมาก (คลิกเพื่อสลับ)')
+    : 'เรียงตามยอดเงิน';
+  const orderTitle = isOrder
+    ? (sortMode === 'order-asc' ? 'เรียงตามลำดับหมวดหมู่: น้อยไปมาก (คลิกเพื่อสลับ)' : 'เรียงตามลำดับหมวดหมู่: มากไปน้อย (คลิกเพื่อสลับ)')
+    : 'เรียงตามลำดับหมวดหมู่';
+
+  return (
+    <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
+      <button
+        onClick={() => onToggleSort('amount')}
+        title={amountTitle}
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+          isAmount ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <ArrowDownWideNarrow className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
+        {isAmount && <span className="text-[9px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>}
+      </button>
+
+      <button
+        onClick={() => onToggleSort('order')}
+        title={orderTitle}
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+          isOrder ? 'bg-[#da291c]/20 text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <ListOrdered className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
+        {isOrder && <span className="text-[9px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>}
+      </button>
+    </div>
+  );
+}
+
+function SimulationBadge({ excludedCount, totalReduced, onReset }) {
+  if (excludedCount === 0) return null;
+  return (
+    <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-none text-[9.5px]">
+      <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+      <span className="font-black text-amber-300 uppercase tracking-wider">
+        จำลองลด {excludedCount} หมวด (-฿{formatMoney(totalReduced)})
+      </span>
+      <button
+        onClick={onReset}
+        className="ml-1 px-1.5 py-0.2 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none"
+        title="คืนค่าหมวดหมู่ทั้งหมด"
+      >
+        <RotateCcw className="w-2.5 h-2.5" />
+        <span>คืนค่า</span>
+      </button>
+    </div>
+  );
+}
+
+function ExpenseProportionHeader({
+  displayMode,
+  onChangeMode,
+  sortMode,
+  onToggleSort,
+  isAllocationMode,
+  isGroupMode,
+  excludedGroupIds,
+  totalReduced,
+  onResetExclusions,
+  showSkeleton,
+  itemCount,
+}) {
+  const countLabel = isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่');
+  const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
+
+  return (
+    <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
+        <PieChart className="w-3.5 h-3.5 text-neutral-400" />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+          สัดส่วนรายจ่าย (Proportions)
+        </span>
+
+        <ModeSwitcher displayMode={displayMode} onChangeMode={onChangeMode} />
+
+        {!isAllocationMode && (
+          <SortSwitcher sortMode={sortMode} onToggleSort={onToggleSort} />
+        )}
+
+        {isAllocationMode && (
+          <SimulationBadge
+            excludedCount={excludedGroupIds.length}
+            totalReduced={totalReduced}
+            onReset={onResetExclusions}
+          />
+        )}
+      </div>
+      <span className="text-[9px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
+        {countText}
+      </span>
+    </div>
+  );
+}
+
+function ExpenseProportionChartAnchor({ activeChartData, options, isAllocationMode, activeTotal }) {
+  return (
+    <div className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20">
+      <div className="relative w-[140px] h-[140px]">
+        <Doughnut data={activeChartData} options={options} />
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-[8px] font-black uppercase tracking-widest opacity-40 text-slate-400">
+            {isAllocationMode ? 'Income' : 'Total'}
+          </span>
+          <span className="text-[12px] font-black tabular-nums text-slate-100">
+            {formatMoney(activeTotal)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProportionItemCell({
+  item,
+  idx,
+  isHovered,
+  onHover,
+  isAllocationMode,
+  isGroupMode,
+  activeTotal,
+  excludedGroupIds,
+  onToggleGroup,
+  isSingleMonthView,
+  sortMode,
+}) {
+  if (isAllocationMode) {
+    return (
+      <AllocationItem 
+        item={item} 
+        idx={idx} 
+        isHovered={isHovered} 
+        onHover={onHover} 
+        activeTotal={activeTotal} 
+        excludedGroupIds={excludedGroupIds}
+        onToggleGroup={onToggleGroup}
+      />
+    );
+  }
+  if (isGroupMode) {
+    return (
+      <GroupItem 
+        item={item} 
+        idx={idx} 
+        isHovered={isHovered} 
+        onHover={onHover} 
+        isSingleMonthView={isSingleMonthView} 
+        sortMode={sortMode} 
+      />
+    );
+  }
+  return <CatItem cat={item} idx={idx} isHovered={isHovered} onHover={onHover} />;
+}
+
+function ExpenseProportionGridHud({
+  activeItems,
+  isAllocationMode,
+  isGroupMode,
+  hoveredIdx,
+  onHover,
+  activeTotal,
+  excludedGroupIds,
+  onToggleGroup,
+  isSingleMonthView,
+  sortMode,
+  gridColsClass,
+}) {
+  const itemCount = activeItems.length;
+  const isGrid3 = isAllocationMode || isGroupMode;
+  const emptyCount = isGrid3 ? (3 - (itemCount % 3)) % 3 : (5 - (itemCount % 5)) % 5;
+
+  return (
+    <div className={`flex-1 grid ${gridColsClass} gap-px bg-[#303030]/50`}>
+      {activeItems.map((item, idx) => (
+        <ProportionItemCell
+          key={item.id || idx}
+          item={item}
+          idx={idx}
+          isHovered={hoveredIdx === idx}
+          onHover={onHover}
+          isAllocationMode={isAllocationMode}
+          isGroupMode={isGroupMode}
+          activeTotal={activeTotal}
+          excludedGroupIds={excludedGroupIds}
+          onToggleGroup={onToggleGroup}
+          isSingleMonthView={isSingleMonthView}
+          sortMode={sortMode}
+        />
+      ))}
+      {[...new Array(emptyCount)].map((_, i) => (
+        <div key={`empty-${i}`} className="bg-[#181818]/10" />
+      ))}
+    </div>
+  );
+}
+
 /**
  * ExpenseProportion - The visual dashboard component for representing expenditures.
  */
@@ -728,7 +986,6 @@ function ExpenseProportion() {
     sortedAllocation = [], totalIncome = 0
   } = analytics;
 
-  // Select data based on mode
   const isGroupMode = displayMode === 'group';
   const isAllocationMode = displayMode === 'allocation';
 
@@ -744,11 +1001,10 @@ function ExpenseProportion() {
   
   const changeDisplayMode = (mode) => {
     setDisplayMode(mode);
-    setHoveredIdx(-1); // Reset hovered item when changing tabs
-    setExcludedGroupIds([]); // Reset simulation when switching tabs
+    setHoveredIdx(-1);
+    setExcludedGroupIds([]);
   };
 
-  // Recalculate allocation amounts and percentages for What-If simulation
   const { simulatedAllocation, totalReduced } = useMemo(() => {
     return calculateSimulatedAllocation(
       isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, analytics.netCashflow
@@ -773,12 +1029,10 @@ function ExpenseProportion() {
     });
   }, []);
 
-  // Apply Dynamic Sorting (Skip for allocation mode as it has fixed needs/wants/savings order)
   const activeItems = useMemo(() => {
     return sortProportionItems(rawItems, sortMode, isAllocationMode);
   }, [rawItems, sortMode, isAllocationMode]);
 
-  // Sync Chart Data with Sorted Items (Dual-Ring Donut Chart in Group Mode)
   const activeChartData = useMemo(() => {
     return buildDoughnutChartData(activeItems, isGroupMode, hoveredIdx);
   }, [activeItems, isGroupMode, hoveredIdx]);
@@ -792,7 +1046,6 @@ function ExpenseProportion() {
   }, [isGroupMode, isAllocationMode, totalExpense, totalIncome, analytics.netCashflow, chartTotal]);
 
   const gridColsClass = (isGroupMode || isAllocationMode) ? 'grid-cols-3' : 'grid-cols-5';
-
   const itemCount = activeItems.length;
 
   const options = useMemo(() => {
@@ -831,181 +1084,48 @@ function ExpenseProportion() {
   const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
 
   if (itemCount === 0 && !showSkeleton) {
-    return (
-      <div className={`${cardClass} p-10 items-center justify-center text-center opacity-60`}>
-        <Inbox className="w-10 h-10 mb-2 opacity-20" />
-        <p className="text-sm font-bold uppercase tracking-widest">No Expense Data</p>
-      </div>
-    );
+    return <ExpenseProportionEmpty />;
   }
 
   return (
     <div className={cardClass}>
-      {/* ─── HEADER (Editorial Style) ─── */}
-      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
-          <PieChart className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
-            สัดส่วนรายจ่าย (Proportions)
-          </span>
+      <ExpenseProportionHeader
+        displayMode={displayMode}
+        onChangeMode={changeDisplayMode}
+        sortMode={sortMode}
+        onToggleSort={handleSortToggle}
+        isAllocationMode={isAllocationMode}
+        isGroupMode={isGroupMode}
+        excludedGroupIds={excludedGroupIds}
+        totalReduced={totalReduced}
+        onResetExclusions={resetExclusions}
+        showSkeleton={showSkeleton}
+        itemCount={itemCount}
+      />
 
-          {/* Mode Switcher */}
-          <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
-            <button 
-              onClick={() => changeDisplayMode('category')}
-              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none ${
-                displayMode === 'category' 
-                ? 'bg-[#da291c] text-white shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              รายหมวด
-            </button>
-            <button 
-              onClick={() => changeDisplayMode('group')}
-              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none ${
-                displayMode === 'group' 
-                ? 'bg-[#da291c] text-white shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              ตามกลุ่ม
-            </button>
-            <button 
-              onClick={() => changeDisplayMode('allocation')}
-              className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none ${
-                displayMode === 'allocation' 
-                ? 'bg-[#da291c] text-white shadow-sm' 
-                : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              สัดส่วน 50/30/20
-            </button>
-          </div>
-
-          {/* Sort Switcher (Hidden in Allocation mode) */}
-          {!isAllocationMode && (
-            <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
-              <button 
-                onClick={() => handleSortToggle('amount')}
-                title={sortMode.startsWith('amount') ? (sortMode === 'amount-desc' ? "เรียงตามยอดเงิน: มากไปน้อย (คลิกเพื่อสลับ)" : "เรียงตามยอดเงิน: น้อยไปมาก (คลิกเพื่อสลับ)") : "เรียงตามยอดเงิน"}
-                className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
-                  sortMode.startsWith('amount') 
-                  ? 'bg-amber-500/20 text-amber-400 shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <ArrowDownWideNarrow className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
-                {sortMode.startsWith('amount') && (
-                  <span className="text-[9px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>
-                )}
-              </button>
-
-              <button 
-                onClick={() => handleSortToggle('order')}
-                title={sortMode.startsWith('order') ? (sortMode === 'order-asc' ? "เรียงตามลำดับหมวดหมู่: น้อยไปมาก (คลิกเพื่อสลับ)" : "เรียงตามลำดับหมวดหมู่: มากไปน้อย (คลิกเพื่อสลับ)") : "เรียงตามลำดับหมวดหมู่"}
-                className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
-                  sortMode.startsWith('order') 
-                  ? 'bg-[#da291c]/20 text-[#da291c] shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <ListOrdered className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
-                {sortMode.startsWith('order') && (
-                  <span className="text-[9px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* What-If Simulation Active Badge & Reset Button */}
-          {isAllocationMode && excludedGroupIds.length > 0 && (
-            <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-none text-[9.5px]">
-              <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-              <span className="font-black text-amber-300 uppercase tracking-wider">
-                จำลองลด {excludedGroupIds.length} หมวด (-฿{formatMoney(totalReduced)})
-              </span>
-              <button
-                onClick={resetExclusions}
-                className="ml-1 px-1.5 py-0.2 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none"
-                title="คืนค่าหมวดหมู่ทั้งหมด"
-              >
-                <RotateCcw className="w-2.5 h-2.5" />
-                <span>คืนค่า</span>
-              </button>
-            </div>
-          )}
-        </div>
-        <span className="text-[9px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
-          {showSkeleton ? '...' : `${itemCount} ${isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่')}`}
-        </span>
-      </div>
-
-      {/* ─── MONOLITHIC CONTENT ─── */}
       {showSkeleton ? (
-        <div className="flex flex-row items-stretch h-32">
-          <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-[#303030]/40 bg-[#303030]/30">
-             <div className="w-20 h-24 rounded-full animate-pulse bg-[#303030]" />
-          </div>
-          <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
-             {[...new Array(5)].map((_, i) => (
-                <div key={i} className="p-2 animate-pulse bg-[#303030]/40">
-                   <div className="h-2 w-12 mb-2 rounded-sm bg-[#303030]" />
-                   <div className="h-4 w-16 mb-2 rounded-sm bg-[#303030]" />
-                   <div className="h-1 w-full rounded-sm bg-[#303030]" />
-                </div>
-             ))}
-          </div>
-        </div>
+        <ExpenseProportionSkeleton />
       ) : (
         <div className="flex flex-row items-stretch min-h-[140px]">
-
-          {/* LEFT: CHART ANCHOR (No Padding) */}
-          <div className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20">
-            <div className="relative w-[140px] h-[140px]">
-              <Doughnut data={activeChartData} options={options} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                 <span className="text-[8px] font-black uppercase tracking-widest opacity-40 text-slate-400">
-                   {isAllocationMode ? 'Income' : 'Total'}
-                 </span>
-                 <span className="text-[12px] font-black tabular-nums text-slate-100">
-                   {formatMoney(activeTotal)}
-                 </span>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT: TABLE-GRID HUD */}
-          <div className={`flex-1 grid ${gridColsClass} gap-px bg-[#303030]/50`}>
-             {activeItems.map((item, idx) => {
-               const isHovered = hoveredIdx === idx;
-               if (isAllocationMode) {
-                 return (
-                   <AllocationItem 
-                     key={item.id || idx} 
-                     item={item} 
-                     idx={idx} 
-                     isHovered={isHovered} 
-                     onHover={setHoveredIdx} 
-                     activeTotal={activeTotal} 
-                     excludedGroupIds={excludedGroupIds}
-                     onToggleGroup={toggleGroupExclusion}
-                   />
-                 );
-               }
-               if (isGroupMode) return <GroupItem key={item.id || idx} item={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} isSingleMonthView={analytics.isSingleMonthView} sortMode={sortMode} />;
-               return <CatItem key={item.id || idx} cat={item} idx={idx} isHovered={isHovered} onHover={setHoveredIdx} />;
-             })}
-             {/* Fill empty cells to maintain grid borders if needed */}
-             {![isAllocationMode, isGroupMode].some(Boolean) && [...new Array((5 - (itemCount % 5)) % 5)].map((_, i) => (
-                <div key={`empty-${i}`} className="bg-[#181818]/10" />
-               ))}
-             {(isAllocationMode || isGroupMode) && [...new Array((3 - (itemCount % 3)) % 3)].map((_, i) => (
-                <div key={`empty-grid3-${i}`} className="bg-[#181818]/10" />
-               ))}
-          </div>
-
+          <ExpenseProportionChartAnchor
+            activeChartData={activeChartData}
+            options={options}
+            isAllocationMode={isAllocationMode}
+            activeTotal={activeTotal}
+          />
+          <ExpenseProportionGridHud
+            activeItems={activeItems}
+            isAllocationMode={isAllocationMode}
+            isGroupMode={isGroupMode}
+            hoveredIdx={hoveredIdx}
+            onHover={setHoveredIdx}
+            activeTotal={activeTotal}
+            excludedGroupIds={excludedGroupIds}
+            onToggleGroup={toggleGroupExclusion}
+            isSingleMonthView={analytics.isSingleMonthView}
+            sortMode={sortMode}
+            gridColsClass={gridColsClass}
+          />
         </div>
       )}
     </div>

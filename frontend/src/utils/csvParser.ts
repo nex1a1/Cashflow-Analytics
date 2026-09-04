@@ -41,55 +41,75 @@ const pushNonEmptyRow = (rows: string[][], row: string[]) => {
   }
 };
 
+interface ParserState {
+  rows: string[][];
+  row: string[];
+  current: string;
+  inQuotes: boolean;
+}
+
+const flushCell = (state: ParserState) => {
+  state.row.push(state.current);
+  state.current = '';
+};
+
+const flushRow = (state: ParserState) => {
+  flushCell(state);
+  pushNonEmptyRow(state.rows, state.row);
+  state.row = [];
+};
+
+const processChar = (
+  char: string,
+  nextChar: string | undefined,
+  state: ParserState
+): { skipNext: boolean } => {
+  if (char === '"') {
+    if (state.inQuotes && nextChar === '"') {
+      state.current += '"';
+      return { skipNext: true };
+    }
+    state.inQuotes = !state.inQuotes;
+    return { skipNext: false };
+  }
+
+  if (state.inQuotes) {
+    state.current += char;
+    return { skipNext: false };
+  }
+
+  if (char === ',') {
+    flushCell(state);
+    return { skipNext: false };
+  }
+
+  if (char === '\n' || char === '\r') {
+    flushRow(state);
+    return { skipNext: char === '\r' && nextChar === '\n' };
+  }
+
+  state.current += char;
+  return { skipNext: false };
+};
+
 export const parseCSV = (text: string): string[][] => {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let current = '';
-  let inQuotes = false;
+  const state: ParserState = {
+    rows: [],
+    row: [],
+    current: '',
+    inQuotes: false,
+  };
 
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (inQuotes) {
-      current += char;
-      continue;
-    }
-
-    if (char === ',') {
-      row.push(current);
-      current = '';
-      continue;
-    }
-
-    if (char === '\n' || char === '\r') {
-      if (char === '\r' && nextChar === '\n') i++;
-      row.push(current);
-      pushNonEmptyRow(rows, row);
-      row = [];
-      current = '';
-      continue;
-    }
-
-    current += char;
+    const { skipNext } = processChar(text[i], text[i + 1], state);
+    if (skipNext) i++;
   }
 
-  if (current !== '' || row.length > 0) {
-    row.push(current);
-    pushNonEmptyRow(rows, row);
+  if (state.current !== '' || state.row.length > 0) {
+    flushRow(state);
   }
 
-  return rows.map(r => r.map(c => c.trim()));
+  return state.rows.map(r => r.map(c => c.trim()));
 };
 
 export const cleanNumber = (val: string | null | undefined): number => {
