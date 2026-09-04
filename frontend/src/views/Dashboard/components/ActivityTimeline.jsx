@@ -323,7 +323,7 @@ export default function ActivityTimeline() {
       groups[key].push(dateStr);
     });
 
-    const monthKeys = Object.keys(groups).sort();
+    const monthKeys = Object.keys(groups).sort((a, b) => a.localeCompare(b));
 
     return monthKeys.map(key => {
       const [yearStr, monthStr] = key.split('-');

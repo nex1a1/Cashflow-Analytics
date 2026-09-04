@@ -12,7 +12,7 @@ export default function EditableInput({
   const handleSave = () => {
     let finalVal = val;
     if (type === 'number') { 
-      finalVal = val === '' ? 0 : parseFloat(val) || 0; 
+      finalVal = val === '' ? 0 : Number.parseFloat(val) || 0; 
       setVal(finalVal); 
     }
     if (finalVal !== initialValue) onSave(finalVal);

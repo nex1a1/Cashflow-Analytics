@@ -194,6 +194,7 @@ export default function MainLayout({ controller }) {
                   dayTypes={dayTypes}
                   dayTypeConfig={dayTypeConfig}
                   isLoading={isProcessing}
+                  transactions={transactions}
                 />
               </motion.div>
             )}

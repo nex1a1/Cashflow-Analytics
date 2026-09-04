@@ -101,8 +101,8 @@ export default function useAnalytics({
     let todayStr = '', filterYear = 0, filterMonth = 0, isCurrentMonth = false;
     if (isSingleMonthView) {
       const parts = filterPeriod.split('-');
-      filterYear = parseInt(parts[0]);
-      filterMonth = parseInt(parts[1]) - 1;
+      filterYear = Number.parseInt(parts[0], 10);
+      filterMonth = Number.parseInt(parts[1], 10) - 1;
       const today = new Date();
       isCurrentMonth = today.getFullYear() === filterYear && today.getMonth() === filterMonth;
       todayStr = today.toISOString().split('T')[0];

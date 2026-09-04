@@ -109,11 +109,11 @@ export default function DailyForm({
       <div className={`flex p-0.5 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
         <button type="button" onClick={() => handleTypeChange('expense')} 
           className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : tokens.textMuted}`}>
-          รายจ่าย (Alt+E)
+          รายจ่าย
         </button>
         <button type="button" onClick={() => handleTypeChange('income')} 
           className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : tokens.textMuted}`}>
-          รายรับ (Alt+I)
+          รายรับ
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   BarChart3, ClipboardList, Download,
@@ -36,18 +36,9 @@ export default function AppHeader({
   const dm = true;
   const showPeriodPicker = ['dashboard', 'analytics', 'ledger', 'calendar'].includes(activeTab);
 
-  // ── Logic: Smooth Processing Transition ───────────────────
-  const [showProcessing, setShowProcessing] = useState(isProcessing);
+  // ── Logic: Snappy Processing Indicator ───────────────────
+  const showProcessing = isProcessing;
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
-
-  useEffect(() => {
-    if (isProcessing) {
-      setShowProcessing(true);
-    } else {
-      const timer = setTimeout(() => setShowProcessing(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isProcessing]);
 
   return (
     <div className="flex flex-col relative z-[60]">

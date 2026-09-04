@@ -74,7 +74,7 @@ export const generateDatesForPeriod = (period: string, allTransactions: any[]): 
     if (period.includes(',')) {
         const months = period.split(',');
         let dateArray: string[] = [];
-        months.sort().forEach(mStr => {
+        months.sort((a, b) => a.localeCompare(b)).forEach(mStr => {
             const [y, m] = mStr.split('-');
             const start = new Date(parseInt(y), parseInt(m) - 1, 1);
             const end = new Date(parseInt(y), parseInt(m), 0);
@@ -84,7 +84,9 @@ export const generateDatesForPeriod = (period: string, allTransactions: any[]): 
                 const mo = String(curr.getMonth() + 1).padStart(2, '0');
                 const yr = curr.getFullYear();
                 dateArray.push(`${yr}-${mo}-${d}`);
-                curr.setDate(curr.getDate() + 1);
+                const nextDate = new Date(curr);
+                nextDate.setDate(nextDate.getDate() + 1);
+                curr = nextDate;
             }
         });
         return dateArray;
@@ -160,7 +162,9 @@ export const generateDatesForPeriod = (period: string, allTransactions: any[]): 
         const m = String(curr.getMonth() + 1).padStart(2, '0');
         const y = curr.getFullYear();
         dateArray.push(`${y}-${m}-${d}`);
-        curr.setDate(curr.getDate() + 1);
+        const nextDate = new Date(curr);
+        nextDate.setDate(nextDate.getDate() + 1);
+        curr = nextDate;
         sanityCheck++;
     }
     return dateArray;

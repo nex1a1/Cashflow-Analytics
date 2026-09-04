@@ -112,17 +112,17 @@ export default function BatchForm({
       <div className={`flex p-0.5 mb-4 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
         <button type="button" onClick={() => handleTypeChange('expense')}
           className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
-          รายจ่าย (Alt+E)
+          รายจ่าย
         </button>
         <button type="button" onClick={() => handleTypeChange('income')}
           className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
-          รายรับ (Alt+I)
+          รายรับ
         </button>
       </div>
 
       <div className="flex gap-3 mb-4">
         <div className="flex-1">
-          <label className={tokens.label}>วันที่</label>
+          <span className={tokens.label}>วันที่</span>
           <DatePicker 
             value={formDate} 
             onChange={(v) => setValue('date', v, { shouldValidate: true })} 
@@ -133,8 +133,9 @@ export default function BatchForm({
           {errors.date && <p className={tokens.errorText}>{errors.date.message}</p>}
         </div>
         <div className="flex-1">
-          <label className={tokens.label}>จำนวนเงิน ฿</label>
+          <label htmlFor="batch-amount" className={tokens.label}>จำนวนเงิน ฿</label>
           <input 
+            id="batch-amount"
             type="number" 
             step="any"
             {...register('amount', { valueAsNumber: true })}
@@ -146,9 +147,9 @@ export default function BatchForm({
       </div>
 
       <div className="mb-4">
-        <label className={tokens.label}>หมวดหมู่</label>
+        <label htmlFor="batch-category" className={tokens.label}>หมวดหมู่</label>
         <div className="flex gap-2">
-          <select {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
+          <select id="batch-category" {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
             {categories.filter(c => c.type === formType).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
           </select>
           
@@ -171,8 +172,8 @@ export default function BatchForm({
       </div>
 
       <div className="mb-4">
-        <label className={tokens.label}>รายละเอียด</label>
-        <input type="text" {...register('description')}
+        <label htmlFor="batch-description" className={tokens.label}>รายละเอียด</label>
+        <input id="batch-description" type="text" {...register('description')}
           placeholder="เช่น ค่าข้าวเที่ยง" className={tokens.input} />
       </div>
 

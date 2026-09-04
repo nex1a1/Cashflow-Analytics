@@ -118,9 +118,9 @@ export default function ImportGuideModal({ isOpen, onClose }) {
             
             {/* Section 1: Template Selection */}
             <section className="space-y-2.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 01. เลือกรูปแบบโครงสร้างไฟล์ (Format Type)
-              </label>
+              </h4>
               
               <div className="space-y-2.5">
                 {/* Long Format */}
@@ -173,9 +173,9 @@ export default function ImportGuideModal({ isOpen, onClose }) {
 
             {/* Section 2: Technical Specifications */}
             <section className="space-y-3.5 bg-[#121212] p-4 rounded-none border border-[#303030]">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 02. ข้อกำหนดทางโครงสร้างระบบ
-              </label>
+              </h4>
 
               <div className="space-y-3 text-[10px] font-mono leading-normal text-slate-400 divide-y divide-[#303030]">
                 
@@ -201,9 +201,9 @@ export default function ImportGuideModal({ isOpen, onClose }) {
 
             {/* Section 3: File Utilities */}
             <section className="space-y-2.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 03. เครื่องมือจัดการเทมเพลต (Tools)
-              </label>
+              </h4>
               
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -265,7 +265,7 @@ export default function ImportGuideModal({ isOpen, onClose }) {
               {/* Paper Watermark / Header */}
               <div className="px-4 py-2.5 border-b border-[#303030] bg-[#1c1c1c] flex justify-between items-center text-[10px] font-mono text-[#cbd5e1] tracking-widest select-none">
                 <span>CASHFLOW SHARK IMPORT PROTOCOL</span>
-                <span>COLUMNS: {selectedFormat === 'long' ? longFormatHeaders.length : 'Date, Categories, Notes'} // TYPE: SIMULATION</span>
+                <span>COLUMNS: {selectedFormat === 'long' ? longFormatHeaders.length : 'Date, Categories, Notes'} {'//'} TYPE: SIMULATION</span>
               </div>
 
               {/* Simulated Sheet Table */}

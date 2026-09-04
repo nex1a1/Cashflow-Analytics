@@ -317,11 +317,11 @@ export function useAppController() {
         const curMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         if (filterPeriod.match(/^\d{4}-\d{2}$/) && filterPeriod > curMonth) {
           setFilterPeriod(curMonth);
-        } else if (filterPeriod.match(/^\d{4}$/) && parseInt(filterPeriod) > d.getFullYear()) {
+        } else if (filterPeriod.match(/^\d{4}$/) && Number.parseInt(filterPeriod, 10) > d.getFullYear()) {
           setFilterPeriod(curMonth);
         } else if (filterPeriod.includes('-Q') || filterPeriod.includes('-H')) {
           const [y] = filterPeriod.split('-');
-          if (parseInt(y) > d.getFullYear()) {
+          if (Number.parseInt(y, 10) > d.getFullYear()) {
             setFilterPeriod(curMonth);
           }
         }
@@ -330,20 +330,35 @@ export function useAppController() {
     });
   }, [filterPeriod, setFilterPeriod]);
 
-  // ─── DATA LOADING ───
+  // ─── MASTER DATA BOOTSTRAP (Runs once on mount) ───
+  const hasBootstrapped = useRef(false);
   useEffect(() => {
+    if (!hasBootstrapped.current) {
+      hasBootstrapped.current = true;
+      bootstrap();
+    }
+  }, [bootstrap]);
+
+  // ─── PERIOD DATA LOADING (Runs on mount and on period/filter change) ───
+  useEffect(() => {
+    let isMounted = true;
     const triggerLoads = async () => {
       setIsFetchingData(true);
-      await bootstrap();
       const { startDate, endDate } = getPeriodDateRange(filterPeriod);
-      await Promise.all([
-        loadAnalytics(startDate, endDate),
-        loadData(startDate, endDate)
-      ]);
-      setIsFetchingData(false);
+      try {
+        await Promise.all([
+          loadAnalytics(startDate, endDate),
+          loadData(startDate, endDate)
+        ]);
+      } catch (err) {
+        console.error('Failed loading period data:', err);
+      } finally {
+        if (isMounted) setIsFetchingData(false);
+      }
     };
     triggerLoads();
-  }, [filterPeriod, bootstrap, loadData, loadAnalytics]);
+    return () => { isMounted = false; };
+  }, [filterPeriod, loadData, loadAnalytics]);
 
   const isProcessing = isTxProcessing || isCsvProcessing || isFetchingData;
 

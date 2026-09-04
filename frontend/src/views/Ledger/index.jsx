@@ -39,7 +39,8 @@ export default function LedgerView({
   dayTypeConfig = [],
   isFilterActive,
   clearFilters,
-  isLoading
+  isLoading,
+  transactions = []
 }) {
   const dm = true;
   const [filterOpen, setFilterOpen] = useState(true);
@@ -62,17 +63,8 @@ export default function LedgerView({
     }
   };
 
-  // ── Logic: Smooth Loading Transition ───────────────────────
-  const [showSkeleton, setShowSkeleton] = useState(isLoading);
-
-  useEffect(() => {
-    if (isLoading) {
-      setShowSkeleton(true);
-    } else {
-      const timer = setTimeout(() => setShowSkeleton(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+  // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
+  const showSkeleton = isLoading && (!displayTransactions || displayTransactions.length === 0) && (!transactions || transactions.length === 0);
 
   // ─── Logic: Data Orchestration ───
   const {

@@ -140,7 +140,7 @@ export default function ExportModal({
             csvContent += row.join(dlm) + '\n';
           });
         } else if (exportFormat === 'wide') {
-          const dates = [...new Set(dataToExport.map(t => t.date))].sort();
+          const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => a.localeCompare(b));
           const cats = categories.filter(c => dataToExport.some(t => t.category === c.name));
           const headers = ['Date', 'DayType', ...cats.map(c => c.name)];
           csvContent += headers.join(dlm) + '\n';
@@ -151,7 +151,7 @@ export default function ExportModal({
             cats.forEach(cat => {
               const amount = dataToExport
                 .filter(t => t.date === date && t.category === cat.name)
-                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
               row.push(amount || 0);
             });
             csvContent += row.join(dlm) + '\n';
@@ -221,9 +221,9 @@ export default function ExportModal({
             
             {/* Section 1: Period */}
             <section className="space-y-2.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 01. ขอบเขตช่วงเวลา (Date Period)
-              </label>
+              </h4>
               <div className="bg-[#121212] p-3 rounded-none border border-[#303030]">
                 <PeriodPicker 
                   filterPeriod={exportPeriod} 
@@ -235,9 +235,9 @@ export default function ExportModal({
 
             {/* Section 2: Format Selection */}
             <section className="space-y-2.5">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 02. รูปแบบเอกสาร (Document Type)
-              </label>
+              </h4>
               
               <div className="space-y-2.5">
                 {/* Transactional Format */}
@@ -313,9 +313,9 @@ export default function ExportModal({
 
             {/* Section 3: Formatting & Delimiter */}
             <section className="space-y-3.5 bg-[#121212]/50 p-4 rounded-none border border-[#303030]">
-              <label className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#cbd5e1] block">
                 03. ตัวเลือกเอกสาร (Format Options)
-              </label>
+              </h4>
 
               {/* Delimiter */}
               <div className="space-y-1.5">
@@ -342,8 +342,9 @@ export default function ExportModal({
 
               {/* Type Gate */}
               <div className="space-y-1.5">
-                <span className="text-[10px] text-[#888888] font-bold uppercase block">ประเภทรายการ (Transaction Type)</span>
+                <label htmlFor="export-type-filter" className="text-[10px] text-[#888888] font-bold uppercase block">ประเภทรายการ (Transaction Type)</label>
                 <select
+                  id="export-type-filter"
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   className="w-full bg-[#121212] border border-[#3e3e3e] text-xs font-bold text-[#cbd5e1] py-2 px-3.5 rounded-none cursor-pointer focus:outline-none focus:border-[#da291c] transition-colors"
@@ -501,7 +502,7 @@ export default function ExportModal({
 
                   {/* PREVIEW: Analytical Matrix (Wide) */}
                   {exportFormat === 'wide' && (() => {
-                    const dates = [...new Set(dataToExport.map(t => t.date))].sort();
+                    const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => a.localeCompare(b));
                     const cats = categories.filter(c => dataToExport.some(t => t.category === c.name));
                     
                     return (
@@ -541,7 +542,7 @@ export default function ExportModal({
                                 {cats.slice(0, 6).map(cat => {
                                   const total = dataToExport
                                     .filter(t => t.date === date && t.category === cat.name)
-                                    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                                    .reduce((sum, t) => sum + Number.parseFloat(t.amount || 0), 0);
                                   
                                   return (
                                     <td 

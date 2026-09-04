@@ -11,8 +11,8 @@ const crypto_1 = __importDefault(require("crypto"));
 console.log('🚀 Starting Mockup Database Generation...');
 // Ensure schema is fully initialized on the demo database
 (0, schema_1.initSchema)();
-// Function to generate random integer between min and max
-const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+// Function to generate random integer between min and max (cryptographically secure)
+const getRandomInt = (min, max) => crypto_1.default.randomInt(min, max + 1);
 const generateMockupData = () => {
     // 1. Clean existing data
     db_1.default.exec("DELETE FROM transactions");

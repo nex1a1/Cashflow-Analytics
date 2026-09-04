@@ -26,7 +26,7 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
         if (ym.match(/^\d{4}-\d{2}$/)) monthSet.add(ym);
       }
     });
-    const sorted = Array.from(monthSet).sort();
+    const sorted = Array.from(monthSet).sort((a, b) => a.localeCompare(b));
     if (sorted.length === 0) {
       const now = new Date();
       sorted.push(`${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`);
@@ -98,7 +98,7 @@ export function getMonthsForPeriod(filterPeriod, transactions = []) {
 
   // Multi-select e.g. "2026-01,2026-03,2026-07"
   if (filterPeriod.includes(',')) {
-    const months = filterPeriod.split(',').filter(Boolean).sort();
+    const months = filterPeriod.split(',').filter(Boolean).sort((a, b) => a.localeCompare(b));
     return months.map(ym => {
       const [y, m] = ym.split('-');
       const mIdx = parseInt(m, 10) - 1;

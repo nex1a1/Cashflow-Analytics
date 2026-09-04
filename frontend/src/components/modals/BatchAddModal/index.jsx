@@ -52,15 +52,6 @@ export default function BatchAddModal({
     const handleKeyDown = (e) => {
       if (!isOpen) return;
       if (e.key === 'Escape') onClose();
-      // Shortcuts for Power Users
-      if (e.altKey && e.key.toLowerCase() === 'e') {
-        e.preventDefault();
-        formMethodsRef.current?.setValue('type', 'expense');
-      }
-      if (e.altKey && e.key.toLowerCase() === 'i') {
-        e.preventDefault();
-        formMethodsRef.current?.setValue('type', 'income');
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -81,7 +72,7 @@ export default function BatchAddModal({
     const targetCatName = catObj?.name || 'อื่นๆ';
     
     const newItem = {
-      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: `temp_${crypto.randomUUID()}`,
       date: formattedDate, 
       category: targetCatName,
       category_id: data.categoryId,

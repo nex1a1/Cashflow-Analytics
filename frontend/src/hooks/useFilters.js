@@ -97,7 +97,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     const yearsMap = {};
     filteredMasterPeriods.forEach(periodStr => { // periodStr is YYYY-MM
       const [y, mStr] = periodStr.split('-');
-      const m = parseInt(mStr, 10);
+      const m = Number.parseInt(mStr, 10);
       
       if (!yearsMap[y]) yearsMap[y] = { months: new Set(), quarters: new Set(), halves: new Set() };
       yearsMap[y].months.add(periodStr);
@@ -108,12 +108,12 @@ export default function useFilters({ transactions, categories, masterPeriods = [
       if (m >= 1  && m <= 6)  yearsMap[y].halves.add(`${y}-H1`);
       if (m >= 7  && m <= 12) yearsMap[y].halves.add(`${y}-H2`);
     });
-    return { yearsMap, sortedYears: Object.keys(yearsMap).sort().reverse() };
+    return { yearsMap, sortedYears: Object.keys(yearsMap).sort((a, b) => b.localeCompare(a)) };
   }, [filteredMasterPeriods]);
 
   // ── เดือนที่มีข้อมูล (Master List) ──
   const rawAvailableMonths = useMemo(() => {
-    return [...filteredMasterPeriods].sort().reverse();
+    return [...filteredMasterPeriods].sort((a, b) => b.localeCompare(a));
   }, [filteredMasterPeriods]);
 
   // ── Derived booleans ─────────────────────────────────────────
@@ -225,10 +225,10 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     }
 
     // 5. Amount Range Filter
-    const min = parseFloat(minAmount);
-    const max = parseFloat(maxAmount);
-    if (!isNaN(min)) filtered = filtered.filter(t => Math.abs(t.amount) >= min);
-    if (!isNaN(max)) filtered = filtered.filter(t => Math.abs(t.amount) <= max);
+    const min = Number.parseFloat(minAmount);
+    const max = Number.parseFloat(maxAmount);
+    if (!Number.isNaN(min)) filtered = filtered.filter(t => Math.abs(t.amount) >= min);
+    if (!Number.isNaN(max)) filtered = filtered.filter(t => Math.abs(t.amount) <= max);
 
     // 6. Day Type (Weekend/Weekday) Filter
     if (dayTypeFilter !== 'ALL') {

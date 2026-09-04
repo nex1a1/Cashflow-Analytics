@@ -45,3 +45,7 @@ PRODUCT.md
 .claude/
 .gemini/
 .impeccable/
+
+#Sonarqube
+sonar-project.properties
+.scannerwork/

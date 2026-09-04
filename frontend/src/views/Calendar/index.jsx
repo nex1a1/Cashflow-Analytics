@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
 import { hexToRgb } from '../../utils/formatters';
 import CalendarSkeleton from './components/CalendarSkeleton';
@@ -44,17 +44,8 @@ export default function CalendarView({
     });
   };
   
-  // ── Logic: Smooth Loading Transition ───────────────────────
-  const [showSkeleton, setShowSkeleton] = useState(isLoading);
-
-  useEffect(() => {
-    if (isLoading) {
-      setShowSkeleton(true);
-    } else {
-      const timer = setTimeout(() => setShowSkeleton(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+  // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
+  const showSkeleton = isLoading && (!transactions || transactions.length === 0) && (!dayTypes || Object.keys(dayTypes).length === 0);
 
   const viewDate = useMemo(() => {
     if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
@@ -349,31 +340,7 @@ export default function CalendarView({
     setFilterPeriod(currentMonthStr);
   };
 
-  // Desktop Keyboard Shortcuts (←, →, T)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Don't trigger if modal is open or if user is typing in form inputs
-      if (selectedDate) return;
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || document.activeElement?.isContentEditable) {
-        return;
-      }
 
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prevMonth();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        nextMonth();
-      } else if (e.key === 't' || e.key === 'T') {
-        e.preventDefault();
-        goToCurrentMonth();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedDate, y, m]);
 
   const monthNet = monthInc - monthExp;
   const now = new Date();

@@ -77,7 +77,7 @@ function formatDbMutationLog(msgStr) {
         if (args.length >= 4) {
             const date = args[1] || '';
             const desc = args[2] || 'ไม่ระบุ';
-            const satang = parseFloat(args[3]) || 0;
+            const satang = Number.parseFloat(args[3]) || 0;
             const baht = (satang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const allocRaw = args[5];
             const alloc = allocRaw && allocRaw !== 'NULL' && allocRaw !== '' ? ` (${allocRaw})` : '';

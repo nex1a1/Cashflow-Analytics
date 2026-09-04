@@ -81,7 +81,7 @@ export default function useImportCSV({
         let found = updatedDayTypeConfig.find(dt => dt.label === label);
         if (!found) {
           found = {
-            id: `dt_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            id: crypto.randomUUID(),
             label,
             color: '#64748B',
           };
@@ -166,7 +166,7 @@ export default function useImportCSV({
           const amount = cleanNumber(row[j]);
           if (amount !== 0) {
             let cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
-            let catName = cleanStr.split('(')[0].trim().replace(/[A-Za-z]+.*$/, '').trim() || cleanStr;
+            let catName = cleanStr.split('(')[0].trim().replace(/[a-zA-Z].*$/, '').trim() || cleanStr;
             let description = note?.trim() ? `${catName} · ${note.trim()}` : catName;
             
             // Intelligence Sync: Try backend prediction first for Wide Format too

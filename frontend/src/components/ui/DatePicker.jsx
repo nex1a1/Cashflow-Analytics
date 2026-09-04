@@ -43,7 +43,7 @@ function getDatesInRange(startStr, endStr) {
   const [sy, sm, sd] = s.split('-').map(Number);
   const [ey, em, ed] = e.split('-').map(Number);
   
-  const cur = new Date(sy, sm - 1, sd);
+  let cur = new Date(sy, sm - 1, sd);
   const endDate = new Date(ey, em - 1, ed);
 
   while (cur <= endDate) {
@@ -51,7 +51,9 @@ function getDatesInRange(startStr, endStr) {
     const cm = String(cur.getMonth() + 1).padStart(2, '0');
     const cd = String(cur.getDate()).padStart(2, '0');
     dates.push(`${cy}-${cm}-${cd}`);
-    cur.setDate(cur.getDate() + 1);
+    const nextDate = new Date(cur);
+    nextDate.setDate(nextDate.getDate() + 1);
+    cur = nextDate;
   }
   return dates;
 }
@@ -59,7 +61,7 @@ function getDatesInRange(startStr, endStr) {
 // Group sorted YYYY-MM-DD date strings into contiguous ranges
 function groupContiguousDates(dateStrArray) {
   if (!dateStrArray || dateStrArray.length === 0) return [];
-  const sorted = [...dateStrArray].sort();
+  const sorted = [...dateStrArray].sort((a, b) => a.localeCompare(b));
   
   const ranges = [];
   let currentRange = [sorted[0]];
@@ -97,7 +99,7 @@ function formatDisplay(v, placeholder = 'เลือกวันที่') {
   const rawDates = v.includes(',') ? v.split(',') : v.includes(':') ? v.split(':') : [v];
   if (rawDates.length === 1) {
     const parts = rawDates[0].split('-').map(Number);
-    if (parts.length < 3 || isNaN(parts[0])) return placeholder;
+    if (parts.length < 3 || Number.isNaN(parts[0])) return placeholder;
     const [y, m, d] = parts;
     return `${d} ${THAI_MONTHS_SHORT[m - 1]} ${y}`;
   }
@@ -307,7 +309,7 @@ export default function DatePicker({
     } else if (draftDates.size === 1) {
       onChange(Array.from(draftDates)[0]);
     } else {
-      const sorted = Array.from(draftDates).sort();
+      const sorted = Array.from(draftDates).sort((a, b) => a.localeCompare(b));
       onChange(sorted.join(','));
     }
     setOpen(false);
@@ -358,9 +360,10 @@ export default function DatePicker({
   return (
     <div ref={containerRef} className="relative z-50 w-full">
       {variant === 'hud' ? (
-        <div 
+        <button 
+          type="button"
           onClick={() => setOpen(!open)}
-          className={`relative flex items-center border rounded-none bg-[#121212] cursor-pointer select-none transition-colors ${
+          className={`relative w-full text-left flex items-center border rounded-none bg-[#121212] cursor-pointer select-none transition-colors ${
             isActive 
               ? 'border-[#da291c] text-white bg-[#121212]' 
               : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
@@ -387,7 +390,7 @@ export default function DatePicker({
               <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
             </span>
           )}
-        </div>
+        </button>
       ) : (
         <button
           type="button"

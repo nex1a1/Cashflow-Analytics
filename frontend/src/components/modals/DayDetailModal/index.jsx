@@ -13,9 +13,9 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   const { showToast } = useToast();
   
   const [yyyyStr, mmStr, ddStr] = dateStr.split('-');
-  const d = parseInt(ddStr, 10);
-  const m = parseInt(mmStr, 10);
-  const y = parseInt(yyyyStr, 10);
+  const d = Number.parseInt(ddStr, 10);
+  const m = Number.parseInt(mmStr, 10);
+  const y = Number.parseInt(yyyyStr, 10);
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dateObj.getDay()];
   const displayDate = `${d} ${THAI_MONTHS[m - 1]} ${y}`;
@@ -33,22 +33,10 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
-      if (e.altKey && e.key.toLowerCase() === 'e') {
-        e.preventDefault();
-        formMethodsRef.current?.setValue('type', 'expense');
-        const firstCat = categories.find(c => c.type === 'expense');
-        formMethodsRef.current?.setValue('categoryId', firstCat?.id || '');
-      }
-      if (e.altKey && e.key.toLowerCase() === 'i') {
-        e.preventDefault();
-        formMethodsRef.current?.setValue('type', 'income');
-        const firstCat = categories.find(c => c.type === 'income');
-        formMethodsRef.current?.setValue('categoryId', firstCat?.id || '');
-      }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [onClose, categories]);
+  }, [onClose]);
 
   const groupMap = useMemo(() => {
     return cashflowGroups.reduce((acc, g) => {
@@ -93,8 +81,8 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
       if (catIdxA !== catIdxB) return catIdxA - catIdxB;
 
       // 4. Sort by Amount (Descending)
-      const amtA = parseFloat(a.amount) || 0;
-      const amtB = parseFloat(b.amount) || 0;
+      const amtA = Number.parseFloat(a.amount) || 0;
+      const amtB = Number.parseFloat(b.amount) || 0;
       if (amtB !== amtA) return amtB - amtA;
 
       // 5. Fallback to ID for stability
@@ -104,8 +92,8 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
 
   const expenses   = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
   const income     = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
-  const totalExp   = expenses.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-  const totalInc   = income.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+  const totalExp   = expenses.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
+  const totalInc   = income.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
 
   const applySuggestion = (s) => {
     if (formMethodsRef.current) {

@@ -82,7 +82,7 @@ export default function QuickSuggest({
 
     // 1. Filter by Form Type (Income/Expense/Savings)
     sourceItems = sourceItems.filter(s => {
-      const c = catMap[s.categoryId] || categories.find(cat => cat.id === s.categoryId || cat.name === s.categoryName);
+      const c = catMap[s.categoryId] || categories.find(cat => String(cat.id) === String(s.categoryId) || cat.name === s.categoryName);
       return c?.type === formType;
     });
 
@@ -246,7 +246,7 @@ export default function QuickSuggest({
                 </button>
                 {activeCategories.map(c => {
                   const isActive = String(activeCatFilter) === String(c.id);
-                  const isHovered = hoveredChipId === c.id;
+                  const isHovered = String(hoveredChipId) === String(c.id);
                   return (
                     <button
                       key={c.id}
@@ -381,7 +381,7 @@ export default function QuickSuggest({
         ) : (
           <div className="flex flex-col gap-1.5">
             {quickSuggestions.map((s, idx) => {
-              const catObj = catMap[s.categoryId] || catMap[s.categoryName] || categories.find(c => c.id === s.categoryId || c.name === s.categoryName);
+              const catObj = catMap[s.categoryId] || catMap[s.categoryName] || categories.find(c => String(c.id) === String(s.categoryId) || c.name === s.categoryName);
               const catColor = catObj?.color || '#cbd5e1';
               const bgAlpha = dm ? 0.2 : 0.15;
               

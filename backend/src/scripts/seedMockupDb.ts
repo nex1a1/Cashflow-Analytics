@@ -10,8 +10,8 @@ console.log('🚀 Starting Mockup Database Generation...');
 // Ensure schema is fully initialized on the demo database
 initSchema();
 
-// Function to generate random integer between min and max
-const getRandomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+// Function to generate random integer between min and max (cryptographically secure)
+const getRandomInt = (min: number, max: number): number => crypto.randomInt(min, max + 1);
 
 interface MockTx {
     id: string;

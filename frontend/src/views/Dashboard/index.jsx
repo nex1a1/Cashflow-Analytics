@@ -1,5 +1,5 @@
 // src/views/Dashboard/index.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Inbox } from 'lucide-react';
 import { DashboardProvider } from './context/DashboardContext';
@@ -17,17 +17,8 @@ export default function DashboardView(props) {
   const dm = true;
   const { transactions, analytics, isLoading } = props;
   
-  // ── Logic: Smooth Loading Transition ───────────────────────
-  const [showSkeleton, setShowSkeleton] = useState(isLoading);
-
-  useEffect(() => {
-    if (isLoading) {
-      setShowSkeleton(true);
-    } else {
-      const timer = setTimeout(() => setShowSkeleton(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+  // ── Logic: Smooth Loading Transition (Only on initial cold boot) ──
+  const showSkeleton = !analytics;
 
   // Memoize the context value to avoid recreating it on every single render
   const dashboardContextValue = useMemo(() => ({
@@ -61,7 +52,7 @@ export default function DashboardView(props) {
   }
 
   // Case 2: Truly Empty State (Not loading and no transactions)
-  if (transactions.length === 0 && !showSkeleton) {
+  if (transactions.length === 0 && !showSkeleton && !isLoading) {
     return (
       <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${'bg-slate-800 border-slate-700'}`}>
         <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />

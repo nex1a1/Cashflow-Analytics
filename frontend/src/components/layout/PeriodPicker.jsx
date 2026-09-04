@@ -74,7 +74,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
         setRangeStart(m);
         setRangeEnd(null);
       } else {
-        const [s, e] = [rangeStart, m].sort();
+        const [s, e] = [rangeStart, m].sort((a, b) => a.localeCompare(b));
         setRangeStart(s);
         setRangeEnd(e);
       }
@@ -95,7 +95,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   const handleConfirmMulti = () => {
     if (multiSelected.length === 0) return;
     if (multiSelected.length === 1) select(multiSelected[0]);
-    else select(multiSelected.sort().join(','));
+    else select([...multiSelected].sort((a, b) => a.localeCompare(b)).join(','));
   };
 
   const isMonthSelected = (m) => {
@@ -198,7 +198,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                 groupedOptions?.sortedYears?.map(year => {
                   const data = groupedOptions.yearsMap[year];
                   const isExpanded = expandedYear === year;
-                  const months = Array.from(data.months).sort().reverse();
+                  const months = Array.from(data.months).sort((a, b) => b.localeCompare(a));
                   return (
                     <div key={year}>
                       <button onClick={() => setExpandedYear(isExpanded ? null : year)}
@@ -259,7 +259,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                               return (
                                 <button key={m} onClick={() => handleMonthClick(m)}
                                   className={`${pillBase} ${currentStyle}`}>
-                                  {THAI_MONTHS_SHORT[parseInt(mo) - 1]}
+                                  {THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}
                                 </button>
                               );
                             })}
@@ -277,9 +277,9 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           {(mode === 'multi' && multiSelected.length > 0) && (
              <div className={`p-2 border-t flex flex-col gap-2 ${'border-[#303030] bg-[#121212]/50'}`}>
                 <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1 custom-scrollbar">
-                    {multiSelected.sort().map(m => (
+                    {[...multiSelected].sort((a, b) => a.localeCompare(b)).map(m => (
                         <div key={m} className={`flex items-center gap-1 px-1.5 py-0.5 rounded-none border ${'bg-amber-500/20 border-amber-500/50 text-amber-300'}`}>
-                            {THAI_MONTHS_SHORT[parseInt(m.split('-')[1]) - 1]} {m.split('-')[0].slice(2)}
+                            {THAI_MONTHS_SHORT[Number.parseInt(m.split('-')[1], 10) - 1]} {m.split('-')[0].slice(2)}
                             <button onClick={() => setMultiSelected(multiSelected.filter(x => x !== m))} className="hover:text-red-500 transition-colors ml-0.5">
                                 <X className="w-2.5 h-2.5" />
                             </button>
