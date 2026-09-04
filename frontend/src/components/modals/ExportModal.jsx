@@ -76,6 +76,66 @@ function downloadCsvBlob(csvContent, filename) {
   URL.revokeObjectURL(url);
 }
 
+function filterExportTransactions(localTransactions, exportPeriod, typeFilter, previewSearch, categories) {
+  const query = previewSearch.trim().toLowerCase();
+  return localTransactions.filter(t => {
+    if (!isDateInFilter(t.date, exportPeriod)) return false;
+    if (t.category && t.category.includes('หักวงเงิน')) return false;
+
+    if (typeFilter !== 'all') {
+      const cat = categories.find(c => c.name === t.category);
+      const tType = cat?.type || 'expense';
+      if (tType !== typeFilter) return false;
+    }
+
+    if (query !== '') {
+      const descMatch = (t.description || '').toLowerCase().includes(query);
+      const catMatch = (t.category || '').toLowerCase().includes(query);
+      if (!descMatch && !catMatch) return false;
+    }
+
+    return true;
+  });
+}
+
+function resolveDayTypeInfo(date, dayTypes, dayTypeConfig) {
+  const dtId = dayTypes[date];
+  if (dtId) {
+    const config = dayTypeConfig.find(d => d.id === dtId);
+    return {
+      label: config?.label || dtId,
+      color: config?.color || '#94a3b8'
+    };
+  }
+  const dayIdx = new Date(date).getDay();
+  const isWeekend = dayIdx === 0 || dayIdx === 6;
+  const config = isWeekend ? dayTypeConfig[1] : dayTypeConfig[0];
+  return {
+    label: config?.label || (isWeekend ? 'Holiday' : 'Workday'),
+    color: config?.color || (isWeekend ? '#EF4444' : '#3B82F6')
+  };
+}
+
+function calculateExportStats(exportFormat, dataToExport, localTransactions, categories, dayTypeConfig, dayTypes) {
+  const rowCount = exportFormat === 'full' 
+    ? localTransactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length
+    : (exportFormat === 'wide' ? [...new Set(dataToExport.map(t => t.date))].length : dataToExport.length);
+  const estKB = (rowCount * (exportFormat === 'wide' ? 0.32 : 0.14)).toFixed(1);
+  return { rowCount, estKB, hasData: rowCount > 0 };
+}
+
+function compileCsvData({ exportFormat, dataToExport, categories, getDayTypeInfo, delimiter, localTransactions, dayTypes, dayTypeConfig }) {
+  let csvContent = '\uFEFF'; // BOM
+  if (exportFormat === 'long') {
+    csvContent += buildLongCsv(dataToExport, categories, getDayTypeInfo, delimiter);
+  } else if (exportFormat === 'wide') {
+    csvContent += buildWideCsv(dataToExport, categories, getDayTypeInfo, delimiter);
+  } else if (exportFormat === 'full') {
+    csvContent += buildFullCsv(localTransactions, categories, dayTypes, dayTypeConfig, delimiter);
+  }
+  return csvContent;
+}
+
 export default function ExportModal({
   isOpen, onClose, transactions: filteredTransactions, categories, dayTypes, dayTypeConfig,
   groupedOptions, getFilterLabel, initialPeriod
@@ -125,56 +185,17 @@ export default function ExportModal({
 
   // Filtered transactions calculation
   const dataToExport = useMemo(() => {
-    return localTransactions.filter(t => {
-      if (!isDateInFilter(t.date, exportPeriod)) return false;
-      if (t.category && t.category.includes('หักวงเงิน')) return false;
-
-      if (typeFilter !== 'all') {
-        const cat = categories.find(c => c.name === t.category);
-        const tType = cat?.type || 'expense';
-        if (tType !== typeFilter) return false;
-      }
-
-      if (previewSearch.trim() !== '') {
-        const query = previewSearch.toLowerCase();
-        const descMatch = (t.description || '').toLowerCase().includes(query);
-        const catMatch = (t.category || '').toLowerCase().includes(query);
-        if (!descMatch && !catMatch) return false;
-      }
-
-      return true;
-    });
+    return filterExportTransactions(localTransactions, exportPeriod, typeFilter, previewSearch, categories);
   }, [localTransactions, exportPeriod, typeFilter, previewSearch, categories]);
 
   // Summary statistics
   const stats = useMemo(() => {
-    const rowCount = exportFormat === 'full' 
-      ? localTransactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length
-      : (exportFormat === 'wide' ? [...new Set(dataToExport.map(t => t.date))].length : dataToExport.length);
-    const estKB = (rowCount * (exportFormat === 'wide' ? 0.32 : 0.14)).toFixed(1);
-    return { rowCount, estKB, hasData: rowCount > 0 };
+    return calculateExportStats(exportFormat, dataToExport, localTransactions, categories, dayTypeConfig, dayTypes);
   }, [exportFormat, dataToExport, localTransactions, categories, dayTypeConfig, dayTypes]);
 
   if (!isOpen) return null;
 
-  // Resolve DayType details
-  const getDayTypeInfo = (date) => {
-    const dtId = dayTypes[date];
-    if (dtId) {
-      const config = dayTypeConfig.find(d => d.id === dtId);
-      return {
-        label: config?.label || dtId,
-        color: config?.color || '#94a3b8'
-      };
-    }
-    const dayIdx = new Date(date).getDay();
-    const isWeekend = dayIdx === 0 || dayIdx === 6;
-    const config = isWeekend ? dayTypeConfig[1] : dayTypeConfig[0];
-    return {
-      label: config?.label || (isWeekend ? 'Holiday' : 'Workday'),
-      color: config?.color || (isWeekend ? '#EF4444' : '#3B82F6')
-    };
-  };
+  const getDayTypeInfo = (date) => resolveDayTypeInfo(date, dayTypes, dayTypeConfig);
 
   // Compile and run the actual CSV export
   const executeExport = () => {
@@ -185,15 +206,10 @@ export default function ExportModal({
     // Simple elegant loading before download
     setTimeout(() => {
       try {
-        let csvContent = '\uFEFF'; // BOM
-        if (exportFormat === 'long') {
-          csvContent += buildLongCsv(dataToExport, categories, getDayTypeInfo, delimiter);
-        } else if (exportFormat === 'wide') {
-          csvContent += buildWideCsv(dataToExport, categories, getDayTypeInfo, delimiter);
-        } else if (exportFormat === 'full') {
-          csvContent += buildFullCsv(localTransactions, categories, dayTypes, dayTypeConfig, delimiter);
-        }
-
+        const csvContent = compileCsvData({
+          exportFormat, dataToExport, categories, getDayTypeInfo, delimiter,
+          localTransactions, dayTypes, dayTypeConfig
+        });
         const filename = `CashflowShark_${exportFormat}_${exportPeriod}_${new Date().toISOString().split('T')[0]}.csv`;
         downloadCsvBlob(csvContent, filename);
       } catch (err) {

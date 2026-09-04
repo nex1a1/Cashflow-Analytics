@@ -16,130 +16,92 @@ export const DAY_OF_WEEK_FULL_LABELS = ['วันอาทิตย์', 'ว�
 /**
  * Parses and returns active month objects for any filter period string
  */
+function createMonthEntry(y, mIdx, useShortYear = true) {
+  const mNum = (mIdx + 1).toString().padStart(2, '0');
+  const yStr = String(y);
+  return {
+    monthStr: `${y}-${mNum}`,
+    year: y,
+    monthIndex: mIdx,
+    monthLabel: `${THAI_MONTHS[mIdx]} ${y}`,
+    shortLabel: useShortYear ? `${THAI_SHORT_MONTHS[mIdx]} ${yStr.slice(-2)}` : THAI_SHORT_MONTHS[mIdx]
+  };
+}
+
+function getAllPeriodMonths(transactions) {
+  const monthSet = new Set();
+  transactions.forEach(t => {
+    if (t.date && t.date.length >= 7) {
+      const ym = t.date.substring(0, 7);
+      if (ym.match(/^\d{4}-\d{2}$/)) monthSet.add(ym);
+    }
+  });
+  const sorted = Array.from(monthSet).sort((a, b) => a.localeCompare(b));
+  if (sorted.length === 0) {
+    const now = new Date();
+    sorted.push(`${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`);
+  }
+  return sorted.map(ym => {
+    const [y, m] = ym.split('-');
+    return createMonthEntry(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, true);
+  });
+}
+
+function getYearPeriodMonths(filterPeriod) {
+  const y = Number.parseInt(filterPeriod, 10);
+  return Array.from({ length: 12 }, (_, i) => createMonthEntry(y, i, false));
+}
+
+function getHalfYearPeriodMonths(filterPeriod) {
+  const [yStr, hStr] = filterPeriod.split('-');
+  const y = Number.parseInt(yStr, 10);
+  const startM = hStr === 'H1' ? 0 : 6;
+  return Array.from({ length: 6 }, (_, idx) => createMonthEntry(y, startM + idx, false));
+}
+
+function getQuarterPeriodMonths(filterPeriod) {
+  const [yStr, qStr] = filterPeriod.split('-Q');
+  const y = Number.parseInt(yStr, 10);
+  const startM = (Number.parseInt(qStr, 10) - 1) * 3;
+  return Array.from({ length: 3 }, (_, idx) => createMonthEntry(y, startM + idx, false));
+}
+
+function getCommaPeriodMonths(filterPeriod) {
+  const months = filterPeriod.split(',').filter(Boolean).sort((a, b) => a.localeCompare(b));
+  return months.map(ym => {
+    const [y, m] = ym.split('-');
+    return createMonthEntry(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, true);
+  });
+}
+
+function getRangePeriodMonths(filterPeriod) {
+  const [startYM, endYM] = filterPeriod.split('_');
+  const [sy, sm] = startYM.split('-').map(Number);
+  const [ey, em] = endYM.split('-').map(Number);
+  const result = [];
+  let curY = sy;
+  let curM = sm;
+  while (curY < ey || (curY === ey && curM <= em)) {
+    result.push(createMonthEntry(curY, curM - 1, true));
+    curM++;
+    if (curM > 12) {
+      curM = 1;
+      curY++;
+    }
+  }
+  return result;
+}
+
+/**
+ * Parses and returns active month objects for any filter period string
+ */
 export function getMonthsForPeriod(filterPeriod, transactions = []) {
-  // All Time: extract all active months from transactions
-  if (!filterPeriod || filterPeriod === 'ALL') {
-    const monthSet = new Set();
-    transactions.forEach(t => {
-      if (t.date && t.date.length >= 7) {
-        const ym = t.date.substring(0, 7);
-        if (ym.match(/^\d{4}-\d{2}$/)) monthSet.add(ym);
-      }
-    });
-    const sorted = Array.from(monthSet).sort((a, b) => a.localeCompare(b));
-    if (sorted.length === 0) {
-      const now = new Date();
-      sorted.push(`${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`);
-    }
-    return sorted.map(ym => {
-      const [y, m] = ym.split('-');
-      const mIdx = Number.parseInt(m, 10) - 1;
-      return {
-        monthStr: ym,
-        year: Number.parseInt(y, 10),
-        monthIndex: mIdx,
-        monthLabel: `${THAI_MONTHS[mIdx]} ${y}`,
-        shortLabel: `${THAI_SHORT_MONTHS[mIdx]} ${y.slice(-2)}`
-      };
-    });
-  }
-
-  // Full Year e.g. "2026"
-  if (filterPeriod.match(/^\d{4}$/)) {
-    const y = Number.parseInt(filterPeriod, 10);
-    return Array.from({ length: 12 }, (_, i) => {
-      const mNum = (i + 1).toString().padStart(2, '0');
-      return {
-        monthStr: `${y}-${mNum}`,
-        year: y,
-        monthIndex: i,
-        monthLabel: `${THAI_MONTHS[i]} ${y}`,
-        shortLabel: THAI_SHORT_MONTHS[i]
-      };
-    });
-  }
-
-  // Half-Year e.g. "2026-H1", "2026-H2"
-  if (filterPeriod.match(/^\d{4}-H[12]$/)) {
-    const [yStr, hStr] = filterPeriod.split('-');
-    const y = Number.parseInt(yStr, 10);
-    const startM = hStr === 'H1' ? 0 : 6;
-    return Array.from({ length: 6 }, (_, idx) => {
-      const i = startM + idx;
-      const mNum = (i + 1).toString().padStart(2, '0');
-      return {
-        monthStr: `${y}-${mNum}`,
-        year: y,
-        monthIndex: i,
-        monthLabel: `${THAI_MONTHS[i]} ${y}`,
-        shortLabel: THAI_SHORT_MONTHS[i]
-      };
-    });
-  }
-
-  // Quarter e.g. "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"
-  if (filterPeriod.match(/^\d{4}-Q[1-4]$/)) {
-    const [yStr, qStr] = filterPeriod.split('-Q');
-    const y = Number.parseInt(yStr, 10);
-    const q = Number.parseInt(qStr, 10);
-    const startM = (q - 1) * 3;
-    return Array.from({ length: 3 }, (_, idx) => {
-      const i = startM + idx;
-      const mNum = (i + 1).toString().padStart(2, '0');
-      return {
-        monthStr: `${y}-${mNum}`,
-        year: y,
-        monthIndex: i,
-        monthLabel: `${THAI_MONTHS[i]} ${y}`,
-        shortLabel: THAI_SHORT_MONTHS[i]
-      };
-    });
-  }
-
-  // Multi-select e.g. "2026-01,2026-03,2026-07"
-  if (filterPeriod.includes(',')) {
-    const months = filterPeriod.split(',').filter(Boolean).sort((a, b) => a.localeCompare(b));
-    return months.map(ym => {
-      const [y, m] = ym.split('-');
-      const mIdx = Number.parseInt(m, 10) - 1;
-      return {
-        monthStr: ym,
-        year: Number.parseInt(y, 10),
-        monthIndex: mIdx,
-        monthLabel: `${THAI_MONTHS[mIdx]} ${y}`,
-        shortLabel: `${THAI_SHORT_MONTHS[mIdx]} ${y.slice(-2)}`
-      };
-    });
-  }
-
-  // Range e.g. "2026-02_2026-05"
-  if (filterPeriod.includes('_')) {
-    const [startYM, endYM] = filterPeriod.split('_');
-    const [sy, sm] = startYM.split('-').map(Number);
-    const [ey, em] = endYM.split('-').map(Number);
-    const result = [];
-    let curY = sy;
-    let curM = sm;
-    while (curY < ey || (curY === ey && curM <= em)) {
-      const mNum = curM.toString().padStart(2, '0');
-      const ym = `${curY}-${mNum}`;
-      const mIdx = curM - 1;
-      result.push({
-        monthStr: ym,
-        year: curY,
-        monthIndex: mIdx,
-        monthLabel: `${THAI_MONTHS[mIdx]} ${curY}`,
-        shortLabel: `${THAI_SHORT_MONTHS[mIdx]} ${String(curY).slice(-2)}`
-      });
-      curM++;
-      if (curM > 12) {
-        curM = 1;
-        curY++;
-      }
-    }
-    return result;
-  }
-
+  if (!filterPeriod || filterPeriod === 'ALL') return getAllPeriodMonths(transactions);
+  if (filterPeriod.match(/^\d{4}$/)) return getYearPeriodMonths(filterPeriod);
+  if (filterPeriod.match(/^\d{4}-H[12]$/)) return getHalfYearPeriodMonths(filterPeriod);
+  if (filterPeriod.match(/^\d{4}-Q[1-4]$/)) return getQuarterPeriodMonths(filterPeriod);
+  if (filterPeriod.includes(',')) return getCommaPeriodMonths(filterPeriod);
+  if (filterPeriod.includes('_')) return getRangePeriodMonths(filterPeriod);
   return [];
 }
 

@@ -6,6 +6,49 @@ import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock from './components/LegendAllocationBlock';
 import PeriodOverview from './components/PeriodOverview/index';
 
+function resolveAllocationType(t, catObj, cashflowGroups) {
+  if (t.allocation_type) return t.allocation_type;
+  if (!catObj?.cashflowGroup) return 'want';
+  const groupObj = cashflowGroups.find(g => g.id === catObj.cashflowGroup);
+  if (groupObj?.type === 'savings') return 'savings';
+  return groupObj?.allocation_type || 'want';
+}
+
+function processCalendarTransaction(t, categories, cashflowGroups, excludedCategoryIds, dayData, catAllocAmounts, totals) {
+  const txD = Number.parseInt(t.date?.split('-')[2], 10);
+  if (!dayData[txD]) return;
+
+  const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
+  const catId = catObj ? catObj.id : (t.category_id || t.category);
+  if (excludedCategoryIds.has(catId)) return;
+
+  const amt = Number.parseFloat(t.amount) || 0;
+
+  if (catObj?.type === 'income') {
+    dayData[txD].inc += amt;
+    dayData[txD].incItems.push({ ...t, _catObj: catObj });
+    totals.tInc += amt;
+    return;
+  }
+
+  dayData[txD].exp += amt;
+  dayData[txD].items.push({ ...t, _catObj: catObj });
+  totals.tExp += amt;
+
+  const aType = resolveAllocationType(t, catObj, cashflowGroups);
+
+  if (!catAllocAmounts[catId]) {
+    catAllocAmounts[catId] = { need: 0, want: 0, savings: 0 };
+  }
+  catAllocAmounts[catId][aType] += amt;
+
+  if (aType === 'need') {
+    totals.tNeed += amt;
+  } else if (aType === 'want') {
+    totals.tWant += amt;
+  }
+}
+
 export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
@@ -75,8 +118,7 @@ export default function CalendarView({
   // Derive calendar grid data and base aggregates
   const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts } = useMemo(() => {
     const dayData = {};
-    let tInc = 0, tExp = 0;
-    let tNeed = 0, tWant = 0;
+    const totals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0 };
     const catAllocAmounts = {};
     
     for (let i = 1; i <= daysInMonth; i++) {
@@ -84,38 +126,7 @@ export default function CalendarView({
     }
 
     currentMonthTransactions.forEach(t => {
-      const txD = Number.parseInt(t.date.split('-')[2], 10);
-      if (dayData[txD]) {
-        const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
-        const catId = catObj ? catObj.id : (t.category_id || t.category);
-        if (excludedCategoryIds.has(catId)) return;
-
-        const amt = Number.parseFloat(t.amount) || 0;
-        
-        if (catObj?.type === 'income') {
-          dayData[txD].inc += amt;
-          dayData[txD].incItems.push({ ...t, _catObj: catObj });
-          tInc += amt;
-        } else {
-          dayData[txD].exp += amt;
-          dayData[txD].items.push({ ...t, _catObj: catObj });
-          tExp += amt;
-          
-          const groupObj = catObj ? cashflowGroups.find(g => g.id === catObj.cashflowGroup) : null;
-          const aType = t.allocation_type || (groupObj?.type === 'savings' ? 'savings' : (groupObj?.allocation_type || 'want'));
-          
-          if (!catAllocAmounts[catId]) {
-            catAllocAmounts[catId] = { need: 0, want: 0, savings: 0 };
-          }
-          catAllocAmounts[catId][aType] += amt;
-
-          if (aType === 'need') {
-            tNeed += amt;
-          } else if (aType === 'want') {
-            tWant += amt;
-          }
-        }
-      }
+      processCalendarTransaction(t, categories, cashflowGroups, excludedCategoryIds, dayData, catAllocAmounts, totals);
     });
 
     for (let i = 1; i <= daysInMonth; i++) {
@@ -123,7 +134,7 @@ export default function CalendarView({
       dayData[i].incItems.sort((a, b) => b.amount - a.amount);
     }
     
-    return { dayData, monthInc: tInc, monthExp: tExp, monthNeed: tNeed, monthWant: tWant, catAllocAmounts };
+    return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts };
   }, [currentMonthTransactions, daysInMonth, categories, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {

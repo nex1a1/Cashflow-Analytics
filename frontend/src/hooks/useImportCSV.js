@@ -119,6 +119,70 @@ function parseWideCsvRow(row, headers, context) {
   return rowItems;
 }
 
+function createConfigAndCategoryResolvers(updatedDayTypeConfig, updatedCategories, flags) {
+  const getOrCreateDayType = (label) => {
+    if (!label || label.trim() === '') return null;
+    const trimmed = label.trim();
+    let found = updatedDayTypeConfig.find(dt => dt.label === trimmed);
+    if (!found) {
+      found = {
+        id: crypto.randomUUID(),
+        label: trimmed,
+        color: '#64748B',
+      };
+      updatedDayTypeConfig.push(found);
+      flags.isConfigChanged = true;
+    }
+    return found.id;
+  };
+
+  const getOrCreateCategory = (name, typeStr = 'รายจ่าย') => {
+    if (!name || name.trim() === '') {
+      return updatedCategories.filter(c => c.type === 'expense')[0]?.name || 'อื่นๆ';
+    }
+    const trimmed = name.trim();
+    let found = updatedCategories.find(c => c.name === trimmed);
+    if (!found) {
+      const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
+      found = {
+        id: crypto.randomUUID(),
+        name: trimmed,
+        icon: '📌',
+        color: isIncome ? '#10B981' : '#64748B',
+        type: isIncome ? 'income' : 'expense',
+        cashflowGroup: isIncome ? 'bonus' : 'variable',
+        allocation_type: isIncome ? 'savings' : 'want',
+      };
+      updatedCategories.push(found);
+      flags.isCategoryChanged = true;
+    }
+    return found.name;
+  };
+
+  return { getOrCreateDayType, getOrCreateCategory };
+}
+
+function parseImportRows(parsedRows, headers, isCsvLong, baseContext) {
+  const newList = [];
+  for (let i = 1; i < parsedRows.length; i++) {
+    const row = parsedRows[i];
+    if (row.length < 2) continue;
+    const dateStr = row[0];
+    if (!dateStr || !dateStr.includes('/')) continue;
+
+    const rowContext = { ...baseContext, dateStr };
+
+    if (isCsvLong) {
+      const item = parseLongCsvRow(row, headers, rowContext);
+      if (item) newList.push(item);
+    } else {
+      const items = parseWideCsvRow(row, headers, rowContext);
+      if (items.length > 0) newList.push(...items);
+    }
+  }
+  return newList;
+}
+
 export default function useImportCSV({
   categories,
   dayTypes,
@@ -154,78 +218,32 @@ export default function useImportCSV({
       const uniqueDescriptions = extractUniqueDescriptions(parsedRows, isCsvLong, headers);
       const predictions = await fetchSharkBrainPredictions(uniqueDescriptions);
 
-      let newList = [];
       let newDayTypes = { ...dayTypes };
       let updatedDayTypeConfig = [...dayTypeConfig];
       let updatedCategories = [...categories];
-      let isConfigChanged = false;
-      let isCategoryChanged = false;
+      const flags = { isConfigChanged: false, isCategoryChanged: false };
 
-      const getOrCreateDayType = (label) => {
-        if (!label || label.trim() === '') return null;
-        const trimmed = label.trim();
-        let found = updatedDayTypeConfig.find(dt => dt.label === trimmed);
-        if (!found) {
-          found = {
-            id: crypto.randomUUID(),
-            label: trimmed,
-            color: '#64748B',
-          };
-          updatedDayTypeConfig.push(found);
-          isConfigChanged = true;
-        }
-        return found.id;
-      };
+      const { getOrCreateDayType, getOrCreateCategory } = createConfigAndCategoryResolvers(
+        updatedDayTypeConfig, updatedCategories, flags
+      );
 
-      const getOrCreateCategory = (name, typeStr = 'รายจ่าย') => {
-        if (!name || name.trim() === '') {
-          return updatedCategories.filter(c => c.type === 'expense')[0]?.name || 'อื่นๆ';
-        }
-        const trimmed = name.trim();
-        let found = updatedCategories.find(c => c.name === trimmed);
-        if (!found) {
-          const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
-          found = {
-            id: crypto.randomUUID(),
-            name: trimmed,
-            icon: '📌',
-            color: isIncome ? '#10B981' : '#64748B',
-            type: isIncome ? 'income' : 'expense',
-            cashflowGroup: isIncome ? 'bonus' : 'variable',
-            allocation_type: isIncome ? 'savings' : 'want',
-          };
-          updatedCategories.push(found);
-          isCategoryChanged = true;
-        }
-        return found.name;
-      };
-
-      for (let i = 1; i < parsedRows.length; i++) {
-        const row = parsedRows[i];
-        if (row.length < 2) continue;
-        const dateStr = row[0];
-        if (!dateStr || !dateStr.includes('/')) continue;
-
-        const rowContext = {
-          dateStr,
-          predictions,
-          getOrCreateDayType,
-          getOrCreateCategory,
-          newDayTypes,
-          updatedCategories,
-        };
-
-        if (isCsvLong) {
-          const item = parseLongCsvRow(row, headers, rowContext);
-          if (item) newList.push(item);
-        } else {
-          const items = parseWideCsvRow(row, headers, rowContext);
-          if (items.length > 0) newList.push(...items);
-        }
-      }
+      const newList = parseImportRows(parsedRows, headers, isCsvLong, {
+        predictions,
+        getOrCreateDayType,
+        getOrCreateCategory,
+        newDayTypes,
+        updatedCategories,
+      });
 
       if (newList.length > 0) {
-        setImportPreview({ items: newList, updatedDayTypeConfig, updatedCategories, isConfigChanged, isCategoryChanged, newDayTypes });
+        setImportPreview({
+          items: newList,
+          updatedDayTypeConfig,
+          updatedCategories,
+          isConfigChanged: flags.isConfigChanged,
+          isCategoryChanged: flags.isCategoryChanged,
+          newDayTypes
+        });
       } else {
         showToast('ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง', 'error');
       }

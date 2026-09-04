@@ -134,8 +134,7 @@ class AnalyticsService {
      * Get monthly aggregated data including group breakdown.
      * Utilizes v_monthly_summary and v_category_monthly.
      */
-    getMonthlyAggregation(startDate, endDate, excludeFuture) {
-        // 1. Get monthly totals
+    fetchMonthlyTotals(startDate, endDate, excludeFuture) {
         let query;
         const params = [];
         if (excludeFuture) {
@@ -178,8 +177,9 @@ class AnalyticsService {
             }
             query += ` ORDER BY month ASC`;
         }
-        const rows = db_1.default.prepare(query).all(...params);
-        // 2. Get group totals per month
+        return db_1.default.prepare(query).all(...params);
+    }
+    fetchMonthlyGroupTotals(startDate, endDate, excludeFuture) {
         let groupQuery;
         const groupParams = [];
         if (excludeFuture) {
@@ -221,9 +221,16 @@ class AnalyticsService {
             }
             groupQuery += ` GROUP BY month, group_id`;
         }
-        const groupRows = db_1.default.prepare(groupQuery).all(...groupParams);
-        // Map group amounts into the main rows
-        const result = rows.map(row => {
+        return db_1.default.prepare(groupQuery).all(...groupParams);
+    }
+    /**
+     * Get monthly aggregated data including group breakdown.
+     * Utilizes v_monthly_summary and v_category_monthly.
+     */
+    getMonthlyAggregation(startDate, endDate, excludeFuture) {
+        const rows = this.fetchMonthlyTotals(startDate, endDate, excludeFuture);
+        const groupRows = this.fetchMonthlyGroupTotals(startDate, endDate, excludeFuture);
+        return rows.map(row => {
             const groups = {};
             groupRows.filter(g => g.month === row.month).forEach(g => {
                 groups[g.group_id] = g.amount / 100;
@@ -236,7 +243,6 @@ class AnalyticsService {
                 groups: groups
             };
         });
-        return result;
     }
     /**
      * Get day-type burn rate analysis (Work vs Holiday spend)

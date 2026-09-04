@@ -79,48 +79,62 @@ function generateFixedExpenses(dateStr: string, catMap: Record<string, string | 
     return txs;
 }
 
+function generateFoodExpenses(dateStr: string, isWeekend: boolean, foodCatId: string): MockTx[] {
+    const txs: MockTx[] = [
+        {
+            id: crypto.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
+            amount: getRandomInt(60, 150) * 100, category_id: foodCatId, allocation_type: 'need', timestamp: `${dateStr} 12:30:00`
+        }
+    ];
+    if (getRandomInt(1, 100) > 20) {
+        txs.push({
+            id: crypto.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
+            amount: isWeekend ? getRandomInt(500, 1500) * 100 : getRandomInt(80, 200) * 100,
+            category_id: foodCatId, allocation_type: isWeekend ? 'want' : 'need', timestamp: `${dateStr} 19:00:00`
+        });
+    }
+    return txs;
+}
+
+function generateTransportExpense(dateStr: string, isWeekend: boolean, transportCatId?: string): MockTx | null {
+    if (isWeekend || !transportCatId) return null;
+    return {
+        id: crypto.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
+        amount: getRandomInt(88, 120) * 100, category_id: transportCatId, allocation_type: 'need', timestamp: `${dateStr} 08:30:00`
+    };
+}
+
+function generateCoffeeExpense(dateStr: string, coffeeCatId?: string): MockTx | null {
+    if (!coffeeCatId || getRandomInt(1, 100) <= 40) return null;
+    return {
+        id: crypto.randomUUID(), date: dateStr, description: 'กาแฟสด',
+        amount: getRandomInt(50, 150) * 100, category_id: coffeeCatId, allocation_type: 'want', timestamp: `${dateStr} 09:00:00`
+    };
+}
+
+function generateShoppingExpense(dateStr: string, isWeekend: boolean, shoppingCatId?: string): MockTx | null {
+    if (!isWeekend || !shoppingCatId || getRandomInt(1, 100) <= 50) return null;
+    return {
+        id: crypto.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
+        amount: getRandomInt(500, 3500) * 100, category_id: shoppingCatId, allocation_type: 'want', timestamp: `${dateStr} 15:00:00`
+    };
+}
+
 function generateDailyExpenses(dateStr: string, isWeekend: boolean, catMap: Record<string, string | undefined>): MockTx[] {
     const txs: MockTx[] = [];
 
-    // Food (Lunch + optional Dinner)
     if (catMap.food) {
-        txs.push({
-            id: crypto.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
-            amount: getRandomInt(60, 150) * 100, category_id: catMap.food, allocation_type: 'need', timestamp: `${dateStr} 12:30:00`
-        });
-        
-        if (getRandomInt(1, 100) > 20) { // 80% chance of dinner expense
-            txs.push({
-                id: crypto.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
-                amount: isWeekend ? getRandomInt(500, 1500) * 100 : getRandomInt(80, 200) * 100, 
-                category_id: catMap.food, allocation_type: isWeekend ? 'want' : 'need', timestamp: `${dateStr} 19:00:00`
-            });
-        }
+        txs.push(...generateFoodExpenses(dateStr, isWeekend, catMap.food));
     }
 
-    // Transport (Workdays mostly)
-    if (!isWeekend && catMap.transport) {
-        txs.push({
-            id: crypto.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
-            amount: getRandomInt(88, 120) * 100, category_id: catMap.transport, allocation_type: 'need', timestamp: `${dateStr} 08:30:00`
-        });
-    }
+    const transport = generateTransportExpense(dateStr, isWeekend, catMap.transport);
+    if (transport) txs.push(transport);
 
-    // Coffee (Random)
-    if (catMap.coffee && getRandomInt(1, 100) > 40) { // 60% chance
-        txs.push({
-            id: crypto.randomUUID(), date: dateStr, description: 'กาแฟสด',
-            amount: getRandomInt(50, 150) * 100, category_id: catMap.coffee, allocation_type: 'want', timestamp: `${dateStr} 09:00:00`
-        });
-    }
+    const coffee = generateCoffeeExpense(dateStr, catMap.coffee);
+    if (coffee) txs.push(coffee);
 
-    // Shopping (Weekends mostly)
-    if (isWeekend && catMap.shopping && getRandomInt(1, 100) > 50) { // 50% chance on weekends
-        txs.push({
-            id: crypto.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
-            amount: getRandomInt(500, 3500) * 100, category_id: catMap.shopping, allocation_type: 'want', timestamp: `${dateStr} 15:00:00`
-        });
-    }
+    const shopping = generateShoppingExpense(dateStr, isWeekend, catMap.shopping);
+    if (shopping) txs.push(shopping);
 
     return txs;
 }

@@ -6,6 +6,98 @@ import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, ChevronUp, RotateCcw
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
 
+function resolveTableHighlightOpacity(dm, isColHovered, isRowHovered) {
+  if (isColHovered && isRowHovered) {
+    return dm ? 0.22 : 0.44;
+  }
+  if (isColHovered) {
+    return dm ? 0.14 : 0.34;
+  }
+  if (isRowHovered) {
+    return dm ? 0.12 : 0.32;
+  }
+  return dm ? 0.08 : 0.28;
+}
+
+function resolveTableSubHighlightOpacity(dm, isColHovered, isRowHovered) {
+  if (isColHovered && isRowHovered) {
+    return dm ? 0.18 : 0.36;
+  }
+  if (isColHovered) {
+    return dm ? 0.12 : 0.26;
+  }
+  if (isRowHovered) {
+    return dm ? 0.10 : 0.24;
+  }
+  return dm ? 0.06 : 0.20;
+}
+
+function getHighlightBgColor(group, isColHovered, isRowHovered, dm) {
+  const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
+  const rgb = hexToRgb(hexColor);
+  const opacity = resolveTableHighlightOpacity(dm, isColHovered, isRowHovered);
+  return `rgba(${rgb}, ${opacity})`;
+}
+
+function getSubHighlightBgColor(group, subColor, isColHovered, isRowHovered, dm) {
+  const hexColor = subColor || group.color || '#64748B';
+  const rgb = hexToRgb(hexColor);
+  const opacity = resolveTableSubHighlightOpacity(dm, isColHovered, isRowHovered);
+  return `rgba(${rgb}, ${opacity})`;
+}
+
+function calculateAdjustedGroupsTotal(groups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics) {
+  if (!row) return 0;
+  return groups
+    .filter(g => !excludedGroups.has(g.id))
+    .reduce((sum, g) => {
+      const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
+      const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
+      const excludedCatSum = groupCats
+        .filter(c => excludedCategories?.has(c.id))
+        .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)), 0);
+      return sum + Math.max(0, rawVal - excludedCatSum);
+    }, 0);
+}
+
+function findPreviousActiveMonth(sortedCashflow, currentMonthStr, excludedMonths) {
+  const currentIndex = sortedCashflow.findIndex(r => r.monthStr === currentMonthStr);
+  if (currentIndex <= 0) return null;
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const candidate = sortedCashflow[i];
+    if (!excludedMonths.has(candidate.monthStr)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function renderMoMBadge(currentAdjustedExpense, prevAdjustedExpense) {
+  if (!prevAdjustedExpense || prevAdjustedExpense <= 0) return null;
+  const diff = currentAdjustedExpense - prevAdjustedExpense;
+  const percent = (diff / prevAdjustedExpense) * 100;
+  const isUp = percent > 0;
+  const isFlat = Math.abs(percent) < 0.1;
+
+  let badgeClass = 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/30';
+  let arrow = '-';
+  if (!isFlat) {
+    if (isUp) {
+      badgeClass = 'bg-[#da291c]/10 text-[#ff4d4d] border-[#da291c]/25';
+      arrow = '↑';
+    } else {
+      badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      arrow = '↓';
+    }
+  }
+
+  return (
+    <span className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[9px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}>
+      {arrow} {Math.abs(percent).toFixed(1)}%
+    </span>
+  );
+}
+
 /**
  * INTERNAL COMPONENT: CashflowTableHeader
  */
@@ -20,14 +112,16 @@ const CashflowTableHeader = React.memo(({
   const getHighlightBg = (group, isHovered) => {
     const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? (isHovered ? 0.16 : 0.08) : (isHovered ? 0.38 : 0.28);
+    let opacity = dm ? 0.08 : 0.28;
+    if (isHovered) opacity = dm ? 0.16 : 0.38;
     return `rgba(${rgb}, ${opacity})`;
   };
 
   const getSubHighlightBg = (group, subColor, isHovered) => {
     const hexColor = subColor || group.color || '#64748B';
     const rgb = hexToRgb(hexColor);
-    const opacity = dm ? (isHovered ? 0.12 : 0.06) : (isHovered ? 0.30 : 0.20);
+    let opacity = dm ? 0.06 : 0.20;
+    if (isHovered) opacity = dm ? 0.12 : 0.30;
     return `rgba(${rgb}, ${opacity})`;
   };
 
@@ -291,6 +385,138 @@ const CashflowTableHeader = React.memo(({
 
 CashflowTableHeader.displayName = 'CashflowTableHeader';
 
+function CashflowTableGroupCells({
+  g, idx, isLastGroup, isIncome, expandedGroups, getActiveCatsForGroup,
+  row, excludedGroups, excludedCategories, categories,
+  filteredGroupMap, filteredCatMap, analytics,
+  hoveredCol, setHoveredCol, isRowHovered, dm,
+  thinBorder, boundaryBorder, boxBorder, isExcluded
+}) {
+  const isExpanded = expandedGroups.has(g.id);
+  const cats = getActiveCatsForGroup(g.id);
+  const colId = `g-${g.id}`;
+  const isColHovered = hoveredCol === colId;
+  const isGroupExcluded = excludedGroups.has(g.id);
+  const isCellFaded = isExcluded || isGroupExcluded;
+
+  const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
+  const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
+  const excludedCatSum = groupCats
+    .filter(c => excludedCategories?.has(c.id))
+    .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)), 0);
+  const adjustedGroupVal = Math.max(0, rawVal - excludedCatSum);
+
+  const defaultColor = isIncome ? '#34d399' : '#cbd5e1';
+  const groupBg = isCellFaded ? '#0d0d0d' : getHighlightBgColor(g, isColHovered, isRowHovered, dm);
+  const groupTextColor = isCellFaded ? undefined : (g.color || defaultColor);
+  const boundaryCls = isLastGroup && !isExpanded ? boundaryBorder : '';
+
+  return (
+    <React.Fragment key={g.id}>
+      <td
+        onMouseEnter={() => setHoveredCol(colId)}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 ${isIncome ? 'font-semibold' : 'font-medium'} border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${boundaryCls} ${
+          isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
+        }`}
+        style={{ color: groupTextColor, backgroundColor: groupBg }}
+      >
+        {adjustedGroupVal > 0 ? formatMoney(adjustedGroupVal) : '-'}
+      </td>
+      {isExpanded && cats.map((c, cIdx) => {
+        const amt = filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0);
+        const catColId = `c-${c.id}`;
+        const isCatColHovered = hoveredCol === catColId;
+        const isCatExcluded = excludedCategories?.has(c.id);
+        const isCatFaded = isCellFaded || isCatExcluded;
+        const catBoundaryCls = cIdx === cats.length - 1 && isLastGroup ? boundaryBorder : thinBorder;
+        const catBg = isCatFaded ? '#0d0d0d' : getSubHighlightBgColor(g, c.color, isCatColHovered, isRowHovered, dm);
+
+        return (
+          <td
+            key={c.id}
+            onMouseEnter={() => setHoveredCol(catColId)}
+            onMouseLeave={() => setHoveredCol(null)}
+            className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${catBoundaryCls} ${
+              isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
+            }`}
+            style={{ color: isCatFaded ? undefined : c.color, backgroundColor: catBg }}
+          >
+            {amt > 0 ? formatMoney(amt) : '-'}
+          </td>
+        );
+      })}
+    </React.Fragment>
+  );
+}
+
+function CashflowTableRowSummaryCells({
+  currentAdjustedIncome, currentAdjustedExpense, prevAdjustedExpense,
+  isExcluded, isRowHovered, hoveredCol, setHoveredCol, thinBorder
+}) {
+  const isTrendHovered = hoveredCol === 'trend';
+  const isNetHovered = hoveredCol === 'net';
+  const isPctLeftHovered = hoveredCol === 'pct-left';
+  const isPctSpentHovered = hoveredCol === 'pct-spent';
+
+  const expMoMJSX = !isExcluded ? renderMoMBadge(currentAdjustedExpense, prevAdjustedExpense) : null;
+  const netAmount = currentAdjustedIncome - currentAdjustedExpense;
+  const netColor = !isExcluded ? (netAmount >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]') : '';
+  const pctLeftColor = !isExcluded ? (currentAdjustedIncome > 0 && netAmount < 0 ? 'text-[#ff4d4d]' : 'text-teal-400') : '';
+  const pctSpentColor = !isExcluded ? (currentAdjustedIncome > 0 && (currentAdjustedExpense / currentAdjustedIncome * 100) > 100 ? 'text-[#ff4d4d]' : 'text-pink-400') : '';
+
+  const pctLeftText = currentAdjustedIncome > 0 ? ((netAmount / currentAdjustedIncome) * 100).toFixed(1) + '%' : '0.0%';
+  const pctSpentText = currentAdjustedIncome > 0 ? ((currentAdjustedExpense / currentAdjustedIncome * 100).toFixed(1) + '%') : '-';
+
+  const getCellBg = (isColHover) => {
+    if (isExcluded) return 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through';
+    if (isColHover) return 'bg-[#1c1c1c]';
+    return isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]';
+  };
+
+  return (
+    <>
+      <td
+        onMouseEnter={() => setHoveredCol('trend')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+          isExcluded
+            ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
+            : isTrendHovered
+              ? 'text-[#ff4d4d] bg-[#1c1c1c]'
+              : (isRowHovered ? 'text-[#ff4d4d] bg-[#1c1c1c]/80' : 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]')
+        }`}
+      >
+        <div className="flex items-center justify-between gap-1">
+          <div className="shrink-0">{expMoMJSX}</div>
+          <span className="text-[11px] tabular-nums">{formatMoney(currentAdjustedExpense)}</span>
+        </div>
+      </td>
+      <td
+        onMouseEnter={() => setHoveredCol('net')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${getCellBg(isNetHovered)} ${netColor}`}
+      >
+        {formatMoney(netAmount)}
+      </td>
+      <td
+        onMouseEnter={() => setHoveredCol('pct-left')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-2 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[70px] z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${getCellBg(isPctLeftHovered)} ${pctLeftColor}`}
+      >
+        {pctLeftText}
+      </td>
+      <td
+        onMouseEnter={() => setHoveredCol('pct-spent')}
+        onMouseLeave={() => setHoveredCol(null)}
+        className={`px-2 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${getCellBg(isPctSpentHovered)} ${pctSpentColor}`}
+      >
+        {pctSpentText}
+      </td>
+    </>
+  );
+}
+
 /**
  * INTERNAL COMPONENT: CashflowTableRow
  */
@@ -304,94 +530,24 @@ const CashflowTableRow = React.memo(({
   excludedGroups, excludedCategories, categories,
   filteredCatMap = {}, filteredGroupMap = {}
 }) => {
-  const getHighlightBg = (group, isColHovered) => {
-    const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
-    const rgb = hexToRgb(hexColor);
-    // Intersection Glow Logic: bump opacity when both row and col are hovered
-    const opacity = dm 
-      ? (isColHovered && isRowHovered ? 0.22 : (isColHovered ? 0.14 : (isRowHovered ? 0.12 : 0.08))) 
-      : (isColHovered && isRowHovered ? 0.44 : (isColHovered ? 0.34 : (isRowHovered ? 0.32 : 0.28)));
-    return `rgba(${rgb}, ${opacity})`;
-  };
+  const prevMonth = findPreviousActiveMonth(analytics.sortedCashflow, row.monthStr, excludedMonths);
 
-  const getSubHighlightBg = (group, subColor, isColHovered) => {
-    const hexColor = subColor || group.color || '#64748B';
-    const rgb = hexToRgb(hexColor);
-    const opacity = dm 
-      ? (isColHovered && isRowHovered ? 0.18 : (isColHovered ? 0.12 : (isRowHovered ? 0.10 : 0.06))) 
-      : (isColHovered && isRowHovered ? 0.36 : (isColHovered ? 0.26 : (isRowHovered ? 0.24 : 0.20)));
-    return `rgba(${rgb}, ${opacity})`;
-  };
-
-  // Find the previous active month before the current row
-  const currentIndex = analytics.sortedCashflow.findIndex(r => r.monthStr === row.monthStr);
-  let prevMonth = null;
-  for (let i = currentIndex - 1; i >= 0; i--) {
-    const candidate = analytics.sortedCashflow[i];
-    if (!excludedMonths.has(candidate.monthStr)) {
-      prevMonth = candidate;
-      break;
-    }
-  }
-
-  const getAdjustedIncome = (r) => {
-    if (!r) return 0;
-    return activeIncomeGroups
-      .filter(g => !excludedGroups.has(g.id))
-      .reduce((sum, g) => {
-        const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-        return sum + Math.max(0, rawVal - excludedCatSum);
-      }, 0);
-  };
-
-  const getAdjustedExpense = (r) => {
-    if (!r) return 0;
-    return activeExpenseGroups
-      .filter(g => !excludedGroups.has(g.id))
-      .reduce((sum, g) => {
-        const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-        return sum + Math.max(0, rawVal - excludedCatSum);
-      }, 0);
-  };
-
-  const currentAdjustedIncome = getAdjustedIncome(row);
-  const currentAdjustedExpense = getAdjustedExpense(row);
-  const prevAdjustedExpense = getAdjustedExpense(prevMonth);
-
-  let expMoMJSX = null;
-  if (!isExcluded && prevMonth && prevAdjustedExpense > 0) {
-    const diff = currentAdjustedExpense - prevAdjustedExpense;
-    const percent = (diff / prevAdjustedExpense) * 100;
-    const isUp = percent > 0;
-    const isFlat = Math.abs(percent) < 0.1;
-
-    // Elite vibrant semi-transparent badge styling (rounded-none compliance, high-contrast text)
-    const badgeClass = isFlat 
-      ? 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/30' 
-      : isUp 
-        ? 'bg-[#da291c]/10 text-[#ff4d4d] border-[#da291c]/25' 
-        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-
-    expMoMJSX = (
-      <span className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[9px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}>
-        {isFlat ? '-' : (isUp ? '↑' : '↓')} {Math.abs(percent).toFixed(1)}%
-      </span>
-    );
-  }
+  const currentAdjustedIncome = calculateAdjustedGroupsTotal(
+    activeIncomeGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  );
+  const currentAdjustedExpense = calculateAdjustedGroupsTotal(
+    activeExpenseGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  );
+  const prevAdjustedExpense = calculateAdjustedGroupsTotal(
+    activeExpenseGroups, prevMonth, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  );
 
   const isMonthHovered = hoveredCol === 'month';
-  const isTrendHovered = hoveredCol === 'trend';
-  const isNetHovered = hoveredCol === 'net';
-  const isPctLeftHovered = hoveredCol === 'pct-left';
-  const isPctSpentHovered = hoveredCol === 'pct-spent';
+  const monthCellBg = isExcluded
+    ? 'text-neutral-500 bg-[#0f0f0f] line-through decoration-neutral-600'
+    : (isMonthHovered 
+        ? 'text-blue-300 bg-[#1c1c1c]' 
+        : (isRowHovered ? 'text-blue-300 bg-[#1c1c1c]/80' : 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]'));
 
   return (
     <tr 
@@ -404,177 +560,75 @@ const CashflowTableRow = React.memo(({
         title={isExcluded ? "คลิกเพื่อนำกลับมารวมคำนวณ" : "คลิกเพื่อนำออกจากการคำนวณทางด้านขวา"}
         onMouseEnter={() => setHoveredCol('month')}
         onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${
-          isExcluded
-            ? 'text-neutral-500 bg-[#0f0f0f] line-through decoration-neutral-600'
-            : isMonthHovered 
-              ? 'text-blue-300 bg-[#1c1c1c]' 
-              : (isRowHovered ? 'text-blue-300 bg-[#1c1c1c]/80' : 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]')
-        }`}
+        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${monthCellBg}`}
       >
         {getThaiMonth(row.monthStr)}
       </td>
       
-      {activeIncomeGroups.map((g, idx) => {
-        const isExpanded = expandedGroups.has(g.id);
-        const cats = getActiveCatsForGroup(g.id);
-        const isLastIncome = idx === activeIncomeGroups.length - 1;
-        const colId = `g-${g.id}`;
-        const isColHovered = hoveredCol === colId;
-        const isGroupExcluded = excludedGroups.has(g.id);
-        const isCellFaded = isExcluded || isGroupExcluded;
-
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)), 0);
-        const adjustedGroupVal = Math.max(0, rawVal - excludedCatSum);
-
-        return (
-          <React.Fragment key={g.id}>
-            <td 
-              onMouseEnter={() => setHoveredCol(colId)}
-              onMouseLeave={() => setHoveredCol(null)}
-              className={`px-3 py-2 font-semibold border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
-                isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
-              }`} 
-              style={{ color: isCellFaded ? undefined : (g.color || '#34d399'), backgroundColor: isCellFaded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
-            >
-              {adjustedGroupVal > 0 ? formatMoney(adjustedGroupVal) : '-'}
-            </td>
-            {isExpanded && cats.map((c, cIdx) => {
-              const amt = filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0);
-              const catColId = `c-${c.id}`;
-              const isCatColHovered = hoveredCol === catColId;
-              const isCatExcluded = excludedCategories?.has(c.id);
-              const isCatFaded = isCellFaded || isCatExcluded;
-
-              return (
-                <td 
-                  key={c.id} 
-                  onMouseEnter={() => setHoveredCol(catColId)}
-                  onMouseLeave={() => setHoveredCol(null)}
-                  className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
-                    isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
-                  }`} 
-                  style={{ color: isCatFaded ? undefined : c.color, backgroundColor: isCatFaded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
-                >
-                  {amt > 0 ? formatMoney(amt) : '-'}
-                </td>
-              );
-            })}
-          </React.Fragment>
-        );
-      })}
+      {activeIncomeGroups.map((g, idx) => (
+        <CashflowTableGroupCells
+          key={g.id}
+          g={g}
+          idx={idx}
+          isLastGroup={idx === activeIncomeGroups.length - 1}
+          isIncome={true}
+          expandedGroups={expandedGroups}
+          getActiveCatsForGroup={getActiveCatsForGroup}
+          row={row}
+          excludedGroups={excludedGroups}
+          excludedCategories={excludedCategories}
+          categories={categories}
+          filteredGroupMap={filteredGroupMap}
+          filteredCatMap={filteredCatMap}
+          analytics={analytics}
+          hoveredCol={hoveredCol}
+          setHoveredCol={setHoveredCol}
+          isRowHovered={isRowHovered}
+          dm={dm}
+          thinBorder={thinBorder}
+          boundaryBorder={boundaryBorder}
+          boxBorder={boxBorder}
+          isExcluded={isExcluded}
+        />
+      ))}
       
-      {activeExpenseGroups.map((g) => {
-        const isExpanded = expandedGroups.has(g.id);
-        const cats = getActiveCatsForGroup(g.id);
-        const colId = `g-${g.id}`;
-        const isColHovered = hoveredCol === colId;
-        const isGroupExcluded = excludedGroups.has(g.id);
-        const isCellFaded = isExcluded || isGroupExcluded;
+      {activeExpenseGroups.map((g) => (
+        <CashflowTableGroupCells
+          key={g.id}
+          g={g}
+          idx={0}
+          isLastGroup={false}
+          isIncome={false}
+          expandedGroups={expandedGroups}
+          getActiveCatsForGroup={getActiveCatsForGroup}
+          row={row}
+          excludedGroups={excludedGroups}
+          excludedCategories={excludedCategories}
+          categories={categories}
+          filteredGroupMap={filteredGroupMap}
+          filteredCatMap={filteredCatMap}
+          analytics={analytics}
+          hoveredCol={hoveredCol}
+          setHoveredCol={setHoveredCol}
+          isRowHovered={isRowHovered}
+          dm={dm}
+          thinBorder={thinBorder}
+          boundaryBorder={boundaryBorder}
+          boxBorder={boxBorder}
+          isExcluded={isExcluded}
+        />
+      ))}
 
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)), 0);
-        const adjustedGroupVal = Math.max(0, rawVal - excludedCatSum);
-
-        return (
-          <React.Fragment key={g.id}>
-            <td 
-              onMouseEnter={() => setHoveredCol(colId)}
-              onMouseLeave={() => setHoveredCol(null)}
-              className={`px-3 py-2 font-medium border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
-                isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
-              }`} 
-              style={{ color: isCellFaded ? undefined : (g.color || '#cbd5e1'), backgroundColor: isCellFaded ? '#0d0d0d' : getHighlightBg(g, isColHovered) }}
-            >
-              {adjustedGroupVal > 0 ? formatMoney(adjustedGroupVal) : '-'}
-            </td>
-            {isExpanded && cats.map((c) => {
-              const amt = filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0);
-              const catColId = `c-${c.id}`;
-              const isCatColHovered = hoveredCol === catColId;
-              const isCatExcluded = excludedCategories?.has(c.id);
-              const isCatFaded = isCellFaded || isCatExcluded;
-
-              return (
-                <td 
-                  key={c.id} 
-                  onMouseEnter={() => setHoveredCol(catColId)}
-                  onMouseLeave={() => setHoveredCol(null)}
-                  className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${thinBorder} ${
-                    isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
-                  }`} 
-                  style={{ color: isCatFaded ? undefined : c.color, backgroundColor: isCatFaded ? '#0d0d0d' : getSubHighlightBg(g, c.color, isCatColHovered) }}
-                >
-                  {amt > 0 ? formatMoney(amt) : '-'}
-                </td>
-              );
-            })}
-          </React.Fragment>
-        );
-      })}
-
-      <td 
-        onMouseEnter={() => setHoveredCol('trend')}
-        onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
-          isExcluded
-            ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
-            : isTrendHovered 
-              ? 'text-[#ff4d4d] bg-[#1c1c1c]' 
-              : (isRowHovered ? 'text-[#ff4d4d] bg-[#1c1c1c]/80' : 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]')
-        }`}
-      >
-        <div className="flex items-center justify-between gap-1">
-          <div className="shrink-0">{!isExcluded && expMoMJSX}</div>
-          <span className="text-[11px] tabular-nums">{formatMoney(currentAdjustedExpense)}</span>
-        </div>
-      </td>
-      <td 
-        onMouseEnter={() => setHoveredCol('net')}
-        onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-          isExcluded
-            ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
-            : isNetHovered 
-              ? 'bg-[#1c1c1c]' 
-              : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? ((currentAdjustedIncome - currentAdjustedExpense) >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]') : ''}`}
-      >
-        {formatMoney(currentAdjustedIncome - currentAdjustedExpense)}
-      </td>
-      <td 
-        onMouseEnter={() => setHoveredCol('pct-left')}
-        onMouseLeave={() => setHoveredCol(null)}
-        className={`px-2 py-2 font-black border-l border-b text-center ${thinBorder} sticky right-[70px] z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-          isExcluded
-            ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
-            : isPctLeftHovered 
-              ? 'bg-[#1c1c1c]' 
-              : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? (currentAdjustedIncome > 0 && (currentAdjustedIncome - currentAdjustedExpense) < 0 ? 'text-[#ff4d4d]' : 'text-teal-400') : ''}`}
-      >
-        {currentAdjustedIncome > 0 ? ((currentAdjustedIncome - currentAdjustedExpense) / currentAdjustedIncome * 100).toFixed(1) : '0.0'}%
-      </td>
-      <td 
-        onMouseEnter={() => setHoveredCol('pct-spent')}
-        onMouseLeave={() => setHoveredCol(null)}
-        className={`px-2 py-2 font-black border-l border-r border-b text-center ${thinBorder} sticky right-0 z-10 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-          isExcluded
-            ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
-            : isPctSpentHovered 
-              ? 'bg-[#1c1c1c]' 
-              : (isRowHovered ? 'bg-[#1c1c1c]/80' : 'bg-[#181818] group-hover:bg-[#1c1c1c]')
-        } ${!isExcluded ? (currentAdjustedIncome > 0 && (currentAdjustedExpense / currentAdjustedIncome * 100) > 100 ? 'text-[#ff4d4d]' : 'text-pink-400') : ''}`}
-      >
-        {currentAdjustedIncome > 0 ? (currentAdjustedExpense / currentAdjustedIncome * 100).toFixed(1) + '%' : '-'}
-      </td>
+      <CashflowTableRowSummaryCells
+        currentAdjustedIncome={currentAdjustedIncome}
+        currentAdjustedExpense={currentAdjustedExpense}
+        prevAdjustedExpense={prevAdjustedExpense}
+        isExcluded={isExcluded}
+        isRowHovered={isRowHovered}
+        hoveredCol={hoveredCol}
+        setHoveredCol={setHoveredCol}
+        thinBorder={thinBorder}
+      />
     </tr>
   );
 });
@@ -596,33 +650,13 @@ const CashflowTableFooter = React.memo(({
 
   const activeMonths = analytics.sortedCashflow.filter(r => !excludedMonths.has(r.monthStr));
 
-  const getAdjustedIncome = (r) => {
-    if (!r) return 0;
-    return activeIncomeGroups
-      .filter(g => !excludedGroups.has(g.id))
-      .reduce((sum, g) => {
-        const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-        return sum + Math.max(0, rawVal - excludedCatSum);
-      }, 0);
-  };
+  const getAdjustedIncome = (r) => calculateAdjustedGroupsTotal(
+    activeIncomeGroups, r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  );
 
-  const getAdjustedExpense = (r) => {
-    if (!r) return 0;
-    return activeExpenseGroups
-      .filter(g => !excludedGroups.has(g.id))
-      .reduce((sum, g) => {
-        const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-        const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-        const excludedCatSum = groupCats
-          .filter(c => excludedCategories?.has(c.id))
-          .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-        return sum + Math.max(0, rawVal - excludedCatSum);
-      }, 0);
-  };
+  const getAdjustedExpense = (r) => calculateAdjustedGroupsTotal(
+    activeExpenseGroups, r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  );
 
   const totalActiveIncome = activeMonths.reduce((s, r) => s + getAdjustedIncome(r), 0);
   const totalActiveExpense = activeMonths.reduce((s, r) => s + getAdjustedExpense(r), 0);

@@ -234,9 +234,88 @@ function calculateForecastingDetails({
   return { showForecasting: true, effectiveDays, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus };
 }
 
+function trackTrendAndGlobal(isoDate, amt, isExp, isInc, startPrev, endPrev, globalDailySum, prevTotals) {
+  if (isExp) {
+    globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
+  }
+  if (startPrev && isoDate >= startPrev && isoDate <= endPrev) {
+    if (isInc) prevTotals.income += amt;
+    else if (isExp) prevTotals.expense += amt;
+  }
+}
+
+function trackForecastingUpToToday(isoDate, amt, isExp, isNeed, isRent, isFood, isCurrentMonth, todayStr, forecastRef) {
+  if (isCurrentMonth && isoDate <= todayStr && isExp) {
+    forecastRef.expenseUpToToday += amt;
+    if (!isNeed) forecastRef.variableUpToToday += amt;
+    if (isRent) forecastRef.rentUpToToday += amt;
+    if (isFood) forecastRef.foodUpToToday += amt;
+  }
+}
+
+function processAnalyticsTx({
+  t, isoDate, txContext, filterPeriod, foodGroupId, rentGroupId,
+  fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
+  hideFixedExpenses, hideWantExpenses, activeFilters,
+  uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
+  stateRef, totals
+}) {
+  if (!isDateInFilter(isoDate, filterPeriod)) return null;
+
+  const { amt, catId, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp, aType, isNeed, isWant } = txContext;
+  const ym = isoDate.substring(0, 7);
+  uniqueMonthsSet.add(ym);
+
+  if (!cashflowMap[ym]) {
+    cashflowMap[ym] = { 
+      monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
+    };
+    cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
+  }
+
+  const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
+  if (cashflowMap[ym].groups[cGroup] !== undefined) {
+    cashflowMap[ym].groups[cGroup] += amt;
+  }
+
+  const isFood = cGroupId === foodGroupId || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
+  const isRent = cGroupId === rentGroupId || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
+
+  if (isInc) {
+    totals.income += amt;
+    cashflowMap[ym].income += amt;
+    dayIncomeMap[isoDate] = (dayIncomeMap[isoDate] || 0) + amt;
+  } else if (isSav) {
+    accumulateSavingsItem(amt, isoDate, ym, cGroup, groupObj, stateRef);
+  } else {
+    totals.expense += amt;
+    cashflowMap[ym].totalExp += amt;
+    dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
+    
+    accumulateRentAndFoodTotals(amt, catObj.name, isRent, isFood, totals);
+
+    if (isNeed) totals.fixed += amt;
+    else totals.variable += amt;
+
+    const passFilter = (!hideFixedExpenses || !isNeed) &&
+      (!hideWantExpenses || !isWant) &&
+      matchesDashboardFilter(catId, catObj.name, isNeed, activeFilters);
+
+    if (passFilter) {
+      accumulateFilteredExpense(t, { amt, catId, aType, isWant, cGroup, groupObj }, ym, isoDate, stateRef);
+    }
+  }
+
+  if (isExp) {
+    accumulateDayOfWeekStats(amt, isoDate, isFood, totals);
+  }
+
+  return { isFood, isRent };
+}
+
 export default function useAnalytics({
-  transactions,
-  categories,
+  transactions = [],
+  categories = [],
   cashflowGroups = [], 
   filterPeriod,
   hideFixedExpenses,
@@ -335,7 +414,7 @@ export default function useAnalytics({
     }
 
     // Variables for Forecasting
-    let expenseUpToToday = 0, variableUpToToday = 0, foodUpToToday = 0, rentUpToToday = 0;
+    const forecastRef = { expenseUpToToday: 0, variableUpToToday: 0, foodUpToToday: 0, rentUpToToday: 0 };
 
     const activeFilters = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
     
@@ -363,77 +442,25 @@ export default function useAnalytics({
       if (!isoDate) return;
 
       const txContext = resolveTransactionContext(t, catMapLookup, cashflowGroups, fallbackExpId);
-      const { amt, catId, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp, aType, isNeed, isWant } = txContext;
+      trackTrendAndGlobal(isoDate, txContext.amt, txContext.isExp, txContext.isInc, startPrev, endPrev, globalDailySum, prevTotals);
 
-      // a) Global Stats (for Heatmap)
-      if (isExp) {
-        globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
-      }
+      const flags = processAnalyticsTx({
+        t, isoDate, txContext, filterPeriod, foodGroupId, rentGroupId,
+        fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
+        hideFixedExpenses, hideWantExpenses, activeFilters,
+        uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
+        stateRef, totals
+      });
 
-      // b) Trend Calculation (Previous Period)
-      if (startPrev && isoDate >= startPrev && isoDate <= endPrev) {
-        if (isInc) prevTotals.income += amt;
-        else if (isExp) prevTotals.expense += amt;
-      }
-
-      // c) Main Period Filter
-      if (!isDateInFilter(isoDate, filterPeriod)) return;
-
-      const ym = isoDate.substring(0, 7);
-      uniqueMonthsSet.add(ym);
-
-      if (!cashflowMap[ym]) {
-        cashflowMap[ym] = { 
-          monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} 
-        };
-        cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
-      }
-
-      const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
-      if (cashflowMap[ym].groups[cGroup] !== undefined) {
-        cashflowMap[ym].groups[cGroup] += amt;
-      }
-
-      const isFood = cGroupId === foodGroupId || groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
-      const isRent = cGroupId === rentGroupId || groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
-
-      if (isInc) {
-        totals.income += amt;
-        cashflowMap[ym].income += amt;
-        dayIncomeMap[isoDate] = (dayIncomeMap[isoDate] || 0) + amt;
-      } else if (isSav) {
-        accumulateSavingsItem(amt, isoDate, ym, cGroup, groupObj, stateRef);
-      } else {
-        totals.expense += amt;
-        cashflowMap[ym].totalExp += amt;
-        dayExpenseMap[isoDate] = (dayExpenseMap[isoDate] || 0) + amt;
-        
-        accumulateRentAndFoodTotals(amt, catObj.name, isRent, isFood, totals);
-
-        if (isNeed) totals.fixed += amt;
-        else totals.variable += amt;
-
-        const passFilter = (!hideFixedExpenses || !isNeed) &&
-          (!hideWantExpenses || !isWant) &&
-          matchesDashboardFilter(catId, catObj.name, isNeed, activeFilters);
-
-        if (passFilter) {
-          accumulateFilteredExpense(t, { amt, catId, aType, isWant, cGroup, groupObj }, ym, isoDate, stateRef);
-        }
-      }
-
-      if (isExp) {
-        accumulateDayOfWeekStats(amt, isoDate, isFood, totals);
-      }
-
-      // Forecasting Logic: Track actual expenses up to today
-      if (isCurrentMonth && isoDate <= todayStr && isExp) {
-        expenseUpToToday += amt;
-        if (!isNeed) variableUpToToday += amt;
-        if (isRent) rentUpToToday += amt;
-        if (isFood) foodUpToToday += amt;
+      if (flags) {
+        trackForecastingUpToToday(
+          isoDate, txContext.amt, txContext.isExp, txContext.isNeed,
+          flags.isRent, flags.isFood, isCurrentMonth, todayStr, forecastRef
+        );
       }
     });
+
+    const { expenseUpToToday, variableUpToToday, foodUpToToday, rentUpToToday } = forecastRef;
 
     chartTotal = stateRef.chartTotal;
 

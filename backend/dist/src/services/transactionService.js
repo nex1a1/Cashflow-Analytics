@@ -92,6 +92,53 @@ class TransactionService {
     `).get(`%${description.split(' ')[0]}%`);
         return fuzzy ? fuzzy.category_id : null;
     }
+    normalizeDate(dateStr) {
+        if (dateStr && dateStr.includes('/')) {
+            const [d, m, y] = dateStr.split('/');
+            return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        }
+        return dateStr || '';
+    }
+    resolveCategoryId(tx) {
+        let categoryId = tx.category_id;
+        if (!categoryId || categoryId === '') {
+            if (tx.category) {
+                categoryId = this.getCategoryIdByName(tx.category);
+            }
+            if (!categoryId) {
+                categoryId = this.suggestCategory(tx.description);
+            }
+        }
+        if (!categoryId) {
+            const fallback = db_1.default.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get()
+                || db_1.default.prepare("SELECT id FROM categories LIMIT 1").get();
+            categoryId = fallback?.id;
+        }
+        return categoryId;
+    }
+    resolveAllocationType(categoryId, currentAlloc) {
+        if (!categoryId)
+            return currentAlloc ?? 'want';
+        const categoryGroup = db_1.default.prepare(`
+      SELECT cg.type 
+      FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `).get(categoryId);
+        if (categoryGroup?.type === 'income') {
+            return null;
+        }
+        if (currentAlloc) {
+            return currentAlloc;
+        }
+        const groupDefault = db_1.default.prepare(`
+      SELECT cg.allocation_type 
+      FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `).get(categoryId);
+        return groupDefault?.allocation_type || 'want';
+    }
     upsertMany(transactions) {
         const stmt = db_1.default.prepare(`
       INSERT INTO transactions (id, date, description, amount, category_id, allocation_type, updated_at)
@@ -107,49 +154,10 @@ class TransactionService {
     `);
         const transactionAction = db_1.default.transaction((txs) => {
             for (const tx of txs) {
-                // Convert date to YYYY-MM-DD if in DD/MM/YYYY
-                let date = tx.date;
-                if (date && date.includes('/')) {
-                    const [d, m, y] = date.split('/');
-                    date = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                }
-                // Amount to Satang (integer)
+                const date = this.normalizeDate(tx.date);
                 const amountSatang = Math.round(tx.amount * 100);
-                // Category mapping logic
-                let categoryId = tx.category_id;
-                if (!categoryId || categoryId === '') {
-                    if (tx.category) {
-                        categoryId = this.getCategoryIdByName(tx.category);
-                    }
-                    if (!categoryId) {
-                        categoryId = this.suggestCategory(tx.description);
-                    }
-                }
-                if (!categoryId) {
-                    const fallback = db_1.default.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get()
-                        || db_1.default.prepare("SELECT id FROM categories LIMIT 1").get();
-                    categoryId = fallback?.id;
-                }
-                // Smart Allocation Type logic: 
-                let allocationType = tx.allocation_type;
-                const categoryGroup = db_1.default.prepare(`
-          SELECT cg.type 
-          FROM cashflow_groups cg
-          JOIN categories c ON c.cashflow_group_id = cg.id
-          WHERE c.id = ?
-        `).get(categoryId);
-                if (categoryGroup?.type === 'income') {
-                    allocationType = null;
-                }
-                else if (!allocationType) {
-                    const groupDefault = db_1.default.prepare(`
-            SELECT cg.allocation_type 
-            FROM cashflow_groups cg
-            JOIN categories c ON c.cashflow_group_id = cg.id
-            WHERE c.id = ?
-          `).get(categoryId);
-                    allocationType = groupDefault?.allocation_type || 'want';
-                }
+                const categoryId = this.resolveCategoryId(tx);
+                const allocationType = this.resolveAllocationType(categoryId, tx.allocation_type);
                 stmt.run(tx.id || crypto_1.default.randomUUID(), date, tx.description || '', amountSatang, categoryId, allocationType);
             }
         });

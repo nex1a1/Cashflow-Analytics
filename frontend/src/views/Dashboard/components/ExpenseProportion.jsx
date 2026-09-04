@@ -548,6 +548,170 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
 
 AllocationItem.displayName = 'AllocationItem';
 
+function calculateSimulatedAllocation(isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, netCashflow) {
+  if (!isAllocationMode || excludedGroupIds.length === 0) {
+    return { simulatedAllocation: sortedAllocation, totalReduced: 0 };
+  }
+
+  const excludedSet = new Set(excludedGroupIds);
+  const needsItem = sortedAllocation.find(a => a.id === 'needs');
+  const wantsItem = sortedAllocation.find(a => a.id === 'wants');
+
+  const needsGroups = needsItem?.groups || [];
+  const wantsGroups = wantsItem?.groups || [];
+
+  const activeNeedsTotal = needsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
+  const activeWantsTotal = wantsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
+
+  const origNeedsTotal = needsItem?.amount || 0;
+  const origWantsTotal = wantsItem?.amount || 0;
+
+  const reducedSum = (origNeedsTotal - activeNeedsTotal) + (origWantsTotal - activeWantsTotal);
+  const baseIncome = totalIncome || (totalExpense + Math.max(0, netCashflow || 0));
+  const simNetSavings = Math.max(0, baseIncome - (activeNeedsTotal + activeWantsTotal));
+
+  const updatedAllocation = sortedAllocation.map(item => {
+    let simAmount = item.amount;
+    if (item.id === 'needs') simAmount = activeNeedsTotal;
+    if (item.id === 'wants') simAmount = activeWantsTotal;
+    if (item.id === 'savings') simAmount = simNetSavings;
+
+    const simPercentage = baseIncome > 0 ? ((simAmount / baseIncome) * 100).toFixed(1) : '0';
+
+    return {
+      ...item,
+      amount: simAmount,
+      percentage: simPercentage,
+    };
+  });
+
+  return { simulatedAllocation: updatedAllocation, totalReduced: reducedSum };
+}
+
+function sortProportionItems(rawItems, sortMode, isAllocationMode) {
+  const items = [...rawItems];
+  if (isAllocationMode) return items;
+
+  return items.sort((a, b) => {
+    const orderA = a.order_index ?? 999;
+    const orderB = b.order_index ?? 999;
+
+    if (sortMode === 'amount-desc' || sortMode === 'amount') {
+      return (b.amount - a.amount) || (orderA - orderB);
+    }
+    if (sortMode === 'amount-asc') {
+      return (a.amount - b.amount) || (orderA - orderB);
+    }
+    if (sortMode === 'order-asc' || sortMode === 'order') {
+      return (orderA - orderB) || (b.amount - a.amount);
+    }
+    if (sortMode === 'order-desc') {
+      return (orderB - orderA) || (b.amount - a.amount);
+    }
+    if (sortMode === 'name-asc') {
+      return (a.name || '').localeCompare(b.name || '', 'th') || (b.amount - a.amount);
+    }
+    if (sortMode === 'name-desc') {
+      return (b.name || '').localeCompare(a.name || '', 'th') || (b.amount - a.amount);
+    }
+    return (b.amount - a.amount);
+  });
+}
+
+function buildDoughnutChartData(activeItems, isGroupMode, hoveredIdx) {
+  if (isGroupMode) {
+    const outerCategories = [];
+    activeItems.forEach((group, gIdx) => {
+      (group.categories || []).forEach(cat => {
+        outerCategories.push({
+          ...cat,
+          groupIdx: gIdx,
+          groupColor: group.color
+        });
+      });
+    });
+
+    const outerData = outerCategories.map(c => c.amount);
+    const outerColors = outerCategories.map(c => {
+      if (hoveredIdx === -1 || hoveredIdx === c.groupIdx) {
+        return c.color || c.groupColor;
+      }
+      return `${c.color || c.groupColor}35`;
+    });
+    const outerBorders = outerCategories.map(c => (hoveredIdx === c.groupIdx ? '#da291c' : '#181818'));
+    const outerBorderWidths = outerCategories.map(c => (hoveredIdx === c.groupIdx ? 2 : 1));
+
+    const innerData = activeItems.map(g => g.amount);
+    const innerColors = activeItems.map((g, idx) => {
+      if (hoveredIdx === -1 || hoveredIdx === idx) {
+        return g.color;
+      }
+      return `${g.color}40`;
+    });
+    const innerBorders = activeItems.map((_, idx) => (hoveredIdx === idx ? '#da291c' : '#181818'));
+    const innerBorderWidths = activeItems.map((_, idx) => (hoveredIdx === idx ? 2 : 1));
+
+    return {
+      labels: [...outerCategories.map(c => `${c.name} (${c.relativePercentage}%)`), ...activeItems.map(g => g.name)],
+      datasets: [
+        {
+          label: 'หมวดหมู่ย่อย (Outer)',
+          data: outerData,
+          backgroundColor: outerColors,
+          borderColor: outerBorders,
+          borderWidth: outerBorderWidths,
+          spacing: 0,
+          offset: 4,
+          weight: 0.85,
+        },
+        {
+          label: 'กลุ่มรายจ่าย (Inner)',
+          data: innerData,
+          backgroundColor: innerColors,
+          borderColor: innerBorders,
+          borderWidth: innerBorderWidths,
+          spacing: 0,
+          offset: 0,
+          weight: 1.15,
+        }
+      ]
+    };
+  }
+
+  return {
+    labels: activeItems.map(i => i.name),
+    datasets: [{
+      data: activeItems.map(i => i.amount),
+      backgroundColor: activeItems.map((i, idx) => {
+        if (hoveredIdx === -1 || hoveredIdx === idx) {
+          return i.color;
+        }
+        return `${i.color}40`;
+      }),
+      borderWidth: activeItems.map((_, idx) => (hoveredIdx === idx ? 3 : 2)),
+      borderColor: activeItems.map((_, idx) => {
+        if (hoveredIdx === idx) return '#da291c';
+        return '#303030';
+      }),
+    }],
+  };
+}
+
+function resolveDoughnutHoverIndex(elements, isGroupMode, activeItems) {
+  if (!elements || elements.length === 0) return -1;
+  const el = elements[0];
+  if (isGroupMode && el.datasetIndex === 0) {
+    let count = 0;
+    for (let gIdx = 0; gIdx < activeItems.length; gIdx++) {
+      count += (activeItems[gIdx].categories || []).length;
+      if (el.index < count) {
+        return gIdx;
+      }
+    }
+  }
+  return el.index;
+}
+
 /**
  * ExpenseProportion - The visual dashboard component for representing expenditures.
  */
@@ -586,47 +750,9 @@ function ExpenseProportion() {
 
   // Recalculate allocation amounts and percentages for What-If simulation
   const { simulatedAllocation, totalReduced } = useMemo(() => {
-    if (!isAllocationMode || excludedGroupIds.length === 0) {
-      return { simulatedAllocation: sortedAllocation, totalReduced: 0 };
-    }
-
-    const excludedSet = new Set(excludedGroupIds);
-    const needsItem = sortedAllocation.find(a => a.id === 'needs');
-    const wantsItem = sortedAllocation.find(a => a.id === 'wants');
-    const savingsItem = sortedAllocation.find(a => a.id === 'savings');
-
-    const needsGroups = needsItem?.groups || [];
-    const wantsGroups = wantsItem?.groups || [];
-    const savingsGroups = savingsItem?.groups || [];
-
-    const activeNeedsTotal = needsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
-    const activeWantsTotal = wantsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
-    const activeSavingsTotal = savingsGroups.filter(g => !excludedSet.has(g.id)).reduce((sum, g) => sum + g.amount, 0);
-
-    const origNeedsTotal = needsItem?.amount || 0;
-    const origWantsTotal = wantsItem?.amount || 0;
-
-    const reducedSum = (origNeedsTotal - activeNeedsTotal) + (origWantsTotal - activeWantsTotal);
-
-    const baseIncome = totalIncome || (totalExpense + Math.max(0, analytics.netCashflow || 0));
-    const simNetSavings = Math.max(0, baseIncome - (activeNeedsTotal + activeWantsTotal));
-
-    const updatedAllocation = sortedAllocation.map(item => {
-      let simAmount = item.amount;
-      if (item.id === 'needs') simAmount = activeNeedsTotal;
-      if (item.id === 'wants') simAmount = activeWantsTotal;
-      if (item.id === 'savings') simAmount = simNetSavings;
-
-      const simPercentage = baseIncome > 0 ? ((simAmount / baseIncome) * 100).toFixed(1) : '0';
-
-      return {
-        ...item,
-        amount: simAmount,
-        percentage: simPercentage,
-      };
-    });
-
-    return { simulatedAllocation: updatedAllocation, totalReduced: reducedSum };
+    return calculateSimulatedAllocation(
+      isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, analytics.netCashflow
+    );
   }, [isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, analytics.netCashflow]);
 
   const rawItems = useMemo(() => {
@@ -649,123 +775,17 @@ function ExpenseProportion() {
 
   // Apply Dynamic Sorting (Skip for allocation mode as it has fixed needs/wants/savings order)
   const activeItems = useMemo(() => {
-    const items = [...rawItems];
-    if (isAllocationMode) return items; // Keep original order
-    
-    return items.sort((a, b) => {
-      const orderA = a.order_index ?? 999;
-      const orderB = b.order_index ?? 999;
-
-      if (sortMode === 'amount-desc' || sortMode === 'amount') {
-        return (b.amount - a.amount) || (orderA - orderB);
-      }
-      if (sortMode === 'amount-asc') {
-        return (a.amount - b.amount) || (orderA - orderB);
-      }
-      if (sortMode === 'order-asc' || sortMode === 'order') {
-        return (orderA - orderB) || (b.amount - a.amount);
-      }
-      if (sortMode === 'order-desc') {
-        return (orderB - orderA) || (b.amount - a.amount);
-      }
-      if (sortMode === 'name-asc') {
-        return (a.name || '').localeCompare(b.name || '', 'th') || (b.amount - a.amount);
-      }
-      if (sortMode === 'name-desc') {
-        return (b.name || '').localeCompare(a.name || '', 'th') || (b.amount - a.amount);
-      }
-      return (b.amount - a.amount);
-    });
+    return sortProportionItems(rawItems, sortMode, isAllocationMode);
   }, [rawItems, sortMode, isAllocationMode]);
 
   // Sync Chart Data with Sorted Items (Dual-Ring Donut Chart in Group Mode)
   const activeChartData = useMemo(() => {
-    if (isGroupMode) {
-      // DUAL-RING DONUT CHART:
-      // Outer Ring (datasets[0]): Constituent Categories under each group
-      // Inner Ring (datasets[1]): Cashflow Groups
-      const outerCategories = [];
-      activeItems.forEach((group, gIdx) => {
-        (group.categories || []).forEach(cat => {
-          outerCategories.push({
-            ...cat,
-            groupIdx: gIdx,
-            groupColor: group.color
-          });
-        });
-      });
-
-      const outerData = outerCategories.map(c => c.amount);
-      const outerColors = outerCategories.map(c => {
-        if (hoveredIdx === -1 || hoveredIdx === c.groupIdx) {
-          return c.color || c.groupColor;
-        }
-        return `${c.color || c.groupColor}35`; // Fade non-hovered categories
-      });
-      const outerBorders = outerCategories.map(c => (hoveredIdx === c.groupIdx ? '#da291c' : '#181818'));
-      const outerBorderWidths = outerCategories.map(c => (hoveredIdx === c.groupIdx ? 2 : 1));
-
-      const innerData = activeItems.map(g => g.amount);
-      const innerColors = activeItems.map((g, idx) => {
-        if (hoveredIdx === -1 || hoveredIdx === idx) {
-          return g.color;
-        }
-        return `${g.color}40`; // Fade non-hovered inner groups
-      });
-      const innerBorders = activeItems.map((_, idx) => (hoveredIdx === idx ? '#da291c' : '#181818'));
-      const innerBorderWidths = activeItems.map((_, idx) => (hoveredIdx === idx ? 2 : 1));
-
-      return {
-        labels: [...outerCategories.map(c => `${c.name} (${c.relativePercentage}%)`), ...activeItems.map(g => g.name)],
-        datasets: [
-          {
-            label: 'หมวดหมู่ย่อย (Outer)',
-            data: outerData,
-            backgroundColor: outerColors,
-            borderColor: outerBorders,
-            borderWidth: outerBorderWidths,
-            spacing: 0, // Continuous slices inside outer ring
-            offset: 4, // Radial offset creates 4px empty space between Donut 1 & Donut 2
-            weight: 0.85,
-          },
-          {
-            label: 'กลุ่มรายจ่าย (Inner)',
-            data: innerData,
-            backgroundColor: innerColors,
-            borderColor: innerBorders,
-            borderWidth: innerBorderWidths,
-            spacing: 0, // Continuous slices inside inner ring
-            offset: 0,
-            weight: 1.15,
-          }
-        ]
-      };
-    }
-
-    return {
-      labels: activeItems.map(i => i.name),
-      datasets: [{
-        data: activeItems.map(i => i.amount),
-        backgroundColor: activeItems.map((i, idx) => {
-          if (hoveredIdx === -1 || hoveredIdx === idx) {
-            return i.color;
-          }
-          return `${i.color}40`;
-        }),
-        borderWidth: activeItems.map((_, idx) => hoveredIdx === idx ? 3 : 2),
-        borderColor: activeItems.map((_, idx) => {
-          if (hoveredIdx === idx) return '#da291c';
-          return '#303030';
-        }),
-      }],
-    };
+    return buildDoughnutChartData(activeItems, isGroupMode, hoveredIdx);
   }, [activeItems, isGroupMode, hoveredIdx]);
 
   const activeTotal = useMemo(() => {
-    if (isGroupMode) return chartTotal; // FIXED: use chartTotal (filtered) to match sorted groups
+    if (isGroupMode) return chartTotal;
     if (isAllocationMode) {
-      // Use income as the 100% base. 
-      // If in "All" period and no explicit income target is set, income is still the denominator.
       return totalIncome || (totalExpense + Math.max(0, analytics.netCashflow || 0));
     }
     return chartTotal;
@@ -781,23 +801,8 @@ function ExpenseProportion() {
       ...baseOptions,
       cutout: isGroupMode ? '48%' : '75%', 
       onHover: (event, elements) => {
-        if (elements && elements.length > 0) {
-          const el = elements[0];
-          if (isGroupMode && el.datasetIndex === 0) {
-            let count = 0;
-            for (let gIdx = 0; gIdx < activeItems.length; gIdx++) {
-              count += (activeItems[gIdx].categories || []).length;
-              if (el.index < count) {
-                setHoveredIdx(gIdx);
-                break;
-              }
-            }
-          } else {
-            setHoveredIdx(el.index);
-          }
-        } else {
-          setHoveredIdx(-1);
-        }
+        const hoverIdx = resolveDoughnutHoverIndex(elements, isGroupMode, activeItems);
+        setHoveredIdx(hoverIdx);
       },
       plugins: {
         ...baseOptions.plugins,

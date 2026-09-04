@@ -65,13 +65,7 @@ function parseSqlValues(cleanSql) {
         return cleaned;
     });
 }
-function formatDbMutationLog(msgStr) {
-    const clean = msgStr.replace(/\s+/g, ' ').trim();
-    // 0. Mute internal FTS index trigger sync noise
-    if (/transactions_fts/i.test(clean)) {
-        return null;
-    }
-    // 1. 💳 Transactions (INSERT / UPSERT / DELETE)
+function formatTransactionMutation(clean) {
     if (/INSERT INTO transactions\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 4) {
@@ -89,18 +83,22 @@ function formatDbMutationLog(msgStr) {
         const shortId = idMatch ? idMatch[1].substring(0, 8) : '';
         return `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${shortId}...)`;
     }
-    // 2. ⚙️ Settings (INSERT / UPDATE)
+    return null;
+}
+function formatSettingsMutation(clean) {
     if (/INSERT INTO settings\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
             const key = args[0];
             const val = args[1];
             if (key === 'schema_verified')
-                return null; // ข้าม log ตั้งค่าภายใน
+                return ''; // Mute internal flag
             return `⚙️ [การตั้งค่า] อัปเดตค่า: ${key} = "${val}"`;
         }
     }
-    // 3. 📅 Calendar Days (INSERT / UPDATE)
+    return null;
+}
+function formatCalendarMutation(clean) {
     if (/INSERT INTO calendar_days\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
@@ -109,7 +107,9 @@ function formatDbMutationLog(msgStr) {
             return `📅 [ปฏิทิน] บันทึกประเภทวัน: ${date} (ประเภท: ${dayTypeId})`;
         }
     }
-    // 4. 📆 Day Types (INSERT / UPDATE / DELETE)
+    return null;
+}
+function formatDayTypeMutation(clean) {
     if (/INSERT INTO day_types\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 3) {
@@ -123,7 +123,9 @@ function formatDbMutationLog(msgStr) {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
     }
-    // 5. 🏷️ Categories (INSERT / UPDATE / DELETE)
+    return null;
+}
+function formatCategoryMutation(clean) {
     if (/INSERT INTO categories\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 2) {
@@ -137,7 +139,9 @@ function formatDbMutationLog(msgStr) {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
     }
-    // 6. 📁 Cashflow Groups (INSERT / UPDATE / DELETE)
+    return null;
+}
+function formatCashflowGroupMutation(clean) {
     if (/INSERT INTO cashflow_groups\b/i.test(clean)) {
         const args = parseSqlValues(clean);
         if (args.length >= 3) {
@@ -151,6 +155,23 @@ function formatDbMutationLog(msgStr) {
     if (/DELETE FROM cashflow_groups/i.test(clean)) {
         const idMatch = clean.match(/WHERE id = '([^']+)'/i);
         return `🗑️ [กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
+    }
+    return null;
+}
+function formatDbMutationLog(msgStr) {
+    const clean = msgStr.replace(/\s+/g, ' ').trim();
+    // 0. Mute internal FTS index trigger sync noise
+    if (/transactions_fts/i.test(clean)) {
+        return null;
+    }
+    const formatted = formatTransactionMutation(clean)
+        ?? formatSettingsMutation(clean)
+        ?? formatCalendarMutation(clean)
+        ?? formatDayTypeMutation(clean)
+        ?? formatCategoryMutation(clean)
+        ?? formatCashflowGroupMutation(clean);
+    if (formatted !== null) {
+        return formatted === '' ? null : formatted;
     }
     // Fallback: Clean single line truncated if too long
     const truncated = clean.length > 130 ? clean.substring(0, 127) + '...' : clean;

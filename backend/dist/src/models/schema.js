@@ -188,8 +188,7 @@ const initSchema = () => {
     console.log('✅ ตั้งค่าโครงสร้างระบบฐานข้อมูล Cashflow Shark เรียบร้อยแล้ว!');
 };
 exports.initSchema = initSchema;
-const verifyTableColumns = () => {
-    // --- รายการธุรกรรม (Transactions) ---
+const verifyTransactionColumns = () => {
     const txInfo = db_1.default.prepare("PRAGMA table_info(transactions)").all();
     const txCols = txInfo.map(c => c.name);
     if (!txCols.includes('is_deleted')) {
@@ -241,7 +240,8 @@ const verifyTableColumns = () => {
     catch (e) {
         console.warn('⚠️ เกิดข้อผิดพลาดขณะเคลียร์สัดส่วนรายได้:', e.message);
     }
-    // --- หมวดหมู่ย่อย (Categories) ---
+};
+const verifyCategoryColumns = () => {
     const catInfo = db_1.default.prepare("PRAGMA table_info(categories)").all();
     const catCols = catInfo.map(c => c.name);
     if (catCols.length > 0 && !catCols.includes('order_index')) {
@@ -257,7 +257,8 @@ const verifyTableColumns = () => {
             console.warn('⚠️ ไม่สามารถลบคอลัมน์ is_fixed ได้:', e.message);
         }
     }
-    // --- กลุ่มรายจ่าย (Cashflow Groups) ---
+};
+const verifyGroupColumns = () => {
     const groupInfo = db_1.default.prepare("PRAGMA table_info(cashflow_groups)").all();
     const groupCols = groupInfo.map(c => c.name);
     if (groupCols.length > 0 && !groupCols.includes('order_index')) {
@@ -272,7 +273,8 @@ const verifyTableColumns = () => {
         db_1.default.exec("ALTER TABLE cashflow_groups ADD COLUMN allocation_type TEXT DEFAULT 'want'");
         console.log('🔹 เพิ่มคอลัมน์ allocation_type ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
     }
-    // --- ประเภทวันทำงาน/วันหยุด (Day Types) ---
+};
+const verifyDayTypeColumns = () => {
     const dayTypeInfo = db_1.default.prepare("PRAGMA table_info(day_types)").all();
     const dayTypeCols = dayTypeInfo.map(c => c.name);
     if (dayTypeCols.length > 0 && !dayTypeCols.includes('name')) {
@@ -283,13 +285,21 @@ const verifyTableColumns = () => {
         db_1.default.exec("ALTER TABLE day_types ADD COLUMN order_index INTEGER DEFAULT 0");
         console.log('🔹 เพิ่มคอลัมน์ order_index ในตารางประเภทวัน (Day Types) เรียบร้อย');
     }
-    // --- บันทึกปฏิทินวัน (Calendar Days) ---
+};
+const verifyCalendarDayColumns = () => {
     const calInfo = db_1.default.prepare("PRAGMA table_info(calendar_days)").all();
     const calCols = calInfo.map(c => c.name);
     if (calCols.length > 0 && !calCols.includes('note')) {
         db_1.default.exec("ALTER TABLE calendar_days ADD COLUMN note TEXT");
         console.log('🔹 เพิ่มคอลัมน์ note ในตารางบันทึกปฏิทินวัน (Calendar Days) เรียบร้อย');
     }
+};
+const verifyTableColumns = () => {
+    verifyTransactionColumns();
+    verifyCategoryColumns();
+    verifyGroupColumns();
+    verifyDayTypeColumns();
+    verifyCalendarDayColumns();
 };
 const seedInitialData = () => {
     // --- นำเข้าข้อมูลประเภทวันทำงาน/วันหยุดเริ่มต้น ---
@@ -323,134 +333,132 @@ const seedInitialData = () => {
         console.log('🌱 เพิ่มกลุ่มรายจ่ายเริ่มต้นเรียบร้อย');
     }
 };
+function ensureSubscriptionGroup() {
+    const group1 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'บริการรายเดือน'").get();
+    const group2 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน'").get();
+    const group3 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน/หนี้'").get();
+    let groupId;
+    if (group1) {
+        groupId = group1.id;
+    }
+    else if (group2) {
+        db_1.default.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
+            .run('บริการรายเดือน', '🔄', '#8B5CF6', group2.id);
+        groupId = group2.id;
+        console.log('✅ เปลี่ยนชื่อกลุ่ม "รายเดือน" เป็น "บริการรายเดือน" เรียบร้อย');
+    }
+    else if (group3) {
+        db_1.default.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
+            .run('บริการรายเดือน', '🔄', '#8B5CF6', group3.id);
+        groupId = group3.id;
+        console.log('✅ เปลี่ยนชื่อกลุ่ม "รายเดือน/หนี้" เป็น "บริการรายเดือน" เรียบร้อย');
+    }
+    else {
+        groupId = crypto_1.default.randomUUID();
+        db_1.default.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, allocation_type) VALUES (?, ?, ?, ?, ?, ?, ?)")
+            .run(groupId, 'บริการรายเดือน', 'expense', 4, '#8B5CF6', '🔄', 'want');
+        console.log('🌱 สร้างกลุ่มใหม่ "บริการรายเดือน" เรียบร้อย');
+    }
+    // ย้ายหมวดหมู่และลบกลุ่มที่ซ้ำซ้อน
+    const redundantGroups = [group2, group3].filter((g) => !!(g && g.id !== groupId));
+    redundantGroups.forEach(rg => {
+        const updateCats = db_1.default.prepare("UPDATE categories SET cashflow_group_id = ? WHERE cashflow_group_id = ?")
+            .run(groupId, rg.id);
+        if (updateCats.changes > 0) {
+            console.log(`✅ รวมหมวดหมู่ ${updateCats.changes} รายการจากกลุ่มที่ซ้ำซ้อนเข้าสู่กลุ่ม "บริการรายเดือน" เรียบร้อย`);
+        }
+        db_1.default.prepare("DELETE FROM cashflow_groups WHERE id = ?").run(rg.id);
+        console.log(`🗑️ ลบกลุ่มรายจ่ายที่ไม่ได้ใช้แล้วออกเรียบร้อย: ${rg.id}`);
+    });
+    return groupId;
+}
+function ensureSoftwareCategory(groupId) {
+    const oldCat = db_1.default.prepare("SELECT id FROM categories WHERE name = 'บริการรายเดือน'").get();
+    if (oldCat) {
+        db_1.default.prepare("UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ?")
+            .run('ซอฟต์แวร์ & AI', '🤖', '#3B82F6', oldCat.id);
+        console.log('✅ เปลี่ยนชื่อหมวดหมู่ "บริการรายเดือน" เป็น "ซอฟต์แวร์ & AI" เรียบร้อย');
+        return oldCat.id;
+    }
+    const existingSoftwareCat = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ซอฟต์แวร์ & AI' OR name = 'ซอฟต์แวร์'").get();
+    if (existingSoftwareCat) {
+        return existingSoftwareCat.id;
+    }
+    const softwareCatId = crypto_1.default.randomUUID();
+    db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(softwareCatId, 'ซอฟต์แวร์ & AI', '🤖', '#3B82F6', 1, groupId);
+    console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ซอฟต์แวร์ & AI" เรียบร้อย');
+    return softwareCatId;
+}
+function ensureShoppingCategory(groupId) {
+    const catLong = db_1.default.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง & ส่งอาหาร'").get();
+    const catShort = db_1.default.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง'").get();
+    if (catLong && catShort) {
+        db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(catShort.id, catLong.id);
+        db_1.default.prepare("DELETE FROM categories WHERE id = ?").run(catLong.id);
+        console.log('🧹 รวมหมวดหมู่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เข้ากับหมวดหมู่ "สมาชิกช้อปปิ้ง" เรียบร้อย');
+        return catShort.id;
+    }
+    if (catShort)
+        return catShort.id;
+    if (catLong)
+        return catLong.id;
+    const shoppingCatId = crypto_1.default.randomUUID();
+    db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(shoppingCatId, 'สมาชิกช้อปปิ้ง & ส่งอาหาร', '🛍️', '#EC4899', 2, groupId);
+    console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เรียบร้อย');
+    return shoppingCatId;
+}
+function ensureEntertainmentCategory(groupId) {
+    const entLong = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง & สตรีมมิ่ง'").get();
+    const entShort = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง'").get();
+    if (entLong && entShort) {
+        db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(entShort.id, entLong.id);
+        db_1.default.prepare("DELETE FROM categories WHERE id = ?").run(entLong.id);
+        console.log('🧹 รวมหมวดหมู่ "ความบันเทิง & สตรีมมิ่ง" เข้ากับหมวดหมู่ "ความบันเทิง" เรียบร้อย');
+        return entShort.id;
+    }
+    if (entShort)
+        return entShort.id;
+    if (entLong)
+        return entLong.id;
+    const entertainmentCatId = crypto_1.default.randomUUID();
+    db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(entertainmentCatId, 'ความบันเทิง & สตรีมมิ่ง', '🍿', '#EF4444', 3, groupId);
+    console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ความบันเทิง & สตรีมมิ่ง" เรียบร้อย');
+    return entertainmentCatId;
+}
+function reclassifySubscriptionTransactions(softwareCatId, shoppingCatId, entertainmentCatId) {
+    const txs = db_1.default.prepare("SELECT id, description FROM transactions WHERE category_id = ? AND is_deleted = 0").all(softwareCatId);
+    let shoppingCount = 0;
+    let entertainmentCount = 0;
+    const updateTx = db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE id = ?");
+    const shoppingKeywords = ['shopee', 'lazada', 'grab', 'lineman', 'foodpanda', 'membership', 'vip', 'prime', 'delivery', 'ช้อป', 'ส่งอาหาร'];
+    const entertainmentKeywords = ['netflix', 'spotify', 'youtube', 'disney', 'hbo', 'prime video', 'steam', 'playstation', 'xbox', 'nintendo', 'game', 'เพลง', 'หนัง', 'บันเทิง'];
+    txs.forEach(tx => {
+        if (!tx.description)
+            return;
+        const desc = tx.description.toLowerCase();
+        if (shoppingKeywords.some(k => desc.includes(k))) {
+            updateTx.run(shoppingCatId, tx.id);
+            shoppingCount++;
+        }
+        else if (entertainmentKeywords.some(k => desc.includes(k))) {
+            updateTx.run(entertainmentCatId, tx.id);
+            entertainmentCount++;
+        }
+    });
+    if (shoppingCount > 0 || entertainmentCount > 0) {
+        console.log(`🧠 จัดหมวดหมู่ธุรกรรมอัตโนมัติ: ย้ายไปที่ สมาชิกช้อปปิ้ง ${shoppingCount} รายการ และ ความบันเทิง & สตรีมมิ่ง ${entertainmentCount} รายการ`);
+    }
+}
 const runSubscriptionMigration = () => {
     try {
-        // 1. ค้นหาหรือสร้างกลุ่มเป้าหมาย 'บริการรายเดือน'
-        let groupId;
-        const group1 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'บริการรายเดือน'").get();
-        const group2 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน'").get();
-        const group3 = db_1.default.prepare("SELECT id FROM cashflow_groups WHERE name = 'รายเดือน/หนี้'").get();
-        if (group1) {
-            groupId = group1.id;
-        }
-        else if (group2) {
-            db_1.default.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
-                .run('บริการรายเดือน', '🔄', '#8B5CF6', group2.id);
-            groupId = group2.id;
-            console.log('✅ เปลี่ยนชื่อกลุ่ม "รายเดือน" เป็น "บริการรายเดือน" เรียบร้อย');
-        }
-        else if (group3) {
-            db_1.default.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
-                .run('บริการรายเดือน', '🔄', '#8B5CF6', group3.id);
-            groupId = group3.id;
-            console.log('✅ เปลี่ยนชื่อกลุ่ม "รายเดือน/หนี้" เป็น "บริการรายเดือน" เรียบร้อย');
-        }
-        else {
-            groupId = crypto_1.default.randomUUID();
-            db_1.default.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, allocation_type) VALUES (?, ?, ?, ?, ?, ?, ?)")
-                .run(groupId, 'บริการรายเดือน', 'expense', 4, '#8B5CF6', '🔄', 'want');
-            console.log('🌱 สร้างกลุ่มใหม่ "บริการรายเดือน" เรียบร้อย');
-        }
-        // ย้ายหมวดหมู่และลบกลุ่มที่ซ้ำซ้อน
-        const redundantGroups = [group2, group3].filter((g) => !!(g && g.id !== groupId));
-        redundantGroups.forEach(rg => {
-            const updateCats = db_1.default.prepare("UPDATE categories SET cashflow_group_id = ? WHERE cashflow_group_id = ?")
-                .run(groupId, rg.id);
-            if (updateCats.changes > 0) {
-                console.log(`✅ รวมหมวดหมู่ ${updateCats.changes} รายการจากกลุ่มที่ซ้ำซ้อนเข้าสู่กลุ่ม "บริการรายเดือน" เรียบร้อย`);
-            }
-            db_1.default.prepare("DELETE FROM cashflow_groups WHERE id = ?").run(rg.id);
-            console.log(`🗑️ ลบกลุ่มรายจ่ายที่ไม่ได้ใช้แล้วออกเรียบร้อย: ${rg.id}`);
-        });
-        // 2. ปรับแต่งและนำเข้าหมวดหมู่บริการรายเดือน
-        let softwareCatId;
-        let shoppingCatId;
-        let entertainmentCatId;
-        // 2.1 ซอฟต์แวร์ & AI (เปลี่ยนชื่อจากหมวดเก่า หรือสร้างใหม่หากไม่มี)
-        const oldCat = db_1.default.prepare("SELECT id FROM categories WHERE name = 'บริการรายเดือน'").get();
-        if (oldCat) {
-            db_1.default.prepare("UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ?")
-                .run('ซอฟต์แวร์ & AI', '🤖', '#3B82F6', oldCat.id);
-            softwareCatId = oldCat.id;
-            console.log('✅ เปลี่ยนชื่อหมวดหมู่ "บริการรายเดือน" เป็น "ซอฟต์แวร์ & AI" เรียบร้อย');
-        }
-        else {
-            const existingSoftwareCat = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ซอฟต์แวร์ & AI' OR name = 'ซอฟต์แวร์'").get();
-            if (existingSoftwareCat) {
-                softwareCatId = existingSoftwareCat.id;
-            }
-            else {
-                softwareCatId = crypto_1.default.randomUUID();
-                db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
-                    .run(softwareCatId, 'ซอฟต์แวร์ & AI', '🤖', '#3B82F6', 1, groupId);
-                console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ซอฟต์แวร์ & AI" เรียบร้อย');
-            }
-        }
-        // 2.2 สมาชิกช้อปปิ้ง & ส่งอาหาร
-        const catLong = db_1.default.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง & ส่งอาหาร'").get();
-        const catShort = db_1.default.prepare("SELECT id FROM categories WHERE name = 'สมาชิกช้อปปิ้ง'").get();
-        if (catLong && catShort) {
-            db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(catShort.id, catLong.id);
-            db_1.default.prepare("DELETE FROM categories WHERE id = ?").run(catLong.id);
-            console.log('🧹 รวมหมวดหมู่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เข้ากับหมวดหมู่ "สมาชิกช้อปปิ้ง" เรียบร้อย');
-            shoppingCatId = catShort.id;
-        }
-        else if (catShort) {
-            shoppingCatId = catShort.id;
-        }
-        else if (catLong) {
-            shoppingCatId = catLong.id;
-        }
-        else {
-            shoppingCatId = crypto_1.default.randomUUID();
-            db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
-                .run(shoppingCatId, 'สมาชิกช้อปปิ้ง & ส่งอาหาร', '🛍️', '#EC4899', 2, groupId);
-            console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เรียบร้อย');
-        }
-        // 2.3 ความบันเทิง & สตรีมมิ่ง
-        const entLong = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง & สตรีมมิ่ง'").get();
-        const entShort = db_1.default.prepare("SELECT id FROM categories WHERE name = 'ความบันเทิง'").get();
-        if (entLong && entShort) {
-            db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(entShort.id, entLong.id);
-            db_1.default.prepare("DELETE FROM categories WHERE id = ?").run(entLong.id);
-            console.log('🧹 รวมหมวดหมู่ "ความบันเทิง & สตรีมมิ่ง" เข้ากับหมวดหมู่ "ความบันเทิง" เรียบร้อย');
-            entertainmentCatId = entShort.id;
-        }
-        else if (entShort) {
-            entertainmentCatId = entShort.id;
-        }
-        else if (entLong) {
-            entertainmentCatId = entLong.id;
-        }
-        else {
-            entertainmentCatId = crypto_1.default.randomUUID();
-            db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
-                .run(entertainmentCatId, 'ความบันเทิง & สตรีมมิ่ง', '🍿', '#EF4444', 3, groupId);
-            console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ความบันเทิง & สตรีมมิ่ง" เรียบร้อย');
-        }
-        // 3. จัดแจงคัดแยกประเภทรายการธุรกรรมเดิม (Smart Classification)
-        const txs = db_1.default.prepare("SELECT id, description FROM transactions WHERE category_id = ? AND is_deleted = 0").all(softwareCatId);
-        let shoppingCount = 0;
-        let entertainmentCount = 0;
-        const updateTx = db_1.default.prepare("UPDATE transactions SET category_id = ? WHERE id = ?");
-        txs.forEach(tx => {
-            if (!tx.description)
-                return;
-            const desc = tx.description.toLowerCase();
-            const shoppingKeywords = ['shopee', 'lazada', 'grab', 'lineman', 'foodpanda', 'membership', 'vip', 'prime', 'delivery', 'ช้อป', 'ส่งอาหาร'];
-            const entertainmentKeywords = ['netflix', 'spotify', 'youtube', 'disney', 'hbo', 'prime video', 'steam', 'playstation', 'xbox', 'nintendo', 'game', 'เพลง', 'หนัง', 'บันเทิง'];
-            if (shoppingKeywords.some(k => desc.includes(k))) {
-                updateTx.run(shoppingCatId, tx.id);
-                shoppingCount++;
-            }
-            else if (entertainmentKeywords.some(k => desc.includes(k))) {
-                updateTx.run(entertainmentCatId, tx.id);
-                entertainmentCount++;
-            }
-        });
-        if (shoppingCount > 0 || entertainmentCount > 0) {
-            console.log(`🧠 จัดหมวดหมู่ธุรกรรมอัตโนมัติ: ย้ายไปที่ สมาชิกช้อปปิ้ง ${shoppingCount} รายการ และ ความบันเทิง & สตรีมมิ่ง ${entertainmentCount} รายการ`);
-        }
+        const groupId = ensureSubscriptionGroup();
+        const softwareCatId = ensureSoftwareCategory(groupId);
+        const shoppingCatId = ensureShoppingCategory(groupId);
+        const entertainmentCatId = ensureEntertainmentCategory(groupId);
+        reclassifySubscriptionTransactions(softwareCatId, shoppingCatId, entertainmentCatId);
     }
     catch (err) {
         console.error('⚠️ เกิดข้อผิดพลาดขณะรัน Migration ของหมวดหมู่รายเดือน:', err.message);

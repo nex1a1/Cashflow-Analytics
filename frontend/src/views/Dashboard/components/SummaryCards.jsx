@@ -189,6 +189,455 @@ const SummaryVitals = memo(({ analytics, showSkeleton }) => {
 /**
  * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
  */
+function getFoodIncomeStatus(pct) {
+  const num = Number.parseFloat(pct) || 0;
+  if (num <= 20) {
+    return { label: 'สมดุลดี', cls: 'text-emerald-400 border-emerald-400/30' };
+  }
+  if (num <= 30) {
+    return { label: 'ปานกลาง', cls: 'text-amber-400 border-amber-400/30' };
+  }
+  return { label: 'สัดส่วนสูง', cls: 'text-rose-400 border-rose-400/30' };
+}
+
+const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }) => (
+  <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
+    rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
+  }`}>
+    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+      <Home size={72} />
+    </div>
+
+    {/* Original Content (Blurs and fades on hover) */}
+    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+        ภาระที่พักอาศัย (Rent Ratio)
+      </span>
+      
+      {!showSkeleton && (
+        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+          <span>เกณฑ์แนะนำ</span>
+          <span className="text-sky-400 font-extrabold">&lt; 30% ของรายรับ</span>
+        </div>
+      )}
+      
+      <div className="mt-auto z-10">
+        {showSkeleton ? (
+          <Shimmer className="h-6 w-16 my-1" />
+        ) : (
+          <div className="flex items-baseline gap-1.5">
+            <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
+              {rentPercentageNum.toFixed(1)}%
+            </div>
+            <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
+              ฿{formatMoney(rentTotal)}
+            </div>
+          </div>
+        )}
+        
+        <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
+          <div 
+            className={`h-full absolute left-0 top-0 transition-none ${
+              showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
+            }`} 
+            style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* Hover Breakdown Overlay */}
+    {!showSkeleton && rentSub && (
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+          <span className="truncate">รายละเอียดที่พัก</span>
+          <span className="text-sky-400 font-extrabold text-[8px] border border-sky-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 หมวด</span>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1">
+              <span>🏢</span> ค่าเช่า
+            </span>
+            <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1">
+              <span>⚡</span> ค่าไฟ
+            </span>
+            <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1">
+              <span>🌐</span> ค่าเน็ต
+            </span>
+            <span className="text-[13px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1">
+              <span>💧</span> ค่าน้ำ
+            </span>
+            <span className="text-[13px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+StrategicRentCard.displayName = 'StrategicRentCard';
+
+const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCategories, showSkeleton }) => (
+  <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
+    lifestyleRatio > 35 ? 'border-l-[#da291c]' : 'border-l-orange-500'
+  }`}>
+    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+      <Zap size={72} />
+    </div>
+
+    {/* Original Content (Blurs and fades on hover) */}
+    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+        ดัชนีฟุ่มเฟือย (Want Ratio)
+      </span>
+      
+      {!showSkeleton && (
+        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+          <span>เกณฑ์แนะนำ</span>
+          <span className="text-orange-400 font-extrabold">&lt; 30% ของรายรับ</span>
+        </div>
+      )}
+      
+      <div className="mt-auto z-10">
+        {showSkeleton ? (
+          <Shimmer className="h-6 w-16 my-1" />
+        ) : (
+          <div className="flex items-baseline gap-1.5">
+            <div className={`text-lg font-black ${lifestyleRatio > 35 ? 'text-[#da291c]' : 'text-orange-400'}`}>
+              {lifestyleRatio.toFixed(1)}%
+            </div>
+            <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
+              ฿{formatMoney(variableTotal)}
+            </div>
+          </div>
+        )}
+        
+        <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
+          <div 
+            className={`h-full absolute left-0 top-0 transition-none ${
+              showSkeleton ? 'bg-slate-700 animate-pulse' : 'bg-orange-500'
+            }`} 
+            style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }} 
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* Hover Breakdown Overlay */}
+    {!showSkeleton && (
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+          <span className="truncate">หมวดฟุ่มเฟือย Top 4</span>
+          <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">Top 4</span>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+          {topWantCategories && topWantCategories.length > 0 ? (
+            topWantCategories.map(cat => (
+              <div key={cat.id} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-wide truncate flex items-center gap-1">
+                  <span>{cat.icon}</span> {cat.name}
+                </span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(cat.amount)}</span>
+                  <span className="text-[9px] font-bold text-neutral-500">({cat.pctOfWant}%)</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-2 bg-[#181818] p-2 text-center text-[9px] text-neutral-500 flex items-center justify-center">
+              ไม่มีข้อมูลฟุ่มเฟือย
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+StrategicLifestyleCard.displayName = 'StrategicLifestyleCard';
+
+const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dailyFixed, dailyVariable, dailySavings, showSkeleton }) => (
+  <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
+    dailyVictory >= 0 ? 'border-l-lime-500' : 'border-l-[#da291c]'
+  }`}>
+    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+      <Award size={72} />
+    </div>
+
+    {/* Original Content (Blurs and fades on hover) */}
+    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+        เงินเหลือรายวัน (Victory)
+      </span>
+      
+      {!showSkeleton && (
+        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+          <span>ระยะเวลาคำนวณ</span>
+          <span className="text-lime-400 font-extrabold">{periodDays} วันในงวด</span>
+        </div>
+      )}
+      
+      <div className="mt-auto z-10">
+        {showSkeleton ? (
+          <Shimmer className="h-6 w-20" />
+        ) : (
+          <div className={`text-lg font-black tabular-nums leading-none ${
+            dailyVictory >= 0 ? 'text-lime-400' : 'text-[#da291c]'
+          }`}>
+            ฿{formatMoney(dailyVictory)}
+          </div>
+        )}
+        <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
+          {dailyVictory >= 0 ? 'กำไรสะสมรายวัน' : 'ขาดทุนสะสมรายวัน'}
+        </div>
+      </div>
+    </div>
+
+    {/* Hover Breakdown Overlay */}
+    {!showSkeleton && (
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+          <span className="truncate">โครงสร้างรายวัน</span>
+          <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${
+            dailyVictory >= 0 ? 'text-lime-400 border-lime-400/30' : 'text-[#da291c] border-[#da291c]/30'
+          }`}>เฉลี่ย {periodDays} วัน</span>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📥 รับ/วัน</span>
+            <span className="text-[13px] font-black text-emerald-400 tabular-nums">฿{formatMoney(dailyIncome)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
+            <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyFixed)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
+            <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">🏦 ออม/วัน</span>
+            <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailySavings)}</span>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+StrategicVictoryCard.displayName = 'StrategicVictoryCard';
+
+const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTotal, showSkeleton }) => {
+  const foodStatus = getFoodIncomeStatus(foodPctOfIncome);
+
+  return (
+    <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-amber-500">
+      <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+        <UtensilsCrossed size={72} />
+      </div>
+
+      {/* Original Content (Blurs and fades on hover) */}
+      <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+        <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+          สัดส่วนค่าอาหาร
+        </span>
+        
+        {!showSkeleton && (
+          <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+            <span>เกณฑ์สัดส่วน</span>
+            <span className="text-amber-400 font-extrabold">&lt; 25% ของรายจ่าย</span>
+          </div>
+        )}
+        
+        <div className="mt-auto z-10">
+          {showSkeleton ? (
+            <Shimmer className="h-6 w-12" />
+          ) : (
+            <div className="text-lg font-black leading-none text-amber-400">
+              {foodPercentage}%
+            </div>
+          )}
+          <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
+            ของรายจ่ายรวม
+          </div>
+        </div>
+      </div>
+
+      {/* Hover Breakdown Overlay */}
+      {!showSkeleton && (
+        <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+          <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+            <span className="truncate">เจาะลึกงบอาหาร</span>
+            <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
+              {foodStatus.label}
+            </span>
+          </div>
+          
+          <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📊 % รายรับ</span>
+              <span className="text-[13px] font-black text-emerald-400 tabular-nums">{foodPctOfIncome}%</span>
+            </div>
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">📉 % รายจ่าย</span>
+              <span className="text-[13px] font-black text-rose-400 tabular-nums">{foodPercentage}%</span>
+            </div>
+            <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🍽️ รวมค่าอาหาร</span>
+              <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(foodTotal)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+StrategicFoodRatioCard.displayName = 'StrategicFoodRatioCard';
+
+const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, foodHolidayAvg, maxFoodDayAmount, showSkeleton }) => (
+  <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-orange-400">
+    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+      <UtensilsCrossed size={72} />
+    </div>
+
+    {/* Original Content (Blurs and fades on hover) */}
+    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+        กินเฉลี่ย/วัน
+      </span>
+      
+      {!showSkeleton && (
+        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+          <span>งบกินรวม</span>
+          <span className="text-orange-400 font-extrabold tabular-nums">฿{formatMoney(foodTotal)}</span>
+        </div>
+      )}
+      
+      <div className="mt-auto z-10">
+        {showSkeleton ? (
+          <Shimmer className="h-6 w-16" />
+        ) : (
+          <div className="text-lg font-black tabular-nums leading-none text-orange-400">
+            ฿{formatMoney(foodDailyAvg)}
+          </div>
+        )}
+        <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
+          ค่าอาหารรายวัน
+        </div>
+      </div>
+    </div>
+
+    {/* Hover Breakdown Overlay */}
+    {!showSkeleton && (
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+          <span className="truncate">พฤติกรรมการกิน</span>
+          <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
+            <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(foodWorkdayAvg)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wide">🏖️ วันหยุด</span>
+            <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(foodHolidayAvg)}</span>
+          </div>
+          <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏆 พีคสูงสุดใน 1 วัน</span>
+            <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(maxFoodDayAmount)}</span>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+StrategicFoodDailyCard.displayName = 'StrategicFoodDailyCard';
+
+const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAvg, dailyHolidayAvg, dailyFixed, dailyVariable, showSkeleton }) => (
+  <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-[#da291c]">
+    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+      <TrendingDown size={72} />
+    </div>
+
+    {/* Original Content (Blurs and fades on hover) */}
+    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+        รายจ่ายเฉลี่ย/วัน
+      </span>
+      
+      {!showSkeleton && (
+        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+          <span>ยอดจ่ายรวม</span>
+          <span className="text-rose-400 font-extrabold tabular-nums">฿{formatMoney(totalExpense)}</span>
+        </div>
+      )}
+      
+      <div className="mt-auto z-10">
+        {showSkeleton ? (
+          <Shimmer className="h-6 w-16" />
+        ) : (
+          <div className="text-lg font-black tabular-nums leading-none text-rose-400">
+            ฿{formatMoney(dailyAvg)}
+          </div>
+        )}
+        <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
+          เฉลี่ยรวมทุกวัน
+        </div>
+      </div>
+    </div>
+
+    {/* Hover Breakdown Overlay */}
+    {!showSkeleton && (
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+          <span className="truncate">อัตราจ่ายรายวัน</span>
+          <span className="text-rose-400 font-extrabold text-[8px] border border-rose-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
+            <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailyWorkdayAvg)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏖️ วันหยุด</span>
+            <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyHolidayAvg)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
+            <span className="text-[13px] font-black text-neutral-300 tabular-nums">฿{formatMoney(dailyFixed)}</span>
+          </div>
+          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
+            <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+StrategicDailyExpenseCard.displayName = 'StrategicDailyExpenseCard';
+
+/**
+ * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
+ */
 const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
   const {
     totalIncome, totalSavings, netCashflow,
@@ -219,237 +668,27 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
       <div className="col-span-7 flex flex-col">
         <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์ (Strategic Analysis)" />
         <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
-          
-          {/* RENT CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
-            rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
-          }`}>
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <Home size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                ภาระที่พักอาศัย (Rent Ratio)
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>เกณฑ์แนะนำ</span>
-                  <span className="text-sky-400 font-extrabold">&lt; 30% ของรายรับ</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-16 my-1" />
-                ) : (
-                  <div className="flex items-baseline gap-1.5">
-                    <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
-                      {rentPercentageNum.toFixed(1)}%
-                    </div>
-                    <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
-                      ฿{formatMoney(rentTotal)}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-                  <div 
-                    className={`h-full absolute left-0 top-0 transition-none ${
-                      showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
-                    }`} 
-                    style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && rentSub && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">รายละเอียดที่พัก</span>
-                  <span className="text-sky-400 font-extrabold text-[8px] border border-sky-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 หมวด</span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1">
-                      <span>🏢</span> ค่าเช่า
-                    </span>
-                    <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1">
-                      <span>⚡</span> ค่าไฟ
-                    </span>
-                    <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1">
-                      <span>🌐</span> ค่าเน็ต
-                    </span>
-                    <span className="text-[13px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1">
-                      <span>💧</span> ค่าน้ำ
-                    </span>
-                    <span className="text-[13px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* WANT RATIO CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
-            lifestyleRatio > 35 ? 'border-l-[#da291c]' : 'border-l-orange-500'
-          }`}>
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <Zap size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                ดัชนีฟุ่มเฟือย (Want Ratio)
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>เกณฑ์แนะนำ</span>
-                  <span className="text-orange-400 font-extrabold">&lt; 30% ของรายรับ</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-16 my-1" />
-                ) : (
-                  <div className="flex items-baseline gap-1.5">
-                    <div className={`text-lg font-black ${lifestyleRatio > 35 ? 'text-[#da291c]' : 'text-orange-400'}`}>
-                      {lifestyleRatio.toFixed(1)}%
-                    </div>
-                    <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
-                      ฿{formatMoney(variableTotal)}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-                  <div 
-                    className={`h-full absolute left-0 top-0 transition-none ${
-                      showSkeleton ? 'bg-slate-700 animate-pulse' : 'bg-orange-500'
-                    }`} 
-                    style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">หมวดฟุ่มเฟือย Top 4</span>
-                  <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">Top 4</span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  {topWantCategories && topWantCategories.length > 0 ? (
-                    topWantCategories.map(cat => (
-                      <div key={cat.id} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                        <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-wide truncate flex items-center gap-1">
-                          <span>{cat.icon}</span> {cat.name}
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(cat.amount)}</span>
-                          <span className="text-[9px] font-bold text-neutral-500">({cat.pctOfWant}%)</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-2 bg-[#181818] p-2 text-center text-[9px] text-neutral-500 flex items-center justify-center">
-                      ไม่มีข้อมูลฟุ่มเฟือย
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* VICTORY CARD */}
-          <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
-            dailyVictory >= 0 ? 'border-l-lime-500' : 'border-l-[#da291c]'
-          }`}>
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <Award size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                เงินเหลือรายวัน (Victory)
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>ระยะเวลาคำนวณ</span>
-                  <span className="text-lime-400 font-extrabold">{periodDays} วันในงวด</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-20" />
-                ) : (
-                  <div className={`text-lg font-black tabular-nums leading-none ${
-                    dailyVictory >= 0 ? 'text-lime-400' : 'text-[#da291c]'
-                  }`}>
-                    ฿{formatMoney(dailyVictory)}
-                  </div>
-                )}
-                <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
-                  {dailyVictory >= 0 ? 'กำไรสะสมรายวัน' : 'ขาดทุนสะสมรายวัน'}
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">โครงสร้างรายวัน</span>
-                  <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${
-                    dailyVictory >= 0 ? 'text-lime-400 border-lime-400/30' : 'text-[#da291c] border-[#da291c]/30'
-                  }`}>เฉลี่ย {periodDays} วัน</span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📥 รับ/วัน</span>
-                    <span className="text-[13px] font-black text-emerald-400 tabular-nums">฿{formatMoney(dailyIncome)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
-                    <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyFixed)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
-                    <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">🏦 ออม/วัน</span>
-                    <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailySavings)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
+          <StrategicRentCard
+            rentPercentageNum={rentPercentageNum}
+            rentTotal={rentTotal}
+            rentSub={rentSub}
+            showSkeleton={showSkeleton}
+          />
+          <StrategicLifestyleCard
+            lifestyleRatio={lifestyleRatio}
+            variableTotal={variableTotal}
+            topWantCategories={topWantCategories}
+            showSkeleton={showSkeleton}
+          />
+          <StrategicVictoryCard
+            dailyVictory={dailyVictory}
+            periodDays={periodDays}
+            dailyIncome={dailyIncome}
+            dailyFixed={dailyFixed}
+            dailyVariable={dailyVariable}
+            dailySavings={dailySavings}
+            showSkeleton={showSkeleton}
+          />
         </div>
       </div>
 
@@ -457,196 +696,29 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }) => {
       <div className="col-span-5 flex flex-col">
         <SectionHeader icon={Scale} title="ข้อมูลสำคัญ (Metrics)" />
         <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
-          
-          {/* FOOD RATIO CARD */}
-          <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-amber-500">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <UtensilsCrossed size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                สัดส่วนค่าอาหาร
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>เกณฑ์สัดส่วน</span>
-                  <span className="text-amber-400 font-extrabold">&lt; 25% ของรายจ่าย</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-12" />
-                ) : (
-                  <div className="text-lg font-black leading-none text-amber-400">
-                    {foodPercentage}%
-                  </div>
-                )}
-                <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
-                  ของรายจ่ายรวม
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">เจาะลึกงบอาหาร</span>
-                  <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${
-                    Number.parseFloat(foodPctOfIncome) <= 20 
-                      ? 'text-emerald-400 border-emerald-400/30' 
-                      : Number.parseFloat(foodPctOfIncome) <= 30 
-                        ? 'text-amber-400 border-amber-400/30' 
-                        : 'text-rose-400 border-rose-400/30'
-                  }`}>
-                    {Number.parseFloat(foodPctOfIncome) <= 20 ? 'สมดุลดี' : Number.parseFloat(foodPctOfIncome) <= 30 ? 'ปานกลาง' : 'สัดส่วนสูง'}
-                  </span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📊 % รายรับ</span>
-                    <span className="text-[13px] font-black text-emerald-400 tabular-nums">{foodPctOfIncome}%</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">📉 % รายจ่าย</span>
-                    <span className="text-[13px] font-black text-rose-400 tabular-nums">{foodPercentage}%</span>
-                  </div>
-                  <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🍽️ รวมค่าอาหาร</span>
-                    <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(foodTotal)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* AVG FOOD DAILY CARD */}
-          <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-orange-400">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <UtensilsCrossed size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                กินเฉลี่ย/วัน
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>งบกินรวม</span>
-                  <span className="text-orange-400 font-extrabold tabular-nums">฿{formatMoney(foodTotal)}</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-16" />
-                ) : (
-                  <div className="text-lg font-black tabular-nums leading-none text-orange-400">
-                    ฿{formatMoney(foodDailyAvg)}
-                  </div>
-                )}
-                <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
-                  ค่าอาหารรายวัน
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">พฤติกรรมการกิน</span>
-                  <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
-                    <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(foodWorkdayAvg)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wide">🏖️ วันหยุด</span>
-                    <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(foodHolidayAvg)}</span>
-                  </div>
-                  <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏆 พีคสูงสุดใน 1 วัน</span>
-                    <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(maxFoodDayAmount)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* AVG DAILY EXPENSE CARD */}
-          <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-[#da291c]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-              <TrendingDown size={72} />
-            </div>
-
-            {/* Original Content (Blurs and fades on hover) */}
-            <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-                รายจ่ายเฉลี่ย/วัน
-              </span>
-              
-              {!showSkeleton && (
-                <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-                  <span>ยอดจ่ายรวม</span>
-                  <span className="text-rose-400 font-extrabold tabular-nums">฿{formatMoney(totalExpense)}</span>
-                </div>
-              )}
-              
-              <div className="mt-auto z-10">
-                {showSkeleton ? (
-                  <Shimmer className="h-6 w-16" />
-                ) : (
-                  <div className="text-lg font-black tabular-nums leading-none text-rose-400">
-                    ฿{formatMoney(dailyAvg)}
-                  </div>
-                )}
-                <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
-                  เฉลี่ยรวมทุกวัน
-                </div>
-              </div>
-            </div>
-
-            {/* Hover Breakdown Overlay */}
-            {!showSkeleton && (
-              <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-                <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-                  <span className="truncate">อัตราจ่ายรายวัน</span>
-                  <span className="text-rose-400 font-extrabold text-[8px] border border-rose-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
-                    <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailyWorkdayAvg)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏖️ วันหยุด</span>
-                    <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyHolidayAvg)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
-                    <span className="text-[13px] font-black text-neutral-300 tabular-nums">฿{formatMoney(dailyFixed)}</span>
-                  </div>
-                  <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                    <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
-                    <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
+          <StrategicFoodRatioCard
+            foodPercentage={foodPercentage}
+            foodPctOfIncome={foodPctOfIncome}
+            foodTotal={foodTotal}
+            showSkeleton={showSkeleton}
+          />
+          <StrategicFoodDailyCard
+            foodDailyAvg={foodDailyAvg}
+            foodTotal={foodTotal}
+            foodWorkdayAvg={foodWorkdayAvg}
+            foodHolidayAvg={foodHolidayAvg}
+            maxFoodDayAmount={maxFoodDayAmount}
+            showSkeleton={showSkeleton}
+          />
+          <StrategicDailyExpenseCard
+            dailyAvg={dailyAvg}
+            totalExpense={totalExpense}
+            dailyWorkdayAvg={dailyWorkdayAvg}
+            dailyHolidayAvg={dailyHolidayAvg}
+            dailyFixed={dailyFixed}
+            dailyVariable={dailyVariable}
+            showSkeleton={showSkeleton}
+          />
         </div>
       </div>
 

@@ -248,6 +248,95 @@ function DatePickerDayCell({
   );
 }
 
+function parseDraftDatesFromValue(value) {
+  if (!value || value === 'ALL' || value === 'WEEKDAY' || value === 'WEEKEND') {
+    return new Set();
+  }
+  if (value.includes(',')) return new Set(value.split(','));
+  if (value.includes(':')) {
+    const [s, e] = value.split(':');
+    return new Set(getDatesInRange(s, e));
+  }
+  return new Set([value]);
+}
+
+function applyRangeSelection(baseline, range, mode) {
+  const next = new Set(baseline);
+  if (mode) {
+    range.forEach(d => next.add(d));
+  } else {
+    range.forEach(d => next.delete(d));
+  }
+  return next;
+}
+
+function formatConfirmedValue(draftDates, allowAll) {
+  if (draftDates.size === 0) return allowAll ? 'ALL' : '';
+  if (draftDates.size === 1) return Array.from(draftDates)[0];
+  const sorted = Array.from(draftDates).sort((a, b) => a.localeCompare(b));
+  return sorted.join(',');
+}
+
+function DatePickerTrigger({
+  variant,
+  open,
+  setOpen,
+  isActive,
+  value,
+  placeholder,
+  textMain,
+  textMuted
+}) {
+  if (variant === 'hud') {
+    return (
+      <button 
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`relative w-full text-left flex items-center border rounded-none bg-[#121212] cursor-pointer select-none transition-colors ${
+          isActive 
+            ? 'border-[#da291c] text-white bg-[#121212]' 
+            : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
+        }`}
+      >
+        <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
+          isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
+        }`}>
+          <Calendar className="w-3 h-3" />
+        </div>
+        
+        <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-7 truncate text-[#cbd5e1]">
+          {formatDisplay(value, placeholder)}
+        </div>
+        
+        <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
+          isActive ? 'text-[#da291c]' : 'text-[#666666]'
+        }`}>
+          <ChevronDown className="w-3 h-3" />
+        </div>
+        
+        {isActive && (
+          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(!open)}
+      className="w-full px-3 py-2.5 text-sm border rounded-none flex items-center justify-between gap-2 font-medium transition-colors outline-none bg-[#121212] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"
+    >
+      <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
+        {formatDisplay(value, placeholder)}
+      </span>
+      <Calendar className="w-4 h-4 shrink-0 text-[#888888]" />
+    </button>
+  );
+}
+
 export default function DatePicker({
   value,
   onChange,
@@ -265,17 +354,7 @@ export default function DatePicker({
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
   
   // Draft dates set for multi-selection (Set of YYYY-MM-DD strings)
-  const [draftDates, setDraftDates] = useState(() => {
-    if (value && value !== 'ALL' && value !== 'WEEKDAY' && value !== 'WEEKEND') {
-      if (value.includes(',')) return new Set(value.split(','));
-      if (value.includes(':')) {
-        const [s, e] = value.split(':');
-        return new Set(getDatesInRange(s, e));
-      }
-      return new Set([value]);
-    }
-    return new Set();
-  });
+  const [draftDates, setDraftDates] = useState(() => parseDraftDatesFromValue(value));
 
   // Drag Sweep States
   const [isDragging, setIsDragging] = useState(false);
@@ -290,17 +369,7 @@ export default function DatePicker({
   useEffect(() => {
     if (!open) return;
     setViewDate(parseValue(value, filterPeriod));
-    if (value && value !== 'ALL' && value !== 'WEEKDAY' && value !== 'WEEKEND') {
-      if (value.includes(',')) setDraftDates(new Set(value.split(',')));
-      else if (value.includes(':')) {
-        const [s, e] = value.split(':');
-        setDraftDates(new Set(getDatesInRange(s, e)));
-      } else {
-        setDraftDates(new Set([value]));
-      }
-    } else {
-      setDraftDates(new Set());
-    }
+    setDraftDates(parseDraftDatesFromValue(value));
   }, [open, value, filterPeriod]);
 
   // Click outside listener
@@ -330,13 +399,7 @@ export default function DatePicker({
     const handleGlobalMouseUp = () => {
       if (dragStart && dragCurrent) {
         const range = getDatesInRange(dragStart, dragCurrent);
-        const next = new Set(dragBaseline);
-        if (dragMode) {
-          range.forEach(d => next.add(d));
-        } else {
-          range.forEach(d => next.delete(d));
-        }
-        setDraftDates(next);
+        setDraftDates(applyRangeSelection(dragBaseline, range, dragMode));
       }
       setIsDragging(false);
       setDragStart(null);
@@ -350,13 +413,7 @@ export default function DatePicker({
   const activeDraftDates = useMemo(() => {
     if (!isDragging || !dragStart || !dragCurrent) return draftDates;
     const range = getDatesInRange(dragStart, dragCurrent);
-    const next = new Set(dragBaseline);
-    if (dragMode) {
-      range.forEach(d => next.add(d));
-    } else {
-      range.forEach(d => next.delete(d));
-    }
-    return next;
+    return applyRangeSelection(dragBaseline, range, dragMode);
   }, [isDragging, dragStart, dragCurrent, dragBaseline, dragMode, draftDates]);
 
   const y = viewDate.getFullYear();
@@ -427,14 +484,7 @@ export default function DatePicker({
 
   // Confirm multi-selection
   const handleConfirm = () => {
-    if (draftDates.size === 0) {
-      onChange(allowAll ? 'ALL' : '');
-    } else if (draftDates.size === 1) {
-      onChange(Array.from(draftDates)[0]);
-    } else {
-      const sorted = Array.from(draftDates).sort((a, b) => a.localeCompare(b));
-      onChange(sorted.join(','));
-    }
+    onChange(formatConfirmedValue(draftDates, allowAll));
     setOpen(false);
   };
 
@@ -482,50 +532,16 @@ export default function DatePicker({
 
   return (
     <div ref={containerRef} className="relative z-50 w-full">
-      {variant === 'hud' ? (
-        <button 
-          type="button"
-          onClick={() => setOpen(!open)}
-          className={`relative w-full text-left flex items-center border rounded-none bg-[#121212] cursor-pointer select-none transition-colors ${
-            isActive 
-              ? 'border-[#da291c] text-white bg-[#121212]' 
-              : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
-          }`}
-        >
-          <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
-            isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
-          }`}>
-            <Calendar className="w-3 h-3" />
-          </div>
-          
-          <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-7 truncate text-[#cbd5e1]">
-            {formatDisplay(value, placeholder)}
-          </div>
-          
-          <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-            isActive ? 'text-[#da291c]' : 'text-[#666666]'
-          }`}>
-            <ChevronDown className="w-3 h-3" />
-          </div>
-          
-          {isActive && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-              <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
-            </span>
-          )}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="w-full px-3 py-2.5 text-sm border rounded-none flex items-center justify-between gap-2 font-medium transition-colors outline-none bg-[#121212] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"
-        >
-          <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
-            {formatDisplay(value, placeholder)}
-          </span>
-          <Calendar className="w-4 h-4 shrink-0 text-[#888888]" />
-        </button>
-      )}
+      <DatePickerTrigger
+        variant={variant}
+        open={open}
+        setOpen={setOpen}
+        isActive={isActive}
+        value={value}
+        placeholder={placeholder}
+        textMain={textMain}
+        textMuted={textMuted}
+      />
 
       {open && (
         <div className={`absolute top-[calc(100%+6px)] left-0 z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}>

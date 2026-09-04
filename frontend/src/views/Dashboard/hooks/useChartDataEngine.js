@@ -1,6 +1,50 @@
 import { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
 
+function resolveDatasetBgColor(ds, chartViewType, borderColor) {
+  if (chartViewType !== 'bar') return ds.backgroundColor;
+  if (ds.borderColor && !ds.backgroundColor?.includes('0.6')) return ds.borderColor;
+  if (ds.backgroundColor?.includes('rgba')) return borderColor;
+  return ds.backgroundColor;
+}
+
+function resolveDatasetBorderWidth(chartViewType, dashboardCategory) {
+  if (chartViewType !== 'line') return 0;
+  return (Array.isArray(dashboardCategory) && dashboardCategory.length > 1 && !dashboardCategory.includes('ALL')) ? 3 : 4;
+}
+
+function processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory }) {
+  if (ds.label === 'Cashflow') {
+    return {
+      ...ds,
+      type: 'line',
+      tension: isSmoothLine ? 0.4 : 0,
+      borderWidth: 4,
+      hidden: hiddenDatasets?.includes(ds.label)
+    };
+  }
+
+  const isLine = chartViewType === 'line';
+  const borderColor = ds.borderColor || ds.backgroundColor;
+  const bgColor = resolveDatasetBgColor(ds, chartViewType, borderColor);
+  const bWidth = resolveDatasetBorderWidth(chartViewType, dashboardCategory);
+
+  return {
+    ...ds,
+    type: isLine ? 'line' : 'bar',
+    tension: isSmoothLine ? 0.4 : 0,
+    backgroundColor: isLine ? ds.backgroundColor : bgColor,
+    borderColor,
+    borderWidth: bWidth,
+    borderRadius: 0,
+    pointRadius: isLine ? 4 : 0,
+    pointBackgroundColor: borderColor,
+    pointBorderWidth: 2,
+    pointBorderColor: '#1e293b',
+    hidden: hiddenDatasets?.includes(ds.label)
+  };
+}
+
 export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, sankeyData, chartGroupMode, hiddenDatasets }) {
   const { transactions, analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy, dm } = useDashboardContext();
 
@@ -74,41 +118,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
     }
 
     let filteredDatasets = analytics.mainChartData.datasets.filter(ds => ds.type !== 'line' || ds.label === 'Cashflow');
-
-    const processedDatasets = filteredDatasets.map(ds => {
-      const isTrendLine = ds.label === 'Cashflow';
-      let finalData = ds.data;
-      if (isTrendLine) {
-        return {
-          ...ds,
-          data: finalData,
-          type: 'line',
-          tension: isSmoothLine ? 0.4 : 0,
-          borderWidth: 4,
-          hidden: hiddenDatasets?.includes(ds.label)
-        };
-      }
-      const newType = chartViewType === 'line' ? 'line' : 'bar';
-      let bgColor = ds.backgroundColor;
-      let borderColor = ds.borderColor || ds.backgroundColor;
-      if (chartViewType === 'bar') {
-        if (ds.borderColor && !ds.backgroundColor?.includes('0.6')) bgColor = ds.borderColor;
-        else if (ds.backgroundColor?.includes('rgba')) bgColor = borderColor;
-      }
-      let bWidth = 0;
-      if (chartViewType === 'line') {
-        bWidth = (Array.isArray(dashboardCategory) && dashboardCategory.length > 1 && !dashboardCategory.includes('ALL')) ? 3 : 4;
-      }
-      return {
-        ...ds, data: finalData, type: newType, tension: isSmoothLine ? 0.4 : 0,
-        backgroundColor: chartViewType === 'line' ? ds.backgroundColor : bgColor,
-        borderColor, borderWidth: bWidth, borderRadius: 0,
-        pointRadius: chartViewType === 'line' ? 4 : 0,
-        pointBackgroundColor: borderColor,
-        pointBorderWidth: 2, pointBorderColor: '#1e293b',
-        hidden: hiddenDatasets?.includes(ds.label)
-      };
-    });
+    const processedDatasets = filteredDatasets.map(ds => processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory }));
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
   }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, dm, sankeyData, hiddenDatasets]);

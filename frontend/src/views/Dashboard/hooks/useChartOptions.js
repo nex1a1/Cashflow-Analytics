@@ -7,6 +7,75 @@ import {
 import { formatMoney } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 
+function formatAllocLine(label, amount, total, isCurrentFlow) {
+  if (amount <= 0) return null;
+  const pct = total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0';
+  const marker = isCurrentFlow ? ' ◄ (สายธารนี้)' : '';
+  return `  ${label}: ฿${formatMoney(amount)} (${pct}%)${marker}`;
+}
+
+function buildSankeyAllocLines(item) {
+  const { need = 0, want = 0, savings = 0, total = item.flow } = item.allocBreakdown || {};
+  const allocCount = (need > 0 ? 1 : 0) + (want > 0 ? 1 : 0) + (savings > 0 ? 1 : 0);
+  if (allocCount <= 1) return [];
+
+  const lines = [
+    '──────────────────────',
+    `รวมทั้งหมวด: ฿${formatMoney(total)}`
+  ];
+
+  const needLine = formatAllocLine('Need', need, total, item.from?.includes('Need'));
+  if (needLine) lines.push(needLine);
+
+  const wantLine = formatAllocLine('Want', want, total, item.from?.includes('Want'));
+  if (wantLine) lines.push(wantLine);
+
+  const savLine = formatAllocLine('Savings', savings, total, item.from?.includes('Savings'));
+  if (savLine) lines.push(savLine);
+
+  return lines;
+}
+
+function formatSankeyTooltipLabel(c) {
+  const item = c.dataset?.data?.[c.dataIndex];
+  if (!item) return '';
+
+  const lines = [`฿${formatMoney(item.flow)} (${item.percent || '-'})`];
+  if (item.allocBreakdown) {
+    lines.push(...buildSankeyAllocLines(item));
+  }
+  return lines;
+}
+
+function cleanSankeyNodeName(str) {
+  if (!str) return '';
+  const lastOpen = str.lastIndexOf('(');
+  return (lastOpen !== -1 && str.endsWith(')'))
+    ? str.slice(0, lastOpen).trimEnd()
+    : str;
+}
+
+function formatSankeyTooltipTitle(tooltipItems) {
+  const item = tooltipItems[0]?.raw;
+  if (!item) return '';
+  return `${cleanSankeyNodeName(item.from)} → ${cleanSankeyNodeName(item.to)}`;
+}
+
+function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, dm, yType, autoSkip }) {
+  if (isBreakdown) {
+    return chartViewType === 'line'
+      ? getLineChartOptions(dm, yType, autoSkip)
+      : getBarChartOptions(dm, yType, autoSkip);
+  }
+  if (chartViewType === 'line') {
+    return getLineChartOptions(dm, yType, autoSkip);
+  }
+  if (mainChartType === 'combo') {
+    return getComboChartOptions(dm, yType, autoSkip);
+  }
+  return getBarChartOptions(dm, yType, autoSkip);
+}
+
 export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
   const { analytics, dm, filterPeriod } = useDashboardContext();
 
@@ -32,8 +101,8 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
               }
               return '#121212';
             },
-            titleColor: (ctx) => '#FFFFFF',
-            bodyColor: (ctx) => '#CBD5E1',
+            titleColor: () => '#FFFFFF',
+            bodyColor: () => '#CBD5E1',
             borderColor: (ctx) => {
               const item = ctx.tooltipItems[0];
               return item?.element?.options?.backgroundColor || ('#303030');
@@ -42,51 +111,8 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
             padding: 12,
             cornerRadius: 0,
             callbacks: {
-              label: (c) => {
-                const item = c.dataset.data[c.dataIndex];
-                if (!item) return '';
-                const lines = [
-                  `฿${formatMoney(item.flow)} (${item.percent || '-'})`
-                ];
-
-                if (item.allocBreakdown) {
-                  const { need = 0, want = 0, savings = 0, total = item.flow } = item.allocBreakdown;
-                  const allocCount = (need > 0 ? 1 : 0) + (want > 0 ? 1 : 0) + (savings > 0 ? 1 : 0);
-                  if (allocCount > 1) {
-                    lines.push('──────────────────────');
-                    lines.push(`รวมทั้งหมวด: ฿${formatMoney(total)}`);
-                    const isNeedFlow = item.from?.includes('Need');
-                    const isWantFlow = item.from?.includes('Want');
-                    const isSavFlow = item.from?.includes('Savings');
-
-                    if (need > 0) {
-                      const pct = total > 0 ? ((need / total) * 100).toFixed(1) : '0.0';
-                      lines.push(`  Need: ฿${formatMoney(need)} (${pct}%)${isNeedFlow ? ' ◄ (สายธารนี้)' : ''}`);
-                    }
-                    if (want > 0) {
-                      const pct = total > 0 ? ((want / total) * 100).toFixed(1) : '0.0';
-                      lines.push(`  Want: ฿${formatMoney(want)} (${pct}%)${isWantFlow ? ' ◄ (สายธารนี้)' : ''}`);
-                    }
-                    if (savings > 0) {
-                      const pct = total > 0 ? ((savings / total) * 100).toFixed(1) : '0.0';
-                      lines.push(`  Savings: ฿${formatMoney(savings)} (${pct}%)${isSavFlow ? ' ◄ (สายธารนี้)' : ''}`);
-                    }
-                  }
-                }
-
-                return lines;
-              },
-              title: (tooltipItems) => {
-                const item = tooltipItems[0]?.raw;
-                const cleanName = (str) => {
-                  if (!str) return '';
-                  const lastOpen = str.lastIndexOf('(');
-                  return (lastOpen !== -1 && str.endsWith(')'))
-                    ? str.slice(0, lastOpen).trimEnd()
-                    : str;
-                };
-                return `${cleanName(item.from)} → ${cleanName(item.to)}`;
-              },
+              label: (c) => formatSankeyTooltipLabel(c),
+              title: (tooltipItems) => formatSankeyTooltipTitle(tooltipItems),
               labelColor: (context) => {
                 const item = context.raw;
                 const flowColor = item?.color || ('#475569');
@@ -103,14 +129,16 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
       };
     }
     
-    let baseOptions;
     const yType = isLogScale ? 'logarithmic' : 'linear';
     const isStacked = isBreakdown && chartViewType === 'bar';
-    if (isBreakdown && chartViewType === 'bar') baseOptions = getBarChartOptions(dm, yType, autoSkip);
-    else if (isBreakdown && chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType, autoSkip);
-    else if (analytics.mainChartType === 'combo' && chartViewType === 'bar') baseOptions = getComboChartOptions(dm, yType, autoSkip);
-    else if (chartViewType === 'line') baseOptions = getLineChartOptions(dm, yType, autoSkip);
-    else baseOptions = getBarChartOptions(dm, yType, autoSkip);
+    const baseOptions = resolveBaseChartOptions({
+      isBreakdown,
+      chartViewType,
+      mainChartType: analytics.mainChartType,
+      dm,
+      yType,
+      autoSkip
+    });
 
     return {
       ...baseOptions,

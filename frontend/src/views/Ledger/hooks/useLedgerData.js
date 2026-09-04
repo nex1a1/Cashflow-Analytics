@@ -1,5 +1,55 @@
 import { useMemo, useState, useEffect } from 'react';
 
+function compareByAmount(a, b, direction) {
+  const valA = Number.parseFloat(a.amount) || 0;
+  const valB = Number.parseFloat(b.amount) || 0;
+  if (valA === valB) return 0;
+  return direction === 'asc' ? valA - valB : valB - valA;
+}
+
+function compareByCategory(a, b, direction) {
+  const valA = a.category || '';
+  const valB = b.category || '';
+  if (valA === valB) return 0;
+  const res = valA.localeCompare(valB);
+  return direction === 'asc' ? res : -res;
+}
+
+function compareByDate(a, b, sortConfig) {
+  const valA = a.date.split('/').reverse().join('');
+  const valB = b.date.split('/').reverse().join('');
+  if (valA === valB) return 0;
+  const res = valA.localeCompare(valB);
+  const dir = sortConfig.key === 'date' ? sortConfig.direction : 'asc';
+  return dir === 'asc' ? res : -res;
+}
+
+function comparePrimary(a, b, sortConfig) {
+  if (sortConfig.key === 'amount') return compareByAmount(a, b, sortConfig.direction);
+  if (sortConfig.key === 'category') return compareByCategory(a, b, sortConfig.direction);
+  return compareByDate(a, b, sortConfig);
+}
+
+function compareHierarchyOrder(a, b, groupOrderMap, catOrderMap) {
+  const groupAOrder = groupOrderMap[a.cashflow_group_id] ?? 999;
+  const groupBOrder = groupOrderMap[b.cashflow_group_id] ?? 999;
+  if (groupAOrder !== groupBOrder) return groupAOrder - groupBOrder;
+
+  const catAOrder = catOrderMap[a.category_id] ?? 999;
+  const catBOrder = catOrderMap[b.category_id] ?? 999;
+  if (catAOrder !== catBOrder) return catAOrder - catBOrder;
+
+  const amtA = Number.parseFloat(a.amount) || 0;
+  const amtB = Number.parseFloat(b.amount) || 0;
+  return amtB - amtA;
+}
+
+function compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap) {
+  const primaryDiff = comparePrimary(a, b, sortConfig);
+  if (primaryDiff !== 0) return primaryDiff;
+  return compareHierarchyOrder(a, b, groupOrderMap, catOrderMap);
+}
+
 export function useLedgerData(displayTransactions, filterPeriod, searchQuery, filters = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
@@ -25,45 +75,9 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
   };
 
   const sortedTransactions = useMemo(() => {
-    return [...displayTransactions].sort((a, b) => {
-      // 1. Primary Sort: Manual Selection or Date (Default)
-      if (sortConfig.key === 'amount') {
-        const valA = Number.parseFloat(a.amount) || 0;
-        const valB = Number.parseFloat(b.amount) || 0;
-        if (valA !== valB) return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
-      } else if (sortConfig.key === 'category') {
-        const valA = a.category || '';
-        const valB = b.category || '';
-        if (valA !== valB) {
-          const res = valA.localeCompare(valB);
-          return sortConfig.direction === 'asc' ? res : -res;
-        }
-      } else {
-        // Default Primary Sort: Date (YYYYMMDD) - Ascending (1 to 31)
-        const valA = a.date.split('/').reverse().join('');
-        const valB = b.date.split('/').reverse().join('');
-        if (valA !== valB) {
-          const res = valA.localeCompare(valB);
-          const dir = (sortConfig.key === 'date') ? sortConfig.direction : 'asc';
-          return dir === 'asc' ? res : -res;
-        }
-      }
-
-      // 2. Secondary Sort: Group Order Index (from Settings)
-      const groupAOrder = groupOrderMap[a.cashflow_group_id] ?? 999;
-      const groupBOrder = groupOrderMap[b.cashflow_group_id] ?? 999;
-      if (groupAOrder !== groupBOrder) return groupAOrder - groupBOrder;
-
-      // 3. Tertiary Sort: Category Order Index (from Settings)
-      const catAOrder = catOrderMap[a.category_id] ?? 999;
-      const catBOrder = catOrderMap[b.category_id] ?? 999;
-      if (catAOrder !== catBOrder) return catAOrder - catBOrder;
-
-      // 4. Final Tie-breaker: Amount (Highest to Lowest)
-      const amtA = Number.parseFloat(a.amount) || 0;
-      const amtB = Number.parseFloat(b.amount) || 0;
-      return amtB - amtA;
-    });
+    return [...displayTransactions].sort((a, b) =>
+      compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap)
+    );
   }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap]);
 
   const pages = useMemo(() => {

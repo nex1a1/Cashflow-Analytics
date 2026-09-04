@@ -35,25 +35,60 @@ export const autoCategorize = (description: string, categoryName: string, catego
   return exists ? exists.name : (categoryList.filter(c=>c.type==='expense')[0]?.name || "อื่นๆ");
 };
 
+const pushNonEmptyRow = (rows: string[][], row: string[]) => {
+  if (row.some(c => c.trim() !== '')) {
+    rows.push(row);
+  }
+};
+
 export const parseCSV = (text: string): string[][] => {
-  let rows: string[][] = [], row: string[] = [], current = '', inQuotes = false;
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
   for (let i = 0; i < text.length; i++) {
-      let char = text[i], nextChar = text[i + 1];
-      if (char === '"') {
-          if (inQuotes && nextChar === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; }
-      } else if (char === ',' && !inQuotes) {
-          row.push(current); current = '';
-      } else if ((char === '\n' || char === '\r') && !inQuotes) {
-          if (char === '\r' && nextChar === '\n') i++;
-          row.push(current);
-          if (row.some(c => c.trim() !== '')) rows.push(row);
-          row = []; current = '';
-      } else { current += char; }
-  }
-  if (current !== '' || row.length > 0) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (inQuotes) {
+      current += char;
+      continue;
+    }
+
+    if (char === ',') {
       row.push(current);
-      if (row.some(c => c.trim() !== '')) rows.push(row);
+      current = '';
+      continue;
+    }
+
+    if (char === '\n' || char === '\r') {
+      if (char === '\r' && nextChar === '\n') i++;
+      row.push(current);
+      pushNonEmptyRow(rows, row);
+      row = [];
+      current = '';
+      continue;
+    }
+
+    current += char;
   }
+
+  if (current !== '' || row.length > 0) {
+    row.push(current);
+    pushNonEmptyRow(rows, row);
+  }
+
   return rows.map(r => r.map(c => c.trim()));
 };
 

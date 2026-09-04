@@ -301,6 +301,76 @@ const buildCategoryDataset = (
   };
 };
 
+const buildMainChartXLabels = (
+  showMonthly: boolean,
+  isSingleMonthView: boolean,
+  sortedMonthsKeys: string[],
+  datesInPeriod: string[]
+): string[] => {
+  if (showMonthly) {
+    return sortedMonthsKeys.map(m => getThaiMonth(m));
+  }
+  if (isSingleMonthView) {
+    return datesInPeriod.map(d => {
+      const parts = d.split('-');
+      return parts.length === 3 ? `วันที่ ${parts[2]}` : d;
+    });
+  }
+  return datesInPeriod.map(d => {
+    const parts = d.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+  });
+};
+
+const buildMonthlyComboChartData = (
+  xLabels: string[],
+  sortedMonthsKeys: string[],
+  cashflowMap: Record<string, CashflowMonthData>
+) => ({
+  labels: xLabels,
+  datasets: [
+    { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#38bdf8', backgroundColor: '#38bdf8', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+    { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 0 },
+    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 0 },
+  ],
+});
+
+const buildDailyComboChartData = (
+  xLabels: string[],
+  datesInPeriod: string[],
+  dailyAllMap: Record<string, number>,
+  hideFixedExpenses: boolean,
+  hideWantExpenses: boolean
+) => {
+  let runningSum = 0;
+  const mtdAvgData = datesInPeriod.map((d, index) => {
+    runningSum += (dailyAllMap[d] || 0);
+    return runningSum / (index + 1);
+  });
+
+  const currentTotal = datesInPeriod.reduce((sum, d) => sum + (dailyAllMap[d] || 0), 0);
+  const currentDailyAvg = datesInPeriod.length > 0 ? currentTotal / datesInPeriod.length : 0;
+
+  return {
+    labels: xLabels,
+    datasets: [
+      {
+        type: 'line', label: 'เฉลี่ยสะสม (MTD)', data: mtdAvgData, borderColor: '#F59E0B',
+        backgroundColor: 'transparent', borderWidth: 4, tension: 0.4, pointRadius: 0, pointHitRadius: 10, order: 1
+      },
+      {
+        type: 'line', label: `เฉลี่ยทั้งเดือน ${formatMoney(currentDailyAvg)}/วัน`, data: datesInPeriod.map(() => currentDailyAvg),
+        borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
+      },
+      {
+        type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : (hideWantExpenses ? 'รายจ่ายจำเป็น' : 'รายจ่ายจริง'), data: datesInPeriod.map(d => dailyAllMap[d] || 0),
+        backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.6)' : (hideWantExpenses ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'),
+        borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'), borderWidth: 2, borderRadius: 0, order: 3
+      }
+    ]
+  };
+};
+
 /**
  * Generates datasets for the main dashboard chart (Combo or Line).
  */
@@ -314,82 +384,43 @@ export const generateMainChartData = ({
   const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
   const isOnlyAll = activeCats.length === 1 && activeCats[0] === 'ALL';
 
-  const xLabels = showMonthly 
-    ? sortedMonthsKeys.map(m => getThaiMonth(m))
-    : isSingleMonthView 
-      ? datesInPeriod.map(d => {
-          const parts = d.split('-');
-          return parts.length === 3 ? `วันที่ ${parts[2]}` : d;
-        })
-      : datesInPeriod.map(d => {
-          const parts = d.split('-');
-          return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
-        });
-
-  let chartType = 'line';
-  let chartData: any = null;
+  const xLabels = buildMainChartXLabels(showMonthly, isSingleMonthView, sortedMonthsKeys, datesInPeriod);
 
   if (showMonthly && isOnlyAll && !hideFixedExpenses && !hideWantExpenses) {
-    chartType = 'combo';
-    chartData = {
-      labels: xLabels,
-      datasets: [
-        { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#38bdf8', backgroundColor: '#38bdf8', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
-        { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 0 },
-        { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 0 },
-      ],
+    return {
+      chartType: 'combo',
+      chartData: buildMonthlyComboChartData(xLabels, sortedMonthsKeys, cashflowMap),
     };
-  } else if (!showMonthly && isOnlyAll) {
-    chartType = 'combo';
-    let runningSum = 0;
-    const mtdAvgData = datesInPeriod.map((d, index) => {
-        runningSum += (dailyAllMap[d] || 0);
-        return runningSum / (index + 1);
-    });
-
-    const currentTotal = datesInPeriod.reduce((sum, d) => sum + (dailyAllMap[d] || 0), 0);
-    const currentDailyAvg = datesInPeriod.length > 0 ? currentTotal / datesInPeriod.length : 0;
-
-    chartData = {
-      labels: xLabels,
-      datasets: [
-        {
-          type: 'line', label: 'เฉลี่ยสะสม (MTD)', data: mtdAvgData, borderColor: '#F59E0B',
-          backgroundColor: 'transparent', borderWidth: 4, tension: 0.4, pointRadius: 0, pointHitRadius: 10, order: 1
-        },
-        {
-          type: 'line', label: `เฉลี่ยทั้งเดือน ${formatMoney(currentDailyAvg)}/วัน`, data: datesInPeriod.map(() => currentDailyAvg),
-          borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
-        },
-        {
-          type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : (hideWantExpenses ? 'รายจ่ายจำเป็น' : 'รายจ่ายจริง'), data: datesInPeriod.map(d => dailyAllMap[d] || 0),
-          backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.6)' : (hideWantExpenses ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'),
-          borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'), borderWidth: 2, borderRadius: 0, order: 3
-        }
-      ]
-    };
-  } else {
-    chartType = 'line';
-    const datasets = activeCats.map(catName =>
-      buildCategoryDataset(catName, {
-        activeCatsCount: activeCats.length,
-        showMonthly,
-        isSingleMonthView,
-        sortedMonthsKeys,
-        datesInPeriod,
-        monthlyAllMap,
-        dailyAllMap,
-        monthlyCatMap,
-        dailyCatMap,
-        hideFixedExpenses,
-        hideWantExpenses,
-        catMap,
-      })
-    );
-    chartData = { labels: xLabels, datasets };
   }
 
-  return { chartData, chartType };
+  if (!showMonthly && isOnlyAll) {
+    return {
+      chartType: 'combo',
+      chartData: buildDailyComboChartData(xLabels, datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses),
+    };
+  }
+
+  const datasets = activeCats.map(catName =>
+    buildCategoryDataset(catName, {
+      activeCatsCount: activeCats.length,
+      showMonthly,
+      isSingleMonthView,
+      sortedMonthsKeys,
+      datesInPeriod,
+      monthlyAllMap,
+      dailyAllMap,
+      monthlyCatMap,
+      dailyCatMap,
+      hideFixedExpenses,
+      hideWantExpenses,
+      catMap,
+    })
+  );
+
+  return {
+    chartType: 'line',
+    chartData: { labels: xLabels, datasets }
+  };
 };
 
 /**

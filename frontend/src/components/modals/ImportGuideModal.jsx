@@ -42,6 +42,193 @@ function downloadSampleFile(filename, content) {
   document.body.removeChild(a);
 }
 
+function LongTablePreview() {
+  return (
+    <>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">01/03/2026</td>
+        <td className="p-3">
+          <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            วันหยุด
+          </span>
+        </td>
+        <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
+        <td className="p-3">
+          <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            อาหารและเครื่องดื่ม
+          </span>
+        </td>
+        <td className="p-3 text-[#cbd5e1]">ข้าวเที่ยง</td>
+        <td className="p-3 text-rose-500 font-bold">65</td>
+      </tr>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">01/03/2026</td>
+        <td className="p-3">
+          <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            วันหยุด
+          </span>
+        </td>
+        <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
+        <td className="p-3">
+          <span className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            ช้อปปิ้งออนไลน์
+          </span>
+        </td>
+        <td className="p-3 text-[#cbd5e1]">Shopee</td>
+        <td className="p-3 text-rose-500 font-bold">299</td>
+      </tr>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">02/03/2026</td>
+        <td className="p-3">
+          <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            ทำงาน
+          </span>
+        </td>
+        <td className="p-3"><span className="text-emerald-500 font-bold">รายรับ</span></td>
+        <td className="p-3">
+          <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
+            เงินเดือน
+          </span>
+        </td>
+        <td className="p-3 text-[#cbd5e1]">เงินเดือนเดือน ก.พ.</td>
+        <td className="p-3 text-emerald-500 font-bold">25000</td>
+      </tr>
+    </>
+  );
+}
+
+function WideTablePreview() {
+  return (
+    <>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">01/03/2026</td>
+        <td className="p-3 text-right text-rose-500 font-bold">฿ 110.00</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-sky-400 font-bold">฿ 45.00</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-slate-500 font-bold italic">฿ 155.00</td>
+        <td className="p-3 text-neutral-600 italic font-sans">—</td>
+      </tr>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">02/03/2026</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-amber-500 font-bold">฿ 299.00</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-slate-500 font-bold italic">฿ 299.00</td>
+        <td className="p-3 text-slate-300 font-sans">Shopee</td>
+      </tr>
+      <tr className="hover:bg-[#1c1c1c] transition-colors">
+        <td className="p-3 text-slate-400">03/03/2026</td>
+        <td className="p-3 text-right text-rose-500 font-bold">฿ 60.00</td>
+        <td className="p-3 text-right text-amber-500 font-bold">฿ 199.00</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-neutral-700 font-mono">—</td>
+        <td className="p-3 text-right text-slate-500 font-bold italic">฿ 259.00</td>
+        <td className="p-3 text-slate-300 font-sans">Lazada</td>
+      </tr>
+    </>
+  );
+}
+
+function GuideSpecsPanel({ selectedFormat }) {
+  if (selectedFormat === 'long') {
+    return (
+      <div className="border border-[#303030] p-5 rounded-none space-y-4 shrink-0 bg-[#121212]">
+        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Layers className="w-4 h-4 text-[#da291c]" />
+          กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-200">ซิงค์ปฏิทินตามชนิดวัน (Calendar Sync)</span>
+              <p className="text-[10px] text-slate-500 leading-normal">
+                คอลัมน์ <span className="text-[#da291c] font-bold">"ชนิดวัน"</span> (ทำงาน/วันหยุด) จะถูกเชื่อมโยงและบันทึกสถิติประเภทวันลงในหน้าปฏิทินระบบโดยตรงอัตโนมัติ
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-200">การจัดการประเภทธุรกรรมที่หลากหลาย</span>
+              <p className="text-[10px] text-slate-500 leading-normal">
+                ระบบถอดรหัสจากคอลัมน์ <span className="text-[#da291c] font-bold">"ประเภท"</span> รองรับ รายรับ รายจ่าย และเงินออม เพื่อประมวลผลกระแสเงินสดหลากรูปแบบในครั้งเดียว
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-200">สร้างหมวดหมู่อัตโนมัติ (Auto-Provision)</span>
+              <p className="text-[10px] text-slate-500 leading-normal">
+                หากคอลัมน์ <span className="text-[#da291c] font-bold">"หมวดหมู่"</span> ยังไม่เคยนิยามไว้ เอ็นจิ้นจะทำการสร้างหมวดหมู่ใหม่ขึ้นมาให้อัตโนมัติโดยที่โครงสร้างระบบไม่เสียหาย
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-200">สเปกจำนวนเงิน Satang-First</span>
+              <p className="text-[10px] text-slate-500 leading-normal">
+                ตัวเลขในช่อง <span className="text-[#da291c] font-bold">"จำนวนเงิน"</span> จะถูกนำไปคูณ 100 เพื่อแปลงเป็นสตางค์ในการประมวลผลเก็บข้อมูลระบบ (Satang Integer Map) เพื่อความแม่นยำทางบัญชี
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-[#303030] p-5 rounded-none space-y-4 shrink-0 bg-[#121212]">
+      <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <Layers className="w-4 h-4 text-[#da291c]" />
+        กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-200">สแกนหัวตารางจับคู่ค่าใช้จ่ายแนวนอน</span>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              ระบบจะจับคู่ชื่อคอลัมน์ภาษาไทย เช่น <span className="text-[#da291c] font-bold">"อาหารและเครื่องดื่ม"</span> หรือ <span className="text-[#da291c] font-bold">"การเดินทาง"</span> เข้ากับหมวดหมู่ที่คุณตั้งค่าไว้โดยตรง
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-200">กรองข้ามคอลัมน์สรุปเพื่อความปลอดภัย</span>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              คอลัมน์อย่างเช่น <span className="text-[#da291c] font-bold">"รวม (Total)", "Date", "Notes"</span> จะถูกตัดออกและเพิกเฉยอัตโนมัติในการสร้างยอดเงิน เพื่อกันปัญหาตัวเลขเบิ้ลสะสม
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-200">ถอดคอลัมน์ Notes เป็นคำอธิบาย</span>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              ข้อความในช่อง <span className="text-[#da291c] font-bold">"Notes"</span> ของวันนั้นๆ จะถูกนำไปใช้เป็นรายละเอียดธุรกรรม (Description) ของรายการในหมวดที่ระบบกรอก
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-200">ระบบทนทานต่อช่องว่าง (Null Tolerance)</span>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              กรณีมีช่องว่างหรือมีสัญลักษณ์ลบ <span className="text-[#da291c] font-bold">"฿ -"</span> ระบบจะประเมินค่าเป็นศูนย์และข้ามไปอย่างไร้ปัญหา ไม่เกิดการหยุดประมวลผลกระทันหัน
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ImportGuideModal({ isOpen, onClose }) {
   const { showToast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState('long'); // 'long' | 'wide'
@@ -282,196 +469,14 @@ export default function ImportGuideModal({ isOpen, onClose }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#303030]">
-                    
-                    {/* Render dynamic mockup rows with high colorful accents */}
-                    {selectedFormat === 'long' ? (
-                      <>
-                        {/* Row 1 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">01/03/2026</td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              วันหยุด
-                            </span>
-                          </td>
-                          <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              อาหารและเครื่องดื่ม
-                            </span>
-                          </td>
-                          <td className="p-3 text-[#cbd5e1]">ข้าวเที่ยง</td>
-                          <td className="p-3 text-rose-500 font-bold">65</td>
-                        </tr>
-                        {/* Row 2 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">01/03/2026</td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-rose-400 bg-rose-950/20 border border-rose-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              วันหยุด
-                            </span>
-                          </td>
-                          <td className="p-3"><span className="text-rose-500 font-bold">รายจ่าย</span></td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              ช้อปปิ้งออนไลน์
-                            </span>
-                          </td>
-                          <td className="p-3 text-[#cbd5e1]">Shopee</td>
-                          <td className="p-3 text-rose-500 font-bold">299</td>
-                        </tr>
-                        {/* Row 3 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">02/03/2026</td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              ทำงาน
-                            </span>
-                          </td>
-                          <td className="p-3"><span className="text-emerald-500 font-bold">รายรับ</span></td>
-                          <td className="p-3">
-                            <span className="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2.5 py-0.5 rounded-full font-bold">
-                              เงินเดือน
-                            </span>
-                          </td>
-                          <td className="p-3 text-[#cbd5e1]">เงินเดือนเดือน ก.พ.</td>
-                          <td className="p-3 text-emerald-500 font-bold">25000</td>
-                        </tr>
-                      </>
-                    ) : (
-                      <>
-                        {/* Row 1 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">01/03/2026</td>
-                          <td className="p-3 text-right text-rose-500 font-bold">฿ 110.00</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-sky-400 font-bold">฿ 45.00</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-slate-500 font-bold italic">฿ 155.00</td>
-                          <td className="p-3 text-neutral-600 italic font-sans">—</td>
-                        </tr>
-                        {/* Row 2 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">02/03/2026</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-amber-500 font-bold">฿ 299.00</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-slate-500 font-bold italic">฿ 299.00</td>
-                          <td className="p-3 text-slate-300 font-sans">Shopee</td>
-                        </tr>
-                        {/* Row 3 */}
-                        <tr className="hover:bg-[#1c1c1c] transition-colors">
-                          <td className="p-3 text-slate-400">03/03/2026</td>
-                          <td className="p-3 text-right text-rose-500 font-bold">฿ 60.00</td>
-                          <td className="p-3 text-right text-amber-500 font-bold">฿ 199.00</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-neutral-700 font-mono">—</td>
-                          <td className="p-3 text-right text-slate-500 font-bold italic">฿ 259.00</td>
-                          <td className="p-3 text-slate-300 font-sans">Lazada</td>
-                        </tr>
-                      </>
-                    )}
+                    {selectedFormat === 'long' ? <LongTablePreview /> : <WideTablePreview />}
                   </tbody>
                 </table>
               </div>
             </div>
 
             {/* Import rules & Mapping features inspector */}
-            <div className="border border-[#303030] p-5 rounded-none space-y-4 shrink-0 bg-[#121212]">
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#da291c]" />
-                กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
-              </h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedFormat === 'long' ? (
-                  <>
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">ซิงค์ปฏิทินตามชนิดวัน (Calendar Sync)</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          คอลัมน์ <span className="text-[#da291c] font-bold">"ชนิดวัน"</span> (ทำงาน/วันหยุด) จะถูกเชื่อมโยงและบันทึกสถิติประเภทวันลงในหน้าปฏิทินระบบโดยตรงอัตโนมัติ
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">การจัดการประเภทธุรกรรมที่หลากหลาย</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          ระบบถอดรหัสจากคอลัมน์ <span className="text-[#da291c] font-bold">"ประเภท"</span> รองรับ รายรับ รายจ่าย และเงินออม เพื่อประมวลผลกระแสเงินสดหลากรูปแบบในครั้งเดียว
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">สร้างหมวดหมู่อัตโนมัติ (Auto-Provision)</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          หากคอลัมน์ <span className="text-[#da291c] font-bold">"หมวดหมู่"</span> ยังไม่เคยนิยามไว้ เอ็นจิ้นจะทำการสร้างหมวดหมู่ใหม่ขึ้นมาให้อัตโนมัติโดยที่โครงสร้างระบบไม่เสียหาย
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">สเปกจำนวนเงิน Satang-First</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          ตัวเลขในช่อง <span className="text-[#da291c] font-bold">"จำนวนเงิน"</span> จะถูกนำไปคูณ 100 เพื่อแปลงเป็นสตางค์ในการประมวลผลเก็บข้อมูลระบบ (Satang Integer Map) เพื่อความแม่นยำทางบัญชี
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">สแกนหัวตารางจับคู่ค่าใช้จ่ายแนวนอน</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          ระบบจะจับคู่ชื่อคอลัมน์ภาษาไทย เช่น <span className="text-[#da291c] font-bold">"อาหารและเครื่องดื่ม"</span> หรือ <span className="text-[#da291c] font-bold">"การเดินทาง"</span> เข้ากับหมวดหมู่ที่คุณตั้งค่าไว้โดยตรง
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">กรองข้ามคอลัมน์สรุปเพื่อความปลอดภัย</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          คอลัมน์อย่างเช่น <span className="text-[#da291c] font-bold">"รวม (Total)", "Date", "Notes"</span> จะถูกตัดออกและเพิกเฉยอัตโนมัติในการสร้างยอดเงิน เพื่อกันปัญหาตัวเลขเบิ้ลสะสม
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">ถอดคอลัมน์ Notes เป็นคำอธิบาย</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          ข้อความในช่อง <span className="text-[#da291c] font-bold">"Notes"</span> ของวันนั้นๆ จะถูกนำไปใช้เป็นรายละเอียดธุรกรรม (Description) ของรายการในหมวดที่ระบบกรอก
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-bold text-slate-200">ระบบทนทานต่อช่องว่าง (Null Tolerance)</span>
-                        <p className="text-[10px] text-slate-500 leading-normal">
-                          กรณีมีช่องว่างหรือมีสัญลักษณ์ลบ <span className="text-[#da291c] font-bold">"฿ -"</span> ระบบจะประเมินค่าเป็นศูนย์และข้ามไปอย่างไร้ปัญหา ไม่เกิดการหยุดประมวลผลกระทันหัน
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            <GuideSpecsPanel selectedFormat={selectedFormat} />
 
           </div>
         </div>
