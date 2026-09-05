@@ -241,6 +241,26 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
   const groups = item.groups || [];
   const activeGroups = groups.filter(g => !excludedGroupIds.includes(g.id));
 
+  let varianceBadgeCls = 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
+  if (!isGood) {
+    if (isOver) {
+      varianceBadgeCls = 'bg-red-500/20 text-red-300 border border-red-500/50';
+    } else {
+      varianceBadgeCls = 'bg-amber-500/20 text-amber-300 border border-amber-500/50';
+    }
+  }
+
+  let varianceText = '';
+  if (isNeedsOrWants) {
+    varianceText = varianceAmount >= 0 
+      ? `+฿${formatMoney(varianceAmount)} ในโควตา` 
+      : `-฿${formatMoney(Math.abs(varianceAmount))} เกินโควตา`;
+  } else {
+    varianceText = varianceAmount >= 0 
+      ? `+฿${formatMoney(varianceAmount)} เกินเป้าออม` 
+      : `ขาดอีก ฿${formatMoney(Math.abs(varianceAmount))}`;
+  }
+
   return (
     <div 
       onMouseEnter={() => onHover(idx)}
@@ -283,22 +303,8 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
 
       {/* ─── QUOTA VARIANCE BADGE ─── */}
       <div className="mb-2">
-        <span className={`inline-flex items-center gap-1 text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-          isGood 
-            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40' 
-            : isOver 
-              ? 'bg-red-500/20 text-red-300 border border-red-500/50'
-              : 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
-        }`}>
-          {isNeedsOrWants ? (
-            varianceAmount >= 0 
-              ? `+฿${formatMoney(varianceAmount)} ในโควตา` 
-              : `-฿${formatMoney(Math.abs(varianceAmount))} เกินโควตา`
-          ) : (
-            varianceAmount >= 0 
-              ? `+฿${formatMoney(varianceAmount)} เกินเป้าออม` 
-              : `ขาดอีก ฿${formatMoney(Math.abs(varianceAmount))}`
-          )}
+        <span className={`inline-flex items-center gap-1 text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${varianceBadgeCls}`}>
+          {varianceText}
         </span>
       </div>
       
@@ -470,7 +476,7 @@ const AllocationItem = React.memo(({ item, idx, isHovered, onHover, activeTotal 
             <button 
               type="button"
               key={g.id} 
-              onClick={() => onToggleGroup && onToggleGroup(g.id)}
+              onClick={() => onToggleGroup?.(g.id)}
               className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal ${
                 isExcluded 
                   ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
@@ -721,6 +727,8 @@ function ExpenseProportionEmpty() {
   );
 }
 
+const SKELETON_KEYS = ['prop-skel-0', 'prop-skel-1', 'prop-skel-2', 'prop-skel-3', 'prop-skel-4'];
+
 function ExpenseProportionSkeleton() {
   return (
     <div className="flex flex-row items-stretch h-32">
@@ -728,8 +736,8 @@ function ExpenseProportionSkeleton() {
         <div className="w-20 h-24 rounded-full animate-pulse bg-[#303030]" />
       </div>
       <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
-        {[...new Array(5)].map((_, i) => (
-          <div key={i} className="p-2 animate-pulse bg-[#303030]/40">
+        {SKELETON_KEYS.map((key) => (
+          <div key={key} className="p-2 animate-pulse bg-[#303030]/40">
             <div className="h-2 w-12 mb-2 rounded-sm bg-[#303030]" />
             <div className="h-4 w-16 mb-2 rounded-sm bg-[#303030]" />
             <div className="h-1 w-full rounded-sm bg-[#303030]" />
@@ -769,12 +777,19 @@ function ModeSwitcher({ displayMode, onChangeMode }) {
 function SortSwitcher({ sortMode, onToggleSort }) {
   const isAmount = sortMode.startsWith('amount');
   const isOrder = sortMode.startsWith('order');
-  const amountTitle = isAmount
-    ? (sortMode === 'amount-desc' ? 'เรียงตามยอดเงิน: มากไปน้อย (คลิกเพื่อสลับ)' : 'เรียงตามยอดเงิน: น้อยไปมาก (คลิกเพื่อสลับ)')
-    : 'เรียงตามยอดเงิน';
-  const orderTitle = isOrder
-    ? (sortMode === 'order-asc' ? 'เรียงตามลำดับหมวดหมู่: น้อยไปมาก (คลิกเพื่อสลับ)' : 'เรียงตามลำดับหมวดหมู่: มากไปน้อย (คลิกเพื่อสลับ)')
-    : 'เรียงตามลำดับหมวดหมู่';
+  let amountTitle = 'เรียงตามยอดเงิน';
+  if (isAmount) {
+    amountTitle = sortMode === 'amount-desc'
+      ? 'เรียงตามยอดเงิน: มากไปน้อย (คลิกเพื่อสลับ)'
+      : 'เรียงตามยอดเงิน: น้อยไปมาก (คลิกเพื่อสลับ)';
+  }
+
+  let orderTitle = 'เรียงตามลำดับหมวดหมู่';
+  if (isOrder) {
+    orderTitle = sortMode === 'order-asc'
+      ? 'เรียงตามลำดับหมวดหมู่: น้อยไปมาก (คลิกเพื่อสลับ)'
+      : 'เรียงตามลำดับหมวดหมู่: มากไปน้อย (คลิกเพื่อสลับ)';
+  }
 
   return (
     <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
@@ -836,7 +851,12 @@ function ExpenseProportionHeader({
   showSkeleton,
   itemCount,
 }) {
-  const countLabel = isAllocationMode ? 'ส่วน' : (isGroupMode ? 'กลุ่ม' : 'หมวดหมู่');
+  let countLabel = 'หมวดหมู่';
+  if (isAllocationMode) {
+    countLabel = 'ส่วน';
+  } else if (isGroupMode) {
+    countLabel = 'กลุ่ม';
+  }
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
 
   return (
@@ -928,6 +948,8 @@ function ProportionItemCell({
   return <CatItem cat={item} idx={idx} isHovered={isHovered} onHover={onHover} />;
 }
 
+const EMPTY_CELL_KEYS = ['prop-empty-0', 'prop-empty-1', 'prop-empty-2', 'prop-empty-3'];
+
 function ExpenseProportionGridHud({
   activeItems,
   isAllocationMode,
@@ -949,7 +971,7 @@ function ExpenseProportionGridHud({
     <div className={`flex-1 grid ${gridColsClass} gap-px bg-[#303030]/50`}>
       {activeItems.map((item, idx) => (
         <ProportionItemCell
-          key={item.id || idx}
+          key={item.id || item.name}
           item={item}
           idx={idx}
           isHovered={hoveredIdx === idx}
@@ -963,8 +985,8 @@ function ExpenseProportionGridHud({
           sortMode={sortMode}
         />
       ))}
-      {[...new Array(emptyCount)].map((_, i) => (
-        <div key={`empty-${i}`} className="bg-[#181818]/10" />
+      {EMPTY_CELL_KEYS.slice(0, emptyCount).map((key) => (
+        <div key={key} className="bg-[#181818]/10" />
       ))}
     </div>
   );

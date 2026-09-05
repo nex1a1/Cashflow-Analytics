@@ -200,14 +200,17 @@ const TimelineDayCell = React.memo(({
 
   const [y, m, d] = dateStr.split('-');
   const displayStr = `${DAY_LABELS[new Date(y, +m - 1, d).getDay()]} ${+d} ${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
-  const detailsText = viewMode === 'dayType'
-    ? `ประเภทวัน: ${dayType?.label || 'ไม่มีข้อมูล'}`
-    : `ยอดรายจ่าย: ${amount > 0 ? amount.toLocaleString('th-TH') + ' บาท' : 'ไม่มีรายจ่าย'}`;
+
+  let detailsText = 'ยอดรายจ่าย: ไม่มีรายจ่าย';
+  if (viewMode === 'dayType') {
+    detailsText = `ประเภทวัน: ${dayType?.label || 'ไม่มีข้อมูล'}`;
+  } else if (amount > 0) {
+    detailsText = `ยอดรายจ่าย: ${amount.toLocaleString('th-TH')} บาท`;
+  }
 
   return (
     <button
       type="button"
-      role="gridcell"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
       className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
@@ -330,7 +333,6 @@ export default function ActivityTimeline() {
       const year = Number.parseInt(yearStr, 10);
       const monthIdx = Number.parseInt(monthStr, 10) - 1;
       
-      const dates = groups[key];
       const firstDateObj = new Date(year, monthIdx, 1);
       const startDayOfWeek = firstDateObj.getDay();
       const totalDays = new Date(year, monthIdx + 1, 0).getDate();
@@ -380,6 +382,150 @@ export default function ActivityTimeline() {
   const cardStyles = `rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]`;
 
   if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
+
+  const renderTimelineContent = () => {
+    if (showSkeleton) {
+      return (
+        <div className="py-12 px-3">
+          <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
+        </div>
+      );
+    }
+
+    if (datesInPeriod.length === 0) {
+      return (
+        <div className="text-center text-slate-400 py-10 text-sm italic">
+          ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก
+        </div>
+      );
+    }
+
+    if (layoutMode === 'calendar') {
+      return (
+        <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
+          <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
+            {calendarMonths.map(month => (
+              <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
+                {/* Month Title */}
+                <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-1 w-full text-center flex items-center justify-center gap-1.5">
+                  <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
+                  <span>{MONTH_LABELS[month.monthIdx]} {month.year.toString().slice(-2)}</span>
+                </div>
+
+                {/* Week Day Header */}
+                <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
+                    <div key={day} className={`w-[20px] text-center text-[8.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Days Grid */}
+                <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[146px]">
+                  {month.gridCells.map((dateStr, idx) => {
+                    if (!dateStr) {
+                      return <div key={`empty-${month.key}-${DAY_LABELS[idx] || idx}`} className="w-[20px] h-[20px] bg-transparent" />;
+                    }
+
+                    const inPeriod = datesInPeriodSet.has(dateStr);
+                    if (!inPeriod) {
+                      return <div key={dateStr} className="w-[20px] h-[20px] bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
+                    }
+
+                    const isToday = dateStr === new Date().toISOString().split('T')[0];
+                    const { dayType, amount } = getDayDetails(dateStr);
+
+                    return (
+                      <div key={dateStr} className="w-[20px] h-[20px] flex items-center justify-center">
+                        <TimelineDayCell
+                          dateStr={dateStr}
+                          isToday={isToday}
+                          viewMode={viewMode}
+                          dm={dm}
+                          dayType={dayType}
+                          amount={amount}
+                          globalMaxThreshold={globalMaxThreshold}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          className="w-full h-full"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto pb-4 pt-6 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex w-max gap-x-[1px] mx-auto">
+          {/* Day Labels (Sticky) */}
+          <div className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r"
+            style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
+            <div className="h-4" />
+            {DAY_LABELS.map((day, i) => (
+              <div 
+                key={day} 
+                className={`h-3.5 flex items-center justify-end text-[9px] font-black ${
+                  i === 0 || i === 6 ? ('text-red-400/80') : ('text-slate-500')
+                }`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Weeks & Days */}
+          {weeks.map((week, weekIndex) => {
+            const weekKey = week.days.find(Boolean) || `wk-${weekIndex}`;
+            return (
+              <div key={weekKey} className="flex flex-col gap-[1px] shrink-0">
+                {/* Month Label */}
+                <div className="h-4 relative flex items-end pb-1">
+                  {week.monthLabel && (
+                    <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
+                      <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
+                      <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
+                        {week.monthLabel}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Days in Week */}
+                {week.days.map((dateStr, dayIndex) => {
+                  if (!dateStr) return <div key={`empty-${weekKey}-${DAY_LABELS[dayIndex]}`} className="w-3.5 h-3.5 bg-transparent" />;
+                  
+                  const isToday = dateStr === new Date().toISOString().split('T')[0];
+                  const { dayType, amount } = getDayDetails(dateStr);
+
+                  return (
+                    <TimelineDayCell
+                      key={dateStr}
+                      dateStr={dateStr}
+                      isToday={isToday}
+                      viewMode={viewMode}
+                      dm={dm}
+                      dayType={dayType}
+                      amount={amount}
+                      globalMaxThreshold={globalMaxThreshold}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={cardStyles}>
@@ -433,131 +579,7 @@ export default function ActivityTimeline() {
 
         {/* Timeline Grid */}
         <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] min-h-[164px] flex flex-col justify-center">
-          {showSkeleton ? (
-            <div className="py-12 px-3">
-               <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
-            </div>
-          ) : datesInPeriod.length === 0 ? (
-            <div className="text-center text-slate-400 py-10 text-sm italic">ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก</div>
-          ) : layoutMode === 'calendar' ? (
-            <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
-              <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
-                {calendarMonths.map(month => (
-                  <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
-                    {/* Month Title */}
-                    <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-1 w-full text-center flex items-center justify-center gap-1.5">
-                      <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
-                      <span>{MONTH_LABELS[month.monthIdx]} {month.year.toString().slice(-2)}</span>
-                    </div>
-
-                    {/* Week Day Header */}
-                    <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
-                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
-                        <div key={i} className={`w-[20px] text-center text-[8.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Days Grid */}
-                    <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[146px]">
-                      {month.gridCells.map((dateStr, idx) => {
-                        if (!dateStr) {
-                          return <div key={`empty-${idx}`} className="w-[20px] h-[20px] bg-transparent" />;
-                        }
-
-                        const inPeriod = datesInPeriodSet.has(dateStr);
-                        if (!inPeriod) {
-                          return <div key={dateStr} className="w-[20px] h-[20px] bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
-                        }
-
-                        const isToday = dateStr === new Date().toISOString().split('T')[0];
-                        const { dayType, amount } = getDayDetails(dateStr);
-
-                        return (
-                          <div key={dateStr} className="w-[20px] h-[20px] flex items-center justify-center">
-                            <TimelineDayCell
-                              dateStr={dateStr}
-                              isToday={isToday}
-                              viewMode={viewMode}
-                              dm={dm}
-                              dayType={dayType}
-                              amount={amount}
-                              globalMaxThreshold={globalMaxThreshold}
-                              onMouseEnter={handleMouseEnter}
-                              onMouseLeave={handleMouseLeave}
-                              className="w-full h-full"
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto pb-4 pt-6 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-              <div className="flex w-max gap-x-[1px] mx-auto">
-                
-                {/* Day Labels (Sticky) */}
-                <div className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r"
-                  style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
-                  <div className="h-4" />
-                  {DAY_LABELS.map((day, i) => (
-                    <div 
-                      key={day} 
-                      className={`h-3.5 flex items-center justify-end text-[9px] font-black ${
-                        i === 0 || i === 6 ? ('text-red-400/80') : ('text-slate-500')
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Weeks & Days */}
-                {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-[1px] shrink-0">
-                    {/* Month Label */}
-                    <div className="h-4 relative flex items-end pb-1">
-                      {week.monthLabel && (
-                        <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
-                          <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
-                          <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
-                            {week.monthLabel}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Days in Week */}
-                    {week.days.map((dateStr, dayIndex) => {
-                      if (!dateStr) return <div key={`empty-${weekIndex}-${dayIndex}`} className="w-3.5 h-3.5 bg-transparent" />;
-                      
-                      const isToday = dateStr === new Date().toISOString().split('T')[0];
-                      const { dayType, amount } = getDayDetails(dateStr);
-
-                      return (
-                        <TimelineDayCell
-                          key={dateStr}
-                          dateStr={dateStr}
-                          isToday={isToday}
-                          viewMode={viewMode}
-                          dm={dm}
-                          dayType={dayType}
-                          amount={amount}
-                          globalMaxThreshold={globalMaxThreshold}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {renderTimelineContent()}
         </div>
       </div>
 

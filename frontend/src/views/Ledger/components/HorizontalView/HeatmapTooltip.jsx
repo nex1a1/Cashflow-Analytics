@@ -1,16 +1,17 @@
 import React, { memo } from 'react';
 import { createPortal } from 'react-dom';
 
-const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, dm }) {
+const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }) {
   const isVisible = !!tooltip;
 
   if (!isVisible || typeof document === 'undefined') return null;
 
   // Smart position: if cell is near the top of the viewport (< 220px), show tooltip below the cell
   const isNearTop = tooltip.y < 220;
-  const topPos = isNearTop
-    ? (tooltip.bottom ? `${tooltip.bottom + 8}px` : `${tooltip.y + 36}px`)
-    : `${tooltip.y - 8}px`;
+  let topPos = `${tooltip.y - 8}px`;
+  if (isNearTop) {
+    topPos = tooltip.bottom ? `${tooltip.bottom + 8}px` : `${tooltip.y + 36}px`;
+  }
   const transformStyle = isNearTop ? 'translate(-50%, 0%)' : 'translate(-50%, -100%)';
 
   return createPortal(
@@ -53,7 +54,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, dm }) {
         </div>
         <div style={{ maxHeight: 240, overflowY: 'auto' }} className="custom-scrollbar">
           {tooltip.items.map((item, i) => (
-            <div key={i} style={{
+            <div key={item.id || `${item.description}-${item.amount}-${item.date || i}`} style={{
               padding: '6px 14px',
               display: 'flex',
               justifyContent: 'space-between',

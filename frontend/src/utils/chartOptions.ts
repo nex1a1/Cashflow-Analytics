@@ -78,24 +78,8 @@ export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', auto
   scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
-export const getBarChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) => ({
-  maintainAspectRatio: false,
-  interaction: { mode: 'index' as const, intersect: false },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      ...getTooltipOptions(isDarkMode),
-      callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
-      },
-    },
-  },
-  maxBarThickness: 80,
-  barPercentage: 0.6,
-  categoryPercentage: 0.8,
-  animation: { duration: 800, easing: 'easeInOutQuart' as const },
-  scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
-});
+export const getBarChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) =>
+  getComboChartOptions(isDarkMode, yType, autoSkip);
 
 export const getLineChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,

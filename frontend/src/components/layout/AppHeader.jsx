@@ -5,12 +5,10 @@ import {
   FileSpreadsheet, Settings, CalendarPlus, Zap,
   Calendar as CalendarIcon, HelpCircle, Clock
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import sharkBlack from '../../assets/images/shark-black.svg';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
-import Tooltip from '../ui/Tooltip';
 
 const TABS = [
   { id: 'dashboard', label: 'เจาะลึกวิเคราะห์', icon: BarChart3 },

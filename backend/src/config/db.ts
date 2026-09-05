@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
 
 // Determine base directory depending on whether running in PKG executable mode
 const isPkg = Boolean((process as any).pkg);
@@ -23,7 +23,7 @@ if (!fs.existsSync(dbDir)) {
 }
 
 function parseSqlValues(cleanSql: string): string[] {
-    const match = cleanSql.match(/VALUES\s*\(([^)]+)\)/i);
+    const match = /VALUES\s*\(([^)]+)\)/i.exec(cleanSql);
     if (!match) return [];
 
     const raw = match[1];
@@ -79,7 +79,7 @@ function formatTransactionMutation(clean: string): string | null {
     }
 
     if (/UPDATE transactions SET is_deleted = 1/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         const shortId = idMatch ? idMatch[1].substring(0, 8) : '';
         return `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${shortId}...)`;
     }
@@ -122,7 +122,7 @@ function formatDayTypeMutation(clean: string): string | null {
         }
     }
     if (/DELETE FROM day_types/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
@@ -139,7 +139,7 @@ function formatCategoryMutation(clean: string): string | null {
         }
     }
     if (/DELETE FROM categories/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
@@ -157,7 +157,7 @@ function formatCashflowGroupMutation(clean: string): string | null {
         }
     }
     if (/DELETE FROM cashflow_groups/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;

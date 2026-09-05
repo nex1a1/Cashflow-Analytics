@@ -3,7 +3,7 @@ process.env.USE_DEMO_DB = 'true';
 
 import db from '../config/db';
 import { initSchema } from '../models/schema';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 console.log('🚀 Starting Mockup Database Generation...');
 

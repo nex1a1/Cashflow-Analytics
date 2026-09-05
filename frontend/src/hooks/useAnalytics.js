@@ -1,7 +1,6 @@
 // src/hooks/useAnalytics.js
 import { useMemo } from 'react';
 import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj, toISODate } from '../utils/dateHelpers';
-import { hexToRgb, formatMoney } from '../utils/formatters';
 import { 
   createCategoryMap, 
   generateMainChartData, 
@@ -234,7 +233,7 @@ function calculateForecastingDetails({
   return { showForecasting: true, effectiveDays, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus };
 }
 
-function trackTrendAndGlobal(isoDate, amt, isExp, isInc, startPrev, endPrev, globalDailySum, prevTotals) {
+function trackTrendAndGlobal({ isoDate, amt, isExp, isInc, startPrev, endPrev, globalDailySum, prevTotals }) {
   if (isExp) {
     globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
   }
@@ -244,7 +243,7 @@ function trackTrendAndGlobal(isoDate, amt, isExp, isInc, startPrev, endPrev, glo
   }
 }
 
-function trackForecastingUpToToday(isoDate, amt, isExp, isNeed, isRent, isFood, isCurrentMonth, todayStr, forecastRef) {
+function trackForecastingUpToToday({ isoDate, amt, isExp, isNeed, isRent, isFood, isCurrentMonth, todayStr, forecastRef }) {
   if (isCurrentMonth && isoDate <= todayStr && isExp) {
     forecastRef.expenseUpToToday += amt;
     if (!isNeed) forecastRef.variableUpToToday += amt;
@@ -384,7 +383,7 @@ function buildGroupBreakdown(catMapData, catMapLookup, groupTotals, cashflowGrou
   const groupCatsMap = {};
   Object.entries(catMapData).forEach(([catId, amount]) => {
     const catObj = catMapLookup[catId];
-    if (!catObj || catObj.type !== 'expense') return;
+    if (catObj?.type !== 'expense') return;
     const gId = catObj.cashflowGroup;
     if (!gId || groupTotals[gId] === undefined) return;
 
@@ -455,7 +454,10 @@ function buildAllocationBreakdown(allocTotals, allocGroupsMap, totals, netCashfl
     { id: 'savings', name: 'Savings & Net', amount: Math.max(0, netSavingsActual), color: '#10B981', icon: '🏦', target: 20, groups: allocGroupsMap.savings }
   ];
 
-  const allocationTotal = totals.income > 0 ? totals.income : (totals.expense + (netSavingsActual > 0 ? netSavingsActual : 0));
+  let allocationTotal = totals.income;
+  if (totals.income <= 0) {
+    allocationTotal = totals.expense + Math.max(0, netSavingsActual);
+  }
   const sortedAllocation = allocationItems.map(item => ({
     ...item,
     percentage: allocationTotal > 0 ? ((item.amount / allocationTotal) * 100).toFixed(1) : 0
@@ -515,13 +517,9 @@ function calculateTopWantCategories(wantCatMapData, catMapLookup, variableTotal)
 
 function resolveCashflowGroups(cashflowGroups) {
   const groups = cashflowGroups || [];
-  const incomeGroups = groups.filter(g => g.type === 'income');
-  const savingsGroups = groups.filter(g => g.type === 'savings');
-  const expenseGroups = groups.filter(g => g.type === 'expense');
-
-  const fallbackIncId = incomeGroups[0]?.id || 'cg_bonus';
-  const fallbackSavId = savingsGroups[0]?.id || 'cg_savings';
-  const fallbackExpId = expenseGroups[0]?.id || 'cg_variable';
+  const fallbackIncId = groups.find(g => g.type === 'income')?.id || 'cg_bonus';
+  const fallbackSavId = groups.find(g => g.type === 'savings')?.id || 'cg_savings';
+  const fallbackExpId = groups.find(g => g.type === 'expense')?.id || 'cg_variable';
 
   const foodKeywords = ['อาหาร', 'food', 'กิน'];
   const rentKeywords = ['หอ', 'ที่พัก', 'rent', 'เช่า'];
@@ -549,7 +547,7 @@ function calculatePeriodWindow(filterPeriod, datesInPeriod) {
 
   if (filterPeriod !== 'ALL' && datesInPeriod.length > 0) {
     const firstDate = new Date(datesInPeriod[0]);
-    const lastDate = new Date(datesInPeriod[datesInPeriod.length - 1]);
+    const lastDate = new Date(datesInPeriod.at(-1));
     const durationMs = lastDate.getTime() - firstDate.getTime() + 86400000;
     const prevEnd = new Date(firstDate.getTime() - 86400000);
     const prevStart = new Date(prevEnd.getTime() - durationMs + 86400000);
@@ -677,7 +675,16 @@ function executeTransactionAggregation({
     if (!isoDate) return;
 
     const txContext = resolveTransactionContext(t, catMapLookup, cashflowGroups, fallbackExpId);
-    trackTrendAndGlobal(isoDate, txContext.amt, txContext.isExp, txContext.isInc, startPrev, endPrev, globalDailySum, prevTotals);
+    trackTrendAndGlobal({
+      isoDate,
+      amt: txContext.amt,
+      isExp: txContext.isExp,
+      isInc: txContext.isInc,
+      startPrev,
+      endPrev,
+      globalDailySum,
+      prevTotals,
+    });
 
     const flags = processAnalyticsTx({
       t, isoDate, txContext, filterPeriod, foodGroupId, rentGroupId,
@@ -688,10 +695,17 @@ function executeTransactionAggregation({
     });
 
     if (flags) {
-      trackForecastingUpToToday(
-        isoDate, txContext.amt, txContext.isExp, txContext.isNeed,
-        flags.isRent, flags.isFood, isCurrentMonth, todayStr, forecastRef
-      );
+      trackForecastingUpToToday({
+        isoDate,
+        amt: txContext.amt,
+        isExp: txContext.isExp,
+        isNeed: txContext.isNeed,
+        isRent: flags.isRent,
+        isFood: flags.isFood,
+        isCurrentMonth,
+        todayStr,
+        forecastRef,
+      });
     }
   });
 }
@@ -716,7 +730,7 @@ function calculateGlobalMaxThreshold(globalDailySum) {
   const globalValues = Object.values(globalDailySum).filter(v => v > 0).sort((a, b) => a - b);
   if (globalValues.length === 0) return 100;
   const p90Index = Math.floor(globalValues.length * 0.9);
-  return globalValues[p90Index] || globalValues[globalValues.length - 1];
+  return globalValues[p90Index] || globalValues.at(-1);
 }
 
 function calculateSavingsMetrics(totals, uniqueMonthsSet) {

@@ -6,4 +6,4 @@ export const dayTypeSchema = z.object({
   label: z.string().min(1, "Label is required"),
   color: z.string().nullable().optional(),
   order_index: z.number().int().optional().default(0)
-}).passthrough();
+}).loose();

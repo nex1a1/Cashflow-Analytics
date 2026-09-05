@@ -91,7 +91,7 @@ export default function CalendarView({
   const showSkeleton = isLoading && (!transactions || transactions.length === 0) && (!dayTypes || Object.keys(dayTypes).length === 0);
 
   const viewDate = useMemo(() => {
-    if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
+    if (filterPeriod && /^\d{4}-\d{2}$/.exec(filterPeriod)) {
       const [yearStr, monthStr] = filterPeriod.split('-');
       return new Date(Number.parseInt(yearStr, 10), Number.parseInt(monthStr, 10) - 1, 1);
     }
@@ -112,7 +112,7 @@ export default function CalendarView({
   // Pre-filter transactions for the current month once for performance
   const currentMonthTransactions = useMemo(() => {
     const targetMonthYear = `${y}-${(m + 1).toString().padStart(2, '0')}`;
-    return transactions.filter(t => t.date && t.date.startsWith(targetMonthYear));
+    return transactions.filter(t => t.date?.startsWith(targetMonthYear));
   }, [transactions, y, m]);
 
   // Derive calendar grid data and base aggregates
@@ -323,6 +323,10 @@ export default function CalendarView({
       }
     };
 
+    needCats.sort(sortFn);
+    wantCats.sort(sortFn);
+    savingsCats.sort(sortFn);
+
     return {
       need: monthNeed,
       want: monthWant,
@@ -331,9 +335,9 @@ export default function CalendarView({
       needPct: totalAllocation > 0 ? Math.round((monthNeed / totalAllocation) * 100) : 0,
       wantPct: totalAllocation > 0 ? Math.round((monthWant / totalAllocation) * 100) : 0,
       savingsPct: totalAllocation > 0 ? Math.round((netSavingsActual / totalAllocation) * 100) : 0,
-      needCats: needCats.sort(sortFn),
-      wantCats: wantCats.sort(sortFn),
-      savingsCats: savingsCats.sort(sortFn),
+      needCats,
+      wantCats,
+      savingsCats,
     };
   }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
@@ -405,7 +409,7 @@ export default function CalendarView({
         />
 
         {/* 2. Legend & Allocation Block */}
-        {groupedLegendData.sortedGroups && groupedLegendData.sortedGroups.length > 0 && (
+        {groupedLegendData.sortedGroups?.length > 0 && (
           <LegendAllocationBlock
             sortedGroups={groupedLegendData.sortedGroups}
             catAmounts={groupedLegendData.catAmounts}

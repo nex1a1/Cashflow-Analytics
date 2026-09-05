@@ -1,11 +1,7 @@
 // src/hooks/useTransactionData.js
 import { useState, useCallback } from 'react';
-import {
-  API_URL, CALENDAR_API_URL, RESET_API_URL, SETTINGS_API_URL,
-  DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES
-} from '../constants';
-import { parseDateStrToObj, toISODate, fromISODate } from '../utils/dateHelpers';
-import { settingsService, calendarService, categoryService, groupService, dayTypeService, transactionService, analyticsService } from '../services/api';
+import { parseDateStrToObj } from '../utils/dateHelpers';
+import { calendarService, categoryService, groupService, dayTypeService, transactionService, analyticsService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 const sortTransactions = (dataArr) =>
@@ -98,7 +94,7 @@ export default function useTransactionData({
       try {
         const groups = await groupService.getAll();
         if (groups?.length) setCashflowGroups(groups);
-      } catch (err) { console.error('Groups load failed'); }
+      } catch (err) { console.error('Groups load failed:', err); }
 
       // 3. Categories
       try {
@@ -111,13 +107,13 @@ export default function useTransactionData({
             order_index: c.order_index || 0
           })));
         }
-      } catch (err) { console.error('Categories load failed'); }
+      } catch (err) { console.error('Categories load failed:', err); }
 
       // 4. Day Types
       try {
         const dtData = await dayTypeService.getAll();
         if (dtData?.length) setDayTypeConfig(dtData);
-      } catch (err) { console.error('DayTypes load failed'); }
+      } catch (err) { console.error('DayTypes load failed:', err); }
 
       // 5. Calendar Usage
       try {

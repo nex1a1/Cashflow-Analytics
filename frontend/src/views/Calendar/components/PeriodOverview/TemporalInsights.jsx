@@ -6,7 +6,11 @@ const formatVal = (val) => (val || 0).toLocaleString('th-TH', { minimumFractionD
 
 function getHumanInsight(workAvg, restAvg, ratio) {
   if (workAvg <= 0 || restAvg <= 0) {
-    return 'เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน';
+    return (
+      <span>
+        เปรียบเทียบอัตราการใช้จ่ายเฉลี่ยต่อวันระหว่างวันทำงานและวันพักผ่อน
+      </span>
+    );
   }
   if (restAvg > workAvg) {
     const diffPct = Math.round(((restAvg - workAvg) / workAvg) * 100);
@@ -35,7 +39,7 @@ function getHumanInsight(workAvg, restAvg, ratio) {
 }
 
 function DayOfWeekMatrixStrip({ dayOfWeekStats, peakDow }) {
-  if (!dayOfWeekStats || dayOfWeekStats.length !== 7) return null;
+  if (dayOfWeekStats?.length !== 7) return null;
 
   return (
     <div className="space-y-1.5 border-t border-[#252525] pt-2.5">
@@ -199,15 +203,33 @@ function WorkLifeFinancialsCard({ activeDayTypes, workVsRest, dayOfWeekStats, pe
   );
 }
 
+const ALLOCATION_CONFIG = {
+  need: {
+    name: 'Need',
+    labelTh: 'จำเป็น (Need)',
+    color: '#EF4444',
+    badgeClass: 'bg-rose-950/50 text-rose-400 border-rose-800/40',
+    tag: 'NEED',
+  },
+  want: {
+    name: 'Want',
+    labelTh: 'ตามใจ (Want)',
+    color: '#F59E0B',
+    badgeClass: 'bg-amber-950/50 text-amber-400 border-amber-800/40',
+    tag: 'WANT',
+  },
+  savings: {
+    name: 'Savings',
+    labelTh: 'เงินออม (Savings)',
+    color: '#10B981',
+    badgeClass: 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40',
+    tag: 'SAVINGS',
+  },
+};
+
 function RankedCategoryRow({ cat }) {
-  const isNeed = cat.allocation === 'need';
-  const isWant = cat.allocation === 'want';
-  const groupName = isNeed ? 'Need' : (isWant ? 'Want' : 'Savings');
-  const groupLabelTh = isNeed ? 'จำเป็น (Need)' : (isWant ? 'ตามใจ (Want)' : 'เงินออม (Savings)');
-  const defaultColor = isNeed ? '#EF4444' : (isWant ? '#F59E0B' : '#10B981');
-  const badgeClass = isNeed
-    ? 'bg-rose-950/50 text-rose-400 border-rose-800/40'
-    : (isWant ? 'bg-amber-950/50 text-amber-400 border-amber-800/40' : 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40');
+  const config = ALLOCATION_CONFIG[cat.allocation] || ALLOCATION_CONFIG.savings;
+  const { name: groupName, labelTh: groupLabelTh, color: defaultColor, badgeClass, tag: badgeTag } = config;
 
   return (
     <div
@@ -221,7 +243,7 @@ function RankedCategoryRow({ cat }) {
         />
         <span className="font-bold text-slate-200 truncate">{cat.name}</span>
         <span className={`px-1.5 py-0.2 text-[8px] font-black uppercase border shrink-0 ${badgeClass}`}>
-          {isNeed ? 'NEED' : (isWant ? 'WANT' : 'SAVINGS')}
+          {badgeTag}
         </span>
       </div>
 

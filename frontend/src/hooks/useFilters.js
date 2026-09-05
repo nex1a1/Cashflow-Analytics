@@ -1,5 +1,5 @@
 // src/hooks/useFilters.js
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
 import { transactionService } from '../services/api';
 
@@ -118,7 +118,7 @@ export default function useFilters({ transactions, categories, masterPeriods = [
 
   // ── Derived booleans ─────────────────────────────────────────
   // true = เลือกดูหลายเดือน (ไม่ใช่เดือนเดียว) → Enforced only in components that require single-month context (like Calendar)
-  const isReadOnlyView = !filterPeriod.match(/^\d{4}-\d{2}$/);
+  const isReadOnlyView = !(/^\d{4}-\d{2}$/.exec(filterPeriod));
 
   // ── Dates ที่มีใน period ปัจจุบัน (ใช้ใน LedgerView filter) ──
   const availableDatesInPeriod = useMemo(() => {

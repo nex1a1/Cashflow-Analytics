@@ -7,4 +7,4 @@ export const categorySchema = z.object({
   color: z.string().nullable().optional(),
   order_index: z.number().int().optional().default(0),
   cashflow_group_id: z.string().min(1, "Cashflow Group ID is required")
-}).passthrough();
+}).loose();

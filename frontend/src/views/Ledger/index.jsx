@@ -6,7 +6,6 @@ import {
 import { formatMoney } from '../../utils/formatters';
 
 // Shared Components
-import StatCard from '../../components/shared/StatCard';
 import FilterBar from './components/Shared/FilterBar';
 
 // View Components
@@ -337,6 +336,41 @@ const LedgerContentArea = ({
   totalPages,
   setCurrentPage
 }) => {
+  const renderLedgerView = () => {
+    if (viewMode === 'horizontal') {
+      return (
+        <HorizontalLedgerView
+          displayTransactions={displayTransactions}
+          categories={categories}
+          formatMoney={formatMoney}
+          dayTypes={dayTypes}
+          dayTypeConfig={dayTypeConfig}
+          allDates={allDatesInPeriod}
+        />
+      );
+    }
+    return (
+      <LedgerTable
+        currentData={currentData}
+        sortedTransactions={sortedTransactions}
+        categories={categories}
+        sortConfig={sortConfig}
+        handleSort={handleSort}
+        isDateSorted={isDateSorted}
+        dateBands={dateBands}
+        handleUpdateTransaction={handleUpdateTransaction}
+        handleDeleteTransaction={handleDeleteTransaction}
+        handleOpenAddModal={handleOpenAddModal}
+        pageInc={pageInc}
+        pageExp={pageExp}
+        formatMoney={formatMoney}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col border rounded-none overflow-hidden shadow-lg min-h-[400px] relative z-0 bg-[#181818] border-[#303030]">
       {showSkeleton && (
@@ -362,23 +396,8 @@ const LedgerContentArea = ({
             </button>
           )}
         </div>
-      ) : viewMode === 'horizontal' ? (
-        <HorizontalLedgerView
-          displayTransactions={displayTransactions} categories={categories}
-          formatMoney={formatMoney}
-          dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
-          allDates={allDatesInPeriod}
-        />
       ) : (
-        <LedgerTable
-          currentData={currentData} sortedTransactions={sortedTransactions}
-          categories={categories} sortConfig={sortConfig}
-          handleSort={handleSort} isDateSorted={isDateSorted}
-          dateBands={dateBands} handleUpdateTransaction={handleUpdateTransaction}
-          handleDeleteTransaction={handleDeleteTransaction} handleOpenAddModal={handleOpenAddModal}
-          pageInc={pageInc} pageExp={pageExp} formatMoney={formatMoney}
-          currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage}
-        />
+        renderLedgerView()
       )}
     </div>
   );
@@ -409,7 +428,6 @@ export default function LedgerView({
   isLoading,
   transactions = []
 }) {
-  const dm = true;
   const [filterOpen, setFilterOpen] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
@@ -460,7 +478,7 @@ export default function LedgerView({
     activeExpenseCards,
     getSubValue,
     catTypeMap
-  } = useLedgerStats(
+  } = useLedgerStats({
     displayTransactions,
     categories,
     cashflowGroups,
@@ -469,7 +487,7 @@ export default function LedgerView({
     advancedFilterGroup,
     setAdvancedFilterGroup,
     allDatesInPeriod
-  );
+  });
 
   const totalPages = pages.length || 1;
   const currentData = pages[currentPage - 1] || [];

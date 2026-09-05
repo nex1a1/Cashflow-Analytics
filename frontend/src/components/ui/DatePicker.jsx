@@ -14,13 +14,19 @@ const THAI_MONTHS_SHORT = [
 
 const DAY_LABELS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
+function splitDateValue(v) {
+  if (v.includes(',')) return v.split(',');
+  if (v.includes(':')) return v.split(':');
+  return [v];
+}
+
 function parseValue(v, filterPeriod) {
   if (v && v !== 'ALL' && v !== 'WEEKDAY' && v !== 'WEEKEND') {
-    const targetStr = v.includes(',') ? v.split(',')[0] : v.includes(':') ? v.split(':')[0] : v;
+    const targetStr = splitDateValue(v)[0];
     const [y, m, d] = targetStr.split('-').map(Number);
     if (y && m && d) return new Date(y, m - 1, d);
   }
-  if (filterPeriod && filterPeriod.match(/^\d{4}-\d{2}$/)) {
+  if (filterPeriod?.match(/^\d{4}-\d{2}$/)) {
     const [py, pm] = filterPeriod.split('-').map(Number);
     return new Date(py, pm - 1, 1);
   }
@@ -96,7 +102,7 @@ function formatDisplay(v, placeholder = 'เลือกวันที่') {
   if (v === 'WEEKDAY') return '💼 วันทำงาน (จ.-ศ.)';
   if (v === 'WEEKEND') return '🏖️ วันหยุด (ส.-อา.)';
 
-  const rawDates = v.includes(',') ? v.split(',') : v.includes(':') ? v.split(':') : [v];
+  const rawDates = splitDateValue(v);
   if (rawDates.length === 1) {
     const parts = rawDates[0].split('-').map(Number);
     if (parts.length < 3 || Number.isNaN(parts[0])) return placeholder;
@@ -108,19 +114,19 @@ function formatDisplay(v, placeholder = 'เลือกวันที่') {
   if (ranges.length === 1) {
     const r = ranges[0];
     const [y1, m1, d1] = r[0].split('-').map(Number);
-    const [y2, m2, d2] = r[r.length - 1].split('-').map(Number);
+    const [, , d2] = r.at(-1).split('-').map(Number);
     if (d1 === d2) return `${d1} ${THAI_MONTHS_SHORT[m1 - 1]} ${y1}`;
     return `📅 ${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} ${y1}`;
   }
 
   const summaryParts = ranges.map(r => {
     const [, , d1] = r[0].split('-').map(Number);
-    const [, , d2] = r[r.length - 1].split('-').map(Number);
+    const [, , d2] = r.at(-1).split('-').map(Number);
     return d1 === d2 ? `${d1}` : `${d1}-${d2}`;
   });
 
-  const lastRange = ranges[ranges.length - 1];
-  const [, lm] = lastRange[lastRange.length - 1].split('-').map(Number);
+  const lastRange = ranges.at(-1);
+  const [, lm] = lastRange.at(-1).split('-').map(Number);
 
   return `📅 ${summaryParts.join(', ')} ${THAI_MONTHS_SHORT[lm - 1]}`;
 }
@@ -178,6 +184,12 @@ function resolveDayTypeObj(y, m, d, dateStr, dayTypes, dayTypeConfig) {
   return dayTypeConfig.find(dt => 
     dt.id === 'WORK' || dt.name === 'WORK' || dt.label?.includes('ทำงาน')
   ) || dayTypeConfig[0];
+}
+
+function getDayDataDotColor(val) {
+  if (val === 'WEEKDAY') return 'bg-blue-400';
+  if (val === 'WEEKEND') return 'bg-amber-400';
+  return 'bg-[#da291c]';
 }
 
 function DatePickerDayCell({
@@ -240,9 +252,7 @@ function DatePickerDayCell({
       )}
       <span>{d}</span>
       {dayHasData && !dayIsSelected && !isDimmed && (
-        <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-          value === 'WEEKDAY' ? 'bg-blue-400' : value === 'WEEKEND' ? 'bg-amber-400' : 'bg-[#da291c]'
-        }`} />
+        <span className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${getDayDataDotColor(value)}`} />
       )}
     </button>
   );
@@ -422,7 +432,7 @@ export default function DatePicker({
 
   const firstDay = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const blanks = new Array(firstDay).fill(null);
+  const blanks = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDay);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const isToday = (d) =>
@@ -608,7 +618,7 @@ export default function DatePicker({
 
           {/* Calendar Day Grid with Connected Range Styling */}
           <div className="grid grid-cols-7 gap-y-0.5">
-            {blanks.map((_, i) => <div key={`b${i}`} />)}
+            {blanks.map(blankKey => <div key={blankKey} />)}
             {days.map(d => (
               <DatePickerDayCell
                 key={d}
@@ -648,9 +658,9 @@ export default function DatePicker({
                     ยังไม่ได้เลือกวัน
                   </span>
                 ) : (
-                  dateRanges.map((range, idx) => {
-                    const [y1, m1, d1] = range[0].split('-').map(Number);
-                    const [, , d2] = range[range.length - 1].split('-').map(Number);
+                  dateRanges.map((range) => {
+                    const [, m1, d1] = range[0].split('-').map(Number);
+                    const [, , d2] = range.at(-1).split('-').map(Number);
                     
                     const label = range.length === 1
                       ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
@@ -658,7 +668,7 @@ export default function DatePicker({
 
                     return (
                       <span 
-                        key={idx}
+                        key={`${range[0]}_${range.at(-1)}`}
                         className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
                       >
                         {label}

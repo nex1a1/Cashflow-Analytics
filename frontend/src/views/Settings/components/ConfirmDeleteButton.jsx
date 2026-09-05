@@ -43,17 +43,18 @@ const ConfirmDeleteButton = memo(({ onConfirm, size = 'sm', disabled = false, to
     );
   }
 
+  let stateCls = 'text-[#888888] hover:text-white hover:bg-[#da291c]/25 border border-transparent hover:border-[#da291c]/45';
+  if (disabled) {
+    stateCls = 'opacity-20 cursor-not-allowed';
+  } else if (confirming) {
+    stateCls = 'bg-[#da291c] text-white animate-pulse';
+  }
+
   return (
     <button 
       onClick={handleClick} 
       disabled={disabled}
-      className={`p-1.5 transition-all active:scale-95 rounded-none ${
-        disabled
-          ? 'opacity-20 cursor-not-allowed'
-          : confirming
-            ? 'bg-[#da291c] text-white animate-pulse'
-            : 'text-[#888888] hover:text-white hover:bg-[#da291c]/25 border border-transparent hover:border-[#da291c]/45'
-      }`}
+      className={`p-1.5 transition-all active:scale-95 rounded-none ${stateCls}`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}
     >
       <Trash2 className="w-3.5 h-3.5" />

@@ -1,5 +1,7 @@
 import React from 'react';
 
+const SKELETON_CARD_KEYS = ['card-income', 'card-expense', 'card-savings', 'card-burn'];
+
 export default function DashboardSkeleton() {
   const shimmer = 'bg-[#303030]/50 animate-pulse';
   const surface = 'bg-[#1c1c1c]';
@@ -13,8 +15,8 @@ export default function DashboardSkeleton() {
 
       {/* Summary Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[...new Array(4)].map((_, i) => (
-          <div key={i} className={`h-28 rounded-none border ${border} ${surface} p-4 flex flex-col gap-3`}>
+        {SKELETON_CARD_KEYS.map((cardKey) => (
+          <div key={cardKey} className={`h-28 rounded-none border ${border} ${surface} p-4 flex flex-col gap-3`}>
              <div className={`h-3 w-16 rounded-none ${shimmer}`} />
              <div className={`h-8 w-24 rounded-none ${shimmer}`} />
              <div className={`h-3 w-20 rounded-none ${shimmer}`} />

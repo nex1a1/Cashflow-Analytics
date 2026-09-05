@@ -1,5 +1,5 @@
 import db from '../config/db';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { Transaction } from '../types';
 
 interface TransactionWithDetails extends Transaction {
@@ -117,7 +117,7 @@ class TransactionService {
   }
 
   private normalizeDate(dateStr?: string): string {
-    if (dateStr && dateStr.includes('/')) {
+    if (dateStr?.includes('/')) {
       const [d, m, y] = dateStr.split('/');
       return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
     }
@@ -249,7 +249,7 @@ class TransactionService {
 
     // Sanitize query to avoid FTS5 syntax errors
     const sanitized = raw
-      .replace(/["'*(){}\[\]^:?+\-~]/g, ' ')
+      .replace(/["'*(){}[\]^:?+\-~]/g, ' ')
       .replace(/\b(AND|OR|NOT|NEAR)\b/gi, ' ')
       .trim();
 

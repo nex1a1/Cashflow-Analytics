@@ -14,7 +14,6 @@ import ActivityTimeline from './components/ActivityTimeline';
 import CashflowTable from './components/CashflowTable';
 
 export default function DashboardView(props) {
-  const dm = true;
   const { transactions, analytics, isLoading } = props;
   
   // ── Logic: Smooth Loading Transition (Only on initial cold boot) ──

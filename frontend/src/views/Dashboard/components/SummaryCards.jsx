@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { 
   Activity, Wallet, Target, Scale, UtensilsCrossed,
   TrendingUp, Zap, Layers, Home, Award, TrendingDown, Navigation,
-  ShieldCheck, Gauge, AlertTriangle
+  ShieldCheck, Gauge
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney } from '../../../utils/formatters';
@@ -200,54 +200,60 @@ function getFoodIncomeStatus(pct) {
   return { label: 'สัดส่วนสูง', cls: 'text-rose-400 border-rose-400/30' };
 }
 
-const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }) => (
-  <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
-    rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
-  }`}>
-    <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-      <Home size={72} />
-    </div>
+const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }) => {
+  let rentBarBg = 'bg-sky-500';
+  if (showSkeleton) {
+    rentBarBg = 'bg-slate-700 animate-pulse';
+  } else if (rentPercentageNum > 30) {
+    rentBarBg = 'bg-[#da291c]';
+  }
 
-    {/* Original Content (Blurs and fades on hover) */}
-    <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
-      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
-        ภาระที่พักอาศัย (Rent Ratio)
-      </span>
-      
-      {!showSkeleton && (
-        <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
-          <span>เกณฑ์แนะนำ</span>
-          <span className="text-sky-400 font-extrabold">&lt; 30% ของรายรับ</span>
-        </div>
-      )}
-      
-      <div className="mt-auto z-10">
-        {showSkeleton ? (
-          <Shimmer className="h-6 w-16 my-1" />
-        ) : (
-          <div className="flex items-baseline gap-1.5">
-            <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
-              {rentPercentageNum.toFixed(1)}%
-            </div>
-            <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
-              ฿{formatMoney(rentTotal)}
-            </div>
+  return (
+    <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
+      rentPercentageNum > 30 ? 'border-l-[#da291c]' : 'border-l-sky-500'
+    }`}>
+      <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
+        <Home size={72} />
+      </div>
+
+      {/* Original Content (Blurs and fades on hover) */}
+      <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
+        <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
+          ภาระที่พักอาศัย (Rent Ratio)
+        </span>
+        
+        {!showSkeleton && (
+          <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+            <span>เกณฑ์แนะนำ</span>
+            <span className="text-sky-400 font-extrabold">&lt; 30% ของรายรับ</span>
           </div>
         )}
         
-        <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-          <div 
-            className={`h-full absolute left-0 top-0 transition-none ${
-              showSkeleton ? 'bg-slate-700 animate-pulse' : (rentPercentageNum > 30 ? 'bg-[#da291c]' : 'bg-sky-500')
-            }`} 
-            style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
-          />
+        <div className="mt-auto z-10">
+          {showSkeleton ? (
+            <Shimmer className="h-6 w-16 my-1" />
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <div className={`text-lg font-black ${rentPercentageNum > 30 ? 'text-[#da291c]' : 'text-sky-400'}`}>
+                {rentPercentageNum.toFixed(1)}%
+              </div>
+              <div className="text-[10px] font-bold text-neutral-500 tabular-nums">
+                ฿{formatMoney(rentTotal)}
+              </div>
+            </div>
+          )}
+          
+          <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
+            <div 
+              className={`h-full absolute left-0 top-0 transition-none ${rentBarBg}`} 
+              style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Hover Breakdown Overlay */}
-    {!showSkeleton && rentSub && (
+      {/* Hover Breakdown Overlay */}
+      {!showSkeleton && rentSub && (
       <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
         <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
           <span className="truncate">รายละเอียดที่พัก</span>
@@ -283,7 +289,8 @@ const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSke
       </div>
     )}
   </div>
-));
+);
+});
 
 StrategicRentCard.displayName = 'StrategicRentCard';
 
@@ -744,13 +751,11 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }) => {
   const fixedTotal = details.fixedTotal || 0;
   const variableUpToToday = details.variableUpToToday || 0;
   const projectedVariableRemaining = details.projectedVariableRemaining || 0;
-  const variableRunRate = details.variableRunRate || 0;
   const actualDailyVariableAvg = details.actualDailyVariableAvg || 0;
   const projectedSurplusPct = details.projectedSurplusPct || 0;
   const maxAllowedExpense = details.maxAllowedExpense || 0;
   const requiredReduction = details.requiredReduction || 0;
   const requiredDailyReduction = details.requiredDailyReduction || 0;
-  const isEarlyMonth = details.isEarlyMonth || false;
   const paceStatus = details.paceStatus || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
   const eomStatus = details.eomStatus || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
 

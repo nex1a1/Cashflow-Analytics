@@ -66,6 +66,37 @@ const getCategoryPillStyles = (hexColor, dm) => {
   };
 };
 
+const getAmountInputClassName = (isInc, dm) => {
+  const baseClass = 'w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
+  if (dm) {
+    const incClass = isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50';
+    return `${baseClass} hover:bg-[#121212] hover:border-[#3e3e3e] ${incClass}`;
+  }
+  const incClass = isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400';
+  return `${baseClass} hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ${incClass}`;
+};
+
+const SortHeader = ({ label, sortKey, className = '', align = 'left', sortConfig, handleSort }) => {
+  const isActive = sortConfig.key === sortKey;
+  return (
+    <th
+      className={`px-4 py-3 font-bold cursor-pointer select-none group text-${align} ${className} ${
+        `text-slate-400 hover:text-slate-200 ${isActive ? 'text-[#da291c] bg-[#121212]/60' : 'hover:bg-[#303030]/30'}`
+      }`}
+      onClick={() => handleSort(sortKey)}
+      title={`เรียงตาม${label}`}
+    >
+      <div className={`inline-flex items-center gap-1.5 text-xs uppercase tracking-wide ${align === 'right' ? 'flex-row-reverse' : ''}`}>
+        {label}
+        <span className={`flex flex-col text-[8px] leading-[0.55] ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`}>
+          <span className={isActive && sortConfig.direction === 'asc' ? ('text-[#da291c]') : ''}>▲</span>
+          <span className={isActive && sortConfig.direction === 'desc' ? ('text-[#da291c]') : ''}>▼</span>
+        </span>
+      </div>
+    </th>
+  );
+};
+
 export default function LedgerTable({
   currentData, sortedTransactions, categories, 
   sortConfig, handleSort, isDateSorted, dateBands,
@@ -87,26 +118,6 @@ export default function LedgerTable({
     setCurrentPage(p);
     setPageInput(String(p));
   };
-  const SortHeader = ({ label, sortKey, className = '', align = 'left' }) => {
-    const isActive = sortConfig.key === sortKey;
-    return (
-      <th
-        className={`px-4 py-3 font-bold cursor-pointer select-none group text-${align} ${className} ${
-          `text-slate-400 hover:text-slate-200 ${isActive ? 'text-[#da291c] bg-[#121212]/60' : 'hover:bg-[#303030]/30'}`
-        }`}
-        onClick={() => handleSort(sortKey)}
-        title={`เรียงตาม${label}`}
-      >
-        <div className={`inline-flex items-center gap-1.5 text-xs uppercase tracking-wide ${align === 'right' ? 'flex-row-reverse' : ''}`}>
-          {label}
-          <span className={`flex flex-col text-[8px] leading-[0.55] ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`}>
-            <span className={isActive && sortConfig.direction === 'asc' ? ('text-[#da291c]') : ''}>▲</span>
-            <span className={isActive && sortConfig.direction === 'desc' ? ('text-[#da291c]') : ''}>▼</span>
-          </span>
-        </div>
-      </th>
-    );
-  };
 
   return (
     <div className="flex flex-col w-full">
@@ -118,12 +129,14 @@ export default function LedgerTable({
                 label="วันที่" 
                 sortKey="date" 
                 className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[145px]" 
+                sortConfig={sortConfig}
+                handleSort={handleSort}
               />
               <th className="px-4 py-3 font-bold w-[90px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ประเภท</th>
-              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" />
+              <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" sortConfig={sortConfig} handleSort={handleSort} />
               <th className="px-4 py-3 font-bold w-[100px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>
               <th className="px-4 py-3 font-bold text-[10px] font-black uppercase tracking-widest text-slate-400">รายละเอียด</th>
-              <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" />
+              <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" sortConfig={sortConfig} handleSort={handleSort} />
               <th className="sticky right-0 z-30 bg-[#121212] border-l border-[#303030]/60 w-12 text-center" />
             </tr>
           </thead>
@@ -134,7 +147,6 @@ export default function LedgerTable({
               const pillStyles = getCategoryPillStyles(catObj?.color, dm);
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
-              const rowBg      = isAlt ? 'bg-[#121212]/20' : 'bg-[#181818]';
               const stickyBg   = isAlt ? 'bg-[#161616]' : 'bg-[#181818]';
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
@@ -235,7 +247,7 @@ export default function LedgerTable({
                   
                   <td className="px-3 py-2 group/input relative align-middle">
                     <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
-                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={`w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${dm ? 'hover:bg-[#121212] hover:border-[#3e3e3e] ' + (isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50') : 'hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ' + (isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400')}`} placeholder="0" />
+                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={getAmountInputClassName(isInc, dm)} placeholder="0" />
                   </td>
                   
                   {/* Sticky Actions Column */}

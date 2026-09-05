@@ -210,7 +210,16 @@ const LedgerStatCard = ({
   );
 };
 
-export function useLedgerStats(displayTransactions, categories, cashflowGroups, formatMoney, dm, advancedFilterGroup, setAdvancedFilterGroup, allDatesInPeriod = []) {
+export function useLedgerStats({
+  displayTransactions = [],
+  categories = [],
+  cashflowGroups = [],
+  formatMoney,
+  dm,
+  advancedFilterGroup,
+  setAdvancedFilterGroup,
+  allDatesInPeriod = []
+} = {}) {
   const catTypeMap = useMemo(() => {
     const map = {};
     categories.forEach(c => {

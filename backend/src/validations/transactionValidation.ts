@@ -10,7 +10,7 @@ const transactionSchema = z.object({
   allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional().default('want'),
   dayNote: z.string().nullable().optional().default(''),
   group_type: z.string().nullable().optional(), 
-}).passthrough();
+}).loose();
 
 export const upsertTransactionSchema = z.union([
   transactionSchema,

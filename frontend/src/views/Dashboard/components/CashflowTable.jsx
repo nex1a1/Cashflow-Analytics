@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, RotateCcw } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
 
@@ -46,7 +46,16 @@ function getSubHighlightBgColor(group, subColor, isColHovered, isRowHovered, dm)
   return `rgba(${rgb}, ${opacity})`;
 }
 
-function calculateAdjustedGroupsTotal(groups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics) {
+function calculateAdjustedGroupsTotal({
+  groups,
+  row,
+  excludedGroups,
+  excludedCategories,
+  categories,
+  filteredGroupMap,
+  filteredCatMap,
+  analytics
+}) {
   if (!row) return 0;
   return groups
     .filter(g => !excludedGroups.has(g.id))
@@ -58,6 +67,25 @@ function calculateAdjustedGroupsTotal(groups, row, excludedGroups, excludedCateg
         .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)), 0);
       return sum + Math.max(0, rawVal - excludedCatSum);
     }, 0);
+}
+
+function calculateActiveMonthGroupTotal({
+  groupId,
+  activeMonths,
+  categories,
+  excludedCategories,
+  filteredGroupMap,
+  filteredCatMap,
+  analytics
+}) {
+  const groupCats = categories.filter(c => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
+  return activeMonths.reduce((s, r) => {
+    const rawVal = filteredGroupMap[groupId]?.[r.monthStr] ?? (r.groups[groupId] || 0);
+    const excludedCatSum = groupCats
+      .filter(c => excludedCategories?.has(c.id))
+      .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
+    return s + Math.max(0, rawVal - excludedCatSum);
+  }, 0);
 }
 
 function findPreviousActiveMonth(sortedCashflow, currentMonthStr, excludedMonths) {
@@ -205,17 +233,6 @@ const CashflowTableHeader = React.memo(({
           return (
             <React.Fragment key={g.id}>
               <th 
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
-                onClick={() => toggleGroup(g.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleGroup(g.id);
-                  }
-                }}
                 onMouseEnter={(e) => {
                   handleMouseEnter(e, g);
                   setHoveredCol(colId);
@@ -224,14 +241,22 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-extrabold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40' : ''}`} 
+                className={`px-3 py-1.5 font-extrabold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${isExcluded ? 'opacity-40' : ''}`} 
                 style={{ color: isExcluded ? undefined : (g.color || '#34d399'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 <div className="flex items-center justify-center gap-1.5">
-                  <span className={isExcluded ? 'line-through text-neutral-500' : ''}>
-                    {g.name} {isExpanded ? '«' : '»'}
-                  </span>
                   <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
+                    onClick={() => toggleGroup(g.id)}
+                    className={`cursor-pointer inline-flex items-center bg-transparent border-0 p-0 font-extrabold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'line-through text-neutral-500' : ''}`}
+                    style={{ color: isExcluded ? undefined : (g.color || '#34d399') }}
+                  >
+                    {g.name} {isExpanded ? '«' : '»'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleGroupExclusion(g.id);
@@ -297,17 +322,6 @@ const CashflowTableHeader = React.memo(({
           return (
             <React.Fragment key={g.id}>
               <th 
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
-                onClick={() => toggleGroup(g.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleGroup(g.id);
-                  }
-                }}
                 onMouseEnter={(e) => {
                   handleMouseEnter(e, g);
                   setHoveredCol(colId);
@@ -316,14 +330,22 @@ const CashflowTableHeader = React.memo(({
                   handleMouseLeave();
                   setHoveredCol(null);
                 }}
-                className={`px-3 py-1.5 font-bold text-center cursor-pointer transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40' : ''}`} 
+                className={`px-3 py-1.5 font-bold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isExcluded ? 'opacity-40' : ''}`} 
                 style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1'), backgroundColor: getHighlightBg(g, isColHovered) }}
               >
                 <div className="flex items-center justify-center gap-1.5">
-                  <span className={isExcluded ? 'line-through text-neutral-500' : ''}>
-                    {g.name} {isExpanded ? '«' : '»'}
-                  </span>
                   <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
+                    onClick={() => toggleGroup(g.id)}
+                    className={`cursor-pointer inline-flex items-center bg-transparent border-0 p-0 font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'line-through text-neutral-500' : ''}`}
+                    style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1') }}
+                  >
+                    {g.name} {isExpanded ? '«' : '»'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleGroupExclusion(g.id);
@@ -467,11 +489,14 @@ function SummaryTrendCell({
   onHover,
 }) {
   const expMoMJSX = !isExcluded ? renderMoMBadge(currentAdjustedExpense, prevAdjustedExpense) : null;
-  const bgCls = isExcluded
-    ? 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through'
-    : isTrendHovered
-      ? 'text-[#ff4d4d] bg-[#1c1c1c]'
-      : (isRowHovered ? 'text-[#ff4d4d] bg-[#1c1c1c]/80' : 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]');
+  let bgCls = 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]';
+  if (isExcluded) {
+    bgCls = 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through';
+  } else if (isTrendHovered) {
+    bgCls = 'text-[#ff4d4d] bg-[#1c1c1c]';
+  } else if (isRowHovered) {
+    bgCls = 'text-[#ff4d4d] bg-[#1c1c1c]/80';
+  }
 
   return (
     <td
@@ -629,22 +654,25 @@ const CashflowTableRow = React.memo(({
 }) => {
   const prevMonth = findPreviousActiveMonth(analytics.sortedCashflow, row.monthStr, excludedMonths);
 
-  const currentAdjustedIncome = calculateAdjustedGroupsTotal(
-    activeIncomeGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
-  );
-  const currentAdjustedExpense = calculateAdjustedGroupsTotal(
-    activeExpenseGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
-  );
-  const prevAdjustedExpense = calculateAdjustedGroupsTotal(
-    activeExpenseGroups, prevMonth, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
-  );
+  const currentAdjustedIncome = calculateAdjustedGroupsTotal({
+    groups: activeIncomeGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  });
+  const currentAdjustedExpense = calculateAdjustedGroupsTotal({
+    groups: activeExpenseGroups, row, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  });
+  const prevAdjustedExpense = calculateAdjustedGroupsTotal({
+    groups: activeExpenseGroups, row: prevMonth, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  });
 
   const isMonthHovered = hoveredCol === 'month';
-  const monthCellBg = isExcluded
-    ? 'text-neutral-500 bg-[#0f0f0f] line-through decoration-neutral-600'
-    : (isMonthHovered 
-        ? 'text-blue-300 bg-[#1c1c1c]' 
-        : (isRowHovered ? 'text-blue-300 bg-[#1c1c1c]/80' : 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]'));
+  let monthCellBg = 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]';
+  if (isExcluded) {
+    monthCellBg = 'text-neutral-500 bg-[#0f0f0f] line-through decoration-neutral-600';
+  } else if (isMonthHovered) {
+    monthCellBg = 'text-blue-300 bg-[#1c1c1c]';
+  } else if (isRowHovered) {
+    monthCellBg = 'text-blue-300 bg-[#1c1c1c]/80';
+  }
 
   return (
     <tr 
@@ -747,13 +775,13 @@ const CashflowTableFooter = React.memo(({
 
   const activeMonths = analytics.sortedCashflow.filter(r => !excludedMonths.has(r.monthStr));
 
-  const getAdjustedIncome = (r) => calculateAdjustedGroupsTotal(
-    activeIncomeGroups, r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
-  );
+  const getAdjustedIncome = (r) => calculateAdjustedGroupsTotal({
+    groups: activeIncomeGroups, row: r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  });
 
-  const getAdjustedExpense = (r) => calculateAdjustedGroupsTotal(
-    activeExpenseGroups, r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
-  );
+  const getAdjustedExpense = (r) => calculateAdjustedGroupsTotal({
+    groups: activeExpenseGroups, row: r, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics
+  });
 
   const totalActiveIncome = activeMonths.reduce((s, r) => s + getAdjustedIncome(r), 0);
   const totalActiveExpense = activeMonths.reduce((s, r) => s + getAdjustedExpense(r), 0);
@@ -781,15 +809,6 @@ const CashflowTableFooter = React.memo(({
           const isColHovered = hoveredCol === colId;
           const isGroupExcluded = excludedGroups.has(g.id);
 
-          const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-          const getGroupActiveVal = (r) => {
-            const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-            const excludedCatSum = groupCats
-              .filter(c => excludedCategories?.has(c.id))
-              .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-            return Math.max(0, rawVal - excludedCatSum);
-          };
-
           return (
             <React.Fragment key={g.id}>
               <td 
@@ -800,7 +819,9 @@ const CashflowTableFooter = React.memo(({
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#34d399') }}
               >
-                {formatMoney(activeMonths.reduce((s, r) => s + getGroupActiveVal(r), 0))}
+                {formatMoney(calculateActiveMonthGroupTotal({
+                  groupId: g.id, activeMonths, categories, excludedCategories, filteredGroupMap, filteredCatMap, analytics
+                }))}
               </td>
               {isExpanded && cats.map((c, cIdx) => {
                 const catColId = `c-${c.id}`;
@@ -833,15 +854,6 @@ const CashflowTableFooter = React.memo(({
           const isColHovered = hoveredCol === colId;
           const isGroupExcluded = excludedGroups.has(g.id);
 
-          const groupCats = categories.filter(c => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-          const getGroupActiveVal = (r) => {
-            const rawVal = filteredGroupMap[g.id]?.[r.monthStr] ?? (r.groups[g.id] || 0);
-            const excludedCatSum = groupCats
-              .filter(c => excludedCategories?.has(c.id))
-              .reduce((cSum, c) => cSum + (filteredCatMap[c.id]?.[r.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)), 0);
-            return Math.max(0, rawVal - excludedCatSum);
-          };
-
           return (
             <React.Fragment key={g.id}>
               <td 
@@ -852,7 +864,9 @@ const CashflowTableFooter = React.memo(({
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`} 
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#cbd5e1') }}
               >
-                {formatMoney(activeMonths.reduce((s, r) => s + getGroupActiveVal(r), 0))}
+                {formatMoney(calculateActiveMonthGroupTotal({
+                  groupId: g.id, activeMonths, categories, excludedCategories, filteredGroupMap, filteredCatMap, analytics
+                }))}
               </td>
               {isExpanded && cats.map((c) => {
                 const catColId = `c-${c.id}`;
@@ -924,7 +938,7 @@ CashflowTableFooter.displayName = 'CashflowTableFooter';
  * INTERNAL COMPONENT: GroupTooltip
  */
 const GroupTooltip = ({ hoveredGroup, dm }) => {
-  if (!hoveredGroup || !hoveredGroup.active) return null;
+  if (!hoveredGroup?.active) return null;
 
   const { x, y, group, activeCats } = hoveredGroup;
 
@@ -1060,10 +1074,10 @@ export default function CashflowTable() {
       const ym = dateStr.substring(0, 7);
       const amt = t.amount || 0;
 
-      if (catId && catMap[catId] && catMap[catId][ym] !== undefined) {
+      if (catId && catMap[catId]?.[ym] !== undefined) {
         catMap[catId][ym] += amt;
       }
-      if (groupId && groupMap[groupId] && groupMap[groupId][ym] !== undefined) {
+      if (groupId && groupMap[groupId]?.[ym] !== undefined) {
         groupMap[groupId][ym] += amt;
       }
     });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, ClipboardList, FileSpreadsheet, Database, ShieldCheck, 
-  Loader2, Info, Search, FileText, Check, AlertTriangle
+  Loader2, Info, Search, FileText, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PeriodPicker from '../layout/PeriodPicker';
@@ -72,7 +72,7 @@ function downloadCsvBlob(csvContent, filename) {
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -80,7 +80,7 @@ function filterExportTransactions(localTransactions, exportPeriod, typeFilter, p
   const query = previewSearch.trim().toLowerCase();
   return localTransactions.filter(t => {
     if (!isDateInFilter(t.date, exportPeriod)) return false;
-    if (t.category && t.category.includes('หักวงเงิน')) return false;
+    if (t.category?.includes('หักวงเงิน')) return false;
 
     if (typeFilter !== 'all') {
       const cat = categories.find(c => c.name === t.category);
@@ -117,10 +117,14 @@ function resolveDayTypeInfo(date, dayTypes, dayTypeConfig) {
 }
 
 function calculateExportStats(exportFormat, dataToExport, localTransactions, categories, dayTypeConfig, dayTypes) {
-  const rowCount = exportFormat === 'full' 
-    ? localTransactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length
-    : (exportFormat === 'wide' ? [...new Set(dataToExport.map(t => t.date))].length : dataToExport.length);
-  const estKB = (rowCount * (exportFormat === 'wide' ? 0.32 : 0.14)).toFixed(1);
+  let rowCount = dataToExport.length;
+  if (exportFormat === 'full') {
+    rowCount = localTransactions.length + categories.length + dayTypeConfig.length + Object.keys(dayTypes).length;
+  } else if (exportFormat === 'wide') {
+    rowCount = new Set(dataToExport.map(t => t.date)).size;
+  }
+  const multiplier = exportFormat === 'wide' ? 0.32 : 0.14;
+  const estKB = (rowCount * multiplier).toFixed(1);
   return { rowCount, estKB, hasData: rowCount > 0 };
 }
 
@@ -316,6 +320,16 @@ const ExportLongPreview = ({ dataToExport, categories, getDayTypeInfo }) => (
         const isIncome = cat?.type === 'income';
         const isSavings = cat?.type === 'savings';
 
+        let typeTextColor = 'text-rose-500';
+        let amountSign = '-';
+        if (isIncome) {
+          typeTextColor = 'text-emerald-500';
+          amountSign = '+';
+        } else if (isSavings) {
+          typeTextColor = 'text-cyan-500';
+          amountSign = '±';
+        }
+
         return (
           <tr key={t.id || idx} className="hover:bg-[#1c1c1c] transition-colors">
             <td className="p-3 text-slate-400">{fromISODate(t.date)}</td>
@@ -325,11 +339,7 @@ const ExportLongPreview = ({ dataToExport, categories, getDayTypeInfo }) => (
               </span>
             </td>
             <td className="p-3 whitespace-nowrap">
-              <span className={`text-[10px] font-bold ${
-                isIncome 
-                  ? 'text-emerald-500' 
-                  : (isSavings ? 'text-cyan-500' : 'text-rose-500')
-              }`}>
+              <span className={`text-[10px] font-bold ${typeTextColor}`}>
                 {(cat?.type || 'expense').toUpperCase()}
               </span>
             </td>
@@ -347,12 +357,8 @@ const ExportLongPreview = ({ dataToExport, categories, getDayTypeInfo }) => (
             <td className="p-3 text-slate-300 max-w-[220px] truncate" title={t.description}>
               {t.description || '—'}
             </td>
-            <td className={`p-3 text-right font-bold ${
-              isIncome 
-                ? 'text-emerald-500' 
-                : (isSavings ? 'text-cyan-500' : 'text-rose-500')
-            }`}>
-              {isIncome ? '+' : (isSavings ? '±' : '-')}{formatMoney(t.amount)}
+            <td className={`p-3 text-right font-bold ${typeTextColor}`}>
+              {amountSign}{formatMoney(t.amount)}
             </td>
           </tr>
         );
@@ -360,6 +366,12 @@ const ExportLongPreview = ({ dataToExport, categories, getDayTypeInfo }) => (
     </tbody>
   </table>
 );
+
+function getCategoryColor(type) {
+  if (type === 'income') return 'text-emerald-500';
+  if (type === 'savings') return 'text-cyan-500';
+  return 'text-rose-500';
+}
 
 const ExportWidePreview = ({ dataToExport, categories, getDayTypeInfo }) => {
   const dates = [...new Set(dataToExport.map(t => t.date))].sort((a, b) => a.localeCompare(b));
@@ -401,15 +413,15 @@ const ExportWidePreview = ({ dataToExport, categories, getDayTypeInfo }) => {
               </td>
               {cats.slice(0, 6).map(cat => {
                 const total = calculateCategoryTotal(dataToExport, date, cat.name);
+                let cellColor = 'text-neutral-700';
+                if (total > 0) {
+                  cellColor = getCategoryColor(cat.type);
+                }
                 
                 return (
                   <td 
                     key={cat.id} 
-                    className={`p-3 text-right font-bold ${
-                      total > 0 
-                        ? (cat.type === 'income' ? 'text-emerald-500' : (cat.type === 'savings' ? 'text-cyan-500' : 'text-rose-500')) 
-                        : 'text-neutral-700'
-                    }`}
+                    className={`p-3 text-right font-bold ${cellColor}`}
                   >
                     {total > 0 ? formatMoney(total) : '—'}
                   </td>
@@ -497,80 +509,91 @@ const ExportPreviewPanel = ({
   localTransactions,
   dayTypes,
   dayTypeConfig
-}) => (
-  <div className="flex-grow flex flex-col p-6 bg-[#181818] overflow-hidden">
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 shrink-0">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-          ตัวอย่างข้อมูลในรายงาน (Document Preview)
-        </span>
-      </div>
-
-      {exportFormat !== 'full' && (
-        <div className="relative w-full sm:w-[260px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="ค้นหาตามคำอธิบาย..."
-            value={previewSearch}
-            onChange={(e) => setPreviewSearch(e.target.value)}
-            className="w-full bg-[#121212] border border-[#3e3e3e] pl-9 pr-3 py-1.5 text-xs font-bold tracking-wide rounded-none focus:border-[#da291c] focus:outline-none transition-colors placeholder:text-[#555555] text-[#cbd5e1]"
-          />
-          {previewSearch && (
-            <button 
-              onClick={() => setPreviewSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-
-    <div className="flex-1 rounded-none border border-[#303030] flex flex-col relative overflow-hidden bg-[#121212]">
-      <div className="px-4 py-2.5 border-b border-[#303030] bg-[#1c1c1c] flex justify-between items-center text-[10px] font-mono text-[#cbd5e1] tracking-widest select-none">
-        <span>CASHFLOW SHARK STATEMENT REPORT</span>
-        <span>PRINT PREVIEW // TOTAL ROWS: {dataToExport.length}</span>
-      </div>
-
-      {isFetching ? (
+}) => {
+  const renderPreviewBody = () => {
+    if (isFetching) {
+      return (
         <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-slate-500">
           <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
           <span className="uppercase tracking-widest text-[#888888]">กำลังอ่านข้อมูลจากฐานข้อมูล...</span>
         </div>
-      ) : !stats.hasData && exportFormat !== 'full' ? (
+      );
+    }
+    if (!stats.hasData && exportFormat !== 'full') {
+      return (
         <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-slate-500">
           <AlertTriangle className="w-6 h-6 text-[#da291c] animate-pulse" />
           <span className="text-[#888888]">ไม่พบบันทึกข้อมูลในช่วงเวลาและเงื่อนไขที่กำหนด</span>
         </div>
-      ) : (
-        <div className="flex-1 overflow-auto scrollbar-tactical relative">
-          {exportFormat === 'long' && (
-            <ExportLongPreview
-              dataToExport={dataToExport}
-              categories={categories}
-              getDayTypeInfo={getDayTypeInfo}
-            />
-          )}
-          {exportFormat === 'wide' && (
-            <ExportWidePreview
-              dataToExport={dataToExport}
-              categories={categories}
-              getDayTypeInfo={getDayTypeInfo}
-            />
-          )}
-          {exportFormat === 'full' && (
-            <ExportFullPreview
-              localTransactions={localTransactions}
-              categories={categories}
-              dayTypes={dayTypes}
-              dayTypeConfig={dayTypeConfig}
-            />
-          )}
+      );
+    }
+    return (
+      <div className="flex-1 overflow-auto scrollbar-tactical relative">
+        {exportFormat === 'long' && (
+          <ExportLongPreview
+            dataToExport={dataToExport}
+            categories={categories}
+            getDayTypeInfo={getDayTypeInfo}
+          />
+        )}
+        {exportFormat === 'wide' && (
+          <ExportWidePreview
+            dataToExport={dataToExport}
+            categories={categories}
+            getDayTypeInfo={getDayTypeInfo}
+          />
+        )}
+        {exportFormat === 'full' && (
+          <ExportFullPreview
+            localTransactions={localTransactions}
+            categories={categories}
+            dayTypes={dayTypes}
+            dayTypeConfig={dayTypeConfig}
+          />
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex-grow flex flex-col p-6 bg-[#181818] overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            ตัวอย่างข้อมูลในรายงาน (Document Preview)
+          </span>
         </div>
-      )}
-    </div>
+
+        {exportFormat !== 'full' && (
+          <div className="relative w-full sm:w-[260px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+            <input
+              type="text"
+              placeholder="ค้นหาตามคำอธิบาย..."
+              value={previewSearch}
+              onChange={(e) => setPreviewSearch(e.target.value)}
+              className="w-full bg-[#121212] border border-[#3e3e3e] pl-9 pr-3 py-1.5 text-xs font-bold tracking-wide rounded-none focus:border-[#da291c] focus:outline-none transition-colors placeholder:text-[#555555] text-[#cbd5e1]"
+            />
+            {previewSearch && (
+              <button 
+                onClick={() => setPreviewSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 rounded-none border border-[#303030] flex flex-col relative overflow-hidden bg-[#121212]">
+        <div className="px-4 py-2.5 border-b border-[#303030] bg-[#1c1c1c] flex justify-between items-center text-[10px] font-mono text-[#cbd5e1] tracking-widest select-none">
+          <span>CASHFLOW SHARK STATEMENT REPORT</span>
+          <span>PRINT PREVIEW // TOTAL ROWS: {dataToExport.length}</span>
+        </div>
+
+        {renderPreviewBody()}
+      </div>
 
     <div className="mt-4 flex items-start gap-3 shrink-0 select-none">
       <Info className="w-4 h-4 text-[#da291c] mt-0.5 shrink-0" />
@@ -585,6 +608,7 @@ const ExportPreviewPanel = ({
     </div>
   </div>
 );
+};
 
 const ExportFooter = ({ delimiter, exportPeriod, getFilterLabel, onClose, executeExport, stats, exportFormat, isExporting }) => (
   <div className="px-6 py-4 border-t border-[#303030] bg-[#121212] flex justify-between items-center shrink-0">

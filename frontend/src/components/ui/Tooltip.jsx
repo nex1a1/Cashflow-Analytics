@@ -3,7 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Tooltip({ children, content, position = 'bottom' }) {
   const [isVisible, setIsVisible] = useState(false);
-  const dm = true;
+
+  let initialY = 0;
+  if (position === 'bottom') {
+    initialY = -5;
+  } else if (position === 'top') {
+    initialY = 5;
+  }
 
   // Position styles
   const positions = {
@@ -25,7 +31,7 @@ export default function Tooltip({ children, content, position = 'bottom' }) {
       <AnimatePresence>
         {isVisible && content && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: position === 'bottom' ? -5 : position === 'top' ? 5 : 0 }}
+            initial={{ opacity: 0, scale: 0.95, y: initialY }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}

@@ -2,6 +2,12 @@ import React, { memo } from 'react';
 import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 
+const ALLOCATION_BADGE_STYLES = {
+  need: 'bg-rose-900/30 text-rose-400 border-rose-800/40',
+  want: 'bg-sky-900/30 text-sky-400 border-sky-800/40',
+  savings: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40'
+};
+
 const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
   const dm = true;
   const isInc = catObj?.type === 'income';
@@ -11,6 +17,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
   const rowBg = `rgba(${hexToRgb(color)}, ${dm ? 0.06 : 0.04})`;
   const borderCls = 'border-[#303030]/60';
   const textPriCls = 'text-slate-100';
+  const allocBadgeStyle = ALLOCATION_BADGE_STYLES[tx.allocation_type] || ALLOCATION_BADGE_STYLES.savings;
   
   return (
     <div className={`flex items-center gap-3 px-3 py-2.5 rounded-none border transition-all ${borderCls}`}
@@ -20,11 +27,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
         <div className="flex items-center gap-2">
           <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
           {tx.allocation_type && !isInc && (
-            <span className={`text-[8px] font-black px-1 rounded-none border shrink-0 ${
-              tx.allocation_type === 'need' ? ('bg-rose-900/30 text-rose-400 border-rose-800/40') :
-              tx.allocation_type === 'want' ? ('bg-sky-900/30 text-sky-400 border-sky-800/40') :
-              ('bg-emerald-900/30 text-emerald-400 border-emerald-800/40')
-            }`}>
+            <span className={`text-[8px] font-black px-1 rounded-none border shrink-0 ${allocBadgeStyle}`}>
               {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
             </span>
           )}
@@ -58,8 +61,6 @@ export default function TransactionList({
   confirmDeleteId,
   handleDelete
 }) {
-  const dm = true;
-
   const expenses = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
   const income   = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
 

@@ -12,7 +12,8 @@ const CATEGORY_RULES: CategoryRule[] = [
   { pattern: /ค่าเช่า|ค่าหอ|หอพัก|อพาร์ทเม้นท์|คอนโด|ห้องพัก/, name: "ค่าเช่า/ค่าหอพัก" },
   { pattern: /ไอแพด|ipad|iphone|ไอโฟน|มือถือ|samsung|xiaomi|tablet|แท็บเล็ต|apple watch|smartwatch/, name: "สมาร์ทโฟน & ไอทีพกพา" },
   { pattern: /mainboard|psu|ram|ryzen|cpu|case|ssd|การ์ดจอ|vga|cooler|heatsink|fan|ups|สำรองไฟ/, name: "ประกอบคอม & ฮาร์ดแวร์" },
-  { pattern: /keyboard|คีย์บอร์ด|เมาส์|mouse|ไมค์|microphone|maono|dac|soundcard|sound blaster|headphone|หูฟัง|earbud|in-ear|joystick|จอย|flydigi|xbox|connection|สายเชื่อมต่อ|enclosure|usb/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
+  { pattern: /keyboard|คีย์บอร์ด|mouse|เมาส์|ไมค์|microphone|mic|maono|dac|soundcard|sound blaster/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
+  { pattern: /headphone|หูฟัง|earbud|in-ear|joystick|จอย|flydigi|xbox|connection|สายเชื่อมต่อ|enclosure|usb/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
   { pattern: /โต๊ะ|table|desk|chair|เก้าอี้|bewell|pegboard|mousepad|แผ่นรองเมาส์|monitor arm|ขาตั้งจอ/, name: "เฟอร์นิเจอร์ & จัดโต๊ะคอม" },
   { pattern: /คอม|computer|ผ่อน|จอ/, name: "อุปกรณ์ไอที/คอมพิวเตอร์" },
   { pattern: /gemini|vip|subscription|netflix|youtube|spotify|yt premium|รายเดือน|สมาชิก/, name: "บริการรายเดือน" },
@@ -32,7 +33,7 @@ export const autoCategorize = (description: string, categoryName: string, catego
   const matchedName = matchedRule ? matchedRule.name : "อื่นๆ";
   
   const exists = categoryList.find(c => c.name === matchedName);
-  return exists ? exists.name : (categoryList.filter(c=>c.type==='expense')[0]?.name || "อื่นๆ");
+  return exists ? exists.name : (categoryList.find(c => c.type === 'expense')?.name || "อื่นๆ");
 };
 
 const pushNonEmptyRow = (rows: string[][], row: string[]) => {

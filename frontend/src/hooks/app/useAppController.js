@@ -3,7 +3,7 @@ import {
   DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES,
 } from '../../constants';
 import { 
-  settingsService, calendarService, categoryService, groupService, dayTypeService 
+  calendarService, groupService, dayTypeService 
 } from '../../services/api';
 import { getPeriodDateRange, toISODate } from '../../utils/dateHelpers';
 import { getFilterLabel } from '../../utils/formatters';
@@ -58,7 +58,6 @@ export function useAppController() {
     handleAddCategory,
     handleDeleteCategory: _handleDeleteCategory,
     handleMoveCategory,
-    loadCategories,
     loadGroups,
   } = useCategories(DEFAULT_CATEGORIES, setCashflowGroups);
 
@@ -315,9 +314,9 @@ export function useAppController() {
       if (newVal) {
         const d = new Date();
         const curMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        if (filterPeriod.match(/^\d{4}-\d{2}$/) && filterPeriod > curMonth) {
+        if (/^\d{4}-\d{2}$/.exec(filterPeriod) && filterPeriod > curMonth) {
           setFilterPeriod(curMonth);
-        } else if (filterPeriod.match(/^\d{4}$/) && Number.parseInt(filterPeriod, 10) > d.getFullYear()) {
+        } else if (/^\d{4}$/.exec(filterPeriod) && Number.parseInt(filterPeriod, 10) > d.getFullYear()) {
           setFilterPeriod(curMonth);
         } else if (filterPeriod.includes('-Q') || filterPeriod.includes('-H')) {
           const [y] = filterPeriod.split('-');

@@ -2,6 +2,12 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Star, Search, SlidersHorizontal, RotateCcw, X, ChevronDown } from 'lucide-react';
 import { hexToRgb } from '../../utils/formatters';
 
+const ALLOC_COLORS = {
+  need: '#f43f5e',
+  want: '#38bdf8',
+  savings: '#34d399'
+};
+
 export default function QuickSuggest({
   transactions,
   categories,
@@ -247,6 +253,22 @@ export default function QuickSuggest({
                 {activeCategories.map(c => {
                   const isActive = activeCatFilter == c.id;
                   const isHovered = hoveredChipId == c.id;
+                  const rgb = hexToRgb(c.color);
+
+                  let borderColor = '#3e3e3e';
+                  let backgroundColor = '#181818';
+                  let color = 'rgba(203, 213, 225, 0.8)';
+
+                  if (isActive) {
+                    borderColor = c.color;
+                    backgroundColor = `rgba(${rgb}, 0.15)`;
+                    color = '#fff';
+                  } else if (isHovered) {
+                    borderColor = `rgba(${rgb}, 0.5)`;
+                    backgroundColor = `rgba(${rgb}, 0.05)`;
+                    color = '#fff';
+                  }
+
                   return (
                     <button
                       key={c.id}
@@ -254,13 +276,7 @@ export default function QuickSuggest({
                       onMouseEnter={() => setHoveredChipId(c.id)}
                       onMouseLeave={() => setHoveredChipId(null)}
                       onClick={() => setActiveCatFilter(c.id)}
-                      style={{
-                        borderColor: isActive ? c.color : (isHovered ? `rgba(${hexToRgb(c.color)}, 0.5)` : '#3e3e3e'),
-                        backgroundColor: isActive 
-                          ? `rgba(${hexToRgb(c.color)}, 0.15)` 
-                          : (isHovered ? `rgba(${hexToRgb(c.color)}, 0.05)` : '#181818'),
-                        color: isActive ? '#fff' : (isHovered ? '#fff' : 'rgba(203, 213, 225, 0.8)')
-                      }}
+                      style={{ borderColor, backgroundColor, color }}
                       className="px-2.5 py-1 text-[11px] font-bold border transition-all duration-75 flex items-center gap-1 rounded-none cursor-pointer"
                     >
                       <span>{c.icon}</span>
@@ -386,9 +402,7 @@ export default function QuickSuggest({
               const bgAlpha = dm ? 0.2 : 0.15;
               
               // Allocation Bar Color
-              const allocColor = s.allocation_type === 'need' ? '#f43f5e' :
-                                 s.allocation_type === 'want' ? '#38bdf8' :
-                                 '#34d399';
+              const allocColor = ALLOC_COLORS[s.allocation_type] || '#34d399';
 
               const itemKey = `${s.categoryId}-${s.description}-${s.amount}-${idx}`;
               const isHovered = hoveredItemKey === itemKey;

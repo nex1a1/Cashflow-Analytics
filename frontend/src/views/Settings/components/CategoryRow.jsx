@@ -10,30 +10,25 @@ function AutoFocusInput({ value, onChange, className, placeholder, isNew }) {
 }
 
 const CategoryRow = memo(({ cat, isNew, isIncome, onMove, onChange, onDelete, filteredGroups = [], cashflowGroups = [], isFirst, isLast }) => {
-  const dm = true;
-  
-  const accentFocus = isIncome 
-    ? 'focus:border-emerald-500/70 focus:shadow-none focus:ring-0' 
-    : 'focus:border-[#da291c]/70 focus:shadow-none focus:ring-0';
+  const focusBorder = isIncome 
+    ? 'focus:border-emerald-500/70' 
+    : 'focus:border-[#da291c]/70';
+
+  const accentFocus = `${focusBorder} focus:shadow-none focus:ring-0`;
 
   const group = cashflowGroups.find(g => g.id === cat.cashflowGroup);
   const groupColor = group?.color || ('#334155');
 
   const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
 
-  const inputCls = `px-2 py-1.5 border outline-none font-semibold text-[13px] flex-1 min-w-0 rounded-sm ${
-    `bg-[#121212] border-[#3e3e3e] ${accentFocus} text-[#cbd5e1] placeholder-[#555555]`
-  }`;
+  const inputCls = `px-2 py-1.5 border outline-none font-semibold text-[13px] flex-1 min-w-0 rounded-sm bg-[#121212] border-[#3e3e3e] ${accentFocus} text-[#cbd5e1] placeholder-[#555555]`;
 
-  const iconCls = `w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm ${
-    `bg-[#121212] border-[#3e3e3e] text-white ${isIncome ? 'focus:border-emerald-500/70' : 'focus:border-[#da291c]/70'}`
-  }`;
+  const iconCls = `w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm bg-[#121212] border-[#3e3e3e] text-white ${focusBorder}`;
 
-  const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none cursor-pointer w-28 rounded-sm ${
-    !currentGroupValid
-      ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
-      : `bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] ${isIncome ? 'focus:border-emerald-500/70' : 'focus:border-[#da291c]/70'}`
-  }`;
+  const selectTheme = !currentGroupValid
+    ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
+    : `bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] ${focusBorder}`;
+  const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none cursor-pointer w-28 rounded-sm ${selectTheme}`;
 
   return (
     <div style={{ borderLeftColor: groupColor, borderLeftWidth: '1px' }} className={`flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 group/cat ${

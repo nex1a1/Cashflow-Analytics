@@ -71,7 +71,7 @@ export default function BatchForm({
       return;
     }
     const cat = categories.find(c => c.id === selectedCatId);
-    if (cat && cat.allocation_type) {
+    if (cat?.allocation_type) {
       setValue('allocation_type', cat.allocation_type);
     }
   }, [formType, selectedCatId, setValue, categories]);
@@ -159,12 +159,19 @@ export default function BatchForm({
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
                 { val: 'want', label: 'WANT', color: 'text-sky-400' },
                 { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
-              ].map(opt => (
-                <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
-                  className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${allocationType === opt.val ? (dm ? 'bg-[#303030] ' + opt.color : 'bg-white ' + opt.color + ' shadow-sm') : ('text-slate-500')}`}>
-                  {opt.label}
-                </button>
-              ))}
+              ].map(opt => {
+                const isSelected = allocationType === opt.val;
+                let activeStyle = 'text-slate-500';
+                if (isSelected) {
+                  activeStyle = dm ? `bg-[#303030] ${opt.color}` : `bg-white ${opt.color} shadow-sm`;
+                }
+                return (
+                  <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
+                    className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${activeStyle}`}>
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

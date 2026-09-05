@@ -4,8 +4,7 @@ import PropTypes from 'prop-types';
 import { Chart } from 'react-chartjs-2';
 import { 
   Layers, TrendingUp, BarChart, Network, 
-  Filter, ChevronDown, Settings, Search,
-  Zap, EyeOff, Activity, X, Lock
+  Filter, ChevronDown, Search, Activity
 } from 'lucide-react';
 
 import { useDashboardContext } from '../context/DashboardContext';
@@ -132,7 +131,7 @@ const MainChartHeader = ({
   setIsBreakdown, filterPeriod,
   mainChartType, mainChartData, showTrendLines
 }) => {
-  const isSingleMonth = filterPeriod.match(/^\d{4}-\d{2}$/);
+  const isSingleMonth = /^\d{4}-\d{2}$/.exec(filterPeriod);
   const showGroupBy = chartViewType !== 'sankey' && !isSingleMonth;
   const title = getMainChartTitle(chartViewType, mainChartType, mainChartData, showTrendLines);
 
@@ -185,7 +184,6 @@ MainChartHeader.propTypes = {
   setSankeyMode: PropTypes.func,
   setIsBreakdown: PropTypes.func.isRequired,
   filterPeriod: PropTypes.string.isRequired,
-  dm: PropTypes.bool.isRequired,
   mainChartType: PropTypes.string,
   mainChartData: PropTypes.object,
   showTrendLines: PropTypes.bool.isRequired
@@ -239,7 +237,7 @@ const MainChartCategorySelector = ({
   const filteredCategories = categories.filter(c => 
     c.type === 'expense' && 
     categoriesWithData.has(c.name) &&
-    (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || (c.icon && c.icon.includes(searchQuery)))
+    (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.icon?.includes(searchQuery))
   );
 
   return (
@@ -566,8 +564,7 @@ MainChartLegend.propTypes = {
   dashboardCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
   setDashboardCategory: PropTypes.func,
   categories: PropTypes.array,
-  categoriesWithData: PropTypes.object,
-  dm: PropTypes.bool
+  categoriesWithData: PropTypes.object
 };
 
 const ToolbarToggleSwitch = ({ isActive, activeColor = 'bg-[#da291c]' }) => (

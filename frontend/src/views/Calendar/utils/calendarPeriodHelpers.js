@@ -512,9 +512,12 @@ export function calculateTemporalInsights({
   const restTotalExpense = restDayTypes.reduce((acc, dt) => acc + dt.totalExpense, 0);
   const restAvgExpense = restTotalDays > 0 ? Math.round(restTotalExpense / restTotalDays) : 0;
 
-  const ratio = workAvgExpense > 0
-    ? (restAvgExpense / workAvgExpense).toFixed(1)
-    : (restAvgExpense > 0 ? '∞' : '1.0');
+  let ratio = '1.0';
+  if (workAvgExpense > 0) {
+    ratio = (restAvgExpense / workAvgExpense).toFixed(1);
+  } else if (restAvgExpense > 0) {
+    ratio = '∞';
+  }
 
   // Month cycle ratios
   Object.values(monthCycleStats).forEach(c => {
@@ -626,7 +629,15 @@ export function calculateAllocationBreakdown({
 
   // Ranked categories with percentage of total allocation
   const rankedCategories = allCatList.slice(0, 10).map(c => {
-    const groupTotal = c.allocation === 'need' ? needTotal : (c.allocation === 'want' ? wantTotal : (savingsGroupTotal > 0 ? savingsGroupTotal : totalSavings));
+    let groupTotal = totalSavings;
+    if (c.allocation === 'need') {
+      groupTotal = needTotal;
+    } else if (c.allocation === 'want') {
+      groupTotal = wantTotal;
+    } else if (savingsGroupTotal > 0) {
+      groupTotal = savingsGroupTotal;
+    }
+
     const pctOfGroup = groupTotal > 0 ? Math.round((c.total / groupTotal) * 100) : 0;
     const pctOfGrand = grandTotal > 0 ? Math.round((c.total / grandTotal) * 100) : 0;
     return {

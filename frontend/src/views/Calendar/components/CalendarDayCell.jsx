@@ -14,8 +14,6 @@ const CalendarDayCell = memo(function CalendarDayCell({
   dayTypeConfig, dayType, handleDayTypeChange, onSelectDate,
   maxDailyExpense = 0
 }) {
-  const isDarkMode = true;
-
   const typeConf = useMemo(() => {
     return dayTypeConfig.find(dt => dt.id === dayType) || dayTypeConfig[0];
   }, [dayType, dayTypeConfig]);
@@ -46,6 +44,13 @@ const CalendarDayCell = memo(function CalendarDayCell({
   const displayedExp = useMemo(() => data.items.slice(0, maxExp), [data.items, maxExp]);
   const hiddenExpItems = useMemo(() => data.items.slice(maxExp), [data.items, maxExp]);
 
+  let dayBadgeCls = 'text-slate-200 bg-[#1a1a1a] font-bold';
+  if (isToday) {
+    dayBadgeCls = 'bg-[#da291c] text-white font-black';
+  } else if (isWeekend) {
+    dayBadgeCls = 'text-red-400 bg-red-950/30 font-bold';
+  }
+
   return (
     <div 
       className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-[#2d2d2d]/30 ${cellBg} hover:bg-[#1d1d1d] transition-none`}
@@ -65,13 +70,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           aria-label={`เลือกวันที่ ${day} ${dateStr}`}
           className="flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0 text-left"
         >
-          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums font-mono ${
-            isToday
-              ? 'bg-[#da291c] text-white font-black'
-              : isWeekend
-                ? 'text-red-400 bg-red-950/30 font-bold'
-                : 'text-slate-200 bg-[#1a1a1a] font-bold'
-          }`}>
+          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums font-mono ${dayBadgeCls}`}>
             {day}
           </span>
           <PlusCircle className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 pointer-events-none text-[#da291c]" />

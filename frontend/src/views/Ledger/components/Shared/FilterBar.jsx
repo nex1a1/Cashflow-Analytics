@@ -1,9 +1,80 @@
 import React from 'react';
 import { 
-  Search, X, Hash, CalendarDays, MousePointer2, Target, 
-  Calendar, Folder, Tag, ChevronDown, RefreshCw, Sparkles
+  Search, X, Hash, CalendarDays, MousePointer2, 
+  Folder, Tag, ChevronDown, RefreshCw, Sparkles
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
+
+// Segment Buttons - Styled to match the flat "รายการ / ตาราง" toggle
+const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
+  const getColors = () => {
+    if (!active) {
+      return 'bg-[#121212] border-[#303030] text-[#888888] hover:text-[#cbd5e1] hover:bg-[#303030]/30';
+    }
+
+    switch (colorScheme) {
+      case 'emerald':
+        return 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.06)]';
+      case 'rose':
+        return 'bg-rose-950/20 border-rose-500/40 text-rose-400 font-black shadow-[0_0_8px_rgba(239,68,68,0.06)]';
+      case 'indigo':
+        return 'bg-indigo-950/20 border-indigo-500/40 text-indigo-400 font-black shadow-[0_0_8px_rgba(99,102,241,0.06)]';
+      case 'amber':
+        return 'bg-amber-950/20 border-amber-500/40 text-amber-400 font-black shadow-[0_0_8px_rgba(245,158,11,0.06)]';
+      case 'sky':
+        return 'bg-sky-950/20 border-sky-500/40 text-sky-450 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
+      case 'blue':
+      default:
+        return 'bg-[#303030] border-[#505050] text-white font-black';
+    }
+  };
+
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex-1 px-1.5 py-1 text-[10px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
+    >
+      {label}
+    </button>
+  );
+};
+
+// Custom visual select box (Flat Slate HUD Style)
+const CustomSelect = ({ value, onChange, options, icon, isActive }) => {
+  return (
+    <div className={`relative flex items-center border rounded-none bg-[#121212] ${
+      isActive 
+        ? 'border-[#da291c] text-white bg-[#121212]' 
+        : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
+    }`}>
+      <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
+        isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
+      }`}>
+        {icon}
+      </div>
+      
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full bg-transparent text-[11px] font-black py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
+      >
+        {options}
+      </select>
+      
+      <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
+        isActive ? 'text-[#da291c]' : 'text-[#666666]'
+      }`}>
+        <ChevronDown className="w-3 h-3" />
+      </div>
+      
+      {isActive && (
+        <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+          <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
+        </span>
+      )}
+    </div>
+  );
+};
 
 export default function FilterBar({
   searchQuery, setSearchQuery,
@@ -21,8 +92,6 @@ export default function FilterBar({
   dayTypes = {},
   dayTypeConfig = []
 }) {
-  const dm = true;
-
   // Dynamic active filters count
   const activeCount = [
     searchQuery !== '',
@@ -34,77 +103,6 @@ export default function FilterBar({
     minAmount !== '',
     maxAmount !== ''
   ].filter(Boolean).length;
-
-  // Segment Buttons - Styled to match the flat "รายการ / ตาราง" toggle
-  const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
-    const getColors = () => {
-      if (!active) {
-        return 'bg-[#121212] border-[#303030] text-[#888888] hover:text-[#cbd5e1] hover:bg-[#303030]/30';
-      }
-
-      switch (colorScheme) {
-        case 'emerald':
-          return 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.06)]';
-        case 'rose':
-          return 'bg-rose-950/20 border-rose-500/40 text-rose-400 font-black shadow-[0_0_8px_rgba(239,68,68,0.06)]';
-        case 'indigo':
-          return 'bg-indigo-950/20 border-indigo-500/40 text-indigo-400 font-black shadow-[0_0_8px_rgba(99,102,241,0.06)]';
-        case 'amber':
-          return 'bg-amber-950/20 border-amber-500/40 text-amber-400 font-black shadow-[0_0_8px_rgba(245,158,11,0.06)]';
-        case 'sky':
-          return 'bg-sky-950/20 border-sky-500/40 text-sky-450 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
-        case 'blue':
-        default:
-          return 'bg-[#303030] border-[#505050] text-white font-black';
-      }
-    };
-
-    return (
-      <button 
-        onClick={onClick}
-        className={`flex-1 px-1.5 py-1 text-[10px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
-      >
-        {label}
-      </button>
-    );
-  };
-
-  // Custom visual select box (Flat Slate HUD Style)
-  const CustomSelect = ({ value, onChange, options, icon, isActive }) => {
-    return (
-      <div className={`relative flex items-center border rounded-none bg-[#121212] ${
-        isActive 
-          ? 'border-[#da291c] text-white bg-[#121212]' 
-          : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
-      }`}>
-        <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
-          isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
-        }`}>
-          {icon}
-        </div>
-        
-        <select
-          value={value}
-          onChange={onChange}
-          className="w-full bg-transparent text-[11px] font-black py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
-        >
-          {options}
-        </select>
-        
-        <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-          isActive ? 'text-[#da291c]' : 'text-[#666666]'
-        }`}>
-          <ChevronDown className="w-3 h-3" />
-        </div>
-        
-        {isActive && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
-          </span>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="relative rounded-none border border-[#303030]/60 bg-[#121212] mb-5 z-50">
@@ -268,11 +266,14 @@ export default function FilterBar({
                       <optgroup label="แยกตามกลุ่ม">
                         {cashflowGroups
                           .filter(g => (activeCashflowGroupIds?.has ? activeCashflowGroupIds.has(g.id) : false) || advancedFilterGroup === g.id)
-                          .map(g => (
-                            <option key={g.id} value={g.id}>
-                              {g.icon ? g.icon : (g.type === 'income' ? '🟢' : '🔴')} {g.name}
-                            </option>
-                          ))}
+                          .map(g => {
+                            const groupIcon = g.icon || (g.type === 'income' ? '🟢' : '🔴');
+                            return (
+                              <option key={g.id} value={g.id}>
+                                {groupIcon} {g.name}
+                              </option>
+                            );
+                          })}
                       </optgroup>
                     )}
                   </>

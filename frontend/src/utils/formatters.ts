@@ -7,7 +7,7 @@ export const formatMoney = (amount: number | string): string =>
   });
 
 export const getThaiMonth = (yearMonth: string): string => {
-  if (!yearMonth || !yearMonth.includes('-')) return yearMonth;
+  if (!yearMonth?.includes('-')) return yearMonth;
   const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const [y, m] = yearMonth.split('-');
@@ -48,10 +48,9 @@ export const getFilterLabel = (period: string): string => {
   return period;
 };
 
-export const hexToRgb = (hexStr?: string): string => {
-    let hex = hexStr || '#94a3b8';
-    hex = hex.replace('#', '');
-    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+export const hexToRgb = (hexStr = '#94a3b8'): string => {
+    const raw = hexStr.replace('#', '');
+    const hex = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
     if (hex.length !== 6) return '148, 163, 184'; 
     const r = Number.parseInt(hex.substring(0, 2), 16);
     const g = Number.parseInt(hex.substring(2, 4), 16);

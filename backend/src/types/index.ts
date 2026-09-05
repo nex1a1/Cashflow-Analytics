@@ -1,6 +1,3 @@
-export type Satang = number; // Integer representation of currency (subunit)
-export type Baht = number;   // Float representation of currency for UI display
-
 export interface CashflowGroup {
   id: string;
   name: string;
@@ -39,7 +36,7 @@ export interface Transaction {
   id: string;
   date: string; // YYYY-MM-DD
   description?: string | null;
-  amount: Satang;
+  amount: number; // Stored in Satang (integer)
   category_id: string;
   allocation_type?: 'need' | 'want' | 'savings' | null;
   is_deleted: number; // 0 or 1

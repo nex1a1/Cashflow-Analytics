@@ -1,5 +1,5 @@
 import db from '../config/db';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { Category } from '../types';
 
 interface CategoryWithDetails extends Category {

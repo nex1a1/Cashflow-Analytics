@@ -2,10 +2,23 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { CalendarDays, ChevronDown, ChevronRight, Check, LayoutGrid, CalendarRange, ListChecks, X } from 'lucide-react';
 import { getFilterLabel, getThaiMonth } from '../../utils/formatters';
 
-const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function ModeBtn({ id, icon: Icon, label, active, onClick }) {
+  return (
+    <button 
+      onClick={() => onClick(id)}
+      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-none transition-all ${
+        active 
+          ? 'bg-[#da291c] text-white font-bold border border-[#da291c]'
+          : 'text-[#888888] hover:text-[#e0e0e0] hover:bg-[#303030] border border-transparent'
+      }`}
+    >
+      <Icon className="w-3 h-3 shrink-0" />
+      <span className="text-[10px] uppercase">{label}</span>
+    </button>
+  );
+}
 
 export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOptions }) {
-  const dm = true;
   const [open, setOpen]               = useState(false);
   const [expandedYear, setExpandedYear] = useState(null);
   
@@ -140,20 +153,6 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
   // --- UI Action Colors ---
   const confirmBtnCls = 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black hover:border-emerald-400 font-bold transition-all';
 
-  const ModeBtn = ({ id, icon: Icon, label }) => (
-    <button 
-      onClick={() => setMode(id)}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-none transition-all ${
-        mode === id 
-          ? ('bg-[#da291c] text-white font-bold border border-[#da291c]')
-          : ('text-[#888888] hover:text-[#e0e0e0] hover:bg-[#303030] border border-transparent')
-      }`}
-    >
-      <Icon className="w-3 h-3 shrink-0" />
-      <span className="text-[10px] uppercase">{label}</span>
-    </button>
-  );
-
   return (
     <div ref={ref} className="relative w-full">
       {/* Trigger */}
@@ -174,9 +173,9 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
           {/* Mode Bar */}
           <div className={`flex gap-1 p-1.5 border-b ${'bg-[#1c1c1c] border-[#303030]'}`}>
-            <ModeBtn id="standard" icon={LayoutGrid} label="หลัก" />
-            <ModeBtn id="range" icon={CalendarRange} label="ช่วง" />
-            <ModeBtn id="multi" icon={ListChecks} label="อิสระ" />
+            <ModeBtn id="standard" icon={LayoutGrid} label="หลัก" active={mode === 'standard'} onClick={setMode} />
+            <ModeBtn id="range" icon={CalendarRange} label="ช่วง" active={mode === 'range'} onClick={setMode} />
+            <ModeBtn id="multi" icon={ListChecks} label="อิสระ" active={mode === 'multi'} onClick={setMode} />
           </div>
 
           <div className="flex-1 overflow-y-auto" style={{ maxHeight: 360, scrollbarWidth: 'thin' }}>
@@ -218,23 +217,33 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
                               {(data.halves.has(`${year}-H1`) || data.halves.has(`${year}-H2`)) && (
                                 <div className="grid grid-cols-2 gap-1 px-1 py-0.5">
-                                  {['H1', 'H2'].map(h => data.halves.has(`${year}-${h}`) && (
-                                    <button key={h} onClick={() => select(`${year}-${h}`)} className={`${pillBase} text-center ${filterPeriod === `${year}-${h}` ? pillActive : pillIdle}`}>
-                                      {h}
-                                    </button>
-                                  ))}
+                                  {['H1', 'H2'].map(h => {
+                                    const hKey = `${year}-${h}`;
+                                    if (!data.halves.has(hKey)) return null;
+                                    const hStyle = filterPeriod === hKey ? pillActive : pillIdle;
+                                    return (
+                                      <button key={h} onClick={() => select(hKey)} className={`${pillBase} text-center ${hStyle}`}>
+                                        {h}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               )}
 
                               {[1, 2, 3, 4].some(q => data.quarters.has(`${year}-Q${q}`)) && (
                                 <div className="grid grid-cols-4 gap-1 px-1 py-0.5">
-                                  {[1, 2, 3, 4].map(q => data.quarters.has(`${year}-Q${q}`) ? (
-                                    <button key={q} onClick={() => select(`${year}-Q${q}`)} className={`${pillBase} text-center ${filterPeriod === `${year}-Q${q}` ? pillActive : pillIdle}`}>
-                                      Q{q}
-                                    </button>
-                                  ) : (
-                                    <span key={q} />
-                                  ))}
+                                  {[1, 2, 3, 4].map(q => {
+                                    const qKey = `${year}-Q${q}`;
+                                    if (!data.quarters.has(qKey)) {
+                                      return <span key={q} />;
+                                    }
+                                    const qStyle = filterPeriod === qKey ? pillActive : pillIdle;
+                                    return (
+                                      <button key={q} onClick={() => select(qKey)} className={`${pillBase} text-center ${qStyle}`}>
+                                        Q{q}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </>
@@ -252,8 +261,8 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                                 else if (ranged) currentStyle = pillRangeBetween;
                               } else if (mode === 'multi') {
                                 if (selected) currentStyle = pillIndependentActive;
-                              } else {
-                                if (selected) currentStyle = pillActive;
+                              } else if (selected) {
+                                currentStyle = pillActive;
                               }
 
                               return (

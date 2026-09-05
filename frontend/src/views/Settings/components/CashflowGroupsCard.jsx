@@ -4,13 +4,21 @@ import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 
+const getAllocBadgeCls = (allocationType) => {
+  if (allocationType === 'need') {
+    return 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30 focus:border-[#da291c]/65';
+  }
+  if (allocationType === 'savings') {
+    return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 focus:border-emerald-500/65';
+  }
+  return 'bg-sky-500/10 text-sky-400 border-sky-500/30 focus:border-sky-500/65';
+};
+
 const CashflowGroupsCard = memo(({
   cashflowGroups, handleAddCashflowGroup, handleMoveCashflowGroup,
   handleChangeCashflowGroup, handleDeleteGroup, cashflowDeleteError,
   txCountByGroup, categories
 }) => {
-  const dm = true;
-
   return (
     <SectionCard
       accentColor="purple"
@@ -63,11 +71,7 @@ const CashflowGroupsCard = memo(({
 
                 {group.type === 'expense' ? (
                   <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
-                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer ${
-                      group.allocation_type === 'need' ? 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30 focus:border-[#da291c]/65' :
-                      group.allocation_type === 'savings' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 focus:border-emerald-500/65' :
-                      'bg-sky-500/10 text-sky-400 border-sky-500/30 focus:border-sky-500/65'
-                    }`}>
+                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer ${getAllocBadgeCls(group.allocation_type)}`}>
                     <option value="need" className="bg-[#121212] text-[#da291c] font-extrabold">NEED</option>
                     <option value="want" className="bg-[#121212] text-sky-400 font-extrabold">WANT</option>
                     <option value="savings" className="bg-[#121212] text-emerald-400 font-extrabold">SAVE</option>

@@ -14,7 +14,6 @@ export default function BatchAddModal({
   dayTypes = {},
   dayTypeConfig = []
 }) {
-  const dm = true;
   const { showToast } = useToast();
   
   const [pendingItems, setPendingItems]   = useState([]);

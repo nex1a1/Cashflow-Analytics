@@ -95,7 +95,7 @@ function parseWideCsvRow(row, headers, context) {
     const amount = cleanNumber(row[j]);
     if (amount === 0) continue;
 
-    const cleanStr = rawHeader.replace(/\n|\r/g, ' ').trim();
+    const cleanStr = rawHeader.replace(/[\n\r]/g, ' ').trim();
     const rawBase = cleanStr.split('(')[0].trim();
     const enIndex = rawBase.search(/[a-zA-Z]/);
     const catName = (enIndex !== -1 ? rawBase.slice(0, enIndex).trim() : rawBase) || cleanStr;
@@ -138,7 +138,7 @@ function createConfigAndCategoryResolvers(updatedDayTypeConfig, updatedCategorie
 
   const getOrCreateCategory = (name, typeStr = 'รายจ่าย') => {
     if (!name || name.trim() === '') {
-      return updatedCategories.filter(c => c.type === 'expense')[0]?.name || 'อื่นๆ';
+      return updatedCategories.find(c => c.type === 'expense')?.name || 'อื่นๆ';
     }
     const trimmed = name.trim();
     let found = updatedCategories.find(c => c.name === trimmed);
@@ -168,7 +168,7 @@ function parseImportRows(parsedRows, headers, isCsvLong, baseContext) {
     const row = parsedRows[i];
     if (row.length < 2) continue;
     const dateStr = row[0];
-    if (!dateStr || !dateStr.includes('/')) continue;
+    if (!dateStr?.includes('/')) continue;
 
     const rowContext = { ...baseContext, dateStr };
 
@@ -291,17 +291,18 @@ export default function useImportCSV({
     }
   }, [importPreview, saveToDb, setDayTypes, setDayTypeConfig, setCategories, showToast]);
 
-  const handleFileUpload = useCallback((e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     setIsProcessing(true);
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      await processCSVText(evt.target.result);
+    try {
+      const text = await file.text();
+      await processCSVText(text);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-    reader.onerror = () => { showToast('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error'); setIsProcessing(false); };
-    reader.readAsText(file);
+    } catch {
+      showToast('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+      setIsProcessing(false);
+    }
   }, [processCSVText, showToast]);
 
   return {

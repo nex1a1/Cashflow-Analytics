@@ -92,7 +92,12 @@ const resolveCashflowContext = (item: any, catMap: Record<string, any>, cashflow
   const fallbackSavId = cashflowGroups?.find(g => g.type === 'savings')?.id || 'cg_savings';
   const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
 
-  const cGroup = cGroupId || (isInc ? fallbackIncId : (isSav ? fallbackSavId : fallbackExpId));
+  let cGroup = cGroupId;
+  if (!cGroup) {
+    if (isInc) cGroup = fallbackIncId;
+    else if (isSav) cGroup = fallbackSavId;
+    else cGroup = fallbackExpId;
+  }
   const isFixed = (item.allocation_type || groupObj.allocation_type || catObj.allocation_type) === 'need';
 
   return { isInc, isSav, cGroup, isFixed, groupName };
@@ -421,6 +426,19 @@ const buildDailyComboChartData = (
   const currentTotal = datesInPeriod.reduce((sum, d) => sum + (dailyAllMap[d] || 0), 0);
   const currentDailyAvg = datesInPeriod.length > 0 ? currentTotal / datesInPeriod.length : 0;
 
+  let barLabel = 'รายจ่ายจริง';
+  let barBg = 'rgba(239,68,68,0.6)';
+  let barBorder = '#EF4444';
+  if (hideFixedExpenses) {
+    barLabel = 'รายจ่ายไลฟ์สไตล์';
+    barBg = 'rgba(216,26,33,0.6)';
+    barBorder = '#D81A21';
+  } else if (hideWantExpenses) {
+    barLabel = 'รายจ่ายจำเป็น';
+    barBg = 'rgba(59,130,246,0.6)';
+    barBorder = '#3B82F6';
+  }
+
   return {
     labels: xLabels,
     datasets: [
@@ -433,9 +451,9 @@ const buildDailyComboChartData = (
         borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
       },
       {
-        type: 'bar', label: hideFixedExpenses ? 'รายจ่ายไลฟ์สไตล์' : (hideWantExpenses ? 'รายจ่ายจำเป็น' : 'รายจ่ายจริง'), data: datesInPeriod.map(d => dailyAllMap[d] || 0),
-        backgroundColor: hideFixedExpenses ? 'rgba(216,26,33,0.6)' : (hideWantExpenses ? 'rgba(59,130,246,0.6)' : 'rgba(239,68,68,0.6)'),
-        borderColor: hideFixedExpenses ? '#D81A21' : (hideWantExpenses ? '#3B82F6' : '#EF4444'), borderWidth: 2, borderRadius: 0, order: 3
+        type: 'bar', label: barLabel, data: datesInPeriod.map(d => dailyAllMap[d] || 0),
+        backgroundColor: barBg,
+        borderColor: barBorder, borderWidth: 2, borderRadius: 0, order: 3
       }
     ]
   };
@@ -449,7 +467,7 @@ export const generateMainChartData = ({
   datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
   dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap
 }: MainChartDataParams) => {
-  const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
+  const isSingleMonthView = Boolean(/^\d{4}-\d{2}$/.exec(filterPeriod));
   const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
   const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
   const isOnlyAll = activeCats.length === 1 && activeCats[0] === 'ALL';

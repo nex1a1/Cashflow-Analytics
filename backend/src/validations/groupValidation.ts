@@ -11,4 +11,4 @@ export const groupSchema = z.object({
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
   highlightBg: z.boolean().or(z.number().min(0).max(1)).optional().default(false)
-}).passthrough();
+}).loose();

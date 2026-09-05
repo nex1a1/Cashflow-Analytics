@@ -8,8 +8,6 @@ const DayTypesCard = memo(({
   dayTypeConfig, handleAddDayType, handleMoveDayType,
   handleDayTypeConfigChange, handleDeleteDayType
 }) => {
-  const dm = true;
-
   return (
     <SectionCard
       accentColor="orange"

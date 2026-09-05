@@ -8,7 +8,7 @@ import { formatMoney } from '../../../utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 
 function formatAllocLine(label, amount, total, isCurrentFlow) {
-  if (amount <= 0) return null;
+  if (amount <= 0) return '';
   const pct = total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0';
   const marker = isCurrentFlow ? ' ◄ (สายธารนี้)' : '';
   return `  ${label}: ฿${formatMoney(amount)} (${pct}%)${marker}`;
@@ -38,7 +38,7 @@ function buildSankeyAllocLines(item) {
 
 function formatSankeyTooltipLabel(c) {
   const item = c.dataset?.data?.[c.dataIndex];
-  if (!item) return '';
+  if (!item) return [];
 
   const lines = [`฿${formatMoney(item.flow)} (${item.percent || '-'})`];
   if (item.allocBreakdown) {
@@ -160,7 +160,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }) {
           callbacks: {
             ...baseOptions.plugins?.tooltip?.callbacks,
             footer: (tooltipItems) => {
-              if (!isBreakdown || tooltipItems.length <= 1) return null;
+              if (!isBreakdown || tooltipItems.length <= 1) return '';
               const sum = tooltipItems
                 .filter(item => {
                   const label = item.dataset?.label;

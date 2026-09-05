@@ -1,5 +1,5 @@
 import db from '../config/db';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 interface DayTypeInput {
   name: string;
@@ -23,7 +23,7 @@ export const initSchema = (): void => {
   let schemaVerified = false;
   try {
     const row = db.prepare("SELECT value FROM settings WHERE key = ?").get('schema_verified') as { value: string } | undefined;
-    if (row && row.value === 'true') {
+    if (row?.value === 'true') {
       schemaVerified = true;
     }
   } catch (e: any) {
@@ -198,19 +198,21 @@ export const initSchema = (): void => {
 
 const verifyTransactionColumns = (): void => {
   const txInfo = db.prepare("PRAGMA table_info(transactions)").all() as Array<{ name: string }>;
-  const txCols = txInfo.map(c => c.name);
+  const txCols = new Set(txInfo.map(c => c.name));
 
-  if (!txCols.includes('is_deleted')) {
+  if (!txCols.has('is_deleted')) {
     db.exec("ALTER TABLE transactions ADD COLUMN is_deleted INTEGER DEFAULT 0");
     console.log('🔹 เพิ่มคอลัมน์ is_deleted ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
   }
-  if (!txCols.includes('category_id')) {
+  if (!txCols.has('category_id')) {
     try {
       db.exec("ALTER TABLE transactions ADD COLUMN category_id INTEGER DEFAULT 1");
       console.log('🔹 เพิ่มคอลัมน์ category_id ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
-    } catch (e: any) {}
+    } catch (_e: unknown) {
+      // Ignored: category_id column may already exist in certain SQLite environments
+    }
   }
-  if (!txCols.includes('allocation_type')) {
+  if (!txCols.has('allocation_type')) {
     db.exec("ALTER TABLE transactions ADD COLUMN allocation_type TEXT DEFAULT 'want'");
     console.log('🔹 เพิ่มคอลัมน์ allocation_type ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
     

@@ -1,6 +1,5 @@
 
 export default function CalendarSkeleton() {
-  const isDarkMode = true;
   const shimmer = 'bg-[#2a2a2a] animate-pulse';
   const surface = 'bg-[#181818]';
   const surfaceAlt = 'bg-[#121212]';

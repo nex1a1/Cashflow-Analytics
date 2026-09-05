@@ -12,8 +12,6 @@ export default function StatCard({
   color, 
   variant = 'vitals' // 'vitals' | 'compact'
 }) {
-  const dm = true;
-
   // COMPACT VARIANT (Horizontal - Used in Heatmap/Pinned areas)
   if (variant === 'compact') {
     return (

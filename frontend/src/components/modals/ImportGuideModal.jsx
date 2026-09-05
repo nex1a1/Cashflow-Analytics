@@ -42,7 +42,7 @@ function downloadSampleFile(filename, content) {
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
 }
 
 function LongTablePreview() {
@@ -216,8 +216,8 @@ function GuideSpecsPanel({ selectedFormat }) {
         กฎเกณฑ์และพฤติกรรมการถอดรหัสข้อมูล (Mapping & Decoding Specifications)
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {specs.map((item, index) => (
-          <div key={index} className="flex gap-3">
+        {specs.map((item) => (
+          <div key={item.title} className="flex gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-[#da291c] mt-1.5 shrink-0" />
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-200">{item.title}</span>
@@ -410,9 +410,9 @@ function GuidePreviewSheet({ selectedFormat }) {
           <table className="w-full text-left font-mono text-[11px] leading-relaxed border-collapse">
             <thead className="sticky top-0 bg-[#1c1c1c] text-[#cbd5e1] z-10 select-none">
               <tr className="border-b border-[#303030]">
-                {headers.map((header, idx) => (
+                {headers.map((header) => (
                   <th 
-                    key={idx} 
+                    key={header} 
                     className={`p-3 font-bold uppercase tracking-wider ${getHeaderColorClass(header, selectedFormat)}`}
                   >
                     {header}

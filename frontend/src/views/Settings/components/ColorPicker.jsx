@@ -30,7 +30,7 @@ for (let r = 0; r < ROWS; r++) {
   else if (r === 1) { s = 65; l = 78; } // Soft pastel
   else if (r === 2) { s = 80; l = 70; } // Bright pastel
   else if (r === 3) { s = 90; l = 60; } // Clear/Vibrant
-  else if (r === 4) { s = 95; l = 50; } // Pure Vivid
+  else if (r === 4) { s = 95; }          // Pure Vivid
   else if (r === 5) { s = 85; l = 42; } // Rich/Deep
   else if (r === 6) { s = 75; l = 34; } // Dark/Saturated
   else if (r === 7) { s = 65; l = 25; } // Deep shadows
@@ -41,15 +41,13 @@ for (let r = 0; r < ROWS; r++) {
       // Last row is a beautifully smooth Grayscale from white to dark obsidian
       const grayL = Math.round(92 - (c / (COLS - 1)) * 80);
       COLOR_PALETTE.push(hslToHex(220, 10, grayL));
+    } else if (c === COLS - 1) {
+      // Last column is a premium Slate/Gray tone matching the row's lightness profile
+      COLOR_PALETTE.push(hslToHex(220, 12, l));
     } else {
-      if (c === COLS - 1) {
-        // Last column is a premium Slate/Gray tone matching the row's lightness profile
-        COLOR_PALETTE.push(hslToHex(220, 12, l));
-      } else {
-        // Other columns span the full standard hue spectrum
-        const h = Math.round((c / (COLS - 1)) * 360);
-        COLOR_PALETTE.push(hslToHex(h, s, l));
-      }
+      // Other columns span the full standard hue spectrum
+      const h = Math.round((c / (COLS - 1)) * 360);
+      COLOR_PALETTE.push(hslToHex(h, s, l));
     }
   }
 }

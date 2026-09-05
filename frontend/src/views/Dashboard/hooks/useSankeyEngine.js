@@ -354,7 +354,7 @@ function buildStandardSankeyFlows({
 }
 
 export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 'standard' }) {
-  const { transactions, analytics, categories, cashflowGroups, filterPeriod, dm } = useDashboardContext();
+  const { transactions, analytics, categories, cashflowGroups, filterPeriod } = useDashboardContext();
 
   return useMemo(() => {
     if (chartViewType !== 'sankey' || !analytics || !transactions) return null;

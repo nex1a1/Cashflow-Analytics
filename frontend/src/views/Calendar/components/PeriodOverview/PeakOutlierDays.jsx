@@ -1,8 +1,14 @@
 // src/views/Calendar/components/PeriodOverview/PeakOutlierDays.jsx
 import React from 'react';
-import { Calendar, ExternalLink, Filter, ShieldCheck, Zap } from 'lucide-react';
+import { Calendar, ExternalLink, ShieldCheck, Zap } from 'lucide-react';
 
 const formatVal = (val) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+function getRankBadgeStyle(idx) {
+  if (idx === 0) return 'bg-[#da291c] text-white';
+  if (idx === 1) return 'bg-orange-600 text-white';
+  return 'bg-[#262626] text-slate-400';
+}
 
 export default function PeakOutlierDays({
   peakOutliers = [],
@@ -81,13 +87,11 @@ export default function PeakOutlierDays({
               {/* Left: Rank, Date, Day-Type */}
               <button
                 type="button"
-                onClick={() => onSelectDate && onSelectDate(item.dateStr)}
+                onClick={() => onSelectDate?.(item.dateStr)}
                 aria-label={`ดูรายการของวันที่ ${item.formattedDate}`}
                 className="flex items-center gap-3 text-left cursor-pointer flex-1 min-w-0 bg-transparent border-0 p-0"
               >
-                <span className={`w-6 h-6 flex items-center justify-center text-xs font-black font-mono ${
-                  idx === 0 ? 'bg-[#da291c] text-white' : (idx === 1 ? 'bg-orange-600 text-white' : 'bg-[#262626] text-slate-400')
-                }`}>
+                <span className={`w-6 h-6 flex items-center justify-center text-xs font-black font-mono ${getRankBadgeStyle(idx)}`}>
                   #{idx + 1}
                 </span>
 
@@ -146,7 +150,7 @@ export default function PeakOutlierDays({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (onSelectDate) onSelectDate(item.dateStr);
+                    onSelectDate?.(item.dateStr);
                   }}
                   className="p-1.5 px-2 text-slate-200 hover:text-white bg-[#1a1a1a] hover:bg-[#252525] border border-[#333333] hover:border-[#da291c] transition-none flex items-center gap-1 text-[10px] font-bold"
                   title="เปิดดูรายการและแก้ไขในวันนั้น"

@@ -47,7 +47,6 @@ const ACCENT = {
 };
 
 const SectionCard = memo(function SectionCard({ accentColor, icon, title, badge, action, children, subAction }) {
-  const dm = true;
   const a = ACCENT[accentColor] || ACCENT.brand;
   const mode = 'dark';
 

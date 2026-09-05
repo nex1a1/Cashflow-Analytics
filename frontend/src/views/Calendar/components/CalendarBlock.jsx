@@ -35,11 +35,17 @@ export default function CalendarBlock({
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
   ];
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-  const WEEKEND_IDX = [0, 6];
+  const WEEKEND_IDX = new Set([0, 6]);
   const today = new Date();
 
   // Peak daily expense calculation for the month (used by heatmap glow in cells)
   const maxDailyExpense = Object.values(calendarData || {}).reduce((max, d) => Math.max(max, d.exp || 0), 0);
+
+  const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
+  const suffixBlankKeys = [
+    's-mon', 's-tue', 's-wed', 's-thu', 's-fri', 's-sat', 's-sun',
+    's-mon2', 's-tue2', 's-wed2', 's-thu2', 's-fri2', 's-sat2', 's-sun2'
+  ].slice(0, suffixDaysCount);
 
   return (
     <div className="flex flex-col space-y-3.5 w-full">
@@ -110,7 +116,7 @@ export default function CalendarBlock({
             <div 
               key={label} 
               className={`py-2 text-center text-[14px] font-black tracking-wider bg-[#121212] ${
-                WEEKEND_IDX.includes(i) ? 'text-red-400' : 'text-slate-400'
+                WEEKEND_IDX.has(i) ? 'text-red-400' : 'text-slate-400'
               }`}
             >
               {label}
@@ -119,9 +125,9 @@ export default function CalendarBlock({
         </div>
 
         <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] flex-1">
-          {new Array(firstDayOfMonth).fill(null).map((_, i) => (
+          {prefixBlankKeys.map(blankKey => (
             <div 
-              key={`blank-${i}`} 
+              key={blankKey} 
               className="min-h-[120px] 2xl:min-h-[140px] bg-[#121212] bg-[radial-gradient(rgba(218,41,28,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
             />
           ))}
@@ -130,7 +136,7 @@ export default function CalendarBlock({
             const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
             const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
             const dow = new Date(y, m, d).getDay();
-            const isWeekend = WEEKEND_IDX.includes(dow);
+            const isWeekend = WEEKEND_IDX.has(dow);
             const defType = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
             const dayType = dayTypes[dateStr] || defType;
 
@@ -151,9 +157,9 @@ export default function CalendarBlock({
             );
           })}
 
-          {Array.from({ length: suffixDaysCount }).map((_, i) => (
+          {suffixBlankKeys.map(suffixKey => (
             <div 
-              key={`suffix-blank-${i}`} 
+              key={suffixKey} 
               className="min-h-[120px] 2xl:min-h-[140px] bg-[#121212] bg-[radial-gradient(rgba(218,41,28,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
             />
           ))}

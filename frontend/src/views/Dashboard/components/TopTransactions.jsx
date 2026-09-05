@@ -143,8 +143,6 @@ export default function TopTransactions() {
   } = useDashboardContext();
   
   const cardStyles = `rounded-none border shadow-sm transition-colors h-full flex flex-col ${'bg-[#181818] border-[#303030]'}`;
-  const headerStyles = `font-bold text-sm flex items-center gap-2 ${'text-slate-200'}`;
-  const dividerStyles = `border-b mb-3 pb-3 ${'border-[#303030]/60'}`;
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum } = useMemo(() => {
@@ -265,8 +263,8 @@ export default function TopTransactions() {
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-[300px]">
           {showSkeleton ? (
             <div className="flex flex-col gap-2">
-              {[...new Array(topXLimit || 7)].map((_, i) => (
-                <div key={i} className={`h-16 w-full rounded-none border animate-pulse ${'bg-[#303030]/40 border-[#303030]/50'}`} />
+              {['top-skel-1', 'top-skel-2', 'top-skel-3', 'top-skel-4', 'top-skel-5', 'top-skel-6', 'top-skel-7', 'top-skel-8', 'top-skel-9', 'top-skel-10', 'top-skel-11', 'top-skel-12', 'top-skel-13', 'top-skel-14', 'top-skel-15', 'top-skel-16', 'top-skel-17', 'top-skel-18', 'top-skel-19', 'top-skel-20'].slice(0, topXLimit || 7).map((key) => (
+                <div key={key} className={`h-16 w-full rounded-none border animate-pulse ${'bg-[#303030]/40 border-[#303030]/50'}`} />
               ))}
             </div>
           ) : (

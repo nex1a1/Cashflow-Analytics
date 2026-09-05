@@ -60,7 +60,6 @@ function CategoryLegendSection({
   handleSetSortMode,
   hexToRgb
 }) {
-  const isDarkMode = true;
   const hasExclusions = excludedCategoryIds.size > 0;
 
   return (
@@ -165,8 +164,15 @@ function CategoryLegendSection({
         <div className="flex flex-col flex-grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || '#64748b';
-            const amtColor = groupObj.type === 'income' ? 'text-emerald-400' : groupObj.type === 'savings' ? 'text-amber-400' : 'text-red-400';
-            const amtPrefix = groupObj.type === 'income' ? '+' : groupObj.type === 'savings' ? '±' : '-';
+            let amtColor = 'text-red-400';
+            let amtPrefix = '-';
+            if (groupObj.type === 'income') {
+              amtColor = 'text-emerald-400';
+              amtPrefix = '+';
+            } else if (groupObj.type === 'savings') {
+              amtColor = 'text-amber-400';
+              amtPrefix = '±';
+            }
             
             return (
               <div key={groupObj.id} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
@@ -239,8 +245,8 @@ function AllocationOverviewSection({
         </div>
         {legendLayoutMode === 'grouped' && allocationTotals.needCats.length > 0 && (
           <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.needCats.map((cat, idx) => (
-              <div key={idx} className="flex justify-between items-center">
+            {allocationTotals.needCats.map((cat) => (
+              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
                 <span className="flex items-center gap-1.5 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
                   <span className="truncate">
@@ -264,8 +270,8 @@ function AllocationOverviewSection({
         </div>
         {legendLayoutMode === 'grouped' && allocationTotals.wantCats.length > 0 && (
           <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.wantCats.map((cat, idx) => (
-              <div key={idx} className="flex justify-between items-center">
+            {allocationTotals.wantCats.map((cat) => (
+              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
                 <span className="flex items-center gap-1.5 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
                   <span className="truncate">
@@ -289,8 +295,8 @@ function AllocationOverviewSection({
         </div>
         {legendLayoutMode === 'grouped' && allocationTotals.savingsCats.length > 0 && (
           <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.savingsCats.map((cat, idx) => (
-              <div key={idx} className="flex justify-between items-center">
+            {allocationTotals.savingsCats.map((cat) => (
+              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
                 <span className="flex items-center gap-1.5 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
                   <span className="truncate">

@@ -9,7 +9,6 @@ import TransactionList from './TransactionList';
 const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
 export default function DayDetailModal({ dateStr, transactions = [], categories = [], cashflowGroups = [], onClose, onSave, onDelete, frequentItems = [] }) {
-  const dm = true;
   const { showToast } = useToast();
   
   const [yyyyStr, mmStr, ddStr] = dateStr.split('-');

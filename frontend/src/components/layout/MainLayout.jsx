@@ -24,7 +24,6 @@ const pageVariants = {
 const pageTransition = { duration: 0 };
 
 export default function MainLayout({ controller }) {
-  const isDarkMode = true;
   const {
     activeTab, setActiveTab,
     dbStatus, isProcessing,
@@ -47,7 +46,6 @@ export default function MainLayout({ controller }) {
     activeCashflowGroupIds,
     activeCategoryNames,
     analytics,
-    summaryData,
     hideFixedExpenses, setHideFixedExpenses,
     hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,

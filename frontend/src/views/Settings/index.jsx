@@ -17,7 +17,6 @@ const SettingsView = memo(function SettingsView({
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
   triggerToast
 }) {
-  const dm = true;
   const [newCatId, setNewCatId] = useState(null);
   
   const onAddCategory = useCallback((type) => {

@@ -149,8 +149,8 @@ export default function HorizontalLedgerView({
               const prevDate = rowIdx > 0 ? sortedDates[rowIdx - 1] : null;
               const prevYM = prevDate ? parseYearMonth(prevDate) : null;
               
-              const isNewYear = !prevYM || currentYM.year !== prevYM.year;
-              const isNewMonth = !prevYM || currentYM.monthIdx !== prevYM.monthIdx || currentYM.year !== prevYM.year;
+              const isNewYear = currentYM.year !== prevYM?.year;
+              const isNewMonth = currentYM.monthIdx !== prevYM?.monthIdx || isNewYear;
               
               return (
                 <React.Fragment key={date}>
