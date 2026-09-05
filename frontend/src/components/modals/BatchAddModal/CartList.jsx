@@ -47,7 +47,9 @@ export default function CartList({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pl-2 shrink-0">
-                  <span className={`font-black text-sm whitespace-nowrap ${item._isInc ? 'text-emerald-400' : 'text-red-400'}`}>{formatMoney(item.amount)}</span>
+                  <span className={`text-xs font-bold tabular-nums tracking-tight shrink-0 ${item._isInc ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
+                    {item._isInc ? '+฿' : '-฿'}{formatMoney(item.amount)}
+                  </span>
                   <button type="button" onClick={() => onRemoveItem(item.id)} disabled={isProcessing} className="p-1.5 rounded-none transition-colors disabled:opacity-50 text-slate-500 hover:text-[#da291c] hover:bg-[#da291c]/10">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

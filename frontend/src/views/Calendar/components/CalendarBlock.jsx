@@ -59,17 +59,17 @@ export default function CalendarBlock({
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
               {monthInc > 0 && (
-                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
+                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
                   ▲ {formatValue(monthInc)} ฿
                 </span>
               )}
               {monthExp > 0 && (
-                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono bg-red-950/40 text-red-400 border-red-800/40">
+                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-red-950/40 text-red-400 border-red-800/40">
                   ▼ {formatValue(monthExp)} ฿
                 </span>
               )}
               {(monthInc > 0 || monthExp > 0) && (
-                <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums font-mono ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                   คงเหลือ {formatValue(monthNet)} ฿
                 </span>
               )}
@@ -183,11 +183,11 @@ export default function CalendarBlock({
               }}
             >
               <div className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: dt.color }} />
-              <span>{dt.label} (<span className="tabular-nums font-mono">{count}</span>)</span>
+              <span>{dt.label} (<span className="tabular-nums tracking-tight">{count}</span>)</span>
             </div>
           );
         })}
-        <div className="ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border bg-[#121212] border-[#2d2d2d] text-slate-300 tabular-nums font-mono">
+        <div className="ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border bg-[#121212] border-[#2d2d2d] text-slate-300 tabular-nums tracking-tight">
           {daysInMonth} วัน
         </div>
       </div>

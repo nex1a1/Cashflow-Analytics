@@ -220,24 +220,24 @@ export default function DayDetailModal({
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mt-2 flex-wrap font-mono tabular-nums">
+              <div className="flex items-center gap-2 mt-2 flex-wrap tabular-nums tracking-tight">
                 {totalInc > 0 && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-none bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
-                    <span className="text-[9px] font-sans font-bold opacity-80">รับ</span> +฿{formatMoney(totalInc)}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-emerald-950/40 text-[#34d399] border border-emerald-800/40 flex items-center gap-1">
+                    <span className="text-[9px] font-medium opacity-80">รับ</span> +฿{formatMoney(totalInc)}
                   </span>
                 )}
                 {totalExp > 0 && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-none bg-rose-950/40 text-rose-400 border border-rose-800/40 flex items-center gap-1">
-                    <span className="text-[9px] font-sans font-bold opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-rose-950/40 text-[#f87171] border border-rose-800/40 flex items-center gap-1">
+                    <span className="text-[9px] font-medium opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
                   </span>
                 )}
                 {dayTx.length > 0 && (
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-none border flex items-center gap-1 ${
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-none border flex items-center gap-1 ${
                     net >= 0 
                       ? 'bg-amber-950/30 text-amber-300 border-amber-800/40' 
                       : 'bg-red-950/40 text-[#da291c] border-[#da291c]/30'
                   }`}>
-                    <span className="text-[9px] font-sans font-bold opacity-80">สุทธิ</span> 
+                    <span className="text-[9px] font-medium opacity-80">สุทธิ</span> 
                     {net >= 0 ? `+฿${formatMoney(net)}` : `-฿${formatMoney(Math.abs(net))}`}
                   </span>
                 )}
@@ -268,6 +268,7 @@ export default function DayDetailModal({
           transactions={transactions}
           categories={categories}
           catMap={catMap}
+          cashflowGroups={cashflowGroups}
           formType={currentFormType}
           suggCatFilter={suggCatFilter}
           setSuggCatFilter={setSuggCatFilter}

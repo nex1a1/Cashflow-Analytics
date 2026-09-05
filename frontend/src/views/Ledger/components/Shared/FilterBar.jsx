@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Search, X, Hash, CalendarDays, MousePointer2, 
   Folder, Tag, ChevronDown, ChevronUp, RefreshCw, Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
+import CategoryMatrixFilter from './CategoryMatrixFilter';
 
 // Segment Buttons - Styled to match the flat "รายการ / ตาราง" toggle
 const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
@@ -39,42 +40,6 @@ const SegmentButton = ({ label, active, onClick, colorScheme = 'blue' }) => {
   );
 };
 
-// Custom visual select box (Flat Slate HUD Style)
-const CustomSelect = ({ value, onChange, options, icon, isActive }) => {
-  return (
-    <div className={`relative flex items-center border rounded-none bg-[#121212] ${
-      isActive 
-        ? 'border-[#da291c] text-white bg-[#121212]' 
-        : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
-    }`}>
-      <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
-        isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
-      }`}>
-        {icon}
-      </div>
-      
-      <select
-        value={value}
-        onChange={onChange}
-        className="w-full bg-transparent text-[11px] font-black py-1 pl-1.5 pr-7 outline-none cursor-pointer appearance-none select-none text-[#cbd5e1]"
-      >
-        {options}
-      </select>
-      
-      <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-        isActive ? 'text-[#da291c]' : 'text-[#666666]'
-      }`}>
-        <ChevronDown className="w-3 h-3" />
-      </div>
-      
-      {isActive && (
-        <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-          <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
-        </span>
-      )}
-    </div>
-  );
-};
 
 export default function FilterBar({
   searchQuery, setSearchQuery,
@@ -94,12 +59,17 @@ export default function FilterBar({
   isExpanded = false,
   setIsExpanded = () => {}
 }) {
+  const isCatActive = Array.isArray(advancedFilterCategory)
+    ? advancedFilterCategory.length < (categories?.length || 0)
+    : advancedFilterCategory !== 'ALL';
+
+
   // Advanced active filters count (excluding search query and type filter)
   const advancedActiveCount = [
     allocationFilter !== 'ALL',
     (advancedFilterDate !== 'ALL' || dayTypeFilter !== 'ALL'),
     advancedFilterGroup !== 'ALL',
-    advancedFilterCategory !== 'ALL',
+    isCatActive,
     minAmount !== '',
     maxAmount !== ''
   ].filter(Boolean).length;
@@ -111,7 +81,7 @@ export default function FilterBar({
     allocationFilter !== 'ALL',
     (advancedFilterDate !== 'ALL' || dayTypeFilter !== 'ALL'),
     advancedFilterGroup !== 'ALL',
-    advancedFilterCategory !== 'ALL',
+    isCatActive,
     minAmount !== '',
     maxAmount !== ''
   ].filter(Boolean).length;
@@ -188,7 +158,7 @@ export default function FilterBar({
       {/* ================= COLLAPSIBLE ADVANCED FILTER SECTION (ROW 2) ================= */}
       {isExpanded && (
         <div className="border-t border-[#303030]/60">
-          <div className="grid grid-cols-3 gap-[1px] bg-[#303030]/50 relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_348px_minmax(320px,1.5fr)] gap-[1px] bg-[#303030]/50 relative z-20">
             
             {/* COLUMN 1: SCOPE & ALLOCATION */}
             <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2.5">
@@ -243,7 +213,7 @@ export default function FilterBar({
               </div>
             </div>
 
-            {/* COLUMN 2: DATE PICKER */}
+            {/* COLUMN 2: DATE PICKER (Exactly fits 320px calendar + 28px padding) */}
             <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
               <div className="flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5 text-[#666666]" />
@@ -278,11 +248,11 @@ export default function FilterBar({
               </div>
 
               <div className="text-[10px] text-slate-500 font-mono">
-                * เลือกวันเพื่อดูรายการที่เกิดขึ้นเฉพาะวันนั้นๆ
+                * เลือกวันเพื่อดูรายการ
               </div>
             </div>
 
-            {/* COLUMN 3: GROUP & CATEGORY */}
+            {/* COLUMN 3: CATEGORY MATRIX (Widened to take remaining space) */}
             <div className="bg-[#181818] p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
               <div className="flex items-center gap-1.5">
                 <Folder className="w-3.5 h-3.5 text-[#666666]" />
@@ -291,55 +261,22 @@ export default function FilterBar({
                 </span>
               </div>
 
-              <div className="flex flex-col gap-1 relative z-40">
+              <div className="flex flex-col gap-1 relative z-50">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  เลือกกลุ่มกระแสเงินสด
+                  เลือกหมวดหมู่ (2-Tier Matrix)
                 </span>
-                <CustomSelect
-                  value={advancedFilterGroup}
-                  onChange={e => setAdvancedFilterGroup(e.target.value)}
-                  isActive={advancedFilterGroup !== 'ALL'}
-                  icon={<Folder className="w-3 h-3" />}
-                  options={
-                    <>
-                      <option value="ALL">📦 กลุ่มทั้งหมด</option>
-                      {cashflowGroups?.length > 0 && (
-                        <optgroup label="แยกตามกลุ่ม">
-                          {cashflowGroups
-                            .filter(g => (activeCashflowGroupIds?.has ? activeCashflowGroupIds.has(g.id) : false) || advancedFilterGroup === g.id)
-                            .map(g => {
-                              const groupIcon = g.icon || (g.type === 'income' ? '🟢' : '🔴');
-                              return (
-                                <option key={g.id} value={g.id}>
-                                  {groupIcon} {g.name}
-                                </option>
-                              );
-                            })}
-                        </optgroup>
-                      )}
-                    </>
-                  }
+                <CategoryMatrixFilter
+                  categories={categories}
+                  cashflowGroups={cashflowGroups}
+                  selectedCategories={advancedFilterCategory}
+                  onChange={setAdvancedFilterCategory}
+                  activeCategoryNames={activeCategoryNames}
+                  typeFilter={typeFilter}
                 />
               </div>
 
-              <div className="flex flex-col gap-1 relative z-40">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  เลือกหมวดหมู่ย่อย
-                </span>
-                <CustomSelect
-                  value={advancedFilterCategory}
-                  onChange={e => setAdvancedFilterCategory(e.target.value)}
-                  isActive={advancedFilterCategory !== 'ALL'}
-                  icon={<Tag className="w-3 h-3" />}
-                  options={
-                    <>
-                      <option value="ALL">🏷️ หมวดหมู่ทั้งหมด</option>
-                      {categories
-                        .filter(c => (activeCategoryNames?.has ? activeCategoryNames.has(c.name) : false) || advancedFilterCategory === c.name)
-                        .map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
-                    </>
-                  }
-                />
+              <div className="text-[10px] text-slate-500 font-mono">
+                * คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย
               </div>
             </div>
 

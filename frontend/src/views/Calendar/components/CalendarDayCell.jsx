@@ -4,7 +4,7 @@ import { formatMoney, hexToRgb } from '../../../utils/formatters';
 
 const formatValue = (val) => {
   return val.toLocaleString('th-TH', {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: val % 1 !== 0 ? 2 : 0,
     maximumFractionDigits: 2
   });
 };
@@ -70,7 +70,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           aria-label={`เลือกวันที่ ${day} ${dateStr}`}
           className="flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0 text-left"
         >
-          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums font-mono ${dayBadgeCls}`}>
+          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
             {day}
           </span>
           <PlusCircle className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 pointer-events-none text-[#da291c]" />
@@ -105,11 +105,11 @@ const CalendarDayCell = memo(function CalendarDayCell({
         {(data.exp > 0 || data.inc > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-[#2d2d2d]/20 pb-0.5">
              {data.exp > 0 ? (
-              <span className="text-red-400 tabular-nums font-mono flex items-center gap-1">
+              <span className="text-red-400 tabular-nums tracking-tight flex items-center gap-1">
                 {formatValue(data.exp)} ฿
                 {hiddenExpItems.length > 0 && (
                   <span 
-                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums font-mono shrink-0 select-none"
+                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
                     style={{
                       backgroundColor: 'rgba(218, 41, 28, 0.08)',
                       borderColor: 'rgba(218, 41, 28, 0.25)',
@@ -123,10 +123,10 @@ const CalendarDayCell = memo(function CalendarDayCell({
               </span>
              ) : <span />}
              {data.inc > 0 && (
-              <span className="text-emerald-400 tabular-nums font-mono flex items-center gap-1">
+              <span className="text-emerald-400 tabular-nums tracking-tight flex items-center gap-1">
                 {hiddenIncItems.length > 0 && (
                   <span 
-                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums font-mono shrink-0 select-none"
+                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
                     style={{
                       backgroundColor: 'rgba(16, 185, 129, 0.08)',
                       borderColor: 'rgba(16, 185, 129, 0.25)',
@@ -149,14 +149,14 @@ const CalendarDayCell = memo(function CalendarDayCell({
           return (
             <div 
               key={tx.id} 
-              className="flex items-center gap-1.5 overflow-hidden text-[11px] leading-tight py-0.5 group/tx" 
+              className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[2.5px] h-3 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-200 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
-              <span className="font-bold shrink-0 ml-1 text-emerald-400 tabular-nums font-mono">
+              <span className="font-bold shrink-0 ml-1 pr-0.5 text-emerald-400 tabular-nums tracking-tight">
                 +{formatValue(tx.amount)}
               </span>
             </div>
@@ -169,14 +169,14 @@ const CalendarDayCell = memo(function CalendarDayCell({
           return (
             <div 
               key={tx.id} 
-              className="flex items-center gap-1.5 overflow-hidden text-[11px] leading-tight py-0.5 group/tx" 
+              className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[2.5px] h-3 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
-              <span className="font-bold shrink-0 ml-1 text-red-400 tabular-nums font-mono">
+              <span className="font-bold shrink-0 ml-1 pr-0.5 text-red-400 tabular-nums tracking-tight">
                 {formatValue(tx.amount)}
               </span>
             </div>

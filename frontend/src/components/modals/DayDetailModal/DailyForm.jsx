@@ -191,7 +191,7 @@ export default function DailyForm({
         </div>
         <div className="flex-1 min-w-[110px]">
           <div className="relative flex items-center">
-            <span className="absolute left-2.5 text-xs font-bold font-mono select-none opacity-50 text-slate-400">
+            <span className="absolute left-2.5 text-xs font-bold select-none opacity-50 text-slate-400">
               ฿
             </span>
             <input 
@@ -200,7 +200,7 @@ export default function DailyForm({
               {...register('amount', { valueAsNumber: true })} 
               onKeyDown={handleKeyDown} 
               placeholder="0.00" 
-              className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-black tabular-nums font-mono`} 
+              className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-bold tabular-nums tracking-tight`} 
             />
           </div>
           {errors.amount && <p className={tokens.errorText}>{errors.amount.message}</p>}

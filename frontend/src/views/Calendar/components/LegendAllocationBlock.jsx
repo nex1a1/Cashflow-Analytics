@@ -155,7 +155,7 @@ function CategoryLegendSection({
               >
                 <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                 <span className="opacity-90">{cat.name}</span>
-                <span className="text-[11px] opacity-75 font-mono font-bold ml-1">{formatValue(amt)} ฿</span>
+                <span className="text-[11px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
               </button>
             );
           })}
@@ -182,7 +182,7 @@ function CategoryLegendSection({
                     {groupObj.icon && <span className="text-[11.5px] shrink-0">{groupObj.icon}</span>}
                     <span className="truncate">{groupObj.name}</span>
                   </span>
-                  <span className={`text-[13px] font-mono font-black tracking-wide tabular-nums shrink-0 ml-2 ${amtColor}`}>
+                  <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>
                     {amtPrefix}{formatValue(groupTotal)} ฿
                   </span>
                 </div>
@@ -195,7 +195,8 @@ function CategoryLegendSection({
                     
                     return (
                       <button 
-                        key={cat.id} 
+                        key={cat.id}
+                        type="button"
                         onClick={() => toggleCategory(cat.id)}
                         className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
                           isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
@@ -208,7 +209,7 @@ function CategoryLegendSection({
                       >
                         <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                         <span className="opacity-90">{cat.name}</span>
-                        <span className="text-[10px] opacity-75 font-mono font-bold ml-1">{formatValue(amt)} ฿</span>
+                        <span className="text-[10px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
                       </button>
                     );
                   })}
@@ -239,7 +240,7 @@ function AllocationOverviewSection({
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-none bg-[#EF4444]" /> จำเป็น (Needs)
           </span>
-          <span className="font-mono tabular-nums text-white">
+          <span className="font-bold tabular-nums tracking-tight text-white">
             {formatValue(allocationTotals.need)} ฿ ({allocationTotals.needPct}%)
           </span>
         </div>
@@ -253,7 +254,7 @@ function AllocationOverviewSection({
                     {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
                   </span>
                 </span>
-                <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
               </div>
             ))}
           </div>
@@ -264,7 +265,7 @@ function AllocationOverviewSection({
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-none bg-[#F59E0B]" /> ทั่วไป (Wants)
           </span>
-          <span className="font-mono tabular-nums text-white">
+          <span className="font-bold tabular-nums tracking-tight text-white">
             {formatValue(allocationTotals.want)} ฿ ({allocationTotals.wantPct}%)
           </span>
         </div>
@@ -278,7 +279,7 @@ function AllocationOverviewSection({
                     {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
                   </span>
                 </span>
-                <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
               </div>
             ))}
           </div>
@@ -289,7 +290,7 @@ function AllocationOverviewSection({
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-none bg-[#10B981]" /> เงินออม (Savings)
           </span>
-          <span className="font-mono tabular-nums text-white">
+          <span className="font-bold tabular-nums tracking-tight text-white">
             {formatValue(allocationTotals.savings)} ฿ ({allocationTotals.savingsPct}%)
           </span>
         </div>
@@ -303,7 +304,7 @@ function AllocationOverviewSection({
                     {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
                   </span>
                 </span>
-                <span className="font-mono tabular-nums text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
               </div>
             ))}
           </div>

@@ -12,7 +12,8 @@ export default function BatchAddModal({
   defaultDate, defaultType, defaultCategory,
   frequentItems = [],
   dayTypes = {},
-  dayTypeConfig = []
+  dayTypeConfig = [],
+  cashflowGroups = []
 }) {
   const { showToast } = useToast();
   
@@ -168,6 +169,7 @@ export default function BatchAddModal({
             transactions={transactions}
             categories={categories}
             catMap={catMap}
+            cashflowGroups={cashflowGroups}
             formType={currentFormType}
             suggCatFilter={suggCatFilter}
             setSuggCatFilter={setSuggCatFilter}

@@ -210,10 +210,23 @@ export default function useFilters({ transactions, categories, masterPeriods = [
 
     // 3. Category Filter
     if (advancedFilterCategory !== 'ALL') {
-      filtered = filtered.filter(t => {
-        const cat = getCat(t);
-        return (cat?.name || t.category) === advancedFilterCategory;
-      });
+      if (Array.isArray(advancedFilterCategory)) {
+        if (advancedFilterCategory.length === 0) {
+          filtered = [];
+        } else {
+          filtered = filtered.filter(t => {
+            const cat = getCat(t);
+            const catName = cat?.name || t.category;
+            return advancedFilterCategory.includes(catName);
+          });
+        }
+      } else {
+        filtered = filtered.filter(t => {
+          const cat = getCat(t);
+          const catName = cat?.name || t.category;
+          return catName === advancedFilterCategory;
+        });
+      }
     }
 
     // 4. Group Filter (Strictly Custom Group IDs)
@@ -252,10 +265,14 @@ export default function useFilters({ transactions, categories, masterPeriods = [
     return filtered;
   }, [transactions, searchResults, filterPeriod, debouncedSearch, advancedFilterCategory, advancedFilterGroup, advancedFilterDate, typeFilter, allocationFilter, minAmount, maxAmount, dayTypeFilter, categories]);
 
+  const isCategoryActive = Array.isArray(advancedFilterCategory)
+    ? advancedFilterCategory.length > 0
+    : advancedFilterCategory !== 'ALL';
+
   const isFilterActive = searchQuery || 
     advancedFilterDate !== 'ALL' || 
     advancedFilterGroup !== 'ALL' || 
-    advancedFilterCategory !== 'ALL' || 
+    isCategoryActive || 
     typeFilter !== 'ALL' || 
     allocationFilter !== 'ALL' || 
     minAmount || 

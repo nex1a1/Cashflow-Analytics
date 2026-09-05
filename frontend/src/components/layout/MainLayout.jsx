@@ -232,6 +232,7 @@ export default function MainLayout({ controller }) {
         defaultDate={addForm.date} defaultType={addForm.type}
         defaultCategory={addForm.category}
         dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
+        cashflowGroups={cashflowGroups}
       />
       <ImportPreviewModal
         importPreview={importPreview} setImportPreview={setImportPreview}

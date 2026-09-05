@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronFirst, ChevronLast } from 'lucide-react';
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
@@ -336,103 +336,161 @@ export default function LedgerTable({
           หน้า {currentPage} • แสดง {currentData.length} จาก {sortedTransactions.length} รายการ
         </div>
 
-        {/* Center: Pagination Controls */}
-        <div className="flex items-center gap-1.5">
-          {/* Jump -10 Pages (Only show if currentPage > 10) */}
-          {currentPage > 10 && (
+        {/* Center: Symmetric Speed Cockpit Pagination */}
+        <div className="inline-flex items-center border border-[#303030] bg-[#121212] divide-x divide-[#303030] shadow-sm select-none">
+          {/* Jump to First Page (|<) */}
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage <= 1}
+            className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono transition-none ${
+              currentPage <= 1
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+            }`}
+            title="หน้าแรกสุด (หน้า 1)"
+          >
+            <ChevronFirst className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Jump -10 (Only if totalPages > 10) */}
+          {totalPages > 10 && (
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 10, 1))}
-              className="flex items-center gap-0.5 px-2 py-1 rounded-none border border-[#303030] bg-[#121212] hover:bg-[#303030] text-[#cbd5e1] text-[9px] font-black uppercase tracking-widest font-mono"
-              title="ถอยหลัง 10 หน้า"
+              disabled={currentPage <= 1}
+              className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono tracking-tighter transition-none ${
+                currentPage <= 1
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                  : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+              }`}
+              title={`ถอยหลัง 10 หน้า (ไปหน้า ${Math.max(currentPage - 10, 1)})`}
             >
-              <ChevronsLeft className="w-3 h-3" /> -10
+              -10
             </button>
           )}
 
-          {/* Jump -5 Pages (Only show if currentPage > 5) */}
-          {currentPage > 5 && (
+          {/* Jump -5 (Only if totalPages > 5) */}
+          {totalPages > 5 && (
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 5, 1))}
-              className="flex items-center gap-0.5 px-2 py-1 rounded-none border border-[#303030] bg-[#121212] hover:bg-[#303030] text-[#cbd5e1] text-[9px] font-black uppercase tracking-widest font-mono"
-              title="ถอยหลัง 5 หน้า"
+              disabled={currentPage <= 1}
+              className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono tracking-tighter transition-none ${
+                currentPage <= 1
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                  : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+              }`}
+              title={`ถอยหลัง 5 หน้า (ไปหน้า ${Math.max(currentPage - 5, 1)})`}
             >
-              <ChevronLeft className="w-3 h-3" /> -5
+              -5
             </button>
           )}
 
-          {/* Previous Page */}
+          {/* Previous Page (< ก่อนหน้า) */}
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border text-[9px] font-black uppercase tracking-widest font-mono ${
-              currentPage === 1
-                ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
-                : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
+            disabled={currentPage <= 1}
+            className={`flex items-center gap-1 h-7 px-2.5 text-[10px] font-black font-mono uppercase tracking-wider transition-none ${
+              currentPage <= 1
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
             }`}
-            title="หน้าก่อนหน้า"
+            title={`หน้าก่อนหน้า (ไปหน้า ${Math.max(currentPage - 1, 1)})`}
           >
-            <ChevronLeft className="w-3 h-3" /> ก่อนหน้า
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">ก่อนหน้า</span>
           </button>
           
           {/* Direct Page Input Box */}
           <div 
-            className="flex items-center gap-1 text-[10px] font-black font-mono tabular-nums text-[#da291c] border border-[#da291c]/30 bg-[#da291c]/5 px-2 py-0.5"
-            title="พิมพ์เลขหน้าแล้วกด Enter หรือ คลิกข้างนอกเพื่อเปลี่ยนหน้า"
+            className="flex items-center h-7 gap-1.5 px-2.5 bg-[#161616] text-[10px] font-black font-mono tabular-nums text-slate-300"
+            title="คลิกเพื่อพิมพ์เลขหน้า แล้วกด Enter (หรือใช้ลูกศรขึ้น/ลง)"
           >
+            <span className="text-slate-500 font-normal uppercase tracking-wider text-[9px] select-none">หน้า</span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
+              onClick={(e) => e.target.select()}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handlePageSubmit();
                   e.target.blur();
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                } else if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.max(prev - 1, 1));
                 }
               }}
               onBlur={handlePageSubmit}
-              className="w-8 text-center bg-transparent text-[#da291c] font-black outline-none focus:bg-[#da291c]/15 focus:ring-1 focus:ring-[#da291c]/50 rounded-none text-[10px]"
+              className="w-7 text-center bg-[#1c1c1c] text-white font-black border border-[#303030] focus:border-[#da291c] focus:ring-1 focus:ring-[#da291c]/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
             />
-            <span className="text-slate-500 font-normal">/</span>
-            <span className="text-slate-400">{totalPages}</span>
+            <span className="text-slate-600 font-normal select-none">/</span>
+            <span className="text-slate-400 font-extrabold select-none">{totalPages}</span>
           </div>
 
-          {/* Next Page */}
+          {/* Next Page (ถัดไป >) */}
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-none border text-[9px] font-black uppercase tracking-widest font-mono ${
-              currentPage === totalPages
-                ? 'opacity-20 cursor-not-allowed border-transparent text-slate-600 bg-transparent'
-                : 'hover:bg-[#303030] border-[#303030] bg-[#121212] text-[#cbd5e1]'
+            disabled={currentPage >= totalPages}
+            className={`flex items-center gap-1 h-7 px-2.5 text-[10px] font-black font-mono uppercase tracking-wider transition-none ${
+              currentPage >= totalPages
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
             }`}
-            title="หน้าถัดไป"
+            title={`หน้าถัดไป (ไปหน้า ${Math.min(currentPage + 1, totalPages)})`}
           >
-            ถัดไป <ChevronRight className="w-3 h-3" />
+            <span className="hidden sm:inline">ถัดไป</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
 
-          {/* Jump +5 Pages (Only show if currentPage + 5 <= totalPages) */}
-          {currentPage + 5 <= totalPages && (
+          {/* Jump +5 (Only if totalPages > 5) */}
+          {totalPages > 5 && (
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 5, totalPages))}
-              className="flex items-center gap-0.5 px-2 py-1 rounded-none border border-[#303030] bg-[#121212] hover:bg-[#303030] text-[#cbd5e1] text-[9px] font-black uppercase tracking-widest font-mono"
-              title="ข้ามไปข้างหน้า 5 หน้า"
+              disabled={currentPage >= totalPages}
+              className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono tracking-tighter transition-none ${
+                currentPage >= totalPages
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                  : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+              }`}
+              title={`ข้ามไปข้างหน้า 5 หน้า (ไปหน้า ${Math.min(currentPage + 5, totalPages)})`}
             >
-              +5 <ChevronRight className="w-3 h-3" />
+              +5
             </button>
           )}
 
-          {/* Jump +10 Pages (Only show if currentPage + 10 <= totalPages) */}
-          {currentPage + 10 <= totalPages && (
+          {/* Jump +10 (Only if totalPages > 10) */}
+          {totalPages > 10 && (
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 10, totalPages))}
-              className="flex items-center gap-0.5 px-2 py-1 rounded-none border border-[#303030] bg-[#121212] hover:bg-[#303030] text-[#cbd5e1] text-[9px] font-black uppercase tracking-widest font-mono"
-              title="ข้ามไปข้างหน้า 10 หน้า"
+              disabled={currentPage >= totalPages}
+              className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono tracking-tighter transition-none ${
+                currentPage >= totalPages
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                  : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+              }`}
+              title={`ข้ามไปข้างหน้า 10 หน้า (ไปหน้า ${Math.min(currentPage + 10, totalPages)})`}
             >
-              +10 <ChevronsRight className="w-3 h-3" />
+              +10
             </button>
           )}
+
+          {/* Jump to Last Page (>|) */}
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage >= totalPages}
+            className={`flex items-center justify-center h-7 px-2 text-[10px] font-black font-mono transition-none ${
+              currentPage >= totalPages
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
+                : 'text-[#cbd5e1] hover:bg-[#252525] hover:text-white active:bg-[#303030] cursor-pointer'
+            }`}
+            title={`หน้าสุดท้าย (หน้า ${totalPages})`}
+          >
+            <ChevronLast className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Right: Page Totals */}

@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, 
   TrendingUp, TrendingDown, Wallet, Inbox, Activity, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { formatMoney } from '../../utils/formatters';
+import { isDateInFilter } from '../../utils/dateHelpers';
 
 // Shared Components
 import FilterBar from './components/Shared/FilterBar';
@@ -11,6 +12,7 @@ import FilterBar from './components/Shared/FilterBar';
 // View Components
 import LedgerTable from './components/ListView/LedgerTable';
 import HorizontalLedgerView from './components/HorizontalView/HorizontalLedgerView';
+import HorizontalFilterBar from './components/HorizontalView/HorizontalFilterBar';
 
 // Custom Hooks
 import { useLedgerData } from './hooks/useLedgerData';
@@ -35,27 +37,40 @@ const LedgerHeaderActions = ({
   filterOpen,
   setFilterOpen,
   isFilterActive,
+  horizontalFilterOpen,
+  setHorizontalFilterOpen,
+  isHorizontalFilterActive,
   handleOpenAddModal,
   hasTransactions,
   confirmDeleteMonth,
   handleDeleteMonthClick
 }) => {
+  const isCurrentFilterOpen = viewMode === 'list' ? filterOpen : horizontalFilterOpen;
+  const toggleFilter = () => {
+    if (viewMode === 'list') {
+      setFilterOpen(v => !v);
+    } else {
+      setHorizontalFilterOpen(v => !v);
+    }
+  };
+  const isCurrentFilterActive = viewMode === 'list' ? isFilterActive : isHorizontalFilterActive;
+
   return (
     <div className="flex items-center gap-2 shrink-0 flex-wrap">
-      {viewMode === 'list' && (
-        <button 
-          onClick={() => setFilterOpen(v => !v)} 
-          className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono ${
-            filterOpen 
-              ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.12)]' 
-              : 'bg-[#121212] border-[#303030] text-slate-400 hover:bg-[#303030]/40 hover:border-[#404040] hover:text-white'
-          } ${isFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]' : ''}`}
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" /> 
-          <span>ตัวกรอง</span>
-          {isFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400" />}
-        </button>
-      )}
+      <button 
+        type="button"
+        onClick={toggleFilter} 
+        className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
+          isCurrentFilterOpen 
+            ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.12)]' 
+            : 'bg-[#121212] border-[#303030] text-slate-400 hover:bg-[#303030]/40 hover:border-[#404040] hover:text-white'
+        } ${isCurrentFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]' : ''}`}
+        title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
+      >
+        <SlidersHorizontal className="w-3.5 h-3.5" /> 
+        <span>ตัวกรอง{viewMode === 'horizontal' ? 'ตาราง' : ''}</span>
+        {isCurrentFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400" />}
+      </button>
 
       <div className="flex items-center rounded-none border border-[#303030] overflow-hidden bg-[#121212]">
         <button 
@@ -315,6 +330,8 @@ const LedgerGroupBreakdownSection = ({
 const LedgerContentArea = ({
   showSkeleton,
   displayTransactions,
+  monthTransactions,
+  horizontalFilters,
   isFilterActive,
   clearFilters,
   viewMode,
@@ -343,12 +360,13 @@ const LedgerContentArea = ({
     if (viewMode === 'horizontal') {
       return (
         <HorizontalLedgerView
-          displayTransactions={displayTransactions}
+          displayTransactions={monthTransactions}
           categories={categories}
           formatMoney={formatMoney}
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}
           allDates={allDatesInPeriod}
+          filterOptions={horizontalFilters}
         />
       );
     }
@@ -389,7 +407,7 @@ const LedgerContentArea = ({
         </div>
       )}
       
-      {displayTransactions.length === 0 && !showSkeleton ? (
+      {viewMode === 'list' && displayTransactions.length === 0 && !showSkeleton ? (
         <div className="flex flex-col items-center justify-center py-24 px-4">
           <Inbox className="w-14 h-14 mb-4 text-[#555555]" />
           <p className="text-base font-bold text-[#888888]">ไม่พบรายการบัญชี</p>
@@ -436,6 +454,57 @@ export default function LedgerView({
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
   const [confirmDeleteMonth, setConfirmDeleteMonth] = useState(false);
+
+  // ── Logic: Dedicated Horizontal Ledger Filters (Approach A) ──
+  const [horizontalFilterOpen, setHorizontalFilterOpen] = useState(false);
+  const [horizontalFilters, setHorizontalFilters] = useState({
+    selectedCategories: 'ALL',
+    includeFixedCosts: false,
+    allocationFilter: 'ALL',
+    dayTypeFilter: 'ALL',
+    hideZeroDays: false,
+  });
+
+  const clearHorizontalFilters = useCallback(() => {
+    setHorizontalFilters({
+      selectedCategories: 'ALL',
+      includeFixedCosts: false,
+      allocationFilter: 'ALL',
+      dayTypeFilter: 'ALL',
+      hideZeroDays: false,
+    });
+  }, []);
+
+  const isHorizontalFilterActive = useMemo(() => {
+    const isCatActive = Array.isArray(horizontalFilters.selectedCategories) 
+      ? horizontalFilters.selectedCategories.length > 0 
+      : horizontalFilters.selectedCategories !== 'ALL';
+    return (
+      isCatActive ||
+      horizontalFilters.includeFixedCosts ||
+      horizontalFilters.allocationFilter !== 'ALL' ||
+      horizontalFilters.dayTypeFilter !== 'ALL' ||
+      horizontalFilters.hideZeroDays
+    );
+  }, [horizontalFilters]);
+
+  const horizontalActiveCount = useMemo(() => {
+    const isCatActive = Array.isArray(horizontalFilters.selectedCategories) 
+      ? horizontalFilters.selectedCategories.length > 0 
+      : horizontalFilters.selectedCategories !== 'ALL';
+    return [
+      isCatActive,
+      horizontalFilters.includeFixedCosts,
+      horizontalFilters.allocationFilter !== 'ALL',
+      horizontalFilters.dayTypeFilter !== 'ALL',
+      horizontalFilters.hideZeroDays
+    ].filter(Boolean).length;
+  }, [horizontalFilters]);
+
+  // Base month transactions for Horizontal View (Independent from List search/filters)
+  const monthTransactions = useMemo(() => {
+    return (transactions || []).filter(t => isDateInFilter(t.date, filterPeriod));
+  }, [transactions, filterPeriod]);
 
   useEffect(() => {
     if (!confirmDeleteMonth) return;
@@ -522,7 +591,9 @@ export default function LedgerView({
             <p className="text-[10px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
               <span className="text-neutral-800 font-bold">•</span>
-              <span className="text-[#da291c] font-extrabold">{displayTransactions.length}</span>
+              <span className="text-[#da291c] font-extrabold">
+                {viewMode === 'list' ? displayTransactions.length : monthTransactions.length}
+              </span>
               <span>รายการ</span>
             </p>
           </div>
@@ -532,8 +603,11 @@ export default function LedgerView({
             filterOpen={filterOpen}
             setFilterOpen={setFilterOpen}
             isFilterActive={isFilterActive}
+            horizontalFilterOpen={horizontalFilterOpen}
+            setHorizontalFilterOpen={setHorizontalFilterOpen}
+            isHorizontalFilterActive={isHorizontalFilterActive}
             handleOpenAddModal={handleOpenAddModal}
-            hasTransactions={displayTransactions.length > 0}
+            hasTransactions={displayTransactions.length > 0 || monthTransactions.length > 0}
             confirmDeleteMonth={confirmDeleteMonth}
             handleDeleteMonthClick={handleDeleteMonthClick}
           />
@@ -579,11 +653,26 @@ export default function LedgerView({
             dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
           />
         )}
+
+        {viewMode === 'horizontal' && horizontalFilterOpen && (
+          <HorizontalFilterBar
+            categories={categories}
+            cashflowGroups={cashflowGroups}
+            monthTransactions={monthTransactions}
+            filters={horizontalFilters}
+            setFilters={setHorizontalFilters}
+            clearFilters={clearHorizontalFilters}
+            isFilterActive={isHorizontalFilterActive}
+            activeCount={horizontalActiveCount}
+          />
+        )}
       </div>
 
       <LedgerContentArea
         showSkeleton={showSkeleton}
         displayTransactions={displayTransactions}
+        monthTransactions={monthTransactions}
+        horizontalFilters={horizontalFilters}
         isFilterActive={isFilterActive}
         clearFilters={clearFilters}
         viewMode={viewMode}

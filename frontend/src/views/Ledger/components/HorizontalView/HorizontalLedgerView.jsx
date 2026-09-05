@@ -47,7 +47,8 @@ export default function HorizontalLedgerView({
   displayTransactions, categories, formatMoney, 
   dayTypes = DEFAULT_DAY_TYPES, 
   dayTypeConfig = DEFAULT_DAY_TYPE_CONFIG, 
-  allDates = DEFAULT_ALL_DATES
+  allDates = DEFAULT_ALL_DATES,
+  filterOptions = {}
 }) {
   const dm = true;
   
@@ -65,7 +66,7 @@ export default function HorizontalLedgerView({
     grandTotal,
     maxCellValue,
     formatDate
-  } = useHeatmapEngine(displayTransactions, categories, allDates);
+  } = useHeatmapEngine(displayTransactions, categories, allDates, filterOptions);
 
   // ─── 2. Event Handlers ───
   const handleCellHover = useCallback((e, date, catId, cat, items) => {

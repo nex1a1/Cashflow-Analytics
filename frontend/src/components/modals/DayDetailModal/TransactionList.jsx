@@ -55,8 +55,8 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
         </div>
       </div>
 
-      {/* Accounting Amount */}
-      <span className={`text-xs font-black shrink-0 tabular-nums font-mono ${isInc ? 'text-emerald-400' : 'text-red-400'}`}>
+      {/* Amount (Ledger Inter Font) */}
+      <span className={`text-xs font-bold shrink-0 tabular-nums tracking-tight ${isInc ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
         {isInc ? '+฿' : '-฿'}{formatMoney(tx.amount)}
       </span>
 
