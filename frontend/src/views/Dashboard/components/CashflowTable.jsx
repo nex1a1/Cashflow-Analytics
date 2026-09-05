@@ -1163,28 +1163,8 @@ export default function CashflowTable() {
     setHoveredGroup(null);
   }, []);
 
-  const handleCatMouseEnter = useCallback((e, category, group) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const catId = category.id;
-    const catTx = transactions.filter(t => (t.category_id === catId || t.categoryId === catId));
-    
-    setHoveredCat({
-      active: true,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-      category,
-      group,
-      catTx
-    });
-  }, [transactions]);
-
-  const handleCatMouseLeave = useCallback(() => {
-    setHoveredCat(null);
-  }, []);
-
-  if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0)) return null;
-
   const activeIncomeGroups = React.useMemo(() => {
+    if (!cashflowGroups || cashflowGroups.length === 0) return [];
     return cashflowGroups
       .filter(g => g.type === 'income')
       .sort((a,b) => a.order_index - b.order_index)
@@ -1192,11 +1172,14 @@ export default function CashflowTable() {
   }, [cashflowGroups, analytics?.sortedCashflow, showSkeleton]);
 
   const activeExpenseGroups = React.useMemo(() => {
+    if (!cashflowGroups || cashflowGroups.length === 0) return [];
     return cashflowGroups
       .filter(g => g.type === 'expense')
       .sort((a,b) => a.order_index - b.order_index)
       .filter(g => analytics?.sortedCashflow?.some(row => (row.groups[g.id] || 0) > 0) || showSkeleton);
   }, [cashflowGroups, analytics?.sortedCashflow, showSkeleton]);
+
+  if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0)) return null;
 
   const thinBorder = 'border-[#303030]/60';
   const boxBorder = 'border-[#3e3e3e]';
@@ -1211,7 +1194,6 @@ export default function CashflowTable() {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup, 
     getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
     handleMouseEnter, handleMouseLeave,
-    handleCatMouseEnter, handleCatMouseLeave,
     hoveredCol, setHoveredCol,
     excludedMonths, toggleMonth,
     excludedGroups, toggleGroupExclusion,

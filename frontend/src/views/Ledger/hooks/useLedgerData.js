@@ -24,9 +24,41 @@ function compareByDate(a, b, sortConfig) {
   return dir === 'asc' ? res : -res;
 }
 
-function comparePrimary(a, b, sortConfig) {
+function compareByGroup(a, b, direction, categories = [], cashflowGroups = []) {
+  let nameA = a.group_name;
+  let nameB = b.group_name;
+  let orderA = 999;
+  let orderB = 999;
+
+  if (!nameA || !nameB) {
+    const catA = categories.find(c => c.id === a.category_id || c.name === a.category);
+    const catB = categories.find(c => c.id === b.category_id || c.name === b.category);
+    const grpIdA = catA?.cashflow_group_id || catA?.cashflowGroup;
+    const grpIdB = catB?.cashflow_group_id || catB?.cashflowGroup;
+    const grpA = cashflowGroups.find(g => g.id === grpIdA);
+    const grpB = cashflowGroups.find(g => g.id === grpIdB);
+    nameA = nameA || grpA?.name || '';
+    nameB = nameB || grpB?.name || '';
+    orderA = grpA?.order_index ?? 999;
+    orderB = grpB?.order_index ?? 999;
+  } else {
+    const grpA = cashflowGroups.find(g => g.name === nameA);
+    const grpB = cashflowGroups.find(g => g.name === nameB);
+    orderA = grpA?.order_index ?? 999;
+    orderB = grpB?.order_index ?? 999;
+  }
+
+  if (orderA !== orderB) {
+    return direction === 'asc' ? orderA - orderB : orderB - orderA;
+  }
+  const res = nameA.localeCompare(nameB);
+  return direction === 'asc' ? res : -res;
+}
+
+function comparePrimary(a, b, sortConfig, categories, cashflowGroups) {
   if (sortConfig.key === 'amount') return compareByAmount(a, b, sortConfig.direction);
   if (sortConfig.key === 'category') return compareByCategory(a, b, sortConfig.direction);
+  if (sortConfig.key === 'group') return compareByGroup(a, b, sortConfig.direction, categories, cashflowGroups);
   return compareByDate(a, b, sortConfig);
 }
 
@@ -44,8 +76,8 @@ function compareHierarchyOrder(a, b, groupOrderMap, catOrderMap) {
   return amtB - amtA;
 }
 
-function compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap) {
-  const primaryDiff = comparePrimary(a, b, sortConfig);
+function compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap, categories, cashflowGroups) {
+  const primaryDiff = comparePrimary(a, b, sortConfig, categories, cashflowGroups);
   if (primaryDiff !== 0) return primaryDiff;
   return compareHierarchyOrder(a, b, groupOrderMap, catOrderMap);
 }
@@ -76,9 +108,9 @@ export function useLedgerData(displayTransactions, filterPeriod, searchQuery, fi
 
   const sortedTransactions = useMemo(() => {
     return [...displayTransactions].sort((a, b) =>
-      compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap)
+      compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap, filters.categories, filters.cashflowGroups)
     );
-  }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap]);
+  }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap, filters.categories, filters.cashflowGroups]);
 
   const pages = useMemo(() => {
     const result = [];

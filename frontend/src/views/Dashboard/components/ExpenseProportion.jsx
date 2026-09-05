@@ -889,9 +889,12 @@ function ExpenseProportionHeader({
   );
 }
 
-function ExpenseProportionChartAnchor({ activeChartData, options, isAllocationMode, activeTotal }) {
+function ExpenseProportionChartAnchor({ activeChartData, options, isAllocationMode, activeTotal, onMouseLeave }) {
   return (
-    <div className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20">
+    <div 
+      onMouseLeave={onMouseLeave}
+      className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20"
+    >
       <div className="relative w-[140px] h-[140px]">
         <Doughnut data={activeChartData} options={options} />
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -1082,26 +1085,11 @@ function ExpenseProportion() {
       plugins: {
         ...baseOptions.plugins,
         tooltip: {
-          enabled: true,
-          backgroundColor: '#121212',
-          titleColor: '#ffffff',
-          bodyColor: '#cbd5e1',
-          borderColor: '#da291c',
-          borderWidth: 1,
-          padding: 10,
-          cornerRadius: 0,
-          displayColors: true,
-          callbacks: {
-            label: (ctx) => {
-              const val = ctx.raw || 0;
-              const pct = activeTotal > 0 ? ((val / activeTotal) * 100).toFixed(1) : 0;
-              return ` ฿${formatMoney(val)} (${pct}%)`;
-            }
-          }
+          enabled: false,
         }
       }
     };
-  }, [dm, isGroupMode, activeItems, activeTotal]);
+  }, [dm, isGroupMode, activeItems]);
   
   const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
 
@@ -1134,6 +1122,7 @@ function ExpenseProportion() {
             options={options}
             isAllocationMode={isAllocationMode}
             activeTotal={activeTotal}
+            onMouseLeave={() => setHoveredIdx(-1)}
           />
           <ExpenseProportionGridHud
             activeItems={activeItems}

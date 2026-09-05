@@ -215,7 +215,6 @@ export function useLedgerStats({
   categories = [],
   cashflowGroups = [],
   formatMoney,
-  dm,
   advancedFilterGroup,
   setAdvancedFilterGroup,
   allDatesInPeriod = []
@@ -330,21 +329,21 @@ export function useLedgerStats({
       .filter(g => isIncomeGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
       .map(g => renderCard(g));
-  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
 
   const activeSavingsCards = useMemo(() => {
     return cashflowGroups
       .filter(g => isSavingsGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
       .map(g => renderCard(g));
-  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
 
   const activeExpenseCards = useMemo(() => {
     return cashflowGroups
       .filter(g => isExpenseGroup(g) && (groupBreakdowns[g.id]?.total || 0) > 0)
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
       .map(g => renderCard(g));
-  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, dm, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
+  }, [cashflowGroups, groupBreakdowns, uniqueMonths, formatMoney, sumInc, sumExp, advancedFilterGroup, setAdvancedFilterGroup]);
 
   return {
     sumInc,

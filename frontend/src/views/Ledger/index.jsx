@@ -101,18 +101,20 @@ const LedgerHeaderActions = ({
       </button>
       
       {hasTransactions && (
-        <button 
-          onClick={handleDeleteMonthClick} 
-          className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-2 border rounded-none font-mono transition-all select-none ${
-            confirmDeleteMonth
-              ? 'text-white bg-[#da291c] border-[#da291c] animate-pulse shadow-[0_0_12px_rgba(218,41,28,0.4)]'
-              : 'text-slate-400 bg-[#121212] border-[#303030] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40'
-          }`} 
-          title={confirmDeleteMonth ? "คลิกอีกครั้งเพื่อยืนยันการลบข้อมูลทั้งหมดในเดือนนี้" : "ลบข้อมูลเดือนนี้"}
-        >
-          <Trash2 className="w-3.5 h-3.5" /> 
-          <span>{confirmDeleteMonth ? 'กดยืนยันลบ!' : 'ลบเดือนนี้'}</span>
-        </button>
+        <div className="flex items-center pl-2 ml-1 border-l border-[#303030]/60">
+          <button 
+            onClick={handleDeleteMonthClick} 
+            className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-2.5 py-2 border rounded-none font-mono transition-all select-none ${
+              confirmDeleteMonth
+                ? 'text-white bg-[#da291c] border-[#da291c] animate-pulse shadow-[0_0_12px_rgba(218,41,28,0.4)]'
+                : 'text-slate-500 bg-[#121212] border-[#2c2c2c] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40 opacity-80 hover:opacity-100'
+            }`} 
+            title={confirmDeleteMonth ? "คลิกอีกครั้งเพื่อยืนยันการลบข้อมูลทั้งหมดในเดือนนี้" : "ลบข้อมูลทั้งเดือนนี้ (กด 2 ครั้งเพื่อยืนยัน)"}
+          >
+            <Trash2 className="w-3.5 h-3.5" /> 
+            <span>{confirmDeleteMonth ? 'กดยืนยันลบ!' : 'ลบเดือนนี้'}</span>
+          </button>
+        </div>
       )}
     </div>
   );
@@ -317,6 +319,7 @@ const LedgerContentArea = ({
   clearFilters,
   viewMode,
   categories,
+  cashflowGroups,
   formatMoney,
   dayTypes,
   dayTypeConfig,
@@ -354,6 +357,7 @@ const LedgerContentArea = ({
         currentData={currentData}
         sortedTransactions={sortedTransactions}
         categories={categories}
+        cashflowGroups={cashflowGroups}
         sortConfig={sortConfig}
         handleSort={handleSort}
         isDateSorted={isDateSorted}
@@ -428,7 +432,7 @@ export default function LedgerView({
   isLoading,
   transactions = []
 }) {
-  const [filterOpen, setFilterOpen] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'horizontal'
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
   const [confirmDeleteMonth, setConfirmDeleteMonth] = useState(false);
@@ -483,7 +487,6 @@ export default function LedgerView({
     categories,
     cashflowGroups,
     formatMoney,
-    dm,
     advancedFilterGroup,
     setAdvancedFilterGroup,
     allDatesInPeriod
@@ -556,8 +559,10 @@ export default function LedgerView({
           />
         )}
 
-        {filterOpen && viewMode === 'list' && (
+        {viewMode === 'list' && (
           <FilterBar
+            isExpanded={filterOpen}
+            setIsExpanded={setFilterOpen}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
             advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}
@@ -583,6 +588,7 @@ export default function LedgerView({
         clearFilters={clearFilters}
         viewMode={viewMode}
         categories={categories}
+        cashflowGroups={cashflowGroups}
         formatMoney={formatMoney}
         dayTypes={dayTypes}
         dayTypeConfig={dayTypeConfig}

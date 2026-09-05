@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { CalendarDays, ChevronDown, ChevronRight, Check, LayoutGrid, CalendarRange, ListChecks, X } from 'lucide-react';
-import { getFilterLabel, getThaiMonth } from '../../utils/formatters';
+import { getFilterLabel, getThaiMonth, THAI_MONTHS_SHORT } from '../../utils/formatters';
 
 function ModeBtn({ id, icon: Icon, label, active, onClick }) {
   return (

@@ -156,12 +156,28 @@
 .dark-mode .group:hover .group-hover\:border-slate-750 { border-color: #303030 !important; }
 
 /* Form elements & Inputs */
-.dark-mode input,
+.dark-mode input:not(.amount-input),
 .dark-mode select:not(.day-type-badge):not(.category-select):not(.allocation-select),
 .dark-mode textarea { 
   background-color: #181818 !important; 
   border-color: #303030 !important; 
   color: #ffffff !important; 
+}
+
+/* Financial Amount Inputs (Ledger ListView) */
+.dark-mode input.amount-expense {
+  color: #f87171 !important; /* Rose-400 vivid red for expenses */
+}
+.dark-mode input.amount-expense:hover,
+.dark-mode input.amount-expense:focus {
+  color: #fca5a5 !important;
+}
+.dark-mode input.amount-income {
+  color: #34d399 !important; /* Emerald-400 green for income */
+}
+.dark-mode input.amount-income:hover,
+.dark-mode input.amount-income:focus {
+  color: #6ee7b7 !important;
 }
 
 .dark-mode select optgroup { 

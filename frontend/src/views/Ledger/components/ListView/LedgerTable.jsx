@@ -66,14 +66,36 @@ const getCategoryPillStyles = (hexColor, dm) => {
   };
 };
 
-const getAmountInputClassName = (isInc, dm) => {
-  const baseClass = 'w-full bg-transparent border border-transparent rounded-none py-1 px-2 text-right text-xs font-black outline-none pl-7 focus:ring-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
-  if (dm) {
-    const incClass = isInc ? 'text-emerald-400 focus:border-emerald-600/50' : 'text-slate-200 focus:border-[#da291c]/50';
-    return `${baseClass} hover:bg-[#121212] hover:border-[#3e3e3e] ${incClass}`;
-  }
-  const incClass = isInc ? 'text-emerald-600 focus:border-emerald-400' : 'text-slate-800 focus:border-red-400';
-  return `${baseClass} hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm ${incClass}`;
+const THAI_DAY_CONFIG = [
+  { label: 'อา.', fullName: 'วันอาทิตย์ (พระอาทิตย์)', color: '#f87171', bg: 'rgba(248, 113, 113, 0.12)', border: 'rgba(248, 113, 113, 0.35)' }, // สีแดง
+  { label: 'จ.',  fullName: 'วันจันทร์ (พระจันทร์)',    color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)',  border: 'rgba(251, 191, 36, 0.35)' },  // สีเหลือง
+  { label: 'อ.',  fullName: 'วันอังคาร (พระอังคาร)',   color: '#f472b6', bg: 'rgba(244, 114, 182, 0.12)', border: 'rgba(244, 114, 182, 0.35)' }, // สีชมพู
+  { label: 'พ.',  fullName: 'วันพุธ (พระพุธ)',        color: '#34d399', bg: 'rgba(52, 211, 153, 0.12)',  border: 'rgba(52, 211, 153, 0.35)' },  // สีเขียว
+  { label: 'พฤ.', fullName: 'วันพฤหัสบดี (พระพฤหัสบดี)', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.12)',  border: 'rgba(251, 146, 60, 0.35)' },  // สีส้ม/แสด
+  { label: 'ศ.',  fullName: 'วันศุกร์ (พระศุกร์)',       color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)',  border: 'rgba(56, 189, 248, 0.35)' },  // สีฟ้า
+  { label: 'ส.',  fullName: 'วันเสาร์ (พระเสาร์)',      color: '#c084fc', bg: 'rgba(192, 132, 252, 0.12)', border: 'rgba(192, 132, 252, 0.35)' }, // สีม่วง
+];
+
+const getThaiDayInfo = (dateStr) => {
+  if (!dateStr) return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const y = Number.parseInt(parts[0], 10);
+  const m = Number.parseInt(parts[1], 10);
+  const d = Number.parseInt(parts[2], 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+  const dateObj = new Date(y, m - 1, d);
+  return THAI_DAY_CONFIG[dateObj.getDay()] || null;
+};
+
+const getGroupBadgeStyles = (hexColor) => {
+  const safeColor = hexColor || '#94a3b8';
+  const rgb = hexToRgb(safeColor) || '148, 163, 184';
+  return {
+    backgroundColor: `rgba(${rgb}, 0.12)`,
+    borderColor: `rgba(${rgb}, 0.35)`,
+    color: safeColor
+  };
 };
 
 const SortHeader = ({ label, sortKey, className = '', align = 'left', sortConfig, handleSort }) => {
@@ -98,7 +120,7 @@ const SortHeader = ({ label, sortKey, className = '', align = 'left', sortConfig
 };
 
 export default function LedgerTable({
-  currentData, sortedTransactions, categories, 
+  currentData, sortedTransactions, categories, cashflowGroups = [],
   sortConfig, handleSort, isDateSorted, dateBands,
   handleUpdateTransaction, handleDeleteTransaction, handleOpenAddModal,
   pageInc, pageExp, formatMoney,
@@ -122,19 +144,18 @@ export default function LedgerTable({
   return (
     <div className="flex flex-col w-full">
       <div className="overflow-auto no-scrollbar relative" style={{ scrollbarWidth: 'thin' }}>
-        <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[800px] bg-[#181818]">
+        <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[760px] bg-[#181818]">
           <thead className="sticky top-0 z-20 border-b bg-[#121212]/95 border-[#303030]/65 backdrop-blur-md">
             <tr>
               <SortHeader 
                 label="วันที่" 
                 sortKey="date" 
-                className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[145px]" 
+                className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[140px]" 
                 sortConfig={sortConfig}
                 handleSort={handleSort}
               />
-              <th className="px-4 py-3 font-bold w-[90px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ประเภท</th>
               <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" sortConfig={sortConfig} handleSort={handleSort} />
-              <th className="px-4 py-3 font-bold w-[100px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>
+              <th className="px-3 py-3 font-bold w-[95px] text-center text-[10px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>
               <th className="px-4 py-3 font-bold text-[10px] font-black uppercase tracking-widest text-slate-400">รายละเอียด</th>
               <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" sortConfig={sortConfig} handleSort={handleSort} />
               <th className="sticky right-0 z-30 bg-[#121212] border-l border-[#303030]/60 w-12 text-center" />
@@ -144,10 +165,14 @@ export default function LedgerTable({
             {currentData.map((item, index, arr) => {
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category) || categories[categories.length - 1];
+              const groupId    = catObj?.cashflow_group_id || catObj?.cashflowGroup;
+              const groupObj   = (cashflowGroups || []).find(g => g.id === groupId) || (item.group_name ? (cashflowGroups || []).find(g => g.name === item.group_name) : null);
               const pillStyles = getCategoryPillStyles(catObj?.color, dm);
               const isInc      = catObj?.type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
               const stickyBg   = isAlt ? 'bg-[#161616]' : 'bg-[#181818]';
+              const isDateBoundary = isDateSorted && isNewDate && index > 0;
+              const dayInfo = isNewDate ? getThaiDayInfo(item.date) : null;
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
               const aColors = {
@@ -157,46 +182,107 @@ export default function LedgerTable({
               };
 
               return (
-                <tr key={item.id} className="group border-b border-[#303030]/30 hover:bg-[#303030]/10">
+                <tr 
+                  key={item.id} 
+                  className={`group border-b border-[#303030]/30 hover:bg-[#303030]/10 ${
+                    isDateBoundary ? 'border-t border-t-[#404040]' : ''
+                  }`}
+                >
                   {/* Sticky Date Column */}
-                  <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-4 py-2.5 group-hover:bg-[#202020] ${stickyBg}`}>
+                  <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-3 py-1 group-hover:bg-[#202020] ${stickyBg}`}>
                     {isNewDate ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-black tabular-nums text-slate-300">{item.date}</span>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-                          <button onClick={() => handleOpenAddModal(item.date, 'income')} className="p-0.5 rounded-none text-emerald-400 hover:bg-emerald-950/40" title="เพิ่มรายรับวันนี้">
+                      <div className="flex items-center justify-between gap-1.5 w-full">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {dayInfo && (
+                            <span 
+                              className="px-1.5 py-0.5 text-[9px] font-black rounded-none border select-none shrink-0 tabular-nums leading-none tracking-tight" 
+                              style={{
+                                color: dayInfo.color,
+                                backgroundColor: dayInfo.bg,
+                                borderColor: dayInfo.border
+                              }}
+                              title={dayInfo.fullName}
+                            >
+                              {dayInfo.label}
+                            </span>
+                          )}
+                          <span className="text-xs font-black tabular-nums text-slate-200 font-mono tracking-tight">
+                            {item.date}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'income')} 
+                            className="p-0.5 rounded-none text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/60 transition-colors" 
+                            title={`เพิ่มรายรับ (${item.date})`}
+                          >
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleOpenAddModal(item.date, 'expense')} className="p-0.5 rounded-none text-[#da291c] hover:bg-rose-950/40" title="เพิ่มรายจ่ายวันนี้">
+                          <button 
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'expense')} 
+                            className="p-0.5 rounded-none text-[#da291c] hover:text-rose-300 hover:bg-rose-950/60 transition-colors" 
+                            title={`เพิ่มรายจ่าย (${item.date})`}
+                          >
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs select-none opacity-20 text-slate-500 ml-4">&quot;</span>
+                      <div className="flex items-center justify-between gap-1.5 w-full">
+                        <div className="flex items-center gap-1.5 min-w-0 pl-3">
+                          <span className="text-slate-600 text-xs font-mono select-none font-bold" title={item.date}>
+                            ↳
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'income')} 
+                            className="p-0.5 rounded-none text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/60 transition-colors" 
+                            title={`เพิ่มรายรับ (${item.date})`}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'expense')} 
+                            className="p-0.5 rounded-none text-[#da291c] hover:text-rose-300 hover:bg-rose-950/60 transition-colors" 
+                            title={`เพิ่มรายจ่าย (${item.date})`}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </td>
-                  
-                  <td className="px-4 py-2.5 align-middle text-center">
-                    <span className={`inline-flex items-center justify-center min-w-[56px] px-2 py-0.5 text-[10px] font-black tracking-wider rounded-none ${isInc ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-500/20' : 'bg-rose-950/20 text-[#da291c] border border-[#da291c]/20'}`}>
-                      {isInc ? 'รายรับ' : 'รายจ่าย'}
-                    </span>
-                  </td>
-                  
-                  <td className="px-3 py-2 align-middle">
+
+                  {/* Compact Single-Line Category Pill (with Inline Group Breadcrumb) */}
+                  <td className="px-3 py-1 align-middle">
                     <div className="relative w-full flex items-center rounded-none border focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
                       {/* Visual Custom Overlay */}
                       <div 
-                        className="category-pill-text w-full flex items-center pl-1.5 pr-7 py-1 text-xs font-extrabold select-none pointer-events-none" 
+                        className="category-pill-text w-full flex items-center pl-2 pr-6 py-1 text-xs select-none pointer-events-none min-w-0" 
                         style={{ '--pill-text-color': pillStyles.textColor }}
                       >
                         <span className="shrink-0 mr-1.5 text-xs">
                           {catObj?.icon}
                         </span>
-                        <span className="truncate" style={{ color: pillStyles.textColor }}>{catObj?.name}</span>
+                        <div className="truncate flex items-center gap-1 min-w-0" style={{ color: pillStyles.textColor }}>
+                          {groupObj?.name && (
+                            <>
+                              <span className="opacity-60 font-medium text-[11px] truncate max-w-[90px]" title={`กลุ่ม: ${groupObj.name}`}>
+                                {groupObj.name}
+                              </span>
+                              <span className="opacity-35 text-[10px] select-none">›</span>
+                            </>
+                          )}
+                          <span className="truncate font-extrabold">{catObj?.name}</span>
+                        </div>
                         
-                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-85" style={{ color: pillStyles.textColor }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-75" style={{ color: pillStyles.textColor }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
                             <polyline points="6 9 12 15 18 9"></polyline>
                           </svg>
                         </div>
@@ -221,7 +307,7 @@ export default function LedgerTable({
                     </div>
                   </td>
                   
-                  <td className="px-3 py-2 align-middle text-center">
+                  <td className="px-3 py-1 align-middle text-center">
                     {!isInc ? (
                       <select 
                         value={aType} 
@@ -240,18 +326,22 @@ export default function LedgerTable({
                     )}
                   </td>
                   
-                  <td className="px-3 py-2 group/input relative align-middle">
+                  <td className="px-3 py-1 group/input relative align-middle">
                     <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
                     <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-slate-200 hover:bg-[#121212] hover:border-[#3e3e3e] focus:border-[#da291c] focus:bg-[#121212]" placeholder="รายละเอียด..." />
                   </td>
                   
-                  <td className="px-3 py-2 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
-                    <AmountEditableInput initialValue={item.amount === 0 ? '' : item.amount} onSave={val => handleUpdateTransaction(item.id, 'amount', val)} className={getAmountInputClassName(isInc, dm)} placeholder="0" />
+                  <td className="px-3 py-1 relative align-middle">
+                    <AmountEditableInput 
+                      initialValue={item.amount === 0 ? '' : item.amount} 
+                      isInc={isInc} 
+                      onSave={val => handleUpdateTransaction(item.id, 'amount', val)} 
+                      placeholder="0.00" 
+                    />
                   </td>
                   
                   {/* Sticky Actions Column */}
-                  <td className={`sticky right-0 z-10 border-l border-[#303030]/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-2 group-hover:bg-[#202020] ${stickyBg}`}>
+                  <td className={`sticky right-0 z-10 border-l border-[#303030]/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-1 group-hover:bg-[#202020] ${stickyBg}`}>
                     <InlineConfirmDelete onDelete={() => handleDeleteTransaction(item.id)} />
                   </td>
                 </tr>
