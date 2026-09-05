@@ -53,8 +53,8 @@ export default function CalendarView({
   transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
-  handleDeleteTransaction, onSaveTransaction, paymentMethods,
-  isLoading, frequentItems = []
+  handleDeleteTransaction, onSaveTransaction,
+  paymentMethods, isLoading, frequentItems = []
 }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState(new Set());
@@ -440,7 +440,8 @@ export default function CalendarView({
           onClose={() => setSelectedDate(null)}
           onSave={async (item) => { await onSaveTransaction(item); }}
           onDelete={(id) => { handleDeleteTransaction(id); }}
-          paymentMethods={paymentMethods}
+          dayTypes={dayTypes}
+          dayTypeConfig={dayTypeConfig}
           frequentItems={frequentItems}
         />
       )}

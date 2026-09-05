@@ -3,7 +3,7 @@ import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRi
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
-import { hexToRgb } from '../../../../utils/formatters';
+import { hexToRgb, THAI_DAY_CONFIG, getThaiDayInfo } from '../../../../utils/formatters';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
@@ -64,28 +64,6 @@ const getCategoryPillStyles = (hexColor, dm) => {
     textColor,
     iconBgColor: `rgba(${rgb}, 0.25)`
   };
-};
-
-const THAI_DAY_CONFIG = [
-  { label: 'อา.', fullName: 'วันอาทิตย์ (พระอาทิตย์)', color: '#f87171', bg: 'rgba(248, 113, 113, 0.12)', border: 'rgba(248, 113, 113, 0.35)' }, // สีแดง
-  { label: 'จ.',  fullName: 'วันจันทร์ (พระจันทร์)',    color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)',  border: 'rgba(251, 191, 36, 0.35)' },  // สีเหลือง
-  { label: 'อ.',  fullName: 'วันอังคาร (พระอังคาร)',   color: '#f472b6', bg: 'rgba(244, 114, 182, 0.12)', border: 'rgba(244, 114, 182, 0.35)' }, // สีชมพู
-  { label: 'พ.',  fullName: 'วันพุธ (พระพุธ)',        color: '#34d399', bg: 'rgba(52, 211, 153, 0.12)',  border: 'rgba(52, 211, 153, 0.35)' },  // สีเขียว
-  { label: 'พฤ.', fullName: 'วันพฤหัสบดี (พระพฤหัสบดี)', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.12)',  border: 'rgba(251, 146, 60, 0.35)' },  // สีส้ม/แสด
-  { label: 'ศ.',  fullName: 'วันศุกร์ (พระศุกร์)',       color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)',  border: 'rgba(56, 189, 248, 0.35)' },  // สีฟ้า
-  { label: 'ส.',  fullName: 'วันเสาร์ (พระเสาร์)',      color: '#c084fc', bg: 'rgba(192, 132, 252, 0.12)', border: 'rgba(192, 132, 252, 0.35)' }, // สีม่วง
-];
-
-const getThaiDayInfo = (dateStr) => {
-  if (!dateStr) return null;
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return null;
-  const y = Number.parseInt(parts[0], 10);
-  const m = Number.parseInt(parts[1], 10);
-  const d = Number.parseInt(parts[2], 10);
-  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
-  const dateObj = new Date(y, m - 1, d);
-  return THAI_DAY_CONFIG[dateObj.getDay()] || null;
 };
 
 const getGroupBadgeStyles = (hexColor) => {

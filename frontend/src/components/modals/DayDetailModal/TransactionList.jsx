@@ -3,48 +3,74 @@ import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 
 const ALLOCATION_BADGE_STYLES = {
-  need: 'bg-rose-900/30 text-rose-400 border-rose-800/40',
-  want: 'bg-sky-900/30 text-sky-400 border-sky-800/40',
-  savings: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40'
+  need: 'bg-rose-950/40 text-rose-400 border-rose-800/40',
+  want: 'bg-sky-950/40 text-sky-400 border-sky-800/40',
+  savings: 'bg-emerald-950/40 text-emerald-400 border-emerald-800/40'
 };
 
 const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }) => {
-  const dm = true;
   const isInc = catObj?.type === 'income';
   const color = catObj?.color || '#94a3b8';
+  const groupObj = catObj?._group;
   const isConfirming = confirmDeleteId === tx.id;
   
-  const rowBg = `rgba(${hexToRgb(color)}, ${dm ? 0.06 : 0.04})`;
+  const rowBg = `rgba(${hexToRgb(color)}, 0.06)`;
   const borderCls = 'border-[#303030]/60';
-  const textPriCls = 'text-slate-100';
   const allocBadgeStyle = ALLOCATION_BADGE_STYLES[tx.allocation_type] || ALLOCATION_BADGE_STYLES.savings;
   
   return (
-    <div className={`flex items-center gap-3 px-3 py-2.5 rounded-none border transition-all ${borderCls}`}
-      style={{ backgroundColor: rowBg }}>
-      <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: color }} />
+    <div 
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-none border transition-all ${borderCls} hover:border-[#404040]`}
+      style={{ backgroundColor: rowBg }}
+    >
+      <div className="w-1.5 h-6 rounded-none shrink-0" style={{ backgroundColor: color }} />
+      
+      {/* Description & Category with Group Breadcrumb */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className={`text-sm font-bold truncate ${textPriCls}`}>{tx.description || tx.category}</p>
+          <p className="text-xs font-bold truncate text-slate-100">
+            {tx.description || tx.category}
+          </p>
+
+          {/* Allocation Type Badge */}
           {tx.allocation_type && !isInc && (
-            <span className={`text-[8px] font-black px-1 rounded-none border shrink-0 ${allocBadgeStyle}`}>
+            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-none border shrink-0 ${allocBadgeStyle}`}>
               {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
             </span>
           )}
         </div>
-        <p className="text-[10px] font-medium flex items-center gap-1 mt-0.5" style={{ color, filter: 'brightness(1.3)' }}>
-          {catObj?.icon} {tx.category}
-        </p>
+
+        {/* Group Breadcrumb & Category */}
+        <div className="text-[10px] font-medium flex items-center gap-1 mt-0.5 min-w-0" style={{ color, filter: 'brightness(1.25)' }}>
+          <span className="shrink-0">{catObj?.icon}</span>
+          {groupObj?.name && (
+            <>
+              <span className="opacity-60 font-medium truncate max-w-[90px]" title={`กลุ่ม: ${groupObj.name}`}>
+                {groupObj.name}
+              </span>
+              <span className="opacity-35 text-[9px] select-none">›</span>
+            </>
+          )}
+          <span className="truncate font-semibold">{catObj?.name || tx.category}</span>
+        </div>
       </div>
-      <span className={`text-sm font-black shrink-0 ${isInc ? ('text-emerald-400') : ('text-red-400')}`}>
-        {isInc ? '+' : '-'}{formatMoney(tx.amount)} ฿
+
+      {/* Accounting Amount */}
+      <span className={`text-xs font-black shrink-0 tabular-nums font-mono ${isInc ? 'text-emerald-400' : 'text-red-400'}`}>
+        {isInc ? '+฿' : '-฿'}{formatMoney(tx.amount)}
       </span>
-      <button onClick={() => onDeleteClick(tx.id)}
-        className={`shrink-0 px-2 py-1 rounded-none text-xs font-bold transition-colors ${
+
+      {/* Delete Action */}
+      <button 
+        type="button"
+        onClick={() => onDeleteClick(tx.id)}
+        className={`shrink-0 px-2 py-1.5 rounded-none text-xs font-bold transition-colors ${
           isConfirming 
-            ? 'bg-red-600 text-white border border-red-500' 
+            ? 'bg-[#da291c] text-white border border-[#da291c] animate-pulse' 
             : 'text-slate-400 hover:text-red-400 hover:bg-[#303030] border border-transparent hover:border-red-800/20'
-        }`}>
+        }`}
+        title={isConfirming ? "คลิกอีกครั้งเพื่อยืนยันลบ" : "ลบรายการ"}
+      >
         {isConfirming ? 'ยืนยัน?' : <Trash2 className="w-3.5 h-3.5" />}
       </button>
     </div>
@@ -79,8 +105,8 @@ export default function TransactionList({
       )}
       {income.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${'text-emerald-400'}`}>
-            <Coins className="w-3.5 h-3.5" /> รายรับ
+          <p className="text-xs font-black mb-2 flex items-center gap-1.5 text-emerald-400 uppercase tracking-wider font-sans">
+            <Coins className="w-3.5 h-3.5" /> รายรับ ({income.length})
           </p>
           <div className="space-y-1.5">
             {income.map(tx => (
@@ -97,8 +123,8 @@ export default function TransactionList({
       )}
       {expenses.length > 0 && (
         <div>
-          <p className={`text-xs font-bold mb-2 flex items-center gap-1.5 ${'text-red-400'}`}>
-            <Wallet className="w-3.5 h-3.5" /> รายจ่าย
+          <p className="text-xs font-black mb-2 flex items-center gap-1.5 text-rose-400 uppercase tracking-wider font-sans">
+            <Wallet className="w-3.5 h-3.5" /> รายจ่าย ({expenses.length})
           </p>
           <div className="space-y-1.5">
             {expenses.map(tx => (

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { CheckCircle, Zap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,15 +14,14 @@ const dailyAddSchema = z.object({
 
 export default function DailyForm({
   onSubmitItem,
-  categories,
+  categories = [],
+  cashflowGroups = [],
   defaultType,
   defaultCategoryId,
   isProcessing,
   externalFormSetter,
   onTypeChange
 }) {
-  const dm = true;
-  
   const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm({
     resolver: zodResolver(dailyAddSchema),
     defaultValues: {
@@ -36,6 +35,39 @@ export default function DailyForm({
 
   const formType = watch('type');
   const allocationType = watch('allocation_type');
+
+  const groupedCategories = useMemo(() => {
+    const relevantCats = categories.filter(c => c.type === formType);
+    const groupLookup = cashflowGroups.reduce((acc, g) => {
+      acc[g.id] = g;
+      return acc;
+    }, {});
+
+    const groups = {};
+    relevantCats.forEach(c => {
+      const gId = c.cashflowGroup || 'other';
+      const gObj = groupLookup[gId];
+      const gName = gObj?.name || 'ทั่วไป / อื่นๆ';
+      const gOrder = gObj?.order_index ?? 999;
+
+      if (!groups[gId]) {
+        groups[gId] = {
+          id: gId,
+          name: gName,
+          order: gOrder,
+          categories: []
+        };
+      }
+      groups[gId].categories.push(c);
+    });
+
+    return Object.values(groups)
+      .sort((a, b) => a.order - b.order)
+      .map(g => ({
+        ...g,
+        categories: [...g.categories].sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999))
+      }));
+  }, [categories, cashflowGroups, formType]);
 
   const isApplyingSuggestionRef = useRef(false);
 
@@ -106,13 +138,13 @@ export default function DailyForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
-      <div className={`flex p-0.5 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
+      <div className={`flex p-0.5 rounded-none border bg-[#181818] border-[#303030]`}>
         <button type="button" onClick={() => handleTypeChange('expense')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : tokens.textMuted}`}>
+          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'bg-[#303030] text-red-400 shadow-sm' : tokens.textMuted}`}>
           รายจ่าย
         </button>
         <button type="button" onClick={() => handleTypeChange('income')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : tokens.textMuted}`}>
+          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? 'bg-[#303030] text-emerald-400 shadow-sm' : tokens.textMuted}`}>
           รายรับ
         </button>
       </div>
@@ -120,23 +152,28 @@ export default function DailyForm({
       <div className="flex gap-2">
         <div className="flex-[3]">
           <select {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
-            {categories.filter(c => c.type === formType).map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+            {groupedCategories.map(g => (
+              <optgroup key={g.id} label={g.name} className="bg-[#181818] text-slate-400 font-bold">
+                {g.categories.map(c => (
+                  <option key={c.id} value={c.id} className="bg-[#121212] text-slate-100 font-medium">
+                    {c.icon} {c.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
           {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
         </div>
 
         {formType === 'expense' && (
-          <div className={`flex p-0.5 rounded-none border shrink-0 ${'bg-[#181818] border-[#303030]'}`}>
+          <div className="flex p-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030]">
             {[
               { val: 'need', label: 'NEED', color: 'text-rose-400' },
               { val: 'want', label: 'WANT', color: 'text-sky-400' },
               { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
             ].map(opt => {
               const isSelected = allocationType === opt.val;
-              let activeStyle = tokens.textMuted;
-              if (isSelected) {
-                activeStyle = dm ? `bg-[#303030] ${opt.color}` : `bg-white ${opt.color} shadow-sm`;
-              }
+              const activeStyle = isSelected ? `bg-[#303030] ${opt.color}` : tokens.textMuted;
               return (
                 <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val)}
                   className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${activeStyle}`}>
@@ -152,8 +189,20 @@ export default function DailyForm({
         <div className="flex-[2]">
           <input type="text" {...register('description')} onKeyDown={handleKeyDown} placeholder="รายละเอียด..." className={tokens.input} />
         </div>
-        <div className="flex-1 min-w-[100px]">
-          <input type="number" step="any" {...register('amount', { valueAsNumber: true })} onKeyDown={handleKeyDown} placeholder="0.00" className={`${errors.amount ? tokens.inputError : tokens.input} text-right font-black`} />
+        <div className="flex-1 min-w-[110px]">
+          <div className="relative flex items-center">
+            <span className="absolute left-2.5 text-xs font-bold font-mono select-none opacity-50 text-slate-400">
+              ฿
+            </span>
+            <input 
+              type="number" 
+              step="any" 
+              {...register('amount', { valueAsNumber: true })} 
+              onKeyDown={handleKeyDown} 
+              placeholder="0.00" 
+              className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-black tabular-nums font-mono`} 
+            />
+          </div>
           {errors.amount && <p className={tokens.errorText}>{errors.amount.message}</p>}
         </div>
       </div>
@@ -166,7 +215,12 @@ export default function DailyForm({
           ล้าง
         </button>
         <button type="submit" disabled={isProcessing}
-          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-white shadow-sm border ${formType === 'expense' ? 'bg-red-600 hover:bg-red-500 border-red-700' : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-700'}`}>
+          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 text-white shadow-sm border ${
+            formType === 'expense' 
+              ? 'bg-[#da291c] hover:bg-[#b82216] border-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.25)]' 
+              : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-700 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+          }`}
+        >
           {isProcessing ? <><Zap className="w-4 h-4 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-4 h-4" /> บันทึก (Enter)</>}
         </button>
       </div>

@@ -65,3 +65,33 @@ export const hexToRgb = (hexStr: string | null | undefined = '#94a3b8'): string 
     if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '148, 163, 184';
     return `${r}, ${g}, ${b}`;
 };
+
+export interface ThaiDayInfo {
+  label: string;
+  fullName: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+export const THAI_DAY_CONFIG: readonly ThaiDayInfo[] = [
+  { label: 'อา.', fullName: 'วันอาทิตย์ (พระอาทิตย์)', color: '#f87171', bg: 'rgba(248, 113, 113, 0.12)', border: 'rgba(248, 113, 113, 0.35)' },
+  { label: 'จ.',  fullName: 'วันจันทร์ (พระจันทร์)',    color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)',  border: 'rgba(251, 191, 36, 0.35)' },
+  { label: 'อ.',  fullName: 'วันอังคาร (พระอังคาร)',   color: '#f472b6', bg: 'rgba(244, 114, 182, 0.12)', border: 'rgba(244, 114, 182, 0.35)' },
+  { label: 'พ.',  fullName: 'วันพุธ (พระพุธ)',        color: '#34d399', bg: 'rgba(52, 211, 153, 0.12)',  border: 'rgba(52, 211, 153, 0.35)' },
+  { label: 'พฤ.', fullName: 'วันพฤหัสบดี (พระพฤหัสบดี)', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.12)',  border: 'rgba(251, 146, 60, 0.35)' },
+  { label: 'ศ.',  fullName: 'วันศุกร์ (พระศุกร์)',       color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)',  border: 'rgba(56, 189, 248, 0.35)' },
+  { label: 'ส.',  fullName: 'วันเสาร์ (พระเสาร์)',      color: '#c084fc', bg: 'rgba(192, 132, 252, 0.12)', border: 'rgba(192, 132, 252, 0.35)' },
+];
+
+export const getThaiDayInfo = (dateStr?: string | null): ThaiDayInfo | null => {
+  if (!dateStr) return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const y = Number.parseInt(parts[0], 10);
+  const m = Number.parseInt(parts[1], 10);
+  const d = Number.parseInt(parts[2], 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+  const dateObj = new Date(y, m - 1, d);
+  return THAI_DAY_CONFIG[dateObj.getDay()] || null;
+};

@@ -1,23 +1,36 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { formatMoney } from '../../../utils/formatters';
+import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../utils/formatters';
 import { useToast } from '../../../context/ToastContext';
 import DailyForm from './DailyForm';
 import QuickSuggest from './QuickSuggest';
 import TransactionList from './TransactionList';
 
-const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-
-export default function DayDetailModal({ dateStr, transactions = [], categories = [], cashflowGroups = [], onClose, onSave, onDelete, frequentItems = [] }) {
+export default function DayDetailModal({ 
+  dateStr, 
+  transactions = [], 
+  categories = [], 
+  cashflowGroups = [], 
+  onClose, 
+  onSave, 
+  onDelete, 
+  dayTypes = {},
+  dayTypeConfig = [],
+  frequentItems = [] 
+}) {
   const { showToast } = useToast();
   
-  const [yyyyStr, mmStr, ddStr] = dateStr.split('-');
+  const [yyyyStr, mmStr, ddStr] = (dateStr || '').split('-');
   const d = Number.parseInt(ddStr, 10);
   const m = Number.parseInt(mmStr, 10);
   const y = Number.parseInt(yyyyStr, 10);
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dateObj.getDay()];
-  const displayDate = `${d} ${THAI_MONTHS[m - 1]} ${y}`;
+  const displayDate = `${d} ${THAI_MONTHS[m - 1] || ''} ${y}`;
+  const thaiDay = getThaiDayInfo(dateStr);
+
+  const dayTypeId = dayTypes[dateStr];
+  const currentDayType = dayTypeId ? dayTypeConfig.find(dt => dt.id === dayTypeId) : null;
 
   const defaultExpenseCatId = categories.find(c => c.type === 'expense')?.id || '';
 
@@ -93,6 +106,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
   const income     = dayTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
   const totalExp   = expenses.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
   const totalInc   = income.reduce((s, t) => s + (Number.parseFloat(t.amount) || 0), 0);
+  const net        = totalInc - totalExp;
 
   const applySuggestion = (s) => {
     if (formMethodsRef.current) {
@@ -169,19 +183,62 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
         </button>
 
         <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
-          <div className={`flex items-start justify-between px-5 py-4 border-b ${tokens.border} shrink-0 pr-12`}>
+          <div className={`flex items-start justify-between px-5 py-3.5 border-b ${tokens.border} shrink-0 pr-12`}>
             <div>
-              <h2 className={`text-lg font-black ${tokens.textPri}`}>{displayDate}</h2>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className={`text-xs font-medium ${tokens.textMuted}`}>วัน{dayOfWeek}</span>
-                {totalExp > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-red-900/40 text-red-400 border border-red-800/30">
-                    ▼ {formatMoney(totalExp)} ฿
+              <div className="flex items-center gap-2 flex-wrap">
+                {thaiDay && (
+                  <span 
+                    className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-none border shrink-0 select-none shadow-sm"
+                    style={{ 
+                      backgroundColor: thaiDay.bg, 
+                      borderColor: thaiDay.border, 
+                      color: thaiDay.color 
+                    }}
+                    title={thaiDay.fullName}
+                  >
+                    {thaiDay.label}
                   </span>
                 )}
+                <h2 className={`text-base font-black tracking-tight ${tokens.textPri}`}>
+                  {displayDate}
+                </h2>
+                <span className={`text-xs font-bold ${tokens.textMuted}`}>
+                  วัน{dayOfWeek}
+                </span>
+
+                {currentDayType && (
+                  <span
+                    className="px-2 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-none border shrink-0"
+                    style={{
+                      backgroundColor: `rgba(${hexToRgb(currentDayType.color || '#94a3b8')}, 0.12)`,
+                      borderColor: `rgba(${hexToRgb(currentDayType.color || '#94a3b8')}, 0.35)`,
+                      color: currentDayType.color || '#cbd5e1'
+                    }}
+                  >
+                    {currentDayType.label}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 flex-wrap font-mono tabular-nums">
                 {totalInc > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-emerald-900/40 text-emerald-400 border border-emerald-800/30">
-                    ▲ {formatMoney(totalInc)} ฿
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-none bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
+                    <span className="text-[9px] font-sans font-bold opacity-80">รับ</span> +฿{formatMoney(totalInc)}
+                  </span>
+                )}
+                {totalExp > 0 && (
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-none bg-rose-950/40 text-rose-400 border border-rose-800/40 flex items-center gap-1">
+                    <span className="text-[9px] font-sans font-bold opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
+                  </span>
+                )}
+                {dayTx.length > 0 && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-none border flex items-center gap-1 ${
+                    net >= 0 
+                      ? 'bg-amber-950/30 text-amber-300 border-amber-800/40' 
+                      : 'bg-red-950/40 text-[#da291c] border-[#da291c]/30'
+                  }`}>
+                    <span className="text-[9px] font-sans font-bold opacity-80">สุทธิ</span> 
+                    {net >= 0 ? `+฿${formatMoney(net)}` : `-฿${formatMoney(Math.abs(net))}`}
                   </span>
                 )}
               </div>
@@ -198,6 +255,7 @@ export default function DayDetailModal({ dateStr, transactions = [], categories 
           <DailyForm 
             onSubmitItem={handleSave}
             categories={categories}
+            cashflowGroups={cashflowGroups}
             defaultType="expense"
             defaultCategoryId={defaultExpenseCatId}
             isProcessing={isSaving}
