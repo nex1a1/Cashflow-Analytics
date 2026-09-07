@@ -118,17 +118,17 @@
 
 ## 🚀 Getting Started & Usage (คู่มือการเริ่มใช้งาน)
 
-คุณสามารถเลือกใช้งาน Cashflow Shark ได้ 2 รูปแบบตามความสะดวก:
+คุณสามารถเลือกใช้งาน Cashflow Shark ได้ตามรูปแบบที่เหมาะสม:
 
 ---
 
-### รูปแบบที่ 1: ⚡ Local TypeScript Development (แนะนำสำหรับการพัฒนาและใช้งานบนเครื่อง)
+### รูปแบบที่ 1: ⚡ Local TypeScript Development (สำหรับการพัฒนาและปรับแต่งโค้ด)
 
 #### ความต้องการขั้นต่ำ:
 *   [Node.js v20 (LTS)](https://nodejs.org/) ขึ้นไป
 *   `npm` หรือ `yarn`
 
-#### ขั้นตอนการติดตั้งและรันระบบ:
+#### ขั้นตอนการรันในโหมด Development:
 ```bash
 # 1. ติดตั้ง Dependencies และสตาร์ท Backend API (Port 3000)
 cd backend
@@ -141,11 +141,33 @@ npm install
 npm run dev
 ```
 
-*   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173)
+*   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173) (รองรับ Vite HMR)
 *   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
+
 ---
 
-### รูปแบบที่ 2: 🐳 Docker Compose (สำหรับรันผ่าน Container แบบเบ็ดเสร็จ)
+### รูปแบบที่ 2: 🏗️ Full-Stack Production Run (Single Port - รวม Web UI & API ในพอร์ตเดียว)
+
+เหมาะสำหรับการใช้งานจริงบนเครื่องส่วนตัว โดยไม่ต้องเปิด 2 หน้าต่าง Terminal:
+
+```bash
+# 1. บิลด์ Frontend เป็น Static Assets
+cd frontend
+npm install
+npm run build
+
+# 2. บิลด์และสตาร์ท Backend Server เพื่อเสิร์ฟทั้ง Web UI และ REST API พร้อมกัน
+cd ../backend
+npm install
+npm run build
+npm start
+```
+
+*   **🌐 All-in-One Service:** [http://localhost:3000](http://localhost:3000) (เสิร์ฟทั้งหน้าเว็บและ API เบ็ดเสร็จ)
+
+---
+
+### รูปแบบที่ 3: 🐳 Docker Compose (สำหรับรันผ่าน Container แบบเบ็ดเสร็จ)
 
 เหมาะสำหรับการรันแบบ Isolated Environment โดยไม่ต้องลง Node.js บนเครื่องโฮสต์:
 
