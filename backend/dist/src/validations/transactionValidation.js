@@ -6,7 +6,7 @@ const transactionSchema = zod_1.z.object({
     id: zod_1.z.coerce.string().min(1),
     date: zod_1.z.string(),
     category: zod_1.z.string().nullable().optional(),
-    category_id: zod_1.z.any().nullable().optional(),
+    category_id: zod_1.z.union([zod_1.z.string(), zod_1.z.number().transform(v => String(v))]).nullable().optional(),
     description: zod_1.z.string().nullable().optional().default(''),
     amount: zod_1.z.coerce.number(),
     allocation_type: zod_1.z.enum(['need', 'want', 'savings']).nullable().optional().default('want'),

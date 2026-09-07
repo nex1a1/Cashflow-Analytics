@@ -65,6 +65,42 @@ describe('analyticsHelpers utility', () => {
       expect(result.cashflowMap['2026-09'].totalExp).toBe(500);
       expect(result.cashflowMap['2026-09'].totalSav).toBe(10000);
     });
+
+    it('aggregates across multiple months and respects filterPeriod', () => {
+      const catMap = createCategoryMap(mockCategories);
+      const mockTransactions: TransactionDisplay[] = [
+        { id: '1', date: '2026-08-15', category: 'เงินเดือน', category_id: 'cat_salary', description: 'Aug Salary', amount: 45000, group_type: 'income' },
+        { id: '2', date: '2026-08-20', category: 'อาหาร', category_id: 'cat_food', description: 'Dinner', amount: 1500, group_type: 'expense' },
+        { id: '3', date: '2026-09-01', category: 'เงินเดือน', category_id: 'cat_salary', description: 'Sep Salary', amount: 50000, group_type: 'income' },
+      ];
+
+      // Filtered to 2026-09 only
+      const sepResult = generateCashflowMap(mockTransactions, '2026-09', catMap, mockGroups);
+      expect(sepResult.totals.income).toBe(50000);
+      expect(sepResult.totals.expense).toBe(0);
+      expect(sepResult.cashflowMap['2026-08']).toBeUndefined();
+      expect(sepResult.cashflowMap['2026-09']).toBeDefined();
+
+      // Filtered to ALL
+      const allResult = generateCashflowMap(mockTransactions, 'ALL', catMap, mockGroups);
+      expect(allResult.totals.income).toBe(95000);
+      expect(allResult.totals.expense).toBe(1500);
+      expect(allResult.cashflowMap['2026-08']).toBeDefined();
+      expect(allResult.cashflowMap['2026-09']).toBeDefined();
+    });
+
+    it('correctly categorizes fixed (need) vs variable (want) expenses', () => {
+      const catMap = createCategoryMap(mockCategories);
+      const mockTransactions: TransactionDisplay[] = [
+        { id: '1', date: '2026-09-05', category: 'อาหาร', category_id: 'cat_food', description: 'Grocery', amount: 1200, allocation_type: 'need' },
+        { id: '2', date: '2026-09-06', category: 'อาหาร', category_id: 'cat_food', description: 'Buffet', amount: 800, allocation_type: 'want' },
+      ];
+
+      const result = generateCashflowMap(mockTransactions, '2026-09', catMap, mockGroups);
+      expect(result.totals.fixed).toBe(1200);
+      expect(result.totals.variable).toBe(800);
+      expect(result.totals.expense).toBe(2000);
+    });
   });
 
   describe('calculateDayTypeCounts', () => {

@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import { initSchema } from './src/models/schema';
@@ -10,8 +11,28 @@ import db from './src/config/db';
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Security Middlewares (Helmet & Restricted CORS)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled to prevent blocking inline charts and dev scripts
+  crossOriginEmbedderPolicy: false,
+}));
+
+const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : defaultAllowedOrigins;
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow local CLI/curl, same-origin, or trusted frontend origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '5mb' }));
 
 // Initialize Database Schema

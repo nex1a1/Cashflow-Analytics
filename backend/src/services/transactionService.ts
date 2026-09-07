@@ -207,8 +207,16 @@ class TransactionService {
   }
 
   deleteByMonth(isoMonth: string) {
-    return db.prepare("UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE strftime('%Y-%m', date) = ?")
-      .run(isoMonth);
+    const [yearStr, monthStr] = isoMonth.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const nextYear = month === 12 ? year + 1 : year;
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const startDate = `${yearStr}-${monthStr.padStart(2, '0')}-01`;
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+    return db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ?')
+      .run(startDate, endDate);
   }
 
   deleteAll() {

@@ -3,6 +3,7 @@
 [![Vibe Coding](https://img.shields.io/badge/Vibe_Coding-100%25_AI_Built-ff69b4?style=for-the-badge&logo=probot)](https://github.com/)
 [![Platform](https://img.shields.io/badge/Platform-PC--First_/_Desktop-blue?style=for-the-badge&logo=windows)](https://github.com/)
 [![Tech Stack](https://img.shields.io/badge/Stack-React_TS_|_Node_TS_|_SQLite-3178C6?style=for-the-badge&logo=typescript)](https://github.com/)
+[![Tests](https://img.shields.io/badge/Tests-Vitest-6E9F18?style=for-the-badge&logo=vitest)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **Cashflow Shark** คือระบบบริหารจัดการการเงินส่วนบุคคลและบันทึกชั่วโมงการทำงานประสิทธิภาพสูง (High-Performance Personal/Small Business Financial Tracker & Work-Day Logger) ที่ถูกออกแบบด้วยปรัชญา **PC-First (Desktop-Only)** เพื่อรีดประสิทธิภาพการใช้งานหน้าจอระดับสูงสุด มอบหน้าต่างข้อมูลที่หนาแน่น เจาะลึก และแม่นยำตามมาตรฐานบัญชีระดับมืออาชีพ พร้อมดีไซน์พรีเมียมสไตล์ **Scuderia Ferrari Luxury Editorial** ที่เฉียบคมและดุดัน
@@ -58,6 +59,13 @@
 *   **On-Demand Terminal Hotkey & API:** กดปุ่ม `[B]` บนหน้าต่าง Terminal เพื่อสั่งสร้างไฟล์ Backup ด่วนได้ทันที หรือเรียกสั่งการผ่าน REST API Endpoint `/api/backup`
 *   **Real-time DB Mutation Logger:** ระบบดักจับคำสั่ง SQL และแสดง Log การเปลี่ยนแปลงข้อมูล (เพิ่ม/แก้ไข/ลบ) ในรูปแบบไอคอนภาษาไทยที่อ่านเข้าใจง่ายทันทีบน Terminal
 
+### 🛡️ 8. Security & Resilience
+*   **Helmet Security Headers:** เพิ่ม HTTP Security Headers อัตโนมัติผ่าน `helmet v8.3.0` ป้องกันการโจมตีพื้นฐาน (XSS, Clickjacking, MIME sniffing)
+*   **CORS Origin Whitelist:** จำกัดการเข้าถึง API เฉพาะ Origins ที่อนุญาต (`localhost:5173`, `127.0.0.1:5173`, `localhost:3000`) พร้อม override ผ่าน `ALLOWED_ORIGINS` env
+*   **Graceful Shutdown:** ระบบปิดตัวอย่างปลอดภัย — ปิด HTTP Server, ระบาย Requests, ปิดการเชื่อมต่อ SQLite ก่อน Exit พร้อม 5 วินาที Force-exit timeout
+*   **SQLite STRICT Mode:** ทุกตารางใช้ `STRICT` keyword บังคับ type enforcement ระดับ storage engine พร้อม auto-migration สำหรับตารางเดิม
+*   **Zod End-to-End Validation:** ทั้ง Mutation payloads และ Query parameters ผ่านการตรวจสอบด้วย Zod schemas ก่อนถึง service layer
+
 ---
 
 ## 🛠️ Tech Stack & Constraints
@@ -70,7 +78,9 @@
 | **Form & Validation** | `react-hook-form v7.75.0`, `zod v4.4.3`, `@hookform/resolvers v5.2.2` | Client-side strict validation with Satang conversion |
 | **Backend Runtime** | `Node.js v20 (LTS)` | Fast asynchronous runtime |
 | **API Framework** | `Express.js v4.18.2`, `TypeScript v5.3.3`, `tsx v4.7.1` | RESTful API, typed controllers and services |
-| **Database Engine** | `better-sqlite3 v12.9.0` (SQLite C++ bindings) | Ultra-fast synchronous SQLite access, FTS5 full-text search |
+| **Database Engine** | `better-sqlite3 ^9.4.3` (SQLite C++ bindings) | Ultra-fast synchronous SQLite, FTS5 search, STRICT mode |
+| **Security** | `helmet v8.3.0`, `cors v2.8.5` | HTTP security headers, origin-restricted CORS whitelist |
+| **Testing** | `Vitest v4.1.11` (Backend), `Vitest v2.1.9` (Frontend) | Unit tests for financial math, formatters, CRUD, and FTS |
 
 ---
 
@@ -78,24 +88,29 @@
 
 สถาปัตยกรรมข้อมูลถูกออกแบบโดยยึดหลัก **Satang-First Mandate** คือการคำนวณและบันทึกหน่วยเงินทั้งหมดในฐานข้อมูลเป็นจำนวนเต็ม **สตางค์ (Satang - Integer)** เพื่อหลีกเลี่ยงปัญหาความคลาดเคลื่อนทางคณิตศาสตร์จากจุดทศนิยมลอยตัว (Floating-point errors) และจะถูกแปลงเป็นหน่วย **บาท (Baht)** เฉพาะตอนแสดงผลบน UI เท่านั้น
 
+ทุกตารางใช้ SQLite **STRICT** mode เพื่อบังคับชนิดข้อมูลระดับ storage engine ตารางเดิมที่ยังไม่เป็น STRICT จะถูก migrate อัตโนมัติเมื่อเริ่มรันเซิร์ฟเวอร์ (Transactional, Idempotent, Zero-data-loss)
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SQLite Database Engine                   │
-│   PRAGMA journal_mode = DELETE  │  PRAGMA foreign_keys = ON │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-       ┌───────────────────────┼───────────────────────┐
-       ▼                       ▼                       ▼
-┌──────────────┐       ┌──────────────┐       ┌─────────────────┐
-│ cashflow_    │ 1   * │ categories   │ 1   * │ transactions    │
-│ groups       ├───────┤              ├───────┤ (Amount Satang) │
-└──────────────┘       └──────────────┘       └────────┬────────┘
-                                                       │ Triggers
-                                                       ▼
-                                              ┌─────────────────┐
-                                              │transactions_fts │
-                                              │ (FTS5 Search)   │
-                                              └─────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    SQLite Database Engine (STRICT Mode)              │
+│  PRAGMA journal_mode = DELETE  │  PRAGMA foreign_keys = ON          │
+│  PRAGMA synchronous = FULL     │  PRAGMA busy_timeout = 5000        │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+       ┌────────────────────────┼────────────────────────┐
+       ▼                        ▼                        ▼
+┌──────────────┐       ┌──────────────┐         ┌─────────────────┐
+│ cashflow_    │ 1   * │ categories   │ 1     * │ transactions    │
+│ groups       ├───────┤              ├─────────┤ (Amount Satang) │
+│   STRICT     │       │   STRICT     │         │    STRICT       │
+└──────────────┘       └──────────────┘         └────────┬────────┘
+                                                         │ Triggers
+       ┌─────────────────────────────────────────────────┤
+       ▼                        ▼                        ▼
+┌──────────────┐       ┌──────────────┐         ┌─────────────────┐
+│ day_types    │ 1   * │calendar_days │         │transactions_fts │
+│   STRICT     ├───────┤   STRICT     │         │ (FTS5 Search)   │
+└──────────────┘       └──────────────┘         └─────────────────┘
 ```
 
 ### 📊 Tables Structure
@@ -185,6 +200,43 @@ docker-compose down
 *   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173)
 *   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
 
+---
+
+## 🧪 Testing (การทดสอบ)
+
+ระบบทดสอบใช้ **Vitest** ครอบคลุม Core Domain Logic ทั้ง Frontend และ Backend:
+
+```bash
+# รันเทสต์ Backend (CRUD, FTS Search, Satang Math, STRICT Mode)
+cd backend
+npm test
+
+# รันเทสต์ Frontend (Formatters, Analytics Helpers, Thai Date Utils)
+cd frontend
+npm test
+```
+
+### Test Coverage:
+| ไฟล์ | ขอบเขต |
+| :--- | :--- |
+| `transactionService.test.ts` | Upsert, Delete, DeleteByMonth (index-friendly range), FTS5 Search, STRICT schema verification |
+| `formatters.test.ts` | Satang↔Baht conversion, `formatMoney`, Thai months/days, `hexToRgb`, Period-over-Period delta |
+| `analyticsHelpers.test.ts` | `createCategoryMap`, `extractYearMonth`, `generateCashflowMap` (income/expense/savings aggregation), `calculateDayTypeCounts` |
+
+---
+
+## 🔒 Security (ความปลอดภัย)
+
+| Layer | Protection | Detail |
+| :--- | :--- | :--- |
+| **HTTP Headers** | `helmet v8.3.0` | ป้องกัน XSS, Clickjacking, MIME sniffing (CSP disabled สำหรับ inline charts) |
+| **CORS** | Origin Whitelist | จำกัดเฉพาะ `localhost:5173`, `127.0.0.1:5173`, `localhost:3000` + `ALLOWED_ORIGINS` env override |
+| **Input Validation** | Zod End-to-End | ทั้ง mutation payloads และ query parameters ผ่าน strict schema validation |
+| **SQL Injection** | Parameterized Queries | ทุก query ใช้ `db.prepare()` parameterized statements ไม่มี string concatenation |
+| **Data Integrity** | SQLite STRICT | บังคับ type enforcement ระดับ storage engine ป้องกัน silent type coercion |
+| **Shutdown** | Graceful | ปิด HTTP → ระบาย Requests → ปิด SQLite → Exit พร้อม 5s timeout |
+
+---
 
 ## 📝 License
 
@@ -193,4 +245,3 @@ docker-compose down
 ---
 
 > 💻 สร้างสรรค์ด้วยจินตนาการ คีย์บอร์ด และพลังของ AI ปัญญาประดิษฐ์ 100% โดย **Cashflow Shark & The AI Dream Team (Antigravity, Gemini & Claude)**
-

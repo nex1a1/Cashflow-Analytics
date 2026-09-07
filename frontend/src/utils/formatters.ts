@@ -14,6 +14,26 @@ export const formatMoney = (amount: number | string): string =>
     maximumFractionDigits: 2,
   });
 
+/**
+ * Converts integer Satang (cents) to decimal Baht.
+ * e.g., 50000 satang -> 500 baht
+ */
+export const satangToBaht = (satang: number | string): number => {
+  const n = Number(satang);
+  if (Number.isNaN(n)) return 0;
+  return n / 100;
+};
+
+/**
+ * Converts decimal Baht to integer Satang (cents) with exact rounding.
+ * e.g., 500.50 baht -> 50050 satang
+ */
+export const bahtToSatang = (baht: number | string): number => {
+  const n = Number(baht);
+  if (Number.isNaN(n)) return 0;
+  return Math.round(n * 100);
+};
+
 export const getThaiMonth = (yearMonth: string): string => {
   if (!yearMonth?.includes('-')) return yearMonth;
   const [y, m] = yearMonth.split('-');

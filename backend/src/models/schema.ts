@@ -7,17 +7,277 @@ interface DayTypeInput {
   color: string;
 }
 
+// Recreates views after schema migrations
+const recreateViews = (): void => {
+  try {
+    db.exec(`
+      CREATE VIEW IF NOT EXISTS v_monthly_summary AS
+      SELECT 
+        strftime('%Y-%m', t.date) as month,
+        SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income_satang,
+        SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense_satang,
+        SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings_satang
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      WHERE t.is_deleted = 0
+      GROUP BY month;
+
+      CREATE VIEW IF NOT EXISTS v_daily_burn AS
+      SELECT 
+        t.date,
+        strftime('%Y-%m', t.date) as month,
+        SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as daily_expense_satang,
+        cd.day_type_id,
+        dt.name as day_type_name,
+        dt.label as day_type_label
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      LEFT JOIN calendar_days cd ON t.date = cd.date
+      LEFT JOIN day_types dt ON cd.day_type_id = dt.id
+      WHERE t.is_deleted = 0
+      GROUP BY t.date;
+
+      CREATE VIEW IF NOT EXISTS v_category_monthly AS
+      SELECT 
+        strftime('%Y-%m', t.date) as month,
+        c.id as category_id,
+        c.name as category_name,
+        c.icon as category_icon,
+        c.color as category_color,
+        cg.id as group_id,
+        cg.type as group_type,
+        SUM(t.amount) as amount_satang
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      WHERE t.is_deleted = 0
+      GROUP BY month, c.id;
+    `);
+  } catch (e: any) {
+    console.warn('⚠️ Error creating views:', e.message);
+  }
+};
+
+// Recreates indexes and triggers after schema migrations
+const recreateTriggersAndIndexes = (): void => {
+  try {
+    db.exec(`
+      CREATE TRIGGER IF NOT EXISTS trg_transactions_updated_at 
+      AFTER UPDATE ON transactions
+      FOR EACH ROW
+      BEGIN
+        UPDATE transactions SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS trg_transactions_ai AFTER INSERT ON transactions BEGIN
+        INSERT INTO transactions_fts(rowid, id, description) VALUES (new.rowid, new.id, new.description);
+      END;
+      CREATE TRIGGER IF NOT EXISTS trg_transactions_ad AFTER DELETE ON transactions BEGIN
+        INSERT INTO transactions_fts(transactions_fts, rowid, id, description) VALUES('delete', old.rowid, old.id, old.description);
+      END;
+      CREATE TRIGGER IF NOT EXISTS trg_transactions_au AFTER UPDATE ON transactions BEGIN
+        INSERT INTO transactions_fts(transactions_fts, rowid, id, description) VALUES('delete', old.rowid, old.id, old.description);
+        INSERT INTO transactions_fts(rowid, id, description) VALUES (new.rowid, new.id, new.description);
+      END;
+
+      CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+      CREATE INDEX IF NOT EXISTS idx_transactions_is_deleted ON transactions(is_deleted);
+      CREATE INDEX IF NOT EXISTS idx_transactions_category_deleted ON transactions(category_id, is_deleted);
+      CREATE INDEX IF NOT EXISTS idx_calendar_days_day_type ON calendar_days(day_type_id);
+    `);
+  } catch (e: any) {
+    console.warn('⚠️ Error creating triggers/indexes:', e.message);
+  }
+};
+
+/**
+ * Migrates existing tables to SQLite STRICT mode without data loss.
+ */
+const migrateTablesToStrict = (): void => {
+  const tables = ['settings', 'transactions', 'calendar_days', 'categories', 'day_types', 'cashflow_groups'];
+  const tablesToMigrate: string[] = [];
+
+  for (const table of tables) {
+    const row = db.prepare("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = ?").get(table) as { sql: string } | undefined;
+    if (row && row.sql && !/\bstrict\b/i.test(row.sql)) {
+      tablesToMigrate.push(table);
+    }
+  }
+
+  if (tablesToMigrate.length === 0) {
+    return;
+  }
+
+  console.log(`🛡️ เริ่มต้นกระบวนการยกระดับความปลอดภัย SQLite STRICT Mode (${tablesToMigrate.join(', ')})...`);
+
+  db.pragma('foreign_keys = OFF');
+
+  const migration = db.transaction(() => {
+    // 0. Drop dependent views and virtual table before altering parent tables
+    db.exec(`
+      DROP VIEW IF EXISTS v_monthly_summary;
+      DROP VIEW IF EXISTS v_daily_burn;
+      DROP VIEW IF EXISTS v_category_monthly;
+      DROP TRIGGER IF EXISTS trg_transactions_updated_at;
+      DROP TRIGGER IF EXISTS trg_transactions_ai;
+      DROP TRIGGER IF EXISTS trg_transactions_ad;
+      DROP TRIGGER IF EXISTS trg_transactions_au;
+      DROP TABLE IF EXISTS transactions_fts;
+    `);
+
+    // 1. settings
+    if (tablesToMigrate.includes('settings')) {
+      db.exec(`
+        CREATE TABLE settings_strict (
+          key   TEXT PRIMARY KEY,
+          value TEXT
+        ) STRICT;
+        INSERT INTO settings_strict (key, value) SELECT key, value FROM settings;
+        DROP TABLE settings;
+        ALTER TABLE settings_strict RENAME TO settings;
+      `);
+    }
+
+    // 2. transactions
+    if (tablesToMigrate.includes('transactions')) {
+      db.exec(`
+        CREATE TABLE transactions_strict (
+          id TEXT PRIMARY KEY,
+          date TEXT NOT NULL,
+          description TEXT,
+          amount INTEGER NOT NULL CHECK(amount >= 0),
+          category_id TEXT NOT NULL,
+          allocation_type TEXT CHECK(allocation_type IS NULL OR allocation_type IN ('need', 'want', 'savings')),
+          is_deleted INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (category_id) REFERENCES categories(id)
+        ) STRICT;
+        INSERT INTO transactions_strict (id, date, description, amount, category_id, allocation_type, is_deleted, created_at, updated_at)
+        SELECT 
+          id, 
+          date, 
+          description, 
+          CAST(amount AS INTEGER), 
+          category_id, 
+          allocation_type, 
+          COALESCE(is_deleted, 0), 
+          COALESCE(created_at, CURRENT_TIMESTAMP), 
+          COALESCE(updated_at, CURRENT_TIMESTAMP)
+        FROM transactions;
+        DROP TABLE transactions;
+        ALTER TABLE transactions_strict RENAME TO transactions;
+      `);
+    }
+
+    // 3. calendar_days
+    if (tablesToMigrate.includes('calendar_days')) {
+      db.exec(`
+        CREATE TABLE calendar_days_strict (
+          date TEXT PRIMARY KEY,
+          day_type_id TEXT NOT NULL,
+          note TEXT,
+          FOREIGN KEY (day_type_id) REFERENCES day_types(id)
+        ) STRICT;
+        INSERT INTO calendar_days_strict (date, day_type_id, note) 
+        SELECT date, day_type_id, note FROM calendar_days;
+        DROP TABLE calendar_days;
+        ALTER TABLE calendar_days_strict RENAME TO calendar_days;
+      `);
+    }
+
+    // 4. categories
+    if (tablesToMigrate.includes('categories')) {
+      db.exec(`
+        CREATE TABLE categories_strict (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          icon TEXT,
+          color TEXT,
+          order_index INTEGER DEFAULT 0,
+          cashflow_group_id TEXT NOT NULL,
+          FOREIGN KEY (cashflow_group_id) REFERENCES cashflow_groups(id)
+        ) STRICT;
+        INSERT INTO categories_strict (id, name, icon, color, order_index, cashflow_group_id) 
+        SELECT id, name, icon, color, CAST(COALESCE(order_index, 0) AS INTEGER), cashflow_group_id FROM categories;
+        DROP TABLE categories;
+        ALTER TABLE categories_strict RENAME TO categories;
+      `);
+    }
+
+    // 5. day_types
+    if (tablesToMigrate.includes('day_types')) {
+      db.exec(`
+        CREATE TABLE day_types_strict (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          label TEXT NOT NULL,
+          color TEXT,
+          order_index INTEGER DEFAULT 0
+        ) STRICT;
+        INSERT INTO day_types_strict (id, name, label, color, order_index) 
+        SELECT id, name, label, color, CAST(COALESCE(order_index, 0) AS INTEGER) FROM day_types;
+        DROP TABLE day_types;
+        ALTER TABLE day_types_strict RENAME TO day_types;
+      `);
+    }
+
+    // 6. cashflow_groups
+    if (tablesToMigrate.includes('cashflow_groups')) {
+      db.exec(`
+        CREATE TABLE cashflow_groups_strict (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'savings')),
+          allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
+          order_index INTEGER DEFAULT 0,
+          color TEXT,
+          icon TEXT,
+          highlight_bg INTEGER DEFAULT 0
+        ) STRICT;
+        INSERT INTO cashflow_groups_strict (id, name, type, allocation_type, order_index, color, icon, highlight_bg) 
+        SELECT id, name, type, COALESCE(allocation_type, 'want'), CAST(COALESCE(order_index, 0) AS INTEGER), color, icon, CAST(COALESCE(highlight_bg, 0) AS INTEGER) FROM cashflow_groups;
+        DROP TABLE cashflow_groups;
+        ALTER TABLE cashflow_groups_strict RENAME TO cashflow_groups;
+      `);
+    }
+
+    // Recreate FTS Virtual Table
+    db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS transactions_fts USING fts5(
+        id UNINDEXED,
+        description,
+        content='transactions'
+      );
+      INSERT INTO transactions_fts(rowid, id, description) 
+      SELECT rowid, id, description FROM transactions WHERE is_deleted = 0;
+    `);
+  });
+
+  migration();
+
+  db.pragma('foreign_keys = ON');
+  recreateViews();
+  recreateTriggersAndIndexes();
+  console.log('🛡️ ทุกตารางถูกยกระดับเป็น SQLite STRICT Mode สำเร็จ 100% (ไร้การสูญหายของข้อมูล)');
+};
+
 export const initSchema = (): void => {
   // เปิด Foreign Key Support
   db.pragma('foreign_keys = ON');
 
-  // สร้างตาราง settings ก่อนเพื่อตรวจสอบสถานะ
+  // สร้างตาราง settings ก่อนเพื่อตรวจสอบสถานะ (STRICT)
   db.exec(`
     CREATE TABLE IF NOT EXISTS settings (
       key   TEXT PRIMARY KEY,
       value TEXT
-    );
+    ) STRICT;
   `);
+
+  // ตรวจสอบและยกระดับโครงสร้างตารางเดิมให้เป็น STRICT Mode หากยังไม่ได้เป็น
+  migrateTablesToStrict();
 
   // ตรวจสอบว่าระบบเคยบันทึกสถานะตรวจสอบโครงสร้างและรัน Migration ไปแล้วหรือยัง
   let schemaVerified = false;
@@ -35,7 +295,7 @@ export const initSchema = (): void => {
     return;
   }
 
-  // 1. สร้างตารางพื้นฐานทั้งหมด (กรณีเริ่มใช้งานครั้งแรก)
+  // 1. สร้างตารางพื้นฐานทั้งหมด (กรณีเริ่มใช้งานครั้งแรก) — ทั้งหมดเป็น STRICT
   db.exec(`
     CREATE TABLE IF NOT EXISTS cashflow_groups (
       id TEXT PRIMARY KEY,
@@ -46,7 +306,7 @@ export const initSchema = (): void => {
       color TEXT,
       icon TEXT,
       highlight_bg INTEGER DEFAULT 0
-    );
+    ) STRICT;
 
     CREATE TABLE IF NOT EXISTS categories (
       id TEXT PRIMARY KEY,
@@ -56,7 +316,7 @@ export const initSchema = (): void => {
       order_index INTEGER DEFAULT 0,
       cashflow_group_id TEXT NOT NULL,
       FOREIGN KEY (cashflow_group_id) REFERENCES cashflow_groups(id)
-    );
+    ) STRICT;
 
     CREATE TABLE IF NOT EXISTS day_types (
       id TEXT PRIMARY KEY,
@@ -64,14 +324,14 @@ export const initSchema = (): void => {
       label TEXT NOT NULL,
       color TEXT,
       order_index INTEGER DEFAULT 0
-    );
+    ) STRICT;
 
     CREATE TABLE IF NOT EXISTS calendar_days (
       date TEXT PRIMARY KEY,
       day_type_id TEXT NOT NULL,
       note TEXT,
       FOREIGN KEY (day_type_id) REFERENCES day_types(id)
-    );
+    ) STRICT;
 
     CREATE TABLE IF NOT EXISTS transactions (
       id TEXT PRIMARY KEY,
@@ -79,12 +339,12 @@ export const initSchema = (): void => {
       description TEXT,
       amount INTEGER NOT NULL CHECK(amount >= 0),
       category_id TEXT NOT NULL,
-      allocation_type TEXT DEFAULT 'want' CHECK(allocation_type IN ('need', 'want', 'savings')),
+      allocation_type TEXT CHECK(allocation_type IS NULL OR allocation_type IN ('need', 'want', 'savings')),
       is_deleted INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id)
-    );
+    ) STRICT;
 
     -- 1.1 Virtual Table สำหรับค้นหารวดเร็ว (Shark Search)
     CREATE VIRTUAL TABLE IF NOT EXISTS transactions_fts USING fts5(
@@ -206,7 +466,7 @@ const verifyTransactionColumns = (): void => {
   }
   if (!txCols.has('category_id')) {
     try {
-      db.exec("ALTER TABLE transactions ADD COLUMN category_id INTEGER DEFAULT 1");
+      db.exec("ALTER TABLE transactions ADD COLUMN category_id TEXT DEFAULT '1'");
       console.log('🔹 เพิ่มคอลัมน์ category_id ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
     } catch (_e: unknown) {
       // Ignored: category_id column may already exist in certain SQLite environments

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { 
   formatMoney, 
+  satangToBaht,
+  bahtToSatang,
   getThaiMonth, 
   getFilterLabel, 
   hexToRgb, 
@@ -9,6 +11,35 @@ import {
 } from '../formatters';
 
 describe('formatters utility', () => {
+  describe('satangToBaht & bahtToSatang (Satang-First Mandate)', () => {
+    it('correctly converts Satang to Baht', () => {
+      expect(satangToBaht(100)).toBe(1);
+      expect(satangToBaht(10050)).toBe(100.5);
+      expect(satangToBaht(5000000)).toBe(50000);
+      expect(satangToBaht(0)).toBe(0);
+      expect(satangToBaht('2500')).toBe(25);
+    });
+
+    it('handles invalid inputs for satangToBaht gracefully', () => {
+      expect(satangToBaht('invalid')).toBe(0);
+      expect(satangToBaht(Number.NaN)).toBe(0);
+    });
+
+    it('correctly converts Baht to integer Satang with exact rounding', () => {
+      expect(bahtToSatang(1)).toBe(100);
+      expect(bahtToSatang(100.5)).toBe(10050);
+      expect(bahtToSatang(50000)).toBe(5000000);
+      expect(bahtToSatang(19.99)).toBe(1999);
+      expect(bahtToSatang('50.25')).toBe(5025);
+      expect(bahtToSatang(0)).toBe(0);
+    });
+
+    it('handles invalid inputs for bahtToSatang gracefully', () => {
+      expect(bahtToSatang('invalid')).toBe(0);
+      expect(bahtToSatang(Number.NaN)).toBe(0);
+    });
+  });
+
   describe('formatMoney', () => {
     it('formats numbers with 2 decimals and commas', () => {
       expect(formatMoney(1000)).toBe('1,000.00');

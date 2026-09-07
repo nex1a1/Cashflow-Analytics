@@ -7,9 +7,10 @@ exports.predictCategories = exports.getFrequentItems = exports.searchTransaction
 const transactionService_1 = __importDefault(require("../services/transactionService"));
 const categoryService_1 = __importDefault(require("../services/categoryService"));
 const transactionValidation_1 = require("../validations/transactionValidation");
+const queryValidation_1 = require("../validations/queryValidation");
 const getAllTransactions = (req, res, next) => {
-    const { startDate, endDate } = req.query;
     try {
+        const { startDate, endDate } = queryValidation_1.dateRangeQuerySchema.parse(req.query);
         const rows = transactionService_1.default.getAll(startDate, endDate);
         res.json(rows.map(row => ({
             id: row.id,
@@ -54,8 +55,8 @@ const deleteTransaction = (req, res, next) => {
 };
 exports.deleteTransaction = deleteTransaction;
 const deleteMonth = (req, res, next) => {
-    const { isoMonth } = req.params; // Expecting YYYY-MM
     try {
+        const { isoMonth } = queryValidation_1.monthParamSchema.parse(req.params);
         transactionService_1.default.deleteByMonth(isoMonth);
         res.json({ success: true, message: `Deleted data for ${isoMonth}` });
     }
@@ -88,8 +89,8 @@ const getAvailablePeriods = (req, res, next) => {
 };
 exports.getAvailablePeriods = getAvailablePeriods;
 const searchTransactions = (req, res, next) => {
-    const { q } = req.query;
     try {
+        const { q } = queryValidation_1.searchQuerySchema.parse(req.query);
         const rows = transactionService_1.default.search(q || '');
         res.json(rows.map(row => ({
             id: row.id,

@@ -5,10 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardAnalytics = void 0;
 const analyticsService_1 = __importDefault(require("../services/analyticsService"));
+const queryValidation_1 = require("../validations/queryValidation");
 const getDashboardAnalytics = (req, res, next) => {
-    const { startDate, endDate, excludeFuture } = req.query;
-    const isExcludeFuture = excludeFuture === 'true';
     try {
+        const { startDate, endDate, excludeFuture } = queryValidation_1.analyticsQuerySchema.parse(req.query);
+        const isExcludeFuture = excludeFuture === 'true';
         const summary = analyticsService_1.default.getSummary(startDate, endDate, isExcludeFuture);
         const categories = analyticsService_1.default.getCategoryBreakdown(startDate, endDate, isExcludeFuture);
         const monthly = analyticsService_1.default.getMonthlyAggregation(startDate, endDate, isExcludeFuture);
