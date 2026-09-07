@@ -6,6 +6,7 @@ import useFilters from '../hooks/useFilters';
 import useAnalytics from '../hooks/useAnalytics';
 import { useAppData } from './AppDataContext';
 import { useAppUI } from './AppUIContext';
+import { STORAGE_KEYS } from '../constants';
 
 const AppFilterContext = createContext<AppFilterContextValue | undefined>(undefined);
 
@@ -36,7 +37,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
 
   // Exclude future toggle
   const [excludeFuture, setExcludeFuture] = useState<boolean>(() => {
-    return localStorage.getItem('excludeFuture') !== 'false';
+    return localStorage.getItem(STORAGE_KEYS.EXCLUDE_FUTURE) !== 'false';
   });
 
   // Filters Hook
@@ -95,7 +96,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   const handleToggleExcludeFuture = useCallback(() => {
     setExcludeFuture(prev => {
       const newVal = !prev;
-      localStorage.setItem('excludeFuture', String(newVal));
+      localStorage.setItem(STORAGE_KEYS.EXCLUDE_FUTURE, String(newVal));
       if (newVal) {
         const d = new Date();
         const curMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;

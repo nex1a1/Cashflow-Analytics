@@ -188,6 +188,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       triggerToast('อัปเดตกลุ่มสำเร็จ', 'success');
     } catch (err: any) {
       triggerToast('ไม่สามารถอัปเดตกลุ่มได้: ' + err.message, 'error');
+      throw err;
     }
   }, [loadGroups, triggerToast]);
 

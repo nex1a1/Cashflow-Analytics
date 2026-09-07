@@ -72,8 +72,11 @@ export default function useCategories(
 
       try {
         await categoryService.save(toSave);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to save category:', err);
+        // Rollback optimistic update
+        setCategories(prev => prev.map(c => c.id === catId ? cat : c));
+        showToast('ไม่สามารถบันทึกหมวดหมู่ได้: ' + (err?.message || 'ข้อผิดพลาด'), 'error');
       }
     }
   }, []);

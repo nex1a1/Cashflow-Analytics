@@ -50,14 +50,22 @@ const SettingsView = memo(function SettingsView({
     }, 0);
   }, [handleAddCategory, categories]);
 
-  const handleChangeCashflowGroup = useCallback((id: string, field: string, value: any) => {
-    // 1. Optimistic Update
+  const handleChangeCashflowGroup = useCallback(async (id: string, field: string, value: any) => {
+    // 1. Snapshot previous state for rollback
+    const previousGroups = [...cashflowGroups];
+    
+    // 2. Optimistic Update
     setCashflowGroups(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
     
-    // 2. Persistent Save
+    // 3. Persistent Save
     const group = cashflowGroups.find(g => g.id === id);
     if (group) {
-      handleUpdateCashflowGroup({ ...group, [field]: value });
+      try {
+        await handleUpdateCashflowGroup({ ...group, [field]: value });
+      } catch {
+        // Rollback state if persistent save failed
+        setCashflowGroups(previousGroups);
+      }
     }
   }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 

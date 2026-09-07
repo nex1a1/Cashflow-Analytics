@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { AppUIContextValue, QuickAddFormData } from '../types';
+import { STORAGE_KEYS } from '../constants';
 
 const AppUIContext = createContext<AppUIContextValue | undefined>(undefined);
 
@@ -9,7 +10,7 @@ export interface AppUIProviderProps {
 
 export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   // Navigation
-  const [activeTab, setActiveTab] = useState<string>(() => localStorage.getItem('activeTab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB) || 'dashboard');
 
   // Modals
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -32,7 +33,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
 
   // Sync activeTab to localStorage
   useEffect(() => {
-    localStorage.setItem('activeTab', activeTab);
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, activeTab);
   }, [activeTab]);
 
   const handleOpenAddModal = useCallback((dateStr?: string, type: string = 'expense') => {

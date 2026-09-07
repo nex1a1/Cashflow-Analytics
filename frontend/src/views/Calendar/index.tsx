@@ -7,6 +7,7 @@ import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock from './components/LegendAllocationBlock';
 import PeriodOverview from './components/PeriodOverview/index';
 import { CashflowGroup, Category, DayType, TransactionDisplay } from '../../types';
+import { STORAGE_KEYS } from '../../constants';
 
 function resolveAllocationType(t: any, catObj: any, cashflowGroups: CashflowGroup[]) {
   if (t.allocation_type) return t.allocation_type;
@@ -88,17 +89,17 @@ function CalendarView({
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
-  const [legendSortMode, setLegendSortMode] = useState<'structure' | 'amount'>(() => (localStorage.getItem('shark_calendar_legend_sort') as 'structure' | 'amount') || 'structure');
-  const [legendLayoutMode, setLegendLayoutMode] = useState<'compact' | 'grouped'>(() => (localStorage.getItem('shark_calendar_legend_layout') as 'compact' | 'grouped') || 'compact');
+  const [legendSortMode, setLegendSortMode] = useState<'structure' | 'amount'>(() => (localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_SORT) as 'structure' | 'amount') || 'structure');
+  const [legendLayoutMode, setLegendLayoutMode] = useState<'compact' | 'grouped'>(() => (localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT) as 'compact' | 'grouped') || 'compact');
 
   const handleSetSortMode = (mode: 'structure' | 'amount') => {
     setLegendSortMode(mode);
-    localStorage.setItem('shark_calendar_legend_sort', mode);
+    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_SORT, mode);
   };
 
   const handleSetLayoutMode = (mode: 'compact' | 'grouped') => {
     setLegendLayoutMode(mode);
-    localStorage.setItem('shark_calendar_legend_layout', mode);
+    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, mode);
   };
 
   const toggleCategory = (catId: string) => {
