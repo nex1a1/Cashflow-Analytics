@@ -1,12 +1,13 @@
 // src/utils/analyticsHelpers.ts
 import { isDateInFilter, parseDateStrToObj } from './dateHelpers';
 import { getThaiMonth, hexToRgb, formatMoney } from './formatters';
+import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
 
 /**
  * Creates a map of category names to category objects for fast lookup.
  */
-export const createCategoryMap = (categories: any[]): Record<string, any> => 
-  categories.reduce((acc: any, cat: any) => { 
+export const createCategoryMap = (categories: Category[]): Record<string, Category> => 
+  categories.reduce((acc: Record<string, Category>, cat: Category) => { 
     acc[cat.name] = cat; 
     acc[cat.id] = cat; 
     return acc; 
@@ -78,12 +79,30 @@ const accumulateExpenseTotals = (
   else totals.variable += amt;
 };
 
-const resolveCashflowContext = (item: any, catMap: Record<string, any>, cashflowGroups: any[]) => {
-  const catObj = catMap[item.category] || { type: 'expense', cashflowGroup: null, allocation_type: 'want' };
+interface CashflowContextResult {
+  isInc: boolean;
+  isSav: boolean;
+  cGroup: string;
+  isFixed: boolean;
+  groupName: string;
+}
+
+const resolveCashflowContext = (
+  item: TransactionDisplay,
+  catMap: Record<string, Category>,
+  cashflowGroups: CashflowGroup[]
+): CashflowContextResult => {
+  const catObj = (item.category_id ? catMap[item.category_id] : undefined) || catMap[item.category] || {
+    id: 'unknown',
+    name: item.category || 'unknown',
+    type: 'expense' as const,
+    cashflowGroup: null,
+    allocation_type: 'want' as const
+  };
   const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
-  const groupObj = cashflowGroups?.find(g => g.id === cGroupId) || {};
-  const groupType = groupObj.type || catObj.type || 'expense';
-  const groupName = (groupObj.name || '').toLowerCase();
+  const groupObj = cashflowGroups?.find(g => g.id === cGroupId);
+  const groupType = groupObj?.type || catObj.type || 'expense';
+  const groupName = (groupObj?.name || '').toLowerCase();
 
   const isInc = groupType === 'income';
   const isSav = groupType === 'savings';
@@ -98,20 +117,29 @@ const resolveCashflowContext = (item: any, catMap: Record<string, any>, cashflow
     else if (isSav) cGroup = fallbackSavId;
     else cGroup = fallbackExpId;
   }
-  const isFixed = (item.allocation_type || groupObj.allocation_type || catObj.allocation_type) === 'need';
+  const isFixed = (item.allocation_type || groupObj?.allocation_type || catObj.allocation_type) === 'need';
 
   return { isInc, isSav, cGroup, isFixed, groupName };
 };
+
+export interface CashflowMapResult {
+  cashflowMap: Record<string, CashflowMonthData>;
+  dayIncomeMap: Record<string, number>;
+  dayExpenseMap: Record<string, number>;
+  uniqueMonthsSet: Set<string>;
+  totals: CashflowTotals;
+  filteredTx: TransactionDisplay[];
+}
 
 /**
  * Groups and aggregates transaction data into a cashflow map by month.
  */
 export const generateCashflowMap = (
-  transactions: any[],
+  transactions: TransactionDisplay[],
   filterPeriod: string,
-  catMap: Record<string, any>,
-  cashflowGroups: any[]
-) => {
+  catMap: Record<string, Category>,
+  cashflowGroups: CashflowGroup[]
+): CashflowMapResult => {
   const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
   const uniqueMonthsSet = new Set<string>();
   const cashflowMap: Record<string, CashflowMonthData> = {};
@@ -138,7 +166,7 @@ export const generateCashflowMap = (
     const ym = extractYearMonth(item.date);
     if (!ym) return;
 
-    const amt = Number.parseFloat(item.amount) || 0;
+    const amt = typeof item.amount === 'number' ? item.amount : (Number.parseFloat(String(item.amount)) || 0);
     const { isInc, isSav, cGroup, isFixed, groupName } = resolveCashflowContext(item, catMap, cashflowGroups);
 
     uniqueMonthsSet.add(ym);
@@ -169,9 +197,22 @@ export const generateCashflowMap = (
   return { cashflowMap, dayIncomeMap, dayExpenseMap, uniqueMonthsSet, totals, filteredTx };
 };
 
-const accumulateCategoryItem = (item: any, catMap: Record<string, any>, stats: any) => {
+export interface CategoryStatsCollector {
+  catMapData: Record<string, number>;
+  dailyAllMap: Record<string, number>;
+  monthlyAllMap: Record<string, number>;
+  dailyCatMap: Record<string, Record<string, number>>;
+  monthlyCatMap: Record<string, Record<string, number>>;
+  chartTotal: number;
+}
+
+const accumulateCategoryItem = (
+  item: TransactionDisplay,
+  catMap: Record<string, Category>,
+  stats: CategoryStatsCollector
+) => {
   if (!item.date) return;
-  const amt = Number.parseFloat(item.amount) || 0;
+  const amt = typeof item.amount === 'number' ? item.amount : (Number.parseFloat(String(item.amount)) || 0);
   const catId = item.category_id || (catMap[item.category]?.id) || 'unknown';
   const ym = extractYearMonth(item.date);
 
@@ -189,31 +230,35 @@ const accumulateCategoryItem = (item: any, catMap: Record<string, any>, stats: a
   stats.chartTotal += amt;
 };
 
+export interface CategoryStatsResult extends CategoryStatsCollector {
+  chartTx: TransactionDisplay[];
+}
+
 /**
  * Calculates category breakdown and mapping for charts.
  */
 export const calculateCategoryStats = (
-  transactions: any[],
-  categories: any[],
+  transactions: TransactionDisplay[],
+  _categories: Category[],
   filterPeriod: string,
-  dashboardCategory: string | string[],
+  _dashboardCategory: string | string[],
   hideFixedExpenses: boolean,
-  catMap: Record<string, any>
-) => {
+  catMap: Record<string, Category>
+): CategoryStatsResult => {
   const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
   const chartTx = filteredTx.filter(t => {
-    const catObj = catMap[t.category_id] || catMap[t.category] || { type: 'expense' };
+    const catObj = (t.category_id ? catMap[t.category_id] : undefined) || catMap[t.category] || { type: 'expense' };
     if (catObj.type === 'income') return false;
     if (hideFixedExpenses && (t.allocation_type || catObj.allocation_type) === 'need') return false;
     return true;
   });
 
-  const stats = {
-    catMapData: {} as Record<string, number>,
-    dailyAllMap: {} as Record<string, number>,
-    monthlyAllMap: {} as Record<string, number>,
-    dailyCatMap: {} as Record<string, Record<string, number>>,
-    monthlyCatMap: {} as Record<string, Record<string, number>>,
+  const stats: CategoryStatsCollector = {
+    catMapData: {},
+    dailyAllMap: {},
+    monthlyAllMap: {},
+    dailyCatMap: {},
+    monthlyCatMap: {},
     chartTotal: 0
   };
 
@@ -233,12 +278,12 @@ interface MainChartDataParams {
   dailyAllMap: Record<string, number>;
   hideFixedExpenses: boolean;
   hideWantExpenses: boolean;
-  isDarkMode: boolean;
+  isDarkMode?: boolean;
   dashboardCategory: string | string[];
   monthlyAllMap: Record<string, number>;
   monthlyCatMap: Record<string, Record<string, number>>;
   dailyCatMap: Record<string, Record<string, number>>;
-  catMap: Record<string, any>;
+  catMap: Record<string, Category>;
 }
 
 function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolean) {
@@ -315,7 +360,7 @@ function buildSpecificCategoryDataset(
     datesInPeriod: string[];
     monthlyCatMap: Record<string, Record<string, number>>;
     dailyCatMap: Record<string, Record<string, number>>;
-    catMap: Record<string, any>;
+    catMap: Record<string, Category>;
   }
 ) {
   const {
@@ -329,7 +374,7 @@ function buildSpecificCategoryDataset(
     catMap,
   } = params;
 
-  const catObj = catMap[catName] || {};
+  const catObj: Partial<Category> = catMap[catName] || {};
   const catId = catObj.id || catName;
   const catColor = catObj.color || '#64748B';
   const rgb = hexToRgb(catColor);
@@ -367,7 +412,7 @@ const buildCategoryDataset = (
     dailyCatMap: Record<string, Record<string, number>>;
     hideFixedExpenses: boolean;
     hideWantExpenses: boolean;
-    catMap: Record<string, any>;
+    catMap: Record<string, Category>;
   }
 ) => {
   if (catName === 'ALL') {
@@ -517,8 +562,8 @@ export const generateMainChartData = ({
 export const calculateDayTypeCounts = (
   datesInPeriod: string[],
   dayTypes: Record<string, string>,
-  dayTypeConfig: any[]
-) => {
+  dayTypeConfig: DayType[]
+): Record<string, number> => {
   const dayTypeCounts: Record<string, number> = {};
   dayTypeConfig.forEach(dt => { dayTypeCounts[dt.id] = 0; });
   

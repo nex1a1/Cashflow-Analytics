@@ -207,8 +207,8 @@ class TransactionService {
   }
 
   deleteByMonth(isoMonth: string) {
-    return db.prepare("UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date LIKE ?")
-      .run(`${isoMonth}%`);
+    return db.prepare("UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE strftime('%Y-%m', date) = ?")
+      .run(isoMonth);
   }
 
   deleteAll() {

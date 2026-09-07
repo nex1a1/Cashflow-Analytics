@@ -6,6 +6,7 @@ import fs from 'fs';
 import { initSchema } from './src/models/schema';
 import apiRoutes from './src/routes/api';
 import backupService from './src/services/backupService';
+import db from './src/config/db';
 
 const app = express();
 
@@ -50,7 +51,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 const PORT = process.env.PORT || 3000;
 const serverUrl = `http://localhost:${PORT}`;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('\n====================================================================');
   console.log('🦈 CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
   console.log('====================================================================');
@@ -59,6 +60,42 @@ app.listen(PORT, () => {
   console.log('  Shortcuts: [B] Manual Backup  |  [Q] Exit');
   console.log('====================================================================\n');
 });
+
+// Graceful Shutdown Handler
+let isShuttingDown = false;
+const gracefulShutdown = (signal: string) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`\n🛑 [${signal}] Initiating graceful shutdown...`);
+
+  // Force exit fallback timeout (5s)
+  const forceExitTimeout = setTimeout(() => {
+    console.error('⚠️ Forcing process exit after shutdown timeout.');
+    process.exit(1);
+  }, 5000);
+  forceExitTimeout.unref();
+
+  server.close((err) => {
+    if (err) {
+      console.error('❌ Error closing HTTP server:', err);
+    } else {
+      console.log('✅ HTTP server closed.');
+    }
+
+    try {
+      db.close();
+      console.log('✅ SQLite database connection closed.');
+    } catch (dbErr: any) {
+      console.error('❌ Error closing SQLite database:', dbErr?.message || dbErr);
+    }
+
+    console.log('👋 Cashflow Shark shutdown complete. Goodbye!\n');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Interactive terminal shortcut listener
 if (process.stdin.isTTY) {
@@ -74,8 +111,7 @@ if (process.stdin.isTTY) {
           .then(data => console.log('✅ Backup result:', data))
           .catch(err => console.error('❌ Backup failed:', err.message));
       } else if (k === 'q' || key === '\u0003') { // q or Ctrl+C
-        console.log('\n👋 Shutting down Cashflow Shark. Goodbye!');
-        process.exit(0);
+        gracefulShutdown('KEYBOARD_QUIT');
       }
     });
   } catch (err) {

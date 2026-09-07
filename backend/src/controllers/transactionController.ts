@@ -2,10 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 import transactionService from '../services/transactionService';
 import categoryService from '../services/categoryService';
 import { upsertTransactionSchema } from '../validations/transactionValidation';
+import { dateRangeQuerySchema, searchQuerySchema, monthParamSchema } from '../validations/queryValidation';
 
 export const getAllTransactions = (req: Request, res: Response, next: NextFunction) => {
-  const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
   try {
+    const { startDate, endDate } = dateRangeQuerySchema.parse(req.query);
     const rows = transactionService.getAll(startDate, endDate);
     res.json(rows.map(row => ({
       id:          row.id,
@@ -49,8 +50,8 @@ export const deleteTransaction = (req: Request, res: Response, next: NextFunctio
 };
 
 export const deleteMonth = (req: Request, res: Response, next: NextFunction) => {
-  const { isoMonth } = req.params; // Expecting YYYY-MM
   try {
+    const { isoMonth } = monthParamSchema.parse(req.params);
     transactionService.deleteByMonth(isoMonth);
     res.json({ success: true, message: `Deleted data for ${isoMonth}` });
   } catch (err: unknown) {
@@ -80,8 +81,8 @@ export const getAvailablePeriods = (req: Request, res: Response, next: NextFunct
 };
 
 export const searchTransactions = (req: Request, res: Response, next: NextFunction) => {
-  const { q } = req.query as { q?: string };
   try {
+    const { q } = searchQuerySchema.parse(req.query);
     const rows = transactionService.search(q || '');
     res.json(rows.map(row => ({
       id:          row.id,

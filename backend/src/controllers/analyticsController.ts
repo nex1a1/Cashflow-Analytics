@@ -1,10 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import analyticsService from '../services/analyticsService';
+import { analyticsQuerySchema } from '../validations/queryValidation';
 
 export const getDashboardAnalytics = (req: Request, res: Response, next: NextFunction) => {
-  const { startDate, endDate, excludeFuture } = req.query as { startDate?: string; endDate?: string; excludeFuture?: string };
-  const isExcludeFuture = excludeFuture === 'true';
   try {
+    const { startDate, endDate, excludeFuture } = analyticsQuerySchema.parse(req.query);
+    const isExcludeFuture = excludeFuture === 'true';
     const summary = analyticsService.getSummary(startDate, endDate, isExcludeFuture);
     const categories = analyticsService.getCategoryBreakdown(startDate, endDate, isExcludeFuture);
     const monthly = analyticsService.getMonthlyAggregation(startDate, endDate, isExcludeFuture);
