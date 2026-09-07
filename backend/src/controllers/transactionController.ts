@@ -52,8 +52,8 @@ export const deleteTransaction = (req: Request, res: Response, next: NextFunctio
 export const deleteMonth = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { isoMonth } = monthParamSchema.parse(req.params);
-    transactionService.deleteByMonth(isoMonth);
-    res.json({ success: true, message: `Deleted data for ${isoMonth}` });
+    const result = transactionService.deleteByMonth(isoMonth);
+    res.json({ success: true, message: `Deleted data for ${isoMonth}`, affected: result.changes });
   } catch (err: unknown) {
     next(err);
   }

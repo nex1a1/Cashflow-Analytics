@@ -8,6 +8,7 @@ import { initSchema } from './src/models/schema';
 import apiRoutes from './src/routes/api';
 import backupService from './src/services/backupService';
 import db from './src/config/db';
+import { auditLogger } from './src/middleware/auditLogger';
 
 const app = express();
 
@@ -34,6 +35,9 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));
+
+// Audit Logging Middleware (Tracks WHO, WHAT, WHERE, HOW with zero truncation)
+app.use(auditLogger);
 
 // Initialize Database Schema
 initSchema();

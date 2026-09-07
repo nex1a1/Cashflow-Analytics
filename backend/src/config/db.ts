@@ -77,9 +77,16 @@ function formatTransactionMutation(clean: string): string | null {
     }
 
     if (/UPDATE transactions SET is_deleted = 1/i.test(clean)) {
+        if (/WHERE date >=/i.test(clean)) {
+            return `🗑️ [ธุรกรรม] ลบข้อมูลรายเดือน (ลบทั้งช่วงเดือน)`;
+        }
         const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
-        const shortId = idMatch ? idMatch[1].substring(0, 8) : '';
-        return `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${shortId}...)`;
+        const fullId = idMatch ? idMatch[1] : '';
+        return fullId ? `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${fullId})` : `🗑️ [ธุรกรรม] ลบธุรกรรม (กลุ่ม/ทั้งหมด)`;
+    }
+
+    if (/UPDATE transactions SET is_deleted = 0/i.test(clean)) {
+        return `♻️ [ธุรกรรม] กู้คืนข้อมูลธุรกรรม (Restore)`;
     }
     return null;
 }
@@ -180,9 +187,8 @@ function formatDbMutationLog(msgStr: string): string | null {
         return formatted === '' ? null : formatted;
     }
 
-    // Fallback: Clean single line truncated if too long
-    const truncated = clean.length > 130 ? clean.substring(0, 127) + '...' : clean;
-    return `⚡ [DB] ${truncated}`;
+    // Fallback: Full query without truncation
+    return `⚡ [DB SQL] ${clean}`;
 }
 
 function openDatabase(dbPath: string): Database.Database {
@@ -192,7 +198,10 @@ function openDatabase(dbPath: string): Database.Database {
             if (/^(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)/i.test(msgStr.trim())) {
                 const formatted = formatDbMutationLog(msgStr);
                 if (formatted) {
-                    console.log(`[DB MUTATION] ${formatted}`);
+                    const now = new Date();
+                    const pad = (n: number, z = 2) => String(n).padStart(z, '0');
+                    const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+                    console.log(`[DB MUTATION] [${ts}] ${formatted}`);
                 }
             }
         }

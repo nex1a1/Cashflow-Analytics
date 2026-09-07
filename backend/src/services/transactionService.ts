@@ -200,10 +200,37 @@ class TransactionService {
     });
 
     transactionAction(transactions);
+
+    const totalSatang = transactions.reduce((sum: number, tx: any) => sum + Math.round((Number(tx.amount) || 0) * 100), 0);
+    const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    console.log(`💳 [Service: Upsert] บันทึกข้อมูลสำเร็จทั้งหมด ${transactions.length} รายการ | ยอดรวม: ฿${totalBaht}`);
+    if (transactions.length <= 15) {
+      transactions.forEach((tx: any, idx: number) => {
+        const itemBaht = (Number(tx.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        console.log(`   ${idx + 1}. [${tx.date}] ID: ${tx.id || 'auto-generated'} | "${tx.description || 'ไม่ระบุ'}" | ฿${itemBaht} (${tx.allocation_type || 'default'})`);
+      });
+    } else {
+      console.log(`   (รายการทั้งหมด ${transactions.length} รายการ ถูกบันทึกลงฐานข้อมูลเรียบร้อยแล้ว)`);
+    }
   }
 
   delete(id: string) {
-    return db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    const target = db.prepare(`
+      SELECT t.id, t.date, t.description, t.amount, c.name as category 
+      FROM transactions t 
+      LEFT JOIN categories c ON t.category_id = c.id 
+      WHERE t.id = ?
+    `).get(id) as { id: string, date: string, description: string, amount: number, category: string | null } | undefined;
+
+    const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+
+    if (target) {
+      const baht = (target.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      console.log(`🗑️ [Service: Delete] ลบธุรกรรมสำเร็จ | ID: ${target.id} | วันที่: ${target.date} | "${target.description}" | ฿${baht} | หมวดหมู่: "${target.category || 'ไม่ระบุ'}" | (ผลลัพธ์: ${result.changes} แถว)`);
+    } else {
+      console.log(`🗑️ [Service: Delete] ลบธุรกรรม ID: ${id} | (ผลลัพธ์: ${result.changes} แถว)`);
+    }
+    return result;
   }
 
   deleteByMonth(isoMonth: string) {
@@ -215,14 +242,38 @@ class TransactionService {
     const startDate = `${yearStr}-${monthStr.padStart(2, '0')}-01`;
     const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
-    return db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ?')
+    // Query affected items before deletion to log exact details without truncation
+    const targetRows = db.prepare(`
+      SELECT t.id, t.date, t.description, t.amount, c.name as category
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.date >= ? AND t.date < ? AND t.is_deleted = 0
+    `).all(startDate, endDate) as Array<{ id: string, date: string, description: string, amount: number, category: string | null }>;
+
+    const totalSatang = targetRows.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ? AND is_deleted = 0')
       .run(startDate, endDate);
+
+    console.log(`🗑️ [Service: Delete Month] ลบข้อมูลทั้งเดือน: ${isoMonth} (ช่วงวันที่: ${startDate} ถึง ${endDate}) | จำนวนที่ได้รับผลกระทบ: ${result.changes} รายการ | ยอดเงินรวม: ฿${totalBaht}`);
+    if (targetRows.length > 0) {
+      console.log(`📋 [Service: Delete Month Details] รายการที่ถูกลบในเดือน ${isoMonth} (${targetRows.length} รายการ):`);
+      targetRows.forEach((r, idx) => {
+        const itemBaht = (r.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        console.log(`   ${idx + 1}. [${r.date}] ID: ${r.id} | "${r.description}" | ฿${itemBaht} | หมวดหมู่: "${r.category || 'ไม่ระบุ'}"`);
+      });
+    }
+    return result;
   }
 
   deleteAll() {
     return db.transaction(() => {
-      db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP').run();
-      db.prepare('DELETE FROM calendar_days').run();
+      const txCount = (db.prepare('SELECT COUNT(*) as c FROM transactions WHERE is_deleted = 0').get() as { c: number }).c;
+      const calCount = (db.prepare('SELECT COUNT(*) as c FROM calendar_days').get() as { c: number }).c;
+      const txResult = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE is_deleted = 0').run();
+      const calResult = db.prepare('DELETE FROM calendar_days').run();
+      console.log(`🚨 [Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
     })();
   }
 

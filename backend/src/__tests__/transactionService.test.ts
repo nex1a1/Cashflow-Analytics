@@ -12,16 +12,24 @@ describe('transactionService', () => {
   const testTxId2 = 'test-tx-uuid-2';
   const testTxId3 = 'test-tx-uuid-3';
 
+  const cleanup = () => {
+    db.prepare("DELETE FROM transactions WHERE id LIKE 'test-tx-%' OR date >= '2099-01-01'").run();
+  };
+
+  beforeAll(() => {
+    initSchema();
+    cleanup();
+  });
+
   afterAll(() => {
-    // Clean up test transactions from database
-    db.prepare('DELETE FROM transactions WHERE id IN (?, ?, ?)').run(testTxId1, testTxId2, testTxId3);
+    cleanup();
   });
 
   it('upserts transactions and stores amount as satang integer', () => {
     transactionService.upsertMany([
       {
         id: testTxId1,
-        date: '2026-09-01',
+        date: '2099-09-01',
         description: 'Shark Test Income Salary',
         amount: 50000.50, // 50,000.50 Baht = 5,000,050 Satang
         category: 'เงินเดือน',
@@ -29,7 +37,7 @@ describe('transactionService', () => {
       },
       {
         id: testTxId2,
-        date: '2026-09-15',
+        date: '2099-09-15',
         description: 'Shark Test Food Expense',
         amount: 350.25, // 350.25 Baht = 35,025 Satang
         category: 'อาหาร',
@@ -37,7 +45,7 @@ describe('transactionService', () => {
       },
       {
         id: testTxId3,
-        date: '2026-10-05',
+        date: '2099-10-05',
         description: 'Shark Test Oct Expense',
         amount: 1000,
         category: 'อาหาร',
@@ -57,7 +65,7 @@ describe('transactionService', () => {
   });
 
   it('retrieves transactions filtered by date range', () => {
-    const sepTransactions = transactionService.getAll('2026-09-01', '2026-09-30');
+    const sepTransactions = transactionService.getAll('2099-09-01', '2099-09-30');
     const ids = sepTransactions.map(t => t.id);
 
     expect(ids).toContain(testTxId1);
@@ -72,16 +80,16 @@ describe('transactionService', () => {
   });
 
   it('deletes transactions by month using index-friendly date range query', () => {
-    // Delete month 2026-09
-    transactionService.deleteByMonth('2026-09');
+    // Delete month 2099-09 (safe test month)
+    transactionService.deleteByMonth('2099-09');
 
     const row1 = db.prepare('SELECT is_deleted FROM transactions WHERE id = ?').get(testTxId1) as any;
     const row2 = db.prepare('SELECT is_deleted FROM transactions WHERE id = ?').get(testTxId2) as any;
     const row3 = db.prepare('SELECT is_deleted FROM transactions WHERE id = ?').get(testTxId3) as any;
 
-    expect(row1.is_deleted).toBe(1); // 2026-09 marked deleted
-    expect(row2.is_deleted).toBe(1); // 2026-09 marked deleted
-    expect(row3.is_deleted).toBe(0); // 2026-10 remains active
+    expect(row1.is_deleted).toBe(1); // 2099-09 marked deleted
+    expect(row2.is_deleted).toBe(1); // 2099-09 marked deleted
+    expect(row3.is_deleted).toBe(0); // 2099-10 remains active
   });
 
   it('deletes a single transaction by id', () => {
@@ -106,7 +114,7 @@ describe('transactionService', () => {
       expect(() => {
         db.prepare(`
           INSERT INTO transactions (id, date, description, amount, category_id)
-          VALUES ('test-strict-err', '2026-09-01', 'Invalid', 'NOT_AN_INTEGER', 'cat_salary')
+          VALUES ('test-strict-err', '2099-09-01', 'Invalid', 'NOT_AN_INTEGER', 'cat_salary')
         `).run();
       }).toThrow();
     });
