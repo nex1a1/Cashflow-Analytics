@@ -3,7 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 // Determine base directory depending on whether running in PKG executable mode
-const isPkg = Boolean((process as any).pkg);
+const isPkg = Boolean((process as unknown as Record<string, unknown>).pkg);
 const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
 let DB_PATH = process.env.DB_PATH || path.join(baseDir, 'data/cashflow.db');
 
@@ -206,8 +206,8 @@ function openDatabase(dbPath: string): Database.Database {
         d.pragma('synchronous = FULL'); // มั่นใจว่าเขียนลงดิสก์แน่นอน
         d.pragma('busy_timeout = 5000');
         d.pragma('foreign_keys = ON');
-    } catch (e: any) {
-        console.warn('⚠️ Could not set DB pragmas:', e.message);
+    } catch (e: unknown) {
+        console.warn('⚠️ Could not set DB pragmas:', e instanceof Error ? e.message : 'Unknown error');
     }
     
     return d;

@@ -7,7 +7,7 @@ export default defineConfig({
     host: true, // อนุญาตให้รันใน Docker แล้วเรียกจากนอก Container ได้
     port: 5173,
     watch: {
-      usePolling: true, // ทำให้ Hot Reload ทำงานกับ Docker Volumes
+      usePolling: process.env.CHOKIDAR_USEPOLLING === 'true', // Docker sets this via env var
     }
   }
 });

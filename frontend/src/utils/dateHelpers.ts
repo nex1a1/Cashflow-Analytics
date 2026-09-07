@@ -207,13 +207,21 @@ export const generateDatesForPeriod = (period: string, allTransactions: any[]): 
   return buildDateSequence(bounds.start, bounds.end);
 };
 
+export interface PeriodDateRange {
+  startDate: string | null;
+  endDate: string | null;
+  fetchStartDate: string | null;
+}
+
 /**
- * Returns { startDate, endDate } in YYYY-MM-DD format for a given period string.
+ * Returns { startDate, endDate, fetchStartDate } in YYYY-MM-DD format for a given period string.
+ * fetchStartDate covers the previous comparison period (e.g. prior month/quarter/year)
+ * so that Period-over-Period comparisons can calculate historical deltas accurately.
  */
-export const getPeriodDateRange = (period: string): { startDate: string | null; endDate: string | null } => {
-  if (period === 'ALL') return { startDate: null, endDate: null };
+export const getPeriodDateRange = (period: string): PeriodDateRange => {
+  if (period === 'ALL') return { startDate: null, endDate: null, fetchStartDate: null };
   const bounds = resolvePeriodDateBounds(period);
-  if (!bounds) return { startDate: null, endDate: null };
+  if (!bounds) return { startDate: null, endDate: null, fetchStartDate: null };
 
   const toStr = (d: Date) => {
     const yr = d.getFullYear();
@@ -221,5 +229,58 @@ export const getPeriodDateRange = (period: string): { startDate: string | null; 
     const da = String(d.getDate()).padStart(2, '0');
     return `${yr}-${mo}-${da}`;
   };
-  return { startDate: toStr(bounds.start), endDate: toStr(bounds.end) };
+
+  const startDate = toStr(bounds.start);
+  const endDate = toStr(bounds.end);
+  let fetchStartDate = startDate;
+
+  if (/^\d{4}-\d{2}$/.test(period)) {
+    // Single Month: YYYY-MM -> previous month start
+    const [yStr, mStr] = period.split('-');
+    const y = Number.parseInt(yStr, 10);
+    const m = Number.parseInt(mStr, 10);
+    const prevDate = new Date(y, m - 2, 1);
+    fetchStartDate = toStr(prevDate);
+  } else if (/^(\d{4})-Q([1-4])$/.test(period)) {
+    // Quarter: YYYY-Q1..4 -> previous quarter start
+    const qMatch = period.match(/^(\d{4})-Q([1-4])$/);
+    if (qMatch) {
+      const y = Number.parseInt(qMatch[1], 10);
+      const q = Number.parseInt(qMatch[2], 10);
+      let prevY = y;
+      let prevQ = q - 1;
+      if (prevQ < 1) {
+        prevY = y - 1;
+        prevQ = 4;
+      }
+      const prevDate = new Date(prevY, (prevQ - 1) * 3, 1);
+      fetchStartDate = toStr(prevDate);
+    }
+  } else if (/^(\d{4})-H([1-2])$/.test(period)) {
+    // Half-Year: YYYY-H1..2 -> previous half start
+    const hMatch = period.match(/^(\d{4})-H([1-2])$/);
+    if (hMatch) {
+      const y = Number.parseInt(hMatch[1], 10);
+      const h = Number.parseInt(hMatch[2], 10);
+      let prevY = y;
+      let prevH = h - 1;
+      if (prevH < 1) {
+        prevY = y - 1;
+        prevH = 2;
+      }
+      const prevDate = new Date(prevY, prevH === 1 ? 0 : 6, 1);
+      fetchStartDate = toStr(prevDate);
+    }
+  } else if (/^\d{4}$/.test(period)) {
+    // Full Year: YYYY -> previous year start
+    const y = Number.parseInt(period, 10);
+    fetchStartDate = `${y - 1}-01-01`;
+  } else if (bounds.start && bounds.end) {
+    // Custom range: shift back by duration
+    const durationMs = bounds.end.getTime() - bounds.start.getTime() + 86400000;
+    const prevStart = new Date(bounds.start.getTime() - durationMs);
+    fetchStartDate = toStr(prevStart);
+  }
+
+  return { startDate, endDate, fetchStartDate };
 };

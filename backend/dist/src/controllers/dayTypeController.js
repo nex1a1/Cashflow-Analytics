@@ -6,37 +6,34 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteDayType = exports.upsertDayType = exports.getAllDayTypes = void 0;
 const dayTypeService_1 = __importDefault(require("../services/dayTypeService"));
 const dayTypeValidation_1 = require("../validations/dayTypeValidation");
-const getAllDayTypes = (req, res) => {
+const getAllDayTypes = (req, res, next) => {
     try {
         const rows = dayTypeService_1.default.getAll();
         res.json(rows);
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getAllDayTypes = getAllDayTypes;
-const upsertDayType = (req, res) => {
+const upsertDayType = (req, res, next) => {
     try {
         const validatedData = dayTypeValidation_1.dayTypeSchema.parse(req.body);
         dayTypeService_1.default.upsert(validatedData);
         res.json({ success: true });
     }
     catch (err) {
-        if (err.name === 'ZodError') {
-            return res.status(400).json({ error: 'Validation Error', details: err.errors });
-        }
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.upsertDayType = upsertDayType;
-const deleteDayType = (req, res) => {
+const deleteDayType = (req, res, next) => {
     try {
         dayTypeService_1.default.delete(req.params.id);
         res.json({ success: true });
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.deleteDayType = deleteDayType;

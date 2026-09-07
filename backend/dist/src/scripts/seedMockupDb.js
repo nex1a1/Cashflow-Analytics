@@ -7,12 +7,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 process.env.USE_DEMO_DB = 'true';
 const db_1 = __importDefault(require("../config/db"));
 const schema_1 = require("../models/schema");
-const crypto_1 = __importDefault(require("crypto"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
 console.log('🚀 Starting Mockup Database Generation...');
 // Ensure schema is fully initialized on the demo database
 (0, schema_1.initSchema)();
 // Function to generate random integer between min and max (cryptographically secure)
-const getRandomInt = (min, max) => crypto_1.default.randomInt(min, max + 1);
+const getRandomInt = (min, max) => node_crypto_1.default.randomInt(min, max + 1);
 function buildCatMap(categories) {
     const catMap = {
         salary: categories.find(c => c.group_name === 'รายได้หลัก' || c.group_type === 'income')?.cat_id,
@@ -36,25 +36,25 @@ function generateFixedExpenses(dateStr, catMap) {
     const txs = [];
     if (catMap.rent) {
         txs.push({
-            id: crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าเช่าคอนโด',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าเช่าคอนโด',
             amount: 12000 * 100, category_id: catMap.rent, allocation_type: 'need', timestamp: `${dateStr} 10:00:00`
         });
     }
     if (catMap.internet) {
         txs.push({
-            id: crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าเน็ตบ้าน AIS',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าเน็ตบ้าน AIS',
             amount: 699 * 100, category_id: catMap.internet, allocation_type: 'need', timestamp: `${dateStr} 10:05:00`
         });
     }
     if (catMap.water_elec) {
         txs.push({
-            id: crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าไฟ',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'ค่าไฟ',
             amount: getRandomInt(1200, 2500) * 100, category_id: catMap.water_elec, allocation_type: 'need', timestamp: `${dateStr} 10:10:00`
         });
     }
     if (catMap.entertainment) {
         txs.push({
-            id: crypto_1.default.randomUUID(), date: dateStr, description: 'Netflix / Spotify',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'Netflix / Spotify',
             amount: 548 * 100, category_id: catMap.entertainment, allocation_type: 'want', timestamp: `${dateStr} 10:15:00`
         });
     }
@@ -63,13 +63,13 @@ function generateFixedExpenses(dateStr, catMap) {
 function generateFoodExpenses(dateStr, isWeekend, foodCatId) {
     const txs = [
         {
-            id: crypto_1.default.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'ข้าวมื้อเที่ยง',
             amount: getRandomInt(60, 150) * 100, category_id: foodCatId, allocation_type: 'need', timestamp: `${dateStr} 12:30:00`
         }
     ];
     if (getRandomInt(1, 100) > 20) {
         txs.push({
-            id: crypto_1.default.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
+            id: node_crypto_1.default.randomUUID(), date: dateStr, description: isWeekend ? 'ชาบู/ปิ้งย่าง' : 'มื้อเย็น',
             amount: isWeekend ? getRandomInt(500, 1500) * 100 : getRandomInt(80, 200) * 100,
             category_id: foodCatId, allocation_type: isWeekend ? 'want' : 'need', timestamp: `${dateStr} 19:00:00`
         });
@@ -80,7 +80,7 @@ function generateTransportExpense(dateStr, isWeekend, transportCatId) {
     if (isWeekend || !transportCatId)
         return null;
     return {
-        id: crypto_1.default.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
+        id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'BTS ไปกลับ',
         amount: getRandomInt(88, 120) * 100, category_id: transportCatId, allocation_type: 'need', timestamp: `${dateStr} 08:30:00`
     };
 }
@@ -88,7 +88,7 @@ function generateCoffeeExpense(dateStr, coffeeCatId) {
     if (!coffeeCatId || getRandomInt(1, 100) <= 40)
         return null;
     return {
-        id: crypto_1.default.randomUUID(), date: dateStr, description: 'กาแฟสด',
+        id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'กาแฟสด',
         amount: getRandomInt(50, 150) * 100, category_id: coffeeCatId, allocation_type: 'want', timestamp: `${dateStr} 09:00:00`
     };
 }
@@ -96,7 +96,7 @@ function generateShoppingExpense(dateStr, isWeekend, shoppingCatId) {
     if (!isWeekend || !shoppingCatId || getRandomInt(1, 100) <= 50)
         return null;
     return {
-        id: crypto_1.default.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
+        id: node_crypto_1.default.randomUUID(), date: dateStr, description: 'ซื้อของใช้ / Shopee',
         amount: getRandomInt(500, 3500) * 100, category_id: shoppingCatId, allocation_type: 'want', timestamp: `${dateStr} 15:00:00`
     };
 }
@@ -170,7 +170,7 @@ const generateMockupData = () => {
         // 3.2 Add Income (Salary at end of month)
         if (isEndOfMonth && catMap.salary) {
             transactionsToInsert.push({
-                id: crypto_1.default.randomUUID(),
+                id: node_crypto_1.default.randomUUID(),
                 date: dateStr,
                 description: 'เงินเดือน',
                 amount: getRandomInt(45000, 55000) * 100, // 45k-55k Baht in Satang

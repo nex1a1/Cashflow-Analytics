@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import backupService from '../services/backupService';
 
-export const performBackup = async (_req: Request, res: Response) => {
+export const performBackup = async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const result = await backupService.createBackup();
         res.status(200).json({
@@ -9,21 +9,17 @@ export const performBackup = async (_req: Request, res: Response) => {
             message: 'Backup completed successfully',
             filename: result.filename
         });
-    } catch (error: any) {
-        console.error('Backup Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Backup failed: ' + error.message
-        });
+    } catch (err: unknown) {
+        next(err);
     }
 };
 
-export const listBackups = (_req: Request, res: Response) => {
+export const listBackups = (_req: Request, res: Response, next: NextFunction) => {
     try {
         const files = backupService.listBackups();
         res.json(files);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (err: unknown) {
+        next(err);
     }
 };
 

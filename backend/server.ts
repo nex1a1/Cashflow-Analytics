@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
@@ -11,7 +12,7 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '5mb' }));
 
 // Initialize Database Schema
 initSchema();
@@ -54,6 +55,16 @@ if (activeStaticDir) {
 } else {
   console.warn('⚠️ Warning: Web Client static directory not found!');
 }
+
+// Global Error Handler
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err && typeof err === 'object' && 'name' in err && (err as any).name === 'ZodError') {
+    return res.status(400).json({ error: 'Validation Error', details: (err as any).errors });
+  }
+  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  console.error('[API Error]', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // Port setup
 const PORT = process.env.PORT || 3000;

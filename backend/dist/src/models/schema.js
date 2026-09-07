@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initSchema = void 0;
 const db_1 = __importDefault(require("../config/db"));
-const crypto_1 = __importDefault(require("crypto"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
 const initSchema = () => {
     // เปิด Foreign Key Support
     db_1.default.pragma('foreign_keys = ON');
@@ -20,7 +20,7 @@ const initSchema = () => {
     let schemaVerified = false;
     try {
         const row = db_1.default.prepare("SELECT value FROM settings WHERE key = ?").get('schema_verified');
-        if (row && row.value === 'true') {
+        if (row?.value === 'true') {
             schemaVerified = true;
         }
     }
@@ -190,19 +190,21 @@ const initSchema = () => {
 exports.initSchema = initSchema;
 const verifyTransactionColumns = () => {
     const txInfo = db_1.default.prepare("PRAGMA table_info(transactions)").all();
-    const txCols = txInfo.map(c => c.name);
-    if (!txCols.includes('is_deleted')) {
+    const txCols = new Set(txInfo.map(c => c.name));
+    if (!txCols.has('is_deleted')) {
         db_1.default.exec("ALTER TABLE transactions ADD COLUMN is_deleted INTEGER DEFAULT 0");
         console.log('🔹 เพิ่มคอลัมน์ is_deleted ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
     }
-    if (!txCols.includes('category_id')) {
+    if (!txCols.has('category_id')) {
         try {
             db_1.default.exec("ALTER TABLE transactions ADD COLUMN category_id INTEGER DEFAULT 1");
             console.log('🔹 เพิ่มคอลัมน์ category_id ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
         }
-        catch (e) { }
+        catch (_e) {
+            // Ignored: category_id column may already exist in certain SQLite environments
+        }
     }
-    if (!txCols.includes('allocation_type')) {
+    if (!txCols.has('allocation_type')) {
         db_1.default.exec("ALTER TABLE transactions ADD COLUMN allocation_type TEXT DEFAULT 'want'");
         console.log('🔹 เพิ่มคอลัมน์ allocation_type ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
         // ย้ายค่า allocation_type จากกลุ่มมาใส่ที่รายการธุรกรรม
@@ -319,7 +321,7 @@ const seedInitialData = () => {
     requestedDayTypes.forEach((dt, idx) => {
         const exists = db_1.default.prepare("SELECT id FROM day_types WHERE label = ?").get(dt.label);
         if (!exists) {
-            insertDayType.run(crypto_1.default.randomUUID(), dt.name, dt.label, dt.color, idx + 1);
+            insertDayType.run(node_crypto_1.default.randomUUID(), dt.name, dt.label, dt.color, idx + 1);
             console.log(`🌱 เพิ่มประเภทวันใหม่เรียบร้อย: ${dt.label}`);
         }
     });
@@ -327,9 +329,9 @@ const seedInitialData = () => {
     const groupsCount = db_1.default.prepare("SELECT COUNT(*) as count FROM cashflow_groups").get().count;
     if (groupsCount === 0) {
         const insertGroup = db_1.default.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon) VALUES (?, ?, ?, ?, ?, ?)");
-        insertGroup.run(crypto_1.default.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
-        insertGroup.run(crypto_1.default.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
-        insertGroup.run(crypto_1.default.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
+        insertGroup.run(node_crypto_1.default.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
+        insertGroup.run(node_crypto_1.default.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
+        insertGroup.run(node_crypto_1.default.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
         console.log('🌱 เพิ่มกลุ่มรายจ่ายเริ่มต้นเรียบร้อย');
     }
 };
@@ -354,7 +356,7 @@ function ensureSubscriptionGroup() {
         console.log('✅ เปลี่ยนชื่อกลุ่ม "รายเดือน/หนี้" เป็น "บริการรายเดือน" เรียบร้อย');
     }
     else {
-        groupId = crypto_1.default.randomUUID();
+        groupId = node_crypto_1.default.randomUUID();
         db_1.default.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, allocation_type) VALUES (?, ?, ?, ?, ?, ?, ?)")
             .run(groupId, 'บริการรายเดือน', 'expense', 4, '#8B5CF6', '🔄', 'want');
         console.log('🌱 สร้างกลุ่มใหม่ "บริการรายเดือน" เรียบร้อย');
@@ -384,7 +386,7 @@ function ensureSoftwareCategory(groupId) {
     if (existingSoftwareCat) {
         return existingSoftwareCat.id;
     }
-    const softwareCatId = crypto_1.default.randomUUID();
+    const softwareCatId = node_crypto_1.default.randomUUID();
     db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
         .run(softwareCatId, 'ซอฟต์แวร์ & AI', '🤖', '#3B82F6', 1, groupId);
     console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ซอฟต์แวร์ & AI" เรียบร้อย');
@@ -403,7 +405,7 @@ function ensureShoppingCategory(groupId) {
         return catShort.id;
     if (catLong)
         return catLong.id;
-    const shoppingCatId = crypto_1.default.randomUUID();
+    const shoppingCatId = node_crypto_1.default.randomUUID();
     db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
         .run(shoppingCatId, 'สมาชิกช้อปปิ้ง & ส่งอาหาร', '🛍️', '#EC4899', 2, groupId);
     console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เรียบร้อย');
@@ -422,7 +424,7 @@ function ensureEntertainmentCategory(groupId) {
         return entShort.id;
     if (entLong)
         return entLong.id;
-    const entertainmentCatId = crypto_1.default.randomUUID();
+    const entertainmentCatId = node_crypto_1.default.randomUUID();
     db_1.default.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
         .run(entertainmentCatId, 'ความบันเทิง & สตรีมมิ่ง', '🍿', '#EF4444', 3, groupId);
     console.log('🌱 สร้างหมวดหมู่ย่อยใหม่ "ความบันเทิง & สตรีมมิ่ง" เรียบร้อย');

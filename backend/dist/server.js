@@ -14,7 +14,7 @@ const backupService_1 = __importDefault(require("./src/services/backupService"))
 const app = (0, express_1.default)();
 // Middlewares
 app.use((0, cors_1.default)());
-app.use(express_1.default.json({ limit: '50mb' }));
+app.use(express_1.default.json({ limit: '5mb' }));
 // Initialize Database Schema
 (0, schema_1.initSchema)();
 // Auto-backup on startup
@@ -53,6 +53,15 @@ if (activeStaticDir) {
 else {
     console.warn('⚠️ Warning: Web Client static directory not found!');
 }
+// Global Error Handler
+app.use((err, _req, res, _next) => {
+    if (err && typeof err === 'object' && 'name' in err && err.name === 'ZodError') {
+        return res.status(400).json({ error: 'Validation Error', details: err.errors });
+    }
+    const message = err instanceof Error ? err.message : 'Internal Server Error';
+    console.error('[API Error]', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+});
 // Port setup
 const PORT = process.env.PORT || 3000;
 const serverUrl = `http://localhost:${PORT}`;

@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import transactionService from '../services/transactionService';
 import categoryService from '../services/categoryService';
 import { upsertTransactionSchema } from '../validations/transactionValidation';
 
-export const getAllTransactions = (req: Request, res: Response) => {
+export const getAllTransactions = (req: Request, res: Response, next: NextFunction) => {
   const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
   try {
     const rows = transactionService.getAll(startDate, endDate);
@@ -17,12 +17,12 @@ export const getAllTransactions = (req: Request, res: Response) => {
       group_type:  row.group_type,
       allocation_type: row.allocation_type
     })));
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const upsertTransactions = (req: Request, res: Response) => {
+export const upsertTransactions = (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = upsertTransactionSchema.parse(req.body);
     const items = Array.isArray(validatedData) ? validatedData : [validatedData];
@@ -30,15 +30,12 @@ export const upsertTransactions = (req: Request, res: Response) => {
     transactionService.upsertMany(items);
 
     res.json({ success: true, count: items.length });
-  } catch (err: any) {
-    if (err.name === 'ZodError') {
-      return res.status(400).json({ error: 'Validation failed', details: err.errors });
-    }
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const deleteTransaction = (req: Request, res: Response) => {
+export const deleteTransaction = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   try {
     const result = transactionService.delete(id);
@@ -46,40 +43,43 @@ export const deleteTransaction = (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Transaction not found' });
     }
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const deleteMonth = (req: Request, res: Response) => {
+export const deleteMonth = (req: Request, res: Response, next: NextFunction) => {
   const { isoMonth } = req.params; // Expecting YYYY-MM
   try {
     transactionService.deleteByMonth(isoMonth);
     res.json({ success: true, message: `Deleted data for ${isoMonth}` });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const resetAllData = (req: Request, res: Response) => {
+export const resetAllData = (req: Request, res: Response, next: NextFunction) => {
+  if (req.headers['x-confirm-reset'] !== 'true') {
+    return res.status(400).json({ error: 'Confirmation required. Send X-Confirm-Reset: true header.' });
+  }
   try {
     transactionService.deleteAll();
     res.json({ success: true, message: 'All data cleared successfully' });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const getAvailablePeriods = (req: Request, res: Response) => {
+export const getAvailablePeriods = (req: Request, res: Response, next: NextFunction) => {
   try {
     const periods = transactionService.getAvailablePeriods();
     res.json(periods);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const searchTransactions = (req: Request, res: Response) => {
+export const searchTransactions = (req: Request, res: Response, next: NextFunction) => {
   const { q } = req.query as { q?: string };
   try {
     const rows = transactionService.search(q || '');
@@ -93,21 +93,21 @@ export const searchTransactions = (req: Request, res: Response) => {
       group_type:  row.group_type,
       allocation_type: row.allocation_type
     })));
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const getFrequentItems = (req: Request, res: Response) => {
+export const getFrequentItems = (req: Request, res: Response, next: NextFunction) => {
   try {
     const items = transactionService.getFrequentItems();
     res.json(items);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 
-export const predictCategories = (req: Request, res: Response) => {
+export const predictCategories = (req: Request, res: Response, next: NextFunction) => {
   const { descriptions } = req.body;
   if (!Array.isArray(descriptions)) {
     return res.status(400).json({ error: 'descriptions must be an array' });
@@ -126,7 +126,7 @@ export const predictCategories = (req: Request, res: Response) => {
       }
     }
     res.json(predictions);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };

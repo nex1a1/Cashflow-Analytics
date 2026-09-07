@@ -12,7 +12,7 @@ const transactionSchema = zod_1.z.object({
     allocation_type: zod_1.z.enum(['need', 'want', 'savings']).nullable().optional().default('want'),
     dayNote: zod_1.z.string().nullable().optional().default(''),
     group_type: zod_1.z.string().nullable().optional(),
-}).passthrough();
+}).loose();
 exports.upsertTransactionSchema = zod_1.z.union([
     transactionSchema,
     zod_1.z.array(transactionSchema)

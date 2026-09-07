@@ -95,3 +95,131 @@ export const getThaiDayInfo = (dateStr?: string | null): ThaiDayInfo | null => {
   const dateObj = new Date(y, m - 1, d);
   return THAI_DAY_CONFIG[dateObj.getDay()] || null;
 };
+
+export interface PeriodDeltaResult {
+  hasDelta: boolean;
+  formattedPct: string;
+  arrow: string;
+  diff: number;
+  prev: number;
+  isGood: boolean;
+  isFlat: boolean;
+  text: string;
+  tooltipText: string;
+  cls: string;
+}
+
+export interface CalculatePeriodDeltaParams {
+  current: number;
+  prev: number;
+  hasPriorData: boolean;
+  periodLabel?: string;
+  type?: 'income' | 'expense' | 'net';
+}
+
+export const calculatePeriodDelta = ({
+  current,
+  prev,
+  hasPriorData,
+  periodLabel = 'PoP',
+  type = 'income',
+}: CalculatePeriodDeltaParams): PeriodDeltaResult => {
+  const isAll = periodLabel === 'ALL';
+
+  if (!hasPriorData || isAll) {
+    return {
+      hasDelta: false,
+      formattedPct: '',
+      arrow: '',
+      diff: 0,
+      prev: 0,
+      isGood: false,
+      isFlat: true,
+      text: isAll ? 'ทั้งหมด' : 'งวดแรก',
+      tooltipText: isAll
+        ? 'แสดงข้อมูลทั้งหมด (ไม่มีงวดก่อนหน้าสำหรับเปรียบเทียบ)'
+        : 'ไม่มีข้อมูลในงวดก่อนหน้าสำหรับเปรียบเทียบ (Base Period)',
+      cls: 'border-neutral-800/80 bg-neutral-900/60 text-neutral-500',
+    };
+  }
+
+  // Handle prior period = 0
+  if (!prev || prev === 0) {
+    if (!current || current === 0) {
+      return {
+        hasDelta: true,
+        formattedPct: '0.0%',
+        arrow: '–',
+        diff: 0,
+        prev: 0,
+        isGood: false,
+        isFlat: true,
+        text: `0.0% ${periodLabel}`,
+        tooltipText: 'ยอดเท่ากับงวดก่อนหน้า (฿0.00)',
+        cls: 'border-neutral-800 bg-neutral-900/60 text-neutral-400',
+      };
+    }
+
+    const isUp = current > 0;
+    const isGood = type === 'expense' ? !isUp : isUp;
+    return {
+      hasDelta: true,
+      formattedPct: 'ใหม่',
+      arrow: isUp ? '↑' : '↓',
+      diff: current,
+      prev: 0,
+      isGood,
+      isFlat: false,
+      text: `ใหม่ (${periodLabel})`,
+      tooltipText: `งวดก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}฿${formatMoney(current)})`,
+      cls: isGood
+        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+        : (type === 'expense'
+          ? 'border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c]'
+          : 'border-rose-500/30 bg-rose-500/10 text-rose-400'),
+    };
+  }
+
+  const diff = current - prev;
+  const percent = (diff / Math.abs(prev)) * 100;
+  const isUp = percent > 0.05;
+  const isDown = percent < -0.05;
+  const isFlat = !isUp && !isDown;
+
+  let isGood = false;
+  if (type === 'income' || type === 'net') {
+    isGood = isUp;
+  } else if (type === 'expense') {
+    isGood = isDown; // Expense reduction is good
+  }
+
+  let cls = 'border-neutral-800 bg-neutral-900/60 text-neutral-400';
+  if (!isFlat) {
+    if (isGood) {
+      cls = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
+    } else {
+      cls = type === 'expense'
+        ? 'border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c]'
+        : 'border-rose-500/30 bg-rose-500/10 text-rose-400';
+    }
+  }
+
+  const arrow = isUp ? '↑' : (isDown ? '↓' : '–');
+  const formattedPct = Math.abs(percent) >= 1000 ? '>999%' : `${Math.abs(percent).toFixed(1)}%`;
+  const text = isFlat ? `0.0% ${periodLabel}` : `${arrow} ${formattedPct} ${periodLabel}`;
+  const diffSign = diff >= 0 ? '+' : '';
+  const tooltipText = `งวดก่อน: ฿${formatMoney(prev)} (${diffSign}฿${formatMoney(diff)})`;
+
+  return {
+    hasDelta: true,
+    formattedPct,
+    arrow,
+    diff,
+    prev,
+    isGood,
+    isFlat,
+    text,
+    tooltipText,
+    cls,
+  };
+};

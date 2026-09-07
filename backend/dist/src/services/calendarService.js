@@ -27,7 +27,7 @@ class CalendarService {
     upsert(date, day_type_id, note = '') {
         // Convert date to YYYY-MM-DD if in DD/MM/YYYY
         let formattedDate = date;
-        if (formattedDate && formattedDate.includes('/')) {
+        if (formattedDate?.includes('/')) {
             const [d, m, y] = formattedDate.split('/');
             formattedDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         }

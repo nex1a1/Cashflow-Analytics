@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.upsertCalendarDay = exports.getAllCalendarDays = void 0;
 const calendarService_1 = __importDefault(require("../services/calendarService"));
 const calendarValidation_1 = require("../validations/calendarValidation");
-const getAllCalendarDays = (req, res) => {
+const getAllCalendarDays = (req, res, next) => {
     try {
         const rows = calendarService_1.default.getAll();
         const data = rows.map(row => ({
@@ -19,23 +19,18 @@ const getAllCalendarDays = (req, res) => {
         res.json(data);
     }
     catch (err) {
-        console.error('❌ Error in getAllCalendarDays:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getAllCalendarDays = getAllCalendarDays;
-const upsertCalendarDay = (req, res) => {
+const upsertCalendarDay = (req, res, next) => {
     try {
         const validatedData = calendarValidation_1.calendarDaySchema.parse(req.body);
         calendarService_1.default.upsert(validatedData.date, validatedData.type_id, validatedData.note || '');
         res.json({ success: true });
     }
     catch (err) {
-        if (err.name === 'ZodError') {
-            return res.status(400).json({ error: 'Validation Error', details: err.errors });
-        }
-        console.error('❌ Error in upsertCalendarDay:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.upsertCalendarDay = upsertCalendarDay;

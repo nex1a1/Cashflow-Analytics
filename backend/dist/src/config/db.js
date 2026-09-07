@@ -4,27 +4,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
+const node_path_1 = __importDefault(require("node:path"));
+const node_fs_1 = __importDefault(require("node:fs"));
 // Determine base directory depending on whether running in PKG executable mode
 const isPkg = Boolean(process.pkg);
-const baseDir = isPkg ? path_1.default.dirname(process.execPath) : path_1.default.join(__dirname, '../../');
-let DB_PATH = process.env.DB_PATH || path_1.default.join(baseDir, 'data/cashflow.db');
+const baseDir = isPkg ? node_path_1.default.dirname(process.execPath) : node_path_1.default.join(__dirname, '../../');
+let DB_PATH = process.env.DB_PATH || node_path_1.default.join(baseDir, 'data/cashflow.db');
 // Override for Demo Mode
 if (process.env.USE_DEMO_DB === 'true') {
-    const dbDir = path_1.default.dirname(DB_PATH);
-    DB_PATH = path_1.default.join(dbDir, 'cashflow_demo.db');
+    const dbDir = node_path_1.default.dirname(DB_PATH);
+    DB_PATH = node_path_1.default.join(dbDir, 'cashflow_demo.db');
     console.warn('⚠️ ===================================================');
     console.warn('⚠️ WARNING: RUNNING IN DEMO MODE (cashflow_demo.db)');
     console.warn('⚠️ ===================================================');
 }
 // สร้าง directory ถ้ายังไม่มี
-const dbDir = path_1.default.dirname(DB_PATH);
-if (!fs_1.default.existsSync(dbDir)) {
-    fs_1.default.mkdirSync(dbDir, { recursive: true });
+const dbDir = node_path_1.default.dirname(DB_PATH);
+if (!node_fs_1.default.existsSync(dbDir)) {
+    node_fs_1.default.mkdirSync(dbDir, { recursive: true });
 }
 function parseSqlValues(cleanSql) {
-    const match = cleanSql.match(/VALUES\s*\(([^)]+)\)/i);
+    const match = /VALUES\s*\(([^)]+)\)/i.exec(cleanSql);
     if (!match)
         return [];
     const raw = match[1];
@@ -79,7 +79,7 @@ function formatTransactionMutation(clean) {
         }
     }
     if (/UPDATE transactions SET is_deleted = 1/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         const shortId = idMatch ? idMatch[1].substring(0, 8) : '';
         return `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${shortId}...)`;
     }
@@ -120,7 +120,7 @@ function formatDayTypeMutation(clean) {
         }
     }
     if (/DELETE FROM day_types/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
@@ -136,7 +136,7 @@ function formatCategoryMutation(clean) {
         }
     }
     if (/DELETE FROM categories/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
@@ -153,7 +153,7 @@ function formatCashflowGroupMutation(clean) {
         }
     }
     if (/DELETE FROM cashflow_groups/i.test(clean)) {
-        const idMatch = clean.match(/WHERE id = '([^']+)'/i);
+        const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         return `🗑️ [กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
@@ -197,7 +197,7 @@ function openDatabase(dbPath) {
         d.pragma('foreign_keys = ON');
     }
     catch (e) {
-        console.warn('⚠️ Could not set DB pragmas:', e.message);
+        console.warn('⚠️ Could not set DB pragmas:', e instanceof Error ? e.message : 'Unknown error');
     }
     return d;
 }

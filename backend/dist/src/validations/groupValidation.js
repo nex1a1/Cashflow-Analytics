@@ -13,4 +13,4 @@ exports.groupSchema = zod_1.z.object({
     color: zod_1.z.string().nullable().optional(),
     icon: zod_1.z.string().nullable().optional(),
     highlightBg: zod_1.z.boolean().or(zod_1.z.number().min(0).max(1)).optional().default(false)
-}).passthrough();
+}).loose();

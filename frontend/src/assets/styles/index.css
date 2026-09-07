@@ -247,4 +247,25 @@ h1, h2, h3, h4, h5, h6 {
 
 .brand-bg-accent-active {
   background-color: #b01e0a !important;
+}
+
+/* Zero-JS Pure CSS Hover Engine for QuickSuggest */
+.sugg-item {
+  border-color: #3e3e3e;
+  background-color: #181818;
+}
+.sugg-item:hover {
+  border-color: rgba(var(--cat-rgb, 203, 213, 225), 0.45);
+  background-color: rgba(var(--cat-rgb, 203, 213, 225), 0.04);
+}
+
+.cat-chip-btn {
+  border-color: #333333;
+  background-color: #181818;
+  color: rgba(203, 213, 225, 0.85);
+}
+.cat-chip-btn:hover {
+  border-color: rgba(var(--chip-rgb, 148, 163, 184), 0.5);
+  background-color: rgba(var(--chip-rgb, 148, 163, 184), 0.08);
+  color: #ffffff;
 }

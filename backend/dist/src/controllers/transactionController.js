@@ -7,7 +7,7 @@ exports.predictCategories = exports.getFrequentItems = exports.searchTransaction
 const transactionService_1 = __importDefault(require("../services/transactionService"));
 const categoryService_1 = __importDefault(require("../services/categoryService"));
 const transactionValidation_1 = require("../validations/transactionValidation");
-const getAllTransactions = (req, res) => {
+const getAllTransactions = (req, res, next) => {
     const { startDate, endDate } = req.query;
     try {
         const rows = transactionService_1.default.getAll(startDate, endDate);
@@ -23,11 +23,11 @@ const getAllTransactions = (req, res) => {
         })));
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getAllTransactions = getAllTransactions;
-const upsertTransactions = (req, res) => {
+const upsertTransactions = (req, res, next) => {
     try {
         const validatedData = transactionValidation_1.upsertTransactionSchema.parse(req.body);
         const items = Array.isArray(validatedData) ? validatedData : [validatedData];
@@ -35,14 +35,11 @@ const upsertTransactions = (req, res) => {
         res.json({ success: true, count: items.length });
     }
     catch (err) {
-        if (err.name === 'ZodError') {
-            return res.status(400).json({ error: 'Validation failed', details: err.errors });
-        }
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.upsertTransactions = upsertTransactions;
-const deleteTransaction = (req, res) => {
+const deleteTransaction = (req, res, next) => {
     const { id } = req.params;
     try {
         const result = transactionService_1.default.delete(id);
@@ -52,42 +49,45 @@ const deleteTransaction = (req, res) => {
         res.json({ success: true });
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.deleteTransaction = deleteTransaction;
-const deleteMonth = (req, res) => {
+const deleteMonth = (req, res, next) => {
     const { isoMonth } = req.params; // Expecting YYYY-MM
     try {
         transactionService_1.default.deleteByMonth(isoMonth);
         res.json({ success: true, message: `Deleted data for ${isoMonth}` });
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.deleteMonth = deleteMonth;
-const resetAllData = (req, res) => {
+const resetAllData = (req, res, next) => {
+    if (req.headers['x-confirm-reset'] !== 'true') {
+        return res.status(400).json({ error: 'Confirmation required. Send X-Confirm-Reset: true header.' });
+    }
     try {
         transactionService_1.default.deleteAll();
         res.json({ success: true, message: 'All data cleared successfully' });
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.resetAllData = resetAllData;
-const getAvailablePeriods = (req, res) => {
+const getAvailablePeriods = (req, res, next) => {
     try {
         const periods = transactionService_1.default.getAvailablePeriods();
         res.json(periods);
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getAvailablePeriods = getAvailablePeriods;
-const searchTransactions = (req, res) => {
+const searchTransactions = (req, res, next) => {
     const { q } = req.query;
     try {
         const rows = transactionService_1.default.search(q || '');
@@ -103,21 +103,21 @@ const searchTransactions = (req, res) => {
         })));
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.searchTransactions = searchTransactions;
-const getFrequentItems = (req, res) => {
+const getFrequentItems = (req, res, next) => {
     try {
         const items = transactionService_1.default.getFrequentItems();
         res.json(items);
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getFrequentItems = getFrequentItems;
-const predictCategories = (req, res) => {
+const predictCategories = (req, res, next) => {
     const { descriptions } = req.body;
     if (!Array.isArray(descriptions)) {
         return res.status(400).json({ error: 'descriptions must be an array' });
@@ -138,7 +138,7 @@ const predictCategories = (req, res) => {
         res.json(predictions);
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.predictCategories = predictCategories;

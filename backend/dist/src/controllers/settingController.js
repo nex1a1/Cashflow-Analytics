@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.upsertSetting = exports.getAllSettings = void 0;
 const settingService_1 = __importDefault(require("../services/settingService"));
 const settingValidation_1 = require("../validations/settingValidation");
-const getAllSettings = (req, res) => {
+const getAllSettings = (req, res, next) => {
     try {
         const rows = settingService_1.default.getAll();
         const settings = {};
@@ -21,21 +21,18 @@ const getAllSettings = (req, res) => {
         res.json(settings);
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getAllSettings = getAllSettings;
-const upsertSetting = (req, res) => {
+const upsertSetting = (req, res, next) => {
     try {
         const { key, value } = settingValidation_1.upsertSettingSchema.parse(req.body);
         settingService_1.default.upsert(key, value);
         res.json({ success: true });
     }
     catch (err) {
-        if (err.name === 'ZodError') {
-            return res.status(400).json({ error: 'Validation failed', details: err.errors });
-        }
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.upsertSetting = upsertSetting;

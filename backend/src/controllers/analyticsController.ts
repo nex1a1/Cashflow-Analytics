@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import analyticsService from '../services/analyticsService';
 
-export const getDashboardAnalytics = (req: Request, res: Response) => {
+export const getDashboardAnalytics = (req: Request, res: Response, next: NextFunction) => {
   const { startDate, endDate, excludeFuture } = req.query as { startDate?: string; endDate?: string; excludeFuture?: string };
   const isExcludeFuture = excludeFuture === 'true';
   try {
@@ -16,8 +16,8 @@ export const getDashboardAnalytics = (req: Request, res: Response) => {
       monthly,
       workLife
     });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    next(err);
   }
 };
 

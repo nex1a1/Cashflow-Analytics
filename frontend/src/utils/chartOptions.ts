@@ -74,7 +74,7 @@ export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', auto
   maxBarThickness: 80,
   barPercentage: 0.6,
   categoryPercentage: 0.8,
-  animation: { duration: 800, easing: 'easeInOutQuart' as const },
+  animation: false as const,
   scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
 });
 
@@ -93,7 +93,7 @@ export const getLineChartOptions = (isDarkMode: boolean, yType = 'linear', autoS
       },
     },
   },
-  animation: { duration: 800, easing: 'easeInOutQuart' as const },
+  animation: false as const,
   scales: getScaleOptions(isDarkMode, true, yType, autoSkip),
 });
 
@@ -110,5 +110,5 @@ export const getDoughnutChartOptions = (isDarkMode: boolean) => ({
       },
     },
   },
-  animation: { animateScale: true, animateRotate: true, duration: 1000 },
+  animation: false as const,
 });

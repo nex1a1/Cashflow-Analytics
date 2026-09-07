@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = __importDefault(require("../config/db"));
-const crypto_1 = __importDefault(require("crypto"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
 class TransactionService {
     getAll(startDate, endDate) {
         let query = `
@@ -47,7 +47,7 @@ class TransactionService {
             // Find a default group (first one available)
             const defaultGroup = db_1.default.prepare("SELECT id FROM cashflow_groups LIMIT 1").get();
             if (defaultGroup) {
-                const id = crypto_1.default.randomUUID();
+                const id = node_crypto_1.default.randomUUID();
                 db_1.default.prepare("INSERT INTO categories (id, name, cashflow_group_id) VALUES (?, ?, ?)")
                     .run(id, name, defaultGroup.id);
                 return id;
@@ -93,7 +93,7 @@ class TransactionService {
         return fuzzy ? fuzzy.category_id : null;
     }
     normalizeDate(dateStr) {
-        if (dateStr && dateStr.includes('/')) {
+        if (dateStr?.includes('/')) {
             const [d, m, y] = dateStr.split('/');
             return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         }
@@ -158,7 +158,7 @@ class TransactionService {
                 const amountSatang = Math.round(tx.amount * 100);
                 const categoryId = this.resolveCategoryId(tx);
                 const allocationType = this.resolveAllocationType(categoryId, tx.allocation_type);
-                stmt.run(tx.id || crypto_1.default.randomUUID(), date, tx.description || '', amountSatang, categoryId, allocationType);
+                stmt.run(tx.id || node_crypto_1.default.randomUUID(), date, tx.description || '', amountSatang, categoryId, allocationType);
             }
         });
         transactionAction(transactions);
@@ -204,7 +204,7 @@ class TransactionService {
         }
         // Sanitize query to avoid FTS5 syntax errors
         const sanitized = raw
-            .replace(/["'*(){}\[\]^:?+\-~]/g, ' ')
+            .replace(/["'*(){}[\]^:?+\-~]/g, ' ')
             .replace(/\b(AND|OR|NOT|NEAR)\b/gi, ' ')
             .trim();
         const tokens = sanitized.split(/\s+/).filter(Boolean);

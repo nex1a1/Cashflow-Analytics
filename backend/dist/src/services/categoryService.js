@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = __importDefault(require("../config/db"));
-const crypto_1 = __importDefault(require("crypto"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
 class CategoryService {
     getAll() {
         return db_1.default.prepare(`
@@ -15,7 +15,7 @@ class CategoryService {
     `).all();
     }
     upsert(category) {
-        const id = category.id || crypto_1.default.randomUUID();
+        const id = category.id || node_crypto_1.default.randomUUID();
         const stmt = db_1.default.prepare(`
       INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id)
       VALUES (?, ?, ?, ?, ?, ?)

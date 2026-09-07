@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardAnalytics = void 0;
 const analyticsService_1 = __importDefault(require("../services/analyticsService"));
-const getDashboardAnalytics = (req, res) => {
+const getDashboardAnalytics = (req, res, next) => {
     const { startDate, endDate, excludeFuture } = req.query;
     const isExcludeFuture = excludeFuture === 'true';
     try {
@@ -21,7 +21,7 @@ const getDashboardAnalytics = (req, res) => {
         });
     }
     catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 exports.getDashboardAnalytics = getDashboardAnalytics;

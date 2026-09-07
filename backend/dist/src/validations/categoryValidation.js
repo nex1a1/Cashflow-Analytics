@@ -9,4 +9,4 @@ exports.categorySchema = zod_1.z.object({
     color: zod_1.z.string().nullable().optional(),
     order_index: zod_1.z.number().int().optional().default(0),
     cashflow_group_id: zod_1.z.string().min(1, "Cashflow Group ID is required")
-}).passthrough();
+}).loose();

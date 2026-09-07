@@ -8,4 +8,4 @@ exports.dayTypeSchema = zod_1.z.object({
     label: zod_1.z.string().min(1, "Label is required"),
     color: zod_1.z.string().nullable().optional(),
     order_index: zod_1.z.number().int().optional().default(0)
-}).passthrough();
+}).loose();

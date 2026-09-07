@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import settingService from '../services/settingService';
 import { upsertSettingSchema } from '../validations/settingValidation';
 
-export const getAllSettings = (req: Request, res: Response) => {
+export const getAllSettings = (req: Request, res: Response, next: NextFunction) => {
     try {
         const rows = settingService.getAll();
         const settings: Record<string, any> = {};
@@ -14,20 +14,17 @@ export const getAllSettings = (req: Request, res: Response) => {
             }
         });
         res.json(settings);
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        next(err);
     }
 };
 
-export const upsertSetting = (req: Request, res: Response) => {
+export const upsertSetting = (req: Request, res: Response, next: NextFunction) => {
     try {
         const { key, value } = upsertSettingSchema.parse(req.body);
         settingService.upsert(key, value);
         res.json({ success: true });
-    } catch (err: any) {
-        if (err.name === 'ZodError') {
-            return res.status(400).json({ error: 'Validation failed', details: err.errors });
-        }
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        next(err);
     }
 };

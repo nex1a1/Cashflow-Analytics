@@ -69,6 +69,8 @@ async function runBuild() {
 
     // Fetch matching Node 18 (ABI 108) better_sqlite3.node binary
     console.log('  📥 Fetching Node 18 (ABI 108) better_sqlite3.node binary...');
+    // ⚠️ CRITICAL: This binary version MUST match the better-sqlite3 version in package.json (currently ^9.4.3)
+    // Both must target Node 18 ABI 108. Mismatched versions WILL cause runtime crashes in the portable .exe
     const tarUrl = 'https://github.com/WiseLibs/better-sqlite3/releases/download/v9.4.3/better-sqlite3-v9.4.3-node-v108-win32-x64.tar.gz';
     const tarPath = path.join(outputDir, 'node108.tar.gz');
     await downloadFile(tarUrl, tarPath);
