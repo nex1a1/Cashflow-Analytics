@@ -2,9 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'node:path';
 import fs from 'node:fs';
 
-// Determine base directory depending on whether running in PKG executable mode
-const isPkg = Boolean((process as unknown as Record<string, unknown>).pkg);
-const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
+const baseDir = path.join(__dirname, '../../');
 let DB_PATH = process.env.DB_PATH || path.join(baseDir, 'data/cashflow.db');
 
 // Override for Demo Mode

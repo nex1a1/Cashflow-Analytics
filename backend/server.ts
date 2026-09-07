@@ -3,7 +3,6 @@ import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
-import { exec } from 'child_process';
 import { initSchema } from './src/models/schema';
 import apiRoutes from './src/routes/api';
 import backupService from './src/services/backupService';
@@ -26,34 +25,15 @@ backupService.createBackup().catch(err => {
 // Routes
 app.use('/api', apiRoutes);
 
-// Static Frontend Asset Serving
-const isPkg = Boolean((process as any).pkg);
-const execDir = isPkg ? path.dirname(process.execPath) : process.cwd();
-
-const staticDirs = [
-  path.join(__dirname, 'frontend_dist'),
-  path.join(__dirname, '../frontend/dist'),
-  path.join(execDir, 'frontend_dist'),
-  path.join(process.cwd(), 'frontend_dist')
-];
-
-let activeStaticDir = staticDirs.find(d => {
-  try {
-    return fs.existsSync(d) && fs.existsSync(path.join(d, 'index.html'));
-  } catch (e) {
-    return false;
-  }
-});
-
-if (activeStaticDir) {
-  console.log(`🌐 Serving Web Client from: ${activeStaticDir}`);
-  app.use(express.static(activeStaticDir));
+// Static Frontend Asset Serving (Production Build)
+const frontendDist = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'))) {
+  console.log(`🌐 Serving Web Client from: ${frontendDist}`);
+  app.use(express.static(frontendDist));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(activeStaticDir!, 'index.html'));
+    res.sendFile(path.join(frontendDist, 'index.html'));
   });
-} else {
-  console.warn('⚠️ Warning: Web Client static directory not found!');
 }
 
 // Global Error Handler
@@ -75,21 +55,9 @@ app.listen(PORT, () => {
   console.log('🦈 CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
   console.log('====================================================================');
   console.log(`[STATUS] 🟢 Server Active  : ${serverUrl}`);
-  if (activeStaticDir) {
-    console.log(`[STATUS] 🟢 Web UI Loaded   : Integrated (Single Port)`);
-  }
   console.log('--------------------------------------------------------------------');
-  console.log('  Shortcuts: [O] Re-open Browser  |  [B] Manual Backup  |  [Q] Exit');
+  console.log('  Shortcuts: [B] Manual Backup  |  [Q] Exit');
   console.log('====================================================================\n');
-
-  // Auto open browser in Windows environment
-  if (process.env.NO_AUTO_OPEN !== 'true') {
-    const startCmd = process.platform === 'win32' ? `start ${serverUrl}` :
-                     process.platform === 'darwin' ? `open ${serverUrl}` : `xdg-open ${serverUrl}`;
-    exec(startCmd, (err) => {
-      if (!err) console.log(`🚀 Auto-opened browser at ${serverUrl}`);
-    });
-  }
 });
 
 // Interactive terminal shortcut listener
@@ -100,12 +68,7 @@ if (process.stdin.isTTY) {
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', (key: string) => {
       const k = key.toLowerCase();
-      if (k === 'o') {
-        const startCmd = process.platform === 'win32' ? `start ${serverUrl}` :
-                         process.platform === 'darwin' ? `open ${serverUrl}` : `xdg-open ${serverUrl}`;
-        exec(startCmd);
-        console.log(`\n🌐 Opening browser at ${serverUrl}...`);
-      } else if (k === 'b') {
+      if (k === 'b') {
         console.log('\n📦 Triggering manual database backup...');
         backupService.createBackup()
           .then(data => console.log('✅ Backup result:', data))

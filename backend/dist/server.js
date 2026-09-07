@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const child_process_1 = require("child_process");
 const schema_1 = require("./src/models/schema");
 const api_1 = __importDefault(require("./src/routes/api"));
 const backupService_1 = __importDefault(require("./src/services/backupService"));
@@ -24,34 +23,16 @@ backupService_1.default.createBackup().catch(err => {
 });
 // Routes
 app.use('/api', api_1.default);
-// Static Frontend Asset Serving
-const isPkg = Boolean(process.pkg);
-const execDir = isPkg ? path_1.default.dirname(process.execPath) : process.cwd();
-const staticDirs = [
-    path_1.default.join(__dirname, 'frontend_dist'),
-    path_1.default.join(__dirname, '../frontend/dist'),
-    path_1.default.join(execDir, 'frontend_dist'),
-    path_1.default.join(process.cwd(), 'frontend_dist')
-];
-let activeStaticDir = staticDirs.find(d => {
-    try {
-        return fs_1.default.existsSync(d) && fs_1.default.existsSync(path_1.default.join(d, 'index.html'));
-    }
-    catch (e) {
-        return false;
-    }
-});
-if (activeStaticDir) {
-    console.log(`🌐 Serving Web Client from: ${activeStaticDir}`);
-    app.use(express_1.default.static(activeStaticDir));
+// Static Frontend Asset Serving (Production Build)
+const frontendDist = path_1.default.join(__dirname, '../frontend/dist');
+if (fs_1.default.existsSync(frontendDist) && fs_1.default.existsSync(path_1.default.join(frontendDist, 'index.html'))) {
+    console.log(`🌐 Serving Web Client from: ${frontendDist}`);
+    app.use(express_1.default.static(frontendDist));
     app.get('*', (req, res, next) => {
         if (req.path.startsWith('/api'))
             return next();
-        res.sendFile(path_1.default.join(activeStaticDir, 'index.html'));
+        res.sendFile(path_1.default.join(frontendDist, 'index.html'));
     });
-}
-else {
-    console.warn('⚠️ Warning: Web Client static directory not found!');
 }
 // Global Error Handler
 app.use((err, _req, res, _next) => {
@@ -70,21 +51,9 @@ app.listen(PORT, () => {
     console.log('🦈 CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
     console.log('====================================================================');
     console.log(`[STATUS] 🟢 Server Active  : ${serverUrl}`);
-    if (activeStaticDir) {
-        console.log(`[STATUS] 🟢 Web UI Loaded   : Integrated (Single Port)`);
-    }
     console.log('--------------------------------------------------------------------');
-    console.log('  Shortcuts: [O] Re-open Browser  |  [B] Manual Backup  |  [Q] Exit');
+    console.log('  Shortcuts: [B] Manual Backup  |  [Q] Exit');
     console.log('====================================================================\n');
-    // Auto open browser in Windows environment
-    if (process.env.NO_AUTO_OPEN !== 'true') {
-        const startCmd = process.platform === 'win32' ? `start ${serverUrl}` :
-            process.platform === 'darwin' ? `open ${serverUrl}` : `xdg-open ${serverUrl}`;
-        (0, child_process_1.exec)(startCmd, (err) => {
-            if (!err)
-                console.log(`🚀 Auto-opened browser at ${serverUrl}`);
-        });
-    }
 });
 // Interactive terminal shortcut listener
 if (process.stdin.isTTY) {
@@ -94,13 +63,7 @@ if (process.stdin.isTTY) {
         process.stdin.setEncoding('utf8');
         process.stdin.on('data', (key) => {
             const k = key.toLowerCase();
-            if (k === 'o') {
-                const startCmd = process.platform === 'win32' ? `start ${serverUrl}` :
-                    process.platform === 'darwin' ? `open ${serverUrl}` : `xdg-open ${serverUrl}`;
-                (0, child_process_1.exec)(startCmd);
-                console.log(`\n🌐 Opening browser at ${serverUrl}...`);
-            }
-            else if (k === 'b') {
+            if (k === 'b') {
                 console.log('\n📦 Triggering manual database backup...');
                 backupService_1.default.createBackup()
                     .then(data => console.log('✅ Backup result:', data))

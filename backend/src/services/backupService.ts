@@ -16,8 +16,7 @@ export interface BackupFileInfo {
 
 class BackupService {
   private getBackupDir(): string {
-    const isPkg = Boolean((process as any).pkg);
-    const baseDir = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '../../');
+    const baseDir = path.join(__dirname, '../../');
     return path.join(baseDir, 'backups');
   }
 

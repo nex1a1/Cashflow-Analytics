@@ -6,9 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const node_path_1 = __importDefault(require("node:path"));
 const node_fs_1 = __importDefault(require("node:fs"));
-// Determine base directory depending on whether running in PKG executable mode
-const isPkg = Boolean(process.pkg);
-const baseDir = isPkg ? node_path_1.default.dirname(process.execPath) : node_path_1.default.join(__dirname, '../../');
+const baseDir = node_path_1.default.join(__dirname, '../../');
 let DB_PATH = process.env.DB_PATH || node_path_1.default.join(baseDir, 'data/cashflow.db');
 // Override for Demo Mode
 if (process.env.USE_DEMO_DB === 'true') {
