@@ -7,13 +7,14 @@ import { Category, DayType } from '../types';
 
 function extractUniqueDescriptions(parsedRows: string[][], isCsvLong: boolean, headers: string[]): Set<string> {
   const uniqueDescriptions = new Set<string>();
+  const h1 = (headers[1] || '').toLowerCase();
   for (let i = 1; i < parsedRows.length; i++) {
     const row = parsedRows[i];
     if (row.length < 2) continue;
     let desc = '';
     if (isCsvLong) {
-      if (headers[1] === 'ชนิดวัน' && row.length >= 6) desc = row[4];
-      else if (headers[1] === 'ประเภท' && row.length >= 5) desc = row[3];
+      if ((headers[1] === 'ชนิดวัน' || h1 === 'daytype' || h1 === 'day_type') && row.length >= 6) desc = row[4];
+      else if ((headers[1] === 'ประเภท' || h1 === 'type') && row.length >= 5) desc = row[3];
       else desc = row[2];
     } else {
       desc = row[row.length - 1];
@@ -45,14 +46,18 @@ function parseLongCsvRow(row: string[], headers: string[], context: any) {
   let amtStr = '';
   let typeStr = 'รายจ่าย';
 
-  if (headers[1] === 'ชนิดวัน' && row.length >= 6) {
+  const h1 = (headers[1] || '').toLowerCase();
+  const isDayType = headers[1] === 'ชนิดวัน' || h1 === 'daytype' || h1 === 'day_type';
+  const isType = headers[1] === 'ประเภท' || h1 === 'type';
+
+  if (isDayType && row.length >= 6) {
     const typeId = getOrCreateDayType(row[1]);
     if (typeId) newDayTypes[dateStr] = typeId;
     typeStr = row[2];
     catName = row[3];
     desc = row[4];
     amtStr = row[5];
-  } else if (headers[1] === 'ประเภท' && row.length >= 5) {
+  } else if (isType && row.length >= 5) {
     typeStr = row[1];
     catName = row[2];
     desc = row[3];
@@ -173,8 +178,10 @@ function parseImportRows(parsedRows: string[][], headers: string[], isCsvLong: b
   for (let i = 1; i < parsedRows.length; i++) {
     const row = parsedRows[i];
     if (row.length < 2) continue;
-    const dateStr = row[0];
-    if (!dateStr?.includes('/')) continue;
+    const dateStr = row[0]?.trim();
+    if (!dateStr) continue;
+    const isValidDate = dateStr.includes('/') || /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    if (!isValidDate) continue;
 
     const rowContext = { ...baseContext, dateStr };
 
@@ -231,9 +238,11 @@ export default function useImportCSV({
         }
 
         const headers = parsedRows[0];
+        const h1 = (headers[1] || '').toLowerCase();
         const isCsvLong =
           headers.length >= 4 &&
-          (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน');
+          (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน' ||
+           h1 === 'daytype' || h1 === 'day_type' || h1 === 'type' || h1 === 'category');
         const uniqueDescriptions = extractUniqueDescriptions(parsedRows, isCsvLong, headers);
         const predictions = await fetchSharkBrainPredictions(uniqueDescriptions);
 

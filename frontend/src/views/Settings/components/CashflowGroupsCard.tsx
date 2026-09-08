@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, Lock, AlertTriangle, Grid } from 'lucide-react'
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
+import DebouncedInput from './DebouncedInput';
 
 const getAllocBadgeCls = (allocationType: string) => {
   if (allocationType === 'need') {
@@ -65,7 +66,7 @@ const CashflowGroupsCard = memo(({
 
                 <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} />
 
-                <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength={2}
+                <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength={8}
                   className={`w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-white focus:border-[#da291c] focus:shadow-none'
                   }`} title="ไอคอน" placeholder="✨" />
@@ -93,16 +94,20 @@ const CashflowGroupsCard = memo(({
                   <div className="w-[80px] shrink-0" />
                 )}
 
-                <input type="text" value={group.name} onChange={e => handleChangeCashflowGroup(group.id, 'name', e.target.value)}
+                <DebouncedInput
+                  value={group.name}
+                  onDebouncedChange={val => handleChangeCashflowGroup(group.id, 'name', val)}
                   className={`flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] focus:shadow-none placeholder-[#555555]'
-                  }`} placeholder="ชื่อคอลัมน์" />
+                  }`}
+                  placeholder="ชื่อคอลัมน์"
+                />
 
                 <div className="flex items-center justify-end w-[32px] shrink-0">
                   {txCount > 0 && (
-                    <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 leading-none rounded-none tabular-nums ${
+                    <span className={`text-[9px] font-mono font-black px-2 py-0.5 leading-none rounded-full tabular-nums ${
                       'bg-[#121212] text-[#888888] border border-[#3e3e3e]'
-                    }`} title={`มี ${txCount} รายการในกลุ่มนี้`}>
+                    }`} title={`มี ${txCount} รายการในกลุ่มนี้ (ในมุมมองปัจจุบัน)`}>
                       {txCount}
                     </span>
                   )}

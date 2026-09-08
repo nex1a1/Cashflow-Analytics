@@ -36,7 +36,6 @@ function QuickSuggest({
   className = "",
   cashflowGroups = []
 }: QuickSuggestProps) {
-  const dm = true;
   const [searchQuery, setSearchQuery] = useState('');
   
   // Local category filter array for multi-category selection
@@ -453,7 +452,7 @@ function QuickSuggest({
               {quickSuggestions.map((s, idx) => {
                 const catObj = catLookup[s.categoryId] || catLookup[s.categoryName];
                 const catColor = catObj?.color || '#cbd5e1';
-                const bgAlpha = dm ? 0.2 : 0.15;
+                const bgAlpha = 0.2;
                 
                 // Allocation Bar Color
                 const allocColor = (s.allocation_type && ALLOC_COLORS[s.allocation_type]) || '#34d399';

@@ -1,27 +1,9 @@
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import ColorPicker from './ColorPicker';
+import DebouncedInput from './DebouncedInput';
 import { Category, CashflowGroup } from '../../../types';
-
-interface AutoFocusInputProps {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
-  placeholder?: string;
-  isNew?: boolean;
-}
-
-function AutoFocusInput({ value, onChange, className, placeholder, isNew }: AutoFocusInputProps) {
-  const ref = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
-    if (isNew && ref.current) {
-      ref.current.focus();
-      ref.current.select();
-    }
-  }, [isNew]);
-  return <input ref={ref} type="text" value={value} onChange={onChange} className={className} placeholder={placeholder} />;
-}
 
 export interface CategoryRowProps {
   cat: Category;
@@ -96,15 +78,15 @@ const CategoryRow = memo(({
         type="text"
         value={cat.icon || ''}
         onChange={e => onChange(cat.id, 'icon', e.target.value)}
-        maxLength={2}
+        maxLength={8}
         className={iconCls}
         title="ไอคอน"
       />
 
-      <AutoFocusInput
+      <DebouncedInput
         isNew={isNew}
         value={cat.name || ''}
-        onChange={e => onChange(cat.id, 'name', e.target.value)}
+        onDebouncedChange={val => onChange(cat.id, 'name', val)}
         className={inputCls}
         placeholder={isIncome ? 'ชื่อรายรับ' : 'ชื่อรายจ่าย'}
       />

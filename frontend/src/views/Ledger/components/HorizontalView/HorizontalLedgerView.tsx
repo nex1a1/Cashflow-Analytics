@@ -22,7 +22,7 @@ const parseYearMonth = (dateStr: string) => {
 
   if (dateStr.includes('-')) {
     const parts = dateStr.split('-');
-    if (parts.length === 3) {
+    if (parts.length >= 2) {
       year = Number.parseInt(parts[0], 10);
       monthIdx = Number.parseInt(parts[1], 10) - 1;
     }
@@ -52,6 +52,8 @@ interface HorizontalLedgerViewProps {
   dayTypeConfig?: DayType[];
   allDates?: string[];
   filterOptions?: HeatmapEngineOptions;
+  clearFilters?: () => void;
+  isFilterActive?: boolean;
 }
 
 export default function HorizontalLedgerView({
@@ -59,7 +61,9 @@ export default function HorizontalLedgerView({
   dayTypes = DEFAULT_DAY_TYPES, 
   dayTypeConfig = DEFAULT_DAY_TYPE_CONFIG, 
   allDates = DEFAULT_ALL_DATES,
-  filterOptions = {}
+  filterOptions = {},
+  clearFilters,
+  isFilterActive = false
 }: HorizontalLedgerViewProps) {
   const dm = true;
   
@@ -117,7 +121,16 @@ export default function HorizontalLedgerView({
           <Inbox className="w-16 h-16 text-[#666666]" />
         </div>
         <p className="text-lg font-black text-[#cbd5e1]">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className="text-sm mt-2 text-[#888888]">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className="text-sm mt-2 mb-4 text-[#888888]">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        {isFilterActive && clearFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="px-4 py-1.5 rounded-none text-xs font-bold border bg-[#303030]/60 border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] hover:text-white cursor-pointer transition-colors font-mono"
+          >
+            ล้างตัวกรองตาราง
+          </button>
+        )}
       </div>
     );
   }
@@ -232,6 +245,7 @@ export default function HorizontalLedgerView({
                 background: bgFoot,
                 borderTop: `1.5px solid ${border2}`,
                 borderRight: `1px solid ${border}`,
+                boxShadow: '2px 0 5px rgba(0,0,0,0.3)',
                 padding: '8px 4px',
                 textAlign: 'center',
                 fontSize: 12,
@@ -279,6 +293,7 @@ export default function HorizontalLedgerView({
                 background: bgFoot,
                 borderTop: `1.5px solid ${border2}`,
                 borderLeft: `1px solid ${border}`,
+                boxShadow: '-2px 0 5px rgba(0,0,0,0.3)',
                 padding: '8px 6px',
               }}>
                 <div style={{

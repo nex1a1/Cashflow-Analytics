@@ -34,57 +34,49 @@ function compareByCategory(a: TransactionDisplay, b: TransactionDisplay, directi
   return direction === 'asc' ? res : -res;
 }
 
+function normalizeDateForSort(d: string): string {
+  if (!d) return '';
+  if (d.includes('-')) return d.replace(/-/g, '');
+  const parts = d.split('/');
+  if (parts.length === 3) return `${parts[2]}${parts[1]}${parts[0]}`;
+  return d;
+}
+
 function compareByDate(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig) {
-  const valA = a.date.split('/').reverse().join('');
-  const valB = b.date.split('/').reverse().join('');
+  const valA = normalizeDateForSort(a.date);
+  const valB = normalizeDateForSort(b.date);
   if (valA === valB) return 0;
   const res = valA.localeCompare(valB);
   const dir = sortConfig.key === 'date' ? sortConfig.direction : 'asc';
   return dir === 'asc' ? res : -res;
 }
 
-function compareByGroup(a: TransactionDisplay, b: TransactionDisplay, direction: 'asc' | 'desc', categories: Category[] = [], cashflowGroups: CashflowGroup[] = []) {
-  let nameA = (a as any).group_name;
-  let nameB = (b as any).group_name;
-  let orderA = 999;
-  let orderB = 999;
+interface CategoryGroupMeta {
+  groupName: string;
+  orderIndex: number;
+}
 
-  if (!nameA || !nameB) {
-    const catA = categories.find(c => c.id === a.category_id || c.name === a.category);
-    const catB = categories.find(c => c.id === b.category_id || c.name === b.category);
-    const grpIdA = catA?.cashflow_group_id || (catA as any)?.cashflowGroup;
-    const grpIdB = catB?.cashflow_group_id || (catB as any)?.cashflowGroup;
-    const grpA = cashflowGroups.find(g => g.id === grpIdA);
-    const grpB = cashflowGroups.find(g => g.id === grpIdB);
-    nameA = nameA || grpA?.name || '';
-    nameB = nameB || grpB?.name || '';
-    orderA = grpA?.order_index ?? 999;
-    orderB = grpB?.order_index ?? 999;
-  } else {
-    const grpA = cashflowGroups.find(g => g.name === nameA);
-    const grpB = cashflowGroups.find(g => g.name === nameB);
-    orderA = grpA?.order_index ?? 999;
-    orderB = grpB?.order_index ?? 999;
-  }
+function compareByGroup(a: TransactionDisplay, b: TransactionDisplay, direction: 'asc' | 'desc', catGroupLookup: Record<string, CategoryGroupMeta>) {
+  const infoA = (a.category_id && catGroupLookup[a.category_id]) || (a.category && catGroupLookup[a.category]) || { groupName: (a as any).group_name || '', orderIndex: 999 };
+  const infoB = (b.category_id && catGroupLookup[b.category_id]) || (b.category && catGroupLookup[b.category]) || { groupName: (b as any).group_name || '', orderIndex: 999 };
 
-  if (orderA !== orderB) {
-    return direction === 'asc' ? orderA - orderB : orderB - orderA;
+  if (infoA.orderIndex !== infoB.orderIndex) {
+    return direction === 'asc' ? infoA.orderIndex - infoB.orderIndex : infoB.orderIndex - infoA.orderIndex;
   }
-  const res = nameA.localeCompare(nameB);
+  const res = infoA.groupName.localeCompare(infoB.groupName);
   return direction === 'asc' ? res : -res;
 }
 
-function comparePrimary(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, categories: Category[], cashflowGroups: CashflowGroup[]) {
+function comparePrimary(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, catGroupLookup: Record<string, CategoryGroupMeta>) {
   if (sortConfig.key === 'amount') return compareByAmount(a, b, sortConfig.direction);
   if (sortConfig.key === 'category') return compareByCategory(a, b, sortConfig.direction);
-  if (sortConfig.key === 'group') return compareByGroup(a, b, sortConfig.direction, categories, cashflowGroups);
+  if (sortConfig.key === 'group') return compareByGroup(a, b, sortConfig.direction, catGroupLookup);
   return compareByDate(a, b, sortConfig);
 }
 
-function compareHierarchyOrder(a: TransactionDisplay, b: TransactionDisplay, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>) {
-  // Use any to bypass if cashflow_group_id is not directly on a/b types
-  const groupAOrder = groupOrderMap[(a as any).cashflow_group_id] ?? 999;
-  const groupBOrder = groupOrderMap[(b as any).cashflow_group_id] ?? 999;
+function compareHierarchyOrder(a: TransactionDisplay, b: TransactionDisplay, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>, catGroupLookup: Record<string, CategoryGroupMeta>) {
+  const groupAOrder = groupOrderMap[(a as any).cashflow_group_id] ?? (a.category_id ? catGroupLookup[a.category_id]?.orderIndex : undefined) ?? 999;
+  const groupBOrder = groupOrderMap[(b as any).cashflow_group_id] ?? (b.category_id ? catGroupLookup[b.category_id]?.orderIndex : undefined) ?? 999;
   if (groupAOrder !== groupBOrder) return groupAOrder - groupBOrder;
 
   const catAOrder = (a.category_id ? catOrderMap[a.category_id] : undefined) ?? 999;
@@ -96,10 +88,10 @@ function compareHierarchyOrder(a: TransactionDisplay, b: TransactionDisplay, gro
   return amtB - amtA;
 }
 
-function compareTransactions(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>, categories: Category[], cashflowGroups: CashflowGroup[]) {
-  const primaryDiff = comparePrimary(a, b, sortConfig, categories, cashflowGroups);
+function compareTransactions(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>, catGroupLookup: Record<string, CategoryGroupMeta>) {
+  const primaryDiff = comparePrimary(a, b, sortConfig, catGroupLookup);
   if (primaryDiff !== 0) return primaryDiff;
-  return compareHierarchyOrder(a, b, groupOrderMap, catOrderMap);
+  return compareHierarchyOrder(a, b, groupOrderMap, catOrderMap, catGroupLookup);
 }
 
 export function useLedgerData(displayTransactions: TransactionDisplay[], filterPeriod: string, searchQuery: string, filters: FilterOptions = {}) {
@@ -119,6 +111,23 @@ export function useLedgerData(displayTransactions: TransactionDisplay[], filterP
     return map;
   }, [filters.cashflowGroups]);
 
+  const catGroupLookup = useMemo(() => {
+    const map: Record<string, CategoryGroupMeta> = {};
+    const groupDict: Record<string, CashflowGroup> = {};
+    (filters.cashflowGroups || []).forEach(g => { groupDict[g.id] = g; });
+    (filters.categories || []).forEach(c => {
+      const gId = c.cashflow_group_id || (c as any).cashflowGroup;
+      const grp = gId ? groupDict[gId] : undefined;
+      const meta: CategoryGroupMeta = {
+        groupName: grp?.name || '',
+        orderIndex: grp?.order_index ?? 999
+      };
+      if (c.id) map[c.id] = meta;
+      if (c.name) map[c.name] = meta;
+    });
+    return map;
+  }, [filters.categories, filters.cashflowGroups]);
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({
       key,
@@ -128,9 +137,9 @@ export function useLedgerData(displayTransactions: TransactionDisplay[], filterP
 
   const sortedTransactions = useMemo(() => {
     return [...displayTransactions].sort((a, b) =>
-      compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap, filters.categories || [], filters.cashflowGroups || [])
+      compareTransactions(a, b, sortConfig, groupOrderMap, catOrderMap, catGroupLookup)
     );
-  }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap, filters.categories, filters.cashflowGroups]);
+  }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap, catGroupLookup]);
 
   const pages = useMemo(() => {
     const result: TransactionDisplay[][] = [];

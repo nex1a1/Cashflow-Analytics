@@ -1,5 +1,7 @@
 import React from 'react';
 import { Briefcase, Coffee, PieChart } from 'lucide-react';
+import { DayOfWeekStat, DayTypeStat, RankedCategory } from '../../utils/calendarPeriodHelpers';
+import { WorkVsRestData } from './PeriodExecutiveHUD';
 
 const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
@@ -431,14 +433,34 @@ function AllocationRhythmCard({ allocationData }: { allocationData: any }) {
   );
 }
 
-export interface TemporalInsightsProps {
-  activeDayTypes: any[];
-  workVsRest: any;
-  dayOfWeekStats?: any[];
-  allocationData: any;
+export interface AllocationBreakdownData {
+  needTotal?: number;
+  wantTotal?: number;
+  savingsTotal?: number;
+  savingsGroupTotal?: number;
+  netSurplus?: number;
+  grandTotal?: number;
+  needPct?: number;
+  wantPct?: number;
+  savingsPct?: number;
+  topNeedCats?: RankedCategory[];
+  topWantCats?: RankedCategory[];
+  rankedCategories?: RankedCategory[];
+  benchmarks?: {
+    needDelta: number;
+    wantDelta: number;
+    savingsDelta: number;
+  };
 }
 
-export default function TemporalInsights({
+export interface TemporalInsightsProps {
+  activeDayTypes: DayTypeStat[];
+  workVsRest?: WorkVsRestData;
+  dayOfWeekStats?: DayOfWeekStat[];
+  allocationData?: AllocationBreakdownData;
+}
+
+const TemporalInsights = React.memo(function TemporalInsights({
   activeDayTypes,
   workVsRest,
   dayOfWeekStats = [],
@@ -455,7 +477,7 @@ export default function TemporalInsights({
     ? dayOfWeekStats.find(d => d.avgExpense === maxDowAvg && d.avgExpense > 0)
     : null;
 
-  const humanInsightText = getHumanInsight(workAvg, restAvg, workVsRest?.ratio);
+  const humanInsightText = getHumanInsight(workAvg, restAvg, workVsRest?.ratio || '1.0');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-stretch">
@@ -471,4 +493,6 @@ export default function TemporalInsights({
       />
     </div>
   );
-}
+});
+
+export default TemporalInsights;

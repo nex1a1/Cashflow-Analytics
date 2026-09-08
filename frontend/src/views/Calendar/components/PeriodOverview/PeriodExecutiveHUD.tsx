@@ -3,6 +3,26 @@ import { DollarSign, Flame, Award, UtensilsCrossed } from 'lucide-react';
 
 const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
+export interface WorkVsRestData {
+  workDays?: number;
+  workTotalExpense?: number;
+  workAvgExpense?: number;
+  restDays?: number;
+  restTotalExpense?: number;
+  restAvgExpense?: number;
+  ratio?: string;
+}
+
+export interface FoodStatsData {
+  totalFoodExpense?: number;
+  foodDailyAvg?: number;
+  foodPctOfExpense?: number;
+  workFoodExpense?: number;
+  restFoodExpense?: number;
+  foodWorkDailyAvg?: number;
+  foodRestDailyAvg?: number;
+}
+
 export interface PeriodExecutiveHUDProps {
   periodIncome: number;
   periodExpense: number;
@@ -16,11 +36,11 @@ export interface PeriodExecutiveHUDProps {
     border: string;
   };
   averageDailyBurn: number;
-  workVsRest: any;
-  foodStats: any;
+  workVsRest?: WorkVsRestData;
+  foodStats?: FoodStatsData;
 }
 
-export default function PeriodExecutiveHUD({
+const PeriodExecutiveHUD = React.memo(function PeriodExecutiveHUD({
   periodIncome,
   periodExpense,
   periodNet,
@@ -165,4 +185,6 @@ export default function PeriodExecutiveHUD({
       </div>
     </div>
   );
-}
+});
+
+export default PeriodExecutiveHUD;

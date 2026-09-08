@@ -328,6 +328,7 @@ interface DatePickerTriggerProps {
   placeholder?: string;
   textMain: string;
   textMuted: string;
+  className?: string;
 }
 
 function DatePickerTrigger({
@@ -338,7 +339,8 @@ function DatePickerTrigger({
   value,
   placeholder,
   textMain,
-  textMuted
+  textMuted,
+  className
 }: DatePickerTriggerProps) {
   if (variant === 'hud') {
     return (
@@ -380,12 +382,12 @@ function DatePickerTrigger({
     <button
       type="button"
       onClick={() => setOpen(!open)}
-      className="w-full px-3 py-2.5 text-sm border rounded-none flex items-center justify-between gap-2 font-medium transition-colors outline-none bg-[#121212] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"
+      className={className || "w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-[#181818] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"}
     >
       <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
         {formatDisplay(value, placeholder)}
       </span>
-      <Calendar className="w-4 h-4 shrink-0 text-[#888888]" />
+      <Calendar className="w-3.5 h-3.5 shrink-0 text-[#888888]" />
     </button>
   );
 }
@@ -402,6 +404,7 @@ export interface DatePickerProps {
   filterPeriod?: string;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: any[];
+  className?: string;
 }
 
 export default function DatePicker({
@@ -415,7 +418,8 @@ export default function DatePicker({
   availableDates = [],
   filterPeriod,
   dayTypes = {},
-  dayTypeConfig = []
+  dayTypeConfig = [],
+  className
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
@@ -608,6 +612,7 @@ export default function DatePicker({
         placeholder={placeholder}
         textMain={textMain}
         textMuted={textMuted}
+        className={className}
       />
 
       {open && (

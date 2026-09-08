@@ -11,15 +11,16 @@ import {
   calculateAllocationBreakdown,
   calculatePeakOutliers
 } from '../../utils/calendarPeriodHelpers';
+import { TransactionDisplay, Category, CashflowGroup, DayType } from '@/types';
 
 export interface PeriodOverviewProps {
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
-  transactions: any[];
-  categories: any[];
-  cashflowGroups: any[];
+  transactions: TransactionDisplay[];
+  categories: Category[];
+  cashflowGroups: CashflowGroup[];
   dayTypes: Record<string, string>;
-  dayTypeConfig: any[];
+  dayTypeConfig: DayType[];
   getFilterLabel: (period?: string) => string;
   goToCurrentMonth: () => void;
   currentMonthStr: string;
@@ -122,13 +123,9 @@ export default function PeriodOverview({
         <button
           onClick={goToCurrentMonth}
           className="px-4 py-2 rounded-none text-xs font-bold bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
-          title="กดแป้นพิมพ์ 'T' เพื่อกลับสู่เดือนปัจจุบัน"
         >
           <CalendarDays className="w-3.5 h-3.5" />
           <span>ไปเดือนปัจจุบัน ({currentMonthLabel})</span>
-          <kbd className="hidden md:inline-block px-1 py-0.2 text-[9px] font-mono bg-black/40 border border-white/20 text-white rounded-none">
-            T
-          </kbd>
         </button>
       </div>
 

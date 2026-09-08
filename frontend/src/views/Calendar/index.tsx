@@ -1,39 +1,68 @@
 // frontend/src/views/Calendar/index.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
 import { hexToRgb } from '../../utils/formatters';
 import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
-import LegendAllocationBlock from './components/LegendAllocationBlock';
+import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem } from './components/LegendAllocationBlock';
 import PeriodOverview from './components/PeriodOverview/index';
-import { CashflowGroup, Category, DayType, TransactionDisplay } from '../../types';
+import {
+  CashflowGroup,
+  Category,
+  DayType,
+  TransactionDisplay,
+  AllocationType,
+  FrequentItem,
+  TransactionPayload
+} from '../../types';
 import { STORAGE_KEYS } from '../../constants';
 
-function resolveAllocationType(t: any, catObj: any, cashflowGroups: CashflowGroup[]) {
+export interface CalendarDayData {
+  inc: number;
+  exp: number;
+  items: TransactionDisplay[];
+  incItems: TransactionDisplay[];
+}
+
+export interface CategoryAllocationAmount {
+  need: number;
+  want: number;
+  savings: number;
+}
+
+function resolveAllocationType(
+  t: TransactionDisplay,
+  catObj: Category | undefined,
+  cashflowGroups: CashflowGroup[]
+): AllocationType {
   if (t.allocation_type) return t.allocation_type;
-  if (!catObj?.cashflowGroup && !catObj?.cashflow_group_id) return 'want';
-  const groupObj = cashflowGroups.find(g => g.id === catObj.cashflowGroup || g.id === catObj.cashflow_group_id);
+  const groupId = catObj?.cashflowGroup || catObj?.cashflow_group_id;
+  if (!groupId) return 'want';
+  const groupObj = cashflowGroups.find(g => g.id === groupId);
   if (groupObj?.type === 'savings') return 'savings';
   return groupObj?.allocation_type || 'want';
 }
 
 function processCalendarTransaction(
-  t: any,
+  t: TransactionDisplay,
   categories: Category[],
   cashflowGroups: CashflowGroup[],
   excludedCategoryIds: Set<string>,
-  dayData: Record<number, any>,
-  catAllocAmounts: Record<string, any>,
+  dayData: Record<number, CalendarDayData>,
+  catAllocAmounts: Record<string, CategoryAllocationAmount>,
   totals: { tInc: number; tExp: number; tNeed: number; tWant: number }
 ) {
-  const txD = Number.parseInt(t.date?.split('-')[2], 10);
+  if (!t.date) return;
+  const dateParts = t.date.split('-');
+  if (dateParts.length < 3) return;
+  const txD = Number.parseInt(dateParts[2], 10);
   if (!dayData[txD]) return;
 
   const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
-  const catId = catObj ? catObj.id : (t.category_id || t.category);
+  const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
   if (excludedCategoryIds.has(catId)) return;
 
-  const amt = Number.parseFloat(t.amount) || 0;
+  const amt = typeof t.amount === 'number' ? t.amount : (Number.parseFloat(String(t.amount)) || 0);
 
   if (catObj?.type === 'income') {
     dayData[txD].inc += amt;
@@ -61,23 +90,23 @@ function processCalendarTransaction(
 }
 
 export interface CalendarViewProps {
-  transactions: any[];
+  transactions: TransactionDisplay[];
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
   rawAvailableMonths: string[];
-  handleOpenAddModal: (date?: string) => void;
-  categories: any[];
-  cashflowGroups: any[];
+  handleOpenAddModal?: (date?: string) => void;
+  categories: Category[];
+  cashflowGroups: CashflowGroup[];
   dayTypes: Record<string, string>;
   handleDayTypeChange: (dateStr: string, val: string) => void;
   dayTypeConfig: DayType[];
   getFilterLabel: (period?: string) => string;
   isReadOnlyView?: boolean;
   handleDeleteTransaction?: (id: string) => void;
-  onSaveTransaction?: (tx: any) => void;
+  onSaveTransaction?: (tx: TransactionPayload) => void | Promise<void>;
   paymentMethods?: any[];
   isLoading: boolean;
-  frequentItems?: any[];
+  frequentItems?: FrequentItem[];
 }
 
 function CalendarView({
@@ -92,17 +121,17 @@ function CalendarView({
   const [legendSortMode, setLegendSortMode] = useState<'structure' | 'amount'>(() => (localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_SORT) as 'structure' | 'amount') || 'structure');
   const [legendLayoutMode, setLegendLayoutMode] = useState<'compact' | 'grouped'>(() => (localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT) as 'compact' | 'grouped') || 'compact');
 
-  const handleSetSortMode = (mode: 'structure' | 'amount') => {
+  const handleSetSortMode = useCallback((mode: 'structure' | 'amount') => {
     setLegendSortMode(mode);
     localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_SORT, mode);
-  };
+  }, []);
 
-  const handleSetLayoutMode = (mode: 'compact' | 'grouped') => {
+  const handleSetLayoutMode = useCallback((mode: 'compact' | 'grouped') => {
     setLegendLayoutMode(mode);
     localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, mode);
-  };
+  }, []);
 
-  const toggleCategory = (catId: string) => {
+  const toggleCategory = useCallback((catId: string) => {
     if (catId === 'CLEAR_ALL') {
       setExcludedCategoryIds(new Set());
       return;
@@ -116,7 +145,7 @@ function CalendarView({
       }
       return next;
     });
-  };
+  }, []);
   
   // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
   const showSkeleton = isLoading && (!transactions || transactions.length === 0) && (!dayTypes || Object.keys(dayTypes).length === 0);
@@ -147,10 +176,10 @@ function CalendarView({
   }, [transactions, y, m]);
 
   // Derive calendar grid data and base aggregates
-  const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts } = useMemo(() => {
-    const dayData: Record<number, any> = {};
+  const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts, maxDailyExpense } = useMemo(() => {
+    const dayData: Record<number, CalendarDayData> = {};
     const totals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0 };
-    const catAllocAmounts: Record<string, any> = {};
+    const catAllocAmounts: Record<string, CategoryAllocationAmount> = {};
     
     for (let i = 1; i <= daysInMonth; i++) {
       dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
@@ -160,12 +189,16 @@ function CalendarView({
       processCalendarTransaction(t, categories, cashflowGroups, excludedCategoryIds, dayData, catAllocAmounts, totals);
     });
 
+    let maxDailyExpense = 0;
     for (let i = 1; i <= daysInMonth; i++) {
-      dayData[i].items.sort((a: any, b: any) => b.amount - a.amount);
-      dayData[i].incItems.sort((a: any, b: any) => b.amount - a.amount);
+      dayData[i].items.sort((a, b) => b.amount - a.amount);
+      dayData[i].incItems.sort((a, b) => b.amount - a.amount);
+      if (dayData[i].exp > maxDailyExpense) {
+        maxDailyExpense = dayData[i].exp;
+      }
     }
     
-    return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts };
+    return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts, maxDailyExpense };
   }, [currentMonthTransactions, daysInMonth, categories, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
@@ -185,13 +218,13 @@ function CalendarView({
 
   // Grouped active categories with totals for the current month
   const groupedLegendData = useMemo(() => {
-    const catsMap = new Map();
+    const catsMap = new Map<string, Category>();
     const catAmounts: Record<string, number> = {};
     
     currentMonthTransactions.forEach(t => {
       const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
-      const amt = Number.parseFloat(t.amount) || 0;
-      const catId = catObj ? catObj.id : (t.category_id || t.category);
+      const amt = typeof t.amount === 'number' ? t.amount : (Number.parseFloat(String(t.amount)) || 0);
+      const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
 
       if (!catsMap.has(catId)) {
         if (catObj) {
@@ -211,16 +244,11 @@ function CalendarView({
 
     const activeCatsArray = Array.from(catsMap.values());
     if (activeCatsArray.length === 0) {
-      return { sortedGroups: [], catAmounts: {} };
+      return { sortedGroups: [] as LegendGroupItem[], catAmounts: {} };
     }
 
-    interface GroupMapEntry {
-      groupObj: any;
-      categories: any[];
-      groupTotal: number;
-    }
-    const groupsMap: Record<string, GroupMapEntry> = {};
-    const getGroupObj = (groupId: any, categoryType: any) => {
+    const groupsMap: Record<string, LegendGroupItem> = {};
+    const getGroupObj = (groupId: string | null | undefined, categoryType: string | undefined) => {
       if (groupId) {
         const found = cashflowGroups.find(g => g.id === groupId);
         if (found) return found;
@@ -251,8 +279,8 @@ function CalendarView({
       groupsMap[groupKey].groupTotal += amt;
     });
 
-    Object.values(groupsMap).forEach((gData: GroupMapEntry) => {
-      gData.categories.sort((a: any, b: any) => {
+    Object.values(groupsMap).forEach((gData: LegendGroupItem) => {
+      gData.categories.sort((a, b) => {
         if (legendSortMode === 'amount') {
           const amtA = catAmounts[a.id] || 0;
           const amtB = catAmounts[b.id] || 0;
@@ -284,18 +312,10 @@ function CalendarView({
   }, [currentMonthTransactions, categories, cashflowGroups, legendSortMode]);
 
   // Derived Allocation details
-  const allocationTotals = useMemo(() => {
-    interface AllocCat {
-      name: string;
-      groupName: string;
-      amount: number;
-      color: string;
-      groupOrder: number;
-      catOrder: number;
-    }
-    const needCats: AllocCat[] = [];
-    const wantCats: AllocCat[] = [];
-    const savingsCats: AllocCat[] = [];
+  const allocationTotals: AllocationTotals = useMemo(() => {
+    const needCats: AllocCatItem[] = [];
+    const wantCats: AllocCatItem[] = [];
+    const savingsCats: AllocCatItem[] = [];
 
     categories.forEach(cat => {
       if (excludedCategoryIds.has(cat.id)) return;
@@ -357,12 +377,16 @@ function CalendarView({
       });
     }
 
-    const sortFn = (a: AllocCat, b: AllocCat) => {
+    const sortFn = (a: AllocCatItem, b: AllocCatItem) => {
       if (legendSortMode === 'amount') {
         return b.amount - a.amount;
       }
-      if (a.groupOrder !== b.groupOrder) return a.groupOrder - b.groupOrder;
-      if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
+      const gA = a.groupOrder ?? 9999;
+      const gB = b.groupOrder ?? 9999;
+      if (gA !== gB) return gA - gB;
+      const cA = a.catOrder ?? 9999;
+      const cB = b.catOrder ?? 9999;
+      if (cA !== cB) return cA - cB;
       return a.name.localeCompare(b.name, 'th');
     };
 
@@ -384,19 +408,21 @@ function CalendarView({
     };
   }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
-  const prevMonth = () => {
+  const prevMonth = useCallback(() => {
     const d = new Date(y, m - 1, 1);
     setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
-  };
-  const nextMonth = () => {
+  }, [y, m, setFilterPeriod]);
+
+  const nextMonth = useCallback(() => {
     const d = new Date(y, m + 1, 1);
     setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
-  };
-  const goToCurrentMonth = () => {
+  }, [y, m, setFilterPeriod]);
+
+  const goToCurrentMonth = useCallback(() => {
     const now = new Date();
     const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     setFilterPeriod(currentMonthStr);
-  };
+  }, [setFilterPeriod]);
 
   const monthNet = monthInc - monthExp;
   const now = new Date();
@@ -447,23 +473,22 @@ function CalendarView({
           hexToRgb={hexToRgb}
           excludedCategoryIds={excludedCategoryIds}
           toggleCategory={toggleCategory}
+          maxDailyExpense={maxDailyExpense}
         />
 
         {/* 2. Legend & Allocation Block */}
-        {groupedLegendData.sortedGroups?.length > 0 && (
-          <LegendAllocationBlock
-            sortedGroups={groupedLegendData.sortedGroups}
-            catAmounts={groupedLegendData.catAmounts}
-            excludedCategoryIds={excludedCategoryIds}
-            toggleCategory={toggleCategory}
-            legendLayoutMode={legendLayoutMode}
-            legendSortMode={legendSortMode}
-            handleSetLayoutMode={handleSetLayoutMode}
-            handleSetSortMode={handleSetSortMode}
-            allocationTotals={allocationTotals}
-            hexToRgb={hexToRgb}
-          />
-        )}
+        <LegendAllocationBlock
+          sortedGroups={groupedLegendData.sortedGroups}
+          catAmounts={groupedLegendData.catAmounts}
+          excludedCategoryIds={excludedCategoryIds}
+          toggleCategory={toggleCategory}
+          legendLayoutMode={legendLayoutMode}
+          legendSortMode={legendSortMode}
+          handleSetLayoutMode={handleSetLayoutMode}
+          handleSetSortMode={handleSetSortMode}
+          allocationTotals={allocationTotals}
+          hexToRgb={hexToRgb}
+        />
       </div>
     );
   }

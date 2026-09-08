@@ -243,7 +243,6 @@ export default function MainLayout() {
         onClose={() => setShowAddModal(false)}
         onSaveBatch={handleSaveBatch}
         categories={categories}
-        transactions={transactions}
         frequentItems={frequentItems}
         defaultDate={addForm.date}
         defaultType={addForm.type}

@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, Lock, CalendarClock } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
+import DebouncedInput from './DebouncedInput';
 import { DayType } from '../../../types';
 
 export interface DayTypesCardProps {
@@ -55,10 +56,9 @@ const DayTypesCard = memo(({
                 </button>
               </div>
 
-              <input
-                type="text"
+              <DebouncedInput
                 value={dt.label}
-                onChange={e => handleDayTypeConfigChange(dt.id, 'label', e.target.value)}
+                onDebouncedChange={val => handleDayTypeConfigChange(dt.id, 'label', val)}
                 className="flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm bg-[#121212] border-[#3e3e3e] text-[#e0e0e0] focus:border-[#da291c] focus:shadow-none placeholder-[#555555]"
                 placeholder="ชื่อชนิดวัน"
               />

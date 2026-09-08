@@ -23,20 +23,20 @@ const DangerZone = memo(({ transactions, handleDeleteAllData }: DangerZoneProps)
               ล้างข้อมูลทั้งหมด (Factory Reset)
             </h3>
             <p className="text-xs leading-relaxed font-semibold text-[#888888]">
-              จะลบ <strong className="text-[#da291c] mx-1">รายการบัญชีทั้งหมด</strong>,{' '}
+              จะลบ <strong className="text-[#da291c] mx-1">รายการบัญชีทั้งหมดในระบบ</strong> (ทุกเดือนย้อนหลัง),{' '}
               <strong className="text-[#da291c] mx-1">ประวัติปฏิทิน</strong>{' '}และ{' '}
               <strong className="text-[#da291c] mx-1">รีเซ็ตการตั้งค่า</strong>กลับเป็นค่าเริ่มต้น
               {' '}—{' '}
               {transactions?.length > 0 && (
-                <span className="font-black mr-1 text-amber-400">
-                  มีข้อมูล {transactions.length} รายการที่จะหายไป
+                <span className="font-semibold mr-1 text-[#888888]">
+                  (รวมถึง <span className="font-mono font-black text-amber-400 tabular-nums">{transactions.length}</span> รายการในมุมมองปัจจุบัน)
                 </span>
               )}
               <span className="font-bold text-[#da291c] ml-1">ไม่สามารถกู้คืนได้</span>
             </p>
           </div>
           <div className="shrink-0">
-            <ConfirmDeleteButton onConfirm={() => handleDeleteAllData({ setShowToast: () => {} })} size="lg" />
+            <ConfirmDeleteButton onConfirm={() => handleDeleteAllData()} size="lg" />
           </div>
         </div>
       </SectionCard>

@@ -312,6 +312,8 @@ function LedgerView({
         displayTransactions={displayTransactions}
         monthTransactions={monthTransactions}
         horizontalFilters={horizontalFilters}
+        clearHorizontalFilters={clearHorizontalFilters}
+        isHorizontalFilterActive={isHorizontalFilterActive}
         isFilterActive={isFilterActive}
         clearFilters={clearFilters}
         viewMode={viewMode}

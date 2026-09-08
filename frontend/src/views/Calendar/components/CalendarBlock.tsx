@@ -22,7 +22,7 @@ export interface CalendarBlockProps {
   prevMonth: () => void;
   nextMonth: () => void;
   goToCurrentMonth: () => void;
-  calendarData: Record<string, {
+  calendarData: Record<number, {
     exp: number;
     inc: number;
     items: TransactionDisplay[];
@@ -36,9 +36,10 @@ export interface CalendarBlockProps {
   hexToRgb: (hex: string | null | undefined) => string;
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
+  maxDailyExpense?: number;
 }
 
-export default function CalendarBlock({
+const CalendarBlock = React.memo(function CalendarBlock({
   y,
   m,
   daysInMonth,
@@ -58,7 +59,8 @@ export default function CalendarBlock({
   onSelectDate,
   hexToRgb,
   excludedCategoryIds,
-  toggleCategory
+  toggleCategory,
+  maxDailyExpense: propMaxDailyExpense
 }: CalendarBlockProps): React.ReactElement {
   const thaiMonths = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -69,7 +71,9 @@ export default function CalendarBlock({
   const today = new Date();
 
   // Peak daily expense calculation for the month (used by heatmap glow in cells)
-  const maxDailyExpense = Object.values(calendarData || {}).reduce((max, d) => Math.max(max, d.exp || 0), 0);
+  const maxDailyExpense = propMaxDailyExpense !== undefined
+    ? propMaxDailyExpense
+    : Object.values(calendarData || {}).reduce((max, d) => Math.max(max, d.exp || 0), 0);
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
   const suffixBlankKeys = [
@@ -223,4 +227,6 @@ export default function CalendarBlock({
       </div>
     </div>
   );
-}
+});
+
+export default CalendarBlock;

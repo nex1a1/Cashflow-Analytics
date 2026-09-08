@@ -10,6 +10,8 @@ export interface LedgerContentAreaProps {
   displayTransactions: TransactionDisplay[];
   monthTransactions: TransactionDisplay[];
   horizontalFilters: HeatmapEngineOptions;
+  clearHorizontalFilters?: () => void;
+  isHorizontalFilterActive?: boolean;
   isFilterActive: boolean;
   clearFilters: () => void;
   viewMode: 'list' | 'horizontal';
@@ -40,6 +42,8 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
   displayTransactions,
   monthTransactions,
   horizontalFilters,
+  clearHorizontalFilters,
+  isHorizontalFilterActive,
   isFilterActive,
   clearFilters,
   viewMode,
@@ -75,6 +79,8 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
           dayTypeConfig={dayTypeConfig}
           allDates={allDatesInPeriod}
           filterOptions={horizontalFilters}
+          clearFilters={clearHorizontalFilters}
+          isFilterActive={isHorizontalFilterActive}
         />
       );
     }

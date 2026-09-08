@@ -152,7 +152,6 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
   }, [dayTypeConfig.length, triggerToast]);
 
   const handleDeleteDayType = useCallback(async (id: string) => {
-    if (!window.confirm('ยืนยันการลบชนิดวันนี้?')) return;
     try {
       await dayTypeService.deleteById(id);
       setDayTypeConfig(prev => prev.filter(d => d.id !== id));
@@ -181,11 +180,13 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     }
   }, [dayTypeConfig, triggerToast]);
 
-  const handleUpdateCashflowGroup = useCallback(async (group: any) => {
+  const handleUpdateCashflowGroup = useCallback(async (group: any, options?: { silent?: boolean }) => {
     try {
       await groupService.save(group);
       await loadGroups();
-      triggerToast('อัปเดตกลุ่มสำเร็จ', 'success');
+      if (!options?.silent) {
+        triggerToast('อัปเดตกลุ่มสำเร็จ', 'success');
+      }
     } catch (err: any) {
       triggerToast('ไม่สามารถอัปเดตกลุ่มได้: ' + err.message, 'error');
       throw err;
@@ -218,7 +219,6 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       triggerToast('ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่', 'error');
       return;
     }
-    if (!window.confirm('ยืนยันการลบกลุ่มนี้?')) return;
     try {
       await groupService.deleteById(id);
       await loadGroups();

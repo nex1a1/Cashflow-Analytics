@@ -1,10 +1,11 @@
 import React from 'react';
 import { CalendarDays, ChevronRight, TableProperties } from 'lucide-react';
+import { MonthlyMatrix } from '../../utils/calendarPeriodHelpers';
 
 const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 export interface MultiMonthGridProps {
-  displayMonths: any[];
+  displayMonths: MonthlyMatrix[];
   currentMonthStr: string;
   setFilterPeriod: (period: string) => void;
   goToCurrentMonth: () => void;
@@ -12,7 +13,7 @@ export interface MultiMonthGridProps {
   onSelectDate?: (dateStr: string) => void;
 }
 
-export default function MultiMonthGrid({
+const MultiMonthGrid = React.memo(function MultiMonthGrid({
   displayMonths,
   currentMonthStr,
   setFilterPeriod,
@@ -156,7 +157,7 @@ export default function MultiMonthGrid({
                     mObj.isSurplus ? 'text-yellow-400' : 'text-rose-400'
                   }`}
                 >
-                  {mObj.isSurplus ? '+' : ''}{formatVal(mObj.net)}
+                  {mObj.isSurplus ? '+' : ''}{formatVal(mObj.net ?? 0)}
                 </td>
               ))}
               <td className={`p-2 px-3 text-right font-black tabular-nums bg-[#181818] ${
@@ -190,4 +191,6 @@ export default function MultiMonthGrid({
       </div>
     </div>
   );
-}
+});
+
+export default MultiMonthGrid;

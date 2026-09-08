@@ -9,8 +9,54 @@ const formatValue = (val: number) => {
   });
 };
 
+export interface LegendCategoryItem {
+  id: string;
+  name: string;
+  color?: string | null;
+  type?: string;
+  order_index?: number;
+  cashflowGroup?: string | null;
+  cashflow_group_id?: string | null;
+}
+
+export interface LegendGroupItem {
+  groupObj: {
+    id: string;
+    name: string;
+    type: string;
+    icon?: string | null;
+    color?: string | null;
+    order_index?: number;
+  };
+  categories: LegendCategoryItem[];
+  groupTotal: number;
+}
+
+export interface AllocCatItem {
+  id?: string;
+  name: string;
+  groupName: string;
+  amount: number;
+  color: string;
+  groupOrder?: number;
+  catOrder?: number;
+}
+
+export interface AllocationTotals {
+  need: number;
+  want: number;
+  savings: number;
+  totalExpense: number;
+  needPct: number;
+  wantPct: number;
+  savingsPct: number;
+  needCats: AllocCatItem[];
+  wantCats: AllocCatItem[];
+  savingsCats: AllocCatItem[];
+}
+
 export interface LegendAllocationBlockProps {
-  sortedGroups: any[];
+  sortedGroups: LegendGroupItem[];
   catAmounts: Record<string, number>;
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
@@ -18,12 +64,12 @@ export interface LegendAllocationBlockProps {
   legendSortMode: 'structure' | 'amount';
   handleSetLayoutMode: (mode: 'compact' | 'grouped') => void;
   handleSetSortMode: (mode: 'structure' | 'amount') => void;
-  allocationTotals: any;
+  allocationTotals: AllocationTotals;
   hexToRgb: (hex: string | null | undefined) => string;
 }
 
 interface CategoryLegendSectionProps {
-  sortedGroups: any[];
+  sortedGroups: LegendGroupItem[];
   catAmounts: Record<string, number>;
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
@@ -34,7 +80,7 @@ interface CategoryLegendSectionProps {
   hexToRgb: (hex: string | null | undefined) => string;
 }
 
-export default function LegendAllocationBlock({
+const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
   sortedGroups,
   catAmounts,
   excludedCategoryIds,
@@ -46,6 +92,16 @@ export default function LegendAllocationBlock({
   allocationTotals,
   hexToRgb
 }: LegendAllocationBlockProps): React.ReactElement {
+  if (!sortedGroups || sortedGroups.length === 0) {
+    return (
+      <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4 text-center select-none">
+        <p className="text-xs font-bold text-slate-500 font-mono tracking-wider uppercase">
+          ไม่มีรายการธุรกรรมในเดือนนี้ (NO TRANSACTIONS IN THIS MONTH)
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-3.5 px-4">
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
@@ -71,7 +127,9 @@ export default function LegendAllocationBlock({
       </div>
     </div>
   );
-}
+});
+
+export default LegendAllocationBlock;
 
 // ── Sub-sections (Internal to keep LegendAllocationBlock cohesive) ──
 

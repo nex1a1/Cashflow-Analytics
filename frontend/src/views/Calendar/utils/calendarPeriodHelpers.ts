@@ -197,6 +197,10 @@ function getRangePeriodMonths(filterPeriod: string): MonthEntry[] {
  */
 export function getMonthsForPeriod(filterPeriod?: string | null, transactions: TransactionDisplay[] = []): MonthEntry[] {
   if (!filterPeriod || filterPeriod === 'ALL') return getAllPeriodMonths(transactions);
+  if (filterPeriod.match(/^\d{4}-\d{2}$/)) {
+    const [y, m] = filterPeriod.split('-');
+    return [createMonthEntry(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, false)];
+  }
   if (filterPeriod.match(/^\d{4}$/)) return getYearPeriodMonths(filterPeriod);
   if (filterPeriod.match(/^\d{4}-H[12]$/)) return getHalfYearPeriodMonths(filterPeriod);
   if (filterPeriod.match(/^\d{4}-Q[1-4]$/)) return getQuarterPeriodMonths(filterPeriod);
@@ -437,7 +441,16 @@ export function isFoodCategory(catObj: any, groupObj: any, tx?: any): boolean {
 
   // Match keywords in group or category
   if (groupName.includes('อาหาร') || groupName.includes('กิน') || groupName.includes('food') || groupName.includes('dining')) return true;
-  if (catName.includes('อาหาร') || catName.includes('กิน') || catName.includes('food') || catName.includes('เครื่องดื่ม') || catName.includes('กาแฟ') || catName.includes('cafe') || catName.includes('ขนม')) return true;
+  if (
+    catName.includes('อาหาร') ||
+    catName.includes('กิน') ||
+    catName.includes('food') ||
+    catName.includes('เครื่องดื่ม') ||
+    catName.includes('กาแฟ') ||
+    catName.includes('cafe') ||
+    catName.includes('คาเฟ่') ||
+    catName.includes('ขนม')
+  ) return true;
   return false;
 }
 

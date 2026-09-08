@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, ExternalLink, ShieldCheck, Zap } from 'lucide-react';
+import { FormattedOutlierDay } from '../../utils/calendarPeriodHelpers';
 
 const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
@@ -10,7 +11,7 @@ function getRankBadgeStyle(idx: number) {
 }
 
 export interface PeakOutlierDaysProps {
-  peakOutliers?: any[];
+  peakOutliers?: FormattedOutlierDay[];
   rentTransactionsCount?: number;
   excludeRent?: boolean;
   setExcludeRent: React.Dispatch<React.SetStateAction<boolean>> | ((val: boolean | ((prev: boolean) => boolean)) => void);
@@ -18,7 +19,7 @@ export interface PeakOutlierDaysProps {
   setFilterPeriod: (period: string) => void;
 }
 
-export default function PeakOutlierDays({
+const PeakOutlierDays = React.memo(function PeakOutlierDays({
   peakOutliers = [],
   rentTransactionsCount = 0,
   excludeRent = true,
@@ -114,9 +115,9 @@ export default function PeakOutlierDays({
                     <span
                       className="px-1.5 py-0.2 text-[9px] font-bold border rounded-none"
                       style={{
-                        color: item.dayType.color,
-                        borderColor: `${item.dayType.color}40`,
-                        backgroundColor: `${item.dayType.color}15`
+                        color: item.dayType.color || undefined,
+                        borderColor: item.dayType.color ? `${item.dayType.color}40` : undefined,
+                        backgroundColor: item.dayType.color ? `${item.dayType.color}15` : undefined
                       }}
                     >
                       {item.dayType.label}
@@ -173,4 +174,6 @@ export default function PeakOutlierDays({
       </div>
     </div>
   );
-}
+});
+
+export default PeakOutlierDays;

@@ -52,6 +52,7 @@ const HeatmapRow = memo(function HeatmapRow({
         background: bgBase,
         borderBottom: `1px solid ${border}`,
         borderRight: `1px solid ${border}`,
+        boxShadow: '2px 0 5px rgba(0,0,0,0.25)',
         padding: '2px',
       }}>
         {(() => {
@@ -148,6 +149,7 @@ const HeatmapRow = memo(function HeatmapRow({
         background: 'rgba(239, 68, 68, 0.04)',
         borderBottom: `1px solid ${border}`,
         borderLeft: `1px solid ${border}`,
+        boxShadow: '-2px 0 5px rgba(0,0,0,0.25)',
         padding: '0 6px',
         height: ROW_H,
       }}>

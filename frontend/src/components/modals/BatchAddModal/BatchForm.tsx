@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { PlusCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { PlusCircle, Check, RotateCcw } from 'lucide-react';
+import { useForm, UseFormSetValue, UseFormSetFocus, UseFormWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayType, AllocationType } from '../../../types';
+import { PendingBatchItem } from './index';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -31,18 +32,26 @@ export interface BatchFormValues {
   allocation_type?: AllocationType | null;
 }
 
+export interface ExternalFormControls {
+  setValue: UseFormSetValue<BatchFormValues>;
+  setFocus: UseFormSetFocus<BatchFormValues>;
+  watch: UseFormWatch<BatchFormValues>;
+}
+
 export interface BatchFormProps {
-  onSubmitItem: (item: any) => void;
+  onSubmitItem: (item: BatchFormValues) => void;
   categories?: Category[];
   cashflowGroups?: CashflowGroup[];
   defaultType?: 'income' | 'expense' | string;
   defaultDate?: string;
   defaultCategoryId?: string;
   isProcessing?: boolean;
-  externalFormSetter?: (controls: { setValue: any; setFocus: any; watch: any }) => void;
+  externalFormSetter?: (controls: ExternalFormControls) => void;
   onTypeChange?: (type: string) => void;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
+  editingItem?: PendingBatchItem | null;
+  onCancelEdit?: () => void;
 }
 
 function BatchForm({
@@ -56,12 +65,12 @@ function BatchForm({
   externalFormSetter,
   onTypeChange,
   dayTypes = {},
-  dayTypeConfig = []
+  dayTypeConfig = [],
+  editingItem,
+  onCancelEdit
 }: BatchFormProps) {
-  const dm = true;
-  
   const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm<BatchFormValues>({
-    resolver: zodResolver(batchAddSchema) as any,
+    resolver: zodResolver(batchAddSchema),
     defaultValues: {
       type: (defaultType as 'income' | 'expense') || 'expense',
       date: defaultDate || getLocalDateString(),
@@ -75,6 +84,19 @@ function BatchForm({
   const formType = watch('type');
   const formDate = watch('date');
   const allocationType = watch('allocation_type');
+
+  // Load editing item data into form
+  useEffect(() => {
+    if (editingItem) {
+      setValue('type', editingItem._isInc ? 'income' : 'expense');
+      setValue('date', editingItem.date);
+      setValue('categoryId', editingItem.category_id || editingItem._catObj?.id || '');
+      setValue('description', editingItem.description || '');
+      setValue('amount', Number(editingItem.amount), { shouldValidate: true });
+      setValue('allocation_type', editingItem.allocation_type || null);
+      setTimeout(() => setFocus('amount'), 50);
+    }
+  }, [editingItem, setValue, setFocus]);
 
   const groupedCategories = useMemo(() => {
     const relevantCats = categories.filter(c => c.type === formType);
@@ -111,7 +133,7 @@ function BatchForm({
 
   const isApplyingSuggestionRef = useRef(false);
 
-  const customSetValue = useCallback((name: any, value: any, options: any) => {
+  const customSetValue: UseFormSetValue<BatchFormValues> = useCallback((name: any, value: any, options?: any) => {
     if (name === 'categoryId' && options?.skipAllocationDefault) {
       isApplyingSuggestionRef.current = true;
     }
@@ -128,11 +150,12 @@ function BatchForm({
       isApplyingSuggestionRef.current = false;
       return;
     }
+    if (editingItem) return; // Do not overwrite allocation when in edit mode
     const cat = categories.find(c => c.id === selectedCatId);
     if (cat?.allocation_type) {
       setValue('allocation_type', cat.allocation_type);
     }
-  }, [formType, selectedCatId, setValue, categories]);
+  }, [formType, selectedCatId, setValue, categories, editingItem]);
 
   useEffect(() => {
     if (externalFormSetter) {
@@ -165,28 +188,44 @@ function BatchForm({
   };
 
   const tokens = {
-    input: `w-full px-3 py-2 text-xs border rounded-none outline-none focus:ring-1 transition-colors ${'bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30'}`,
-    inputError: `w-full px-3 py-2 text-xs border rounded-none outline-none focus:ring-1 transition-colors ${'bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30'}`,
-    label: `block text-[11px] font-bold uppercase mb-1.5 ${'text-slate-400'}`,
-    errorText: `text-[10px] font-bold text-red-500 mt-1`
+    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
+    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30",
+    label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400",
+    errorText: "text-[10px] font-bold text-red-500 mt-1"
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-[#1c1c1c] border-[#303030]">
       
-      <div className={`flex p-0.5 mb-4 rounded-none border ${'bg-[#181818] border-[#303030]'}`}>
-        <button type="button" onClick={() => handleTypeChange('expense')}
-          className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'expense' ? ('bg-[#303030] text-red-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
+      {/* Type Toggle: Expense / Income */}
+      <div className="grid grid-cols-2 p-0.5 mb-4 rounded-none border bg-[#181818] border-[#303030] h-9">
+        <button 
+          type="button" 
+          onClick={() => handleTypeChange('expense')}
+          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+            formType === 'expense' 
+              ? 'bg-[#303030] text-red-400 shadow-sm' 
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
           รายจ่าย
         </button>
-        <button type="button" onClick={() => handleTypeChange('income')}
-          className={`flex-1 py-1.5 font-bold text-xs rounded-none transition-all ${formType === 'income' ? ('bg-[#303030] text-emerald-400 shadow-sm') : ('text-slate-400 hover:text-slate-200')}`}>
+        <button 
+          type="button" 
+          onClick={() => handleTypeChange('income')}
+          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+            formType === 'income' 
+              ? 'bg-[#303030] text-emerald-400 shadow-sm' 
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
           รายรับ
         </button>
       </div>
 
+      {/* Date & Amount Row */}
       <div className="flex gap-3 mb-4">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <span className={tokens.label}>วันที่</span>
           <DatePicker 
             value={formDate} 
@@ -194,12 +233,13 @@ function BatchForm({
             required 
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
+            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-[#181818] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"
           />
           {errors.date && <p className={tokens.errorText}>{errors.date.message}</p>}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <label htmlFor="batch-amount" className={tokens.label}>จำนวนเงิน ฿</label>
-          <div className="relative flex items-center">
+          <div className="relative flex items-center h-9">
             <span className="absolute left-2.5 text-xs font-bold select-none opacity-50 text-slate-400">
               ฿
             </span>
@@ -217,10 +257,15 @@ function BatchForm({
         </div>
       </div>
 
+      {/* Category & Allocation Row */}
       <div className="mb-4">
         <label htmlFor="batch-category" className={tokens.label}>หมวดหมู่</label>
-        <div className="flex gap-2">
-          <select id="batch-category" {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
+        <div className="flex gap-2 h-9">
+          <select 
+            id="batch-category" 
+            {...register('categoryId')} 
+            className={`flex-1 min-w-0 ${errors.categoryId ? tokens.inputError : tokens.input}`}
+          >
             {groupedCategories.map(g => (
               <optgroup key={g.id} label={g.name} className="bg-[#181818] text-slate-400 font-bold">
                 {g.categories.map(c => (
@@ -233,20 +278,22 @@ function BatchForm({
           </select>
           
           {formType === 'expense' && (
-            <div className={`flex p-0.5 rounded-none border shrink-0 ${'bg-[#181818] border-[#303030]'}`}>
+            <div className="h-9 flex p-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030]">
               {[
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
                 { val: 'want', label: 'WANT', color: 'text-sky-400' },
                 { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
               ].map(opt => {
                 const isSelected = allocationType === opt.val;
-                let activeStyle = 'text-slate-500';
-                if (isSelected) {
-                  activeStyle = dm ? `bg-[#303030] ${opt.color}` : `bg-white ${opt.color} shadow-sm`;
-                }
                 return (
-                  <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                    className={`px-2 py-1 text-[10px] font-black rounded-none transition-all ${activeStyle}`}>
+                  <button 
+                    key={opt.val} 
+                    type="button" 
+                    onClick={() => setValue('allocation_type', opt.val as AllocationType)}
+                    className={`h-full px-2.5 text-[10px] font-black rounded-none transition-all flex items-center justify-center ${
+                      isSelected ? `bg-[#303030] ${opt.color}` : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
                     {opt.label}
                   </button>
                 );
@@ -257,6 +304,7 @@ function BatchForm({
         {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
       </div>
 
+      {/* Description Input */}
       <div className="mb-4">
         <label htmlFor="batch-description" className={tokens.label}>รายละเอียด</label>
         <input 
@@ -269,17 +317,51 @@ function BatchForm({
         />
       </div>
 
-      <div className="mt-auto flex gap-2">
-        <button type="button" onClick={() => { setValue('description', ''); setValue('amount', '' as unknown as number, { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
-          className={`px-3 py-2.5 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 ${'bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]'}`}
-          title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
-        >
-          ล้าง
-        </button>
-        <button type="submit" disabled={isProcessing}
-          className={`flex-1 px-4 py-2.5 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${'bg-[#da291c] hover:bg-[#b01e0a] text-white border-[#da291c]'}`}>
-          <PlusCircle className="w-4 h-4" /> เพิ่มลงตะกร้า (Enter)
-        </button>
+      {/* Action Buttons: Normal vs Edit Mode */}
+      <div className="mt-auto flex gap-2 h-10">
+        {editingItem ? (
+          <>
+            <button 
+              type="button" 
+              onClick={onCancelEdit} 
+              disabled={isProcessing}
+              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]"
+              title="ยกเลิกการแก้ไข"
+            >
+              ยกเลิก
+            </button>
+            <button 
+              type="submit" 
+              disabled={isProcessing}
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-amber-600 hover:bg-amber-500 text-white border-amber-600 shadow-sm"
+            >
+              <Check className="w-4 h-4" /> บันทึกแก้ไข (Enter)
+            </button>
+          </>
+        ) : (
+          <>
+            <button 
+              type="button" 
+              onClick={() => { 
+                setValue('description', ''); 
+                setValue('amount', '' as unknown as number, { shouldValidate: false }); 
+                setTimeout(() => setFocus('amount'), 10); 
+              }} 
+              disabled={isProcessing}
+              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]"
+              title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1 text-slate-400" /> ล้าง
+            </button>
+            <button 
+              type="submit" 
+              disabled={isProcessing}
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-[#da291c] hover:bg-[#b01e0a] text-white border-[#da291c]"
+            >
+              <PlusCircle className="w-4 h-4" /> เพิ่มลงตะกร้า (Enter)
+            </button>
+          </>
+        )}
       </div>
     </form>
   );

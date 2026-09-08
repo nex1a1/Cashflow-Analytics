@@ -130,13 +130,6 @@ export default function useCategories(
         return;
       }
 
-      if (
-        !window.confirm(
-          `ยืนยันการลบหมวดหมู่ "${catToDelete.name}"?\n(หากมีรายการที่เคยลบไปแล้วในถังขยะที่อ้างอิงหมวดหมู่นี้ รายการเหล่านั้นจะถูกลบถาวร)`
-        )
-      )
-        return;
-
       try {
         await categoryService.deleteById(id);
         await loadCategories();

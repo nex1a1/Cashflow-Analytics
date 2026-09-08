@@ -17,6 +17,10 @@ interface HeatmapCellProps {
   fmtCell: (val: number) => string;
 }
 
+export function formatCellAmount(val: number): string {
+  return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity, 
   dm, border, ROW_H, maxCellValue,
@@ -106,7 +110,7 @@ const HeatmapCell = memo(function HeatmapCell({
                     : 'none',
                   transform: 'scale(1)',
                 }}>
-                  {fmtCell(cellSum)}
+                  {fmtCell ? fmtCell(cellSum) : formatCellAmount(cellSum)}
                 </span>
               </div>
             );

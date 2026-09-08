@@ -42,7 +42,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
       amtColor: 'text-emerald-400',
       amtSign: '+',
       badgeText: 'IN',
-      pulseColor: '[#10b981]',
+      pulseClass: 'bg-emerald-500',
       borderColorActive: '#10b981/40',
       iconFallback: '💰'
     };
@@ -56,7 +56,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
       amtColor: 'text-amber-400',
       amtSign: '±',
       badgeText: 'SAVE',
-      pulseColor: '[#f59e0b]',
+      pulseClass: 'bg-amber-500',
       borderColorActive: '#f59e0b/40',
       iconFallback: '💼'
     };
@@ -69,7 +69,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
     amtColor: 'text-red-400',
     amtSign: '-',
     badgeText: 'OUT',
-    pulseColor: '[#da291c]',
+    pulseClass: 'bg-[#da291c]',
     borderColorActive: '#da291c/40',
     iconFallback: '📉'
   };
@@ -193,7 +193,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
           
           <div className="flex items-center gap-1.5 shrink-0">
             {isActive && (
-              <span className={`w-1.5 h-1.5 rounded-none bg-${theme.pulseColor} animate-pulse shrink-0`} />
+              <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} animate-pulse shrink-0`} />
             )}
             <span 
               className="text-[9.5px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border shrink-0 leading-none"
@@ -234,9 +234,9 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
           </div>
         </div>
 
-        {/* Row 3: Inline Category List (Always Visible) */}
+        {/* Row 3: Inline Category List (Always Visible with max height) */}
         {sortedCats.length > 0 && (
-          <div className="mt-2.5 pt-2.5 border-t border-dashed border-[#2d2d2d] flex flex-col gap-2 z-10">
+          <div className="mt-2.5 pt-2.5 border-t border-dashed border-[#2d2d2d] flex flex-col gap-2 z-10 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
             {sortedCats.map(cat => (
               <LedgerStatCategoryRow
                 key={cat.id}
@@ -330,8 +330,14 @@ export function useLedgerStats({
   const uniqueMonths = useMemo(() => {
     const months = new Set<string>();
     displayTransactions.forEach(t => {
-      const parts = t.date.split('/');
-      if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
+      if (!t.date) return;
+      if (t.date.includes('-')) {
+        const parts = t.date.split('-');
+        if (parts.length >= 2) months.add(`${parts[0]}-${parts[1]}`);
+      } else {
+        const parts = t.date.split('/');
+        if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
+      }
     });
     return months.size;
   }, [displayTransactions]);
