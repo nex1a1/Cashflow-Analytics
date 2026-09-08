@@ -78,7 +78,6 @@ import {
   X, ClipboardList, FileSpreadsheet, Database, ShieldCheck, 
   Loader2, Info, Search, FileText, AlertTriangle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import PeriodPicker from '../layout/PeriodPicker';
 import { isDateInFilter, fromISODate } from '../../utils/dateHelpers';
 import { transactionService } from '../../services/api';
@@ -730,25 +729,19 @@ const ExportFooter = ({  delimiter, exportPeriod, getFilterLabel, onClose, execu
   </div>
 );
 
-const ExportLoadingOverlay = ({  isExporting  }: ExportLoadingOverlayProps) => (
-  <AnimatePresence>
-    {isExporting && (
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/90 z-[200] flex items-center justify-center select-none"
-      >
-        <div className="flex flex-col items-center space-y-3 font-mono">
-          <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-            กำลังประมวลผลและสร้างไฟล์รายงาน...
-          </span>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+const ExportLoadingOverlay = ({  isExporting  }: ExportLoadingOverlayProps) => {
+  if (!isExporting) return null;
+  return (
+    <div className="absolute inset-0 bg-black/90 z-[200] flex items-center justify-center select-none">
+      <div className="flex flex-col items-center space-y-3 font-mono">
+        <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+          กำลังประมวลผลและสร้างไฟล์รายงาน...
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export interface ExportModalProps {
   isOpen: boolean;
@@ -842,10 +835,7 @@ export default function ExportModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        exit={{ opacity: 0 }}
+      <div 
         className="relative rounded-none shadow-xl flex flex-col w-full max-w-[1240px] h-[85vh] border border-[#3e3e3e] bg-[#181818] overflow-hidden"
       >
         <ExportHeader onClose={onClose} isExporting={isExporting} />
@@ -889,7 +879,7 @@ export default function ExportModal({
           isExporting={isExporting}
         />
         <ExportLoadingOverlay isExporting={isExporting} />
-      </motion.div>
+      </div>
     </div>
   );
 }

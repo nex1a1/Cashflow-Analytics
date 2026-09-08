@@ -11,23 +11,28 @@ export default {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'Bai Jamjuree', 'monospace'],
       },
       borderRadius: {
-        'sm': '2px',
-        'md': '4px',
-        'lg': '6px',
-        'xl': '8px',     // Sharp panel corners
-        '2xl': '10px',   // Sharp card/modal corners
-        '3xl': '12px',
+        DEFAULT: '0px',
+        none: '0px',
+        sm: '4px',
+        full: '9999px',
       },
       colors: {
-        gundam: {
-          bg: '#050507',        // Deep Space Base
-          card: '#14141A',     // Matte Metal Structure
-          primary: '#F43F5E',  // Beam Light Sabre
-          secondary: '#232935',// Desaturated Shield Slate
-          accent: '#F59E0B',   // Golden V-Fin Thruster
-          green: '#10B981',    // Beam Rifle Green
-          cyan: '#00F0FF',     // Psycho Frame Cyan
-        }
+        canvas: '#181818',
+        surface: {
+          DEFAULT: '#121212',
+          elevated: '#303030',
+          hover: '#1d1d1d',
+        },
+        hairline: '#2d2d2d',
+        rosso: {
+          DEFAULT: '#da291c',
+          active: '#b01e0a',
+        },
+        ink: {
+          display: '#ffffff',
+          body: '#969696',
+          muted: '#666666',
+        },
       }
     },
   },

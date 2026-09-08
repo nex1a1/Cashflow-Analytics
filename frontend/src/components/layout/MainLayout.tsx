@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import AppHeader from './AppHeader';
 import AppToast from '../shared/AppToast';
 
@@ -20,14 +19,6 @@ import BatchAddModal from '../modals/BatchAddModal/index';
 import ExportModal from '../modals/ExportModal';
 import ImportGuideModal from '../modals/ImportGuideModal';
 import ImportPreviewModal from '../modals/ImportPreviewModal';
-
-const pageVariants = {
-  initial: { opacity: 1 },
-  in: { opacity: 1 },
-  out: { opacity: 1 }
-};
-
-const pageTransition = { duration: 0 };
 
 export default function MainLayout() {
   const { toast, showToast: triggerToast } = useToast();
@@ -119,133 +110,131 @@ export default function MainLayout() {
           onToggleExcludeFuture={handleToggleExcludeFuture}
         />
 
-        <div className="p-6 relative z-0 flex-grow transition-colors duration-300 bg-[#181818]">
-          <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && (
-              <motion.div key="dashboard" initial={false} animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                <DashboardView
-                  analytics={analytics}
-                  transactions={dashboardTransactions}
-                  cashflowGroups={cashflowGroups}
-                  filterPeriod={filterPeriod}
-                  getFilterLabel={getFilterLabel}
-                  hideFixedExpenses={hideFixedExpenses}
-                  setHideFixedExpenses={setHideFixedExpenses}
-                  hideWantExpenses={hideWantExpenses}
-                  setHideWantExpenses={setHideWantExpenses}
-                  dashboardCategory={dashboardCategory}
-                  setDashboardCategory={setDashboardCategory}
-                  chartGroupBy={chartGroupBy}
-                  setChartGroupBy={setChartGroupBy}
-                  topXLimit={topXLimit}
-                  setTopXLimit={setTopXLimit}
-                  categories={categories}
-                  dayTypeConfig={dayTypeConfig}
-                  dayTypes={dayTypes}
-                  isLoading={isProcessing}
-                />
-              </motion.div>
-            )}
+        <div className="p-6 relative z-0 flex-grow bg-[#181818]">
+          {activeTab === 'dashboard' && (
+            <div key="dashboard">
+              <DashboardView
+                analytics={analytics}
+                transactions={dashboardTransactions}
+                cashflowGroups={cashflowGroups}
+                filterPeriod={filterPeriod}
+                getFilterLabel={getFilterLabel}
+                hideFixedExpenses={hideFixedExpenses}
+                setHideFixedExpenses={setHideFixedExpenses}
+                hideWantExpenses={hideWantExpenses}
+                setHideWantExpenses={setHideWantExpenses}
+                dashboardCategory={dashboardCategory}
+                setDashboardCategory={setDashboardCategory}
+                chartGroupBy={chartGroupBy}
+                setChartGroupBy={setChartGroupBy}
+                topXLimit={topXLimit}
+                setTopXLimit={setTopXLimit}
+                categories={categories}
+                dayTypeConfig={dayTypeConfig}
+                dayTypes={dayTypes}
+                isLoading={isProcessing}
+              />
+            </div>
+          )}
 
-            {activeTab === 'calendar' && (
-              <motion.div key="calendar" initial={false} animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                <CalendarView
-                  transactions={transactions}
-                  filterPeriod={filterPeriod}
-                  setFilterPeriod={setFilterPeriod}
-                  rawAvailableMonths={rawAvailableMonths}
-                  handleOpenAddModal={handleOpenAddModal}
-                  categories={categories}
-                  cashflowGroups={cashflowGroups}
-                  dayTypes={dayTypes}
-                  handleDayTypeChange={handleDayTypeChange}
-                  dayTypeConfig={dayTypeConfig}
-                  getFilterLabel={getFilterLabel}
-                  isReadOnlyView={isReadOnlyView}
-                  onSaveTransaction={handleSaveTransaction}
-                  handleDeleteTransaction={handleDeleteTransaction}
-                  isLoading={isProcessing}
-                  frequentItems={frequentItems}
-                />
-              </motion.div>
-            )}
+          {activeTab === 'calendar' && (
+            <div key="calendar">
+              <CalendarView
+                transactions={transactions}
+                filterPeriod={filterPeriod}
+                setFilterPeriod={setFilterPeriod}
+                rawAvailableMonths={rawAvailableMonths}
+                handleOpenAddModal={handleOpenAddModal}
+                categories={categories}
+                cashflowGroups={cashflowGroups}
+                dayTypes={dayTypes}
+                handleDayTypeChange={handleDayTypeChange}
+                dayTypeConfig={dayTypeConfig}
+                getFilterLabel={getFilterLabel}
+                isReadOnlyView={isReadOnlyView}
+                onSaveTransaction={handleSaveTransaction}
+                handleDeleteTransaction={handleDeleteTransaction}
+                isLoading={isProcessing}
+                frequentItems={frequentItems}
+              />
+            </div>
+          )}
 
-            {activeTab === 'ledger' && (
-              <motion.div key="ledger" initial={false} animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                <LedgerView
-                  displayTransactions={displayTransactions}
-                  isReadOnlyView={isReadOnlyView}
-                  getFilterLabel={getFilterLabel}
-                  setFilterPeriod={setFilterPeriod}
-                  rawAvailableMonths={rawAvailableMonths}
-                  filterPeriod={filterPeriod}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  handleOpenAddModal={handleOpenAddModal}
-                  handleUpdateTransaction={handleUpdateTransaction}
-                  handleDeleteTransaction={handleDeleteTransaction}
-                  handleDeleteMonth={async (period: string) => {
-                    const ok = await handleDeleteMonth(period);
-                    if (ok) showSuccess();
-                  }}
-                  cashflowGroups={cashflowGroups}
-                  categories={categories}
-                  advancedFilterCategory={advancedFilterCategory}
-                  setAdvancedFilterCategory={setAdvancedFilterCategory}
-                  advancedFilterGroup={advancedFilterGroup}
-                  setAdvancedFilterGroup={setAdvancedFilterGroup}
-                  advancedFilterDate={advancedFilterDate}
-                  setAdvancedFilterDate={setAdvancedFilterDate}
-                  typeFilter={typeFilter}
-                  setTypeFilter={setTypeFilter}
-                  allocationFilter={allocationFilter}
-                  setAllocationFilter={setAllocationFilter}
-                  minAmount={minAmount}
-                  setMinAmount={setMinAmount}
-                  maxAmount={maxAmount}
-                  setMaxAmount={setMaxAmount}
-                  dayTypeFilter={dayTypeFilter}
-                  setDayTypeFilter={setDayTypeFilter}
-                  availableDatesInPeriod={availableDatesInPeriod}
-                  allDatesInPeriod={allDatesInPeriod}
-                  activeCashflowGroupIds={activeCashflowGroupIds}
-                  activeCategoryNames={activeCategoryNames}
-                  isFilterActive={isFilterActive}
-                  clearFilters={clearFilters}
-                  dayTypes={dayTypes}
-                  dayTypeConfig={dayTypeConfig}
-                  isLoading={isProcessing}
-                  transactions={transactions}
-                />
-              </motion.div>
-            )}
+          {activeTab === 'ledger' && (
+            <div key="ledger">
+              <LedgerView
+                displayTransactions={displayTransactions}
+                isReadOnlyView={isReadOnlyView}
+                getFilterLabel={getFilterLabel}
+                setFilterPeriod={setFilterPeriod}
+                rawAvailableMonths={rawAvailableMonths}
+                filterPeriod={filterPeriod}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                handleOpenAddModal={handleOpenAddModal}
+                handleUpdateTransaction={handleUpdateTransaction}
+                handleDeleteTransaction={handleDeleteTransaction}
+                handleDeleteMonth={async (period: string) => {
+                  const ok = await handleDeleteMonth(period);
+                  if (ok) showSuccess();
+                }}
+                cashflowGroups={cashflowGroups}
+                categories={categories}
+                advancedFilterCategory={advancedFilterCategory}
+                setAdvancedFilterCategory={setAdvancedFilterCategory}
+                advancedFilterGroup={advancedFilterGroup}
+                setAdvancedFilterGroup={setAdvancedFilterGroup}
+                advancedFilterDate={advancedFilterDate}
+                setAdvancedFilterDate={setAdvancedFilterDate}
+                typeFilter={typeFilter}
+                setTypeFilter={setTypeFilter}
+                allocationFilter={allocationFilter}
+                setAllocationFilter={setAllocationFilter}
+                minAmount={minAmount}
+                setMinAmount={setMinAmount}
+                maxAmount={maxAmount}
+                setMaxAmount={setMaxAmount}
+                dayTypeFilter={dayTypeFilter}
+                setDayTypeFilter={setDayTypeFilter}
+                availableDatesInPeriod={availableDatesInPeriod}
+                allDatesInPeriod={allDatesInPeriod}
+                activeCashflowGroupIds={activeCashflowGroupIds}
+                activeCategoryNames={activeCategoryNames}
+                isFilterActive={isFilterActive}
+                clearFilters={clearFilters}
+                dayTypes={dayTypes}
+                dayTypeConfig={dayTypeConfig}
+                isLoading={isProcessing}
+                transactions={transactions}
+              />
+            </div>
+          )}
 
-            {activeTab === 'settings' && (
-              <motion.div key="settings" initial={false} animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
-                <SettingsView
-                  categories={categories}
-                  cashflowGroups={cashflowGroups}
-                  setCashflowGroups={setCashflowGroups}
-                  handleAddCategory={handleAddCategory}
-                  handleCategoryChange={handleCategoryChange}
-                  handleDeleteCategory={handleDeleteCategory}
-                  handleMoveCategory={handleMoveCategory}
-                  handleAddCashflowGroup={handleAddCashflowGroup}
-                  handleUpdateCashflowGroup={handleUpdateCashflowGroup}
-                  handleDeleteCashflowGroup={handleDeleteCashflowGroup}
-                  handleMoveCashflowGroup={handleMoveCashflowGroup}
-                  dayTypeConfig={dayTypeConfig}
-                  handleDayTypeConfigChange={handleDayTypeConfigChange}
-                  handleAddDayType={handleAddDayType}
-                  handleDeleteDayType={handleDeleteDayType}
-                  handleMoveDayType={handleMoveDayType}
-                  handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
-                  transactions={transactions}
-                  triggerToast={triggerToast}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {activeTab === 'settings' && (
+            <div key="settings">
+              <SettingsView
+                categories={categories}
+                cashflowGroups={cashflowGroups}
+                setCashflowGroups={setCashflowGroups}
+                handleAddCategory={handleAddCategory}
+                handleCategoryChange={handleCategoryChange}
+                handleDeleteCategory={handleDeleteCategory}
+                handleMoveCategory={handleMoveCategory}
+                handleAddCashflowGroup={handleAddCashflowGroup}
+                handleUpdateCashflowGroup={handleUpdateCashflowGroup}
+                handleDeleteCashflowGroup={handleDeleteCashflowGroup}
+                handleMoveCashflowGroup={handleMoveCashflowGroup}
+                dayTypeConfig={dayTypeConfig}
+                handleDayTypeConfigChange={handleDayTypeConfigChange}
+                handleAddDayType={handleAddDayType}
+                handleDeleteDayType={handleDeleteDayType}
+                handleMoveDayType={handleMoveDayType}
+                handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
+                transactions={transactions}
+                triggerToast={triggerToast}
+              />
+            </div>
+          )}
         </div>
       </div>
 

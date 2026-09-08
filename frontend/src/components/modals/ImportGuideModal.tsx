@@ -3,7 +3,6 @@ import {
   X, ClipboardList, FileSpreadsheet, ShieldCheck, 
   FileText, CheckCircle, FileDown, Layers, Copy
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 
 const LONG_HEADER_COLORS: Record<string, string> = {
@@ -501,11 +500,8 @@ export default function ImportGuideModal({ isOpen, onClose }: ImportGuideModalPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+    <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
+      <div 
         className="relative rounded-none shadow-xl flex flex-col w-full max-w-[1240px] h-[85vh] border border-[#3e3e3e] bg-[#181818] overflow-hidden"
       >
         <GuideHeader onClose={onClose} />
@@ -522,7 +518,7 @@ export default function ImportGuideModal({ isOpen, onClose }: ImportGuideModalPr
           </div>
         </div>
         <GuideFooter selectedFormat={selectedFormat} onClose={onClose} />
-      </motion.div>
+      </div>
     </div>
   );
 }

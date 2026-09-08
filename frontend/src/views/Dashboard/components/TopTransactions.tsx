@@ -1,7 +1,6 @@
 // src/views/Dashboard/components/TopTransactions.tsx
 import React, { useMemo } from 'react';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { formatMoney } from '../../../utils/formatters';
 import { isDateInFilter } from '../../../utils/dateHelpers';
 import { useDashboardContext } from '../context/DashboardContext';
@@ -70,12 +69,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }: Transacti
   };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+    <div
       className={`relative flex items-start gap-3.5 p-3.5 rounded-none border transition-all overflow-hidden group shadow-sm ${getCardBorderClass()}`}
     >
       {/* Premium Visual Progress Bar Backdrop (toned down opacity in Dark Mode for perfect subtlety) */}
@@ -133,7 +127,7 @@ const TransactionItem = ({ tx, index, catDef, isDarkMode, maxAmount }: Transacti
           {formatMoney(Math.abs(amountNum))}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -278,39 +272,33 @@ export default function TopTransactions() {
               ))}
             </div>
           ) : (
-            <AnimatePresence mode="popLayout">
-              {displayTransactions.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {displayTransactions.map((tx, idx) => {
-                    const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
-                    return (
-                      <TransactionItem 
-                        key={tx.id} 
-                        tx={tx} 
-                        index={idx} 
-                        catDef={catDef} 
-                        isDarkMode={dm} 
-                        maxAmount={maxAmount}
-                      />
-                    );
-                  })}
+            displayTransactions.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {displayTransactions.map((tx, idx) => {
+                  const catDef = categories.find(c => c.id === tx.category_id || c.name === tx.category);
+                  return (
+                    <TransactionItem 
+                      key={tx.id} 
+                      tx={tx} 
+                      index={idx} 
+                      catDef={catDef} 
+                      isDarkMode={dm} 
+                      maxAmount={maxAmount}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                <div className={`p-4 rounded-full mb-3 ${'bg-[#303030]/30'}`}>
+                  <AlertCircle className={`w-8 h-8 opacity-20 ${'text-slate-400'}`} />
                 </div>
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="h-full flex flex-col items-center justify-center text-center py-10"
-                >
-                  <div className={`p-4 rounded-full mb-3 ${'bg-[#303030]/30'}`}>
-                    <AlertCircle className={`w-8 h-8 opacity-20 ${'text-slate-400'}`} />
-                  </div>
-                  <p className={`text-sm font-bold opacity-60 ${'text-slate-400'}`}>
-                    ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
-                  </p>
-                  <p className="text-[10px] mt-1 opacity-40">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <p className={`text-sm font-bold opacity-60 ${'text-slate-400'}`}>
+                  ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
+                </p>
+                <p className="text-[10px] mt-1 opacity-40">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
+              </div>
+            )
           )}
         </div>
       </div>

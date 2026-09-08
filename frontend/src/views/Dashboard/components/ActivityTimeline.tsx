@@ -1,7 +1,5 @@
-// src/views/Dashboard/components/ActivityTimeline.tsx
 import React, { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CalendarClock, CalendarDays, Flame, Info, TableProperties 
 } from 'lucide-react';
@@ -64,10 +62,8 @@ const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }: any) => {
           <btn.icon className="w-3.5 h-3.5" /> 
           <span>{btn.label}</span>
           {viewMode === btn.id && (
-            <motion.div
-              layoutId="activeModeTab"
+            <div
               className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
         </button>
@@ -112,22 +108,18 @@ const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }: any) => {
     <div className="flex items-center gap-2">
       <div className="relative group/info cursor-help mr-1">
         <Info className="w-3.5 h-3.5 text-slate-400" />
-        <AnimatePresence>
-          <motion.div 
-            className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible"
-            initial={{ opacity: 0, y: 5 }}
-            whileHover={{ opacity: 1, y: 0 }}
-          >
-            <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[250px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
-              <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
-              <p className="text-slate-300">
-                ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดตลอดกาลของคุณ ({globalMaxThreshold.toLocaleString('th-TH')} บ.) 
-                เพื่อให้สเกลสีคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
-              </p>
-            </div>
-            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212] md:ml-2 mr-2 md:mr-0" />
-          </motion.div>
-        </AnimatePresence>
+        <div 
+          className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible"
+        >
+          <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[250px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
+            <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
+            <p className="text-slate-300">
+              ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดตลอดกาลของคุณ ({globalMaxThreshold.toLocaleString('th-TH')} บ.) 
+              เพื่อให้สเกลสีคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
+            </p>
+          </div>
+          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212] md:ml-2 mr-2 md:mr-0" />
+        </div>
       </div>
       <span className="text-[10px] font-bold text-slate-400">น้อย</span>
       {[0, 1, 2, 3, 4, 5, 6].map(level => (
@@ -149,40 +141,31 @@ const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }: any) => {
  * INTERNAL COMPONENT: TimelineTooltip
  */
 const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode, isDarkMode }: any) => {
+  if (!active) return null;
   return createPortal(
-    <AnimatePresence>
-      {active && (
-        <div
-          className="fixed pointer-events-none z-[99999]"
-          style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 2 }}
-            transition={{ duration: 0.1 }}
-            className="flex flex-col items-center"
-          >
-            <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
-              <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
-              {viewMode === 'dayType' ? (
-                <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
-                  <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: dayType?.color }} />
-                  {dayType?.label || 'ไม่มีข้อมูล'}
-                </div>
-              ) : (
-                <div className={`flex flex-col items-center ${amount > 0 ? 'text-orange-400' : 'text-slate-400'}`}>
-                  <div className="text-[13px] leading-none">
-                    {amount > 0 ? amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : 'ไม่มีรายจ่าย'}
-                  </div>
-                </div>
-              )}
+    <div
+      className="fixed pointer-events-none z-[99999]"
+      style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
+    >
+      <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
+          <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
+          {viewMode === 'dayType' ? (
+            <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
+              <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: dayType?.color }} />
+              {dayType?.label || 'ไม่มีข้อมูล'}
             </div>
-            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#121212]/95" />
-          </motion.div>
+          ) : (
+            <div className={`flex flex-col items-center ${amount > 0 ? 'text-orange-400' : 'text-slate-400'}`}>
+              <div className="text-[13px] leading-none">
+                {amount > 0 ? amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : 'ไม่มีรายจ่าย'}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </AnimatePresence>,
+        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#121212]/95" />
+      </div>
+    </div>,
     document.body
   );
 };
@@ -259,10 +242,8 @@ const TimelineLayoutToggle = ({ layoutMode, setLayoutMode }: any) => {
           <btn.icon className="w-3.5 h-3.5" /> 
           <span>{btn.label}</span>
           {layoutMode === btn.id && (
-            <motion.div
-              layoutId="activeLayoutTab"
+            <div
               className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
         </button>
@@ -553,28 +534,20 @@ export default function ActivityTimeline() {
           {showSkeleton ? (
             <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={viewMode}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 5 }}
-                transition={{ duration: 0.2 }}
-              >
-                {viewMode === 'dayType' ? (
-                  <TimelineDayTypeLegend 
-                    dayTypeConfig={dayTypeConfig} 
-                    dayTypeCounts={analytics.dayTypeCounts} 
-                    isDarkMode={dm} 
-                  />
-                ) : (
-                  <TimelineHeatmapLegend 
-                    globalMaxThreshold={globalMaxThreshold} 
-                    isDarkMode={dm} 
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
+            <div>
+              {viewMode === 'dayType' ? (
+                <TimelineDayTypeLegend 
+                  dayTypeConfig={dayTypeConfig} 
+                  dayTypeCounts={analytics.dayTypeCounts} 
+                  isDarkMode={dm} 
+                />
+              ) : (
+                <TimelineHeatmapLegend 
+                  globalMaxThreshold={globalMaxThreshold} 
+                  isDarkMode={dm} 
+                />
+              )}
+            </div>
           )}
         </div>
 

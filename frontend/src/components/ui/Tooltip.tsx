@@ -1,6 +1,5 @@
 // src/components/ui/Tooltip.tsx
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export interface TooltipProps {
   children: React.ReactNode;
@@ -10,13 +9,6 @@ export interface TooltipProps {
 
 export default function Tooltip({ children, content, position = 'bottom' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-
-  let initialY = 0;
-  if (position === 'bottom') {
-    initialY = -5;
-  } else if (position === 'top') {
-    initialY = 5;
-  }
 
   // Position styles
   const positions: Record<string, string> = {
@@ -35,21 +27,14 @@ export default function Tooltip({ children, content, position = 'bottom' }: Tool
       onBlur={() => setIsVisible(false)}
     >
       {children}
-      <AnimatePresence>
-        {isVisible && content && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: initialY }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={`absolute z-[9999] px-2.5 py-1.5 text-[11px] font-bold rounded-sm whitespace-nowrap shadow-lg border pointer-events-none ${positions[position]} ${
-              'bg-slate-800 text-slate-200 border-slate-700 shadow-black/50'
-            }`}
-          >
-            {content}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isVisible && content && (
+        <div
+          role="tooltip"
+          className={`absolute z-[9999] px-2.5 py-1 text-[11px] font-medium rounded-sm whitespace-nowrap shadow-lg border pointer-events-none ${positions[position]} bg-neutral-900 text-neutral-200 border-neutral-700 shadow-black/50`}
+        >
+          {content}
+        </div>
+      )}
     </div>
   );
 }
