@@ -10,20 +10,127 @@ import { formatMoney, calculatePeriodDelta } from '../../../utils/formatters';
 import sharkLogo from '../../../assets/images/shark-white.svg';
 import AnimatedNumber from '../../../components/ui/AnimatedNumber';
 
+// ── TypeScript Interfaces ────────────────────────────────────────────────────
+
+interface PrevTotals {
+  income: number;
+  expense: number;
+  txCount: number;
+}
+
+interface RentSub {
+  rent: number;
+  electricity: number;
+  internet: number;
+  water: number;
+}
+
+interface SubscriptionService {
+  name: string;
+  icon?: string;
+  amount: number;
+}
+
+interface WantCategory {
+  id: string | number;
+  name: string;
+  icon: string;
+  amount: number;
+  pctOfWant: number;
+}
+
+interface PaceStatus {
+  label: string;
+  color: string;
+  bg: string;
+}
+
+interface EomStatus {
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+interface ForecastingDetails {
+  currentDay: number;
+  lastDayOfMonth: number;
+  remainingDays: number;
+  monthProgressPct: number;
+  fixedTotal: number;
+  variableUpToToday: number;
+  projectedVariableRemaining: number;
+  actualDailyVariableAvg: number;
+  projectedSurplusPct: number;
+  maxAllowedExpense: number;
+  requiredReduction: number;
+  requiredDailyReduction: number;
+  paceStatus: PaceStatus;
+  eomStatus: EomStatus;
+}
+
+interface SummaryAnalytics {
+  // Vitals
+  totalIncome: number;
+  totalExpense: number;
+  netCashflow: number;
+  savingsRate: number;
+  totalSavings: number;
+  datesInPeriod?: string[];
+  prevTotals?: PrevTotals;
+  periodLabel?: string;
+  // Strategic
+  dailyAvg: number;
+  foodPercentage: number | string;
+  foodTotal: number;
+  foodDailyAvg: number;
+  foodPctOfIncome: number | string;
+  foodWorkdayAvg: number;
+  foodHolidayAvg: number;
+  dailyWorkdayAvg: number;
+  dailyHolidayAvg: number;
+  maxFoodDayAmount: number;
+  variableTotal: number;
+  fixedTotal: number;
+  topWantCategories?: WantCategory[];
+  rentPercentage: number | string;
+  rentTotal: number;
+  rentSub?: RentSub;
+  subscriptionTotal: number;
+  subscriptionPctOfIncome: number | string;
+  subscriptionPercentage: number | string;
+  subscriptionCount: number;
+  subscriptionSub?: Record<string, number>;
+  topSubscriptionServices?: SubscriptionService[];
+  // Forecasting
+  showForecasting?: boolean;
+  projectedExpense: number;
+  safeToSpend: number;
+  projectedSurplus: number;
+  forecastingDetails?: ForecastingDetails;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 /**
- * Shared Shimmer for Hybrid Loading (Elite Flat HUD Style)
+ * Formats a signed monetary value with the sign BEFORE the ฿ symbol.
+ * e.g. -1234 → "-฿1,234.00"  |  1234 → "฿1,234.00"
  */
+const formatSignedMoney = (value: number): string => {
+  const abs = Math.abs(value);
+  return value < 0 ? `-฿${formatMoney(abs)}` : `฿${formatMoney(abs)}`;
+};
+
+// ── Shared UI ────────────────────────────────────────────────────────────────
+
 const Shimmer = ({ className }: { className?: string }) => (
   <div className={`rounded-none animate-pulse bg-neutral-800/80 ${className || ''}`} />
 );
 
-/**
- * Shared Header for Summary Sections (Elite HUD Style)
- */
-const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon, title: string }) => (
+const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon; title: string }) => (
   <div className="px-4 py-2 flex items-center justify-between border-b border-[#2d2d2d] bg-[#121212]/80">
     <div className="flex items-center gap-2">
-      <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+      <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
       {Icon && <Icon className="w-3.5 h-3.5 text-neutral-400" />}
       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
         {title}
@@ -32,10 +139,14 @@ const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon, title: string
   </div>
 );
 
-/**
- * SECTION 1: FINANCIAL VITALS (Income, Expense, Cashflow, Savings)
- */
-const SummaryVitals = memo(({ analytics, showSkeleton }: any) => {
+// ── SECTION 1: FINANCIAL VITALS ──────────────────────────────────────────────
+
+interface SummaryVitalsProps {
+  analytics: SummaryAnalytics;
+  showSkeleton?: boolean;
+}
+
+const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsProps) => {
   const {
     totalIncome, totalExpense, netCashflow, savingsRate,
     datesInPeriod, prevTotals, periodLabel
@@ -44,62 +155,39 @@ const SummaryVitals = memo(({ analytics, showSkeleton }: any) => {
   const periodDays = Math.max(1, datesInPeriod?.length || 1);
   const avgIncomePerDay = totalIncome / periodDays;
   const avgExpensePerDay = totalExpense / periodDays;
-  
   const expensePercent = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : 0;
 
-  // Grade pill mapping using our vibrant semi-transparent badge style
   const getSavingsGradeInfo = (rate: number) => {
-    if (rate >= 30) return { grade: 'A+', label: 'ELITE', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-    if (rate >= 20) return { grade: 'A', label: 'STRONG', cls: 'bg-teal-500/10 text-teal-400 border-teal-500/20' };
-    if (rate >= 15) return { grade: 'B', label: 'GOOD', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
-    if (rate >= 10) return { grade: 'C', label: 'FAIR', cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
-    if (rate >= 5)  return { grade: 'D', label: 'WEAK', cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20' };
-    return { grade: 'F', label: 'CRITICAL', cls: 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/20' };
+    if (rate >= 30) return { grade: 'A+', label: 'ELITE',     cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+    if (rate >= 20) return { grade: 'A',  label: 'STRONG',    cls: 'bg-teal-500/10 text-teal-400 border-teal-500/20' };
+    if (rate >= 15) return { grade: 'B',  label: 'GOOD',      cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
+    if (rate >= 10) return { grade: 'C',  label: 'FAIR',      cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
+    if (rate >= 5)  return { grade: 'D',  label: 'WEAK',      cls: 'bg-orange-500/10 text-orange-400 border-orange-500/20' };
+    return           { grade: 'F',  label: 'CRITICAL',  cls: 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/20' };
   };
 
   const gradeInfo = getSavingsGradeInfo(savingsRate);
 
-  // ── PoP (Period-over-Period) Delta Calculations ──
   const hasPriorData = Boolean(prevTotals && prevTotals.txCount > 0);
   const curPeriodLabel = periodLabel || 'PoP';
 
-  const incomeDelta = calculatePeriodDelta({
-    current: totalIncome,
-    prev: prevTotals?.income ?? 0,
-    hasPriorData,
-    periodLabel: curPeriodLabel,
-    type: 'income',
-  });
-
-  const expenseDelta = calculatePeriodDelta({
-    current: totalExpense,
-    prev: prevTotals?.expense ?? 0,
-    hasPriorData,
-    periodLabel: curPeriodLabel,
-    type: 'expense',
-  });
-
-  const netDelta = calculatePeriodDelta({
-    current: netCashflow,
-    prev: prevTotals ? (prevTotals.income - prevTotals.expense) : 0,
-    hasPriorData,
-    periodLabel: curPeriodLabel,
-    type: 'net',
-  });
+  const incomeDelta  = calculatePeriodDelta({ current: totalIncome,  prev: prevTotals?.income ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'income' });
+  const expenseDelta = calculatePeriodDelta({ current: totalExpense, prev: prevTotals?.expense ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'expense' });
+  const netDelta     = calculatePeriodDelta({ current: netCashflow,  prev: prevTotals ? (prevTotals.income - prevTotals.expense) : 0, hasPriorData, periodLabel: curPeriodLabel, type: 'net' });
 
   return (
     <div className="flex flex-col">
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก (Core Vitals)" />
       <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d]">
-        
+
         {/* INCOME CELL */}
         <div className="group relative overflow-hidden p-4 flex flex-col justify-between min-h-[110px] border-l-2 border-l-emerald-500 bg-[#181818] hover:bg-[#1d1d1d] transition-none">
           <div className="absolute -right-2 -bottom-2 opacity-[0.03] pointer-events-none w-16 h-16">
             <img src={sharkLogo} alt="" className="w-full h-full object-contain filter grayscale opacity-40" />
           </div>
 
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400">
+          <div className="flex justify-between items-center mb-1 gap-2 min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
               รายรับรวม
             </span>
           </div>
@@ -139,12 +227,13 @@ const SummaryVitals = memo(({ analytics, showSkeleton }: any) => {
             <Wallet size={72} />
           </div>
 
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400">
+          {/* #5 Fix: min-w-0 on label container + shrink-0 on badge to prevent badge crush */}
+          <div className="flex justify-between items-center mb-1 gap-2 min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
               รายจ่ายรวม
             </span>
             {!showSkeleton && (
-              <div className="px-1.5 py-0.5 border border-rose-500/20 bg-rose-500/10 text-rose-400 rounded-none text-[9px] font-black uppercase tracking-widest">
+              <div className="px-1.5 py-0.5 border border-rose-500/20 bg-rose-500/10 text-rose-400 rounded-none text-[9px] font-black uppercase tracking-widest shrink-0">
                 ใช้ไป {expensePercent}%
               </div>
             )}
@@ -187,12 +276,13 @@ const SummaryVitals = memo(({ analytics, showSkeleton }: any) => {
             {netCashflow >= 0 ? <Navigation size={72} /> : <TrendingDown size={72} />}
           </div>
 
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400">
+          {/* #5 Fix: min-w-0 + shrink-0 so savings-grade badge never gets squished */}
+          <div className="flex justify-between items-start mb-1 gap-2 min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0 pt-0.5">
               กระแสเงินสดสุทธิ
             </span>
             {!showSkeleton && (
-              <div className={`px-1.5 py-0.5 border flex items-center gap-1.5 rounded-none text-[9px] font-black uppercase tracking-widest ${gradeInfo.cls}`}>
+              <div className={`px-1.5 py-0.5 border flex items-center gap-1.5 rounded-none text-[9px] font-black uppercase tracking-widest shrink-0 ${gradeInfo.cls}`}>
                 <span>ออม {savingsRate}%</span>
                 <span className="opacity-30">|</span>
                 <span className="font-extrabold">{gradeInfo.grade} {gradeInfo.label}</span>
@@ -240,27 +330,26 @@ const SummaryVitals = memo(({ analytics, showSkeleton }: any) => {
 
 SummaryVitals.displayName = 'SummaryVitals';
 
-/**
- * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
- */
+// ── SECTION 2 SUB-CARDS ──────────────────────────────────────────────────────
+
 function getFoodIncomeStatus(pct: number) {
   const num = Number.parseFloat(String(pct)) || 0;
-  if (num <= 20) {
-    return { label: 'สมดุลดี', cls: 'text-emerald-400 border-emerald-400/30' };
-  }
-  if (num <= 30) {
-    return { label: 'ปานกลาง', cls: 'text-amber-400 border-amber-400/30' };
-  }
-  return { label: 'สัดส่วนสูง', cls: 'text-rose-400 border-rose-400/30' };
+  if (num <= 20) return { label: 'สมดุลดี',      cls: 'text-emerald-400 border-emerald-400/30' };
+  if (num <= 30) return { label: 'ปานกลาง',      cls: 'text-amber-400 border-amber-400/30' };
+  return            { label: 'สัดส่วนสูง',     cls: 'text-rose-400 border-rose-400/30' };
 }
 
-const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }: any) => {
+interface RentCardProps {
+  rentPercentageNum: number;
+  rentTotal: number;
+  rentSub?: RentSub;
+  showSkeleton?: boolean;
+}
+
+const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }: RentCardProps) => {
   let rentBarBg = 'bg-sky-500';
-  if (showSkeleton) {
-    rentBarBg = 'bg-slate-700 animate-pulse';
-  } else if (rentPercentageNum > 30) {
-    rentBarBg = 'bg-[#da291c]';
-  }
+  if (showSkeleton)          rentBarBg = 'bg-slate-700 animate-pulse';
+  else if (rentPercentageNum > 30) rentBarBg = 'bg-[#da291c]';
 
   return (
     <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${
@@ -270,19 +359,19 @@ const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSke
         <Home size={72} />
       </div>
 
-      {/* Original Content (Blurs and fades on hover) */}
+      {/* Main content — blurs on hover */}
       <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
         <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
           ภาระที่พักอาศัย (Rent Ratio)
         </span>
-        
+
         {!showSkeleton && (
           <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
             <span>เกณฑ์แนะนำ</span>
             <span className="text-sky-400 font-extrabold">&lt; 30% ของรายรับ</span>
           </div>
         )}
-        
+
         <div className="mt-auto z-10">
           {showSkeleton ? (
             <Shimmer className="h-6 w-16 my-1" />
@@ -296,107 +385,103 @@ const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSke
               </div>
             </div>
           )}
-          
+
           <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-            <div 
-              className={`h-full absolute left-0 top-0 transition-none ${rentBarBg}`} 
-              style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }} 
+            <div
+              className={`h-full absolute left-0 top-0 transition-none ${rentBarBg}`}
+              style={{ width: showSkeleton ? '50%' : `${Math.min(100, rentPercentageNum)}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Hover Breakdown Overlay */}
+      {/* #2 Fix: removed pointer-events-none — users can now select/copy values */}
       {!showSkeleton && rentSub && (
-      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
-        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
-          <span className="truncate">รายละเอียดที่พัก</span>
-          <span className="text-sky-400 font-extrabold text-[8px] border border-sky-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 หมวด</span>
-        </div>
-        
-        <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1">
-              <span>🏢</span> ค่าเช่า
-            </span>
-            <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
+        <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
+          <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
+            <span className="truncate">รายละเอียดที่พัก</span>
+            <span className="text-sky-400 font-extrabold text-[8px] border border-sky-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 หมวด</span>
           </div>
-          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1">
-              <span>⚡</span> ค่าไฟ
-            </span>
-            <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
-          </div>
-          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1">
-              <span>🌐</span> ค่าเน็ต
-            </span>
-            <span className="text-[13px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
-          </div>
-          <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1">
-              <span>💧</span> ค่าน้ำ
-            </span>
-            <span className="text-[13px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
+
+          <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1"><span>🏢</span> ค่าเช่า</span>
+              <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
+            </div>
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1"><span>⚡</span> ค่าไฟ</span>
+              <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
+            </div>
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1"><span>🌐</span> ค่าเน็ต</span>
+              <span className="text-[13px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
+            </div>
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1"><span>💧</span> ค่าน้ำ</span>
+              <span className="text-[13px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 });
 
 StrategicRentCard.displayName = 'StrategicRentCard';
 
-const StrategicSubscriptionCard = memo(({ 
-  subscriptionTotal = 0, 
-  subscriptionPctOfIncome = 0, 
-  subscriptionPercentage = 0, 
-  subscriptionCount = 0, 
-  subscriptionSub = {}, 
-  topSubscriptionServices = [], 
+interface SubscriptionCardProps {
+  subscriptionTotal?: number;
+  subscriptionPctOfIncome?: number | string;
+  subscriptionPercentage?: number | string;
+  subscriptionCount?: number;
+  subscriptionSub?: Record<string, number>;
+  topSubscriptionServices?: SubscriptionService[];
+  totalIncome?: number;
+  showSkeleton?: boolean;
+}
+
+const StrategicSubscriptionCard = memo(({
+  subscriptionTotal = 0,
+  subscriptionPctOfIncome = 0,
+  subscriptionPercentage = 0,
+  subscriptionCount = 0,
+  topSubscriptionServices = [],
   totalIncome = 0,
-  showSkeleton 
-}: any) => {
-  const subPctNum = Number.parseFloat(subscriptionPctOfIncome) || 0;
-  const subExpPctNum = Number.parseFloat(subscriptionPercentage) || 0;
+  showSkeleton
+}: SubscriptionCardProps) => {
+  const subPctNum    = Number.parseFloat(String(subscriptionPctOfIncome)) || 0;
+  const subExpPctNum = Number.parseFloat(String(subscriptionPercentage)) || 0;
   const isIncomeBased = totalIncome > 0;
-  const displayPct = isIncomeBased ? subPctNum : subExpPctNum;
+  const displayPct    = isIncomeBased ? subPctNum : subExpPctNum;
 
-  // Thresholds: ideal is < 5% of income (or < 8% of expense). > 10% is leak alert.
-  const isLeak = isIncomeBased ? displayPct > 10 : displayPct > 15;
-  const isModerate = isIncomeBased ? displayPct > 5 : displayPct > 8;
+  const isLeak     = isIncomeBased ? displayPct > 10 : displayPct > 15;
+  const isModerate = isIncomeBased ? displayPct > 5  : displayPct > 8;
 
-  let statusBadge = { 
-    label: 'SAFE', 
-    cls: 'text-purple-400 border-purple-400/30', 
-    borderLeft: 'border-l-purple-500', 
-    barBg: 'bg-purple-500',
-    colorText: 'text-purple-400'
+  let statusBadge = {
+    label: 'SAFE',       cls: 'text-purple-400 border-purple-400/30',
+    borderLeft: 'border-l-purple-500', barBg: 'bg-purple-500', colorText: 'text-purple-400'
   };
-
   if (isLeak) {
-    statusBadge = { 
-      label: 'LEAK ALERT', 
-      cls: 'text-[#da291c] border-[#da291c]/30', 
-      borderLeft: 'border-l-[#da291c]', 
-      barBg: 'bg-[#da291c]',
-      colorText: 'text-[#da291c]'
+    statusBadge = {
+      label: 'LEAK ALERT', cls: 'text-[#da291c] border-[#da291c]/30',
+      borderLeft: 'border-l-[#da291c]', barBg: 'bg-[#da291c]', colorText: 'text-[#da291c]'
     };
   } else if (isModerate) {
-    statusBadge = { 
-      label: 'MODERATE', 
-      cls: 'text-amber-400 border-amber-400/30', 
-      borderLeft: 'border-l-amber-500', 
-      barBg: 'bg-amber-500',
-      colorText: 'text-amber-400'
+    statusBadge = {
+      label: 'MODERATE',   cls: 'text-amber-400 border-amber-400/30',
+      borderLeft: 'border-l-amber-500', barBg: 'bg-amber-500', colorText: 'text-amber-400'
     };
   }
 
-  // Bar progress normalized against 10% target ceiling
-  const barWidth = isIncomeBased 
+  const barWidth = isIncomeBased
     ? Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / 10) * 100))
     : Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / 15) * 100));
+
+  // #6 Fix: pad to an even number of cells so the 2-col grid stays symmetric
+  const services = [...(topSubscriptionServices ?? [])].slice(0, 4);
+  const paddedServices = services.length % 2 !== 0
+    ? [...services, null]
+    : services;
 
   return (
     <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l-2 ${statusBadge.borderLeft}`}>
@@ -404,7 +489,6 @@ const StrategicSubscriptionCard = memo(({
         <Repeat size={72} />
       </div>
 
-      {/* Original Content (Blurs and fades on hover) */}
       <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
         <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
           บริการรายเดือน (Subscriptions)
@@ -435,18 +519,16 @@ const StrategicSubscriptionCard = memo(({
 
           <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
             <div
-              className={`h-full absolute left-0 top-0 transition-none ${
-                showSkeleton ? 'bg-slate-700 animate-pulse' : statusBadge.barBg
-              }`}
+              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : statusBadge.barBg}`}
               style={{ width: showSkeleton ? '50%' : `${barWidth}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Hover Breakdown Overlay */}
+      {/* #2 Fix: removed pointer-events-none */}
       {!showSkeleton && (
-        <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
           <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
             <span className="truncate">เจาะลึกรายเดือน</span>
             <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>
@@ -455,35 +537,29 @@ const StrategicSubscriptionCard = memo(({
           </div>
 
           <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
-            {topSubscriptionServices && topSubscriptionServices.length > 0 ? (
-              topSubscriptionServices.slice(0, 4).map((item: any, idx: number) => (
-                <div key={idx} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                  <span className="text-[9px] font-bold text-purple-300 uppercase tracking-wide truncate flex items-center gap-1">
-                    <span>{item.icon || '🔄'}</span> {item.name}
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-[13px] font-black text-purple-400 tabular-nums">฿{formatMoney(item.amount)}</span>
-                    {subscriptionTotal > 0 && (
-                      <span className="text-[9px] font-bold text-neutral-500">
-                        ({((item.amount / subscriptionTotal) * 100).toFixed(0)}%)
-                      </span>
-                    )}
+            {paddedServices.length > 0 ? (
+              paddedServices.map((item, idx) =>
+                item ? (
+                  <div key={idx} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+                    <span className="text-[9px] font-bold text-purple-300 uppercase tracking-wide truncate flex items-center gap-1">
+                      <span>{item.icon || '🔄'}</span> {item.name}
+                    </span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[13px] font-black text-purple-400 tabular-nums">฿{formatMoney(item.amount)}</span>
+                      {subscriptionTotal > 0 && (
+                        <span className="text-[9px] font-bold text-neutral-500">
+                          ({((item.amount / subscriptionTotal) * 100).toFixed(0)}%)
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                ) : (
+                  <div key={`pad-${idx}`} className="bg-[#181818]" />
+                )
+              )
             ) : (
               <div className="col-span-2 bg-[#181818] p-2 text-center text-[9px] text-neutral-500 flex items-center justify-center">
                 ไม่มีข้อมูลรายเดือน
-              </div>
-            )}
-            {topSubscriptionServices && topSubscriptionServices.length === 1 && (
-              <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-                <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">
-                  สถานะ
-                </span>
-                <span className={`text-[11px] font-extrabold tabular-nums ${statusBadge.colorText}`}>
-                  {statusBadge.label}
-                </span>
               </div>
             )}
           </div>
@@ -495,7 +571,14 @@ const StrategicSubscriptionCard = memo(({
 
 StrategicSubscriptionCard.displayName = 'StrategicSubscriptionCard';
 
-const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCategories, showSkeleton }: any) => (
+interface LifestyleCardProps {
+  lifestyleRatio: number;
+  variableTotal: number;
+  topWantCategories?: WantCategory[];
+  showSkeleton?: boolean;
+}
+
+const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCategories, showSkeleton }: LifestyleCardProps) => (
   <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
     lifestyleRatio > 35 ? 'border-l-[#da291c]' : 'border-l-orange-500'
   }`}>
@@ -503,19 +586,18 @@ const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCat
       <Zap size={72} />
     </div>
 
-    {/* Original Content (Blurs and fades on hover) */}
     <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
       <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
         ดัชนีฟุ่มเฟือย (Want Ratio)
       </span>
-      
+
       {!showSkeleton && (
         <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
           <span>เกณฑ์แนะนำ</span>
           <span className="text-orange-400 font-extrabold">&lt; 30% ของรายรับ</span>
         </div>
       )}
-      
+
       <div className="mt-auto z-10">
         {showSkeleton ? (
           <Shimmer className="h-6 w-16 my-1" />
@@ -529,29 +611,27 @@ const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCat
             </div>
           </div>
         )}
-        
+
         <div className="w-full h-1 mt-2 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-          <div 
-            className={`h-full absolute left-0 top-0 transition-none ${
-              showSkeleton ? 'bg-slate-700 animate-pulse' : 'bg-orange-500'
-            }`} 
-            style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }} 
+          <div
+            className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : 'bg-orange-500'}`}
+            style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }}
           />
         </div>
       </div>
     </div>
 
-    {/* Hover Breakdown Overlay */}
+    {/* #2 Fix: removed pointer-events-none */}
     {!showSkeleton && (
-      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
         <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
           <span className="truncate">หมวดฟุ่มเฟือย Top 4</span>
           <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">Top 4</span>
         </div>
-        
+
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           {topWantCategories && topWantCategories.length > 0 ? (
-            topWantCategories.map((cat: any) => (
+            topWantCategories.map(cat => (
               <div key={cat.id} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
                 <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-wide truncate flex items-center gap-1">
                   <span>{cat.icon}</span> {cat.name}
@@ -575,7 +655,17 @@ const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCat
 
 StrategicLifestyleCard.displayName = 'StrategicLifestyleCard';
 
-const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dailyFixed, dailyVariable, dailySavings, showSkeleton }: any) => (
+interface VictoryCardProps {
+  dailyVictory: number;
+  periodDays: number;
+  dailyIncome: number;
+  dailyFixed: number;
+  dailyVariable: number;
+  dailySavings: number;
+  showSkeleton?: boolean;
+}
+
+const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dailyFixed, dailyVariable, dailySavings, showSkeleton }: VictoryCardProps) => (
   <div className={`group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 ${
     dailyVictory >= 0 ? 'border-l-lime-500' : 'border-l-[#da291c]'
   }`}>
@@ -583,27 +673,27 @@ const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dail
       <Award size={72} />
     </div>
 
-    {/* Original Content (Blurs and fades on hover) */}
     <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
       <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
         เงินเหลือรายวัน (Victory)
       </span>
-      
+
       {!showSkeleton && (
         <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
           <span>ระยะเวลาคำนวณ</span>
           <span className="text-lime-400 font-extrabold">{periodDays} วันในงวด</span>
         </div>
       )}
-      
+
       <div className="mt-auto z-10">
         {showSkeleton ? (
           <Shimmer className="h-6 w-20" />
         ) : (
+          // #4 Fix: sign before ฿ symbol
           <div className={`text-lg font-black tabular-nums leading-none ${
             dailyVictory >= 0 ? 'text-lime-400' : 'text-[#da291c]'
           }`}>
-            ฿{formatMoney(dailyVictory)}
+            {formatSignedMoney(dailyVictory)}
           </div>
         )}
         <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
@@ -612,16 +702,16 @@ const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dail
       </div>
     </div>
 
-    {/* Hover Breakdown Overlay */}
+    {/* #2 Fix: removed pointer-events-none */}
     {!showSkeleton && (
-      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
         <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
           <span className="truncate">โครงสร้างรายวัน</span>
           <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${
             dailyVictory >= 0 ? 'text-lime-400 border-lime-400/30' : 'text-[#da291c] border-[#da291c]/30'
           }`}>เฉลี่ย {periodDays} วัน</span>
         </div>
-        
+
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
             <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📥 รับ/วัน</span>
@@ -647,8 +737,21 @@ const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dail
 
 StrategicVictoryCard.displayName = 'StrategicVictoryCard';
 
-const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTotal, showSkeleton }: any) => {
-  const foodStatus = getFoodIncomeStatus(foodPctOfIncome);
+interface FoodRatioCardProps {
+  foodPercentage: number | string;
+  foodPctOfIncome: number | string;
+  foodTotal: number;
+  showSkeleton?: boolean;
+}
+
+const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTotal, showSkeleton }: FoodRatioCardProps) => {
+  const foodStatus = getFoodIncomeStatus(Number(foodPctOfIncome));
+  const pctOfExpense = Number(foodPercentage);
+  const pctOfIncome  = Number(foodPctOfIncome);
+
+  // #7 Fix: improved overlay — show budget utilization vs thresholds instead of raw % duplication
+  const vsExpThreshold  = pctOfExpense > 25  ? `เกินเกณฑ์ ${(pctOfExpense - 25).toFixed(1)}%`  : `เหลือ ${(25 - pctOfExpense).toFixed(1)}% จากเกณฑ์`;
+  const vsIncThreshold  = pctOfIncome  > 20  ? `เกินเกณฑ์ ${(pctOfIncome  - 20).toFixed(1)}%`  : `เหลือ ${(20 - pctOfIncome).toFixed(1)}% จากเกณฑ์`;
 
   return (
     <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-amber-500">
@@ -656,19 +759,18 @@ const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTota
         <UtensilsCrossed size={72} />
       </div>
 
-      {/* Original Content (Blurs and fades on hover) */}
       <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
         <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
           สัดส่วนค่าอาหาร
         </span>
-        
+
         {!showSkeleton && (
           <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
             <span>เกณฑ์สัดส่วน</span>
             <span className="text-amber-400 font-extrabold">&lt; 25% ของรายจ่าย</span>
           </div>
         )}
-        
+
         <div className="mt-auto z-10">
           {showSkeleton ? (
             <Shimmer className="h-6 w-12" />
@@ -683,28 +785,38 @@ const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTota
         </div>
       </div>
 
-      {/* Hover Breakdown Overlay */}
+      {/* #2 Fix: removed pointer-events-none | #7 Fix: meaningful overlay data */}
       {!showSkeleton && (
-        <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+        <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
           <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
             <span className="truncate">เจาะลึกงบอาหาร</span>
             <span className={`font-extrabold text-[8px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
               {foodStatus.label}
             </span>
           </div>
-          
+
           <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
             <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-              <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📊 % รายรับ</span>
-              <span className="text-[13px] font-black text-emerald-400 tabular-nums">{foodPctOfIncome}%</span>
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🍽️ รวมค่าอาหาร</span>
+              <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(foodTotal)}</span>
             </div>
             <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
               <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">📉 % รายจ่าย</span>
               <span className="text-[13px] font-black text-rose-400 tabular-nums">{foodPercentage}%</span>
             </div>
-            <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🍽️ รวมค่าอาหาร</span>
-              <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(foodTotal)}</span>
+            {/* vs Expense threshold */}
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">เทียบเกณฑ์ 25%</span>
+              <span className={`text-[11px] font-black tabular-nums ${pctOfExpense > 25 ? 'text-[#da291c]' : 'text-emerald-400'}`}>
+                {vsExpThreshold}
+              </span>
+            </div>
+            {/* vs Income threshold */}
+            <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
+              <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">เทียบรายรับ 20%</span>
+              <span className={`text-[11px] font-black tabular-nums ${pctOfIncome > 20 ? 'text-[#da291c]' : 'text-emerald-400'}`}>
+                {vsIncThreshold}
+              </span>
             </div>
           </div>
         </div>
@@ -715,25 +827,33 @@ const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTota
 
 StrategicFoodRatioCard.displayName = 'StrategicFoodRatioCard';
 
-const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, foodHolidayAvg, maxFoodDayAmount, showSkeleton }: any) => (
+interface FoodDailyCardProps {
+  foodDailyAvg: number;
+  foodTotal: number;
+  foodWorkdayAvg: number;
+  foodHolidayAvg: number;
+  maxFoodDayAmount: number;
+  showSkeleton?: boolean;
+}
+
+const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, foodHolidayAvg, maxFoodDayAmount, showSkeleton }: FoodDailyCardProps) => (
   <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-orange-400">
     <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
       <UtensilsCrossed size={72} />
     </div>
 
-    {/* Original Content (Blurs and fades on hover) */}
     <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
       <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
         กินเฉลี่ย/วัน
       </span>
-      
+
       {!showSkeleton && (
         <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
           <span>งบกินรวม</span>
           <span className="text-orange-400 font-extrabold tabular-nums">฿{formatMoney(foodTotal)}</span>
         </div>
       )}
-      
+
       <div className="mt-auto z-10">
         {showSkeleton ? (
           <Shimmer className="h-6 w-16" />
@@ -748,14 +868,14 @@ const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, 
       </div>
     </div>
 
-    {/* Hover Breakdown Overlay */}
+    {/* #2 Fix: removed pointer-events-none */}
     {!showSkeleton && (
-      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
         <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
           <span className="truncate">พฤติกรรมการกิน</span>
           <span className="text-orange-400 font-extrabold text-[8px] border border-orange-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
         </div>
-        
+
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
             <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
@@ -777,31 +897,41 @@ const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, 
 
 StrategicFoodDailyCard.displayName = 'StrategicFoodDailyCard';
 
-const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAvg, dailyHolidayAvg, dailyFixed, dailyVariable, showSkeleton }: any) => (
+interface DailyExpenseCardProps {
+  dailyAvg: number;
+  totalExpense: number;
+  dailyWorkdayAvg: number;
+  dailyHolidayAvg: number;
+  dailyFixed: number;
+  dailyVariable: number;
+  showSkeleton?: boolean;
+}
+
+const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAvg, dailyHolidayAvg, dailyFixed, dailyVariable, showSkeleton }: DailyExpenseCardProps) => (
   <div className="group relative overflow-hidden p-3.5 flex flex-col justify-between h-full min-h-[150px] bg-[#181818] hover:bg-[#1d1d1d] transition-none border-l-2 border-l-[#da291c]">
     <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
       <TrendingDown size={72} />
     </div>
 
-    {/* Original Content (Blurs and fades on hover) */}
     <div className="flex-1 flex flex-col justify-between w-full h-full transition-none group-hover:blur-[1.5px] group-hover:opacity-20">
       <span className="text-[9px] font-black uppercase tracking-[0.12em] text-neutral-400 mb-1">
         รายจ่ายเฉลี่ย/วัน
       </span>
-      
+
       {!showSkeleton && (
         <div className="my-auto py-1 border-y border-neutral-800/60 flex items-center justify-between text-[9px] font-bold text-neutral-500">
           <span>ยอดจ่ายรวม</span>
           <span className="text-rose-400 font-extrabold tabular-nums">฿{formatMoney(totalExpense)}</span>
         </div>
       )}
-      
+
       <div className="mt-auto z-10">
         {showSkeleton ? (
           <Shimmer className="h-6 w-16" />
         ) : (
+          // #4 Fix: sign before ฿ — dailyAvg should always be positive here, but defensive
           <div className="text-lg font-black tabular-nums leading-none text-rose-400">
-            ฿{formatMoney(dailyAvg)}
+            {formatSignedMoney(dailyAvg)}
           </div>
         )}
         <div className="text-[9px] font-bold text-neutral-500 mt-2 leading-none">
@@ -810,14 +940,14 @@ const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAv
       </div>
     </div>
 
-    {/* Hover Breakdown Overlay */}
+    {/* #2 Fix: removed pointer-events-none */}
     {!showSkeleton && (
-      <div className="absolute inset-0 p-2 bg-[#181818]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-none pointer-events-none z-20 flex flex-col justify-start">
+      <div className="absolute inset-0 p-2 bg-[#181818]/95 opacity-0 group-hover:opacity-100 transition-none z-20 flex flex-col justify-start">
         <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1 flex justify-between items-center shrink-0 gap-1">
           <span className="truncate">อัตราจ่ายรายวัน</span>
           <span className="text-rose-400 font-extrabold text-[8px] border border-rose-400/30 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>
         </div>
-        
+
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
             <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
@@ -843,10 +973,14 @@ const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAv
 
 StrategicDailyExpenseCard.displayName = 'StrategicDailyExpenseCard';
 
-/**
- * SECTION 2: STRATEGIC & KEY METRICS (Commitment, Velocity, Food Metrics)
- */
-const SummaryStrategic = memo(({ analytics, showSkeleton }: any) => {
+// ── SECTION 2: STRATEGIC ─────────────────────────────────────────────────────
+
+interface SummaryStrategicProps {
+  analytics: SummaryAnalytics;
+  showSkeleton?: boolean;
+}
+
+const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrategicProps) => {
   const {
     totalIncome, totalSavings, netCashflow,
     dailyAvg, foodPercentage, foodTotal, foodDailyAvg, foodPctOfIncome,
@@ -857,33 +991,25 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }: any) => {
     subscriptionCount, subscriptionSub, topSubscriptionServices
   } = analytics;
 
-  const periodDays = Math.max(1, datesInPeriod?.length || 1);
+  const periodDays  = Math.max(1, datesInPeriod?.length || 1);
   const totalExpense = fixedTotal + variableTotal;
-  const dailyVictory = netCashflow / periodDays;
-  const dailyIncome = totalIncome / periodDays;
-  const dailyFixed = fixedTotal / periodDays;
+  const dailyVictory  = netCashflow / periodDays;
+  const dailyIncome   = totalIncome / periodDays;
+  const dailyFixed    = fixedTotal / periodDays;
   const dailyVariable = variableTotal / periodDays;
-  const dailySavings = totalSavings / periodDays;
+  const dailySavings  = totalSavings / periodDays;
 
-  // Safely parse decimals to numbers for stable evaluation
-  const rentPercentageNum = Number.parseFloat(rentPercentage) || 0;
-
-  // Lifestyle Ratio: (Wants / Total Income)
-  const lifestyleRatio = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
+  const rentPercentageNum = Number.parseFloat(String(rentPercentage)) || 0;
+  const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
 
   return (
     <div className="grid grid-cols-12 items-stretch gap-px bg-[#2d2d2d]">
-      
-      {/* Strategic Analysis */}
+
+      {/* Strategic Analysis (7 cols) */}
       <div className="col-span-7 flex flex-col">
         <SectionHeader icon={Target} title="วิเคราะห์กลยุทธ์ (Strategic Analysis)" />
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-[1px] bg-[#2d2d2d] flex-1">
-          <StrategicRentCard
-            rentPercentageNum={rentPercentageNum}
-            rentTotal={rentTotal}
-            rentSub={rentSub}
-            showSkeleton={showSkeleton}
-          />
+          <StrategicRentCard rentPercentageNum={rentPercentageNum} rentTotal={rentTotal} rentSub={rentSub} showSkeleton={showSkeleton} />
           <StrategicSubscriptionCard
             subscriptionTotal={subscriptionTotal}
             subscriptionPctOfIncome={subscriptionPctOfIncome}
@@ -894,51 +1020,23 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }: any) => {
             totalIncome={totalIncome}
             showSkeleton={showSkeleton}
           />
-          <StrategicLifestyleCard
-            lifestyleRatio={lifestyleRatio}
-            variableTotal={variableTotal}
-            topWantCategories={topWantCategories}
-            showSkeleton={showSkeleton}
-          />
+          <StrategicLifestyleCard lifestyleRatio={lifestyleRatio} variableTotal={variableTotal} topWantCategories={topWantCategories} showSkeleton={showSkeleton} />
           <StrategicVictoryCard
-            dailyVictory={dailyVictory}
-            periodDays={periodDays}
-            dailyIncome={dailyIncome}
-            dailyFixed={dailyFixed}
-            dailyVariable={dailyVariable}
-            dailySavings={dailySavings}
+            dailyVictory={dailyVictory} periodDays={periodDays}
+            dailyIncome={dailyIncome} dailyFixed={dailyFixed}
+            dailyVariable={dailyVariable} dailySavings={dailySavings}
             showSkeleton={showSkeleton}
           />
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics (5 cols) */}
       <div className="col-span-5 flex flex-col">
         <SectionHeader icon={Scale} title="ข้อมูลสำคัญ (Metrics)" />
         <div className="grid grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
-          <StrategicFoodRatioCard
-            foodPercentage={foodPercentage}
-            foodPctOfIncome={foodPctOfIncome}
-            foodTotal={foodTotal}
-            showSkeleton={showSkeleton}
-          />
-          <StrategicFoodDailyCard
-            foodDailyAvg={foodDailyAvg}
-            foodTotal={foodTotal}
-            foodWorkdayAvg={foodWorkdayAvg}
-            foodHolidayAvg={foodHolidayAvg}
-            maxFoodDayAmount={maxFoodDayAmount}
-            showSkeleton={showSkeleton}
-          />
-          <StrategicDailyExpenseCard
-            dailyAvg={dailyAvg}
-            totalExpense={totalExpense}
-            dailyWorkdayAvg={dailyWorkdayAvg}
-            dailyHolidayAvg={dailyHolidayAvg}
-            dailyFixed={dailyFixed}
-            dailyVariable={dailyVariable}
-            showSkeleton={showSkeleton}
-          />
+          <StrategicFoodRatioCard foodPercentage={foodPercentage} foodPctOfIncome={foodPctOfIncome} foodTotal={foodTotal} showSkeleton={showSkeleton} />
+          <StrategicFoodDailyCard foodDailyAvg={foodDailyAvg} foodTotal={foodTotal} foodWorkdayAvg={foodWorkdayAvg} foodHolidayAvg={foodHolidayAvg} maxFoodDayAmount={maxFoodDayAmount} showSkeleton={showSkeleton} />
+          <StrategicDailyExpenseCard dailyAvg={dailyAvg} totalExpense={totalExpense} dailyWorkdayAvg={dailyWorkdayAvg} dailyHolidayAvg={dailyHolidayAvg} dailyFixed={dailyFixed} dailyVariable={dailyVariable} showSkeleton={showSkeleton} />
         </div>
       </div>
 
@@ -946,108 +1044,111 @@ const SummaryStrategic = memo(({ analytics, showSkeleton }: any) => {
   );
 });
 
-/**
- * SECTION 3: FORECAST (Opt-in predictions & Elite Safe Zone Center)
- */
-const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
-  const {
-    showForecasting, projectedExpense, safeToSpend, projectedSurplus, forecastingDetails
-  } = analytics;
+SummaryStrategic.displayName = 'SummaryStrategic';
+
+// ── SECTION 3: FORECASTING ───────────────────────────────────────────────────
+
+interface SummaryForecastingProps {
+  analytics: SummaryAnalytics;
+  showSkeleton?: boolean;
+}
+
+const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryForecastingProps) => {
+  const { showForecasting, projectedExpense, safeToSpend, projectedSurplus, forecastingDetails } = analytics;
 
   if (!showForecasting) return null;
 
-  const details = forecastingDetails || {};
-  const currentDay = details.currentDay || 1;
-  const lastDayOfMonth = details.lastDayOfMonth || 30;
-  const remainingDays = details.remainingDays || 0;
-  const monthProgressPct = details.monthProgressPct || 0;
-  const fixedTotal = details.fixedTotal || 0;
-  const variableUpToToday = details.variableUpToToday || 0;
+  const details = forecastingDetails || {} as ForecastingDetails;
+  const currentDay              = details.currentDay              || 1;
+  const lastDayOfMonth          = details.lastDayOfMonth          || 30;
+  const remainingDays           = details.remainingDays           || 0;
+  const monthProgressPct        = details.monthProgressPct        || 0;
+  const fixedTotal              = details.fixedTotal              || 0;
+  const variableUpToToday       = details.variableUpToToday       || 0;
   const projectedVariableRemaining = details.projectedVariableRemaining || 0;
-  const actualDailyVariableAvg = details.actualDailyVariableAvg || 0;
-  const projectedSurplusPct = details.projectedSurplusPct || 0;
-  const maxAllowedExpense = details.maxAllowedExpense || 0;
-  const requiredReduction = details.requiredReduction || 0;
-  const requiredDailyReduction = details.requiredDailyReduction || 0;
-  const paceStatus = details.paceStatus || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
-  const eomStatus = details.eomStatus || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+  const actualDailyVariableAvg  = details.actualDailyVariableAvg  || 0;
+  const projectedSurplusPct     = details.projectedSurplusPct     || 0;
+  const maxAllowedExpense        = details.maxAllowedExpense       || 0;
+  const requiredReduction        = details.requiredReduction       || 0;
+  const requiredDailyReduction   = details.requiredDailyReduction  || 0;
+  const paceStatus  = details.paceStatus  || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
+  const eomStatus   = details.eomStatus   || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
 
-  const headroom = safeToSpend - actualDailyVariableAvg;
-
-  // Stacked Expense proportions
-  const totalProj = Math.max(1, projectedExpense);
-  const fixedPct = Math.min(100, Math.max(0, (fixedTotal / totalProj) * 100));
-  const varSpentPct = Math.min(100, Math.max(0, (variableUpToToday / totalProj) * 100));
-  const varRemPct = Math.min(100, Math.max(0, (projectedVariableRemaining / totalProj) * 100));
-
-  // Daily Headroom pace ratio
+  const headroom     = safeToSpend - actualDailyVariableAvg;
   const safePaceRatio = safeToSpend > 0 ? Math.min(100, (actualDailyVariableAvg / safeToSpend) * 100) : 100;
+
+  // Stacked proportions
+  const totalProj  = Math.max(1, projectedExpense);
+  const fixedPct   = Math.min(100, Math.max(0, (fixedTotal / totalProj) * 100));
+  const varSpentPct = Math.min(100, Math.max(0, (variableUpToToday / totalProj) * 100));
+  const varRemPct  = Math.min(100, Math.max(0, (projectedVariableRemaining / totalProj) * 100));
 
   return (
     <div className="flex flex-col">
-      {/* 1. Top Section Header with EOM Safety Grade */}
+      {/* Header */}
       <div className="px-4 py-2.5 flex items-center justify-between border-b border-[#2d2d2d] bg-[#121212]/90">
         <div className="flex items-center gap-2">
           <div className="w-[3px] h-3.5 bg-[#da291c] shrink-0" />
           <TrendingUp className="w-4 h-4 text-neutral-300" />
           <span className="text-xs font-black uppercase tracking-[0.2em] text-neutral-100">
-            พยากรณ์สิ้นเดือน (Projection & Safe Zone Center)
+            พยากรณ์สิ้นเดือน (Projection &amp; Safe Zone Center)
           </span>
         </div>
-        <div className={`px-2.5 py-1 border text-[10px] font-black tracking-wider uppercase flex items-center gap-1.5 ${eomStatus.bg} ${eomStatus.border}`}
-          style={{ color: eomStatus.color }}>
+        <div
+          className={`px-2.5 py-1 border text-[10px] font-black tracking-wider uppercase flex items-center gap-1.5 ${eomStatus.bg} ${eomStatus.border}`}
+          style={{ color: eomStatus.color }}
+        >
           <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
           <span>{eomStatus.label}</span>
         </div>
       </div>
 
-      {/* 2. Burn-Rate & Calendar Pace Bar with Monthly Ceiling */}
-      <div className="px-4 py-3 bg-[#151515] border-b border-[#2d2d2d] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-neutral-300 font-bold text-xs uppercase tracking-wider">
-            <Gauge className="w-4 h-4 text-indigo-400" />
-            <span>ความเร็วใช้จ่าย (Burn Pace):</span>
+      {/* #8 Fix: Burn-Pace bar restructured into 2 rows for breathing room */}
+      <div className="px-4 py-2.5 bg-[#151515] border-b border-[#2d2d2d] flex flex-col gap-2 text-xs">
+        {/* Row A: pace label + badge + ceiling */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span className="text-neutral-300 font-bold uppercase tracking-wider">Burn Pace:</span>
+            <span
+              className="text-xs font-black uppercase px-2.5 py-0.5 border"
+              style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}
+            >
+              {paceStatus.label}
+            </span>
           </div>
-          <span className="text-xs font-black uppercase px-2.5 py-0.5 border" style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}>
-            {paceStatus.label}
-          </span>
+          <div className="text-xs text-neutral-300 font-mono bg-neutral-900 px-2 py-0.5 border border-neutral-800">
+            เพดานงบทั้งเดือน: <span className="text-emerald-400 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="text-xs text-neutral-300 font-mono bg-neutral-900 px-2 py-0.5 border border-neutral-800">
-            เพดานงบรวมไม่ติดลบ: <span className="text-emerald-400 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
-          </div>
-          <div className="text-xs text-neutral-300 font-mono">
-            วันในเดือน: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span> ({monthProgressPct}%)
-          </div>
-          <div className="w-28 h-2 bg-neutral-800 rounded-none overflow-hidden relative border border-neutral-700/60">
-            <div 
-              className="h-full transition-all duration-300"
-              style={{ 
-                width: `${Math.min(100, monthProgressPct)}%`,
-                backgroundColor: paceStatus.color 
-              }} 
+        {/* Row B: calendar progress */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-neutral-400 font-mono">
+            วันในเดือน: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
+            <span className="text-neutral-500"> ({monthProgressPct}%)</span>
+          </span>
+          <div className="w-28 h-2 bg-neutral-800 overflow-hidden relative border border-neutral-700/60">
+            <div
+              className="h-full"
+              style={{ width: `${Math.min(100, monthProgressPct)}%`, backgroundColor: paceStatus.color }}
             />
           </div>
-          <div className="text-xs text-neutral-300 font-mono">
+          <span className="text-neutral-400 font-mono">
             คงเหลือ <span className="text-neutral-100 font-bold">{remainingDays} วัน</span>
-          </div>
+          </span>
         </div>
       </div>
 
-      {/* 3. High-Density 3-Column HUD Grid */}
+      {/* 3-Column HUD Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d]">
-        
-        {/* Card 1: พยากรณ์รายจ่ายเดือนนี้ (Projected Expense vs Monthly Ceiling) */}
+
+        {/* Card 1: Projected Expense */}
         <div className="group relative overflow-hidden p-5 flex flex-col gap-4 bg-indigo-950/20 hover:bg-indigo-950/30 transition-none border-l-2 border-l-indigo-500">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
-                พยากรณ์รายจ่ายเดือนนี้
-              </span>
-              <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 border border-indigo-700/60">
-                MONTHLY FORECAST
-              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">พยากรณ์รายจ่ายเดือนนี้</span>
+              <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 border border-indigo-700/60">MONTHLY FORECAST</span>
             </div>
             {showSkeleton ? (
               <Shimmer className="h-8 w-32 mt-2" />
@@ -1064,21 +1165,19 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
             )}
           </div>
 
-          {/* Stacked Proportions Progress Bar */}
           <div className="space-y-1">
             <div className="h-1.5 w-full bg-neutral-800 flex overflow-hidden border border-indigo-900/40">
-              <div style={{ width: `${fixedPct}%` }} className="bg-slate-400" title="Fixed" />
+              <div style={{ width: `${fixedPct}%` }}   className="bg-slate-400" title="Fixed" />
               <div style={{ width: `${varSpentPct}%` }} className="bg-indigo-500" title="Var Spent" />
-              <div style={{ width: `${varRemPct}%` }} className="bg-indigo-800/80" title="Var Projected" />
+              <div style={{ width: `${varRemPct}%` }}   className="bg-indigo-800/80" title="Var Projected" />
             </div>
             <div className="flex justify-between text-[10px] font-mono text-neutral-400">
               <span className="text-slate-300">ภาระคงที่ ({fixedPct.toFixed(0)}%)</span>
-              <span className="text-indigo-300">จ่ายประจำวันแล้ว ({varSpentPct.toFixed(0)}%)</span>
-              <span className="text-indigo-400">ประเมินรายวัน ({varRemPct.toFixed(0)}%)</span>
+              <span className="text-indigo-300">จ่ายแล้ว ({varSpentPct.toFixed(0)}%)</span>
+              <span className="text-indigo-400">ประเมิน ({varRemPct.toFixed(0)}%)</span>
             </div>
           </div>
 
-          {/* Math Breakdown: Exclusive home for expense components */}
           <div className="pt-3 border-t border-indigo-900/50 text-xs font-mono text-neutral-300 space-y-1.5">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">• ภาระคงที่/ที่พัก (Fixed/Rent):</span>
@@ -1099,20 +1198,18 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
           </div>
         </div>
 
-        {/* Card 2: งบเหลือใช้จ่ายรายวัน (Daily Spending Ceiling) */}
+        {/* Card 2: Safe to Spend */}
         <div className={`group relative overflow-hidden p-5 flex flex-col gap-4 transition-none border-l-2 ${
-          safeToSpend > 300 
+          safeToSpend > 300
             ? 'bg-emerald-950/20 hover:bg-emerald-950/30 border-l-teal-500'
             : 'bg-red-950/20 hover:bg-red-950/30 border-l-[#da291c]'
         }`}>
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
-                เพดานใช้วันละไม่เกิน (Safe to Spend)
-              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">เพดานใช้วันละไม่เกิน</span>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 border ${
-                headroom >= 0 
-                  ? 'text-teal-300 bg-teal-950/80 border-teal-700/60' 
+                headroom >= 0
+                  ? 'text-teal-300 bg-teal-950/80 border-teal-700/60'
                   : 'text-red-300 bg-red-950/80 border-red-700/60'
               }`}>
                 {headroom >= 0 ? 'SAFE ZONE' : 'OVER PACED'}
@@ -1135,12 +1232,11 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
             )}
           </div>
 
-          {/* Daily Headroom Gauge Bar */}
           <div className="space-y-1">
             <div className="h-1.5 w-full bg-neutral-800 overflow-hidden relative border border-neutral-700/60">
-              <div 
+              <div
                 className={`h-full ${headroom >= 0 ? 'bg-teal-400' : 'bg-[#da291c]'}`}
-                style={{ width: `${Math.min(100, safePaceRatio)}%` }} 
+                style={{ width: `${Math.min(100, safePaceRatio)}%` }}
               />
             </div>
             <div className="flex justify-between text-[10px] font-mono text-neutral-400">
@@ -1149,7 +1245,6 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
             </div>
           </div>
 
-          {/* Math Breakdown: Exclusive home for daily pace & headroom */}
           <div className="pt-3 border-t border-neutral-800/80 text-xs font-mono text-neutral-300 space-y-1.5">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">• สปีดใช้จ่ายรายวันปัจจุบัน:</span>
@@ -1175,13 +1270,11 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
           </div>
         </div>
 
-        {/* Card 3: กระแสเงินสดสุทธิคาดการณ์ & เป้าหมายไม่ติดลบ (Projected Net Cashflow) */}
+        {/* Card 3: Projected Net Cashflow */}
         <div className="group relative overflow-hidden p-5 flex flex-col gap-4 bg-purple-950/20 hover:bg-purple-950/30 transition-none border-l-2 border-l-purple-500">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
-                กระแสเงินสดสุทธิคาดการณ์
-              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">กระแสเงินสดสุทธิคาดการณ์</span>
               <span className="text-[10px] font-mono font-bold text-purple-300 bg-purple-950/80 px-2 py-0.5 border border-purple-700/60">
                 EOM SURPLUS / DEFICIT
               </span>
@@ -1195,12 +1288,11 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
             )}
           </div>
 
-          {/* Retention Ratio Progress Bar */}
           <div className="space-y-1">
             <div className="h-1.5 w-full bg-neutral-800 overflow-hidden relative border border-purple-900/40">
-              <div 
+              <div
                 className={`h-full ${projectedSurplus >= 0 ? 'bg-purple-500' : 'bg-[#da291c]'}`}
-                style={{ width: `${Math.min(100, Math.max(0, projectedSurplusPct))}%` }} 
+                style={{ width: `${Math.min(100, Math.max(0, projectedSurplusPct))}%` }}
               />
             </div>
             <div className="flex justify-between text-[10px] font-mono text-neutral-400">
@@ -1209,7 +1301,6 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
             </div>
           </div>
 
-          {/* Math Breakdown: Exclusive home for income ceiling & break-even targets */}
           <div className="pt-3 border-t border-purple-900/50 text-xs font-mono text-neutral-300 space-y-1.5">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">• เพดานรายรับรวมทั้งเดือน:</span>
@@ -1238,8 +1329,12 @@ const SummaryForecasting = memo(({ analytics, showSkeleton }: any) => {
   );
 });
 
+SummaryForecasting.displayName = 'SummaryForecasting';
+
+// ── ROOT EXPORT ───────────────────────────────────────────────────────────────
+
 /**
- * SummaryCards - The mission control center for financial vitals.
+ * SummaryCards — Mission control center for financial vitals.
  */
 export default function SummaryCards() {
   const { analytics, showSkeleton } = useDashboardContext();
@@ -1248,20 +1343,20 @@ export default function SummaryCards() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {/* 1. Core Vitals Card */}
+      {/* 1. Core Vitals */}
       <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
-        <SummaryVitals analytics={analytics} showSkeleton={showSkeleton} />
+        <SummaryVitals analytics={analytics as SummaryAnalytics} showSkeleton={showSkeleton} />
       </div>
 
-      {/* 2. Strategic & Key Metrics Card */}
+      {/* 2. Strategic & Key Metrics */}
       <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
-        <SummaryStrategic analytics={analytics} showSkeleton={showSkeleton} />
+        <SummaryStrategic analytics={analytics as SummaryAnalytics} showSkeleton={showSkeleton} />
       </div>
 
-      {/* 3. Forecasting Predictions Card */}
+      {/* 3. Forecasting */}
       {analytics.showForecasting && (
         <div className="w-full flex flex-col rounded-none overflow-hidden border border-[#2d2d2d] bg-[#181818] shadow-sm">
-          <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+          <SummaryForecasting analytics={analytics as SummaryAnalytics} showSkeleton={showSkeleton} />
         </div>
       )}
     </div>
