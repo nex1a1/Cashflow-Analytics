@@ -55,7 +55,7 @@ function processStandardDataset(ds: any, { chartViewType, isSmoothLine, hiddenDa
 }
 
 export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, sankeyData, chartGroupMode, hiddenDatasets }: ChartDataEngineProps) {
-  const { transactions, analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy, dm } = useDashboardContext();
+  const { transactions, analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy } = useDashboardContext();
 
   const categoriesWithData = useMemo(() => {
     if (!categories) return new Set<string>();
@@ -97,6 +97,12 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
         ? categories.filter(c => (c as any).type === 'expense' && categoriesWithData.has(c.name))
         : categories.filter(c => (activeCats.includes(c.name) || activeCats.includes(c.id)) && categoriesWithData.has(c.name));
 
+      if (hideFixedExpenses) {
+        catsToRender = catsToRender.filter(c => c.allocation_type !== 'need');
+      } else if (hideWantExpenses) {
+        catsToRender = catsToRender.filter(c => c.allocation_type === 'need');
+      }
+
       const datasets = catsToRender.map(catObj => {
         const catName = catObj.name;
         const catId = catObj.id;
@@ -126,17 +132,17 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
       return { labels: xLabels, datasets };
     }
 
-    let filteredDatasets = analytics.mainChartData.datasets.filter((ds: any) => ds.type !== 'line' || ds.label === 'Cashflow');
-    const processedDatasets = filteredDatasets.map((ds: any) => processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory }));
+    const processedDatasets = analytics.mainChartData.datasets.map((ds: any) =>
+      processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory })
+    );
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, dm, sankeyData, hiddenDatasets]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, sankeyData, hiddenDatasets]);
 
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];
     if (chartViewType === 'sankey') return [];
     return displayChartData.datasets.filter((ds: any) => {
-      if (ds.label?.includes('เฉลี่ย') || ds.label === 'Cashflow' || ds.label?.includes('Target') || ds.label?.includes('เป้าหมาย')) return false;
       return ds.data?.some((v: number) => v > 0);
     });
   }, [displayChartData, chartViewType]);

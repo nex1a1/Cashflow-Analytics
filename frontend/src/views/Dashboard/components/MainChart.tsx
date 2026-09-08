@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart.tsx
-import React, { useState, useRef, useEffect, SetStateAction, Dispatch } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { Chart } from 'react-chartjs-2';
 import { 
   Layers, TrendingUp, BarChart, Network, 
@@ -12,16 +12,163 @@ import { useChartDataEngine } from '../hooks/useChartDataEngine';
 import { useChartOptions } from '../hooks/useChartOptions';
 import { Category } from '../../../types';
 
-/**
- * INTERNAL COMPONENT: MainChartHeader
- */
-function getMainChartTitle(chartViewType: string, mainChartType?: string, mainChartData?: any, showTrendLines?: boolean) {
+// ==========================================
+// TYPE INTERFACES
+// ==========================================
+
+interface ChartGroupBySwitcherProps {
+  chartGroupBy: string;
+  setChartGroupBy: (v: string) => void;
+}
+
+interface ViewTypeSwitcherProps {
+  chartViewType: string;
+  setChartViewType: (v: string) => void;
+  setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
+}
+
+interface SankeyControlsProps {
+  sankeyMode: string;
+  setSankeyMode: (v: string) => void;
+  sankeySortMode: string;
+  setSankeySortMode: (v: string) => void;
+  showSkeleton?: boolean;
+}
+
+interface MainChartHeaderProps {
+  chartViewType: string;
+  setChartViewType: (v: string) => void;
+  chartGroupBy: string;
+  setChartGroupBy: (v: string) => void;
+  setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
+  filterPeriod: string;
+  mainChartType?: string;
+}
+
+interface MainChartCategorySelectorProps {
+  dashboardCategory: string | string[];
+  setDashboardCategory: (v: string[]) => void;
+  categories: Category[];
+  categoriesWithData: Set<string>;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+}
+
+interface MainChartFilterMenuProps {
+  showCatMenu: boolean;
+  setShowCatMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
+  filterMenuRef: React.RefObject<HTMLDivElement>;
+  dashboardCategory: string | string[];
+  setDashboardCategory: (v: string[]) => void;
+  categories: Category[];
+  categoriesWithData: Set<string>;
+}
+
+interface BreakdownLegendItemProps {
+  category: Category;
+  isActive: boolean;
+  onToggle: (catName: string) => void;
+}
+
+interface BreakdownLegendProps {
+  categories: Category[];
+  categoriesWithData: Set<string>;
+  dashboardCategory: string | string[];
+  setDashboardCategory: (v: string[]) => void;
+}
+
+export interface LegendDataset {
+  label?: string;
+  type?: string;
+  borderColor?: string;
+  backgroundColor?: string;
+  data?: number[];
+  [key: string]: any;
+}
+
+interface StandardLegendItemProps {
+  dataset: LegendDataset;
+  isHidden: boolean;
+  onToggle: (label: string) => void;
+}
+
+interface StandardLegendProps {
+  legendDatasets: LegendDataset[];
+  hiddenDatasets: string[];
+  setHiddenDatasets: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+interface MainChartLegendProps {
+  legendDatasets: LegendDataset[];
+  hiddenDatasets: string[];
+  setHiddenDatasets: React.Dispatch<React.SetStateAction<string[]>>;
+  isBreakdown: boolean;
+  dashboardCategory: string | string[];
+  setDashboardCategory: (v: string[]) => void;
+  categories: Category[];
+  categoriesWithData: Set<string>;
+}
+
+interface ToolbarToggleSwitchProps {
+  isActive: boolean;
+  activeColor?: string;
+}
+
+interface ToolbarViewModesProps {
+  showSkeleton?: boolean;
+  isBreakdown: boolean;
+  setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
+  isLogScale: boolean;
+  setIsLogScale: (v: boolean | ((prev: boolean) => boolean)) => void;
+}
+
+interface ToolbarAllocationSelectorProps {
+  showSkeleton?: boolean;
+  hideFixedExpenses: boolean;
+  setHideFixedExpenses: (v: boolean) => void;
+  hideWantExpenses: boolean;
+  setHideWantExpenses: (v: boolean) => void;
+}
+
+interface ToolbarLineStyleSelectorProps {
+  showSkeleton?: boolean;
+  isSmoothLine: boolean;
+  setIsSmoothLine: (v: boolean) => void;
+}
+
+interface MainChartToolbarProps {
+  chartViewType: string;
+  showSkeleton?: boolean;
+  isBreakdown: boolean;
+  setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
+  isLogScale: boolean;
+  setIsLogScale: (v: boolean | ((prev: boolean) => boolean)) => void;
+  hideFixedExpenses: boolean;
+  setHideFixedExpenses: (v: boolean) => void;
+  hideWantExpenses: boolean;
+  setHideWantExpenses: (v: boolean) => void;
+  isSmoothLine: boolean;
+  setIsSmoothLine: (v: boolean) => void;
+  sankeyMode: string;
+  setSankeyMode: (v: string) => void;
+  sankeySortMode: string;
+  setSankeySortMode: (v: string) => void;
+  showCatMenu: boolean;
+  setShowCatMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
+  filterMenuRef: React.RefObject<HTMLDivElement>;
+  dashboardCategory: string | string[];
+  setDashboardCategory: (v: string[]) => void;
+  categories: Category[];
+  categoriesWithData: Set<string>;
+}
+
+// ==========================================
+// TITLE & CONTRAST HELPERS
+// ==========================================
+
+function getMainChartTitle(chartViewType: string, mainChartType?: string): string {
   if (chartViewType === 'sankey') {
     return 'โครงสร้างกระแสเงินสด (Sankey Flow)';
-  }
-  const isMtd = mainChartType === 'combo' && mainChartData?.datasets?.some((ds: any) => ds.label?.includes('เฉลี่ยสะสม')) && showTrendLines;
-  if (isMtd) {
-    return 'เทรนด์รายจ่ายรายวัน (MTD Average)';
   }
   if (mainChartType === 'combo') {
     return 'วิเคราะห์กระแสเงินสด';
@@ -32,26 +179,41 @@ function getMainChartTitle(chartViewType: string, mainChartType?: string, mainCh
   return 'รายจ่ายรายวัน';
 }
 
-function ChartGroupBySwitcher({ chartGroupBy, setChartGroupBy }: { chartGroupBy: string, setChartGroupBy: (v: string) => void }) {
-  return (
-    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
-      <button 
-        onClick={() => setChartGroupBy('monthly')} 
-        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
-      >
-        รายเดือน
-      </button>
-      <button 
-        onClick={() => setChartGroupBy('daily')} 
-        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
-      >
-        รายวัน
-      </button>
-    </div>
-  );
-}
+const getContrastTextColor = (hexColor: string | null | undefined): string => {
+  if (!hexColor) return '#ffffff';
+  let hex = hexColor.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (hex.length !== 6) return '#ffffff';
+  const r = Number.parseInt(hex.substring(0, 2), 16);
+  const g = Number.parseInt(hex.substring(2, 4), 16);
+  const b = Number.parseInt(hex.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 145 ? '#0f172a' : '#ffffff';
+};
 
-function ViewTypeSwitcher({ chartViewType, setChartViewType, setIsBreakdown }: { chartViewType: string, setChartViewType: (v: string) => void, setIsBreakdown: (v: boolean) => void }) {
+// ==========================================
+// SUBCOMPONENTS: HEADER & SWITCHERS
+// ==========================================
+
+const ChartGroupBySwitcher = memo(({ chartGroupBy, setChartGroupBy }: ChartGroupBySwitcherProps) => (
+  <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+    <button 
+      onClick={() => setChartGroupBy('monthly')} 
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+    >
+      รายเดือน
+    </button>
+    <button 
+      onClick={() => setChartGroupBy('daily')} 
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+    >
+      รายวัน
+    </button>
+  </div>
+));
+ChartGroupBySwitcher.displayName = 'ChartGroupBySwitcher';
+
+const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBreakdown }: ViewTypeSwitcherProps) => {
   const views = [
     { id: 'line', label: 'เส้น', icon: TrendingUp },
     { id: 'bar', label: 'แท่ง', icon: BarChart },
@@ -68,7 +230,7 @@ function ViewTypeSwitcher({ chartViewType, setChartViewType, setIsBreakdown }: {
             key={v.id}
             onClick={() => {
               setChartViewType(v.id);
-              if (v.id !== 'bar') setIsBreakdown(false);
+              if (v.id === 'sankey') setIsBreakdown(false);
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
               isActive ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
@@ -80,60 +242,58 @@ function ViewTypeSwitcher({ chartViewType, setChartViewType, setIsBreakdown }: {
       })}
     </div>
   );
-}
+});
+ViewTypeSwitcher.displayName = 'ViewTypeSwitcher';
 
-function SankeyControls({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode }: any) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
-        <button 
-          onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')} 
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
-            sankeyMode === 'allocation' ? 'bg-[#da291c] text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-          }`}
-          title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
-        >
-          <Layers className="w-3 h-3" />
-          {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
-        </button>
-      </div>
-
-      <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
-        <button 
-          onClick={() => setSankeySortMode('value')} 
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
-            sankeySortMode === 'value' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-          }`}
-        >
-          เรียงตามยอดเงิน
-        </button>
-        <button 
-          onClick={() => setSankeySortMode('index')} 
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all ${
-            sankeySortMode === 'index' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-          }`}
-        >
-          เรียงตามลำดับ (Settings)
-        </button>
-      </div>
+const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode, showSkeleton }: SankeyControlsProps) => (
+  <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+      <button 
+        disabled={showSkeleton}
+        onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')} 
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeyMode === 'allocation' ? 'bg-[#da291c] text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+        title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
+      >
+        <Layers className="w-3 h-3" />
+        {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
+      </button>
     </div>
-  );
-}
 
-/**
- * INTERNAL COMPONENT: MainChartHeader
- */
-const MainChartHeader = ({
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+      <button 
+        disabled={showSkeleton}
+        onClick={() => setSankeySortMode('value')} 
+        className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeySortMode === 'value' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+      >
+        เรียงตามยอดเงิน
+      </button>
+      <button 
+        disabled={showSkeleton}
+        onClick={() => setSankeySortMode('index')} 
+        className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeySortMode === 'index' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        }`}
+      >
+        เรียงตามลำดับ (Settings)
+      </button>
+    </div>
+  </div>
+));
+SankeyControls.displayName = 'SankeyControls';
+
+const MainChartHeader = memo(({
   chartViewType, setChartViewType,
   chartGroupBy, setChartGroupBy,
-  sankeySortMode, setSankeySortMode,
-  sankeyMode, setSankeyMode,
   setIsBreakdown, filterPeriod,
-  mainChartType, mainChartData, showTrendLines
-}: any) => {
+  mainChartType
+}: MainChartHeaderProps) => {
   const isSingleMonth = /^\d{4}-\d{2}$/.exec(filterPeriod);
   const showGroupBy = chartViewType !== 'sankey' && !isSingleMonth;
-  const title = getMainChartTitle(chartViewType, mainChartType, mainChartData, showTrendLines);
+  const title = getMainChartTitle(chartViewType, mainChartType);
 
   return (
     <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] flex-wrap relative z-20 w-full gap-3">
@@ -159,43 +319,33 @@ const MainChartHeader = ({
           setChartViewType={setChartViewType} 
           setIsBreakdown={setIsBreakdown} 
         />
-
-        {chartViewType === 'sankey' && (
-          <SankeyControls 
-            sankeyMode={sankeyMode} 
-            setSankeyMode={setSankeyMode} 
-            sankeySortMode={sankeySortMode} 
-            setSankeySortMode={setSankeySortMode} 
-          />
-        )}
       </div>
     </div>
   );
-};
+});
+MainChartHeader.displayName = 'MainChartHeader';
 
-const getContrastTextColor = (hexColor: string | null | undefined) => {
-  if (!hexColor) return '#ffffff';
-  let hex = hexColor.replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-  if (hex.length !== 6) return '#ffffff';
-  const r = Number.parseInt(hex.substring(0, 2), 16);
-  const g = Number.parseInt(hex.substring(2, 4), 16);
-  const b = Number.parseInt(hex.substring(4, 6), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 145 ? '#0f172a' : '#ffffff';
-};
+// ==========================================
+// SUBCOMPONENTS: CATEGORY SELECTOR & FILTER
+// ==========================================
 
-/**
- * INTERNAL COMPONENT: MainChartFilterMenu
- */
-const MainChartCategorySelector = ({
+const MainChartCategorySelector = memo(({
   dashboardCategory, setDashboardCategory, categories, categoriesWithData,
   searchQuery, setSearchQuery
-}: any) => {
-  const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-  const allExpenseCatNames = categories.filter((c: any) => c.type === 'expense' && categoriesWithData.has(c.name)).map((c: any) => c.name);
+}: MainChartCategorySelectorProps) => {
+  const activeCats = useMemo(() => 
+    Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory],
+    [dashboardCategory]
+  );
 
-  const toggleCategory = (catName: string) => {
+  const allExpenseCatNames = useMemo(() => 
+    categories
+      .filter(c => c.type === 'expense' && categoriesWithData.has(c.name))
+      .map(c => c.name),
+    [categories, categoriesWithData]
+  );
+
+  const toggleCategory = useCallback((catName: string) => {
     if (catName === 'ALL') {
       setDashboardCategory(['ALL']);
       return;
@@ -211,17 +361,22 @@ const MainChartCategorySelector = ({
     } else {
       setDashboardCategory(currentActive);
     }
-  };
+  }, [activeCats, allExpenseCatNames, setDashboardCategory]);
 
-  const selectAllVariable = () => {
-    const variableCats = categories.filter((c: any) => c.type === 'expense' && c.allocation_type !== 'need' && categoriesWithData.has(c.name)).map((c: any) => c.name);
+  const selectAllVariable = useCallback(() => {
+    const variableCats = categories
+      .filter(c => c.type === 'expense' && c.allocation_type !== 'need' && categoriesWithData.has(c.name))
+      .map(c => c.name);
     setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
-  };
+  }, [categories, categoriesWithData, setDashboardCategory]);
 
-  const filteredCategories = categories.filter((c: any) => 
-    c.type === 'expense' && 
-    categoriesWithData.has(c.name) &&
-    (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.icon?.includes(searchQuery))
+  const filteredCategories = useMemo(() => 
+    categories.filter(c => 
+      c.type === 'expense' && 
+      categoriesWithData.has(c.name) &&
+      (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || (c.icon && c.icon.includes(searchQuery)))
+    ),
+    [categories, categoriesWithData, searchQuery]
   );
 
   return (
@@ -258,16 +413,17 @@ const MainChartCategorySelector = ({
         {searchQuery && (
           <button 
             onClick={() => setSearchQuery('')}
-            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-650"
+            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200"
           >
             ✕
           </button>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mt-1">
+      {/* Category List with Scrollable Area */}
+      <div className="flex flex-wrap gap-1.5 mt-1 max-h-[360px] overflow-y-auto pr-1 select-none">
         {filteredCategories.length > 0 ? (
-          filteredCategories.map((c: any) => {
+          filteredCategories.map(c => {
             const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
             const textColor = isActive ? getContrastTextColor(c.color) : '#94a3b8';
             return (
@@ -278,8 +434,8 @@ const MainChartCategorySelector = ({
                   !isActive ? 'opacity-40 line-through bg-[#181818] border-[#303030]' : ''
                 }`} 
                 style={{ 
-                  backgroundColor: isActive ? c.color : '#181818', 
-                  borderColor: isActive ? c.color : '#303030', 
+                  backgroundColor: isActive ? (c.color || '#303030') : '#181818', 
+                  borderColor: isActive ? (c.color || '#303030') : '#303030', 
                   color: textColor 
                 }}
               >
@@ -296,16 +452,14 @@ const MainChartCategorySelector = ({
       </div>
     </>
   );
-};
+});
+MainChartCategorySelector.displayName = 'MainChartCategorySelector';
 
-/**
- * INTERNAL COMPONENT: MainChartFilterMenu
- */
-const MainChartFilterMenu = ({
-  dm, showCatMenu, setShowCatMenu, filterMenuRef,
+const MainChartFilterMenu = memo(({
+  showCatMenu, setShowCatMenu, filterMenuRef,
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
-}: any) => {
+}: MainChartFilterMenuProps) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Reset search when menu closes
@@ -318,16 +472,16 @@ const MainChartFilterMenu = ({
   return (
     <div className="relative" ref={filterMenuRef}>
       <button
-        onClick={() => setShowCatMenu(!showCatMenu)}
+        onClick={() => setShowCatMenu(prev => !prev)}
         className={`px-3 py-1.5 border rounded-none shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${
           showCatMenu 
-            ? ('bg-[#da291c] border-[#da291c] text-white shadow-md') 
-            : ('bg-[#181818] border-[#303030] text-slate-200 hover:bg-[#303030]')
+            ? 'bg-[#da291c] border-[#da291c] text-white shadow-md' 
+            : 'bg-[#181818] border-[#303030] text-slate-200 hover:bg-[#303030]'
         }`}
       >
         <Filter className="w-3.5 h-3.5" />
         ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? (
-          <span className={`px-1.5 rounded-full text-[9px] ${'bg-[#303030] text-[#da291c] border border-[#303030]'}`}>
+          <span className="px-1.5 rounded-full text-[9px] bg-[#303030] text-[#da291c] border border-[#303030]">
             {dashboardCategory.length}
           </span>
         ) : ''}
@@ -335,18 +489,16 @@ const MainChartFilterMenu = ({
       </button>
 
       {showCatMenu && (
-        <div className={`absolute right-0 top-full mt-2 w-[520px] max-w-[90vw] rounded-none shadow-2xl border z-[45] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
-          'bg-[#181818] border-[#303030] shadow-black/60'
-        }`}>
+        <div className="absolute right-0 top-full mt-2 w-[520px] max-w-[90vw] rounded-none shadow-2xl border z-[45] flex flex-col overflow-hidden bg-[#181818] border-[#303030] shadow-black/60">
           {/* Header */}
-          <div className={`px-4 py-2.5 border-b flex items-center gap-1.5 ${'border-[#303030] bg-[#181818]/65 text-slate-200'}`}>
+          <div className="px-4 py-2.5 border-b flex items-center gap-1.5 border-[#303030] bg-[#181818]/65 text-slate-200">
             <Layers className="w-3.5 h-3.5 text-[#da291c]" />
             <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
           </div>
 
           {/* Body */}
           <div className="p-4">
-            <div className="flex flex-col gap-3 animate-in fade-in duration-200">
+            <div className="flex flex-col gap-3">
               <MainChartCategorySelector
                 dashboardCategory={dashboardCategory}
                 setDashboardCategory={setDashboardCategory}
@@ -361,20 +513,25 @@ const MainChartFilterMenu = ({
       )}
     </div>
   );
-};
+});
+MainChartFilterMenu.displayName = 'MainChartFilterMenu';
 
-function updateActiveCategories(catName: string, activeCats: string[], allCatNames: string[]) {
+// ==========================================
+// SUBCOMPONENTS: LEGENDS
+// ==========================================
+
+function updateActiveCategories(catName: string, activeCats: string[], allCatNames: string[]): string[] {
   const base = activeCats.includes('ALL') ? [...allCatNames] : [...activeCats];
   const next = base.includes(catName) ? base.filter(c => c !== catName) : [...base, catName];
   return (next.length === 0 || next.length === allCatNames.length) ? ['ALL'] : next;
 }
 
-const BreakdownLegendItem = ({ category, isActive, onToggle }: any) => {
+const BreakdownLegendItem = memo(({ category, isActive, onToggle }: BreakdownLegendItemProps) => {
   const isHidden = !isActive;
   return (
     <button
       onClick={() => onToggle(category.name)}
-      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
+      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
         isHidden ? 'opacity-35 line-through' : 'opacity-100'
       }`}
       title="คลิกเพื่อเปิด/ซ่อนหมวดหมู่นี้"
@@ -389,22 +546,26 @@ const BreakdownLegendItem = ({ category, isActive, onToggle }: any) => {
       </span>
     </button>
   );
-};
+});
+BreakdownLegendItem.displayName = 'BreakdownLegendItem';
 
-const BreakdownLegend = ({ categories, categoriesWithData, dashboardCategory, setDashboardCategory }: any) => {
-  const catsWithDataList = categories.filter((c: any) => c.type === 'expense' && categoriesWithData.has(c.name));
+const BreakdownLegend = memo(({ categories, categoriesWithData, dashboardCategory, setDashboardCategory }: BreakdownLegendProps) => {
+  const catsWithDataList = useMemo(() => 
+    categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)),
+    [categories, categoriesWithData]
+  );
   if (catsWithDataList.length === 0) return null;
 
   const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
-  const allCatNames = catsWithDataList.map((c: any) => c.name);
+  const allCatNames = useMemo(() => catsWithDataList.map(c => c.name), [catsWithDataList]);
 
-  const handleToggle = (catName: string) => {
+  const handleToggle = useCallback((catName: string) => {
     setDashboardCategory(updateActiveCategories(catName, activeCats, allCatNames));
-  };
+  }, [activeCats, allCatNames, setDashboardCategory]);
 
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
-      {catsWithDataList.map((c: any) => {
+      {catsWithDataList.map(c => {
         const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
         return (
           <BreakdownLegendItem
@@ -417,64 +578,67 @@ const BreakdownLegend = ({ categories, categoriesWithData, dashboardCategory, se
       })}
     </div>
   );
-};
+});
+BreakdownLegend.displayName = 'BreakdownLegend';
 
-function getDatasetIndicatorStyle(ds: any) {
+function getDatasetIndicatorStyle(ds: LegendDataset) {
   const isLine = ds.type === 'line';
   return {
     width: isLine ? 16 : 10,
     height: isLine ? 3 : 10,
     backgroundColor: isLine
-      ? (ds.borderColor || ds.backgroundColor)
-      : (ds.backgroundColor || ds.borderColor),
+      ? (ds.borderColor || ds.backgroundColor || '#64748B')
+      : (ds.backgroundColor || ds.borderColor || '#64748B'),
   };
 }
 
-const StandardLegendItem = ({ dataset, isHidden, onToggle }: any) => (
-  <button
-    onClick={() => onToggle(dataset.label)}
-    className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 ${
-      isHidden ? 'opacity-35 line-through' : 'opacity-100'
-    }`}
-    title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
-  >
-    <span
-      className="inline-block rounded-none shrink-0"
-      style={getDatasetIndicatorStyle(dataset)}
-    />
-    <span className="text-[10px] font-medium leading-none text-slate-400">
-      {dataset.label}
-    </span>
-  </button>
-);
+const StandardLegendItem = memo(({ dataset, isHidden, onToggle }: StandardLegendItemProps) => {
+  const label = dataset.label || '';
+  return (
+    <button
+      onClick={() => onToggle(label)}
+      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
+        isHidden ? 'opacity-35 line-through' : 'opacity-100'
+      }`}
+      title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"
+    >
+      <span
+        className="inline-block rounded-none shrink-0"
+        style={getDatasetIndicatorStyle(dataset)}
+      />
+      <span className="text-[10px] font-medium leading-none text-slate-400">
+        {label}
+      </span>
+    </button>
+  );
+});
+StandardLegendItem.displayName = 'StandardLegendItem';
 
-const StandardLegend = ({ legendDatasets, hiddenDatasets, setHiddenDatasets }: any) => {
+const StandardLegend = memo(({ legendDatasets, hiddenDatasets, setHiddenDatasets }: StandardLegendProps) => {
   if (legendDatasets.length === 0) return null;
 
-  const toggleDataset = (label: string) => {
-    setHiddenDatasets((prev: string[]) => 
+  const toggleDataset = useCallback((label: string) => {
+    setHiddenDatasets(prev => 
       prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
     );
-  };
+  }, [setHiddenDatasets]);
 
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
-      {legendDatasets.map((ds: any, i: number) => (
+      {legendDatasets.map((ds, i) => (
         <StandardLegendItem
           key={ds.label || i}
           dataset={ds}
-          isHidden={hiddenDatasets.includes(ds.label)}
+          isHidden={Boolean(ds.label && hiddenDatasets.includes(ds.label))}
           onToggle={toggleDataset}
         />
       ))}
     </div>
   );
-};
+});
+StandardLegend.displayName = 'StandardLegend';
 
-/**
- * INTERNAL COMPONENT: MainChartLegend
- */
-const MainChartLegend = ({ 
+const MainChartLegend = memo(({ 
   legendDatasets, 
   hiddenDatasets, 
   setHiddenDatasets, 
@@ -482,9 +646,8 @@ const MainChartLegend = ({
   dashboardCategory,
   setDashboardCategory,
   categories,
-  categoriesWithData,
-  dm
-}: any) => {
+  categoriesWithData
+}: MainChartLegendProps) => {
   if (isBreakdown) {
     return (
       <BreakdownLegend
@@ -503,23 +666,35 @@ const MainChartLegend = ({
       setHiddenDatasets={setHiddenDatasets}
     />
   );
-};
+});
+MainChartLegend.displayName = 'MainChartLegend';
 
-const ToolbarToggleSwitch = ({ isActive, activeColor = 'bg-[#da291c]' }: any) => (
+// ==========================================
+// SUBCOMPONENTS: TOOLBAR CONTROLS
+// ==========================================
+
+const ToolbarToggleSwitch = memo(({ isActive, activeColor = 'bg-[#da291c]' }: ToolbarToggleSwitchProps) => (
   <div className={`relative w-7 h-4 rounded-none shrink-0 ${
     isActive ? `${activeColor} shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]` : 'bg-[#181818] border border-[#303030]'
   }`}>
-    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out ${
+    <div className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-2.5 h-2.5 rounded-none ease-out transition-transform ${
       isActive ? 'bg-white translate-x-3.5 shadow-md' : 'bg-[#303030]'
     }`} />
   </div>
-);
+));
+ToolbarToggleSwitch.displayName = 'ToolbarToggleSwitch';
 
-const ToolbarViewModes = ({ showSkeleton, isBreakdown, setIsBreakdown, isLogScale, setIsLogScale }: any) => (
+const ToolbarViewModes = memo(({ 
+  showSkeleton, 
+  isBreakdown, 
+  setIsBreakdown, 
+  isLogScale, 
+  setIsLogScale
+}: ToolbarViewModesProps) => (
   <div className="flex gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0">
     <button
       disabled={showSkeleton}
-      onClick={() => setIsBreakdown((prev: boolean) => !prev)}
+      onClick={() => setIsBreakdown(prev => !prev)}
       title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
       className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
         isBreakdown
@@ -534,7 +709,7 @@ const ToolbarViewModes = ({ showSkeleton, isBreakdown, setIsBreakdown, isLogScal
 
     <button
       disabled={showSkeleton}
-      onClick={() => setIsLogScale((prev: boolean) => !prev)}
+      onClick={() => setIsLogScale(prev => !prev)}
       title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
       className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
         isLogScale
@@ -547,13 +722,14 @@ const ToolbarViewModes = ({ showSkeleton, isBreakdown, setIsBreakdown, isLogScal
       <ToolbarToggleSwitch isActive={isLogScale} activeColor="bg-emerald-500" />
     </button>
   </div>
-);
+));
+ToolbarViewModes.displayName = 'ToolbarViewModes';
 
-const ToolbarAllocationSelector = ({
+const ToolbarAllocationSelector = memo(({
   showSkeleton,
   hideFixedExpenses, setHideFixedExpenses,
   hideWantExpenses, setHideWantExpenses
-}: any) => {
+}: ToolbarAllocationSelectorProps) => {
   const isAll = !hideFixedExpenses && !hideWantExpenses;
   const isWantOnly = hideFixedExpenses && !hideWantExpenses;
   const isNeedOnly = !hideFixedExpenses && hideWantExpenses;
@@ -592,9 +768,10 @@ const ToolbarAllocationSelector = ({
       </button>
     </div>
   );
-};
+});
+ToolbarAllocationSelector.displayName = 'ToolbarAllocationSelector';
 
-const ToolbarLineStyleSelector = ({ showSkeleton, isSmoothLine, setIsSmoothLine }: any) => (
+const ToolbarLineStyleSelector = memo(({ showSkeleton, isSmoothLine, setIsSmoothLine }: ToolbarLineStyleSelectorProps) => (
   <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]">
     <button
       disabled={showSkeleton}
@@ -617,20 +794,42 @@ const ToolbarLineStyleSelector = ({ showSkeleton, isSmoothLine, setIsSmoothLine 
       เส้นโค้ง
     </button>
   </div>
-);
+));
+ToolbarLineStyleSelector.displayName = 'ToolbarLineStyleSelector';
 
-const MainChartToolbar = ({
+const MainChartToolbar = memo(({
   chartViewType, showSkeleton, isBreakdown, setIsBreakdown,
   isLogScale, setIsLogScale,
   hideFixedExpenses, setHideFixedExpenses,
   hideWantExpenses, setHideWantExpenses,
   isSmoothLine, setIsSmoothLine,
-  dm, showCatMenu, setShowCatMenu, filterMenuRef,
+  sankeyMode, setSankeyMode,
+  sankeySortMode, setSankeySortMode,
+  showCatMenu, setShowCatMenu, filterMenuRef,
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
-}: any) => {
+}: MainChartToolbarProps) => {
+  // Balanced layout: If in Sankey view, render dedicated Sankey controls in the toolbar
   if (chartViewType === 'sankey') {
-    return <div className="relative z-10 w-full" />;
+    return (
+      <div className="flex items-center justify-between gap-3 relative z-10 flex-wrap w-full">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
+            <Activity className="w-3 h-3 text-[#da291c] animate-pulse" /> SANKEY FLOW
+          </span>
+
+          <span className="w-px h-4 shrink-0 bg-[#303030]" />
+
+          <SankeyControls 
+            sankeyMode={sankeyMode} 
+            setSankeyMode={setSankeyMode} 
+            sankeySortMode={sankeySortMode} 
+            setSankeySortMode={setSankeySortMode}
+            showSkeleton={showSkeleton}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -671,14 +870,19 @@ const MainChartToolbar = ({
         )}
 
         <MainChartFilterMenu 
-          dm={dm} showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
+          showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
           dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
           categories={categories} categoriesWithData={categoriesWithData}
         />
       </div>
     </div>
   );
-};
+});
+MainChartToolbar.displayName = 'MainChartToolbar';
+
+// ==========================================
+// MAIN EXPORT COMPONENT
+// ==========================================
 
 export default function MainChart() {
   const { 
@@ -687,7 +891,6 @@ export default function MainChart() {
     hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
     chartGroupBy, setChartGroupBy,
-    dm,
     showSkeleton
   } = useDashboardContext();
   
@@ -726,18 +929,18 @@ export default function MainChart() {
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
-  const card = `rounded-none border shadow-sm transition-colors h-full flex flex-col ${'bg-[#181818] border-[#303030]'}`;
+  const card = 'rounded-none border shadow-sm transition-colors h-full flex flex-col bg-[#181818] border-[#303030]';
 
   return (
     <div className={`${card} min-h-0`}>
       <MainChartHeader 
-        chartViewType={chartViewType} setChartViewType={setChartViewType}
-        chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy}
-        sankeySortMode={sankeySortMode} setSankeySortMode={setSankeySortMode}
-        sankeyMode={sankeyMode} setSankeyMode={setSankeyMode}
-        setIsBreakdown={setIsBreakdown} filterPeriod={filterPeriod} dm={dm}
-        mainChartType={analytics.mainChartType} mainChartData={analytics.mainChartData}
-        showTrendLines={false}
+        chartViewType={chartViewType}
+        setChartViewType={setChartViewType}
+        chartGroupBy={chartGroupBy}
+        setChartGroupBy={setChartGroupBy}
+        setIsBreakdown={setIsBreakdown}
+        filterPeriod={filterPeriod}
+        mainChartType={analytics.mainChartType}
       />
 
       <div className="p-4 flex flex-col flex-1 min-h-0 gap-3">
@@ -754,7 +957,10 @@ export default function MainChart() {
           setHideWantExpenses={setHideWantExpenses}
           isSmoothLine={isSmoothLine}
           setIsSmoothLine={setIsSmoothLine}
-          dm={dm}
+          sankeyMode={sankeyMode}
+          setSankeyMode={setSankeyMode}
+          sankeySortMode={sankeySortMode}
+          setSankeySortMode={setSankeySortMode}
           showCatMenu={showCatMenu}
           setShowCatMenu={setShowCatMenu}
           filterMenuRef={filterMenuRef}
@@ -766,7 +972,7 @@ export default function MainChart() {
 
         <div className="relative w-full flex-1 min-h-[350px]">
           {showSkeleton ? (
-            <div className={`absolute inset-0 rounded-none animate-pulse ${'bg-[#303030]/40'}`} />
+            <div className="absolute inset-0 rounded-none animate-pulse bg-[#303030]/40" />
           ) : (
             <div className="absolute inset-0">
               <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any} data={displayChartData as any} options={options} />
@@ -783,7 +989,6 @@ export default function MainChart() {
           setDashboardCategory={setDashboardCategory}
           categories={categories}
           categoriesWithData={categoriesWithData}
-          dm={dm} 
         />
       </div>
     </div>

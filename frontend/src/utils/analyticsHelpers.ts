@@ -1,6 +1,6 @@
 // src/utils/analyticsHelpers.ts
 import { isDateInFilter, parseDateStrToObj } from './dateHelpers';
-import { getThaiMonth, hexToRgb, formatMoney } from './formatters';
+import { getThaiMonth, hexToRgb } from './formatters';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
 
 /**
@@ -462,15 +462,6 @@ const buildDailyComboChartData = (
   hideFixedExpenses: boolean,
   hideWantExpenses: boolean
 ) => {
-  let runningSum = 0;
-  const mtdAvgData = datesInPeriod.map((d, index) => {
-    runningSum += (dailyAllMap[d] || 0);
-    return runningSum / (index + 1);
-  });
-
-  const currentTotal = datesInPeriod.reduce((sum, d) => sum + (dailyAllMap[d] || 0), 0);
-  const currentDailyAvg = datesInPeriod.length > 0 ? currentTotal / datesInPeriod.length : 0;
-
   let barLabel = 'รายจ่ายจริง';
   let barBg = 'rgba(239,68,68,0.6)';
   let barBorder = '#EF4444';
@@ -488,17 +479,14 @@ const buildDailyComboChartData = (
     labels: xLabels,
     datasets: [
       {
-        type: 'line', label: 'เฉลี่ยสะสม (MTD)', data: mtdAvgData, borderColor: '#F59E0B',
-        backgroundColor: 'transparent', borderWidth: 4, tension: 0.4, pointRadius: 0, pointHitRadius: 10, order: 1
-      },
-      {
-        type: 'line', label: `เฉลี่ยทั้งเดือน ${formatMoney(currentDailyAvg)}/วัน`, data: datesInPeriod.map(() => currentDailyAvg),
-        borderColor: '#94a3b8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, pointHitRadius: 0, order: 2
-      },
-      {
-        type: 'bar', label: barLabel, data: datesInPeriod.map(d => dailyAllMap[d] || 0),
+        type: 'bar',
+        label: barLabel,
+        data: datesInPeriod.map(d => dailyAllMap[d] || 0),
         backgroundColor: barBg,
-        borderColor: barBorder, borderWidth: 2, borderRadius: 0, order: 3
+        borderColor: barBorder,
+        borderWidth: 2,
+        borderRadius: 0,
+        order: 1
       }
     ]
   };

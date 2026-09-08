@@ -177,12 +177,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
             ...baseOptions.plugins?.tooltip?.callbacks,
             footer: (tooltipItems: any[]) => {
               if (!isBreakdown || tooltipItems.length <= 1) return '';
-              const sum = tooltipItems
-                .filter(item => {
-                  const label = item.dataset?.label;
-                  return !(label?.includes('เฉลี่ย') || label?.includes('Target') || label?.includes('เป้าหมาย'));
-                })
-                .reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+              const sum = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
               return `รวม: ${formatMoney(sum)} ฿`;
             }
           }
