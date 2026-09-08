@@ -4,94 +4,137 @@ import {
   CalendarClock, CalendarDays, Flame, Info, TableProperties 
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
-import { DayType } from '../../../types';
+import { DayType } from '@/types';
+import { THAI_MONTHS_SHORT, formatMoney } from '@/utils/formatters';
 
-const THAI_MONTHS_FULL = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
+// ─── TYPES & INTERFACES ──────────────────────────────────────────
+export type TimelineViewMode = 'dayType' | 'heatmap';
+export type TimelineLayoutMode = 'github' | 'calendar';
 
-// --- Constants ---
-const MONTH_LABELS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-const DAY_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+export interface TimelineTooltipState {
+  active: boolean;
+  x: number;
+  y: number;
+  dateDisplay: string;
+  dayType: DayType | null;
+  amount: number;
+}
 
-const HEATMAP_SHADES_DARK = ['#1e1b4b', '#312e81', '#4338ca', '#5850ec', '#ea580c', '#e11d48'];
-const HEATMAP_SHADES_LIGHT = ['#e0e7ff', '#c7d2fe', '#a5b4fc', '#818cf8', '#fed7aa', '#fecdd3'];
+export interface DayDetails {
+  displayStr: string;
+  dayType: DayType;
+  amount: number;
+  dayOfWeek: number;
+}
 
-// --- Helpers ---
-const getExpenseLevel = (amount: number, maxThreshold: number) => {
-  if (!amount || amount === 0) return 0;
+// ─── CONSTANTS & PALETTE (Ferrari Editorial) ───────────────────
+const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'] as const;
+const THAI_DAYS_MINI = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as const;
+
+// Ferrari Editorial Thermal Scale: near-black -> deep zinc -> bronze -> racing orange -> Rosso Corsa
+export const FERRARI_HEATMAP_SHADES = [
+  '#27272a', // Level 1: Zinc 800 (Minimal spend)
+  '#3f3f46', // Level 2: Zinc 700 (Low spend)
+  '#78350f', // Level 3: Deep Warm Amber
+  '#b45309', // Level 4: Racing Amber
+  '#c2410c', // Level 5: Racing Orange
+  '#da291c', // Level 6: Rosso Corsa Championship Red (Peak)
+] as const;
+
+// Helper: คำนวณวันที่วันนี้ตาม Local Timezone (ป้องกัน UTC Off-by-One Bug)
+export const getLocalTodayString = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+export const getExpenseLevel = (amount: number, maxThreshold: number): number => {
+  if (!amount || amount <= 0) return 0;
   const ratio = amount / maxThreshold;
-  if (ratio <= (1 / 6)) return 1;
-  if (ratio <= (2 / 6)) return 2;
-  if (ratio <= (3 / 6)) return 3;
-  if (ratio <= (4 / 6)) return 4;
-  if (ratio <= (5 / 6)) return 5;
+  if (ratio <= 1 / 6) return 1;
+  if (ratio <= 2 / 6) return 2;
+  if (ratio <= 3 / 6) return 3;
+  if (ratio <= 4 / 6) return 4;
+  if (ratio <= 5 / 6) return 5;
   return 6;
 };
 
-const getHeatmapColor = (level: number, isDarkMode?: boolean) => {
+export const getHeatmapColor = (level: number): string => {
   if (level === 0) return '#181818';
-  const shades = isDarkMode ? HEATMAP_SHADES_DARK : HEATMAP_SHADES_LIGHT;
-  return shades[level - 1] || shades[0];
+  return FERRARI_HEATMAP_SHADES[level - 1] || FERRARI_HEATMAP_SHADES[0];
 };
 
-/**
- * INTERNAL COMPONENT: TimelineModeToggle
- */
-const TimelineModeToggle = ({ viewMode, setViewMode, isDarkMode }: any) => {
-  const modeButtons = [
+// ─── SUB-COMPONENT: TimelineModeToggle ─────────────────────────
+interface TimelineModeToggleProps {
+  viewMode: TimelineViewMode;
+  setViewMode: (mode: TimelineViewMode) => void;
+}
+
+const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setViewMode }) => {
+  const modeButtons: Array<{ id: TimelineViewMode; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
     { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-[#ff4d4d]' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: 'text-orange-400' }
   ];
 
   return (
     <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
-      {modeButtons.map((btn) => (
-        <button
-          key={btn.id}
-          type="button"
-          aria-pressed={viewMode === btn.id}
-          onClick={() => setViewMode(btn.id)}
-          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
-            viewMode === btn.id 
-              ? btn.color 
-              : ('text-slate-400 hover:text-slate-200')
-          }`}
-        >
-          <btn.icon className="w-3.5 h-3.5" /> 
-          <span>{btn.label}</span>
-          {viewMode === btn.id && (
-            <div
-              className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
-            />
-          )}
-        </button>
-      ))}
+      {modeButtons.map((btn) => {
+        const Icon = btn.icon;
+        const isActive = viewMode === btn.id;
+        return (
+          <button
+            key={btn.id}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() => setViewMode(btn.id)}
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
+              isActive ? btn.color : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> 
+            <span>{btn.label}</span>
+            {isActive && (
+              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
 
-/**
- * INTERNAL COMPONENT: TimelineDayTypeLegend
- */
-const TimelineDayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }: any) => {
-  const muted = `text-xs font-bold ${'text-slate-400'}`;
-  const totalDays = Object.values(dayTypeCounts).reduce((acc: any, count: any) => acc + count, 0) as number;
+// ─── SUB-COMPONENT: TimelineDayTypeLegend ──────────────────────
+interface TimelineDayTypeLegendProps {
+  dayTypeConfig: DayType[];
+  dayTypeCounts: Record<string, number>;
+}
+
+const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeConfig, dayTypeCounts }) => {
+  const totalDays = useMemo(
+    () => Object.values(dayTypeCounts || {}).reduce((acc, count) => acc + (Number(count) || 0), 0),
+    [dayTypeCounts]
+  );
   
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {dayTypeConfig
-        .filter((dt: any) => (dayTypeCounts[dt.id] || 0) > 0)
-        .map((dt: any) => {
-          const count = dayTypeCounts[dt.id];
-          const percentage = totalDays > 0 ? ((count / totalDays) * 100).toFixed(2) : '0.00';
+        .filter((dt) => (dayTypeCounts?.[dt.id] || 0) > 0)
+        .map((dt) => {
+          const count = dayTypeCounts[dt.id] || 0;
+          const percentage = totalDays > 0 ? ((count / totalDays) * 100).toFixed(1) : '0.0';
           return (
             <div key={dt.id} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-none shrink-0 shadow-sm" style={{ backgroundColor: dt.color }} />
-              <span className={muted}>
+              <div 
+                className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20" 
+                style={{ backgroundColor: dt.color || '#475569' }} 
+              />
+              <span className="text-xs font-bold text-slate-400">
                 {dt.label} 
-                <span className="opacity-70 text-[10px] ml-1">({count} วัน / {percentage}%)</span>
+                <span className="opacity-70 text-[10px] ml-1 tabular-nums">
+                  ({count} วัน / {percentage}%)
+                </span>
               </span>
             </div>
           );
@@ -100,35 +143,35 @@ const TimelineDayTypeLegend = ({ dayTypeConfig, dayTypeCounts, isDarkMode }: any
   );
 };
 
-/**
- * INTERNAL COMPONENT: TimelineHeatmapLegend
- */
-const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }: any) => {
+// ─── SUB-COMPONENT: TimelineHeatmapLegend ──────────────────────
+interface TimelineHeatmapLegendProps {
+  globalMaxThreshold: number;
+}
+
+const TimelineHeatmapLegend: React.FC<TimelineHeatmapLegendProps> = ({ globalMaxThreshold }) => {
   return (
     <div className="flex items-center gap-2">
       <div className="relative group/info cursor-help mr-1">
         <Info className="w-3.5 h-3.5 text-slate-400" />
-        <div 
-          className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible"
-        >
-          <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[250px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
+        <div className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible">
+          <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[260px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
             <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
             <p className="text-slate-300">
-              ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดตลอดกาลของคุณ ({globalMaxThreshold.toLocaleString('th-TH')} บ.) 
-              เพื่อให้สเกลสีคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
+              ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿) 
+              เพื่อให้สเกลความร้อนคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
             </p>
           </div>
           <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212] md:ml-2 mr-2 md:mr-0" />
         </div>
       </div>
       <span className="text-[10px] font-bold text-slate-400">น้อย</span>
-      {[0, 1, 2, 3, 4, 5, 6].map(level => (
+      {[0, 1, 2, 3, 4, 5, 6].map((level) => (
         <div 
           key={level} 
           className="w-3 h-3 rounded-none shrink-0 border" 
           style={{ 
-            backgroundColor: getHeatmapColor(level, isDarkMode), 
-            borderColor: level === 0 ? ('#3e3e3e') : 'transparent' 
+            backgroundColor: getHeatmapColor(level), 
+            borderColor: level === 0 ? '#3e3e3e' : 'transparent' 
           }} 
         />
       ))}
@@ -137,60 +180,93 @@ const TimelineHeatmapLegend = ({ globalMaxThreshold, isDarkMode }: any) => {
   );
 };
 
-/**
- * INTERNAL COMPONENT: TimelineTooltip
- */
-const TimelineTooltip = ({ active, x, y, dateDisplay, amount, dayType, viewMode, isDarkMode }: any) => {
+// ─── SUB-COMPONENT: TimelineTooltip ────────────────────────────
+interface TimelineTooltipProps extends TimelineTooltipState {
+  viewMode: TimelineViewMode;
+}
+
+const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
+  active,
+  x,
+  y,
+  dateDisplay,
+  amount,
+  dayType,
+  viewMode
+}) => {
   if (!active) return null;
   return createPortal(
     <div
       className="fixed pointer-events-none z-[99999]"
-      style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
+      style={{ left: x, top: Math.max(10, y - 6), transform: 'translate(-50%, -100%)' }}
     >
       <div className="flex flex-col items-center">
         <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
           <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
           {viewMode === 'dayType' ? (
             <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
-              <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: dayType?.color }} />
-              {dayType?.label || 'ไม่มีข้อมูล'}
+              <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: dayType?.color || '#cbd5e1' }} />
+              <span>{dayType?.label || 'ไม่มีข้อมูล'}</span>
             </div>
           ) : (
             <div className={`flex flex-col items-center ${amount > 0 ? 'text-orange-400' : 'text-slate-400'}`}>
-              <div className="text-[13px] leading-none">
-                {amount > 0 ? amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : 'ไม่มีรายจ่าย'}
+              <div className="text-[13px] leading-none tabular-nums font-mono">
+                {amount > 0 ? `${formatMoney(amount)} ฿` : 'ไม่มีรายจ่าย'}
               </div>
             </div>
           )}
         </div>
-        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#121212]/95" />
+        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#3e3e3e]" />
       </div>
     </div>,
     document.body
   );
 };
 
-/**
- * INTERNAL COMPONENT: TimelineDayCell - High performance memoized grid cell
- */
-const TimelineDayCell = React.memo(({
-  dateStr, isToday, viewMode, dm, dayType, amount, globalMaxThreshold,
-  onMouseEnter, onMouseLeave, className = "w-3.5 h-3.5"
-}: any) => {
+// ─── SUB-COMPONENT: TimelineDayCell (High performance memoized) ─
+interface TimelineDayCellProps {
+  dateStr: string;
+  isToday: boolean;
+  viewMode: TimelineViewMode;
+  dayType?: DayType;
+  amount: number;
+  globalMaxThreshold: number;
+  onHover: (e: React.MouseEvent | React.FocusEvent, dateStr: string) => void;
+  onLeave: () => void;
+  className?: string;
+}
+
+const TimelineDayCell = React.memo<TimelineDayCellProps>(({
+  dateStr,
+  isToday,
+  viewMode,
+  dayType,
+  amount,
+  globalMaxThreshold,
+  onHover,
+  onLeave,
+  className = "w-4 h-4"
+}) => {
   const level = getExpenseLevel(amount, globalMaxThreshold);
   const backgroundColor = viewMode === 'heatmap' 
-    ? getHeatmapColor(level, dm) 
-    : (dayType?.color || '#cbd5e1');
+    ? getHeatmapColor(level) 
+    : (dayType?.color || '#333333');
 
   const [y, m, d] = dateStr.split('-');
-  const displayStr = `${DAY_LABELS[new Date(Number(y), +m - 1, Number(d)).getDay()]} ${+d} ${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
+  const dateObj = new Date(Number(y), +m - 1, Number(d));
+  const dayOfWeek = dateObj.getDay();
+  const displayStr = `${THAI_DAYS[dayOfWeek]} ${+d} ${THAI_MONTHS_SHORT[+m - 1]} ${y.slice(2)}`;
 
   let detailsText = 'ยอดรายจ่าย: ไม่มีรายจ่าย';
   if (viewMode === 'dayType') {
     detailsText = `ประเภทวัน: ${dayType?.label || 'ไม่มีข้อมูล'}`;
   } else if (amount > 0) {
-    detailsText = `ยอดรายจ่าย: ${amount.toLocaleString('th-TH')} บาท`;
+    detailsText = `ยอดรายจ่าย: ${formatMoney(amount)} บาท`;
   }
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent) => onHover(e, dateStr), [onHover, dateStr]);
+  const handleMouseLeave = useCallback(() => onLeave(), [onLeave]);
+  const handleFocus = useCallback((e: React.FocusEvent) => onHover(e, dateStr), [onHover, dateStr]);
 
   return (
     <button
@@ -199,68 +275,70 @@ const TimelineDayCell = React.memo(({
       aria-label={`${displayStr}, ${detailsText}`}
       className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
         isToday 
-          ? 'ring ring-[#da291c] z-10' 
+          ? 'ring-1 ring-[#da291c] z-10' 
           : 'opacity-90 hover:opacity-100 hover:border-[#da291c] hover:z-10'
       }`}
       style={{
         backgroundColor,
-        borderColor: (viewMode === 'heatmap' && level === 0) ? ('#3e3e3e') : 'transparent'
+        borderColor: (viewMode === 'heatmap' && level === 0) ? '#2d2d2d' : 'transparent'
       }}
-      onMouseEnter={(e) => onMouseEnter(e, dateStr)}
-      onMouseLeave={onMouseLeave}
-      onFocus={(e) => onMouseEnter(e, dateStr)}
-      onBlur={onMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleMouseLeave}
     />
   );
 });
 
 TimelineDayCell.displayName = 'TimelineDayCell';
 
-/**
- * INTERNAL COMPONENT: TimelineLayoutToggle
- */
-const TimelineLayoutToggle = ({ layoutMode, setLayoutMode }: any) => {
-  const layoutButtons = [
+// ─── SUB-COMPONENT: TimelineLayoutToggle ───────────────────────
+interface TimelineLayoutToggleProps {
+  layoutMode: TimelineLayoutMode;
+  setLayoutMode: (mode: TimelineLayoutMode) => void;
+}
+
+const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode, setLayoutMode }) => {
+  const layoutButtons: Array<{ id: TimelineLayoutMode; label: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'github', label: 'GitHub แนวนอน', icon: TableProperties },
     { id: 'calendar', label: 'ปฏิทินทั่วไป', icon: CalendarDays }
   ];
 
   return (
     <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
-      {layoutButtons.map((btn) => (
-        <button
-          key={btn.id}
-          type="button"
-          aria-pressed={layoutMode === btn.id}
-          onClick={() => setLayoutMode(btn.id)}
-          className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
-            layoutMode === btn.id 
-              ? 'text-slate-100' 
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <btn.icon className="w-3.5 h-3.5" /> 
-          <span>{btn.label}</span>
-          {layoutMode === btn.id && (
-            <div
-              className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60"
-            />
-          )}
-        </button>
-      ))}
+      {layoutButtons.map((btn) => {
+        const Icon = btn.icon;
+        const isActive = layoutMode === btn.id;
+        return (
+          <button
+            key={btn.id}
+            type="button"
+            aria-pressed={isActive}
+            onClick={() => setLayoutMode(btn.id)}
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
+              isActive ? 'text-slate-100' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" /> 
+            <span>{btn.label}</span>
+            {isActive && (
+              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
 
-/**
- * Main Activity Timeline Component
- */
+// ─── MAIN COMPONENT: ActivityTimeline ──────────────────────────
 export default function ActivityTimeline() {
-  const { analytics, dayTypeConfig, dayTypes, dm, showSkeleton } = useDashboardContext();
-  const [viewMode, setViewMode] = useState('dayType');
-  const [layoutMode, setLayoutMode] = useState('github');
-  
-  const [tooltip, setTooltip] = useState<any>({
+  const { analytics, dayTypeConfig, dayTypes, showSkeleton } = useDashboardContext();
+
+  const [viewMode, setViewMode] = useState<TimelineViewMode>('dayType');
+  const [layoutMode, setLayoutMode] = useState<TimelineLayoutMode>('github');
+
+  const [tooltip, setTooltip] = useState<TimelineTooltipState>({
     active: false,
     x: 0,
     y: 0,
@@ -269,22 +347,46 @@ export default function ActivityTimeline() {
     amount: 0
   });
 
-  const datesInPeriod = useMemo(() => analytics.datesInPeriod || [], [analytics.datesInPeriod]) as string[];
-  const dailyExpenses = useMemo(() => analytics.dailyAllMap || {}, [analytics.dailyAllMap]) as Record<string, number>;
+  const datesInPeriod = useMemo(() => analytics.datesInPeriod || [], [analytics.datesInPeriod]);
+  const dailyExpenses = useMemo(() => (analytics.dailyAllMap || {}) as Record<string, number>, [analytics.dailyAllMap]);
   const globalMaxThreshold = (analytics.globalMaxThreshold as number) || 100;
   const datesInPeriodSet = useMemo(() => new Set(datesInPeriod), [datesInPeriod]);
 
+  // Local Timezone Today String (ป้องกันปัญหา UTC Shift)
+  const todayStr = useMemo(() => getLocalTodayString(), []);
+
+  // O(1) Map สำหรับ DayTypeConfig เพื่อลด Linear Search
+  const dayTypeMap = useMemo(() => {
+    const map = new Map<string, DayType>();
+    (dayTypeConfig || []).forEach(dt => map.set(dt.id, dt));
+    return map;
+  }, [dayTypeConfig]);
+
+  const defaultWorkday = useMemo(
+    () => dayTypeConfig?.find(t => t.name === 'workday') || dayTypeConfig?.[0],
+    [dayTypeConfig]
+  );
+  const defaultHoliday = useMemo(
+    () => dayTypeConfig?.find(t => t.name === 'holiday') || dayTypeConfig?.[1] || dayTypeConfig?.[0],
+    [dayTypeConfig]
+  );
+
   const weeks = useMemo(() => {
     if (datesInPeriod.length === 0) return [];
-    const result: any[] = [];
+    const result: Array<{ days: (string | null)[]; monthLabel: string | null }> = [];
     let currentWeek: (string | null)[] = new Array(7).fill(null);
     let monthLabel: string | null = null;
+
     datesInPeriod.forEach((dateStr, index) => {
       const [y, m, d] = dateStr.split('-');
       const dateObj = new Date(Number(y), +m - 1, Number(d));
       const dayOfWeek = dateObj.getDay();
-      if (d === '01' || index === 0) monthLabel = `${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
+
+      if (d === '01' || index === 0) {
+        monthLabel = `${THAI_MONTHS_SHORT[+m - 1]} ${y.slice(2)}`;
+      }
       currentWeek[dayOfWeek] = dateStr;
+
       if (dayOfWeek === 6 || index === datesInPeriod.length - 1) {
         result.push({ days: [...currentWeek], monthLabel });
         currentWeek = new Array(7).fill(null);
@@ -337,33 +439,48 @@ export default function ActivityTimeline() {
     });
   }, [datesInPeriod]);
 
-  const getDayDetails = useCallback((dateStr: string) => {
+  const getDayDetails = useCallback((dateStr: string): DayDetails => {
     const [y, m, d] = dateStr.split('-');
     const dateObj = new Date(Number(y), +m - 1, Number(d));
     const dayOfWeek = dateObj.getDay();
-    const displayStr = `${DAY_LABELS[dayOfWeek]} ${+d} ${MONTH_LABELS[+m - 1]} ${y.slice(2)}`;
-    const defaultDayType = (dayOfWeek === 0 || dayOfWeek === 6) 
-      ? (dayTypeConfig.find(t => t.name === 'holiday') || dayTypeConfig[1] || dayTypeConfig[0])
-      : (dayTypeConfig.find(t => t.name === 'workday') || dayTypeConfig[0]);
-    const dayType = dayTypeConfig.find(t => t.id === dayTypes[dateStr]?.id || t.id === dayTypes[dateStr]) || defaultDayType;
+    const displayStr = `${THAI_DAYS[dayOfWeek]} ${+d} ${THAI_MONTHS_SHORT[+m - 1]} ${y.slice(2)}`;
+
+    const defaultDayType = (dayOfWeek === 0 || dayOfWeek === 6) ? defaultHoliday : defaultWorkday;
+    const configuredDayTypeId = dayTypes[dateStr]?.id || dayTypes[dateStr];
+    const dayType = (configuredDayTypeId ? dayTypeMap.get(configuredDayTypeId) : undefined) || defaultDayType || {
+      id: 'unknown',
+      name: 'unknown',
+      label: 'ทั่วไป',
+      color: '#475569',
+      order_index: 0
+    };
     const amount = dailyExpenses[dateStr] || 0;
     return { displayStr, dayType, amount, dayOfWeek };
-  }, [dayTypeConfig, dayTypes, dailyExpenses]);
+  }, [dayTypeMap, dayTypes, dailyExpenses, defaultHoliday, defaultWorkday]);
 
   const handleMouseEnter = useCallback((e: React.MouseEvent | React.FocusEvent, dateStr: string) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const { displayStr, dayType, amount } = getDayDetails(dateStr);
-    setTooltip({ active: true, x: rect.left + rect.width / 2, y: rect.top, dateDisplay: displayStr, dayType, amount });
+    const targetX = rect.left + rect.width / 2;
+    // Clamping to avoid viewport overflow
+    const clampedX = Math.max(70, Math.min(window.innerWidth - 70, targetX));
+    setTooltip({ 
+      active: true, 
+      x: clampedX, 
+      y: rect.top, 
+      dateDisplay: displayStr, 
+      dayType, 
+      amount 
+    });
   }, [getDayDetails]);
 
   const handleMouseLeave = useCallback(() => {
-    setTooltip((prev: any) => ({ ...prev, active: false }));
+    setTooltip((prev) => ({ ...prev, active: false }));
   }, []);
 
-  // Styles
-  const cardStyles = `rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]`;
-
-  if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) return null;
+  if (!showSkeleton && (!analytics.dayTypeCounts || Object.keys(analytics.dayTypeCounts).length === 0)) {
+    return null;
+  }
 
   const renderTimelineContent = () => {
     if (showSkeleton) {
@@ -391,12 +508,12 @@ export default function ActivityTimeline() {
                 {/* Month Title */}
                 <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-1 w-full text-center flex items-center justify-center gap-1.5">
                   <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
-                  <span>{MONTH_LABELS[month.monthIdx]} {month.year.toString().slice(-2)}</span>
+                  <span>{THAI_MONTHS_SHORT[month.monthIdx]} {month.year.toString().slice(-2)}</span>
                 </div>
 
-                {/* Week Day Header */}
+                {/* Week Day Header (Consistent Thai abbreviations) */}
                 <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
+                  {THAI_DAYS_MINI.map((day, i) => (
                     <div key={day} className={`w-[20px] text-center text-[8.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
                       {day}
                     </div>
@@ -407,7 +524,7 @@ export default function ActivityTimeline() {
                 <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[146px]">
                   {month.gridCells.map((dateStr, idx) => {
                     if (!dateStr) {
-                      return <div key={`empty-${month.key}-${DAY_LABELS[idx] || idx}`} className="w-[20px] h-[20px] bg-transparent" />;
+                      return <div key={`empty-${month.key}-${idx}`} className="w-[20px] h-[20px] bg-transparent" />;
                     }
 
                     const inPeriod = datesInPeriodSet.has(dateStr);
@@ -415,7 +532,7 @@ export default function ActivityTimeline() {
                       return <div key={dateStr} className="w-[20px] h-[20px] bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
                     }
 
-                    const isToday = dateStr === new Date().toISOString().split('T')[0];
+                    const isToday = dateStr === todayStr;
                     const { dayType, amount } = getDayDetails(dateStr);
 
                     return (
@@ -424,12 +541,11 @@ export default function ActivityTimeline() {
                           dateStr={dateStr}
                           isToday={isToday}
                           viewMode={viewMode}
-                          dm={dm}
                           dayType={dayType}
                           amount={amount}
                           globalMaxThreshold={globalMaxThreshold}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
+                          onHover={handleMouseEnter}
+                          onLeave={handleMouseLeave}
                           className="w-full h-full"
                         />
                       </div>
@@ -447,14 +563,15 @@ export default function ActivityTimeline() {
       <div className="overflow-x-auto pb-4 pt-6 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex w-max gap-x-[1px] mx-auto">
           {/* Day Labels (Sticky) */}
-          <div className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r"
-            style={{ backgroundColor: '#121212', borderColor: '#303030' }}>
+          <div 
+            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r border-[#303030] bg-[#121212]"
+          >
             <div className="h-4" />
-            {DAY_LABELS.map((day, i) => (
+            {THAI_DAYS.map((day, i) => (
               <div 
                 key={day} 
-                className={`h-3.5 flex items-center justify-end text-[9px] font-black ${
-                  i === 0 || i === 6 ? ('text-red-400/80') : ('text-slate-500')
+                className={`h-4 flex items-center justify-end text-[9px] font-black ${
+                  i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-500'
                 }`}
               >
                 {day}
@@ -480,10 +597,12 @@ export default function ActivityTimeline() {
                 </div>
 
                 {/* Days in Week */}
-                {week.days.map((dateStr: string, dayIndex: number) => {
-                  if (!dateStr) return <div key={`empty-${weekKey}-${DAY_LABELS[dayIndex]}`} className="w-3.5 h-3.5 bg-transparent" />;
+                {week.days.map((dateStr, dayIndex) => {
+                  if (!dateStr) {
+                    return <div key={`empty-${weekKey}-${dayIndex}`} className="w-4 h-4 bg-transparent" />;
+                  }
                   
-                  const isToday = dateStr === new Date().toISOString().split('T')[0];
+                  const isToday = dateStr === todayStr;
                   const { dayType, amount } = getDayDetails(dateStr);
 
                   return (
@@ -492,12 +611,12 @@ export default function ActivityTimeline() {
                       dateStr={dateStr}
                       isToday={isToday}
                       viewMode={viewMode}
-                      dm={dm}
                       dayType={dayType}
                       amount={amount}
                       globalMaxThreshold={globalMaxThreshold}
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
+                      onHover={handleMouseEnter}
+                      onLeave={handleMouseLeave}
+                      className="w-4 h-4"
                     />
                   );
                 })}
@@ -510,17 +629,17 @@ export default function ActivityTimeline() {
   };
 
   return (
-    <div className={cardStyles}>
+    <div className="rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]">
       {/* ─── HEADER (Editorial Style) ─── */}
       <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] w-full gap-4 relative z-20 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
           <CalendarClock className="w-3.5 h-3.5 text-neutral-400" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
             ไทม์ไลน์กิจกรรม
           </span>
           <div className="ml-2">
-            <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} isDarkMode={dm} />
+            <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} />
           </div>
         </div>
         <div className="flex items-center">
@@ -529,7 +648,7 @@ export default function ActivityTimeline() {
       </div>
 
       <div className="p-4 flex flex-col gap-3">
-        {/* Legend Row (New Line) */}
+        {/* Legend Row */}
         <div className="flex justify-end min-h-[20px]">
           {showSkeleton ? (
             <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
@@ -539,12 +658,10 @@ export default function ActivityTimeline() {
                 <TimelineDayTypeLegend 
                   dayTypeConfig={dayTypeConfig} 
                   dayTypeCounts={analytics.dayTypeCounts} 
-                  isDarkMode={dm} 
                 />
               ) : (
                 <TimelineHeatmapLegend 
                   globalMaxThreshold={globalMaxThreshold} 
-                  isDarkMode={dm} 
                 />
               )}
             </div>
@@ -560,7 +677,6 @@ export default function ActivityTimeline() {
       <TimelineTooltip 
         {...tooltip} 
         viewMode={viewMode} 
-        isDarkMode={dm} 
       />
     </div>
   );
