@@ -1,8 +1,8 @@
 // src/views/Dashboard/components/ExpenseProportion/index.tsx
 import React, { useMemo, useState, useCallback } from 'react';
 import { Inbox } from 'lucide-react';
-import { formatMoney } from '../../../../utils/formatters';
-import { getDoughnutChartOptions } from '../../../../utils/chartOptions';
+import { formatMoney } from '@/utils/formatters';
+import { getDoughnutChartOptions } from '@/utils/chartOptions';
 import { useDashboardContext } from '../../context/DashboardContext';
 import {
   DisplayMode,
@@ -41,9 +41,9 @@ function ExpenseProportionSkeleton() {
       <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
         {SKELETON_KEYS.map((key) => (
           <div key={key} className="p-2 animate-pulse bg-[#303030]/40">
-            <div className="h-2 w-12 mb-2 rounded-sm bg-[#303030]" />
-            <div className="h-4 w-16 mb-2 rounded-sm bg-[#303030]" />
-            <div className="h-1 w-full rounded-sm bg-[#303030]" />
+            <div className="h-2 w-12 mb-2 rounded-none bg-[#303030]" />
+            <div className="h-4 w-16 mb-2 rounded-none bg-[#303030]" />
+            <div className="h-1 w-full rounded-none bg-[#303030]" />
           </div>
         ))}
       </div>

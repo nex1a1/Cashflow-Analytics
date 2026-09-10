@@ -48,7 +48,7 @@ const CategoryRow = memo(({
   const selectTheme = !currentGroupValid
     ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
     : `bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] ${focusBorder}`;
-  const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none cursor-pointer w-28 rounded-sm ${selectTheme}`;
+  const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none cursor-pointer w-40 rounded-sm ${selectTheme}`;
 
   return (
     <div

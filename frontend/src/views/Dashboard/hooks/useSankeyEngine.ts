@@ -1,14 +1,46 @@
 import { useMemo } from 'react';
-import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import { formatMoney, hexToRgb } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
-import { toISODate, isDateInFilter } from '../../../utils/dateHelpers';
-import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
+import { toISODate, isDateInFilter } from '@/utils/dateHelpers';
+import { TransactionDisplay, Category, CashflowGroup } from '@/types';
 
 interface SankeyEngineProps {
   chartViewType: string;
   sankeySortMode: string;
   sankeyMode?: string;
 }
+
+// ─── Sankey layout invariants ───────────────────────────────────────────────
+// `column` (0-4) is shared across every builder and must stay in lockstep with the
+// 5-column layout mandated by CLAUDE.md (Income -> Total Cash -> Alloc/Expense -> Groups -> Categories).
+// `priority` only has to be unique *within one render*: buildIncomeSankeyFlows always runs,
+// paired with exactly one of buildAllocationSankeyFlows OR buildStandardSankeyFlows (sankeyMode
+// picks one, never both) — so the ALLOC_* and STANDARD_* bands below may safely reuse the same
+// numbers as each other, but must never collide with the INCOME band, which always coexists.
+const SANKEY_COLUMN = {
+  INCOME: 0,
+  TOTAL_CASH: 1,
+  ALLOCATION: 2,
+  EXPENSE_MAIN: 2,
+  CAT_ALLOC: 3,
+  EXPENSE_GROUP: 3,
+  CAT: 4,
+} as const;
+
+const SANKEY_PRIORITY = {
+  INCOME_OVERSPENT: 900,
+  TOTAL_CASH: 1000,
+  ALLOC_NEED: 1400,
+  STANDARD_SAVINGS: 1500,
+  ALLOC_WANT: 1600,
+  ALLOC_SAV: 1800,
+  ALLOC_NEED_CATS_BASE: 2000,
+  STANDARD_EXPENSE: 2000,
+  ALLOC_WANT_CATS_BASE: 3000,
+  STANDARD_EXPENSE_GROUPS_BASE: 3000,
+  ALLOC_SAV_CATS_BASE: 4000,
+  REMAINING: -1,
+} as const;
 
 function formatPercent(val: number, total: number, suffix = ''): string {
   if (!total || total <= 0) return '0.0' + suffix;
@@ -56,13 +88,10 @@ function buildIncomeSankeyFlows({
   sortedGroupTotals, totalInc, deficitAmount, isSurplus,
   labelTotalCash, labelOverspent, flows, priority, column
 }: any) {
-  const COL_INCOME = 0;
-  const COL_TOTAL = 1;
-
-  priority[labelTotalCash] = 1000;
-  column[labelTotalCash] = COL_TOTAL;
-  priority[labelOverspent] = 900; 
-  column[labelOverspent] = COL_INCOME;
+  priority[labelTotalCash] = SANKEY_PRIORITY.TOTAL_CASH;
+  column[labelTotalCash] = SANKEY_COLUMN.TOTAL_CASH;
+  priority[labelOverspent] = SANKEY_PRIORITY.INCOME_OVERSPENT;
+  column[labelOverspent] = SANKEY_COLUMN.INCOME;
 
   sortedGroupTotals.filter((item: any) => item.g.type === 'income').forEach(({ amount, g }: any, idx: number) => {
     const groupLabel = `${g.name} (${formatMoney(amount)})`;
@@ -74,7 +103,7 @@ function buildIncomeSankeyFlows({
       percent: formatPercent(amount, totalInc, '% of Total')
     });
     priority[groupLabel] = idx + 1;
-    column[groupLabel] = COL_INCOME;
+    column[groupLabel] = SANKEY_COLUMN.INCOME;
   });
 
   if (!isSurplus && deficitAmount > 0) {
@@ -93,9 +122,6 @@ function buildAllocationSankeyFlows({
   labelTotalCash, labelRemaining, flows, priority, column,
   categories, categoryTotals, groupMap, sankeySortMode
 }: any) {
-  const COL_ALLOCATION = 2;
-  const COL_CAT_ALLOC = 3;
-
   let totalNeed = 0;
   let totalWant = 0;
   let totalAllocSav = 0;
@@ -151,14 +177,14 @@ function buildAllocationSankeyFlows({
     });
   }
 
-  priority[labelNeed] = 1400;
-  column[labelNeed] = COL_ALLOCATION;
-  priority[labelWant] = 1600;
-  column[labelWant] = COL_ALLOCATION;
-  priority[labelSav] = 1800;
-  column[labelSav] = COL_ALLOCATION;
-  priority[labelRemaining] = -1;
-  column[labelRemaining] = COL_ALLOCATION;
+  priority[labelNeed] = SANKEY_PRIORITY.ALLOC_NEED;
+  column[labelNeed] = SANKEY_COLUMN.ALLOCATION;
+  priority[labelWant] = SANKEY_PRIORITY.ALLOC_WANT;
+  column[labelWant] = SANKEY_COLUMN.ALLOCATION;
+  priority[labelSav] = SANKEY_PRIORITY.ALLOC_SAV;
+  column[labelSav] = SANKEY_COLUMN.ALLOCATION;
+  priority[labelRemaining] = SANKEY_PRIORITY.REMAINING;
+  column[labelRemaining] = SANKEY_COLUMN.ALLOCATION;
 
   const categoriesWithData = categories
     .map((cat: any) => {
@@ -190,7 +216,7 @@ function buildAllocationSankeyFlows({
     catList.forEach((cat, idx) => {
       const catLabel = `${cat.name} (${formatMoney(cat.catTotal)})`;
       priority[catLabel] = basePriority + idx;
-      column[catLabel] = COL_CAT_ALLOC;
+      column[catLabel] = SANKEY_COLUMN.CAT_ALLOC;
 
       const breakdown = {
         need: cat.allocs.need,
@@ -223,13 +249,13 @@ function buildAllocationSankeyFlows({
     });
   };
 
-  pushAllocCategoryFlows(needCategories, 2000);
-  pushAllocCategoryFlows(wantCategories, 3000);
+  pushAllocCategoryFlows(needCategories, SANKEY_PRIORITY.ALLOC_NEED_CATS_BASE);
+  pushAllocCategoryFlows(wantCategories, SANKEY_PRIORITY.ALLOC_WANT_CATS_BASE);
 
   savCategories.forEach((cat: any, idx: number) => {
     const catLabel = `${cat.name} (${formatMoney(cat.catTotal)})`;
-    priority[catLabel] = 4000 + idx;
-    column[catLabel] = COL_CAT_ALLOC;
+    priority[catLabel] = SANKEY_PRIORITY.ALLOC_SAV_CATS_BASE + idx;
+    column[catLabel] = SANKEY_COLUMN.CAT_ALLOC;
 
     flows.push({
       from: labelSav,
@@ -253,10 +279,6 @@ function buildStandardSankeyFlows({
   labelTotalCash, labelRemaining, flows, priority, column,
   sortedGroupTotals, categories, categoryTotals, sankeySortMode
 }: any) {
-  const COL_EXP_MAIN = 2; 
-  const COL_EXP_GROUP = 3;
-  const COL_CAT = 4;
-
   const labelTotalExp = `Expense (${formatMoney(totalExp)})`;
   const labelTotalSav = `Savings (${formatMoney(totalSav)})`;
 
@@ -290,12 +312,12 @@ function buildStandardSankeyFlows({
     });
   }
 
-  priority[labelTotalExp] = 2000;
-  column[labelTotalExp] = COL_EXP_MAIN;
-  priority[labelTotalSav] = 1500;
-  column[labelTotalSav] = COL_EXP_MAIN;
-  priority[labelRemaining] = -1;
-  column[labelRemaining] = COL_EXP_MAIN;
+  priority[labelTotalExp] = SANKEY_PRIORITY.STANDARD_EXPENSE;
+  column[labelTotalExp] = SANKEY_COLUMN.EXPENSE_MAIN;
+  priority[labelTotalSav] = SANKEY_PRIORITY.STANDARD_SAVINGS;
+  column[labelTotalSav] = SANKEY_COLUMN.EXPENSE_MAIN;
+  priority[labelRemaining] = SANKEY_PRIORITY.REMAINING;
+  column[labelRemaining] = SANKEY_COLUMN.EXPENSE_MAIN;
 
   const pushGroupAndCategoryFlows = (type: string, parentLabel: string, parentTotal: number, percentLabel: (name: string) => string) => {
     sortedGroupTotals.filter((item: any) => item.g.type === type).forEach(({ groupId, amount, g }: any) => {
@@ -340,11 +362,11 @@ function buildStandardSankeyFlows({
     return b.amount - a.amount;
   });
 
-  const expensePriorityBase = 3000;
+  const expensePriorityBase = SANKEY_PRIORITY.STANDARD_EXPENSE_GROUPS_BASE;
   expenses.forEach((item: any, gIdx: number) => {
     const groupLabel = `${item.g.name} (${formatMoney(item.amount)})`;
     priority[groupLabel] = expensePriorityBase + gIdx;
-    column[groupLabel] = COL_EXP_GROUP;
+    column[groupLabel] = SANKEY_COLUMN.EXPENSE_GROUP;
 
     const cats = categories.filter((c: any) => (c.cashflow_group_id || c.cashflowGroup) === item.groupId)
       .map((cat: any) => ({ ...cat, catTotal: categoryTotals[cat.id] }))
@@ -357,7 +379,7 @@ function buildStandardSankeyFlows({
     cats.forEach((cat: any, cIdx: number) => {
       const catLabel = `${cat.name} (${formatMoney(cat.catTotal)})`;
       priority[catLabel] = expensePriorityBase + (gIdx * 100) + cIdx + 1;
-      column[catLabel] = COL_CAT;
+      column[catLabel] = SANKEY_COLUMN.CAT;
     });
   });
 }

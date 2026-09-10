@@ -103,10 +103,10 @@ const CashflowGroupsCard = memo(({
                   placeholder="ชื่อคอลัมน์"
                 />
 
-                <div className="flex items-center justify-end w-[32px] shrink-0">
+                <div className="flex items-center justify-end min-w-[32px] shrink-0">
                   {txCount > 0 && (
-                    <span className={`text-[9px] font-mono font-black px-2 py-0.5 leading-none rounded-full tabular-nums ${
-                      'bg-[#121212] text-[#888888] border border-[#3e3e3e]'
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 leading-none rounded-none tabular-nums ${
+                      'bg-[#1e1e1e] text-[#a0a0a0] border border-[#383838]'
                     }`} title={`มี ${txCount} รายการในกลุ่มนี้ (ในมุมมองปัจจุบัน)`}>
                       {txCount}
                     </span>

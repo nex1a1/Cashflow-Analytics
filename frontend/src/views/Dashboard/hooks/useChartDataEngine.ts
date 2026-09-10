@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
+import { isDateInFilter } from '@/utils/dateHelpers';
 
 interface ChartDataEngineProps {
   chartViewType: string;
@@ -66,11 +67,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
     const activeTx = transactions || [];
     activeTx.forEach(t => {
       if (!t.date) return;
-      let match = false;
-      if (!filterPeriod || filterPeriod === 'ALL') match = true;
-      else if (filterPeriod.length === 4) match = t.date.startsWith(filterPeriod);
-      else if (filterPeriod.length === 7) match = t.date.startsWith(filterPeriod);
-      else match = true;
+      const match = isDateInFilter(t.date, filterPeriod || 'ALL');
 
       if (match && Number.parseFloat(String(t.amount)) > 0) {
         const catName = (t.category_id ? catLookup.get(t.category_id) : undefined) || t.category;

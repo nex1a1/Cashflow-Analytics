@@ -3,8 +3,8 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, RotateCcw } from 'lucide-react';
 import { useDashboardContext, DashboardAnalyticsResult } from '../context/DashboardContext';
-import { formatMoney, getThaiMonth, hexToRgb } from '../../../utils/formatters';
-import { CashflowGroup, Category } from '../../../types';
+import { formatMoney, getThaiMonth, hexToRgb } from '@/utils/formatters';
+import { CashflowGroup, Category } from '@/types';
 
 // ─── Local Interfaces ─────────────────────────────────────────────────────────
 
@@ -69,6 +69,41 @@ function getSubHighlightBgColor(
 
 // ─── Calculation helpers ───────────────────────────────────────────────────────
 
+interface AdjustedGroupValueParams {
+  groupId: string;
+  row: MonthRow;
+  excludedCategories: Set<string>;
+  categories: Category[];
+  filteredGroupMap: MonthlyMap;
+  filteredCatMap: MonthlyMap;
+  analytics: Analytics;
+}
+
+/** Single source of truth for "group total minus excluded categories" — used by the footer total,
+ *  the row summary total, and each row's per-group cell so they can never silently disagree. */
+function calculateAdjustedGroupValue({
+  groupId,
+  row,
+  excludedCategories,
+  categories,
+  filteredGroupMap,
+  filteredCatMap,
+  analytics,
+}: AdjustedGroupValueParams): number {
+  const rawVal = filteredGroupMap[groupId]?.[row.monthStr] ?? (row.groups[groupId] || 0);
+  const groupCats = categories.filter((c) => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
+  const excludedCatSum = groupCats
+    .filter((c) => excludedCategories?.has(c.id))
+    .reduce(
+      (cSum, c) =>
+        cSum +
+        (filteredCatMap[c.id]?.[row.monthStr] ??
+          (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)),
+      0,
+    );
+  return Math.max(0, rawVal - excludedCatSum);
+}
+
 interface AdjustedTotalParams {
   groups: CashflowGroup[];
   row: MonthRow | null;
@@ -93,20 +128,12 @@ function calculateAdjustedGroupsTotal({
   if (!row) return 0;
   return groups
     .filter((g) => !excludedGroups.has(g.id))
-    .reduce((sum, g) => {
-      const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
-      const groupCats = categories.filter((c) => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-      const excludedCatSum = groupCats
-        .filter((c) => excludedCategories?.has(c.id))
-        .reduce(
-          (cSum, c) =>
-            cSum +
-            (filteredCatMap[c.id]?.[row.monthStr] ??
-              (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)),
-          0,
-        );
-      return sum + Math.max(0, rawVal - excludedCatSum);
-    }, 0);
+    .reduce(
+      (sum, g) =>
+        sum +
+        calculateAdjustedGroupValue({ groupId: g.id, row, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics }),
+      0,
+    );
 }
 
 interface ActiveMonthGroupTotalParams {
@@ -128,20 +155,12 @@ function calculateActiveMonthGroupTotal({
   filteredCatMap,
   analytics,
 }: ActiveMonthGroupTotalParams): number {
-  const groupCats = categories.filter((c) => c.cashflowGroup === groupId || c.cashflow_group_id === groupId);
-  return activeMonths.reduce((s, r) => {
-    const rawVal = filteredGroupMap[groupId]?.[r.monthStr] ?? (r.groups[groupId] || 0);
-    const excludedCatSum = groupCats
-      .filter((c) => excludedCategories?.has(c.id))
-      .reduce(
-        (cSum, c) =>
-          cSum +
-          (filteredCatMap[c.id]?.[r.monthStr] ??
-            (analytics.monthlyCatMap?.[c.id]?.[r.monthStr] || 0)),
-        0,
-      );
-    return s + Math.max(0, rawVal - excludedCatSum);
-  }, 0);
+  return activeMonths.reduce(
+    (s, r) =>
+      s +
+      calculateAdjustedGroupValue({ groupId, row: r, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics }),
+    0,
+  );
 }
 
 function findPreviousActiveMonth(
@@ -527,16 +546,9 @@ function CashflowTableGroupCells({
   const isGroupExcluded = excludedGroups.has(g.id);
   const isCellFaded = isExcluded || isGroupExcluded;
 
-  const groupCats = categories.filter((c) => c.cashflowGroup === g.id || c.cashflow_group_id === g.id);
-  const rawVal = filteredGroupMap[g.id]?.[row.monthStr] ?? (row.groups[g.id] || 0);
-  const excludedCatSum = groupCats
-    .filter((c) => excludedCategories?.has(c.id))
-    .reduce(
-      (cSum, c) =>
-        cSum + (filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0)),
-      0,
-    );
-  const adjustedGroupVal = Math.max(0, rawVal - excludedCatSum);
+  const adjustedGroupVal = calculateAdjustedGroupValue({
+    groupId: g.id, row, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics,
+  });
 
   const defaultColor = isIncome ? '#34d399' : '#cbd5e1';
   const groupBg = isCellFaded ? '#0d0d0d' : getHighlightBgColor(g, isColHovered, isRowHovered, dm);
@@ -938,22 +950,6 @@ const CashflowTableFooter = React.memo(({
   excludedMonths, excludedGroups, excludedCategories, categories,
   filteredCatMap = {}, filteredGroupMap = {},
 }: FooterProps) => {
-  // Fix #13: แสดง message แทนการหาย เมื่อมีแค่เดือนเดียว
-  if (analytics.numMonths <= 1) {
-    return (
-      <tfoot>
-        <tr>
-          <td
-            colSpan={999}
-            className={`px-4 py-2 text-center text-[10px] text-neutral-600 italic border-t ${thinBorder} bg-[#121212]`}
-          >
-            ยอดรวมจะแสดงเมื่อมีข้อมูลมากกว่า 1 เดือน
-          </td>
-        </tr>
-      </tfoot>
-    );
-  }
-
   const activeMonths: MonthRow[] = (analytics.sortedCashflow as MonthRow[]).filter((r) => !excludedMonths.has(r.monthStr));
 
   // Fix #3: pre-compute per-month totals once instead of calling getAdjusted* twice in reduce
@@ -973,6 +969,22 @@ const CashflowTableFooter = React.memo(({
     return { totalActiveIncome: income, totalActiveExpense: expense };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMonths, activeIncomeGroups, activeExpenseGroups, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics]);
+
+  // Fix #13: แสดง message แทนการหาย เมื่อมีแค่เดือนเดียว (moved after hooks — Rules of Hooks)
+  if (analytics.numMonths <= 1) {
+    return (
+      <tfoot>
+        <tr>
+          <td
+            colSpan={999}
+            className={`px-4 py-2 text-center text-[10px] text-neutral-600 italic border-t ${thinBorder} bg-[#121212]`}
+          >
+            ยอดรวมจะแสดงเมื่อมีข้อมูลมากกว่า 1 เดือน
+          </td>
+        </tr>
+      </tfoot>
+    );
+  }
 
   const totalActiveNet = totalActiveIncome - totalActiveExpense;
   const activeSavingsRate =
@@ -1325,18 +1337,26 @@ export default function CashflowTable() {
     });
   }, []);
 
+  // Fix #6: precompute once per (categories, analytics) change instead of re-scanning
+  // every category × month for every (row, group) pair the table renders.
+  const activeCatsByGroup = useMemo(() => {
+    const map = new Map<string, Category[]>();
+    categories.forEach((c) => {
+      const groupId = c.cashflowGroup ?? c.cashflow_group_id;
+      if (!groupId) return;
+      const hasData = analytics?.sortedCashflow?.some(
+        (row: MonthRow) => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0,
+      );
+      if (!hasData) return;
+      if (!map.has(groupId)) map.set(groupId, []);
+      map.get(groupId)!.push(c);
+    });
+    return map;
+  }, [categories, analytics]);
+
   const getActiveCatsForGroup = useCallback(
-    (groupId: string): Category[] => {
-      const allCatsInGroup = categories.filter(
-        (c) => c.cashflowGroup === groupId || c.cashflow_group_id === groupId,
-      );
-      return allCatsInGroup.filter((c) =>
-        analytics?.sortedCashflow?.some(
-          (row: MonthRow) => (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0) > 0,
-        ),
-      );
-    },
-    [categories, analytics],
+    (groupId: string): Category[] => activeCatsByGroup.get(groupId) || [],
+    [activeCatsByGroup],
   );
 
   // Fix #8: ลบ allCats (unused), Fix #12: viewport boundary detection

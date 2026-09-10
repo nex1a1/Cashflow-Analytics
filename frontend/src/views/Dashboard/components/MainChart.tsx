@@ -10,7 +10,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 import { useSankeyEngine } from '../hooks/useSankeyEngine';
 import { useChartDataEngine } from '../hooks/useChartDataEngine';
 import { useChartOptions } from '../hooks/useChartOptions';
-import { Category } from '../../../types';
+import { Category } from '@/types';
 
 // ==========================================
 // TYPE INTERFACES
@@ -550,18 +550,18 @@ const BreakdownLegendItem = memo(({ category, isActive, onToggle }: BreakdownLeg
 BreakdownLegendItem.displayName = 'BreakdownLegendItem';
 
 const BreakdownLegend = memo(({ categories, categoriesWithData, dashboardCategory, setDashboardCategory }: BreakdownLegendProps) => {
-  const catsWithDataList = useMemo(() => 
+  const catsWithDataList = useMemo(() =>
     categories.filter(c => c.type === 'expense' && categoriesWithData.has(c.name)),
     [categories, categoriesWithData]
   );
-  if (catsWithDataList.length === 0) return null;
-
   const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
   const allCatNames = useMemo(() => catsWithDataList.map(c => c.name), [catsWithDataList]);
 
   const handleToggle = useCallback((catName: string) => {
     setDashboardCategory(updateActiveCategories(catName, activeCats, allCatNames));
   }, [activeCats, allCatNames, setDashboardCategory]);
+
+  if (catsWithDataList.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
@@ -615,13 +615,13 @@ const StandardLegendItem = memo(({ dataset, isHidden, onToggle }: StandardLegend
 StandardLegendItem.displayName = 'StandardLegendItem';
 
 const StandardLegend = memo(({ legendDatasets, hiddenDatasets, setHiddenDatasets }: StandardLegendProps) => {
-  if (legendDatasets.length === 0) return null;
-
   const toggleDataset = useCallback((label: string) => {
-    setHiddenDatasets(prev => 
+    setHiddenDatasets(prev =>
       prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
     );
   }, [setHiddenDatasets]);
+
+  if (legendDatasets.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">

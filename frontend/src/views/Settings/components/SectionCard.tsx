@@ -88,7 +88,7 @@ const SectionCard = memo(function SectionCard({
           {icon}
           {title}
           {badge != null && (
-            <span className="text-[9px] font-mono font-black px-2 py-0.5 ml-1 rounded-full tabular-nums bg-[#121212] text-[#888888] border border-[#303030]">
+            <span className="text-[10px] font-bold px-1.5 py-0.5 ml-1 rounded-none tabular-nums bg-[#121212] text-[#a0a0a0] border border-[#383838]">
               {badge}
             </span>
           )}

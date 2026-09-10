@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
-import { TransactionDisplay, Category, CashflowGroup, DayType } from '../../../types';
+import { TransactionDisplay, Category, CashflowGroup, DayType } from '@/types';
 
 export interface DashboardAnalyticsResult {
   mainChartType?: string;

@@ -3,8 +3,8 @@ import {
   getComboChartOptions,
   getBarChartOptions,
   getLineChartOptions,
-} from '../../../utils/chartOptions';
-import { formatMoney } from '../../../utils/formatters';
+} from '@/utils/chartOptions';
+import { formatMoney } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 
 interface ChartOptionsProps {
