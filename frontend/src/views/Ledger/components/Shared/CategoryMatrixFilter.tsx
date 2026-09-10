@@ -306,8 +306,8 @@ export default function CategoryMatrixFilter({
 
       {/* ── Floating 2-Tier Chips Matrix Popover ── */}
       {isOpen && (
-        <div 
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-[#3e3e3e] shadow-2xl p-3 bg-[#181818] select-none flex flex-col gap-2.5"
+        <div
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-[#3e3e3e] shadow-2xl p-3 bg-[#181818] select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
           style={{ backdropFilter: 'blur(12px)' }}
         >
           {/* Section Header Bar */}

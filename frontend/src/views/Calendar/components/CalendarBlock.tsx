@@ -1,14 +1,9 @@
 import React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
+import { resolveDefaultDayTypeId } from '../utils/calendarPeriodHelpers';
+import { formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
-
-const formatValue = (val: number) => {
-  return val.toLocaleString('th-TH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  });
-};
 
 export interface CalendarBlockProps {
   y: number;
@@ -33,10 +28,11 @@ export interface CalendarBlockProps {
   dayTypeCounts: Record<string, number>;
   handleDayTypeChange: (dateStr: string, value: string) => void;
   onSelectDate: (dateStr: string) => void;
+  handleOpenAddModal?: (dateStr?: string, type?: string) => void;
   hexToRgb: (hex: string | null | undefined) => string;
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
-  maxDailyExpense?: number;
+  maxDailyExpense: number;
 }
 
 const CalendarBlock = React.memo(function CalendarBlock({
@@ -57,10 +53,11 @@ const CalendarBlock = React.memo(function CalendarBlock({
   dayTypeCounts,
   handleDayTypeChange,
   onSelectDate,
+  handleOpenAddModal,
   hexToRgb,
   excludedCategoryIds,
   toggleCategory,
-  maxDailyExpense: propMaxDailyExpense
+  maxDailyExpense
 }: CalendarBlockProps): React.ReactElement {
   const thaiMonths = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -69,11 +66,6 @@ const CalendarBlock = React.memo(function CalendarBlock({
   const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   const WEEKEND_IDX = new Set([0, 6]);
   const today = new Date();
-
-  // Peak daily expense calculation for the month (used by heatmap glow in cells)
-  const maxDailyExpense = propMaxDailyExpense !== undefined
-    ? propMaxDailyExpense
-    : Object.values(calendarData || {}).reduce((max, d) => Math.max(max, d.exp || 0), 0);
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
   const suffixBlankKeys = [
@@ -94,17 +86,17 @@ const CalendarBlock = React.memo(function CalendarBlock({
             <div className="flex items-center gap-2 flex-wrap">
               {monthInc > 0 && (
                 <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
-                  ▲ {formatValue(monthInc)} ฿
+                  ▲ {formatAmount(monthInc)} ฿
                 </span>
               )}
               {monthExp > 0 && (
                 <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-red-950/40 text-red-400 border-red-800/40">
-                  ▼ {formatValue(monthExp)} ฿
+                  ▼ {formatAmount(monthExp)} ฿
                 </span>
               )}
               {(monthInc > 0 || monthExp > 0) && (
                 <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
-                  คงเหลือ {formatValue(monthNet)} ฿
+                  คงเหลือ {formatAmount(monthNet)} ฿
                 </span>
               )}
               {excludedCategoryIds?.size > 0 && (
@@ -171,8 +163,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
             const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
             const dow = new Date(y, m, d).getDay();
             const isWeekend = WEEKEND_IDX.has(dow);
-            const defType = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
-            const dayType = dayTypes[dateStr] || defType;
+            const defType = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
+            const dayType = dayTypes[dateStr] || defType || '';
 
             return (
               <CalendarDayCell
@@ -186,6 +178,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 dayType={dayType}
                 handleDayTypeChange={handleDayTypeChange}
                 onSelectDate={onSelectDate}
+                handleOpenAddModal={handleOpenAddModal}
                 maxDailyExpense={maxDailyExpense}
               />
             );

@@ -1,13 +1,7 @@
 import React from 'react';
 import { List, Rows, Folders, Coins } from 'lucide-react';
 import sharkWhite from '../../../assets/images/shark-white.svg';
-
-const formatValue = (val: number) => {
-  return val.toLocaleString('th-TH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  });
-};
+import { formatAmount as formatValue } from '../../../utils/formatters';
 
 export interface LegendCategoryItem {
   id: string;
@@ -150,7 +144,7 @@ function CategoryLegendSection({
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-none bg-[#da291c] animate-pulse" /> หมวดหมู่ธุรกรรม (Categories)
+          <span className="w-1.5 h-1.5 rounded-none bg-[#da291c]" /> หมวดหมู่ธุรกรรม (Categories)
         </span>
         
         {/* Layout Switcher */}

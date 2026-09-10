@@ -6,6 +6,7 @@ import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem } from './components/LegendAllocationBlock';
 import PeriodOverview from './components/PeriodOverview/index';
+import { resolveDefaultDayTypeId } from './utils/calendarPeriodHelpers';
 import {
   CashflowGroup,
   Category,
@@ -45,7 +46,7 @@ function resolveAllocationType(
 
 function processCalendarTransaction(
   t: TransactionDisplay,
-  categories: Category[],
+  findCategory: (t: TransactionDisplay) => Category | undefined,
   cashflowGroups: CashflowGroup[],
   excludedCategoryIds: Set<string>,
   dayData: Record<number, CalendarDayData>,
@@ -58,7 +59,7 @@ function processCalendarTransaction(
   const txD = Number.parseInt(dateParts[2], 10);
   if (!dayData[txD]) return;
 
-  const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
+  const catObj = findCategory(t);
   const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
   if (excludedCategoryIds.has(catId)) return;
 
@@ -93,8 +94,7 @@ export interface CalendarViewProps {
   transactions: TransactionDisplay[];
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
-  rawAvailableMonths: string[];
-  handleOpenAddModal?: (date?: string) => void;
+  handleOpenAddModal?: (dateStr?: string, type?: string) => void;
   categories: Category[];
   cashflowGroups: CashflowGroup[];
   dayTypes: Record<string, string>;
@@ -110,7 +110,7 @@ export interface CalendarViewProps {
 }
 
 function CalendarView({
-  transactions, filterPeriod, setFilterPeriod, rawAvailableMonths,
+  transactions, filterPeriod, setFilterPeriod,
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
@@ -175,18 +175,33 @@ function CalendarView({
     return transactions.filter(t => t.date?.startsWith(targetMonthYear));
   }, [transactions, y, m]);
 
+  // O(1) category lookup shared by every aggregation pass below, instead of each
+  // transaction doing its own O(n) categories.find(...) scan.
+  const findCategory = useMemo(() => {
+    const byId = new Map<string, Category>();
+    const byName = new Map<string, Category>();
+    categories.forEach(c => {
+      byId.set(c.id, c);
+      if (c.name) byName.set(c.name, c);
+    });
+    return (t: TransactionDisplay): Category | undefined =>
+      (t.category_id && byId.get(t.category_id))
+      || (t.category && byName.get(t.category))
+      || undefined;
+  }, [categories]);
+
   // Derive calendar grid data and base aggregates
   const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts, maxDailyExpense } = useMemo(() => {
     const dayData: Record<number, CalendarDayData> = {};
     const totals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0 };
     const catAllocAmounts: Record<string, CategoryAllocationAmount> = {};
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
       dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
     }
 
     currentMonthTransactions.forEach(t => {
-      processCalendarTransaction(t, categories, cashflowGroups, excludedCategoryIds, dayData, catAllocAmounts, totals);
+      processCalendarTransaction(t, findCategory, cashflowGroups, excludedCategoryIds, dayData, catAllocAmounts, totals);
     });
 
     let maxDailyExpense = 0;
@@ -197,19 +212,19 @@ function CalendarView({
         maxDailyExpense = dayData[i].exp;
       }
     }
-    
+
     return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts, maxDailyExpense };
-  }, [currentMonthTransactions, daysInMonth, categories, cashflowGroups, excludedCategoryIds]);
+  }, [currentMonthTransactions, daysInMonth, findCategory, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     dayTypeConfig.forEach(dt => { counts[dt.id] = 0; });
-    
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
       const dow = new Date(y, m, d).getDay();
       const isWeekend = dow === 0 || dow === 6;
-      const def = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
+      const def = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
       const cur = dayTypes[dateStr] || def;
       if (cur) counts[cur] = (counts[cur] || 0) + 1;
     }
@@ -220,9 +235,9 @@ function CalendarView({
   const groupedLegendData = useMemo(() => {
     const catsMap = new Map<string, Category>();
     const catAmounts: Record<string, number> = {};
-    
+
     currentMonthTransactions.forEach(t => {
-      const catObj = categories.find(c => c.id === t.category_id || c.name === t.category);
+      const catObj = findCategory(t);
       const amt = typeof t.amount === 'number' ? t.amount : (Number.parseFloat(String(t.amount)) || 0);
       const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
 
@@ -309,7 +324,7 @@ function CalendarView({
     });
 
     return { sortedGroups, catAmounts };
-  }, [currentMonthTransactions, categories, cashflowGroups, legendSortMode]);
+  }, [currentMonthTransactions, findCategory, cashflowGroups, legendSortMode]);
 
   // Derived Allocation details
   const allocationTotals: AllocationTotals = useMemo(() => {
@@ -470,6 +485,7 @@ function CalendarView({
           dayTypeCounts={dayTypeCounts}
           handleDayTypeChange={handleDayTypeChange}
           onSelectDate={setSelectedDate}
+          handleOpenAddModal={handleOpenAddModal}
           hexToRgb={hexToRgb}
           excludedCategoryIds={excludedCategoryIds}
           toggleCategory={toggleCategory}

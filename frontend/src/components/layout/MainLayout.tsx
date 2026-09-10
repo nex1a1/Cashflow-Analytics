@@ -143,7 +143,6 @@ export default function MainLayout() {
                 transactions={transactions}
                 filterPeriod={filterPeriod}
                 setFilterPeriod={setFilterPeriod}
-                rawAvailableMonths={rawAvailableMonths}
                 handleOpenAddModal={handleOpenAddModal}
                 categories={categories}
                 cashflowGroups={cashflowGroups}

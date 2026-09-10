@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import { formatMoney, formatAmount, hexToRgb } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 
 export interface CalendarDayCellProps {
@@ -18,19 +18,14 @@ export interface CalendarDayCellProps {
   dayType: string;
   handleDayTypeChange: (dateStr: string, value: string) => void;
   onSelectDate: (dateStr: string) => void;
+  handleOpenAddModal?: (dateStr?: string, type?: string) => void;
   maxDailyExpense?: number;
 }
 
-const formatValue = (val: number) => {
-  return val.toLocaleString('th-TH', {
-    minimumFractionDigits: val % 1 !== 0 ? 2 : 0,
-    maximumFractionDigits: 2
-  });
-};
-
-const CalendarDayCell = memo(function CalendarDayCell({ 
-  day, data, dateStr, isToday, isWeekend, 
+const CalendarDayCell = memo(function CalendarDayCell({
+  day, data, dateStr, isToday, isWeekend,
   dayTypeConfig, dayType, handleDayTypeChange, onSelectDate,
+  handleOpenAddModal,
   maxDailyExpense = 0
 }: CalendarDayCellProps): React.ReactElement {
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
@@ -81,7 +76,19 @@ const CalendarDayCell = memo(function CalendarDayCell({
           <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
             {day}
           </span>
-          <PlusCircle className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 pointer-events-none text-[#da291c]" />
+          {handleOpenAddModal && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenAddModal(dateStr);
+              }}
+              className="opacity-0 group-hover:opacity-100 text-[#da291c] hover:text-white transition-none cursor-pointer"
+              title="เพิ่มรายการวันนี้"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <select
@@ -115,7 +122,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-[#2d2d2d]/20 pb-0.5">
              {cellData.exp > 0 ? (
               <span className="text-red-400 tabular-nums tracking-tight flex items-center gap-1">
-                {formatValue(cellData.exp)} ฿
+                {formatAmount(cellData.exp)} ฿
                 {hiddenExpCount > 0 && (
                   <span 
                     className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
@@ -146,7 +153,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
                     +{hiddenIncCount}
                   </span>
                 )}
-                +{formatValue(cellData.inc)} ฿
+                +{formatAmount(cellData.inc)} ฿
               </span>
             )}
           </div>
@@ -166,7 +173,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 pr-0.5 text-emerald-400 tabular-nums tracking-tight">
-                +{formatValue(tx.amount)}
+                +{formatAmount(tx.amount)}
               </span>
             </div>
           );
@@ -186,7 +193,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 pr-0.5 text-red-400 tabular-nums tracking-tight">
-                {formatValue(tx.amount)}
+                {formatAmount(tx.amount)}
               </span>
             </div>
           );

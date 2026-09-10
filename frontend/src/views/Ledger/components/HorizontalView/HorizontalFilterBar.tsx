@@ -4,48 +4,9 @@ import {
   SlidersHorizontal, Check, Folder, MousePointer2
 } from 'lucide-react';
 import CategoryMatrixFilter from '../Shared/CategoryMatrixFilter';
+import SegmentButton from '../Shared/SegmentButton';
 import { EXCLUDED_HEATMAP_CATEGORIES, HeatmapEngineOptions } from '../../hooks/useHeatmapEngine';
 import { Category, CashflowGroup, TransactionDisplay } from '../../../../types';
-
-interface SegmentButtonProps {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  colorScheme?: 'rose' | 'sky' | 'emerald' | 'amber' | 'red' | 'blue';
-}
-
-const SegmentButton: React.FC<SegmentButtonProps> = ({ label, active, onClick, colorScheme = 'blue' }) => {
-  const getColors = () => {
-    if (!active) {
-      return 'bg-[#121212] border-[#303030] text-[#888888] hover:text-[#cbd5e1] hover:bg-[#303030]/30';
-    }
-
-    switch (colorScheme) {
-      case 'rose':
-        return 'bg-rose-950/20 border-rose-500/40 text-rose-400 font-black shadow-[0_0_8px_rgba(239,68,68,0.06)]';
-      case 'sky':
-        return 'bg-sky-950/20 border-sky-500/40 text-sky-400 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
-      case 'emerald':
-        return 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.06)]';
-      case 'amber':
-        return 'bg-amber-950/20 border-amber-500/40 text-amber-400 font-black shadow-[0_0_8px_rgba(245,158,11,0.06)]';
-      case 'red':
-        return 'bg-[#da291c]/20 border-[#da291c]/50 text-[#da291c] font-black shadow-[0_0_8px_rgba(218,41,28,0.08)]';
-      default:
-        return 'bg-[#303030] border-[#505050] text-white font-black';
-    }
-  };
-
-  return (
-    <button 
-      type="button"
-      onClick={onClick}
-      className={`flex-1 px-2 py-1 text-[10px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 transition-colors font-mono cursor-pointer ${getColors()}`}
-    >
-      {label}
-    </button>
-  );
-};
 
 interface HorizontalFilterBarProps {
   categories: Category[];
@@ -237,7 +198,7 @@ export default function HorizontalFilterBar({
             <button
               type="button"
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1 rounded-none border text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/15 border-[#da291c]/40 hover:border-[#da291c] font-mono transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1 rounded-none border text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/15 border-[#da291c]/40 hover:border-[#da291c] font-mono transition-colors cursor-pointer whitespace-nowrap"
               title="ล้างตัวกรองของตารางทั้งหมด"
             >
               <RefreshCw className="w-3 h-3" />
@@ -291,7 +252,7 @@ export default function HorizontalFilterBar({
               <button
                 type="button"
                 onClick={toggleFixedCosts}
-                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[10px] font-mono font-bold transition-all select-none cursor-pointer ${
+                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[10px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   includeFixedCosts
                     ? 'bg-amber-950/30 border-amber-500/60 text-amber-300'
                     : 'bg-[#121212] border-[#303030] text-slate-400 hover:text-slate-200 hover:border-[#444444]'
@@ -312,7 +273,7 @@ export default function HorizontalFilterBar({
               <button
                 type="button"
                 onClick={toggleHideZeroDays}
-                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[10px] font-mono font-bold transition-all select-none cursor-pointer ${
+                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[10px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   hideZeroDays
                     ? 'bg-[#da291c]/20 border-[#da291c]/60 text-[#da291c]'
                     : 'bg-[#121212] border-[#303030] text-slate-400 hover:text-slate-200 hover:border-[#444444]'

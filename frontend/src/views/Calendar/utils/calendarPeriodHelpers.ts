@@ -413,6 +413,22 @@ export function calculatePeriodMetrics({
 }
 
 /**
+ * Resolves the default day_type id for a given weekday/weekend slot when no explicit
+ * override exists in `dayTypes`. Prefers matching by the stable `name` code ('workday' /
+ * 'holiday') so re-ordering day types in Settings can't silently flip the default;
+ * falls back to the legacy positional guess for rows seeded before `name` was backfilled.
+ */
+export function resolveDefaultDayTypeId(dayTypeConfig: DayType[], isWeekend: boolean): string | undefined {
+  if (isWeekend) {
+    return dayTypeConfig.find(dt => dt.name === 'holiday')?.id
+      || dayTypeConfig[1]?.id
+      || dayTypeConfig[0]?.id;
+  }
+  return dayTypeConfig.find(dt => dt.name === 'workday')?.id
+    || dayTypeConfig[0]?.id;
+}
+
+/**
  * Identifies if a given day-type object or string is work-related (Work, OT, Company Act, Shift)
  */
 export function isWorkDayType(dt: any): boolean {

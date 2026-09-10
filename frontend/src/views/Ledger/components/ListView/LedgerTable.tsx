@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronFirst, ChevronLast } from 'lucide-react';
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
@@ -141,6 +141,26 @@ export default function LedgerTable({
 }: LedgerTableProps) {
   const dm = true;
   const [pageInput, setPageInput] = useState(String(currentPage));
+
+  // Category <select> options grouped by cashflow group (Tier 1: group, Tier 2: category)
+  // so the per-row picker doesn't dump every category into one flat list.
+  const groupedCategoriesByType = useMemo(() => {
+    const build = (type: string) => {
+      const groupMap = new Map<string, { id: string; name: string; order: number; cats: Category[] }>();
+      categories.filter(c => (c as any).type === type).forEach(c => {
+        const gId = c.cashflow_group_id || (c as any).cashflowGroup || '__other__';
+        if (!groupMap.has(gId)) {
+          const g = (cashflowGroups || []).find(gr => gr.id === gId);
+          groupMap.set(gId, { id: gId, name: g?.name || 'อื่นๆ', order: g?.order_index ?? 999, cats: [] });
+        }
+        groupMap.get(gId)!.cats.push(c);
+      });
+      return Array.from(groupMap.values())
+        .sort((a, b) => a.order - b.order)
+        .map(g => ({ ...g, cats: [...g.cats].sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999)) }));
+    };
+    return { income: build('income'), expense: build('expense') };
+  }, [categories, cashflowGroups]);
 
   useEffect(() => {
     setPageInput(String(currentPage));
@@ -302,19 +322,23 @@ export default function LedgerTable({
                       </div>
 
                       {/* Invisible select overlay for native interaction */}
-                      <select 
-                        value={item.category_id || ''} 
-                        onChange={e => handleUpdateTransaction(item.id, 'category_id', e.target.value)} 
+                      <select
+                        value={item.category_id || ''}
+                        onChange={e => handleUpdateTransaction(item.id, 'category_id', e.target.value)}
                         className="category-select absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       >
-                        {categories.filter(c => (c as any).type === (catObj as any)?.type || (c as any).type === item.group_type).map(c => (
-                          <option 
-                            key={c.id} 
-                            value={c.id}
-                            className="bg-[#121212] text-slate-200"
-                          >
-                            {c.icon} {c.name}
-                          </option>
+                        {(isInc ? groupedCategoriesByType.income : groupedCategoriesByType.expense).map(g => (
+                          <optgroup key={g.id} label={g.name}>
+                            {g.cats.map(c => (
+                              <option
+                                key={c.id}
+                                value={c.id}
+                                className="bg-[#121212] text-slate-200"
+                              >
+                                {c.icon} {c.name}
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </div>

@@ -15,6 +15,16 @@ export const formatMoney = (amount: number | string): string =>
   });
 
 /**
+ * Compact amount formatting: trims trailing decimal zeros (e.g. 100 -> "100", 100.5 -> "100.5").
+ * Used across Calendar view surfaces (grid cells, header, legend) so displayed totals stay consistent.
+ */
+export const formatAmount = (amount: number | string): string =>
+  (Number(amount) || 0).toLocaleString('th-TH', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
+/**
  * Converts integer Satang (cents) to decimal Baht.
  * e.g., 50000 satang -> 500 baht
  */

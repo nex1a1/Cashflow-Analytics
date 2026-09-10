@@ -1,53 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { 
   Search, X, Hash, CalendarDays, MousePointer2, 
   Folder, Tag, ChevronDown, ChevronUp, RefreshCw, Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CategoryMatrixFilter from './CategoryMatrixFilter';
+import SegmentButton from './SegmentButton';
 import { Category, CashflowGroup, DayType } from '../../../../types';
-
-// Segment Buttons - Styled to match the flat "รายการ / ตาราง" toggle
-interface SegmentButtonProps {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  colorScheme?: 'rose' | 'sky' | 'emerald' | 'amber' | 'indigo' | 'blue';
-}
-
-const SegmentButton: React.FC<SegmentButtonProps> = ({ label, active, onClick, colorScheme = 'blue' }) => {
-  const getColors = () => {
-    if (!active) {
-      return 'bg-[#121212] border-[#303030] text-[#888888] hover:text-[#cbd5e1] hover:bg-[#303030]/30';
-    }
-
-    switch (colorScheme) {
-      case 'emerald':
-        return 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.06)]';
-      case 'rose':
-        return 'bg-rose-950/20 border-rose-500/40 text-rose-400 font-black shadow-[0_0_8px_rgba(239,68,68,0.06)]';
-      case 'indigo':
-        return 'bg-indigo-950/20 border-indigo-500/40 text-indigo-400 font-black shadow-[0_0_8px_rgba(99,102,241,0.06)]';
-      case 'amber':
-        return 'bg-amber-950/20 border-amber-500/40 text-amber-400 font-black shadow-[0_0_8px_rgba(245,158,11,0.06)]';
-      case 'sky':
-        return 'bg-sky-950/20 border-sky-500/40 text-sky-400 font-black shadow-[0_0_8px_rgba(56,189,248,0.06)]';
-      case 'blue':
-      default:
-        return 'bg-[#303030] border-[#505050] text-white font-black';
-    }
-  };
-
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex-1 px-1.5 py-1 text-[10px] font-black uppercase tracking-wider border first:rounded-none last:rounded-none -ml-[1px] first:ml-0 ${getColors()}`}
-    >
-      {label}
-    </button>
-  );
-};
-
 
 interface FilterBarProps {
   searchQuery: string;
@@ -154,7 +113,7 @@ export default function FilterBar({
 
         {/* Center: Quick Type Filter */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030] min-w-[170px]">
+          <div className="flex rounded-none p-0.5 border bg-[#121212] border-[#303030]">
             <SegmentButton label="ทั้งหมด" active={typeFilter === 'ALL'} onClick={() => setTypeFilter('ALL')} />
             <SegmentButton label="รายรับ" active={typeFilter === 'INCOME'} onClick={() => setTypeFilter('INCOME')} colorScheme="emerald" />
             <SegmentButton label="รายจ่าย" active={typeFilter === 'EXPENSE'} onClick={() => setTypeFilter('EXPENSE')} colorScheme="rose" />
@@ -166,7 +125,7 @@ export default function FilterBar({
           <button
             type="button"
             onClick={() => setIsExpanded(prev => !prev)}
-            className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-1.5 rounded-none border font-mono transition-all select-none ${
+            className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-1.5 rounded-none border font-mono transition-all select-none whitespace-nowrap ${
               isExpanded
                 ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_10px_rgba(218,41,28,0.12)]'
                 : 'bg-[#121212] border-[#303030] text-slate-400 hover:text-slate-100 hover:border-[#444444]'
@@ -186,7 +145,7 @@ export default function FilterBar({
           {isFilterActive && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-none border text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/30 hover:border-[#da291c] font-mono shrink-0"
+              className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-none border text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/30 hover:border-[#da291c] font-mono shrink-0 whitespace-nowrap"
               title="ล้างการคัดกรองทั้งหมด"
             >
               <RefreshCw className="w-3 h-3" />
