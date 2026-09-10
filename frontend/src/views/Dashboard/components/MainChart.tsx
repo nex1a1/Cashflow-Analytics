@@ -1,9 +1,10 @@
 // src/views/Dashboard/components/MainChart.tsx
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { Chart } from 'react-chartjs-2';
-import { 
-  Layers, TrendingUp, BarChart, Network, 
-  Filter, ChevronDown, Search, Activity
+import {
+  Layers, TrendingUp, BarChart, Network,
+  Filter, ChevronDown, Search, Activity,
+  LayoutGrid, Shuffle, Check, X
 } from 'lucide-react';
 
 import { useDashboardContext } from '../context/DashboardContext';
@@ -333,17 +334,29 @@ const MainChartCategorySelector = memo(({
   dashboardCategory, setDashboardCategory, categories, categoriesWithData,
   searchQuery, setSearchQuery
 }: MainChartCategorySelectorProps) => {
-  const activeCats = useMemo(() => 
+  const activeCats = useMemo(() =>
     Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory],
     [dashboardCategory]
   );
 
-  const allExpenseCatNames = useMemo(() => 
+  const allExpenseCatNames = useMemo(() =>
     categories
       .filter(c => c.type === 'expense' && categoriesWithData.has(c.name))
       .map(c => c.name),
     [categories, categoriesWithData]
   );
+
+  const variableCatNames = useMemo(() =>
+    categories
+      .filter(c => c.type === 'expense' && c.allocation_type !== 'need' && categoriesWithData.has(c.name))
+      .map(c => c.name),
+    [categories, categoriesWithData]
+  );
+
+  const isAllActive = activeCats.includes('ALL') || activeCats.length === allExpenseCatNames.length;
+  const isVariableActive = !isAllActive && variableCatNames.length > 0 &&
+    activeCats.length === variableCatNames.length &&
+    variableCatNames.every(n => activeCats.includes(n));
 
   const toggleCategory = useCallback((catName: string) => {
     if (catName === 'ALL') {
@@ -364,90 +377,114 @@ const MainChartCategorySelector = memo(({
   }, [activeCats, allExpenseCatNames, setDashboardCategory]);
 
   const selectAllVariable = useCallback(() => {
-    const variableCats = categories
-      .filter(c => c.type === 'expense' && c.allocation_type !== 'need' && categoriesWithData.has(c.name))
-      .map(c => c.name);
-    setDashboardCategory(variableCats.length > 0 ? variableCats : ['ALL']);
-  }, [categories, categoriesWithData, setDashboardCategory]);
+    setDashboardCategory(variableCatNames.length > 0 ? variableCatNames : ['ALL']);
+  }, [variableCatNames, setDashboardCategory]);
 
-  const filteredCategories = useMemo(() => 
-    categories.filter(c => 
-      c.type === 'expense' && 
+  const filteredCategories = useMemo(() =>
+    categories.filter(c =>
+      c.type === 'expense' &&
       categoriesWithData.has(c.name) &&
       (c.name.toLowerCase().includes(searchQuery.toLowerCase()) || (c.icon && c.icon.includes(searchQuery)))
     ),
     [categories, categoriesWithData, searchQuery]
   );
 
+  const selectedCount = isAllActive ? allExpenseCatNames.length : activeCats.length;
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-2">
-        <button 
-          onClick={() => setDashboardCategory(['ALL'])} 
-          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-none text-[11px] font-bold transition-all border ${
-            activeCats.includes('ALL') || activeCats.length === allExpenseCatNames.length
-              ? 'bg-[#da291c]/20 border-[#da291c] text-[#da291c]' 
-              : 'bg-[#181818]/50 border-[#303030] text-slate-300 hover:bg-[#303030]'
+      {/* Quick Presets */}
+      <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+        <button
+          onClick={() => setDashboardCategory(['ALL'])}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors ${
+            isAllActive ? 'bg-[#303030] text-[#da291c]' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
           }`}
         >
-          📊 ทั้งหมด (รวม)
+          <LayoutGrid className="w-3.5 h-3.5" /> ทั้งหมด (รวม)
         </button>
-        <button 
-          onClick={selectAllVariable} 
-          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-none text-[11px] font-bold transition-all border bg-amber-950/20 border-amber-500/30 text-amber-400 hover:bg-amber-950/40"
+        <button
+          onClick={selectAllVariable}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors ${
+            isVariableActive ? 'bg-[#303030] text-[#da291c]' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          }`}
         >
-          🔄 ผันแปรทั้งหมด
+          <Shuffle className="w-3.5 h-3.5" /> เฉพาะผันแปร
         </button>
       </div>
 
       {/* Search Bar inside categories tab */}
       <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="ค้นหาหมวดหมู่ด่วน..."
-          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-none font-medium transition-all bg-[#181818] border-[#303030] text-slate-200 focus:border-[#da291c]"
+          placeholder="ค้นหาหมวดหมู่..."
+          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-none font-medium transition-colors bg-[#121212] border-[#303030] text-slate-200 focus:border-slate-400 placeholder-slate-600"
         />
-        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
         {searchQuery && (
-          <button 
+          <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200"
           >
-            ✕
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
-      {/* Category List with Scrollable Area */}
-      <div className="flex flex-wrap gap-1.5 mt-1 max-h-[360px] overflow-y-auto pr-1 select-none">
+      {/* Category Checklist */}
+      <div className="grid grid-cols-2 gap-1 mt-0.5 max-h-[320px] overflow-y-auto pr-1 select-none">
         {filteredCategories.length > 0 ? (
           filteredCategories.map(c => {
-            const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
-            const textColor = isActive ? getContrastTextColor(c.color) : '#94a3b8';
+            const isActive = isAllActive || activeCats.includes(c.name) || activeCats.includes(c.id);
+            const tickColor = getContrastTextColor(c.color);
             return (
-              <button 
-                key={c.id} 
-                onClick={() => toggleCategory(c.name)} 
-                className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-none text-[10px] font-bold transition-all border shadow-sm ${
-                  !isActive ? 'opacity-40 line-through bg-[#181818] border-[#303030]' : ''
-                }`} 
-                style={{ 
-                  backgroundColor: isActive ? (c.color || '#303030') : '#181818', 
-                  borderColor: isActive ? (c.color || '#303030') : '#303030', 
-                  color: textColor 
+              <button
+                key={c.id}
+                onClick={() => toggleCategory(c.name)}
+                style={{
+                  backgroundColor: isActive ? `${c.color || '#64748b'}1a` : 'transparent',
+                  // border-color is globally hardened to a hairline gray (darkMode.css); an
+                  // inset box-shadow is the only way to still ring the chip in its category color.
+                  boxShadow: isActive ? `inset 0 0 0 1px ${c.color || '#64748b'}66` : 'none',
                 }}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-none border border-[#2d2d2d] text-[11px] font-semibold text-left transition-colors ${
+                  isActive ? 'text-slate-100' : 'text-slate-500 hover:border-[#484848] hover:text-slate-300'
+                }`}
               >
-                <span className="opacity-90">{c.icon}</span> 
-                {c.name}
+                <span
+                  className="w-3 h-3 shrink-0 flex items-center justify-center rounded-none"
+                  style={{ backgroundColor: isActive ? (c.color || '#64748b') : 'transparent' }}
+                >
+                  {isActive && <Check className="w-2.5 h-2.5" strokeWidth={3} style={{ color: tickColor }} />}
+                </span>
+                <span className="truncate">
+                  {c.icon && <span className="mr-1 opacity-90">{c.icon}</span>}
+                  {c.name}
+                </span>
               </button>
             );
           })
         ) : (
-          <div className="text-[11px] italic py-6 text-center w-full text-slate-500">
+          <div className="col-span-2 text-[11px] italic py-6 text-center text-slate-500">
             ไม่พบหมวดหมู่ที่ต้องการ
           </div>
+        )}
+      </div>
+
+      {/* Summary Footer */}
+      <div className="flex items-center justify-between pt-2.5 mt-0.5 border-t border-[#303030]/60">
+        <span className="text-[10px] font-semibold text-slate-500">
+          เลือก <span className="text-slate-200">{selectedCount}</span> จาก {allExpenseCatNames.length} หมวดหมู่
+        </span>
+        {!isAllActive && (
+          <button
+            onClick={() => setDashboardCategory(['ALL'])}
+            className="text-[10px] font-bold uppercase tracking-wide text-[#da291c] hover:text-white"
+          >
+            ล้างตัวกรอง
+          </button>
         )}
       </div>
     </>
@@ -469,45 +506,57 @@ const MainChartFilterMenu = memo(({
     }
   }, [showCatMenu]);
 
+  const isFiltered = Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL');
+
   return (
     <div className="relative" ref={filterMenuRef}>
       <button
         onClick={() => setShowCatMenu(prev => !prev)}
-        className={`px-3 py-1.5 border rounded-none shadow-sm text-[11px] font-bold outline-none flex items-center gap-1.5 transition-all ${
-          showCatMenu 
-            ? 'bg-[#da291c] border-[#da291c] text-white shadow-md' 
-            : 'bg-[#181818] border-[#303030] text-slate-200 hover:bg-[#303030]'
+        style={isFiltered ? { boxShadow: 'inset 0 0 0 1px rgba(218,41,28,0.5)' } : undefined}
+        className={`px-3 py-1.5 border border-[#303030] rounded-none text-[11px] font-bold outline-none flex items-center gap-1.5 transition-colors ${
+          isFiltered
+            ? 'bg-[#181818] text-[#da291c]'
+            : showCatMenu
+              ? 'bg-[#303030] text-slate-100'
+              : 'bg-[#181818] text-slate-200 hover:bg-[#303030]/50'
         }`}
       >
         <Filter className="w-3.5 h-3.5" />
-        ตัวกรองแสดงผล {Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL') ? (
-          <span className="px-1.5 rounded-full text-[9px] bg-[#303030] text-[#da291c] border border-[#303030]">
+        ตัวกรองแสดงผล
+        {isFiltered && (
+          <span className="px-1.5 rounded-full text-[9px] font-black bg-[#da291c]/20 text-[#da291c] border border-[#da291c]/40">
             {dashboardCategory.length}
           </span>
-        ) : ''}
+        )}
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showCatMenu ? 'rotate-180' : ''}`} />
       </button>
 
       {showCatMenu && (
-        <div className="absolute right-0 top-full mt-2 w-[520px] max-w-[90vw] rounded-none shadow-2xl border z-[45] flex flex-col overflow-hidden bg-[#181818] border-[#303030] shadow-black/60">
+        <div className="absolute right-0 top-full mt-2 w-[460px] max-w-[90vw] rounded-none shadow-2xl border z-[45] flex flex-col overflow-hidden bg-[#181818] border-[#303030]">
           {/* Header */}
-          <div className="px-4 py-2.5 border-b flex items-center gap-1.5 border-[#303030] bg-[#181818]/65 text-slate-200">
-            <Layers className="w-3.5 h-3.5 text-[#da291c]" />
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
+          <div className="px-3.5 py-2.5 border-b flex items-center justify-between border-[#303030] text-slate-200">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-[#da291c]" />
+              <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
+            </div>
+            <button
+              onClick={() => setShowCatMenu(false)}
+              className="text-slate-500 hover:text-slate-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Body */}
-          <div className="p-4">
-            <div className="flex flex-col gap-3">
-              <MainChartCategorySelector
-                dashboardCategory={dashboardCategory}
-                setDashboardCategory={setDashboardCategory}
-                categories={categories}
-                categoriesWithData={categoriesWithData}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-              />
-            </div>
+          <div className="p-3.5 flex flex-col gap-3">
+            <MainChartCategorySelector
+              dashboardCategory={dashboardCategory}
+              setDashboardCategory={setDashboardCategory}
+              categories={categories}
+              categoriesWithData={categoriesWithData}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
           </div>
         </div>
       )}
@@ -749,8 +798,9 @@ const ToolbarAllocationSelector = memo(({
       <button
         disabled={showSkeleton}
         onClick={() => { setHideFixedExpenses(true); setHideWantExpenses(false); }}
+        style={isWantOnly ? { ['--tint-border-color' as any]: 'rgba(245, 158, 11, 0.3)' } : undefined}
         className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-          isWantOnly ? 'bg-amber-950/40 text-amber-400 shadow-sm border border-amber-500/30' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          isWantOnly ? 'bg-amber-950/40 text-amber-400 shadow-sm border tint-border' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
         }`}
         title="ดูเฉพาะค่าใช้จ่ายผันแปร / ไลฟ์สไตล์ (WANT)"
       >
@@ -759,8 +809,9 @@ const ToolbarAllocationSelector = memo(({
       <button
         disabled={showSkeleton}
         onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(true); }}
+        style={isNeedOnly ? { ['--tint-border-color' as any]: 'rgba(59, 130, 246, 0.3)' } : undefined}
         className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-          isNeedOnly ? 'bg-blue-950/40 text-blue-400 shadow-sm border border-blue-500/30' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          isNeedOnly ? 'bg-blue-950/40 text-blue-400 shadow-sm border tint-border' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
         }`}
         title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น (NEED)"
       >
@@ -915,11 +966,18 @@ export default function MainChart() {
   const filterMenuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!showCatMenu) return;
-    const handler = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent) => {
       if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) setShowCatMenu(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowCatMenu(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [showCatMenu]);
 
   // The Logic Engines

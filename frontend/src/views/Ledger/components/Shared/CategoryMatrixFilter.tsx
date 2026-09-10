@@ -492,22 +492,24 @@ export default function CategoryMatrixFilter({
                               onClick={() => handleToggleCategory(cat.name)}
                               style={{
                                 borderColor: isCatActive ? (cat.color || '#da291c') : '#2c2c2c',
+                                ['--tint-border-color' as any]: isCatActive ? (cat.color || '#da291c') : '#2c2c2c',
                                 backgroundColor: isCatActive ? `rgba(${rgb}, 0.2)` : '#121212'
                               }}
-                              className={`px-1.5 py-0.5 text-[10px] font-mono border rounded-none transition-all flex items-center gap-1 select-none cursor-pointer ${
-                                isCatActive 
-                                  ? 'text-white font-black shadow-sm' 
+                              className={`px-1.5 py-0.5 text-[10px] font-mono border tint-border rounded-none transition-all flex items-center gap-1 select-none cursor-pointer ${
+                                isCatActive
+                                  ? 'text-white font-black shadow-sm'
                                   : 'text-slate-500 hover:text-slate-300 hover:border-slate-600'
                               }`}
                               title={`คลิกเพื่อเปิด/ปิดหมวดหมู่ "${cat.name}"`}
                             >
                               {/* Checkbox indicator */}
-                              <div 
-                                className={`w-3 h-3 border flex items-center justify-center rounded-none shrink-0 transition-colors ${
+                              <div
+                                className={`w-3 h-3 border tint-border flex items-center justify-center rounded-none shrink-0 transition-colors ${
                                   isCatActive ? 'text-white' : 'border-[#404040] bg-[#181818]'
                                 }`}
                                 style={{
-                                  borderColor: isCatActive ? (cat.color || '#da291c') : undefined,
+                                  borderColor: isCatActive ? (cat.color || '#da291c') : '#404040',
+                                  ['--tint-border-color' as any]: isCatActive ? (cat.color || '#da291c') : '#404040',
                                   backgroundColor: isCatActive ? (cat.color || '#da291c') : undefined
                                 }}
                               >

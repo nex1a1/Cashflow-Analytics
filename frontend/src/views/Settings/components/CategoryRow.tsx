@@ -36,10 +36,10 @@ const CategoryRow = memo(({
 
   const accentFocus = `${focusBorder} focus:shadow-none focus:ring-0`;
 
-  const group = cashflowGroups.find(g => g.id === (cat.cashflowGroup || cat.cashflow_group_id));
+  const group = cashflowGroups.find(g => g.id === cat.cashflowGroup);
   const groupColor = group?.color || '#334155';
 
-  const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === (cat.cashflowGroup || cat.cashflow_group_id));
+  const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
 
   const inputCls = `px-2 py-1.5 border outline-none font-semibold text-[13px] flex-1 min-w-0 rounded-sm bg-[#121212] border-[#3e3e3e] ${accentFocus} text-[#cbd5e1] placeholder-[#555555]`;
 
@@ -81,6 +81,7 @@ const CategoryRow = memo(({
         maxLength={8}
         className={iconCls}
         title="ไอคอน"
+        aria-label="ไอคอนหมวดหมู่"
       />
 
       <DebouncedInput
@@ -93,10 +94,11 @@ const CategoryRow = memo(({
 
       <div className="relative shrink-0">
         <select
-          value={cat.cashflowGroup || cat.cashflow_group_id || ''}
+          value={cat.cashflowGroup || ''}
           onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
           className={selectCls}
           title={!currentGroupValid ? 'กลุ่มนี้ไม่ตรงกับประเภทของหมวดหมู่' : undefined}
+          aria-label="กลุ่ม Cashflow ของหมวดหมู่"
         >
           <option value="" disabled>-- กลุ่ม --</option>
           {filteredGroups.map(g => (

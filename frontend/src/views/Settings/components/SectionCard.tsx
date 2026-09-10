@@ -21,12 +21,6 @@ const ACCENT: Record<string, AccentStyle> = {
     glow: 'border-t-2 border-t-[#da291c]',
     btn: 'bg-[#da291c]/15 hover:bg-[#da291c]/25 text-[#da291c] border border-[#da291c]/35'
   },
-  blue: {
-    header: 'bg-[#121212] border-[#da291c]/20',
-    title: 'text-[#da291c]',
-    glow: 'border-t-2 border-t-[#da291c]',
-    btn: 'bg-[#da291c]/15 hover:bg-[#da291c]/25 text-[#da291c] border border-[#da291c]/35'
-  },
   purple: {
     header: 'bg-[#121212] border-purple-950/40',
     title: 'text-purple-400',
@@ -44,12 +38,6 @@ const ACCENT: Record<string, AccentStyle> = {
     title: 'text-sky-400',
     glow: 'border-t-2 border-t-sky-500/90',
     btn: 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-500/35'
-  },
-  red: {
-    header: 'bg-[#121212] border-[#da291c]/20',
-    title: 'text-[#da291c]',
-    glow: 'border-t-2 border-t-[#da291c]',
-    btn: 'bg-[#da291c]/15 hover:bg-[#da291c]/25 text-[#da291c] border border-[#da291c]/35'
   }
 };
 

@@ -11,7 +11,7 @@ const OrphanWarningBanner = memo(({ categories, cashflowGroups }: OrphanWarningB
   const orphans = useMemo(() => {
     const validIds = new Set(cashflowGroups.map(g => g.id));
     return categories.filter(c => {
-      const gId = c.cashflowGroup || c.cashflow_group_id;
+      const gId = c.cashflowGroup;
       return gId && !validIds.has(gId);
     });
   }, [categories, cashflowGroups]);

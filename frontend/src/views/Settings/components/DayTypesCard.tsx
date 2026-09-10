@@ -1,10 +1,12 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Lock, CalendarClock } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
 import { DayType } from '../../../types';
+
+const DAY_TYPES_ICON = <CalendarClock className="w-3.5 h-3.5" />;
 
 export interface DayTypesCardProps {
   dayTypeConfig: DayType[];
@@ -21,13 +23,17 @@ const DayTypesCard = memo(({
   handleDayTypeConfigChange,
   handleDeleteDayType
 }: DayTypesCardProps) => {
+  const addAction = useMemo(() => ({
+    label: 'เพิ่ม', onClick: handleAddDayType
+  }), [handleAddDayType]);
+
   return (
     <SectionCard
       accentColor="orange"
-      icon={<CalendarClock className="w-3.5 h-3.5" />}
+      icon={DAY_TYPES_ICON}
       title="ชนิดวันบนปฏิทิน"
       badge={dayTypeConfig.length}
-      action={{ label: 'เพิ่ม', onClick: handleAddDayType }}
+      action={addAction}
     >
       <div className="p-3 space-y-2 bg-[#121212]/30">
         {dayTypeConfig.map((dt, idx) => {

@@ -4,6 +4,8 @@ import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 import { TransactionDisplay } from '../../../types';
 
+const DANGER_ICON = <AlertCircle className="w-3.5 h-3.5" />;
+
 export interface DangerZoneProps {
   transactions: TransactionDisplay[];
   handleDeleteAllData: (opts?: any) => void;
@@ -14,7 +16,7 @@ const DangerZone = memo(({ transactions, handleDeleteAllData }: DangerZoneProps)
     <div>
       <SectionCard
         accentColor="brand"
-        icon={<AlertCircle className="w-3.5 h-3.5" />}
+        icon={DANGER_ICON}
         title="Danger Zone"
       >
         <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#121212]/50 rounded-none border-t border-[#da291c]/25">

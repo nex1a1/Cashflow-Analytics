@@ -214,3 +214,23 @@
 .dark-mode .category-pill-text * {
   color: var(--pill-text-color) !important;
 }
+
+/* ────────────────────────────────────────────────────────── */
+/* BORDER COLOR ESCAPE HATCH                                  */
+/* The universal `.dark-mode *` rule above (line 13) hardens  */
+/* every border to a flat hairline gray by !important, which  */
+/* also silently kills intentional colored borders (inline    */
+/* styles and arbitrary Tailwind border classes). Components  */
+/* that need a real colored border opt out by adding the      */
+/* `tint-border` class plus an inline `--tint-border-color`.  */
+/* Higher selector specificity than `.dark-mode *` lets it win */
+/* regardless of source order.                                */
+/* ────────────────────────────────────────────────────────── */
+.tint-border,
+.tint-border::before,
+.tint-border::after,
+.dark-mode .tint-border,
+.dark-mode .tint-border::before,
+.dark-mode .tint-border::after {
+  border-color: var(--tint-border-color) !important;
+}

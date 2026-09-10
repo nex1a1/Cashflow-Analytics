@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import { Settings2, Info, Coins, Wallet } from 'lucide-react';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../types';
 
@@ -8,6 +8,9 @@ import CategoryRow from './components/CategoryRow';
 import CashflowGroupsCard from './components/CashflowGroupsCard';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
+
+const EXPENSE_ICON = <Wallet className="w-3.5 h-3.5" />;
+const INCOME_ICON = <Coins className="w-3.5 h-3.5" />;
 
 export interface SettingsViewProps {
   categories: Category[];
@@ -53,6 +56,14 @@ const SettingsView = memo(function SettingsView({
     }
   }, [handleAddCategory]);
 
+  const addExpenseAction = useMemo(() => ({
+    label: 'เพิ่มรายจ่าย', onClick: () => onAddCategory('expense')
+  }), [onAddCategory]);
+
+  const addIncomeAction = useMemo(() => ({
+    label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income')
+  }), [onAddCategory]);
+
   const handleChangeCashflowGroup = useCallback(async (id: string, field: string, value: any) => {
     // 1. Snapshot previous state for rollback
     const previousGroups = [...cashflowGroups];
@@ -73,10 +84,20 @@ const SettingsView = memo(function SettingsView({
   }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 
   const [cashflowDeleteError, setCashflowDeleteError] = useState<{ id: string; msg: string } | null>(null);
+  const cashflowDeleteErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (cashflowDeleteErrorTimer.current) clearTimeout(cashflowDeleteErrorTimer.current);
+  }, []);
+
   const handleDeleteGroup = useCallback((id: string) => {
-    if (categories.some(c => (c.cashflowGroup || c.cashflow_group_id) === id)) {
+    if (categories.some(c => c.cashflowGroup === id)) {
+      if (cashflowDeleteErrorTimer.current) clearTimeout(cashflowDeleteErrorTimer.current);
       setCashflowDeleteError({ id, msg: 'ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่' });
-      setTimeout(() => setCashflowDeleteError(null), 4000);
+      cashflowDeleteErrorTimer.current = setTimeout(() => {
+        setCashflowDeleteError(null);
+        cashflowDeleteErrorTimer.current = null;
+      }, 4000);
       return;
     }
     handleDeleteCashflowGroup(id);
@@ -87,7 +108,7 @@ const SettingsView = memo(function SettingsView({
     // 1. Build a fast lookup map for Category ID/Name to CashflowGroup ID
     const catToGroupMap: Record<string, string> = {};
     categories.forEach(c => {
-      const gId = c.cashflowGroup || c.cashflow_group_id;
+      const gId = c.cashflowGroup;
       if (gId) {
         catToGroupMap[c.id] = gId;
         if (c.name) {
@@ -147,10 +168,10 @@ const SettingsView = memo(function SettingsView({
         <div className="flex flex-col gap-4">
           <SectionCard
             accentColor="brand"
-            icon={<Wallet className="w-3.5 h-3.5" />}
+            icon={EXPENSE_ICON}
             title="หมวดหมู่รายจ่าย"
             badge={expenseCategories.length}
-            action={{ label: 'เพิ่มรายจ่าย', onClick: () => onAddCategory('expense') }}
+            action={addExpenseAction}
           >
             <div>
               {expenseCategories.map((cat, idx) => (
@@ -168,10 +189,10 @@ const SettingsView = memo(function SettingsView({
 
           <SectionCard
             accentColor="emerald"
-            icon={<Coins className="w-3.5 h-3.5" />}
+            icon={INCOME_ICON}
             title="หมวดหมู่รายรับ"
             badge={incomeCategories.length}
-            action={{ label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income') }}
+            action={addIncomeAction}
           >
             <div>
               {incomeCategories.map((cat, idx) => (

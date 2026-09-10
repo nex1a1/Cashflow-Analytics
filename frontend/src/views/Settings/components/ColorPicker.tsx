@@ -151,8 +151,9 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
         onClick={handleOpen} 
         type="button"
         className="w-5 h-5 border rounded-none border-[#3e3e3e] cursor-pointer hover:border-[#da291c]/50 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
-        style={{ backgroundColor: color }} 
-        title="เลือกสี" 
+        style={{ backgroundColor: color }}
+        title="เลือกสี"
+        aria-label="เลือกสี"
       />
       
       {open && createPortal(
@@ -269,6 +270,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                 maxLength={7}
                 className="w-full bg-transparent text-xs font-mono font-bold text-[#cbd5e1] outline-none text-right uppercase"
                 placeholder="#000000"
+                aria-label="รหัสสี HEX"
               />
             </div>
           </div>

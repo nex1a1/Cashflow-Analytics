@@ -1,9 +1,11 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Lock, AlertTriangle, Grid } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
+
+const GROUPS_ICON = <Grid className="w-3.5 h-3.5" />;
 
 const getAllocBadgeCls = (allocationType: string) => {
   if (allocationType === 'need') {
@@ -33,13 +35,17 @@ const CashflowGroupsCard = memo(({
   handleChangeCashflowGroup, handleDeleteGroup, cashflowDeleteError,
   txCountByGroup, categories
 }: CashflowGroupsCardProps) => {
+  const addAction = useMemo(() => ({
+    label: 'เพิ่ม', onClick: handleAddCashflowGroup
+  }), [handleAddCashflowGroup]);
+
   return (
     <SectionCard
       accentColor="purple"
-      icon={<Grid className="w-3.5 h-3.5" />}
+      icon={GROUPS_ICON}
       title="คอลัมน์ Cashflow"
       badge={cashflowGroups.length}
-      action={{ label: 'เพิ่ม', onClick: handleAddCashflowGroup }}
+      action={addAction}
     >
       <div className={`p-3 space-y-2 ${'bg-[#121212]/30'}`}>
         {[...cashflowGroups].sort((a, b) => a.order_index - b.order_index).map((group, idx, arr) => {
@@ -69,7 +75,7 @@ const CashflowGroupsCard = memo(({
                 <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength={8}
                   className={`w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-white focus:border-[#da291c] focus:shadow-none'
-                  }`} title="ไอคอน" placeholder="✨" />
+                  }`} title="ไอคอน" aria-label="ไอคอนคอลัมน์" placeholder="✨" />
 
 
                 <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
@@ -77,7 +83,8 @@ const CashflowGroupsCard = memo(({
                   className={`p-1.5 text-[11px] font-bold outline-none border w-[110px] shrink-0 rounded-sm ${
                     'bg-[#121212] border-[#3e3e3e] text-[#cbd5e1]'
                   } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-[#da291c] focus:shadow-none'}`}
-                  title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}>
+                  title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}
+                  aria-label="ประเภทคอลัมน์">
                   <option value="income">รายรับ (IN)</option>
                   <option value="expense">รายจ่าย (EXP)</option>
                   <option value="savings">ออม/ลงทุน (SAV)</option>
@@ -85,7 +92,8 @@ const CashflowGroupsCard = memo(({
 
                 {group.type === 'expense' ? (
                   <select value={group.allocation_type || 'want'} onChange={e => handleChangeCashflowGroup(group.id, 'allocation_type', e.target.value)}
-                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer ${getAllocBadgeCls(group.allocation_type)}`}>
+                    className={`allocation-select p-1.5 text-[10px] font-black outline-none border w-[80px] shrink-0 rounded-sm cursor-pointer ${getAllocBadgeCls(group.allocation_type)}`}
+                    aria-label="รูปแบบการจัดสรร (Need/Want/Save)">
                     <option value="need" className="bg-[#121212] text-[#da291c] font-extrabold">NEED</option>
                     <option value="want" className="bg-[#121212] text-sky-400 font-extrabold">WANT</option>
                     <option value="savings" className="bg-[#121212] text-emerald-400 font-extrabold">SAVE</option>
