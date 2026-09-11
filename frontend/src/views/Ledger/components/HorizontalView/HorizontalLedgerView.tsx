@@ -80,6 +80,7 @@ export default function HorizontalLedgerView({
     categoryTotal,
     grandTotal,
     maxCellValue,
+    maxDailyTotal,
     formatDate
   } = useHeatmapEngine(displayTransactions, categories, allDates, filterOptions);
 
@@ -103,8 +104,6 @@ export default function HorizontalLedgerView({
   const handleCellLeave = useCallback(() => {
     setTooltip(null);
   }, []);
-
-  const fmtCell = useCallback((v: number) => v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), []);
 
   // ─── 3. Styles ───
   const border  = 'rgba(255,255,255,0.06)';
@@ -231,7 +230,8 @@ export default function HorizontalLedgerView({
                     handleCellLeave={handleCellLeave}
                     handleCellHover={handleCellHover}
                     dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-                    fmtCell={fmtCell}
+                    maxDailyTotal={maxDailyTotal}
+                    formatMoney={formatMoney}
                   />
                 </React.Fragment>
               );
@@ -281,7 +281,7 @@ export default function HorizontalLedgerView({
                         color: cat.color || undefined,
                         filter: 'brightness(1.4)',
                       }}>
-                        {fmtCell(categoryTotal[cat.name])}
+                        {formatMoney(categoryTotal[cat.name])}
                       </span>
                     </div>
                   )}
@@ -309,7 +309,7 @@ export default function HorizontalLedgerView({
                     fontVariantNumeric: 'tabular-nums',
                     color: '#f87171',
                   }}>
-                    {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatMoney(grandTotal)}
                   </span>
                 </div>
               </td>

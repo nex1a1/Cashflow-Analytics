@@ -162,6 +162,12 @@ export function useHeatmapEngine(
     expenseTransactions.reduce((sum, t) => sum + (Number.parseFloat(t.amount as any) || 0), 0),
     [expenseTransactions]);
 
+  const maxDailyTotal = useMemo(() => {
+    let max = 0;
+    Object.values(dailyTotal).forEach(v => { if (v > max) max = v; });
+    return max || 1;
+  }, [dailyTotal]);
+
   const maxCellValue = useMemo(() => {
     let max = 0;
     sortedDates.forEach(date => {
@@ -204,6 +210,7 @@ export function useHeatmapEngine(
     categoryTotal,
     grandTotal,
     maxCellValue,
+    maxDailyTotal,
     formatDate
   };
 }

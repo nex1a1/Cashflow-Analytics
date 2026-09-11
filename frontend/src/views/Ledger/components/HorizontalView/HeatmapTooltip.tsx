@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { createPortal } from 'react-dom';
+import { formatMoney } from '../../../../utils/formatters';
 import { TransactionDisplay, Category } from '../../../../types';
 
 export interface TooltipData {
@@ -81,7 +82,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
                 {item.description || <span style={{ opacity: 0.3, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
               </p>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: '#f87171', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
-                ฿{(Number.parseFloat(item.amount as any) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ฿{formatMoney(Number.parseFloat(item.amount as any) || 0)}
               </p>
             </div>
           ))}
@@ -99,7 +100,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
               รวม {tooltip.items.length} รายการ
             </p>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#f87171', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
-              ฿{tooltip.items.reduce((s, t) => s + (Number.parseFloat(t.amount as any) || 0), 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ฿{formatMoney(tooltip.items.reduce((s, t) => s + (Number.parseFloat(t.amount as any) || 0), 0))}
             </p>
           </div>
         )}

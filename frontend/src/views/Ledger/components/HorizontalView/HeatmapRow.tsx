@@ -25,7 +25,8 @@ interface HeatmapRowProps {
   border: string;
   ROW_H: number | string;
   maxCellValue: number;
-  fmtCell: (val: number) => string;
+  maxDailyTotal: number;
+  formatMoney: (val: number | string) => string;
 }
 
 const HeatmapRow = memo(function HeatmapRow({
@@ -33,7 +34,7 @@ const HeatmapRow = memo(function HeatmapRow({
   dailyTotal, grandTotal, cellMap, activeCategories,
   dayTypes, dayTypeConfig,
   handleCellLeave, handleCellHover,
-  dm, bgBase, border, ROW_H, maxCellValue, fmtCell
+  dm, bgBase, border, ROW_H, maxCellValue, maxDailyTotal, formatMoney
 }: HeatmapRowProps) {
   const total = dailyTotal[date] || 0;
 
@@ -56,9 +57,7 @@ const HeatmapRow = memo(function HeatmapRow({
         padding: '2px',
       }}>
         {(() => {
-          const dailyValues = Object.values(dailyTotal);
-          const maxDaily = dailyValues.length > 0 ? Math.max(...dailyValues) : 1;
-          const sparkPct = grandTotal > 0 ? Math.max(4, Math.round((total / maxDaily) * 100)) : 0;
+          const sparkPct = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
           return (
             <div style={{
               position: 'relative',
@@ -139,7 +138,7 @@ const HeatmapRow = memo(function HeatmapRow({
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
             dm={dm} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-            handleCellHover={handleCellHover} fmtCell={fmtCell}
+            handleCellHover={handleCellHover} formatMoney={formatMoney}
           />
         );
       })}
@@ -168,7 +167,7 @@ const HeatmapRow = memo(function HeatmapRow({
               letterSpacing: '-0.02em',
               color: '#f87171',
             }}>
-              {fmtCell(total)}
+              {formatMoney(total)}
             </span>
           </div>
         )}

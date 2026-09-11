@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { hexToRgb } from '../../../../utils/formatters';
+import { hexToRgb, formatMoney } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
 interface HeatmapCellProps {
@@ -14,17 +14,15 @@ interface HeatmapCellProps {
   ROW_H: number | string;
   maxCellValue: number;
   handleCellHover: (e: React.MouseEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
-  fmtCell: (val: number) => string;
+  formatMoney: (val: number | string) => string;
 }
 
-export function formatCellAmount(val: number): string {
-  return val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+export const formatCellAmount = formatMoney;
 
 const HeatmapCell = memo(function HeatmapCell({
-  idx, date, cat, items, cellSum, intensity, 
+  idx, date, cat, items, cellSum, intensity,
   dm, border, ROW_H, maxCellValue,
-  handleCellHover, fmtCell
+  handleCellHover, formatMoney
 }: HeatmapCellProps) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
@@ -110,7 +108,7 @@ const HeatmapCell = memo(function HeatmapCell({
                     : 'none',
                   transform: 'scale(1)',
                 }}>
-                  {fmtCell ? fmtCell(cellSum) : formatCellAmount(cellSum)}
+                  {formatMoney(cellSum)}
                 </span>
               </div>
             );
