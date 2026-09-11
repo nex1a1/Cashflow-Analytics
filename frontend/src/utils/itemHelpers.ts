@@ -24,7 +24,7 @@ export const STATUS_CONFIG: Record<ItemStatus, StatusBadgeInfo> = {
   },
   sold: {
     label: 'ขายแล้ว',
-    className: 'text-purple-400 border-purple-500/40 bg-purple-500/10',
+    className: 'text-neutral-300 border-neutral-500/40 bg-neutral-500/10',
   },
   cancelled: {
     label: 'ยกเลิก',
@@ -192,3 +192,99 @@ export function calculateItemStats(items: ItemWithDetails[]): ItemAnalyticsStats
     cancelledCount,
   };
 }
+
+export interface CategoryAccent {
+  border: string;
+  text: string;
+  pill: string;
+  dot: string;
+}
+
+const CATEGORY_ACCENT_PALETTE: CategoryAccent[] = [
+  { border: 'border-l-sky-500', text: 'text-sky-400', pill: 'bg-sky-950/40 text-sky-300 border-sky-500/40', dot: 'bg-sky-400' },
+  { border: 'border-l-indigo-500', text: 'text-indigo-400', pill: 'bg-indigo-950/40 text-indigo-300 border-indigo-500/40', dot: 'bg-indigo-400' },
+  { border: 'border-l-emerald-500', text: 'text-emerald-400', pill: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40', dot: 'bg-emerald-400' },
+  { border: 'border-l-amber-500', text: 'text-amber-400', pill: 'bg-amber-950/40 text-amber-300 border-amber-500/40', dot: 'bg-amber-400' },
+  { border: 'border-l-rose-500', text: 'text-rose-400', pill: 'bg-rose-950/40 text-rose-300 border-rose-500/40', dot: 'bg-rose-400' },
+  { border: 'border-l-teal-500', text: 'text-teal-400', pill: 'bg-teal-950/40 text-teal-300 border-teal-500/40', dot: 'bg-teal-400' },
+  { border: 'border-l-purple-500', text: 'text-purple-400', pill: 'bg-purple-950/40 text-purple-300 border-purple-500/40', dot: 'bg-purple-400' },
+  { border: 'border-l-orange-500', text: 'text-orange-400', pill: 'bg-orange-950/40 text-orange-300 border-orange-500/40', dot: 'bg-orange-400' },
+];
+
+/**
+ * Returns a curated distinct color accent for category group headers.
+ * Uses smart keyword matching with fallback to deterministic hashing.
+ */
+export function getCategoryAccent(categoryId: number, categoryName = ''): CategoryAccent {
+  const lower = categoryName.toLowerCase();
+  if (/มือถือ|โทรศัพท์|สมาร์ทโฟน|อุปกรณ์/i.test(lower)) return CATEGORY_ACCENT_PALETTE[0]; // Sky Blue
+  if (/คอม|ไอที|ฮาร์ดแวร์|tech/i.test(lower)) return CATEGORY_ACCENT_PALETTE[1]; // Indigo
+  if (/กันพลา|อดิเรก|ของสะสม|เกม|โมเดล|hobby/i.test(lower)) return CATEGORY_ACCENT_PALETTE[2]; // Emerald
+  if (/เฟอร์นิเจอร์|โต๊ะ|ของแต่ง|ห้อง|บ้าน/i.test(lower)) return CATEGORY_ACCENT_PALETTE[3]; // Amber
+  if (/เครื่องแต่งกาย|เสื้อ|แฟชั่น|รองเท้า|นาฬิกา|apparel/i.test(lower)) return CATEGORY_ACCENT_PALETTE[4]; // Rose
+  if (/เครื่องเสียง|หูฟัง|กล้อง|เลนส์|audio/i.test(lower)) return CATEGORY_ACCENT_PALETTE[5]; // Teal
+  if (/หนังสือ|พัฒนา|ยานพาหนะ|รถ/i.test(lower)) return CATEGORY_ACCENT_PALETTE[7]; // Orange
+
+  const idx = Math.abs(categoryId) % CATEGORY_ACCENT_PALETTE.length;
+  return CATEGORY_ACCENT_PALETTE[idx];
+}
+
+export type WishlistSortOption = 'priority_desc' | 'price_desc' | 'price_asc' | 'date_desc';
+export type InventorySortOption = 'purchased_desc' | 'price_desc' | 'price_asc' | 'warranty_asc' | 'date_desc';
+
+/**
+ * Sorts wishlist items based on chosen sorting criteria.
+ */
+export function sortWishlistItems(items: ItemWithDetails[], sortBy: WishlistSortOption): ItemWithDetails[] {
+  const sorted = [...items];
+  switch (sortBy) {
+    case 'priority_desc':
+      return sorted.sort((a, b) => {
+        const pA = a.priority ?? 0;
+        const pB = b.priority ?? 0;
+        if (pB !== pA) return pB - pA;
+        return b.display_price - a.display_price;
+      });
+    case 'price_desc':
+      return sorted.sort((a, b) => b.display_price - a.display_price);
+    case 'price_asc':
+      return sorted.sort((a, b) => a.display_price - b.display_price);
+    case 'date_desc':
+      return sorted.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    default:
+      return sorted;
+  }
+}
+
+/**
+ * Sorts inventory items based on chosen sorting criteria.
+ */
+export function sortInventoryItems(items: ItemWithDetails[], sortBy: InventorySortOption): ItemWithDetails[] {
+  const sorted = [...items];
+  switch (sortBy) {
+    case 'purchased_desc':
+      return sorted.sort((a, b) => {
+        const dateA = a.purchased_at || '0000-00-00';
+        const dateB = b.purchased_at || '0000-00-00';
+        if (dateB !== dateA) return dateB.localeCompare(dateA);
+        return b.display_price - a.display_price;
+      });
+    case 'price_desc':
+      return sorted.sort((a, b) => b.display_price - a.display_price);
+    case 'price_asc':
+      return sorted.sort((a, b) => a.display_price - b.display_price);
+    case 'warranty_asc':
+      return sorted.sort((a, b) => {
+        if (a.warranty_until && !b.warranty_until) return -1;
+        if (!a.warranty_until && b.warranty_until) return 1;
+        if (a.warranty_until && b.warranty_until) return a.warranty_until.localeCompare(b.warranty_until);
+        return (b.purchased_at || '').localeCompare(a.purchased_at || '');
+      });
+    case 'date_desc':
+      return sorted.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    default:
+      return sorted;
+  }
+}
+
+

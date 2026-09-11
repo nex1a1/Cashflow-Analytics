@@ -356,6 +356,7 @@ export default function ItemFormModal({
         };
       } else {
         // Inventory / Asset Payload
+        const isMovedToPlanned = inventoryStatus === 'planned';
         payload = {
           name: name.trim(),
           category_id: categoryId,
@@ -363,10 +364,10 @@ export default function ItemFormModal({
           source: source.trim() || null,
           status: inventoryStatus,
           price: numPrice,
-          purchased_at: purchasedAt || null,
-          broken_at: inventoryStatus === 'broken' ? (brokenAt || null) : null,
-          warranty_until: (hasWarranty && warrantyUntil) ? warrantyUntil : null,
-          priority: 0,
+          purchased_at: isMovedToPlanned ? null : (purchasedAt || null),
+          broken_at: (!isMovedToPlanned && inventoryStatus === 'broken') ? (brokenAt || null) : null,
+          warranty_until: (!isMovedToPlanned && hasWarranty && warrantyUntil) ? warrantyUntil : null,
+          priority: isMovedToPlanned ? 5 : 0,
           description: description.trim() || null
         };
       }
@@ -493,7 +494,7 @@ export default function ItemFormModal({
             {/* 1. Item Name */}
             <div className="md:col-span-7">
               <label className="block text-xs font-black uppercase tracking-wider text-neutral-300 mb-1.5 flex items-center gap-1">
-                <span>{activeMode === 'wishlist' ? 'ชื่อสิ่งที่อยากได้ / เป้าหมาย' : 'ชื่อสิ่งของ / ทรัพย์สิน'}</span>
+                <span>{activeMode === 'wishlist' ? 'ชื่อสินค้า / สิ่งที่อยากได้' : 'ชื่อสิ่งของ / ทรัพย์สิน'}</span>
                 <span className={activeMode === 'wishlist' ? 'text-amber-400' : 'text-[#da291c]'}>*</span>
               </label>
               <input
@@ -502,7 +503,7 @@ export default function ItemFormModal({
                 onChange={(e) => setName(e.target.value)}
                 placeholder={
                   activeMode === 'wishlist'
-                    ? 'เช่น Mechanical Keyboard, จอคอม 4K, เก้าอี้ Ergonomic'
+                    ? 'เช่น คีย์บอร์ด Custom, จอคอม 4K, หูฟังไร้สาย'
                     : 'เช่น MacBook Pro M3 Max, เก้าอี้ Herman Miller Aeron, iPhone 15 Pro'
                 }
                 className={`w-full px-3.5 py-2 bg-[#1b1b1b] border text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none transition-colors ${
@@ -597,7 +598,7 @@ export default function ItemFormModal({
               <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-300">
                 สถานะการใช้งานจริง
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className={`grid gap-2 ${editingItem ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
                 <button
                   type="button"
                   onClick={() => setInventoryStatus('purchased')}
@@ -651,16 +652,34 @@ export default function ItemFormModal({
                   onClick={() => setInventoryStatus('sold')}
                   className={`p-2.5 border text-left transition-all rounded-none ${
                     inventoryStatus === 'sold'
-                      ? 'bg-purple-950/50 border-purple-500 text-purple-300 shadow-sm'
+                      ? 'bg-[#232323] border-neutral-400 text-neutral-200 shadow-sm'
                       : 'bg-[#141414] border-[#2c2c2c] text-neutral-400 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <DollarSign className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <DollarSign className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                     <span className="font-bold text-xs">ขายแล้ว</span>
                   </div>
                   <div className="text-[10px] text-neutral-500 mt-1 truncate">ส่งต่อ / ปลดระวาง / มีรายรับคืน</div>
                 </button>
+
+                {editingItem && (
+                  <button
+                    type="button"
+                    onClick={() => setInventoryStatus('planned')}
+                    className={`p-2.5 border text-left transition-all rounded-none ${
+                      inventoryStatus === 'planned'
+                        ? 'bg-amber-950/50 border-amber-500 text-amber-300 shadow-sm'
+                        : 'bg-[#141414] border-[#2c2c2c] text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="font-bold text-xs">กลับ Wishlist</span>
+                    </div>
+                    <div className="text-[10px] text-neutral-500 mt-1 truncate">ย้ายไปวางแผนซื้อใหม่</div>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -671,7 +690,7 @@ export default function ItemFormModal({
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5">
-                  ยี่ห้อ / รุ่น
+                  {activeMode === 'wishlist' ? 'แบรนด์ / ยี่ห้อ / รุ่น' : 'ยี่ห้อ / รุ่น'}
                 </label>
                 <input
                   type="text"
@@ -679,16 +698,18 @@ export default function ItemFormModal({
                   onChange={(e) => setBrandModel(e.target.value)}
                   placeholder={
                     activeMode === 'wishlist'
-                      ? 'เช่น Keychron Q1 Pro, Dell U2723QE'
+                      ? 'เช่น Keychron Q1 Pro, Dell U2723QE, Sony WH-1000XM5'
                       : 'เช่น Apple, Sony, Herman Miller'
                   }
-                  className="w-full px-3 py-2 bg-[#1b1b1b] border border-[#333] text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none focus:border-[#da291c]"
+                  className={`w-full px-3 py-2 bg-[#1b1b1b] border text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none transition-colors ${
+                    activeMode === 'wishlist' ? 'border-[#333] focus:border-amber-500' : 'border-[#333] focus:border-[#da291c]'
+                  }`}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5">
-                  {activeMode === 'wishlist' ? 'ร้านค้า / แหล่งที่เล็งไว้' : 'ร้านค้า / ซื้อจากที่ไหน'}
+                  {activeMode === 'wishlist' ? 'ร้านค้า / แหล่งซื้อที่เล็งไว้' : 'ร้านค้า / ซื้อจากที่ไหน'}
                 </label>
                 <input
                   type="text"
@@ -696,16 +717,23 @@ export default function ItemFormModal({
                   onChange={(e) => setSource(e.target.value)}
                   placeholder={
                     activeMode === 'wishlist'
-                      ? 'เช่น Shopee Mall, Banana IT, Central World'
+                      ? 'เช่น Shopee Mall, Banana IT, Central World, หน้าร้านฟอร์จูน'
                       : 'เช่น Studio 7, Advice, HomePro, Shopee'
                   }
-                  className="w-full px-3 py-2 bg-[#1b1b1b] border border-[#333] text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none focus:border-[#da291c]"
+                  className={`w-full px-3 py-2 bg-[#1b1b1b] border text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none transition-colors ${
+                    activeMode === 'wishlist' ? 'border-[#333] focus:border-amber-500' : 'border-[#333] focus:border-[#da291c]'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5">
-                  {activeMode === 'wishlist' ? 'งบประมาณ / ราคาประมาณการ (บาท)' : 'ราคาที่ซื้อมา (บาท)'}
+                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5 flex items-center justify-between">
+                  <span>{activeMode === 'wishlist' ? 'งบประมาณ / ราคาประเมิน (บาท)' : 'ราคาที่ซื้อมา (บาท)'}</span>
+                  {activeMode === 'wishlist' && (
+                    <span className="text-[10px] font-mono font-bold text-amber-400">
+                      * ราคาประเมิน
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -713,13 +741,15 @@ export default function ItemFormModal({
                   value={price}
                   onChange={handlePriceChange}
                   onBlur={handlePriceBlur}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 bg-[#1b1b1b] border border-[#333] text-slate-100 placeholder-neutral-500 rounded-sm text-sm font-mono tabular-nums focus:outline-none focus:border-[#da291c]"
+                  placeholder={activeMode === 'wishlist' ? '0.00 (ราคาประเมิน)' : '0.00'}
+                  className={`w-full px-3 py-2 bg-[#1b1b1b] border text-slate-100 placeholder-neutral-500 rounded-sm text-sm font-mono tabular-nums focus:outline-none transition-colors ${
+                    activeMode === 'wishlist' ? 'border-[#333] focus:border-amber-500' : 'border-[#333] focus:border-[#da291c]'
+                  }`}
                 />
                 <p className="mt-1 text-[10px] text-neutral-500 flex items-center gap-1">
                   <Info className="w-3 h-3 text-neutral-500 shrink-0" />
                   {activeMode === 'wishlist'
-                    ? 'ราคาประเมินล่วงหน้าเพื่อคำนวณงบกระแสเงินสด (เมื่อซื้อจริงสามารถผูกกับ Transaction ในบัญชีได้)'
+                    ? 'ราคาประเมินล่วงหน้าเพื่อคำนวณงบประมาณ (เมื่อซื้อจริงสามารถกดแปลงและผูกกับ Transaction ในบัญชีได้)'
                     : 'ราคาที่ซื้อจริงตามใบเสร็จ (สามารถกดผูกกับ Transaction ในระบบเพื่อบันทึกงวดและราคาอัตโนมัติ)'
                   }
                 </p>
@@ -1157,7 +1187,7 @@ export default function ItemFormModal({
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5">
               {activeMode === 'wishlist'
-                ? 'สเปกที่ต้องการ / เหตุผลความจำเป็น / โน้ตเตือนใจ'
+                ? 'รายละเอียดเพิ่มเติม / สเปกที่เล็งไว้ / โน้ตเตือนใจ'
                 : 'หมายเลขเครื่อง (S/N) / สภาพ / บันทึกการใช้งาน'
               }
             </label>
@@ -1167,10 +1197,12 @@ export default function ItemFormModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder={
                 activeMode === 'wishlist'
-                  ? 'เช่น ซื้อมาทำงานแทนตัวเดิมที่ปุ่มเบิ้ล, รอโปร 10.10 หรือโบนัสออก, สี Dark Grey...'
+                  ? 'เช่น เล็งสี Dark Grey สวิตช์ Red, รอโปร 10.10 หรือโบนัสออก, เช็คโค้ดลด 1,000 บาท...'
                   : 'เช่น S/N: C02G..., สภาพ 95%, อุปกรณ์ครบกล่อง, เก็บไว้ที่ลิ้นชักโต๊ะทำงาน...'
               }
-              className="w-full px-3 py-2 bg-[#1b1b1b] border border-[#333] text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none focus:border-[#da291c]"
+              className={`w-full px-3 py-2 bg-[#1b1b1b] border text-slate-100 placeholder-neutral-500 rounded-sm text-sm focus:outline-none transition-colors ${
+                activeMode === 'wishlist' ? 'border-[#333] focus:border-amber-500' : 'border-[#333] focus:border-[#da291c]'
+              }`}
             />
           </div>
 

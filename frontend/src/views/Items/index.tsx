@@ -2,22 +2,27 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Package, Plus, Sparkles, Filter, Search, ChevronDown, ChevronRight, ChevronUp,
   ShieldCheck, AlertTriangle, Archive, Tag, RefreshCw, XCircle, ShoppingBag,
-  Layers, List, ChevronsDownUp, ChevronsUpDown
+  Layers, List, ChevronsDownUp, ChevronsUpDown, ArrowUpDown
 } from 'lucide-react';
 import { ItemWithDetails, ItemCategory, ItemStatus, CreateItemPayload, UpdateItemPayload } from '../../types';
 import { itemService } from '../../services/api';
 import { formatMoney } from '../../utils/formatters';
+import { STORAGE_KEYS } from '../../constants/storageKeys';
 import {
   groupItemsByCategory,
   calculateItemStats,
   STATUS_CONFIG,
-  CategoryItemGroup
+  CategoryItemGroup,
+  getCategoryAccent,
+  WishlistSortOption,
+  InventorySortOption,
+  sortWishlistItems,
+  sortInventoryItems
 } from '../../utils/itemHelpers';
 
 import ItemCard from './ItemCard';
 import ItemFormModal from './ItemFormModal';
 import LinkTransactionsModal from './LinkTransactionsModal';
-import QuickPurchaseModal from './QuickPurchaseModal';
 import ItemCategoryModal from './ItemCategoryModal';
 
 export default function ItemsView() {
@@ -41,16 +46,31 @@ export default function ItemsView() {
   const [defaultFormStatus, setDefaultFormStatus] = useState<ItemStatus>('planned');
   
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkModalMode, setLinkModalMode] = useState<'manage' | 'purchase'>('manage');
   const [linkingItem, setLinkingItem] = useState<ItemWithDetails | null>(null);
-
-  const [quickPurchaseModalOpen, setQuickPurchaseModalOpen] = useState(false);
-  const [quickPurchaseItem, setQuickPurchaseItem] = useState<ItemWithDetails | null>(null);
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [lastCreatedCategory, setLastCreatedCategory] = useState<ItemCategory | null>(null);
 
-  // Collapsed categories tracking
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  // Sorting states with localStorage persistence
+  const [wishlistSort, setWishlistSort] = useState<WishlistSortOption>(() => {
+    return (localStorage.getItem(STORAGE_KEYS.ITEMS_WISHLIST_SORT) as WishlistSortOption) || 'priority_desc';
+  });
+  const [inventorySort, setInventorySort] = useState<InventorySortOption>(() => {
+    return (localStorage.getItem(STORAGE_KEYS.ITEMS_INVENTORY_SORT) as InventorySortOption) || 'purchased_desc';
+  });
+
+  const handleWishlistSortChange = (newSort: WishlistSortOption) => {
+    setWishlistSort(newSort);
+    localStorage.setItem(STORAGE_KEYS.ITEMS_WISHLIST_SORT, newSort);
+  };
+
+  const handleInventorySortChange = (newSort: InventorySortOption) => {
+    setInventorySort(newSort);
+    localStorage.setItem(STORAGE_KEYS.ITEMS_INVENTORY_SORT, newSort);
+  };
 
   // Load items and categories
   const fetchData = useCallback(async () => {
@@ -103,24 +123,26 @@ export default function ItemsView() {
     });
   }, [items, selectedCategoryFilter, searchQuery]);
 
-  // Split into Planned (Left) and Possessions (Right)
+  // Split into Planned (Left) and Possessions (Right) with Active Sorting
   const plannedItems = useMemo(() => {
-    return filteredItems.filter(i => i.status === 'planned');
-  }, [filteredItems]);
+    const raw = filteredItems.filter(i => i.status === 'planned');
+    return sortWishlistItems(raw, wishlistSort);
+  }, [filteredItems, wishlistSort]);
 
   const cancelledItems = useMemo(() => {
     return filteredItems.filter(i => i.status === 'cancelled');
   }, [filteredItems]);
 
   const possessionItems = useMemo(() => {
-    return filteredItems.filter(i => {
+    const raw = filteredItems.filter(i => {
       if (i.status === 'planned' || i.status === 'cancelled') return false;
       if (rightColumnFilter === 'purchased') return i.status === 'purchased';
       if (rightColumnFilter === 'stored') return i.status === 'stored';
       if (rightColumnFilter === 'archived') return i.status === 'broken' || i.status === 'sold';
       return true; // 'ALL'
     });
-  }, [filteredItems, rightColumnFilter]);
+    return sortInventoryItems(raw, inventorySort);
+  }, [filteredItems, rightColumnFilter, inventorySort]);
 
   // Group items by category (respecting custom order_index)
   const plannedGroups = useMemo(() => groupItemsByCategory(plannedItems, categories), [plannedItems, categories]);
@@ -194,14 +216,16 @@ export default function ItemsView() {
     }
   };
 
-  // Quick purchase confirmation
-  const handleConfirmQuickPurchase = async (itemId: number, purchasedAt: string, openLinkModalAfter: boolean) => {
-    const updated = await itemService.updateStatus(itemId, 'purchased', { purchased_at: purchasedAt });
-    await fetchData();
-
-    if (openLinkModalAfter) {
-      setLinkingItem(updated);
-      setLinkModalOpen(true);
+  // Purchase & link confirmation
+  const handleConfirmPurchase = async (itemId: number, purchasedAt: string, selectedTxIds: string[]) => {
+    try {
+      await itemService.updateStatus(itemId, 'purchased', { purchased_at: purchasedAt });
+      if (selectedTxIds && selectedTxIds.length > 0) {
+        await itemService.linkTransactions(itemId, selectedTxIds);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Failed to confirm purchase:', err);
     }
   };
 
@@ -292,7 +316,7 @@ export default function ItemsView() {
         <div className="p-3 md:p-3.5 bg-[#121212] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">
-              ประมาณการ Wishlist
+              ราคาประเมิน Wishlist
             </span>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
           </div>
@@ -429,7 +453,7 @@ export default function ItemsView() {
         {/* ── LEFT COLUMN: Planned / Wishlist ── */}
         <div className="space-y-3">
           {/* Column Header */}
-          <div className="p-2.5 px-3 bg-[#181818] border-t-2 border-t-amber-500 border-x border-b border-[#282828] flex items-center justify-between gap-2">
+          <div className="p-2.5 px-3 bg-[#181818] border-t-2 border-t-amber-500 border-x border-b border-[#282828] flex items-center justify-between gap-2 flex-wrap">
             <div>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-none bg-amber-500" />
@@ -441,22 +465,40 @@ export default function ItemsView() {
                 </span>
               </div>
               <div className="text-[11px] font-mono text-neutral-400 mt-0.5">
-                รวมประมาณการ: <strong className="text-amber-400">฿{formatMoney(stats.wishlistValue)}</strong>
+                รวมราคาประเมิน: <strong className="text-amber-400">฿{formatMoney(stats.wishlistValue)}</strong>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setEditingItem(null);
-                setFormModalMode('wishlist');
-                setDefaultFormStatus('planned');
-                setFormModalOpen(true);
-              }}
-              className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/40 rounded-none flex items-center gap-1.5 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              เพิ่ม Wishlist
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Wishlist Sort Selector */}
+              <div className="flex items-center gap-1 bg-[#141414] border border-[#333] px-2 py-0.5">
+                <ArrowUpDown className="w-3 h-3 text-amber-400 shrink-0" />
+                <select
+                  value={wishlistSort}
+                  onChange={(e) => handleWishlistSortChange(e.target.value as WishlistSortOption)}
+                  className="bg-transparent text-neutral-300 hover:text-white text-xs font-medium focus:outline-none cursor-pointer py-0.5"
+                  title="จัดเรียงรายการใน Wishlist"
+                >
+                  <option value="priority_desc" className="bg-[#181818] text-slate-200">🎯 ความสำคัญ (มาก ➔ น้อย)</option>
+                  <option value="price_desc" className="bg-[#181818] text-slate-200">💰 ราคาประเมิน (มาก ➔ น้อย)</option>
+                  <option value="price_asc" className="bg-[#181818] text-slate-200">🪙 ราคาประเมิน (น้อย ➔ มาก)</option>
+                  <option value="date_desc" className="bg-[#181818] text-slate-200">🕒 บันทึกล่าสุด (ใหม่สุด)</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  setFormModalMode('wishlist');
+                  setDefaultFormStatus('planned');
+                  setFormModalOpen(true);
+                }}
+                className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/40 rounded-none flex items-center gap-1.5 transition-colors shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                เพิ่ม Wishlist
+              </button>
+            </div>
           </div>
 
           {/* Planned Items Content */}
@@ -465,33 +507,39 @@ export default function ItemsView() {
           ) : viewMode === 'grouped' ? (
             /* Grouped View */
             plannedGroups.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-3.5">
                 {plannedGroups.map((group, groupIndex) => {
                   const groupKey = `planned-${group.categoryId}`;
                   const isCollapsed = collapsedCategories.has(groupKey);
+                  const accent = getCategoryAccent(group.categoryId, group.categoryName);
 
                   return (
-                    <div key={groupKey} className="border border-[#262626] bg-[#121212]">
+                    <div key={groupKey} className="border border-[#282828] bg-[#121212] shadow-sm">
                       {/* Category Subheader */}
-                      <div className="w-full px-3 py-1.5 bg-[#161616] border-b border-[#242424] flex items-center justify-between">
+                      <div className={`w-full px-3 py-2 bg-[#181818] border-b border-[#282828] border-l-4 ${accent.border} flex items-center justify-between transition-colors`}>
                         <button
                           type="button"
                           onClick={() => toggleCategoryCollapse(groupKey)}
                           className="flex items-center gap-2 text-left hover:text-white flex-1 transition-colors min-w-0"
                         >
                           {isCollapsed ? (
-                            <ChevronRight className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                            <ChevronRight className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           )}
-                          <span className="text-xs font-bold text-slate-200 truncate">{group.categoryName}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono shrink-0">({group.items.length})</span>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} />
+                          <span className="text-xs sm:text-sm font-black text-slate-100 uppercase tracking-wide truncate">
+                            {group.categoryName}
+                          </span>
+                          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-none border shrink-0 ${accent.pill}`}>
+                            {group.items.length} รายการ
+                          </span>
                         </button>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs font-mono font-bold text-amber-400/90 tabular-nums">
+                          <span className="text-xs sm:text-sm font-mono font-bold text-amber-400 tabular-nums">
                             ฿{formatMoney(group.totalValue)}
                           </span>
-                          <div className="flex items-center border border-[#2a2a2a] bg-[#111] divide-x divide-[#222]">
+                          <div className="flex items-center">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -500,7 +548,7 @@ export default function ItemsView() {
                               }}
                               disabled={groupIndex === 0}
                               title="เลื่อนหมวดหมู่นี้ขึ้น"
-                              className="p-1 text-neutral-400 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-400 hover:bg-[#222] transition-colors"
+                              className="p-1 text-neutral-500 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-500 transition-colors"
                             >
                               <ChevronUp className="w-3 h-3" />
                             </button>
@@ -512,7 +560,7 @@ export default function ItemsView() {
                               }}
                               disabled={groupIndex === plannedGroups.length - 1}
                               title="เลื่อนหมวดหมู่นี้ลง"
-                              className="p-1 text-neutral-400 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-400 hover:bg-[#222] transition-colors"
+                              className="p-1 text-neutral-500 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-500 transition-colors"
                             >
                               <ChevronDown className="w-3 h-3" />
                             </button>
@@ -535,12 +583,13 @@ export default function ItemsView() {
                               }}
                               onDelete={handleDeleteItem}
                               onQuickPurchase={(it) => {
-                                setQuickPurchaseItem(it);
-                                setQuickPurchaseModalOpen(true);
+                                setLinkingItem(it);
+                                setLinkModalMode('purchase');
+                                setLinkModalOpen(true);
                               }}
-                              onQuickCancel={handleQuickCancel}
                               onOpenLinkModal={(it) => {
                                 setLinkingItem(it);
+                                setLinkModalMode('manage');
                                 setLinkModalOpen(true);
                               }}
                             />
@@ -573,12 +622,13 @@ export default function ItemsView() {
                     }}
                     onDelete={handleDeleteItem}
                     onQuickPurchase={(it) => {
-                      setQuickPurchaseItem(it);
-                      setQuickPurchaseModalOpen(true);
+                      setLinkingItem(it);
+                      setLinkModalMode('purchase');
+                      setLinkModalOpen(true);
                     }}
-                    onQuickCancel={handleQuickCancel}
                     onOpenLinkModal={(it) => {
                       setLinkingItem(it);
+                      setLinkModalMode('manage');
                       setLinkModalOpen(true);
                     }}
                   />
@@ -619,9 +669,9 @@ export default function ItemsView() {
                         setFormModalOpen(true);
                       }}
                       onDelete={handleDeleteItem}
-                      onChangeStatus={handleChangeStatus}
                       onOpenLinkModal={(it) => {
                         setLinkingItem(it);
+                        setLinkModalMode('manage');
                         setLinkModalOpen(true);
                       }}
                     />
@@ -648,24 +698,43 @@ export default function ItemsView() {
                   </span>
                 </div>
                 <div className="text-[11px] font-mono text-neutral-400 mt-0.5">
-                  มูลค่ารวมกลุ่มนี้: <strong className="text-emerald-400">
+                  มูลค่ารวมกลุ่มนี้: <strong className="text-slate-100">
                     ฿{formatMoney(possessionItems.reduce((acc, i) => acc + i.display_price, 0))}
                   </strong>
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  setEditingItem(null);
-                  setFormModalMode('inventory');
-                  setDefaultFormStatus('purchased');
-                  setFormModalOpen(true);
-                }}
-                className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-[#da291c] text-white hover:bg-red-700 rounded-none flex items-center gap-1.5 transition-colors shadow-md"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                บันทึกของใหม่
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Inventory Sort Selector */}
+                <div className="flex items-center gap-1 bg-[#141414] border border-[#333] px-2 py-0.5">
+                  <ArrowUpDown className="w-3 h-3 text-[#da291c] shrink-0" />
+                  <select
+                    value={inventorySort}
+                    onChange={(e) => handleInventorySortChange(e.target.value as InventorySortOption)}
+                    className="bg-transparent text-neutral-300 hover:text-white text-xs font-medium focus:outline-none cursor-pointer py-0.5"
+                    title="จัดเรียงรายการใน Inventory"
+                  >
+                    <option value="purchased_desc" className="bg-[#181818] text-slate-200">📅 วันที่ซื้อ (ล่าสุด ➔ เก่าสุด)</option>
+                    <option value="price_desc" className="bg-[#181818] text-slate-200">💰 มูลค่า (มาก ➔ น้อย)</option>
+                    <option value="price_asc" className="bg-[#181818] text-slate-200">🪙 มูลค่า (น้อย ➔ มาก)</option>
+                    <option value="warranty_asc" className="bg-[#181818] text-slate-200">🛡️ ประกัน (ใกล้หมดก่อน)</option>
+                    <option value="date_desc" className="bg-[#181818] text-slate-200">🕒 บันทึกล่าสุด (ใหม่สุด)</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setEditingItem(null);
+                    setFormModalMode('inventory');
+                    setDefaultFormStatus('purchased');
+                    setFormModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-[#da291c] text-white hover:bg-red-700 rounded-none flex items-center gap-1.5 transition-colors shadow-md shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  บันทึกของใหม่
+                </button>
+              </div>
             </div>
 
             {/* Status Filter Pills */}
@@ -725,33 +794,39 @@ export default function ItemsView() {
           ) : viewMode === 'grouped' ? (
             /* Grouped View */
             possessionGroups.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-3.5">
                 {possessionGroups.map((group, groupIndex) => {
                   const groupKey = `possessions-${group.categoryId}`;
                   const isCollapsed = collapsedCategories.has(groupKey);
+                  const accent = getCategoryAccent(group.categoryId, group.categoryName);
 
                   return (
-                    <div key={groupKey} className="border border-[#262626] bg-[#121212]">
+                    <div key={groupKey} className="border border-[#282828] bg-[#121212] shadow-sm">
                       {/* Category Subheader */}
-                      <div className="w-full px-3 py-1.5 bg-[#161616] border-b border-[#242424] flex items-center justify-between">
+                      <div className={`w-full px-3 py-2 bg-[#181818] border-b border-[#282828] border-l-4 ${accent.border} flex items-center justify-between transition-colors`}>
                         <button
                           type="button"
                           onClick={() => toggleCategoryCollapse(groupKey)}
                           className="flex items-center gap-2 text-left hover:text-white flex-1 transition-colors min-w-0"
                         >
                           {isCollapsed ? (
-                            <ChevronRight className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                            <ChevronRight className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           )}
-                          <span className="text-xs font-bold text-slate-200 truncate">{group.categoryName}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono shrink-0">({group.items.length})</span>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} />
+                          <span className="text-xs sm:text-sm font-black text-slate-100 uppercase tracking-wide truncate">
+                            {group.categoryName}
+                          </span>
+                          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-none border shrink-0 ${accent.pill}`}>
+                            {group.items.length} รายการ
+                          </span>
                         </button>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">
+                          <span className="text-xs sm:text-sm font-mono font-bold text-slate-100 tabular-nums">
                             ฿{formatMoney(group.totalValue)}
                           </span>
-                          <div className="flex items-center border border-[#2a2a2a] bg-[#111] divide-x divide-[#222]">
+                          <div className="flex items-center">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -760,7 +835,7 @@ export default function ItemsView() {
                               }}
                               disabled={groupIndex === 0}
                               title="เลื่อนหมวดหมู่นี้ขึ้น"
-                              className="p-1 text-neutral-400 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-400 hover:bg-[#222] transition-colors"
+                              className="p-1 text-neutral-500 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-500 transition-colors"
                             >
                               <ChevronUp className="w-3 h-3" />
                             </button>
@@ -772,7 +847,7 @@ export default function ItemsView() {
                               }}
                               disabled={groupIndex === possessionGroups.length - 1}
                               title="เลื่อนหมวดหมู่นี้ลง"
-                              className="p-1 text-neutral-400 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-400 hover:bg-[#222] transition-colors"
+                              className="p-1 text-neutral-500 hover:text-white disabled:opacity-20 disabled:hover:text-neutral-500 transition-colors"
                             >
                               <ChevronDown className="w-3 h-3" />
                             </button>
@@ -796,9 +871,9 @@ export default function ItemsView() {
                               onDelete={handleDeleteItem}
                               onOpenLinkModal={(it) => {
                                 setLinkingItem(it);
+                                setLinkModalMode('manage');
                                 setLinkModalOpen(true);
                               }}
-                              onChangeStatus={handleChangeStatus}
                             />
                           ))}
                         </div>
@@ -830,9 +905,9 @@ export default function ItemsView() {
                     onDelete={handleDeleteItem}
                     onOpenLinkModal={(it) => {
                       setLinkingItem(it);
+                      setLinkModalMode('manage');
                       setLinkModalOpen(true);
                     }}
-                    onChangeStatus={handleChangeStatus}
                   />
                 ))}
               </div>
@@ -856,11 +931,13 @@ export default function ItemsView() {
         initialMode={formModalMode}
         onOpenCategoryManager={() => setCategoryModalOpen(true)}
         onQuickPurchaseWishlist={(it) => {
-          setQuickPurchaseItem(it);
-          setQuickPurchaseModalOpen(true);
+          setLinkingItem(it);
+          setLinkModalMode('purchase');
+          setLinkModalOpen(true);
         }}
         onOpenLinkModal={(it) => {
           setLinkingItem(it);
+          setLinkModalMode('manage');
           setLinkModalOpen(true);
         }}
         onRefreshCategories={fetchData}
@@ -871,16 +948,11 @@ export default function ItemsView() {
         isOpen={linkModalOpen}
         onClose={() => setLinkModalOpen(false)}
         item={linkingItem}
+        mode={linkModalMode}
         onLinkSuccess={() => {
           fetchData();
         }}
-      />
-
-      <QuickPurchaseModal
-        isOpen={quickPurchaseModalOpen}
-        onClose={() => setQuickPurchaseModalOpen(false)}
-        item={quickPurchaseItem}
-        onConfirm={handleConfirmQuickPurchase}
+        onConfirmPurchase={handleConfirmPurchase}
       />
 
       <ItemCategoryModal
