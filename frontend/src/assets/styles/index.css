@@ -49,6 +49,42 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(148, 163, 184, 0.6);
 }
 
+/* Tactical Dark Scrollbar */
+.tactical-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #383838 #141414;
+}
+
+.tactical-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tactical-scrollbar::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+.tactical-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #383838;
+  border-radius: 0px;
+}
+
+.tactical-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #da291c;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* ────────────────────────────────────────────────────────── */
 /* ELITE Financial Intelligence - Disable Moving Animations   */
 /* ────────────────────────────────────────────────────────── */

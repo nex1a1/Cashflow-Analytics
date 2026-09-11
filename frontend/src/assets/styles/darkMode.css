@@ -37,10 +37,15 @@
 .dark-mode .rounded-full,
 .dark-mode .badge-pill,
 .dark-mode [class*="badge-pill"],
-.dark-mode [class*="category-pill"],
 .dark-mode [class*="day-type-badge"],
 .dark-mode .day-type-badge {
   border-radius: 9999px !important;
+}
+
+/* Category Pill Trigger: subtle 4px corner matching adjacent inputs */
+.dark-mode .category-pill-trigger,
+.dark-mode [class*="category-pill-trigger"] {
+  border-radius: 4px !important;
 }
 
 /* ────────────────────────────────────────────────────────── */

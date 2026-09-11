@@ -48,13 +48,19 @@ export default function CategorySelect({
 }: CategorySelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('ALL');
   const [activeIndex, setActiveIndex] = useState<number>(-1);
-  const [coords, setCoords] = useState<{ top: number; left: number; width: number; maxHeight: number }>({
-    top: 0,
+  const [coords, setCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+    openUpwards: boolean;
+  }>({
     left: 0,
-    width: 360,
-    maxHeight: 420
+    width: 480,
+    maxHeight: 480,
+    openUpwards: false
   });
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -83,23 +89,6 @@ export default function CategorySelect({
   const selectedCategoryGroup = selectedCategory
     ? groupMap[selectedCategory.cashflowGroup || selectedCategory.cashflow_group_id || '']
     : undefined;
-
-  // Available Cashflow Groups for this type (for the Group Ribbon)
-  const availableGroups = useMemo(() => {
-    const relevantCats = type && type !== 'all'
-      ? categories.filter(c => c.type === type)
-      : categories;
-
-    const groupIds = new Set(
-      relevantCats.map(c => c.cashflowGroup || c.cashflow_group_id || 'other')
-    );
-
-    const list = Array.from(groupIds)
-      .map(gId => groupMap[gId])
-      .filter((g): g is CashflowGroup => Boolean(g));
-
-    return list.sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999));
-  }, [categories, cashflowGroups, groupMap, type]);
 
   // Top Frequent Categories for quick picks
   const quickPicks = useMemo(() => {
@@ -133,10 +122,9 @@ export default function CategorySelect({
       categories,
       cashflowGroups,
       type,
-      searchQuery,
-      selectedGroupId
+      searchQuery
     });
-  }, [categories, cashflowGroups, type, searchQuery, selectedGroupId]);
+  }, [categories, cashflowGroups, type, searchQuery]);
 
   // Flat list of visible categories for keyboard navigation
   const flatCategories = useMemo(() => {
@@ -147,10 +135,11 @@ export default function CategorySelect({
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = variant === 'default'
-      ? Math.max(340, Math.min(rect.width, 460))
-      : 360;
-    const estimatedHeight = 420;
+    const rawWidth = variant === 'default'
+      ? Math.max(460, Math.min(rect.width, 540))
+      : 480;
+    const popoverWidth = Math.min(rawWidth, window.innerWidth - 32);
+    const estimatedHeight = 480;
 
     let left = rect.left;
     if (left + popoverWidth > window.innerWidth - 16) {
@@ -158,20 +147,25 @@ export default function CategorySelect({
     }
     if (left < 16) left = 16;
 
-    let top = rect.bottom + 4;
     const spaceBelow = window.innerHeight - rect.bottom - 16;
     const spaceAbove = rect.top - 16;
 
-    let maxHeight = 420;
-    // Flip above if tight below and more space above
-    if (spaceBelow < 280 && spaceAbove > spaceBelow) {
-      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceAbove));
-      top = Math.max(16, rect.top - maxHeight - 4);
+    // Flip upwards if space below cannot accommodate the desired height AND space above is larger than space below
+    const openUpwards = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+
+    let maxHeight = estimatedHeight;
+    let top: number | undefined;
+    let bottom: number | undefined;
+
+    if (openUpwards) {
+      maxHeight = Math.min(estimatedHeight, Math.max(240, spaceAbove));
+      bottom = window.innerHeight - rect.top + 4;
     } else {
-      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceBelow));
+      maxHeight = Math.min(estimatedHeight, Math.max(240, spaceBelow));
+      top = rect.bottom + 4;
     }
 
-    setCoords({ top, left, width: popoverWidth, maxHeight });
+    setCoords({ top, bottom, left, width: popoverWidth, maxHeight, openUpwards });
   }, [variant]);
 
   // Toggle open
@@ -180,7 +174,6 @@ export default function CategorySelect({
     updatePosition();
     setOpen(true);
     setSearchQuery('');
-    setSelectedGroupId('ALL');
     setActiveIndex(-1);
   }, [disabled, updatePosition]);
 
@@ -456,11 +449,12 @@ export default function CategorySelect({
             ref={popoverRef}
             className="fixed z-[9999] bg-[#141414] border border-[#3e3e3e] shadow-[0_16px_40px_rgba(0,0,0,0.95)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
             style={{
-              top: `${coords.top}px`,
+              ...(coords.openUpwards
+                ? { bottom: `${coords.bottom}px`, borderBottom: '3px solid #da291c', borderTop: '1px solid #3e3e3e' }
+                : { top: `${coords.top}px`, borderTop: '3px solid #da291c', borderBottom: '1px solid #3e3e3e' }),
               left: `${coords.left}px`,
               width: `${coords.width}px`,
               maxHeight: `${coords.maxHeight}px`,
-              borderTop: '3px solid #da291c'
             }}
           >
             {/* ZONE 1: SEARCH BAR */}
@@ -494,43 +488,8 @@ export default function CategorySelect({
               </div>
             </div>
 
-            {/* ZONE 2: GROUP FILTER RIBBON */}
-            {availableGroups.length > 1 && !searchQuery && (
-              <div className="px-2 py-1.5 border-b border-[#282828] bg-[#161616] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedGroupId('ALL')}
-                  className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-none shrink-0 transition-colors ${
-                    selectedGroupId === 'ALL'
-                      ? 'bg-[#da291c] text-white'
-                      : 'bg-[#222222] text-slate-400 hover:text-slate-200 border border-[#303030]'
-                  }`}
-                >
-                  ทั้งหมด
-                </button>
-                {availableGroups.map(g => {
-                  const isSelected = selectedGroupId === g.id;
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setSelectedGroupId(g.id)}
-                      className={`px-2 py-0.5 text-[10px] font-extrabold rounded-none shrink-0 flex items-center gap-1 transition-colors ${
-                        isSelected
-                          ? 'bg-[#da291c] text-white'
-                          : 'bg-[#222222] text-slate-400 hover:text-slate-200 border border-[#303030]'
-                      }`}
-                    >
-                      <CategoryGlyph icon={g.icon} color={isSelected ? '#ffffff' : g.color} size={10} />
-                      <span>{g.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ZONE 3: QUICK PICKS (FREQUENT ITEMS) */}
-            {quickPicks.length > 0 && !searchQuery && selectedGroupId === 'ALL' && (
+            {/* ZONE 2: QUICK PICKS (FREQUENT ITEMS) */}
+            {quickPicks.length > 0 && !searchQuery && (
               <div className="px-2.5 py-1.5 border-b border-[#222222] bg-[#121212] shrink-0">
                 <div className="flex items-center gap-1 text-[9px] font-black uppercase text-amber-500/80 mb-1 tracking-wider">
                   <Zap className="w-2.5 h-2.5" />
@@ -558,9 +517,8 @@ export default function CategorySelect({
                 </div>
               </div>
             )}
-
-            {/* ZONE 4: CATEGORY LIST WITH GROUP HEADERS */}
-            <div className="flex-1 overflow-y-auto min-h-0 py-1 divide-y divide-[#222222]/60">
+            {/* ZONE 3: CATEGORY LIST WITH GROUP HEADERS */}
+            <div className="flex-1 overflow-y-auto tactical-scrollbar min-h-0 py-1 divide-y divide-[#222222]/60">
               {groupedCategories.length === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-500 font-medium">
                   ไม่พบหมวดหมู่ที่ตรงกับคำค้นหา
