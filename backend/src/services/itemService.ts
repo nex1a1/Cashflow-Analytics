@@ -223,6 +223,12 @@ class ItemService {
     const insertedId = Number(result.lastInsertRowid);
     const item = this.getById(insertedId);
     if (!item) throw new Error('Failed to retrieve newly created item');
+
+    const priceText = item.display_price != null
+      ? `฿${item.display_price.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : 'ไม่ระบุราคา';
+    console.log(`📦 [Service: Item Create] บันทึกสิ่งของใหม่สำเร็จ | ID: ${item.id} | "${item.name}" | สถานะ: ${item.status} | ${priceText} | หมวดหมู่: "${item.category_name}"`);
+
     return item;
   }
 
@@ -276,6 +282,12 @@ class ItemService {
 
     const updated = this.getById(id);
     if (!updated) throw new Error('Failed to retrieve updated item');
+
+    const priceText = updated.display_price != null
+      ? `฿${updated.display_price.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : 'ไม่ระบุราคา';
+    console.log(`📦 [Service: Item Update] แก้ไขข้อมูลสิ่งของสำเร็จ | ID: ${updated.id} | "${updated.name}" | สถานะ: ${updated.status} | ${priceText}`);
+
     return updated;
   }
 
@@ -313,6 +325,9 @@ class ItemService {
 
     const updated = this.getById(id);
     if (!updated) throw new Error('Failed to retrieve updated item');
+
+    console.log(`📦 [Service: Item Status] เปลี่ยนสถานะสิ่งของ | ID: ${updated.id} | "${updated.name}" -> สถานะ: ${updated.status}`);
+
     return updated;
   }
 
@@ -320,15 +335,20 @@ class ItemService {
    * Delete an item (hard delete).
    */
   delete(id: number): boolean {
+    const existing = this.getById(id);
     const result = db.prepare(`DELETE FROM items WHERE id = ?`).run(id);
-    return result.changes > 0;
+    const success = result.changes > 0;
+    if (success) {
+      console.log(`🗑️ [Service: Item Delete] ลบสิ่งของสำเร็จ | ID: ${id}${existing ? ` | "${existing.name}"` : ''}`);
+    }
+    return success;
   }
 
   /**
    * Link one or more transactions to an item.
    */
   linkTransactions(itemId: number, transactionIds: string[]): void {
-    const checkItem = db.prepare(`SELECT id FROM items WHERE id = ?`).get(itemId);
+    const checkItem = db.prepare(`SELECT id, name FROM items WHERE id = ?`).get(itemId) as { id: number; name: string } | undefined;
     if (!checkItem) {
       throw new Error(`Item with id ${itemId} not found`);
     }
@@ -345,6 +365,7 @@ class ItemService {
     });
 
     linkBatch(transactionIds);
+    console.log(`🔗 [Service: Link Transactions] ผูกธุรกรรมกับสิ่งของสำเร็จ | Item ID: ${itemId} | "${checkItem.name}" | จำนวนธุรกรรมที่ผูก: ${transactionIds.length} รายการ`);
   }
 
   /**
@@ -356,38 +377,82 @@ class ItemService {
       WHERE item_id = ? AND transaction_id = ?
     `).run(itemId, transactionId);
 
-    return result.changes > 0;
+    const success = result.changes > 0;
+    if (success) {
+      console.log(`🔗 [Service: Unlink Transaction] ยกเลิกการผูกธุรกรรม | Item ID: ${itemId} | Transaction ID: ${transactionId}`);
+    }
+    return success;
   }
 
   /**
-   * Get all item categories with item counts.
+   * Get all item categories with item counts ordered by order_index.
    */
   getCategories(): Array<ItemCategory & { item_count: number }> {
     return db.prepare(`
       SELECT 
         ic.id,
         ic.name,
+        COALESCE(ic.order_index, ic.id) as order_index,
         ic.created_at,
         COUNT(i.id) as item_count
       FROM item_categories ic
       LEFT JOIN items i ON ic.id = i.category_id AND i.status != 'cancelled'
       GROUP BY ic.id
-      ORDER BY ic.name ASC
+      ORDER BY COALESCE(ic.order_index, ic.id) ASC, ic.id ASC
     `).all() as Array<ItemCategory & { item_count: number }>;
+  }
+
+  /**
+   * Reorder item categories by an ordered array of category IDs.
+   */
+  reorderCategories(orderedIds: number[]): void {
+    const updateStmt = db.prepare(`UPDATE item_categories SET order_index = ? WHERE id = ?`);
+    const runTransaction = db.transaction((ids: number[]) => {
+      ids.forEach((id, index) => {
+        updateStmt.run(index + 1, id);
+      });
+    });
+    runTransaction(orderedIds);
+    console.log(`🏷️ [Service: Category Reorder] จัดลำดับหมวดหมู่สิ่งของใหม่สำเร็จ (${orderedIds.length} หมวดหมู่)`);
   }
 
   /**
    * Create an item category.
    */
   createCategory(name: string): ItemCategory {
-    const result = db.prepare(`
-      INSERT INTO item_categories (name) VALUES (?)
-    `).run(name);
+    const maxOrder = (db.prepare(`SELECT MAX(order_index) as max_order FROM item_categories`).get() as { max_order: number | null })?.max_order ?? 0;
+    const nextOrder = maxOrder + 1;
 
-    return {
+    const result = db.prepare(`
+      INSERT INTO item_categories (name, order_index) VALUES (?, ?)
+    `).run(name, nextOrder);
+
+    const category = {
       id: Number(result.lastInsertRowid),
       name,
+      order_index: nextOrder,
       created_at: new Date().toISOString()
+    };
+    console.log(`🏷️ [Service: Category Create] สร้างหมวดหมู่สิ่งของสำเร็จ | ID: ${category.id} | "${category.name}" (ลำดับ ${nextOrder})`);
+    return category;
+  }
+
+  /**
+   * Update an item category name.
+   */
+  updateCategory(id: number, name: string): ItemCategory {
+    const check = db.prepare(`SELECT id, created_at FROM item_categories WHERE id = ?`).get(id) as { id: number; created_at: string } | undefined;
+    if (!check) {
+      throw new Error(`Category with id ${id} not found`);
+    }
+
+    db.prepare(`UPDATE item_categories SET name = ? WHERE id = ?`).run(name, id);
+    console.log(`🏷️ [Service: Category Update] แก้ไขชื่อหมวดหมู่สิ่งของ | ID: ${id} | "${name}"`);
+
+    return {
+      id,
+      name,
+      created_at: check.created_at
     };
   }
 
@@ -401,7 +466,11 @@ class ItemService {
     }
 
     const result = db.prepare(`DELETE FROM item_categories WHERE id = ?`).run(id);
-    return result.changes > 0;
+    const success = result.changes > 0;
+    if (success) {
+      console.log(`🗑️ [Service: Category Delete] ลบหมวดหมู่สิ่งของสำเร็จ | ID: ${id}`);
+    }
+    return success;
   }
 }
 

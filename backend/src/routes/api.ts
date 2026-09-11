@@ -24,6 +24,8 @@ router.delete('/items/:id/transactions/:transactionId', itemController.unlinkTra
 // Item Categories
 router.get('/item-categories', itemController.getItemCategories);
 router.post('/item-categories', itemController.createItemCategory);
+router.put('/item-categories/reorder', itemController.reorderItemCategories);
+router.put('/item-categories/:id', itemController.updateItemCategory);
 router.delete('/item-categories/:id', itemController.deleteItemCategory);
 
 // Transactions

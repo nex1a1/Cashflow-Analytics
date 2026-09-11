@@ -273,6 +273,7 @@ export const initItemTrackerSchema = (): void => {
       CREATE TABLE IF NOT EXISTS item_categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
+        order_index INTEGER DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       ) STRICT;
 
@@ -317,6 +318,19 @@ export const initItemTrackerSchema = (): void => {
       END;
     `);
 
+    // Ensure order_index column exists on existing item_categories table
+    try {
+      const itemCatInfo = db.prepare("PRAGMA table_info(item_categories)").all() as Array<{ name: string }>;
+      const itemCatCols = new Set(itemCatInfo.map(c => c.name));
+      if (!itemCatCols.has('order_index')) {
+        db.exec("ALTER TABLE item_categories ADD COLUMN order_index INTEGER DEFAULT 0");
+        db.exec("UPDATE item_categories SET order_index = id WHERE order_index IS NULL OR order_index = 0");
+        console.log('🔹 เพิ่มคอลัมน์ order_index ในตารางหมวดหมู่สิ่งของ (item_categories) เรียบร้อย');
+      }
+    } catch (_e: unknown) {
+      // Ignored if column already exists
+    }
+
     // Seed default item categories if empty
     const catCount = (db.prepare("SELECT COUNT(*) as count FROM item_categories").get() as { count: number }).count;
     if (catCount === 0) {
@@ -328,10 +342,10 @@ export const initItemTrackerSchema = (): void => {
         'กันพลา / งานอดิเรก',
         'เครื่องแต่งกาย'
       ];
-      const insertCat = db.prepare("INSERT OR IGNORE INTO item_categories (name) VALUES (?)");
-      for (const catName of defaultCategories) {
-        insertCat.run(catName);
-      }
+      const insertCat = db.prepare("INSERT OR IGNORE INTO item_categories (name, order_index) VALUES (?, ?)");
+      defaultCategories.forEach((catName, idx) => {
+        insertCat.run(catName, idx + 1);
+      });
       console.log('🌱 นำเข้าหมวดหมู่สิ่งของเริ่มต้น (Item Categories) สำเร็จ');
     }
   } catch (err: any) {

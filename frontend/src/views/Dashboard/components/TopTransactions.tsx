@@ -103,7 +103,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
             }}
             title={catDef?.name || tx.category}
           >
-            <CategoryGlyph icon={catDef?.icon} color={catDef?.color} size={12} className="shrink-0" fallbackEmoji="📌" />
+            <CategoryGlyph icon={catDef?.icon} color={catDef?.color} size={14} className="shrink-0" />
             <span className="truncate">{catDef?.name || tx.category}</span>
           </span>
           

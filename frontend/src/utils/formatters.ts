@@ -44,6 +44,33 @@ export const bahtToSatang = (baht: number | string): number => {
   return Math.round(n * 100);
 };
 
+/**
+ * Formats a raw number or string with thousands commas while preserving user input formatting (e.g. typing decimals).
+ * e.g. 3991 -> "3,991", "3991.5" -> "3,991.5", "1000000" -> "1,000,000"
+ */
+export const formatNumberWithCommas = (val: string | number | null | undefined): string => {
+  if (val == null || val === '') return '';
+  const str = String(val).replace(/,/g, '').trim();
+  if (!str) return '';
+  const parts = str.split('.');
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (parts.length > 1) {
+    return `${intPart}.${parts.slice(1).join('')}`;
+  }
+  return intPart;
+};
+
+/**
+ * Strips commas and parses as number or null.
+ */
+export const parseCleanNumber = (val: string | number | null | undefined): number | null => {
+  if (val == null) return null;
+  const clean = String(val).replace(/,/g, '').trim();
+  if (!clean) return null;
+  const num = Number(clean);
+  return Number.isNaN(num) ? null : num;
+};
+
 export const getThaiMonth = (yearMonth: string): string => {
   if (!yearMonth?.includes('-')) return yearMonth;
   const [y, m] = yearMonth.split('-');

@@ -405,6 +405,7 @@ export interface DatePickerProps {
   dayTypes?: Record<string, string>;
   dayTypeConfig?: any[];
   className?: string;
+  align?: 'left' | 'right' | 'auto';
 }
 
 export default function DatePicker({
@@ -419,7 +420,8 @@ export default function DatePicker({
   filterPeriod,
   dayTypes = {},
   dayTypeConfig = [],
-  className
+  className,
+  align = 'auto',
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
@@ -435,6 +437,43 @@ export default function DatePicker({
   const [dragMode, setDragMode] = useState(true); // true = add range, false = remove range
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [resolvedAlign, setResolvedAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+
+  // Auto-detect horizontal alignment to avoid overflow clipping
+  useEffect(() => {
+    if (!open) return;
+    if (align === 'left' || align === 'right') {
+      setResolvedAlign(align);
+      return;
+    }
+
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      let limitRight = window.innerWidth;
+      let parent = containerRef.current.parentElement;
+      while (parent && parent !== document.body) {
+        const style = window.getComputedStyle(parent);
+        if (
+          style.overflowX === 'hidden' ||
+          style.overflowX === 'auto' ||
+          style.overflowY === 'auto' ||
+          style.overflow === 'hidden' ||
+          style.overflow === 'auto'
+        ) {
+          const pRect = parent.getBoundingClientRect();
+          limitRight = Math.min(limitRight, pRect.right);
+        }
+        parent = parent.parentElement;
+      }
+
+      // Popover width is w-80 (320px) + buffer (16px)
+      if (rect.left + 336 > limitRight) {
+        setResolvedAlign('right');
+      } else {
+        setResolvedAlign('left');
+      }
+    }
+  }, [open, align]);
 
   // Sync state when popover opens or value/period changes
   useEffect(() => {
@@ -602,7 +641,7 @@ export default function DatePicker({
   const hoverDay  = 'hover:bg-[#303030] hover:text-white';
 
   return (
-    <div ref={containerRef} className="relative z-50 w-full">
+    <div ref={containerRef} className={`relative ${open ? 'z-[60]' : 'z-20'} w-full`}>
       <DatePickerTrigger
         variant={variant}
         open={open}
@@ -616,7 +655,7 @@ export default function DatePicker({
       />
 
       {open && (
-        <div className={`absolute top-[calc(100%+6px)] left-0 z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}>
+        <div className={`absolute top-[calc(100%+6px)] ${resolvedAlign === 'right' ? 'right-0' : 'left-0'} z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}>
 
           {allowAll && (
             <div className="flex rounded-none p-0.5 mb-2.5 border bg-[#121212] border-[#303030]">

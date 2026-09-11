@@ -31,6 +31,7 @@ describe('itemHelpers', () => {
       expect(result).toBeDefined();
       expect(result!.status).toBe('active');
       expect(result!.daysRemaining).toBeGreaterThan(30);
+      expect(result!.shortLabel).toContain('คุ้มครอง');
     });
 
     it('detects warranty expiring soon (<= 30 days)', () => {
@@ -38,12 +39,14 @@ describe('itemHelpers', () => {
       expect(result).toBeDefined();
       expect(result!.status).toBe('expiring_soon');
       expect(result!.daysRemaining).toBe(14);
+      expect(result!.shortLabel).toBe('เหลือ 14 วัน');
     });
 
     it('detects expired warranty', () => {
       const result = getWarrantyStatus('2026-01-01', refDate);
       expect(result).toBeDefined();
       expect(result!.status).toBe('expired');
+      expect(result!.shortLabel).toBe('หมดประกันแล้ว');
     });
   });
 
@@ -128,6 +131,16 @@ describe('itemHelpers', () => {
       expect(pcGroup).toBeDefined();
       expect(pcGroup!.items.length).toBe(2);
       expect(pcGroup!.totalValue).toBe(65000);
+    });
+
+    it('sorts groups according to custom category order_index', () => {
+      const mockCategories = [
+        { id: 30, name: 'เฟอร์นิเจอร์', order_index: 0, created_at: '2026-01-01' },
+        { id: 20, name: 'อุปกรณ์ต่อพ่วง', order_index: 1, created_at: '2026-01-01' },
+        { id: 10, name: 'คอมพิวเตอร์', order_index: 2, created_at: '2026-01-01' },
+      ];
+      const groups = groupItemsByCategory(mockItems, mockCategories);
+      expect(groups.map(g => g.categoryId)).toEqual([30, 20, 10]);
     });
 
     it('computes accurate stats for asset cockpit HUD', () => {

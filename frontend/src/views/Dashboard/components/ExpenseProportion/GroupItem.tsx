@@ -53,7 +53,7 @@ export const GroupItem = React.memo<GroupItemProps>(({
         <div className="flex flex-col min-w-0 gap-0.5">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
-              <CategoryGlyph icon={item.icon} color={item.color} size={15} className="shrink-0 opacity-80" fallbackEmoji="📁" />
+              <CategoryGlyph icon={item.icon} color={item.color} size={17} className="shrink-0 opacity-80" />
               <span className="truncate group-hover:brightness-125">{item.name}</span>
             </span>
           </div>
@@ -116,7 +116,7 @@ export const GroupItem = React.memo<GroupItemProps>(({
                     <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none`}>
                       <div className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color || item.color }} />
-                        <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={c.icon} color={c.color} size={12} fallbackEmoji="✨" /> {c.name}</span>
+                        <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={c.icon} color={c.color} size={14} /> {c.name}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
                         <span className="text-slate-400">฿{formatMoney(c.amount)}</span>
@@ -139,7 +139,7 @@ export const GroupItem = React.memo<GroupItemProps>(({
           <div key={c.id} className="flex items-center justify-between gap-2 py-0.5 px-1 min-w-0 group/item hover:bg-[#282828] transition-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || item.color }} />
-              <CategoryGlyph icon={c.icon} color={c.color} size={11} className="shrink-0 opacity-80" fallbackEmoji="✨" />
+              <CategoryGlyph icon={c.icon} color={c.color} size={13} className="shrink-0 opacity-80" />
               <span className="text-[11px] font-bold truncate text-slate-200 group-hover/item:text-white">
                 {c.name}
               </span>

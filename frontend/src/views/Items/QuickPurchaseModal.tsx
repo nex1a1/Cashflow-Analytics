@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, Link as LinkIcon, Calendar } from 'lucide-react';
 import { ItemWithDetails } from '../../types';
+import DatePicker from '../../components/ui/DatePicker';
 
 interface QuickPurchaseModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export default function QuickPurchaseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-md bg-[#141414] border border-[#2e2e2e] shadow-2xl rounded-none flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2e2e2e] bg-[#181818]">
@@ -63,11 +64,13 @@ export default function QuickPurchaseModal({
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-300 mb-1.5">
               วันที่ซื้อ
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={purchasedAt}
-              onChange={(e) => setPurchasedAt(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1b1b1b] border border-[#333] text-slate-100 rounded-sm text-sm focus:outline-none focus:border-[#da291c]"
+              onChange={setPurchasedAt}
+              allowAll={false}
+              isMulti={false}
+              placeholder="เลือกวันที่ซื้อ"
+              className="w-full h-10 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-mono font-bold transition-colors outline-none bg-[#1b1b1b] border-[#333] text-slate-100 hover:border-[#da291c] focus:border-[#da291c]"
             />
           </div>
 

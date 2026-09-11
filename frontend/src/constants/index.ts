@@ -20,21 +20,21 @@ export const OLD_PALETTE_MAP = {
 import { Category, DayType } from '../types';
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'inc1', name: "เงินเดือน", icon: "💰", color: '#059669', type: 'income', cashflowGroup: null, allocation_type: 'savings' },
-  { id: 'inc2', name: "รายรับพิเศษ/โบนัส", icon: "🎁", color: '#10B981', type: 'income', cashflowGroup: null, allocation_type: 'savings' },
-  { id: 'c1', name: "อาหารและเครื่องดื่ม", icon: "🍜", color: '#F97316', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c13', name: "ค่าเช่า/ค่าหอพัก", icon: "🏢", color: '#B45309', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
-  { id: 'c2', name: "ซุปเปอร์มาร์เก็ต/ห้าง", icon: "🛒", color: '#14B8A6', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c3', name: "ช้อปปิ้งออนไลน์", icon: "📦", color: '#8B5CF6', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c4', name: "บริการรายเดือน", icon: "💳", color: '#6366F1', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
-  { id: 'c5', name: "การเดินทาง", icon: "🚗", color: '#64748B', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "🏠", color: '#F59E0B', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
-  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "💻", color: '#da291c', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "📈", color: '#10B981', type: 'expense', cashflowGroup: null, allocation_type: 'savings' },
-  { id: 'c9', name: "บันเทิงและสันทนาการ", icon: "🎬", color: '#EC4899', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c10', name: "สุขภาพและความงาม", icon: "💊", color: '#F43F5E', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c11', name: "ครอบครัวและสัตว์เลี้ยง", icon: "🐶", color: '#F4B800', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c12', name: "อื่นๆ", icon: "📌", color: '#64748B', type: 'expense', cashflowGroup: null, allocation_type: 'want' }
+  { id: 'inc1', name: "เงินเดือน", icon: "banknote", color: '#059669', type: 'income', cashflowGroup: null, allocation_type: 'savings' },
+  { id: 'inc2', name: "รายรับพิเศษ/โบนัส", icon: "gift", color: '#10B981', type: 'income', cashflowGroup: null, allocation_type: 'savings' },
+  { id: 'c1', name: "อาหารและเครื่องดื่ม", icon: "utensils", color: '#F97316', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c13', name: "ค่าเช่า/ค่าหอพัก", icon: "building-2", color: '#B45309', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
+  { id: 'c2', name: "ซุปเปอร์มาร์เก็ต/ห้าง", icon: "shopping-cart", color: '#14B8A6', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c3', name: "ช้อปปิ้งออนไลน์", icon: "package", color: '#8B5CF6', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c4', name: "บริการรายเดือน", icon: "credit-card", color: '#6366F1', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
+  { id: 'c5', name: "การเดินทาง", icon: "car", color: '#64748B', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "home", color: '#F59E0B', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
+  { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "laptop", color: '#da291c', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "trending-up", color: '#10B981', type: 'expense', cashflowGroup: null, allocation_type: 'savings' },
+  { id: 'c9', name: "บันเทิงและสันทนาการ", icon: "film", color: '#EC4899', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c10', name: "สุขภาพและความงาม", icon: "pill", color: '#F43F5E', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c11', name: "ครอบครัวและสัตว์เลี้ยง", icon: "dog", color: '#F4B800', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
+  { id: 'c12', name: "อื่นๆ", icon: "pin", color: '#64748B', type: 'expense', cashflowGroup: null, allocation_type: 'want' }
 ];
 
 export const DEFAULT_DAY_TYPES: DayType[] = [

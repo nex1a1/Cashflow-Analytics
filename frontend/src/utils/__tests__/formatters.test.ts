@@ -7,7 +7,9 @@ import {
   getFilterLabel, 
   hexToRgb, 
   getThaiDayInfo, 
-  calculatePeriodDelta 
+  calculatePeriodDelta,
+  formatNumberWithCommas,
+  parseCleanNumber
 } from '../formatters';
 
 describe('formatters utility', () => {
@@ -144,6 +146,28 @@ describe('formatters utility', () => {
       expect(result.formattedPct).toBe('20.0%');
       expect(result.arrow).toBe('↓');
       expect(result.isGood).toBe(true); // Less expense is good!
+    });
+  });
+
+  describe('formatNumberWithCommas & parseCleanNumber', () => {
+    it('correctly adds commas to integers and decimals', () => {
+      expect(formatNumberWithCommas(3991)).toBe('3,991');
+      expect(formatNumberWithCommas('3991')).toBe('3,991');
+      expect(formatNumberWithCommas('3991.50')).toBe('3,991.50');
+      expect(formatNumberWithCommas('3991.')).toBe('3,991.');
+      expect(formatNumberWithCommas('1000000')).toBe('1,000,000');
+      expect(formatNumberWithCommas('')).toBe('');
+      expect(formatNumberWithCommas(null)).toBe('');
+      expect(formatNumberWithCommas(undefined)).toBe('');
+    });
+
+    it('correctly parses comma-formatted strings to numbers', () => {
+      expect(parseCleanNumber('3,991')).toBe(3991);
+      expect(parseCleanNumber('3,991.50')).toBe(3991.5);
+      expect(parseCleanNumber('1,000,000')).toBe(1000000);
+      expect(parseCleanNumber('')).toBeNull();
+      expect(parseCleanNumber(null)).toBeNull();
+      expect(parseCleanNumber('invalid')).toBeNull();
     });
   });
 });

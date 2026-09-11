@@ -34,6 +34,10 @@ describe('itemService', () => {
     const found = categories.find(c => c.name === catName);
     expect(found).toBeDefined();
 
+    // Test updating category name
+    const updatedCat = itemService.updateCategory(newCat.id, `${catName}-Renamed`);
+    expect(updatedCat.name).toBe(`${catName}-Renamed`);
+
     // Clean up test category
     itemService.deleteCategory(newCat.id);
   });

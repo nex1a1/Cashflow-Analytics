@@ -176,6 +176,16 @@ export const itemService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
     }).then(handleResponse<ItemCategory>),
+    updateCategory: (id: number, name: string): Promise<ItemCategory> => fetch(`${ITEM_CATEGORIES_API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    }).then(handleResponse<ItemCategory>),
+    reorderCategories: (orderedIds: number[]): Promise<{ success: boolean }> => fetch(`${ITEM_CATEGORIES_API_URL}/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds })
+    }).then(handleResponse<{ success: boolean }>),
     deleteCategory: (id: number): Promise<{ success: boolean }> => fetch(`${ITEM_CATEGORIES_API_URL}/${id}`, {
         method: 'DELETE'
     }).then(handleResponse<{ success: boolean }>)

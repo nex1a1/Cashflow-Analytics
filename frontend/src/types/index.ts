@@ -276,6 +276,7 @@ export type ItemStatus = 'planned' | 'cancelled' | 'purchased' | 'stored' | 'bro
 export interface ItemCategory {
   id: number;
   name: string;
+  order_index?: number;
   created_at: string;
   item_count?: number;
 }

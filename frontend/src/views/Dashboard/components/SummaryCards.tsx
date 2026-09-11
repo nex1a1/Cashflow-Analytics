@@ -3,7 +3,9 @@ import React, { memo } from 'react';
 import { 
   Activity, Wallet, Target, Scale, UtensilsCrossed,
   TrendingUp, Zap, Layers, Home, Award, TrendingDown, Navigation,
-  ShieldCheck, Gauge, Repeat, LucideIcon
+  ShieldCheck, Gauge, Repeat, Building2, Globe, Droplets,
+  ArrowDownToLine, Lock, PiggyBank, Briefcase, Palmtree, Trophy,
+  LucideIcon
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney, calculatePeriodDelta } from '@/utils/formatters';
@@ -434,19 +436,27 @@ const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSke
       overlayBody={rentSub && (
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1"><span>🏢</span> ค่าเช่า</span>
+            <span className="text-[9px] font-bold text-sky-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Building2 size={13} className="shrink-0 text-sky-400" /> ค่าเช่า
+            </span>
             <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(rentSub.rent)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1"><span>⚡</span> ค่าไฟ</span>
+            <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Zap size={13} className="shrink-0 text-amber-400" /> ค่าไฟ
+            </span>
             <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(rentSub.electricity)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1"><span>🌐</span> ค่าเน็ต</span>
+            <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Globe size={13} className="shrink-0 text-indigo-400" /> ค่าเน็ต
+            </span>
             <span className="text-[13px] font-black text-indigo-400 tabular-nums">฿{formatMoney(rentSub.internet)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1"><span>💧</span> ค่าน้ำ</span>
+            <span className="text-[9px] font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Droplets size={13} className="shrink-0 text-cyan-400" /> ค่าน้ำ
+            </span>
             <span className="text-[13px] font-black text-cyan-400 tabular-nums">฿{formatMoney(rentSub.water)}</span>
           </div>
         </div>
@@ -557,7 +567,7 @@ const StrategicSubscriptionCard = memo(({
               item ? (
                 <div key={idx} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
                   <span className="text-[9px] font-bold text-purple-300 uppercase tracking-wide truncate flex items-center gap-1">
-                    <CategoryGlyph icon={item.icon} size={12} fallbackEmoji="🔄" /> {item.name}
+                    <CategoryGlyph icon={item.icon} size={14} /> {item.name}
                   </span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[13px] font-black text-purple-400 tabular-nums">฿{formatMoney(item.amount)}</span>
@@ -636,7 +646,7 @@ const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCat
             topWantCategories.map(cat => (
               <div key={cat.id} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
                 <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-wide truncate flex items-center gap-1">
-                  <CategoryGlyph icon={cat.icon} color={cat.color} size={12} /> {cat.name}
+                  <CategoryGlyph icon={cat.icon} color={cat.color} size={14} /> {cat.name}
                 </span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(cat.amount)}</span>
@@ -712,19 +722,27 @@ const StrategicVictoryCard = memo(({ dailyVictory, periodDays, dailyIncome, dail
       overlayBody={(
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">📥 รับ/วัน</span>
+            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+              <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน
+            </span>
             <span className="text-[13px] font-black text-emerald-400 tabular-nums">฿{formatMoney(dailyIncome)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
+            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide flex items-center gap-1.5">
+              <Lock size={13} className="shrink-0 text-rose-400" /> จำเป็น/วัน
+            </span>
             <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyFixed)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+              <Target size={13} className="shrink-0 text-amber-400" /> ตามใจ/วัน
+            </span>
             <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">🏦 ออม/วัน</span>
+            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide flex items-center gap-1.5">
+              <PiggyBank size={13} className="shrink-0 text-sky-400" /> ออม/วัน
+            </span>
             <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailySavings)}</span>
           </div>
         </div>
@@ -782,11 +800,15 @@ const StrategicFoodRatioCard = memo(({ foodPercentage, foodPctOfIncome, foodTota
       overlayBody={(
         <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🍽️ รวมค่าอาหาร</span>
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+              <UtensilsCrossed size={13} className="shrink-0 text-amber-400" /> รวมค่าอาหาร
+            </span>
             <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(foodTotal)}</span>
           </div>
           <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">📉 % รายจ่าย</span>
+            <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide flex items-center gap-1.5">
+              <TrendingDown size={13} className="shrink-0 text-rose-400" /> % รายจ่าย
+            </span>
             <span className="text-[13px] font-black text-rose-400 tabular-nums">{foodPercentage}%</span>
           </div>
           {/* vs Expense threshold */}
@@ -850,15 +872,21 @@ const StrategicFoodDailyCard = memo(({ foodDailyAvg, foodTotal, foodWorkdayAvg, 
     overlayBody={(
       <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
+          <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Briefcase size={13} className="shrink-0 text-sky-400" /> วันทำงาน
+          </span>
           <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(foodWorkdayAvg)}</span>
         </div>
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wide">🏖️ วันหยุด</span>
+          <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Palmtree size={13} className="shrink-0 text-orange-400" /> วันหยุด
+          </span>
           <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(foodHolidayAvg)}</span>
         </div>
         <div className="col-span-2 bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏆 พีคสูงสุดใน 1 วัน</span>
+          <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Trophy size={13} className="shrink-0 text-rose-400" /> พีคสูงสุดใน 1 วัน
+          </span>
           <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(maxFoodDayAmount)}</span>
         </div>
       </div>
@@ -908,19 +936,27 @@ const StrategicDailyExpenseCard = memo(({ dailyAvg, totalExpense, dailyWorkdayAv
     overlayBody={(
       <div className="flex-1 grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1 overflow-hidden">
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">💼 วันทำงาน</span>
+          <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Briefcase size={13} className="shrink-0 text-sky-400" /> วันทำงาน
+          </span>
           <span className="text-[13px] font-black text-sky-400 tabular-nums">฿{formatMoney(dailyWorkdayAvg)}</span>
         </div>
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">🏖️ วันหยุด</span>
+          <span className="text-[9px] font-bold text-rose-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Palmtree size={13} className="shrink-0 text-rose-400" /> วันหยุด
+          </span>
           <span className="text-[13px] font-black text-rose-400 tabular-nums">฿{formatMoney(dailyHolidayAvg)}</span>
         </div>
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide">🔒 จำเป็น/วัน</span>
+          <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Lock size={13} className="shrink-0 text-neutral-400" /> จำเป็น/วัน
+          </span>
           <span className="text-[13px] font-black text-neutral-300 tabular-nums">฿{formatMoney(dailyFixed)}</span>
         </div>
         <div className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
-          <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">🎯 ตามใจ/วัน</span>
+          <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+            <Target size={13} className="shrink-0 text-amber-400" /> ตามใจ/วัน
+          </span>
           <span className="text-[13px] font-black text-amber-400 tabular-nums">฿{formatMoney(dailyVariable)}</span>
         </div>
       </div>

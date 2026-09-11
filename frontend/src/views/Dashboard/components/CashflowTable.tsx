@@ -393,7 +393,7 @@ const CashflowTableHeader = React.memo(({
                     <CategoryGlyph
                       icon={g.icon}
                       color={isExcluded ? '#737373' : groupColor}
-                      size={16}
+                      size={18}
                       fallbackEmoji="💰"
                     />
                     {cats.length > 0 && (
@@ -432,7 +432,7 @@ const CashflowTableHeader = React.memo(({
                     title={c.name}
                   >
                     <div className="flex items-center justify-center gap-1 min-w-0">
-                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={13} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
+                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={15} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
                         className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
@@ -481,7 +481,7 @@ const CashflowTableHeader = React.memo(({
                     <CategoryGlyph
                       icon={g.icon}
                       color={isExcluded ? '#737373' : groupColor}
-                      size={16}
+                      size={18}
                       fallbackEmoji="📦"
                     />
                     {cats.length > 0 && (
@@ -520,7 +520,7 @@ const CashflowTableHeader = React.memo(({
                     title={c.name}
                   >
                     <div className="flex items-center justify-center gap-1 min-w-0">
-                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={13} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
+                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={15} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
                         className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
@@ -1214,7 +1214,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
                   borderColor: `rgba(${catRgb}, 0.35)`,
                 }}
               >
-                <CategoryGlyph icon={category.icon} color={catColor} size={13} fallbackEmoji="📁" />
+                <CategoryGlyph icon={category.icon} color={catColor} size={15} fallbackEmoji="📁" />
               </div>
               <span className="font-black text-[12px] text-white tracking-wide truncate">
                 {category.name}
@@ -1288,7 +1288,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
                   borderColor: `rgba(${rgb}, 0.35)`,
                 }}
               >
-                <CategoryGlyph icon={group.icon} color={groupColor} size={13} fallbackEmoji={isIncome ? '💰' : '📦'} />
+                <CategoryGlyph icon={group.icon} color={groupColor} size={15} fallbackEmoji={isIncome ? '💰' : '📦'} />
               </div>
               <span className="font-black text-[12px] text-white tracking-wide truncate">
                 {group.name}
@@ -1326,7 +1326,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
                         borderColor: `rgba(${catRgb}, 0.25)`,
                       }}
                     >
-                      <CategoryGlyph icon={c.icon} color={catColor} size={11} className="shrink-0" fallbackEmoji="📁" />
+                      <CategoryGlyph icon={c.icon} color={catColor} size={13} className="shrink-0" fallbackEmoji="📁" />
                       <span className="whitespace-nowrap leading-none">{c.name}</span>
                     </div>
                   );

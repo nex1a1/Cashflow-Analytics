@@ -401,11 +401,11 @@ function filterCategoriesByDashboard(categories: Category[], cashflowGroups: Cas
 function buildSortedCategories(catMapData: any, catMapLookup: any, chartTotal: number, filteredCats: any[]) {
   return Object.entries(catMapData)
     .map(([catId, amount]: [string, any]) => {
-      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '📦', color: '#94a3b8', order_index: 999 };
+      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'package', color: '#94a3b8', order_index: 999 };
       return {
         id: catId,
         name: catObj.name,
-        icon: catObj.icon || '📦',
+        icon: catObj.icon || 'package',
         color: catObj.color || '#94a3b8',
         amount: Number(amount),
         percentage: chartTotal > 0 ? ((Number(amount) / chartTotal) * 100).toFixed(1) : '0.0',
@@ -499,9 +499,9 @@ function buildAllocationBreakdown(
 
   const netSavingsActual = netCashflow;
   const allocationItems = [
-    { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: '#EF4444', icon: '🏠', target: 50, groups: allocGroupsMap.need },
-    { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: '#F59E0B', icon: '🛍️', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, netSavingsActual), color: '#10B981', icon: '🏦', target: 20, groups: allocGroupsMap.savings }
+    { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: '#EF4444', icon: 'home', target: 50, groups: allocGroupsMap.need },
+    { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: '#F59E0B', icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
+    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, netSavingsActual), color: '#10B981', icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
@@ -549,11 +549,11 @@ function calculateWorkdayAndHolidayStats(datesInPeriod: string[], totals: any) {
 function calculateTopWantCategories(wantCatMapData: any, catMapLookup: any, variableTotal: number) {
   return Object.entries(wantCatMapData)
     .map(([catId, amount]: [string, any]) => {
-      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: '🛍️', color: '#f59e0b' };
+      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'shopping-bag', color: '#f59e0b' };
       return {
         id: catId,
         name: catObj.name,
-        icon: catObj.icon || '🛍️',
+        icon: catObj.icon || 'shopping-bag',
         color: catObj.color || '#f59e0b',
         amount: Number(amount),
         allocation_type: 'want',
@@ -570,17 +570,17 @@ function calculateTopSubscriptionServices(subscriptionItems: any[], catMapLookup
   (subscriptionItems || []).forEach((item: any) => {
     const key = (item.description || item.categoryName || 'บริการรายเดือน').trim();
     if (!map[key]) {
-      let icon = '🔄';
+      let icon = 'repeat';
       const lowerKey = key.toLowerCase();
       const catObj = catMapLookup[item.categoryId];
       if (catObj?.icon) {
         icon = catObj.icon;
       } else if (lowerKey.includes('ai') || lowerKey.includes('gpt') || lowerKey.includes('gemini') || lowerKey.includes('claude') || lowerKey.includes('bot')) {
-        icon = '🤖';
+        icon = 'bot';
       } else if (lowerKey.includes('netflix') || lowerKey.includes('youtube') || lowerKey.includes('spotify') || lowerKey.includes('disney')) {
-        icon = '🍿';
+        icon = 'popcorn';
       } else if (lowerKey.includes('shopee') || lowerKey.includes('lazada') || lowerKey.includes('lineman') || lowerKey.includes('grab')) {
-        icon = '🛍️';
+        icon = 'shopping-bag';
       }
 
       map[key] = {

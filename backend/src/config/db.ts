@@ -168,6 +168,80 @@ function formatCashflowGroupMutation(clean: string): string | null {
     return null;
 }
 
+function formatItemMutation(clean: string): string | null {
+    if (/INSERT INTO items\b/i.test(clean)) {
+        const args = parseSqlValues(clean);
+        if (args.length >= 2) {
+            const name = args[1] || 'ไม่ระบุ';
+            const brand = args[2] && args[2] !== 'NULL' ? ` (${args[2]})` : '';
+            const status = args[4] || 'planned';
+            const satang = Number.parseFloat(args[5]) || 0;
+            const baht = (satang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const statusMap: Record<string, string> = {
+                planned: 'วางแผนจะซื้อ (Wishlist)',
+                purchased: 'ใช้งานอยู่',
+                stored: 'เก็บเข้ากรุ',
+                broken: 'พัง/ชำรุด',
+                sold: 'ขายแล้ว',
+                cancelled: 'ยกเลิก'
+            };
+            const statusTH = statusMap[status] || status;
+            return `📦 [บันทึกสิ่งของ] เพิ่มรายการ: "${name}"${brand} | สถานะ: ${statusTH} | ฿${baht}`;
+        }
+    }
+
+    if (/UPDATE items SET\b/i.test(clean)) {
+        const idMatch = /WHERE id = (\d+)/i.exec(clean);
+        const id = idMatch ? idMatch[1] : '';
+        if (/status = '([^']+)'/i.test(clean)) {
+            const stMatch = /status = '([^']+)'/i.exec(clean);
+            const st = stMatch ? stMatch[1] : '';
+            return `📦 [บันทึกสิ่งของ] อัปเดตสถานะสิ่งของ (ID: ${id}) เป็น "${st}"`;
+        }
+        return id ? `📦 [บันทึกสิ่งของ] แก้ไขข้อมูลสิ่งของ (ID: ${id})` : `📦 [บันทึกสิ่งของ] แก้ไขข้อมูลสิ่งของ`;
+    }
+
+    if (/DELETE FROM items\b/i.test(clean)) {
+        const idMatch = /WHERE id = (\d+)/i.exec(clean);
+        return `🗑️ [บันทึกสิ่งของ] ลบสิ่งของ (ID: ${idMatch ? idMatch[1] : ''})`;
+    }
+
+    return null;
+}
+
+function formatItemCategoryMutation(clean: string): string | null {
+    if (/INSERT INTO item_categories\b/i.test(clean)) {
+        const args = parseSqlValues(clean);
+        const name = args[0] || 'ไม่ระบุ';
+        return `🏷️ [หมวดหมู่สิ่งของ] เพิ่มหมวดหมู่: "${name}"`;
+    }
+    if (/UPDATE item_categories SET\b/i.test(clean)) {
+        const idMatch = /WHERE id = (\d+)/i.exec(clean);
+        const nameMatch = /name = '([^']+)'/i.exec(clean);
+        const name = nameMatch ? nameMatch[1] : '';
+        return `🏷️ [หมวดหมู่สิ่งของ] แก้ไขชื่อหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''}): "${name}"`;
+    }
+    if (/DELETE FROM item_categories\b/i.test(clean)) {
+        const idMatch = /WHERE id = (\d+)/i.exec(clean);
+        return `🗑️ [หมวดหมู่สิ่งของ] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
+    }
+    return null;
+}
+
+function formatItemTransactionMutation(clean: string): string | null {
+    if (/INSERT INTO item_transactions\b/i.test(clean)) {
+        const args = parseSqlValues(clean);
+        const itemId = args[0] || '';
+        const txId = args[1] || '';
+        return `🔗 [ผูกรายการบัญชี] ผูกธุรกรรมกับสิ่งของ: สิ่งของ ID ${itemId} <-> รายการ ID ${txId}`;
+    }
+    if (/DELETE FROM item_transactions\b/i.test(clean)) {
+        const idMatch = /WHERE item_id = (\d+)/i.exec(clean);
+        return `🔗 [ผูกรายการบัญชี] รีเซ็ต/ล้างการผูกธุรกรรม (สิ่งของ ID: ${idMatch ? idMatch[1] : ''})`;
+    }
+    return null;
+}
+
 function formatDbMutationLog(msgStr: string): string | null {
     const clean = msgStr.replace(/\s+/g, ' ').trim();
 
@@ -177,6 +251,9 @@ function formatDbMutationLog(msgStr: string): string | null {
     }
 
     const formatted = formatTransactionMutation(clean)
+        ?? formatItemMutation(clean)
+        ?? formatItemCategoryMutation(clean)
+        ?? formatItemTransactionMutation(clean)
         ?? formatSettingsMutation(clean)
         ?? formatCalendarMutation(clean)
         ?? formatDayTypeMutation(clean)

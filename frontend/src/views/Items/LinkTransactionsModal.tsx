@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X, Link as LinkIcon, Unlink, Search, Filter,
-  CheckCircle2, Plus, ArrowRight, ShieldAlert, Sparkles, Check
+  CheckCircle2, Plus, ArrowRight, ShieldAlert, Sparkles, Check,
+  Clock, Calendar
 } from 'lucide-react';
 import { ItemWithDetails, LinkedTransactionInfo, TransactionDisplay } from '../../types';
 import { itemService, transactionService } from '../../services/api';
@@ -144,10 +145,69 @@ export default function LinkTransactionsModal({
     return currentSum + addedSum;
   }, [detailedItem, candidateTransactions, selectedTxIds, linkedTxIds]);
 
+  // Date Synchronization with Linked Transactions
+  const [isSyncingDate, setIsSyncingDate] = useState(false);
+  const [syncSuccessMsg, setSyncSuccessMsg] = useState('');
+
+  // Helper to calculate target warranty date from baseDate + years
+  const calcWarrantyDate = (baseDateStr: string, years: number): string => {
+    if (!baseDateStr) return '';
+    const [y, m, d] = baseDateStr.split('-').map(Number);
+    if (!y || !m || !d) return '';
+    const target = new Date(y, m - 1, d);
+    target.setFullYear(target.getFullYear() + years);
+    const cy = target.getFullYear();
+    const cm = String(target.getMonth() + 1).padStart(2, '0');
+    const cd = String(target.getDate()).padStart(2, '0');
+    return `${cy}-${cm}-${cd}`;
+  };
+
+  // Sorted linked transaction dates (earliest to latest)
+  const txDatesSorted = useMemo(() => {
+    if (!detailedItem?.linked_transactions || detailedItem.linked_transactions.length === 0) {
+      return [];
+    }
+    return [...detailedItem.linked_transactions].sort((a, b) => a.date.localeCompare(b.date));
+  }, [detailedItem]);
+
+  const earliestTx = txDatesSorted[0];
+  const latestTx = txDatesSorted[txDatesSorted.length - 1];
+  const hasMultipleDates = earliestTx && latestTx && earliestTx.date !== latestTx.date;
+
+  // Handle syncing purchase date with a specific transaction date
+  const handleSyncPurchaseDate = async (targetDate: string) => {
+    if (!detailedItem) return;
+    setIsSyncingDate(true);
+    setActionError('');
+    setSyncSuccessMsg('');
+    try {
+      let newWarranty = detailedItem.warranty_until;
+      if (detailedItem.purchased_at && detailedItem.warranty_until) {
+        const matchedYears = [1, 2, 3, 5].find(y => calcWarrantyDate(detailedItem.purchased_at!, y) === detailedItem.warranty_until);
+        if (matchedYears) {
+          newWarranty = calcWarrantyDate(targetDate, matchedYears);
+        }
+      }
+
+      const updated = await itemService.update(detailedItem.id, {
+        purchased_at: targetDate,
+        warranty_until: newWarranty,
+      });
+      setDetailedItem(prev => prev ? { ...prev, purchased_at: targetDate, warranty_until: newWarranty } : null);
+      onLinkSuccess(updated);
+      setSyncSuccessMsg(`ซิงค์วันที่ซื้อเป็น ${targetDate} สำเร็จ`);
+      setTimeout(() => setSyncSuccessMsg(''), 3500);
+    } catch (err: any) {
+      setActionError(err.message || 'ไม่สามารถอัปเดตวันที่ซื้อได้');
+    } finally {
+      setIsSyncingDate(false);
+    }
+  };
+
   if (!isOpen || !item) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
       <div className="w-full max-w-3xl bg-[#141414] border border-[#2e2e2e] shadow-2xl rounded-none flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2e2e2e] bg-[#181818]">
@@ -198,6 +258,86 @@ export default function LinkTransactionsModal({
               </div>
             </div>
 
+            {/* Tactical Purchase Date Sync HUD */}
+            {txDatesSorted.length > 0 && (
+              <div className="mb-3 p-3 bg-[#161616] border border-[#2a2a2a] space-y-2.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="text-neutral-300 font-bold">วันที่ซื้อ / ได้มาในระบบ:</span>
+                    <span className="font-mono font-bold text-white bg-[#101010] px-2 py-0.5 border border-[#333]">
+                      {detailedItem?.purchased_at || 'ยังไม่ได้ระบุ'}
+                    </span>
+                  </div>
+
+                  {syncSuccessMsg && (
+                    <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1 animate-in fade-in">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {syncSuccessMsg}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#222] flex-wrap">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400">
+                    ดึงวันที่จากธุรกรรมที่ผูกไว้:
+                  </span>
+                  
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {hasMultipleDates ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isSyncingDate}
+                          onClick={() => handleSyncPurchaseDate(earliestTx.date)}
+                          className={`px-2.5 py-1 text-[11px] font-bold border transition-colors flex items-center gap-1.5 ${
+                            detailedItem?.purchased_at === earliestTx.date
+                              ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500 shadow-sm'
+                              : 'bg-[#121212] hover:bg-[#202020] text-neutral-300 hover:text-white border-[#333]'
+                          }`}
+                          title="เริ่มนับประกันตั้งแต่งวดแรกที่ซื้อ (เหมาะกับแบบผ่อนชำระหลายงวด)"
+                        >
+                          <Clock className="w-3 h-3 text-emerald-400" />
+                          <span>งวดแรก: {earliestTx.date}</span>
+                          <span className="text-[9px] text-neutral-400 font-normal">(ผ่อนชำระ)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isSyncingDate}
+                          onClick={() => handleSyncPurchaseDate(latestTx.date)}
+                          className={`px-2.5 py-1 text-[11px] font-bold border transition-colors flex items-center gap-1.5 ${
+                            detailedItem?.purchased_at === latestTx.date
+                              ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500 shadow-sm'
+                              : 'bg-[#121212] hover:bg-[#202020] text-neutral-300 hover:text-white border-[#333]'
+                          }`}
+                          title="เริ่มนับประกัน ณ วันที่จ่ายส่วนที่เหลือและรับของ (เหมาะกับจอง/มัดจำก่อนแล้วรับของ)"
+                        >
+                          <Calendar className="w-3 h-3 text-sky-400" />
+                          <span>วันรับของ/ล่าสุด: {latestTx.date}</span>
+                          <span className="text-[9px] text-neutral-400 font-normal">(มัดจำ/รับของ)</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isSyncingDate || detailedItem?.purchased_at === earliestTx.date}
+                        onClick={() => handleSyncPurchaseDate(earliestTx.date)}
+                        className={`px-2.5 py-1 text-[11px] font-bold border transition-colors flex items-center gap-1.5 ${
+                          detailedItem?.purchased_at === earliestTx.date
+                            ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500'
+                            : 'bg-[#121212] hover:bg-[#202020] text-neutral-300 hover:text-white border-[#333]'
+                        }`}
+                      >
+                        <Clock className="w-3 h-3 text-emerald-400" />
+                        <span>ใช้วันที่ของรายการนี้ ({earliestTx.date})</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isLoadingItem ? (
               <div className="py-6 text-center text-xs text-neutral-500">กำลังโหลดรายการที่ผูกอยู่...</div>
             ) : detailedItem?.linked_transactions && detailedItem.linked_transactions.length > 0 ? (
@@ -217,8 +357,25 @@ export default function LinkTransactionsModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="font-mono font-black text-slate-100 tabular-nums">
+                    <div className="flex items-center gap-2 shrink-0">
+                      {tx.date === detailedItem?.purchased_at ? (
+                        <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span>วันที่ซื้อ</span>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isSyncingDate}
+                          onClick={() => handleSyncPurchaseDate(tx.date)}
+                          className="text-[10px] font-bold text-neutral-400 hover:text-white bg-[#181818] hover:bg-[#252525] border border-[#333] hover:border-emerald-500/50 px-2 py-0.5 rounded-none transition-colors"
+                          title={`ใช้วันที่ ${tx.date} เป็นวันที่ซื้อของสิ่งนี้`}
+                        >
+                          ใช้วันนี้
+                        </button>
+                      )}
+
+                      <span className="font-mono font-black text-slate-100 tabular-nums ml-1">
                         ฿{formatMoney(tx.amount)}
                       </span>
                       <button

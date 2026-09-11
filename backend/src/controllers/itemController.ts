@@ -152,6 +152,34 @@ export const createItemCategory = (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const updateItemCategory = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid category ID' });
+    }
+
+    const { name } = itemCategorySchema.parse(req.body);
+    const updated = itemService.updateCategory(id, name);
+    res.json(updated);
+  } catch (err: unknown) {
+    next(err);
+  }
+};
+
+export const reorderItemCategories = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { orderedIds } = req.body as { orderedIds: number[] };
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: 'orderedIds must be an array of category IDs' });
+    }
+    itemService.reorderCategories(orderedIds);
+    res.json({ success: true, message: 'Categories reordered successfully' });
+  } catch (err: unknown) {
+    next(err);
+  }
+};
+
 export const deleteItemCategory = (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = Number(req.params.id);

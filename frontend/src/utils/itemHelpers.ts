@@ -1,4 +1,4 @@
-import { ItemStatus, ItemWithDetails } from '../types';
+import { ItemCategory, ItemStatus, ItemWithDetails } from '../types';
 
 export interface StatusBadgeInfo {
   label: string;
@@ -35,6 +35,7 @@ export const STATUS_CONFIG: Record<ItemStatus, StatusBadgeInfo> = {
 export interface WarrantyStatus {
   status: 'active' | 'expiring_soon' | 'expired';
   label: string;
+  shortLabel: string;
   daysRemaining?: number;
   className: string;
 }
@@ -59,6 +60,7 @@ export function getWarrantyStatus(warrantyUntil?: string | null, referenceDate =
     return {
       status: 'expired',
       label: `หมดประกันแล้ว (${warrantyUntil})`,
+      shortLabel: 'หมดประกันแล้ว',
       className: 'text-neutral-500 border-neutral-700 bg-neutral-800/30',
     };
   }
@@ -67,6 +69,7 @@ export function getWarrantyStatus(warrantyUntil?: string | null, referenceDate =
     return {
       status: 'expiring_soon',
       label: `ประกันเหลือ ${diffDays} วัน (${warrantyUntil})`,
+      shortLabel: diffDays === 0 ? 'หมดประกันวันนี้' : `เหลือ ${diffDays} วัน`,
       daysRemaining: diffDays,
       className: 'text-amber-400 border-amber-500/50 bg-amber-950/20 animate-pulse',
     };
@@ -75,6 +78,7 @@ export function getWarrantyStatus(warrantyUntil?: string | null, referenceDate =
   return {
     status: 'active',
     label: `ประกันถึง ${warrantyUntil}`,
+    shortLabel: diffDays >= 365 ? `คุ้มครองอีก ${Math.round((diffDays / 365) * 10) / 10} ปี` : `คุ้มครองอีก ${diffDays} วัน`,
     daysRemaining: diffDays,
     className: 'text-teal-400 border-teal-500/30 bg-teal-950/20',
   };
@@ -88,9 +92,12 @@ export interface CategoryItemGroup {
 }
 
 /**
- * Groups items by category name and preserves ordering.
+ * Groups items by category and preserves ordering according to categories order_index if provided.
  */
-export function groupItemsByCategory(items: ItemWithDetails[]): CategoryItemGroup[] {
+export function groupItemsByCategory(
+  items: ItemWithDetails[],
+  categories?: ItemCategory[]
+): CategoryItemGroup[] {
   const map = new Map<number, CategoryItemGroup>();
 
   for (const item of items) {
@@ -107,7 +114,23 @@ export function groupItemsByCategory(items: ItemWithDetails[]): CategoryItemGrou
     group.totalValue += item.display_price;
   }
 
-  return Array.from(map.values()).sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'th'));
+  const groups = Array.from(map.values());
+
+  if (categories && categories.length > 0) {
+    const orderMap = new Map<number, number>();
+    categories.forEach((cat, idx) => {
+      orderMap.set(cat.id, cat.order_index ?? idx);
+    });
+
+    return groups.sort((a, b) => {
+      const orderA = orderMap.has(a.categoryId) ? orderMap.get(a.categoryId)! : 9999;
+      const orderB = orderMap.has(b.categoryId) ? orderMap.get(b.categoryId)! : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.categoryName.localeCompare(b.categoryName, 'th');
+    });
+  }
+
+  return groups.sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'th'));
 }
 
 export interface ItemAnalyticsStats {
