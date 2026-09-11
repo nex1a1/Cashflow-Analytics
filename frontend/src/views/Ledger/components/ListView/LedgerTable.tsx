@@ -5,79 +5,9 @@ import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
 import { hexToRgb, getThaiDayInfo } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
-import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
-import { CATEGORY_ICON_MAP } from '../../../../constants/categoryIcons';
+import CategorySelect from '../../../../components/shared/CategorySelect';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
-
-const getCategoryPillStyles = (hexColor: string | null | undefined, dm: boolean) => {
-  const defaultRgb = '148, 163, 184';
-  const rgb = hexToRgb(hexColor || '') || defaultRgb;
-  
-  // Parse HSL to adjust lightness beautifully for text readability
-  let hex = hexColor || '#94a3b8';
-  hex = hex.replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-  let r = 148, g = 163, b = 184;
-  if (hex.length === 6) {
-    r = Number.parseInt(hex.substring(0, 2), 16);
-    g = Number.parseInt(hex.substring(2, 4), 16);
-    b = Number.parseInt(hex.substring(4, 6), 16);
-  }
-  
-  let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
-  let max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
-  let h = 0, s = 0, l = (max + min) / 2;
-
-  if (max === min) {
-    h = s = 0;
-  } else {
-    let d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
-      case gNorm: h = (bNorm - rNorm) / d + 2; break;
-      case bNorm: h = (rNorm - gNorm) / d + 4; break;
-    }
-    h /= 6;
-  }
-  
-  h = Math.round(h * 360);
-  s = Math.round(s * 100);
-  
-  let textColor;
-  let bgOpacity = dm ? 0.15 : 0.12;
-  let borderOpacity = dm ? 0.35 : 0.25;
-  
-  if (dm) {
-    // Dark mode: Boost lightness to at least 65% for excellent visibility
-    const targetL = Math.max(l * 100, 65);
-    const targetS = Math.max(s, 60);
-    textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
-  } else {
-    // Light mode: Clamp lightness to max 35% so it's readable
-    const targetL = Math.min(l * 100, 35);
-    const targetS = Math.max(s, 70);
-    textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
-  }
-  
-  return {
-    backgroundColor: `rgba(${rgb}, ${bgOpacity})`,
-    borderColor: `rgba(${rgb}, ${borderOpacity})`,
-    textColor,
-    iconBgColor: `rgba(${rgb}, 0.25)`
-  };
-};
-
-const getGroupBadgeStyles = (hexColor: string | null | undefined) => {
-  const safeColor = hexColor || '#94a3b8';
-  const rgb = hexToRgb(safeColor) || '148, 163, 184';
-  return {
-    backgroundColor: `rgba(${rgb}, 0.12)`,
-    borderColor: `rgba(${rgb}, 0.35)`,
-    color: safeColor
-  };
-};
 
 interface SortConfig {
   key: string;
@@ -141,28 +71,9 @@ export default function LedgerTable({
   pageInc, pageExp, formatMoney,
   currentPage, totalPages, setCurrentPage
 }: LedgerTableProps) {
-  const dm = true;
   const [pageInput, setPageInput] = useState(String(currentPage));
 
-  // Category <select> options grouped by cashflow group (Tier 1: group, Tier 2: category)
-  // so the per-row picker doesn't dump every category into one flat list.
-  const groupedCategoriesByType = useMemo(() => {
-    const build = (type: string) => {
-      const groupMap = new Map<string, { id: string; name: string; order: number; cats: Category[] }>();
-      categories.filter(c => (c as any).type === type).forEach(c => {
-        const gId = c.cashflow_group_id || (c as any).cashflowGroup || '__other__';
-        if (!groupMap.has(gId)) {
-          const g = (cashflowGroups || []).find(gr => gr.id === gId);
-          groupMap.set(gId, { id: gId, name: g?.name || 'อื่นๆ', order: g?.order_index ?? 999, cats: [] });
-        }
-        groupMap.get(gId)!.cats.push(c);
-      });
-      return Array.from(groupMap.values())
-        .sort((a, b) => a.order - b.order)
-        .map(g => ({ ...g, cats: [...g.cats].sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999)) }));
-    };
-    return { income: build('income'), expense: build('expense') };
-  }, [categories, cashflowGroups]);
+
 
   useEffect(() => {
     setPageInput(String(currentPage));
@@ -200,9 +111,6 @@ export default function LedgerTable({
             {currentData.map((item, index, arr) => {
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category) || categories[categories.length - 1];
-              const groupId    = catObj?.cashflow_group_id || (catObj as any)?.cashflowGroup;
-              const groupObj   = (cashflowGroups || []).find(g => g.id === groupId) || ((item as any).group_name ? (cashflowGroups || []).find(g => g.name === (item as any).group_name) : null);
-              const pillStyles = getCategoryPillStyles(catObj?.color, dm);
               const isInc      = (catObj as any)?.type === 'income' || item.group_type === 'income';
               const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
               const stickyBg   = isAlt ? 'bg-[#161616]' : 'bg-[#181818]';
@@ -295,53 +203,15 @@ export default function LedgerTable({
 
                   {/* Compact Single-Line Category Pill (with Inline Group Breadcrumb) */}
                   <td className="px-3 py-1 align-middle">
-                    <div className="relative w-full flex items-center rounded-none border focus-within:ring-1 focus-within:ring-opacity-40" style={{ backgroundColor: pillStyles.backgroundColor, borderColor: pillStyles.borderColor }}>
-                      {/* Visual Custom Overlay */}
-                      <div 
-                        className="category-pill-text w-full flex items-center pl-2 pr-6 py-1 text-xs select-none pointer-events-none min-w-0" 
-                        style={{ '--pill-text-color': pillStyles.textColor } as React.CSSProperties}
-                      >
-                        <CategoryGlyph icon={catObj?.icon} color={catObj?.color} size={12} className="shrink-0 mr-1.5" />
-                        <div className="truncate flex items-center gap-1 min-w-0" style={{ color: pillStyles.textColor }}>
-                          {groupObj?.name && (
-                            <>
-                              <span className="opacity-60 font-medium text-[11px] truncate max-w-[90px]" title={`กลุ่ม: ${groupObj.name}`}>
-                                {groupObj.name}
-                              </span>
-                              <span className="opacity-35 text-[10px] select-none">›</span>
-                            </>
-                          )}
-                          <span className="truncate font-extrabold">{catObj?.name}</span>
-                        </div>
-                        
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-75" style={{ color: pillStyles.textColor }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Invisible select overlay for native interaction */}
-                      <select
-                        value={item.category_id || ''}
-                        onChange={e => handleUpdateTransaction(item.id, 'category_id', e.target.value)}
-                        className="category-select absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      >
-                        {(isInc ? groupedCategoriesByType.income : groupedCategoriesByType.expense).map(g => (
-                          <optgroup key={g.id} label={g.name}>
-                            {g.cats.map(c => (
-                              <option
-                                key={c.id}
-                                value={c.id}
-                                className="bg-[#121212] text-slate-200"
-                              >
-                                {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
+                    <CategorySelect
+                      value={item.category_id || ''}
+                      onChange={(catId) => handleUpdateTransaction(item.id, 'category_id', catId)}
+                      categories={categories}
+                      cashflowGroups={cashflowGroups}
+                      type={isInc ? 'income' : 'expense'}
+                      variant="pill"
+                      size="sm"
+                    />
                   </td>
                   
                   <td className="px-3 py-1 align-middle text-center">

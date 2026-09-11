@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Category, CashflowGroup, AllocationType } from '../../../types';
-import { CATEGORY_ICON_MAP } from '../../../constants/categoryIcons';
+import CategorySelect from '@/components/shared/CategorySelect';
 
 const dailyAddSchema = z.object({
   type: z.enum(['income', 'expense']),
@@ -56,39 +56,6 @@ export default function DailyForm({
 
   const formType = watch('type');
   const allocationType = watch('allocation_type');
-
-  const groupedCategories = useMemo(() => {
-    const relevantCats = categories.filter(c => c.type === formType);
-    const groupLookup = cashflowGroups.reduce<Record<string, CashflowGroup>>((acc, g) => {
-      acc[g.id] = g;
-      return acc;
-    }, {});
-
-    const groups: Record<string, { id: string; name: string; order: number; categories: Category[] }> = {};
-    relevantCats.forEach(c => {
-      const gId = c.cashflowGroup || c.cashflow_group_id || 'other';
-      const gObj = groupLookup[gId];
-      const gName = gObj?.name || 'ทั่วไป / อื่นๆ';
-      const gOrder = gObj?.order_index ?? 999;
-
-      if (!groups[gId]) {
-        groups[gId] = {
-          id: gId,
-          name: gName,
-          order: gOrder,
-          categories: []
-        };
-      }
-      groups[gId].categories.push(c);
-    });
-
-    return Object.values(groups)
-      .sort((a, b) => a.order - b.order)
-      .map(g => ({
-        ...g,
-        categories: [...g.categories].sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999))
-      }));
-  }, [categories, cashflowGroups, formType]);
 
   const isApplyingSuggestionRef = useRef(false);
 
@@ -172,17 +139,15 @@ export default function DailyForm({
 
       <div className="flex gap-2">
         <div className="flex-[3]">
-          <select {...register('categoryId')} className={errors.categoryId ? tokens.inputError : tokens.input}>
-            {groupedCategories.map(g => (
-              <optgroup key={g.id} label={g.name} className="bg-[#181818] text-slate-400 font-bold">
-                {g.categories.map(c => (
-                  <option key={c.id} value={c.id} className="bg-[#121212] text-slate-100 font-medium">
-                    {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <CategorySelect
+            value={selectedCatId}
+            onChange={(val) => setValue('categoryId', val, { shouldValidate: true })}
+            categories={categories}
+            cashflowGroups={cashflowGroups}
+            type={formType}
+            error={!!errors.categoryId}
+            onSelectNextFocus={() => setFocus('amount')}
+          />
           {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
         </div>
 

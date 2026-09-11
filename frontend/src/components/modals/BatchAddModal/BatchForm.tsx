@@ -6,7 +6,7 @@ import { z } from 'zod';
 import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayType, AllocationType } from '../../../types';
 import { PendingBatchItem } from './index';
-import { CATEGORY_ICON_MAP } from '../../../constants/categoryIcons';
+import CategorySelect from '@/components/shared/CategorySelect';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -98,39 +98,6 @@ function BatchForm({
       setTimeout(() => setFocus('amount'), 50);
     }
   }, [editingItem, setValue, setFocus]);
-
-  const groupedCategories = useMemo(() => {
-    const relevantCats = categories.filter(c => c.type === formType);
-    const groupLookup = cashflowGroups.reduce<Record<string, CashflowGroup>>((acc, g) => {
-      acc[g.id] = g;
-      return acc;
-    }, {});
-
-    const groups: Record<string, { id: string; name: string; order: number; categories: Category[] }> = {};
-    relevantCats.forEach(c => {
-      const gId = c.cashflowGroup || c.cashflow_group_id || 'other';
-      const gObj = groupLookup[gId];
-      const gName = gObj?.name || 'ทั่วไป / อื่นๆ';
-      const gOrder = gObj?.order_index ?? 999;
-
-      if (!groups[gId]) {
-        groups[gId] = {
-          id: gId,
-          name: gName,
-          order: gOrder,
-          categories: []
-        };
-      }
-      groups[gId].categories.push(c);
-    });
-
-    return Object.values(groups)
-      .sort((a, b) => a.order - b.order)
-      .map(g => ({
-        ...g,
-        categories: [...g.categories].sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999))
-      }));
-  }, [categories, cashflowGroups, formType]);
 
   const isApplyingSuggestionRef = useRef(false);
 
@@ -262,21 +229,18 @@ function BatchForm({
       <div className="mb-4">
         <label htmlFor="batch-category" className={tokens.label}>หมวดหมู่</label>
         <div className="flex gap-2 h-9">
-          <select 
-            id="batch-category" 
-            {...register('categoryId')} 
-            className={`flex-1 min-w-0 ${errors.categoryId ? tokens.inputError : tokens.input}`}
-          >
-            {groupedCategories.map(g => (
-              <optgroup key={g.id} label={g.name} className="bg-[#181818] text-slate-400 font-bold">
-                {g.categories.map(c => (
-                  <option key={c.id} value={c.id} className="bg-[#121212] text-slate-100 font-medium">
-                    {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <div className="flex-1 min-w-0">
+            <CategorySelect 
+              id="batch-category" 
+              value={selectedCatId} 
+              onChange={(val) => setValue('categoryId', val, { shouldValidate: true })} 
+              categories={categories} 
+              cashflowGroups={cashflowGroups} 
+              type={formType} 
+              error={!!errors.categoryId} 
+              size="md"
+            />
+          </div>
           
           {formType === 'expense' && (
             <div className="h-9 flex p-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030]">
