@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { createPortal } from 'react-dom';
 import { formatMoney } from '../../../../utils/formatters';
 import { TransactionDisplay, Category } from '../../../../types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 export interface TooltipData {
   x: number;
@@ -57,7 +58,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
           borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
           background: `${tooltip.cat?.color}12`,
         }}>
-          <span style={{ fontSize: 18, lineHeight: 1 }}>{tooltip.cat?.icon}</span>
+          <CategoryGlyph icon={tooltip.cat?.icon} color={tooltip.cat?.color} size={18} />
           <div>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: '#f1f5f9', lineHeight: 1.2, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {tooltip.cat?.name}

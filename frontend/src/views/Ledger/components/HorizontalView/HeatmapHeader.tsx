@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Category } from '../../../../types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 interface HeatmapHeaderProps {
   activeCategories: Category[];
@@ -63,7 +64,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
                 margin: '0 auto',
               }}
             >
-              <span style={{ fontSize: 16, lineHeight: 1 }}>{cat.icon}</span>
+              <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
               <span style={{
                 fontSize: 10,
                 fontWeight: 900,

@@ -1,6 +1,7 @@
 import React, { useMemo, memo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Category, CashflowGroup } from '../../../types';
+import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 export interface OrphanWarningBannerProps {
   categories: Category[];
@@ -23,7 +24,12 @@ const OrphanWarningBanner = memo(({ categories, cashflowGroups }: OrphanWarningB
       <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
       <div className="text-xs leading-relaxed font-semibold">
         <strong>พบหมวดหมู่ที่กลุ่ม Cashflow ถูกลบไปแล้ว</strong> (<span className="font-mono font-black tabular-nums">{orphans.length}</span> รายการ):{' '}
-        {orphans.map(c => `${c.icon || ''} ${c.name}`).join(', ')}
+        {orphans.map((c, idx) => (
+          <span key={c.id} className="inline-flex items-center gap-1">
+            <CategoryGlyph icon={c.icon} color={c.color} size={12} />
+            <span>{c.name}{idx < orphans.length - 1 ? ',' : ''}</span>
+          </span>
+        ))}
         <br />
         <span className="text-amber-400/80 font-bold">กรุณากำหนดกลุ่มใหม่ให้หมวดหมู่เหล่านี้</span>
       </div>

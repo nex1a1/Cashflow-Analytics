@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { ClipboardList, Inbox, Trash2, CalendarDays, Pencil } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import { PendingBatchItem } from './index';
+import CategoryGlyph from '../../shared/CategoryGlyph';
 
 export interface CartListProps {
   pendingItems: PendingBatchItem[];
@@ -88,7 +89,7 @@ function CartList({
                             borderColor: `rgba(${catRgb}, 0.4)` 
                           }}
                         >
-                          <span className="shrink-0">{item._catObj?.icon}</span>
+                          <CategoryGlyph icon={item._catObj?.icon} color={item._catObj?.color} size={10} className="shrink-0" />
                           {item._catObj?._group?.name && (
                             <>
                               <span className="opacity-60 font-medium truncate max-w-[70px]" title={`กลุ่ม: ${item._catObj._group.name}`}>

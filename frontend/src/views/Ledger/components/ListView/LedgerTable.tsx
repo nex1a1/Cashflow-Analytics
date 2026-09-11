@@ -5,6 +5,8 @@ import AmountEditableInput from './AmountEditableInput';
 import InlineConfirmDelete from './InlineConfirmDelete';
 import { hexToRgb, getThaiDayInfo } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
+import { CATEGORY_ICON_MAP } from '../../../../constants/categoryIcons';
 
 const SELECT_ARROW = `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`;
 
@@ -299,9 +301,7 @@ export default function LedgerTable({
                         className="category-pill-text w-full flex items-center pl-2 pr-6 py-1 text-xs select-none pointer-events-none min-w-0" 
                         style={{ '--pill-text-color': pillStyles.textColor } as React.CSSProperties}
                       >
-                        <span className="shrink-0 mr-1.5 text-xs">
-                          {catObj?.icon}
-                        </span>
+                        <CategoryGlyph icon={catObj?.icon} color={catObj?.color} size={12} className="shrink-0 mr-1.5" />
                         <div className="truncate flex items-center gap-1 min-w-0" style={{ color: pillStyles.textColor }}>
                           {groupObj?.name && (
                             <>
@@ -335,7 +335,7 @@ export default function LedgerTable({
                                 value={c.id}
                                 className="bg-[#121212] text-slate-200"
                               >
-                                {c.icon} {c.name}
+                                {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
                               </option>
                             ))}
                           </optgroup>

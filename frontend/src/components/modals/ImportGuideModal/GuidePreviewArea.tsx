@@ -13,6 +13,7 @@ import {
   LongVariation,
   HeaderLanguage,
 } from './guideUtils';
+import CategoryGlyph from '../../shared/CategoryGlyph';
 
 const CATEGORY_COLORS: Record<string, { color: string; icon: string }> = {
   'เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง': { color: '#818cf8', icon: '🎮' },
@@ -218,7 +219,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                               backgroundColor: `${catVis.color}12`,
                             }}
                           >
-                            {catVis.icon && <span>{catVis.icon}</span>}
+                            {catVis.icon && <CategoryGlyph icon={catVis.icon} color={catVis.color} size={11} />}
                             <span>{t.category}</span>
                           </span>
                         </td>

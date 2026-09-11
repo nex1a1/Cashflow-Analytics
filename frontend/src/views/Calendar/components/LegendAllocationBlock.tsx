@@ -2,6 +2,7 @@ import React from 'react';
 import { List, Rows, Folders, Coins } from 'lucide-react';
 import sharkWhite from '../../../assets/images/shark-white.svg';
 import { formatAmount as formatValue } from '../../../utils/formatters';
+import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 export interface LegendCategoryItem {
   id: string;
@@ -257,7 +258,7 @@ function CategoryLegendSection({
                 <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-[#2d2d2d]/50">
                   <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
                     <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
-                    {groupObj.icon && <span className="text-[11.5px] shrink-0">{groupObj.icon}</span>}
+                    {groupObj.icon && <CategoryGlyph icon={groupObj.icon} color={groupObj.color} size={11} className="shrink-0" />}
                     <span className="truncate">{groupObj.name}</span>
                   </span>
                   <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>

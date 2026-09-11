@@ -3,6 +3,7 @@ import React from 'react';
 import { EyeOff } from 'lucide-react';
 import { formatMoney } from '../../../../utils/formatters';
 import { AllocationGroupItemData, AllocationItemProps } from './types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 /**
  * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
@@ -197,12 +198,12 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none`}>
                         <div className="flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color || item.color }} />
-                          <span className="font-bold text-slate-200">{g.icon || '✨'} {g.name}</span>
+                          <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={g.icon} color={g.color} size={12} fallbackEmoji="✨" /> {g.name}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
                           <span className="text-slate-400">฿{formatMoney(g.amount)}</span>
                           <span className="font-black text-[#da291c]">
-                            {item.amount > 0 ? ((g.amount / item.amount) * 100).toFixed(0) : 0}% ของส่วนนี้
+                            {relPct.toFixed(0)}% ของส่วนนี้
                           </span>
                         </div>
                       </div>
@@ -287,7 +288,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                   className="w-1.5 h-1.5 rounded-full shrink-0" 
                   style={{ backgroundColor: isExcluded ? '#525252' : (g.color || item.color) }} 
                 />
-                <span className="text-[10px] shrink-0 opacity-70">{g.icon || '✨'}</span>
+                <CategoryGlyph icon={g.icon} color={g.color} size={10} className="shrink-0 opacity-70" fallbackEmoji="✨" />
                 <span className={`text-[10.5px] font-bold truncate ${
                   isExcluded ? 'line-through text-slate-500' : 'text-slate-300 group-hover/item:text-slate-100'
                 }`}>

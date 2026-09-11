@@ -2,6 +2,7 @@
 import React from 'react';
 import { formatMoney } from '../../../../utils/formatters';
 import { CatItemProps } from './types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 /**
  * Sub-component for individual category cell (Table-like HUD)
@@ -23,7 +24,7 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
         style={{ color: '#94a3b8' }}
         title={cat.name}
       >
-        <span className="shrink-0 leading-none" style={{ color: cat.color }}>{cat.icon || '📦'}</span>
+        <CategoryGlyph icon={cat.icon} color={cat.color} size={12} className="shrink-0 leading-none" fallbackEmoji="📦" />
         <span className="truncate group-hover:text-[#da291c] uppercase tracking-tight">{cat.name}</span>
       </span>
       <div className="flex flex-col items-end shrink-0 leading-none">

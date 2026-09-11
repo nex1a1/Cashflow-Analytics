@@ -9,6 +9,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 import { formatMoney, calculatePeriodDelta } from '@/utils/formatters';
 import sharkLogo from '@/assets/images/shark-white.svg';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
 // ── TypeScript Interfaces ────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ interface WantCategory {
   id: string | number;
   name: string;
   icon: string;
+  color?: string;
   amount: number;
   pctOfWant: number;
 }
@@ -555,7 +557,7 @@ const StrategicSubscriptionCard = memo(({
               item ? (
                 <div key={idx} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
                   <span className="text-[9px] font-bold text-purple-300 uppercase tracking-wide truncate flex items-center gap-1">
-                    <span>{item.icon || '🔄'}</span> {item.name}
+                    <CategoryGlyph icon={item.icon} size={12} fallbackEmoji="🔄" /> {item.name}
                   </span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[13px] font-black text-purple-400 tabular-nums">฿{formatMoney(item.amount)}</span>
@@ -634,7 +636,7 @@ const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCat
             topWantCategories.map(cat => (
               <div key={cat.id} className="bg-[#181818] p-1.5 flex flex-col justify-center text-left">
                 <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-wide truncate flex items-center gap-1">
-                  <span>{cat.icon}</span> {cat.name}
+                  <CategoryGlyph icon={cat.icon} color={cat.color} size={12} /> {cat.name}
                 </span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[13px] font-black text-orange-400 tabular-nums">฿{formatMoney(cat.amount)}</span>

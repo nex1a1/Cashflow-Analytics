@@ -1,6 +1,7 @@
 // src/components/ImportPreviewModal.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap } from 'lucide-react';
+import { CATEGORY_ICON_MAP } from '../../constants/categoryIcons';
 
 export interface ImportPreviewModalProps {
   importPreview: any;
@@ -110,7 +111,11 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                       onChange={e => updateItem(item.id, 'category', e.target.value)}
                       className="text-[10px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] focus:border-[#da291c] transition-colors"
                     >
-                      {allCats.map((c: any) => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
+                      {allCats.map((c: any) => (
+                        <option key={c.id} value={c.name}>
+                          {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
+                        </option>
+                      ))}
                     </select>
                     
                     <input 

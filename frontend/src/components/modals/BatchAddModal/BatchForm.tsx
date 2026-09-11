@@ -6,6 +6,7 @@ import { z } from 'zod';
 import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayType, AllocationType } from '../../../types';
 import { PendingBatchItem } from './index';
+import { CATEGORY_ICON_MAP } from '../../../constants/categoryIcons';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -270,7 +271,7 @@ function BatchForm({
               <optgroup key={g.id} label={g.name} className="bg-[#181818] text-slate-400 font-bold">
                 {g.categories.map(c => (
                   <option key={c.id} value={c.id} className="bg-[#121212] text-slate-100 font-medium">
-                    {c.icon} {c.name}
+                    {c.icon && !CATEGORY_ICON_MAP[c.icon] ? `${c.icon} ` : ''}{c.name}
                   </option>
                 ))}
               </optgroup>

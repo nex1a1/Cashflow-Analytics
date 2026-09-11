@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
+import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 interface GroupBreakdownCategory {
   id: string;
@@ -96,7 +97,7 @@ const LedgerStatCategoryRow: React.FC<LedgerStatCategoryRowProps> = ({ cat, tota
             borderColor: `${catColor}30` 
           }}
         >
-          {cat.icon || '✨'}
+          <CategoryGlyph icon={cat.icon} color={cat.color || defaultColor} size={11} fallbackEmoji="✨" />
         </span>
         <span 
           className="truncate uppercase tracking-tight text-[11px] font-black"
@@ -180,7 +181,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
                 borderColor: isActive ? theme.borderColorActive : `${g.color || theme.defaultColor}30`
               }}
             >
-              {g.icon || theme.iconFallback}
+              <CategoryGlyph icon={g.icon} color={g.color || theme.defaultColor} size={14} fallbackEmoji={theme.iconFallback} />
             </div>
             <span 
               className={`text-[12.5px] font-black uppercase tracking-wider truncate leading-none ${

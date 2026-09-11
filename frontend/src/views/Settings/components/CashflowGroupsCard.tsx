@@ -4,6 +4,7 @@ import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
+import IconPicker from '@/components/shared/IconPicker';
 
 const GROUPS_ICON = <Grid className="w-3.5 h-3.5" />;
 
@@ -72,10 +73,7 @@ const CashflowGroupsCard = memo(({
 
                 <ColorPicker color={group.color || '#64748B'} onChange={c => handleChangeCashflowGroup(group.id, 'color', c)} />
 
-                <input type="text" value={group.icon || ''} onChange={e => handleChangeCashflowGroup(group.id, 'icon', e.target.value)} maxLength={8}
-                  className={`w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm ${
-                    'bg-[#121212] border-[#3e3e3e] text-white focus:border-[#da291c] focus:shadow-none'
-                  }`} title="ไอคอน" aria-label="ไอคอนคอลัมน์" placeholder="✨" />
+                <IconPicker icon={group.icon} color={group.color} onChange={v => handleChangeCashflowGroup(group.id, 'icon', v)} />
 
 
                 <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}

@@ -13,7 +13,6 @@ export interface CategoryItemData {
   percentage: string | number;
   cashflow_group_id?: string;
   order_index?: number;
-  relativePercentage?: string | number;
 }
 
 export interface GroupCategoryItemData {
@@ -46,7 +45,6 @@ export interface AllocationGroupItemData {
   icon?: string;
   color?: string;
   relativePercentage?: string | number;
-  order_index?: number;
 }
 
 export interface AllocationItemData {

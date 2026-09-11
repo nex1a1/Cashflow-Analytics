@@ -5,6 +5,7 @@ import { formatMoney } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
+import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
 // --- Helpers ---
 const getSmartDate = (dateStr?: string) => {
@@ -102,7 +103,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
             }}
             title={catDef?.name || tx.category}
           >
-            <span className="text-[12px] shrink-0">{catDef?.icon || '📌'}</span>
+            <CategoryGlyph icon={catDef?.icon} color={catDef?.color} size={12} className="shrink-0" fallbackEmoji="📌" />
             <span className="truncate">{catDef?.name || tx.category}</span>
           </span>
           

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Star, Search, SlidersHorizontal, RotateCcw, X, ChevronDown, Check } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup, FrequentItem } from '../../types';
+import CategoryGlyph from './CategoryGlyph';
 
 const ALLOC_COLORS: Record<string, string> = {
   need: '#f43f5e',
@@ -363,7 +364,7 @@ function QuickSuggest({
                   color: cat.color || '#e2e8f0' 
                 }}
               >
-                <span>{cat.icon || '📌'}</span>
+                <CategoryGlyph icon={cat.icon} color={cat.color} size={10} fallbackEmoji="📌" />
                 <span>{cat.name}</span>
                 <button 
                   type="button" 
@@ -379,7 +380,7 @@ function QuickSuggest({
             {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
             {selectedCatObjs.length === 0 && activeGroupObj && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
-                <span>{activeGroupObj.icon || '📁'}</span>
+                <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={10} fallbackEmoji="📁" />
                 <span>กลุ่ม: {activeGroupObj.name}</span>
                 <button 
                   type="button" 
@@ -482,7 +483,7 @@ function QuickSuggest({
                         className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] transition-transform duration-75 group-hover:scale-105"
                         style={{ backgroundColor: `rgba(${hexToRgb(catColor)}, ${bgAlpha})` }}
                       >
-                        {catObj?.icon || '📌'}
+                        <CategoryGlyph icon={catObj?.icon} color={catColor} size={12} fallbackEmoji="📌" />
                       </div>
                       
                       <div className="flex flex-col items-start min-w-0 overflow-hidden leading-tight flex-1">
@@ -595,7 +596,7 @@ function QuickSuggest({
                               : 'border-[#303030] bg-[#181818] text-slate-400 hover:text-slate-200 hover:border-slate-500'
                         }`}
                       >
-                        {g.icon && <span className="text-[11px]">{g.icon}</span>}
+                        {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={11} />}
                         <span>{g.name}</span>
                         {selectedCountInGroup > 0 && (
                           <span className="ml-0.5 px-1 py-0.2 rounded-full text-[8px] font-black bg-[#da291c] text-white leading-none">
@@ -612,7 +613,7 @@ function QuickSuggest({
                   <div className="mt-1.5 p-1.5 bg-[#121212] border border-[#262626]">
                     <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-[#222222] text-[9px]">
                       <span className="text-slate-400 font-bold flex items-center gap-1">
-                        {activeGroupObj?.icon && <span>{activeGroupObj.icon}</span>}
+                        {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={10} />}
                         <span>หมวดในกลุ่ม: <strong className="text-white">{activeGroupObj?.name}</strong></span>
                       </span>
                       <div className="flex items-center gap-2">
@@ -665,7 +666,7 @@ function QuickSuggest({
                             }`}
                           >
                             {isCatActive && <Check className="w-2.5 h-2.5 text-white shrink-0" />}
-                            {c.icon && <span className="text-[10px]">{c.icon}</span>}
+                            {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={10} />}
                             <span>{c.name}</span>
                           </button>
                         );

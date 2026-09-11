@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import CategoryGlyph from '../../shared/CategoryGlyph';
 
 const ALLOCATION_BADGE_STYLES: Record<string, string> = {
   need: 'bg-rose-950/40 text-rose-400 border-rose-800/40',
@@ -56,7 +57,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }: TxRowProps) 
 
         {/* Group Breadcrumb & Category */}
         <div className="text-[10px] font-medium flex items-center gap-1 mt-0.5 min-w-0" style={{ color, filter: 'brightness(1.25)' }}>
-          <span className="shrink-0">{catObj?.icon}</span>
+          <CategoryGlyph icon={catObj?.icon} color={color} size={10} className="shrink-0" />
           {groupObj?.name && (
             <>
               <span className="opacity-60 font-medium truncate max-w-[90px]" title={`กลุ่ม: ${groupObj.name}`}>

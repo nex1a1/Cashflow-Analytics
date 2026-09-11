@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import ConfirmDeleteButton from './ConfirmDeleteButton';
 import ColorPicker from './ColorPicker';
 import DebouncedInput from './DebouncedInput';
+import IconPicker from '@/components/shared/IconPicker';
 import { Category, CashflowGroup } from '../../../types';
 
 export interface CategoryRowProps {
@@ -43,8 +44,6 @@ const CategoryRow = memo(({
 
   const inputCls = `px-2 py-1.5 border outline-none font-semibold text-[13px] flex-1 min-w-0 rounded-sm bg-[#121212] border-[#3e3e3e] ${accentFocus} text-[#cbd5e1] placeholder-[#555555]`;
 
-  const iconCls = `w-8 h-8 text-center text-base outline-none border shrink-0 rounded-sm bg-[#121212] border-[#3e3e3e] text-white ${focusBorder}`;
-
   const selectTheme = !currentGroupValid
     ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
     : `bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] ${focusBorder}`;
@@ -74,15 +73,7 @@ const CategoryRow = memo(({
         </button>
       </div>
 
-      <input
-        type="text"
-        value={cat.icon || ''}
-        onChange={e => onChange(cat.id, 'icon', e.target.value)}
-        maxLength={8}
-        className={iconCls}
-        title="ไอคอน"
-        aria-label="ไอคอนหมวดหมู่"
-      />
+      <IconPicker icon={cat.icon} color={cat.color} onChange={v => onChange(cat.id, 'icon', v)} />
 
       <DebouncedInput
         isNew={isNew}

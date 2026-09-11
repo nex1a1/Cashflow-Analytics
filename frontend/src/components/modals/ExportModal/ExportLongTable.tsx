@@ -4,6 +4,7 @@ import { Category, CashflowGroup, TransactionDisplay } from '../../../types';
 import { formatMoney } from '../../../utils/formatters';
 import { fromISODate } from '../../../utils/dateHelpers';
 import { DayTypeInfo, ExportFormatKey } from './types';
+import CategoryGlyph from '../../shared/CategoryGlyph';
 
 export interface ExportLongTableProps {
   data: TransactionDisplay[];
@@ -125,7 +126,7 @@ export default function ExportLongTable({
                       backgroundColor: `${catColor}12`,
                     }}
                   >
-                    {cat?.icon && <span>{cat.icon}</span>}
+                    {cat?.icon && <CategoryGlyph icon={cat.icon} color={catColor} size={11} />}
                     <span>{t.category}</span>
                   </span>
                 </td>

@@ -12,6 +12,7 @@ import { useSankeyEngine } from '../hooks/useSankeyEngine';
 import { useChartDataEngine } from '../hooks/useChartDataEngine';
 import { useChartOptions } from '../hooks/useChartOptions';
 import { Category } from '@/types';
+import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
 // ==========================================
 // TYPE INTERFACES
@@ -460,7 +461,7 @@ const MainChartCategorySelector = memo(({
                   {isActive && <Check className="w-2.5 h-2.5" strokeWidth={3} style={{ color: tickColor }} />}
                 </span>
                 <span className="truncate">
-                  {c.icon && <span className="mr-1 opacity-90">{c.icon}</span>}
+                  {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={12} className="mr-1 opacity-90 inline" />}
                   {c.name}
                 </span>
               </button>
@@ -590,7 +591,7 @@ const BreakdownLegendItem = memo(({ category, isActive, onToggle }: BreakdownLeg
         style={{ backgroundColor: category.color || '#64748B' }}
       />
       <span className="text-[10px] font-medium leading-none text-slate-400">
-        {category.icon && <span className="mr-1 opacity-90">{category.icon}</span>}
+        {category.icon && <CategoryGlyph icon={category.icon} color={category.color} size={10} className="mr-1 opacity-90 inline" />}
         {category.name}
       </span>
     </button>
