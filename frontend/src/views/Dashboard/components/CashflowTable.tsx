@@ -5,6 +5,7 @@ import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, RotateCcw } from 'lu
 import { useDashboardContext, DashboardAnalyticsResult } from '../context/DashboardContext';
 import { formatMoney, getThaiMonth, hexToRgb } from '@/utils/formatters';
 import { CashflowGroup, Category } from '@/types';
+import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
 // ─── Local Interfaces ─────────────────────────────────────────────────────────
 
@@ -20,11 +21,19 @@ interface HoveredGroupState {
   active: boolean;
   x: number;
   y: number;
+  type?: 'group' | 'category';
   group: CashflowGroup;
-  activeCats: Category[];
+  category?: Category;
+  activeCats?: Category[];
 }
 
 type MonthlyMap = Record<string, Record<string, number>>;
+
+// ─── Fixed column widths (prevents long category/group names from blowing out the table) ─────
+// ponytail: same w-/min-w-/max-w-[Npx] pattern already used by the sticky trend/net/% columns below.
+const MONTH_COL_CLS = 'w-[112px] min-w-[112px] max-w-[112px]';
+const GROUP_COL_CLS = 'w-[96px] min-w-[96px] max-w-[96px]';
+const CAT_COL_CLS = 'w-[76px] min-w-[76px] max-w-[76px]';
 
 // ─── Shared highlight helpers (single source of truth) ────────────────────────
 
@@ -222,6 +231,7 @@ interface CommonTableProps extends BorderClasses {
   analytics: Analytics;
   dm: boolean | undefined;
   handleMouseEnter: (e: React.MouseEvent<HTMLElement>, group: CashflowGroup) => void;
+  handleCategoryMouseEnter?: (e: React.MouseEvent<HTMLElement>, group: CashflowGroup, category: Category) => void;
   handleMouseLeave: () => void;
   hoveredCol: string | null;
   setHoveredCol: (col: string | null) => void;
@@ -253,6 +263,7 @@ const CashflowTableHeader = React.memo(({
   boundaryBorder,
   boxBorder,
   handleMouseEnter,
+  handleCategoryMouseEnter,
   handleMouseLeave,
   hoveredCol,
   setHoveredCol,
@@ -274,7 +285,7 @@ const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
+          className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
             hoveredCol === 'month' ? 'bg-[#303030] text-blue-300' : 'text-blue-300 bg-[#121212]'
           }`}
         >
@@ -359,37 +370,49 @@ const CashflowTableHeader = React.memo(({
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
           const isExcluded = excludedGroups.has(g.id);
+          const groupColor = g.color || '#34d399';
 
           return (
             <React.Fragment key={g.id}>
               <th
                 onMouseEnter={(e) => { handleMouseEnter(e, g); setHoveredCol(colId); }}
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
-                className={`px-3 py-1.5 font-extrabold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${isExcluded ? 'opacity-40' : ''}`}
-                style={{ color: isExcluded ? undefined : (g.color || '#34d399'), backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                className={`px-2 py-1.5 font-extrabold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
+                style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                title={`${g.name} (รายรับ)`}
               >
-                <div className="flex items-center justify-center gap-1.5">
+                <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
                     type="button"
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
+                    title={`กลุ่ม: ${g.name}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center bg-transparent border-0 p-0 font-extrabold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'line-through text-neutral-500' : ''}`}
-                    style={{ color: isExcluded ? undefined : (g.color || '#34d399') }}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
-                    {g.name} {isExpanded ? '«' : '»'}
+                    <CategoryGlyph
+                      icon={g.icon}
+                      color={isExcluded ? '#737373' : groupColor}
+                      size={16}
+                      fallbackEmoji="💰"
+                    />
+                    {cats.length > 0 && (
+                      <span className={`text-[9px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-emerald-400/70'}`}>
+                        {isExpanded ? '«' : '»'}
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); toggleGroupExclusion(g.id); }}
-                    className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                    className={`p-1 rounded-none transition-colors inline-flex items-center justify-center shrink-0 ${
                       isExcluded
                         ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
                         : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                     }`}
-                    title={isExcluded ? 'นำกลับมารวมคำนวณ' : 'ยกเว้นกลุ่มนี้จากการคำนวณ'}
+                    title={isExcluded ? `นำกลุ่ม ${g.name} กลับมารวมคำนวณ` : `ยกเว้นกลุ่ม ${g.name} จากการคำนวณ`}
                   >
-                    {isExcluded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {isExcluded ? <EyeOff className="w-3 h-3 text-rose-400/80" /> : <Eye className="w-3 h-3" />}
                   </button>
                 </div>
               </th>
@@ -402,21 +425,22 @@ const CashflowTableHeader = React.memo(({
                 return (
                   <th
                     key={c.id}
-                    onMouseEnter={() => setHoveredCol(catColId)}
-                    onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''}`}
-                    style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined), backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
+                    onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
+                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    title={c.name}
                   >
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={isCatFaded ? 'line-through text-neutral-500' : ''}>{c.name}</span>
+                    <div className="flex items-center justify-center gap-1 min-w-0">
+                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={13} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
-                        className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                        className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
                           isCatExcluded
                             ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
                             : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                         }`}
-                        title={isCatExcluded ? 'นำหมวดหมู่นี้กลับมารวมคำนวณ' : 'ยกเว้นหมวดหมู่นี้จากการคำนวณ'}
+                        title={isCatExcluded ? `นำหมวด ${c.name} กลับมารวมคำนวณ` : `ยกเว้นหมวด ${c.name} จากการคำนวณ`}
                       >
                         {isCatExcluded ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
                       </button>
@@ -434,37 +458,49 @@ const CashflowTableHeader = React.memo(({
           const colId = `g-${g.id}`;
           const isColHovered = hoveredCol === colId;
           const isExcluded = excludedGroups.has(g.id);
+          const groupColor = g.color || '#cbd5e1';
 
           return (
             <React.Fragment key={g.id}>
               <th
                 onMouseEnter={(e) => { handleMouseEnter(e, g); setHoveredCol(colId); }}
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
-                className={`px-3 py-1.5 font-bold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isExcluded ? 'opacity-40' : ''}`}
-                style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1'), backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                className={`px-2 py-1.5 font-bold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
+                style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                title={`${g.name} (รายจ่าย)`}
               >
-                <div className="flex items-center justify-center gap-1.5">
+                <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
                     type="button"
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
+                    title={`กลุ่ม: ${g.name}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center bg-transparent border-0 p-0 font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'line-through text-neutral-500' : ''}`}
-                    style={{ color: isExcluded ? undefined : (g.color || '#cbd5e1') }}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
-                    {g.name} {isExpanded ? '«' : '»'}
+                    <CategoryGlyph
+                      icon={g.icon}
+                      color={isExcluded ? '#737373' : groupColor}
+                      size={16}
+                      fallbackEmoji="📦"
+                    />
+                    {cats.length > 0 && (
+                      <span className={`text-[9px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-slate-400'}`}>
+                        {isExpanded ? '«' : '»'}
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); toggleGroupExclusion(g.id); }}
-                    className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                    className={`p-1 rounded-none transition-colors inline-flex items-center justify-center shrink-0 ${
                       isExcluded
                         ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
                         : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                     }`}
-                    title={isExcluded ? 'นำกลับมารวมคำนวณ' : 'ยกเว้นกลุ่มนี้จากการคำนวณ'}
+                    title={isExcluded ? `นำกลุ่ม ${g.name} กลับมารวมคำนวณ` : `ยกเว้นกลุ่ม ${g.name} จากการคำนวณ`}
                   >
-                    {isExcluded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {isExcluded ? <EyeOff className="w-3 h-3 text-rose-400/80" /> : <Eye className="w-3 h-3" />}
                   </button>
                 </div>
               </th>
@@ -477,21 +513,22 @@ const CashflowTableHeader = React.memo(({
                 return (
                   <th
                     key={c.id}
-                    onMouseEnter={() => setHoveredCol(catColId)}
-                    onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''}`}
-                    style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined), backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
+                    onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
+                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
+                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    title={c.name}
                   >
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={isCatFaded ? 'line-through text-neutral-500' : ''}>{c.name}</span>
+                    <div className="flex items-center justify-center gap-1 min-w-0">
+                      <CategoryGlyph icon={c.icon} color={isCatFaded ? '#64748B' : c.color} size={13} className={isCatFaded ? 'opacity-60' : ''} fallbackEmoji="📁" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
-                        className={`p-0.5 rounded transition-colors inline-flex items-center justify-center ${
+                        className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
                           isCatExcluded
                             ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
                             : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                         }`}
-                        title={isCatExcluded ? 'นำหมวดหมู่นี้กลับมารวมคำนวณ' : 'ยกเว้นหมวดหมู่นี้จากการคำนวณ'}
+                        title={isCatExcluded ? `นำหมวด ${c.name} กลับมารวมคำนวณ` : `ยกเว้นหมวด ${c.name} จากการคำนวณ`}
                       >
                         {isCatExcluded ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
                       </button>
@@ -560,7 +597,7 @@ function CashflowTableGroupCells({
       <td
         onMouseEnter={() => setHoveredCol(colId)}
         onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 ${isIncome ? 'font-semibold' : 'font-medium'} border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${boundaryCls} ${
+        className={`px-3 py-2 truncate ${isIncome ? 'font-semibold' : 'font-medium'} border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${boundaryCls} ${GROUP_COL_CLS} ${
           isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
         }`}
         style={{ color: groupTextColor, backgroundColor: groupBg }}
@@ -581,7 +618,7 @@ function CashflowTableGroupCells({
             key={c.id}
             onMouseEnter={() => setHoveredCol(catColId)}
             onMouseLeave={() => setHoveredCol(null)}
-            className={`px-2 py-2 text-[10px] tabular-nums font-black border-l border-b transition-colors ${catBoundaryCls} ${
+            className={`px-2 py-2 text-[10px] tabular-nums font-black truncate border-l border-b transition-colors ${catBoundaryCls} ${CAT_COL_CLS} ${
               isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
             }`}
             style={{ color: isCatFaded ? undefined : (c.color ?? undefined), backgroundColor: catBg }}
@@ -858,7 +895,7 @@ const CashflowTableRow = React.memo(({
         title={isExcluded ? 'คลิกเพื่อนำกลับมารวมคำนวณ' : 'คลิกเพื่อนำออกจากการคำนวณ'}
         onMouseEnter={() => setHoveredCol('month')}
         onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${monthCellBg}`}
+        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${MONTH_COL_CLS} ${monthCellBg}`}
       >
         <div className="flex items-center justify-center gap-1.5">
           {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-neutral-600" />}
@@ -998,7 +1035,7 @@ const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${
+          className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
             hoveredCol === 'month' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -1017,7 +1054,7 @@ const CashflowTableFooter = React.memo(({
               <td
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
-                className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${
+                className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${GROUP_COL_CLS} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#34d399') }}
@@ -1037,7 +1074,7 @@ const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${
+                    className={`px-2 py-2.5 text-[9px] font-black uppercase truncate border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${CAT_COL_CLS} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                     } ${isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
                     style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
@@ -1068,7 +1105,7 @@ const CashflowTableFooter = React.memo(({
               <td
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
-                className={`px-3 py-2.5 border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${
+                className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${GROUP_COL_CLS} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#cbd5e1') }}
@@ -1088,7 +1125,7 @@ const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[9px] font-black uppercase border-l border-b transition-colors ${thinBorder} ${
+                    className={`px-2 py-2.5 text-[9px] font-black uppercase truncate border-l border-b transition-colors ${thinBorder} ${CAT_COL_CLS} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
                     } ${isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
                     style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
@@ -1152,51 +1189,167 @@ CashflowTableFooter.displayName = 'CashflowTableFooter';
 
 // ─── INTERNAL: GroupTooltip ────────────────────────────────────────────────────
 
-// Fix #6: ลบ Framer Motion ออก — ใช้ plain div แทน (animations globally suppressed via index.css)
 const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null }) => {
   if (!hoveredGroup?.active) return null;
-  const { x, y, group, activeCats } = hoveredGroup;
-  if (!activeCats || activeCats.length === 0) return null;
+  const { x, y, group, category, type = 'group', activeCats } = hoveredGroup;
 
-  const groupColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
+  // Handle Category Hover Tooltip
+  if (type === 'category' && category) {
+    const catColor = category.color || '#64748B';
+    const catRgb = hexToRgb(catColor);
+    const groupColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
+
+    return createPortal(
+      <div
+        className="fixed pointer-events-none z-[99999]"
+        style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
+      >
+        <div className="flex flex-col items-center min-w-[170px] max-w-[320px]">
+          <div className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/98 border-[#3e3e3e] text-slate-200">
+            <div className="flex items-center gap-2 mb-1.5 border-b pb-1.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <div
+                className="w-5 h-5 flex items-center justify-center shrink-0 border"
+                style={{
+                  backgroundColor: `rgba(${catRgb}, 0.15)`,
+                  borderColor: `rgba(${catRgb}, 0.35)`,
+                }}
+              >
+                <CategoryGlyph icon={category.icon} color={catColor} size={13} fallbackEmoji="📁" />
+              </div>
+              <span className="font-black text-[12px] text-white tracking-wide truncate">
+                {category.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[9.5px] text-slate-400 font-mono">
+              <span>กลุ่มหลัก:</span>
+              <span
+                className="px-1.5 py-0.5 border font-bold"
+                style={{
+                  color: groupColor,
+                  backgroundColor: `rgba(${hexToRgb(groupColor)}, 0.1)`,
+                  borderColor: `rgba(${hexToRgb(groupColor)}, 0.25)`,
+                }}
+              >
+                {group.name}
+              </span>
+            </div>
+            <div
+              className="mt-2 pt-1 border-t text-[8.5px] text-neutral-500"
+              style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+            >
+              กดรูปตาเพื่อเปิด/ปิดการคำนวณหมวดหมู่นี้
+            </div>
+          </div>
+          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#3e3e3e]" />
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  // Handle Group Hover Tooltip (always displays even if activeCats is empty)
+  const isIncome = group.type === 'income';
+  const groupColor = group.color || (isIncome ? '#10B981' : '#64748B');
+  const rgb = hexToRgb(groupColor);
+
+  const allocationLabel =
+    group.allocation_type === 'need'
+      ? 'จำเป็น (NEED)'
+      : group.allocation_type === 'savings'
+        ? 'เงินออม (SAVINGS)'
+        : 'กิเลส (WANT)';
+
+  const allocationColorCls =
+    group.allocation_type === 'need'
+      ? 'text-red-400 bg-red-950/40 border-red-500/30'
+      : group.allocation_type === 'savings'
+        ? 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30'
+        : 'text-amber-400 bg-amber-950/40 border-amber-500/30';
+
+  const cats = activeCats || [];
 
   return createPortal(
     <div
       className="fixed pointer-events-none z-[99999]"
       style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
     >
-      <div className="flex flex-col items-center min-w-[160px] max-w-[420px]">
-        <div className="w-full rounded-none p-2 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/95 border-[#3e3e3e] text-slate-200">
+      <div className="flex flex-col items-center min-w-[200px] max-w-[420px]">
+        <div className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/98 border-[#3e3e3e] text-slate-200">
+          {/* Header with Group Icon, Name & Type Badges */}
           <div
-            className="flex items-center gap-1.5 border-b pb-1.5 mb-1.5"
+            className="flex items-center justify-between gap-2 border-b pb-1.5 mb-2"
+            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className="w-5 h-5 flex items-center justify-center shrink-0 border"
+                style={{
+                  backgroundColor: `rgba(${rgb}, 0.15)`,
+                  borderColor: `rgba(${rgb}, 0.35)`,
+                }}
+              >
+                <CategoryGlyph icon={group.icon} color={groupColor} size={13} fallbackEmoji={isIncome ? '💰' : '📦'} />
+              </div>
+              <span className="font-black text-[12px] text-white tracking-wide truncate">
+                {group.name}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <span className={`px-1.5 py-0.5 text-[9px] font-black border uppercase leading-none ${
+                isIncome
+                  ? 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30'
+                  : allocationColorCls
+              }`}>
+                {isIncome ? 'รายรับ (+)' : allocationLabel}
+              </span>
+            </div>
+          </div>
+
+          {/* Subcategories if any */}
+          {cats.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-[9.5px] font-bold text-neutral-400">
+                <span>หมวดหมู่ย่อย ({cats.length}):</span>
+                <span className="text-neutral-500 text-[9px]">คลิกคอลัมน์เพื่อดูแจกแจง</span>
+              </div>
+              <div className="flex flex-wrap gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
+                {cats.map((c) => {
+                  const catColor = c.color || '#64748B';
+                  const catRgb = hexToRgb(catColor);
+                  return (
+                    <div
+                      key={c.id}
+                      className="flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold text-slate-300"
+                      style={{
+                        backgroundColor: `rgba(${catRgb}, 0.08)`,
+                        borderColor: `rgba(${catRgb}, 0.25)`,
+                      }}
+                    >
+                      <CategoryGlyph icon={c.icon} color={catColor} size={11} className="shrink-0" fallbackEmoji="📁" />
+                      <span className="whitespace-nowrap leading-none">{c.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-[9.5px] text-neutral-500 italic py-0.5">
+              ไม่มีหมวดหมู่ย่อยที่บันทึกข้อมูลในรอบนี้
+            </div>
+          )}
+
+          {/* Micro Footer Hint */}
+          <div
+            className="mt-2 pt-1.5 border-t text-[8.5px] text-neutral-500 flex items-center justify-between"
             style={{ borderColor: 'rgba(255,255,255,0.06)' }}
           >
-            <span className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
-            <span className="font-black text-[11px] uppercase tracking-wider">{group.name}</span>
-            <span className="text-[9px] font-bold opacity-60">({activeCats.length})</span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {activeCats.map((c) => {
-              const catColor = c.color || '#64748B';
-              const rgb = hexToRgb(catColor);
-              return (
-                <div
-                  key={c.id}
-                  className="flex items-center gap-1 py-0.5 px-1.5 rounded-none border text-[10px] font-bold text-slate-300"
-                  style={{
-                    backgroundColor: `rgba(${rgb}, 0.08)`,
-                    borderColor: `rgba(${rgb}, 0.25)`,
-                  }}
-                >
-                  <span className="text-[11px] leading-none shrink-0">{c.icon || '📁'}</span>
-                  <span className="whitespace-nowrap leading-none">{c.name}</span>
-                </div>
-              );
-            })}
+            <span>คลิกหัวตารางเพื่อ {cats.length > 0 ? 'ยุบ/ขยาย' : 'เลือก'}</span>
+            <span>กดรูปตาเพื่อซ่อน/เปิด</span>
           </div>
         </div>
         {/* Arrow */}
-        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212]/95" />
+        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#3e3e3e]" />
       </div>
     </div>,
     document.body,
@@ -1366,7 +1519,7 @@ export default function CashflowTable() {
       const activeCats = getActiveCatsForGroup(group.id);
 
       // Clamp tooltip X so it doesn't overflow viewport
-      const tooltipHalfWidth = 100; // เผื่อ min-w-[160px] / 2
+      const tooltipHalfWidth = 110;
       const rawX = rect.left + rect.width / 2;
       const clampedX = Math.min(
         Math.max(rawX, tooltipHalfWidth + 8),
@@ -1377,11 +1530,36 @@ export default function CashflowTable() {
         active: true,
         x: clampedX,
         y: rect.top,
+        type: 'group',
         group,
         activeCats,
       });
     },
     [getActiveCatsForGroup],
+  );
+
+  const handleCategoryMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLElement>, group: CashflowGroup, category: Category) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+
+      const tooltipHalfWidth = 90;
+      const rawX = rect.left + rect.width / 2;
+      const clampedX = Math.min(
+        Math.max(rawX, tooltipHalfWidth + 8),
+        window.innerWidth - tooltipHalfWidth - 8,
+      );
+
+      setHoveredGroup({
+        active: true,
+        x: clampedX,
+        y: rect.top,
+        type: 'category',
+        group,
+        category,
+        activeCats: [],
+      });
+    },
+    [],
   );
 
   const handleMouseLeave = useCallback(() => { setHoveredGroup(null); }, []);
@@ -1424,7 +1602,7 @@ export default function CashflowTable() {
   const segmentProps: CommonTableProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup,
     getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
-    handleMouseEnter, handleMouseLeave,
+    handleMouseEnter, handleCategoryMouseEnter, handleMouseLeave,
     hoveredCol, setHoveredCol,
     excludedMonths, toggleMonth,
     excludedGroups, toggleGroupExclusion,
