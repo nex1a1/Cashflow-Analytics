@@ -5,7 +5,7 @@ import { hexToRgb } from '../../utils/formatters';
 import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem } from './components/LegendAllocationBlock';
-import PeriodOverview from './components/PeriodOverview/index';
+import MonthOnlyNotice from './components/MonthOnlyNotice';
 import { resolveDefaultDayTypeId } from './utils/calendarPeriodHelpers';
 import {
   CashflowGroup,
@@ -107,6 +107,7 @@ export interface CalendarViewProps {
   paymentMethods?: any[];
   isLoading: boolean;
   frequentItems?: FrequentItem[];
+  onSwitchToAnalysisMode?: () => void;
 }
 
 function CalendarView({
@@ -114,7 +115,7 @@ function CalendarView({
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
-  paymentMethods, isLoading, frequentItems = []
+  paymentMethods, isLoading, frequentItems = [], onSwitchToAnalysisMode
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
@@ -439,18 +440,11 @@ function CalendarView({
     content = <CalendarSkeleton />;
   } else if (isReadOnlyView) {
     content = (
-      <PeriodOverview
-        filterPeriod={filterPeriod}
-        setFilterPeriod={setFilterPeriod}
-        transactions={transactions}
-        categories={categories}
-        cashflowGroups={cashflowGroups}
-        dayTypes={dayTypes}
-        dayTypeConfig={dayTypeConfig}
-        getFilterLabel={getFilterLabel}
+      <MonthOnlyNotice
+        filterLabel={getFilterLabel ? getFilterLabel(filterPeriod) : filterPeriod}
+        currentMonthLabel={getFilterLabel ? getFilterLabel(currentMonthStr) : currentMonthStr}
         goToCurrentMonth={goToCurrentMonth}
-        currentMonthStr={currentMonthStr}
-        onSelectDate={setSelectedDate}
+        onSwitchToAnalysisMode={onSwitchToAnalysisMode}
       />
     );
   } else {

@@ -25,6 +25,7 @@ export default function MainLayout() {
 
   const {
     activeTab, setActiveTab,
+    insightsMode, setInsightsMode,
     showAddModal, setShowAddModal,
     showExportModal, setShowExportModal,
     showImportGuide, setShowImportGuide,
@@ -89,6 +90,8 @@ export default function MainLayout() {
           transactionCount={transactions.length}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          insightsMode={insightsMode}
+          setInsightsMode={setInsightsMode}
           filterPeriod={filterPeriod}
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
@@ -111,51 +114,50 @@ export default function MainLayout() {
         />
 
         <div className="p-6 relative z-0 flex-grow bg-[#181818]">
-          {activeTab === 'dashboard' && (
-            <div key="dashboard">
-              <DashboardView
-                analytics={analytics}
-                transactions={dashboardTransactions}
-                cashflowGroups={cashflowGroups}
-                filterPeriod={filterPeriod}
-                getFilterLabel={getFilterLabel}
-                hideFixedExpenses={hideFixedExpenses}
-                setHideFixedExpenses={setHideFixedExpenses}
-                hideWantExpenses={hideWantExpenses}
-                setHideWantExpenses={setHideWantExpenses}
-                dashboardCategory={dashboardCategory}
-                setDashboardCategory={setDashboardCategory}
-                chartGroupBy={chartGroupBy}
-                setChartGroupBy={setChartGroupBy}
-                topXLimit={topXLimit}
-                setTopXLimit={setTopXLimit}
-                categories={categories}
-                dayTypeConfig={dayTypeConfig}
-                dayTypes={dayTypes}
-                isLoading={isProcessing}
-              />
-            </div>
-          )}
-
-          {activeTab === 'calendar' && (
-            <div key="calendar">
-              <CalendarView
-                transactions={transactions}
-                filterPeriod={filterPeriod}
-                setFilterPeriod={setFilterPeriod}
-                handleOpenAddModal={handleOpenAddModal}
-                categories={categories}
-                cashflowGroups={cashflowGroups}
-                dayTypes={dayTypes}
-                handleDayTypeChange={handleDayTypeChange}
-                dayTypeConfig={dayTypeConfig}
-                getFilterLabel={getFilterLabel}
-                isReadOnlyView={isReadOnlyView}
-                onSaveTransaction={handleSaveTransaction}
-                handleDeleteTransaction={handleDeleteTransaction}
-                isLoading={isProcessing}
-                frequentItems={frequentItems}
-              />
+          {activeTab === 'insights' && (
+            <div key="insights">
+              {insightsMode === 'analysis' ? (
+                <DashboardView
+                  analytics={analytics}
+                  transactions={dashboardTransactions}
+                  cashflowGroups={cashflowGroups}
+                  filterPeriod={filterPeriod}
+                  getFilterLabel={getFilterLabel}
+                  hideFixedExpenses={hideFixedExpenses}
+                  setHideFixedExpenses={setHideFixedExpenses}
+                  hideWantExpenses={hideWantExpenses}
+                  setHideWantExpenses={setHideWantExpenses}
+                  dashboardCategory={dashboardCategory}
+                  setDashboardCategory={setDashboardCategory}
+                  chartGroupBy={chartGroupBy}
+                  setChartGroupBy={setChartGroupBy}
+                  topXLimit={topXLimit}
+                  setTopXLimit={setTopXLimit}
+                  categories={categories}
+                  dayTypeConfig={dayTypeConfig}
+                  dayTypes={dayTypes}
+                  isLoading={isProcessing}
+                />
+              ) : (
+                <CalendarView
+                  transactions={transactions}
+                  filterPeriod={filterPeriod}
+                  setFilterPeriod={setFilterPeriod}
+                  handleOpenAddModal={handleOpenAddModal}
+                  categories={categories}
+                  cashflowGroups={cashflowGroups}
+                  dayTypes={dayTypes}
+                  handleDayTypeChange={handleDayTypeChange}
+                  dayTypeConfig={dayTypeConfig}
+                  getFilterLabel={getFilterLabel}
+                  isReadOnlyView={isReadOnlyView}
+                  onSaveTransaction={handleSaveTransaction}
+                  handleDeleteTransaction={handleDeleteTransaction}
+                  isLoading={isProcessing}
+                  frequentItems={frequentItems}
+                  onSwitchToAnalysisMode={() => setInsightsMode('analysis')}
+                />
+              )}
             </div>
           )}
 

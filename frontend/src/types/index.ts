@@ -158,9 +158,13 @@ export interface QuickAddFormData {
   amount: string;
 }
 
+export type InsightsMode = 'analysis' | 'calendar';
+
 export interface AppUIContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  insightsMode: InsightsMode;
+  setInsightsMode: React.Dispatch<React.SetStateAction<InsightsMode>>;
   hideFixedExpenses: boolean;
   setHideFixedExpenses: React.Dispatch<React.SetStateAction<boolean>>;
   hideWantExpenses: boolean;
