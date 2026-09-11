@@ -48,3 +48,38 @@ export interface Setting {
   key: string;
   value: string;
 }
+
+export type ItemStatus = 'planned' | 'cancelled' | 'purchased' | 'stored' | 'broken' | 'sold';
+
+export interface ItemCategory {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface Item {
+  id: number;
+  category_id: number;
+  name: string;
+  brand_model?: string | null;
+  source?: string | null;
+  status: ItemStatus;
+  price_satang?: number | null;
+  purchased_at?: string | null;
+  broken_at?: string | null;
+  warranty_until?: string | null;
+  priority: number;
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemWithDetails extends Item {
+  category_name: string;
+  linked_count: number;
+  linked_satang: number;
+  display_price_satang: number;
+  display_price: number; // in Baht
+  price?: number | null;  // in Baht
+}
+

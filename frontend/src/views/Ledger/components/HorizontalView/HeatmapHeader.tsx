@@ -4,14 +4,13 @@ import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 interface HeatmapHeaderProps {
   activeCategories: Category[];
-  dm: boolean;
   bgHead: string;
   border: string;
   border2: string;
 }
 
-const HeatmapHeader = memo(function HeatmapHeader({ 
-  activeCategories, dm, bgHead, border, border2 
+const HeatmapHeader = memo(function HeatmapHeader({
+  activeCategories, bgHead, border, border2
 }: HeatmapHeaderProps) {
   return (
     <thead>

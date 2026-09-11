@@ -264,6 +264,81 @@ const migrateTablesToStrict = (): void => {
   console.log('🛡️ ทุกตารางถูกยกระดับเป็น SQLite STRICT Mode สำเร็จ 100% (ไร้การสูญหายของข้อมูล)');
 };
 
+/**
+ * ตั้งค่าตารางและข้อมูลเริ่มต้นสำหรับระบบ Note (Item Lifecycle Tracker)
+ */
+export const initItemTrackerSchema = (): void => {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS item_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      ) STRICT;
+
+      CREATE TABLE IF NOT EXISTS items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        brand_model TEXT,
+        source TEXT,
+        status TEXT NOT NULL CHECK (
+          status IN ('planned', 'cancelled', 'purchased', 'stored', 'broken', 'sold')
+        ),
+        price_satang INTEGER,
+        purchased_at TEXT,
+        broken_at TEXT,
+        warranty_until TEXT,
+        priority INTEGER DEFAULT 0,
+        description TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES item_categories(id)
+      ) STRICT;
+
+      CREATE TABLE IF NOT EXISTS item_transactions (
+        item_id INTEGER NOT NULL,
+        transaction_id TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (item_id, transaction_id),
+        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+        FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
+      CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id);
+      CREATE INDEX IF NOT EXISTS idx_item_transactions_tx ON item_transactions(transaction_id);
+
+      CREATE TRIGGER IF NOT EXISTS trg_items_updated_at 
+      AFTER UPDATE ON items
+      FOR EACH ROW
+      BEGIN
+        UPDATE items SET updated_at = CURRENT_TIMESTAMP WHERE id = old.id;
+      END;
+    `);
+
+    // Seed default item categories if empty
+    const catCount = (db.prepare("SELECT COUNT(*) as count FROM item_categories").get() as { count: number }).count;
+    if (catCount === 0) {
+      const defaultCategories = [
+        'คอมพิวเตอร์',
+        'อุปกรณ์ต่อพ่วง',
+        'เฟอร์นิเจอร์ / ของแต่งห้อง',
+        'มือถือ & อุปกรณ์',
+        'กันพลา / งานอดิเรก',
+        'เครื่องแต่งกาย'
+      ];
+      const insertCat = db.prepare("INSERT OR IGNORE INTO item_categories (name) VALUES (?)");
+      for (const catName of defaultCategories) {
+        insertCat.run(catName);
+      }
+      console.log('🌱 นำเข้าหมวดหมู่สิ่งของเริ่มต้น (Item Categories) สำเร็จ');
+    }
+  } catch (err: any) {
+    console.error('⚠️ เกิดข้อผิดพลาดขณะตั้งค่าตาราง Item Tracker:', err.message);
+  }
+};
+
 export const initSchema = (): void => {
   // เปิด Foreign Key Support
   db.pragma('foreign_keys = ON');
@@ -278,6 +353,9 @@ export const initSchema = (): void => {
 
   // ตรวจสอบและยกระดับโครงสร้างตารางเดิมให้เป็น STRICT Mode หากยังไม่ได้เป็น
   migrateTablesToStrict();
+
+  // ตั้งค่าและสร้างตาราง Item Tracker (STRICT)
+  initItemTrackerSchema();
 
   // ตรวจสอบว่าระบบเคยบันทึกสถานะตรวจสอบโครงสร้างและรัน Migration ไปแล้วหรือยัง
   let schemaVerified = false;

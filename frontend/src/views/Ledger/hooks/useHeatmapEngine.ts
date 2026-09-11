@@ -1,18 +1,12 @@
 import { useMemo, useCallback } from 'react';
 import { TransactionDisplay, Category } from '../../../types';
+import { THAI_MONTHS_SHORT, THAI_DAY_CONFIG } from '../../../utils/formatters';
+import { parseDateStrToObj } from '../../../utils/dateHelpers';
 
 export const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าหอพัก', 'ค่าไฟ', 'ค่าเน็ต', 'ค่าน้ำ'];
 
-const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-const DAY_NAMES = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
-
 function getDayOfWeek(dateStr: string): number {
-  if (dateStr.includes('-')) {
-    const [y, m, d] = dateStr.split('-');
-    return new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-  }
-  const [d, m, y] = dateStr.split('/');
-  return new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
+  return parseDateStrToObj(dateStr).getDay();
 }
 
 export interface HeatmapEngineOptions {
@@ -187,7 +181,7 @@ export function useHeatmapEngine(
     if (yearNum > 2500) yearNum -= 543;
     const dateObj = new Date(yearNum, monthIdx, dayNum);
     const dow     = dateObj.getDay();
-    return { day: dayNum, month: THAI_MONTHS_SHORT[monthIdx] || '', dayName: DAY_NAMES[dow], isWeekend: dow === 0 || dow === 6 };
+    return { day: dayNum, month: THAI_MONTHS_SHORT[monthIdx] || '', dayName: THAI_DAY_CONFIG[dow]?.label || '', isWeekend: dow === 0 || dow === 6 };
   }, []);
 
   return {

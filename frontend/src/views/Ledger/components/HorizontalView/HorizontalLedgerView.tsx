@@ -9,31 +9,15 @@ import HeatmapTooltip, { TooltipData } from './HeatmapTooltip';
 import HeatmapHeader from './HeatmapHeader';
 import HeatmapRow from './HeatmapRow';
 import { TransactionDisplay, Category, DayType } from '../../../../types';
-
-const THAI_MONTHS_FULL = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
+import { THAI_MONTHS } from '../../../../utils/formatters';
+import { parseDateStrToObj } from '../../../../utils/dateHelpers';
 
 const parseYearMonth = (dateStr: string) => {
-  let monthIdx = 0;
-  let year = 0;
-  if (!dateStr) return { year, monthIdx };
+  if (!dateStr) return { year: 0, monthIdx: 0 };
+  const dateObj = parseDateStrToObj(dateStr);
+  let year = dateObj.getFullYear();
+  const monthIdx = dateObj.getMonth();
 
-  if (dateStr.includes('-')) {
-    const parts = dateStr.split('-');
-    if (parts.length >= 2) {
-      year = Number.parseInt(parts[0], 10);
-      monthIdx = Number.parseInt(parts[1], 10) - 1;
-    }
-  } else {
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      monthIdx = Number.parseInt(parts[1], 10) - 1;
-      year = Number.parseInt(parts[2], 10);
-    }
-  }
-  
   if (year > 0 && year < 2500) {
     year += 543;
   }
@@ -65,8 +49,6 @@ export default function HorizontalLedgerView({
   clearFilters,
   isFilterActive = false
 }: HorizontalLedgerViewProps) {
-  const dm = true;
-  
   // UI State
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
@@ -160,9 +142,9 @@ export default function HorizontalLedgerView({
             <col style={{ width: 100 }} />
           </colgroup>
 
-          <HeatmapHeader 
+          <HeatmapHeader
             activeCategories={activeCategories}
-            dm={dm} bgHead={bgHead} border={border} border2={border2}
+            bgHead={bgHead} border={border} border2={border2}
           />
 
           <tbody>
@@ -216,7 +198,7 @@ export default function HorizontalLedgerView({
                             letterSpacing: '0.02em',
                             fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Bai Jamjuree', monospace",
                           }}>
-                            {THAI_MONTHS_FULL[currentYM.monthIdx]} {currentYM.year}
+                            {THAI_MONTHS[currentYM.monthIdx]} {currentYM.year}
                           </span>
                         </div>
                       </td>
@@ -229,7 +211,7 @@ export default function HorizontalLedgerView({
                     activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
                     handleCellLeave={handleCellLeave}
                     handleCellHover={handleCellHover}
-                    dm={dm} bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
+                    bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
                     maxDailyTotal={maxDailyTotal}
                     formatMoney={formatMoney}
                   />

@@ -12,6 +12,7 @@ import { useAppFilter } from '../../context/AppFilterContext';
 import DashboardView from '../../views/Dashboard/index';
 import CalendarView from '../../views/Calendar';
 import LedgerView from '../../views/Ledger/index';
+import ItemsView from '../../views/Items/index';
 import SettingsView from '../../views/Settings';
 
 // Modals
@@ -208,6 +209,12 @@ export default function MainLayout() {
                 isLoading={isProcessing}
                 transactions={transactions}
               />
+            </div>
+          )}
+
+          {activeTab === 'items' && (
+            <div key="items">
+              <ItemsView />
             </div>
           )}
 

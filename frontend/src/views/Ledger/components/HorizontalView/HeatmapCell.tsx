@@ -9,7 +9,6 @@ interface HeatmapCellProps {
   items: TransactionDisplay[];
   cellSum: number;
   intensity: number;
-  dm: boolean;
   border: string;
   ROW_H: number | string;
   maxCellValue: number;
@@ -19,11 +18,12 @@ interface HeatmapCellProps {
 
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity,
-  dm, border, ROW_H, maxCellValue,
+  border, ROW_H, maxCellValue,
   handleCellHover, formatMoney
 }: HeatmapCellProps) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
+  const sz = Math.min(14.5, 12.5 + Math.round(intensity * 2));
 
   return (
     <td
@@ -67,7 +67,7 @@ const HeatmapCell = memo(function HeatmapCell({
               color: cat.color || undefined,
               filter: 'brightness(1.5)',
               opacity: 0.9,
-              background: `rgba(${hexToRgb(cat.color || '#000000')}, ${dm ? 0.2 : 0.1})`,
+              background: `rgba(${hexToRgb(cat.color || '#000000')}, 0.2)`,
               borderRadius: 0,
               padding: '1px 3px',
               zIndex: 10,
@@ -77,40 +77,35 @@ const HeatmapCell = memo(function HeatmapCell({
             </span>
           )}
 
-          {(() => {
-            const sz = Math.min(14.5, 12.5 + Math.round(intensity * 2));
-            return (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'baseline',
-                justifyContent: 'center',
-                width: '100%',
-                marginTop: items.length > 1 ? '3px' : '0',
-                overflow: 'hidden',
-              }}>
-                <span style={{
-                  fontSize: `${sz}px`,
-                  fontWeight: 800,
-                  fontVariantNumeric: 'tabular-nums',
-                  color: cat.color || undefined,
-                  filter: 'brightness(1.8) saturate(1.2)',
-                  lineHeight: 1,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  minWidth: 0,
-                  letterSpacing: '-0.01em',
-                  textShadow: intensity > 0.4 
-                    ? `0 1px 2px ${'rgba(0,0,0,0.6)'}` 
-                    : 'none',
-                  transform: 'scale(1)',
-                }}>
-                  {formatMoney(cellSum)}
-                </span>
-              </div>
-            );
-          })()}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            justifyContent: 'center',
+            width: '100%',
+            marginTop: items.length > 1 ? '3px' : '0',
+            overflow: 'hidden',
+          }}>
+            <span style={{
+              fontSize: `${sz}px`,
+              fontWeight: 800,
+              fontVariantNumeric: 'tabular-nums',
+              color: cat.color || undefined,
+              filter: 'brightness(1.8) saturate(1.2)',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+              letterSpacing: '-0.01em',
+              textShadow: intensity > 0.4
+                ? `0 1px 2px ${'rgba(0,0,0,0.6)'}`
+                : 'none',
+              transform: 'scale(1)',
+            }}>
+              {formatMoney(cellSum)}
+            </span>
+          </div>
           <div style={{
             position: 'absolute',
             bottom: 0,
@@ -119,7 +114,7 @@ const HeatmapCell = memo(function HeatmapCell({
             width: `${barW}%`,
             height: 2,
             borderRadius: 0,
-            background: `rgba(${hexToRgb(cat.color || '#000000')}, ${dm ? 0.85 : 0.7})`,
+            background: `rgba(${hexToRgb(cat.color || '#000000')}, 0.85)`,
           }} />
         </div>
       ) : (

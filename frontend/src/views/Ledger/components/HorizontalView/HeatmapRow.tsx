@@ -20,7 +20,6 @@ interface HeatmapRowProps {
   dayTypeConfig: DayType[];
   handleCellLeave: () => void;
   handleCellHover: (e: React.MouseEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
-  dm: boolean;
   bgBase: string;
   border: string;
   ROW_H: number | string;
@@ -34,7 +33,7 @@ const HeatmapRow = memo(function HeatmapRow({
   dailyTotal, grandTotal, cellMap, activeCategories,
   dayTypes, dayTypeConfig,
   handleCellLeave, handleCellHover,
-  dm, bgBase, border, ROW_H, maxCellValue, maxDailyTotal, formatMoney
+  bgBase, border, ROW_H, maxCellValue, maxDailyTotal, formatMoney
 }: HeatmapRowProps) {
   const total = dailyTotal[date] || 0;
 
@@ -43,6 +42,7 @@ const HeatmapRow = memo(function HeatmapRow({
   const typeConf  = dayTypeConfig.find(dt => dt.id === curTypeId);
   const typeColor = typeConf?.color || '#64748b';
   const typeRgb   = typeConf?.color ? hexToRgb(typeConf.color) : '100,116,139';
+  const sparkPct  = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
 
   return (
     <tr style={{ height: ROW_H }}
@@ -56,75 +56,70 @@ const HeatmapRow = memo(function HeatmapRow({
         boxShadow: '2px 0 5px rgba(0,0,0,0.25)',
         padding: '2px',
       }}>
-        {(() => {
-          const sparkPct = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
-          return (
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              minHeight: '30px',
-              borderRadius: 0,
-              overflow: 'hidden',
-              background: `rgba(${typeRgb}, ${dm ? 0.08 : 0.04})`,
-              borderLeft: `2.5px solid ${typeColor}`,
-              padding: '2px 0',
-              '--type-rgb': typeRgb,
-            } as React.CSSProperties} >
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: `${sparkPct}%`,
-                background: `rgba(${typeRgb}, ${dm ? 0.18 : 0.1})`,
-                borderRadius: 0,
-              }} />
-              
-              <div style={{
-                position: 'relative', 
-                zIndex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                lineHeight: 1,
-              }}>
-                <span style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  color: typeColor,
-                  filter: 'brightness(1.2)',
-                  opacity: 0.8,
-                  marginBottom: '1px',
-                }}>{dayName}</span>
-                
-                <span style={{
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: typeColor,
-                  filter: 'brightness(1.4)',
-                  fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '-0.02em',
-                }}>
-                  {day}
-                  <span style={{
-                    fontSize: '8px',
-                    fontWeight: 900,
-                    marginLeft: '2px',
-                    opacity: 0.8,
-                    textTransform: 'uppercase',
-                    verticalAlign: 'top',
-                    display: 'inline-block',
-                    marginTop: '1px'
-                  }}>{month}</span>
-                </span>
-              </div>
-            </div>
-          );
-        })()}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          minHeight: '30px',
+          borderRadius: 0,
+          overflow: 'hidden',
+          background: `rgba(${typeRgb}, 0.08)`,
+          borderLeft: `2.5px solid ${typeColor}`,
+          padding: '2px 0',
+          '--type-rgb': typeRgb,
+        } as React.CSSProperties} >
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${sparkPct}%`,
+            background: `rgba(${typeRgb}, 0.18)`,
+            borderRadius: 0,
+          }} />
+
+          <div style={{
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            lineHeight: 1,
+          }}>
+            <span style={{
+              fontSize: 9,
+              fontWeight: 800,
+              color: typeColor,
+              filter: 'brightness(1.2)',
+              opacity: 0.8,
+              marginBottom: '1px',
+            }}>{dayName}</span>
+
+            <span style={{
+              fontSize: 14,
+              fontWeight: 900,
+              color: typeColor,
+              filter: 'brightness(1.4)',
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: '-0.02em',
+            }}>
+              {day}
+              <span style={{
+                fontSize: '8px',
+                fontWeight: 900,
+                marginLeft: '2px',
+                opacity: 0.8,
+                textTransform: 'uppercase',
+                verticalAlign: 'top',
+                display: 'inline-block',
+                marginTop: '1px'
+              }}>{month}</span>
+            </span>
+          </div>
+        </div>
       </td>
 
       {activeCategories.map((cat, idx) => {
@@ -137,7 +132,7 @@ const HeatmapRow = memo(function HeatmapRow({
             key={cat.id}
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
-            dm={dm} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
+            border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
             handleCellHover={handleCellHover} formatMoney={formatMoney}
           />
         );
