@@ -827,37 +827,40 @@ export default function ItemFormModal({
                       <button
                         type="button"
                         onClick={() => setPriority(2)}
-                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all ${
+                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all flex items-center justify-center gap-1.5 ${
                           priority <= 3
                             ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/60'
                             : 'bg-[#141414] text-neutral-400 border-[#2a2a2a] hover:text-white'
                         }`}
                       >
-                        🟢 ปกติ (0-3)
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                        <span>ปกติ (0-3)</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setPriority(5)}
-                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all ${
+                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all flex items-center justify-center gap-1.5 ${
                           priority >= 4 && priority <= 7
                             ? 'bg-amber-950/40 text-amber-300 border-amber-500/60'
                             : 'bg-[#141414] text-neutral-400 border-[#2a2a2a] hover:text-white'
                         }`}
                       >
-                        🟡 ปานกลาง (4-7)
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        <span>ปานกลาง (4-7)</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setPriority(9)}
-                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all ${
+                        className={`py-2 px-2 text-[11px] font-bold rounded-none border text-center transition-all flex items-center justify-center gap-1.5 ${
                           priority >= 8
                             ? 'bg-red-950/40 text-red-300 border-red-600/60'
                             : 'bg-[#141414] text-neutral-400 border-[#2a2a2a] hover:text-white'
                         }`}
                       >
-                        🔴 สำคัญมาก (8-10)
+                        <span className="w-2 h-2 rounded-full bg-[#da291c] shrink-0" />
+                        <span>สำคัญมาก (8-10)</span>
                       </button>
                     </div>
 

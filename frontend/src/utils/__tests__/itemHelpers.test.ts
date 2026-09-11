@@ -7,6 +7,8 @@ import {
   getCategoryAccent,
   sortWishlistItems,
   sortInventoryItems,
+  WISHLIST_SORT_OPTIONS,
+  INVENTORY_SORT_OPTIONS
 } from '../itemHelpers';
 import { ItemWithDetails } from '../../types';
 
@@ -214,6 +216,18 @@ describe('itemHelpers', () => {
     it('sorts inventory by warranty_asc (soonest expiry first)', () => {
       const sorted = sortInventoryItems(mockInventory, 'warranty_asc');
       expect(sorted.map(i => i.id)).toEqual([20, 10]); // 2026-08-01 -> 2027-01-01
+    });
+
+    it('provides valid WISHLIST_SORT_OPTIONS and INVENTORY_SORT_OPTIONS without emojis', () => {
+      expect(WISHLIST_SORT_OPTIONS.length).toBe(4);
+      expect(INVENTORY_SORT_OPTIONS.length).toBe(5);
+
+      const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+      for (const opt of [...WISHLIST_SORT_OPTIONS, ...INVENTORY_SORT_OPTIONS]) {
+        expect(opt.value).toBeTruthy();
+        expect(opt.label).toBeTruthy();
+        expect(emojiRegex.test(opt.label)).toBe(false);
+      }
     });
   });
 });

@@ -17,13 +17,16 @@ import {
   WishlistSortOption,
   InventorySortOption,
   sortWishlistItems,
-  sortInventoryItems
+  sortInventoryItems,
+  WISHLIST_SORT_OPTIONS,
+  INVENTORY_SORT_OPTIONS
 } from '../../utils/itemHelpers';
 
 import ItemCard from './ItemCard';
 import ItemFormModal from './ItemFormModal';
 import LinkTransactionsModal from './LinkTransactionsModal';
 import ItemCategoryModal from './ItemCategoryModal';
+import ItemSortDropdown from './ItemSortDropdown';
 
 export default function ItemsView() {
   const [items, setItems] = useState<ItemWithDetails[]>([]);
@@ -471,20 +474,13 @@ export default function ItemsView() {
 
             <div className="flex items-center gap-2">
               {/* Wishlist Sort Selector */}
-              <div className="flex items-center gap-1 bg-[#141414] border border-[#333] px-2 py-0.5">
-                <ArrowUpDown className="w-3 h-3 text-amber-400 shrink-0" />
-                <select
-                  value={wishlistSort}
-                  onChange={(e) => handleWishlistSortChange(e.target.value as WishlistSortOption)}
-                  className="bg-transparent text-neutral-300 hover:text-white text-xs font-medium focus:outline-none cursor-pointer py-0.5"
-                  title="จัดเรียงรายการใน Wishlist"
-                >
-                  <option value="priority_desc" className="bg-[#181818] text-slate-200">🎯 ความสำคัญ (มาก ➔ น้อย)</option>
-                  <option value="price_desc" className="bg-[#181818] text-slate-200">💰 ราคาประเมิน (มาก ➔ น้อย)</option>
-                  <option value="price_asc" className="bg-[#181818] text-slate-200">🪙 ราคาประเมิน (น้อย ➔ มาก)</option>
-                  <option value="date_desc" className="bg-[#181818] text-slate-200">🕒 บันทึกล่าสุด (ใหม่สุด)</option>
-                </select>
-              </div>
+              <ItemSortDropdown
+                value={wishlistSort}
+                onChange={handleWishlistSortChange}
+                options={WISHLIST_SORT_OPTIONS}
+                accentColor="amber"
+                title="จัดเรียงรายการใน Wishlist"
+              />
 
               <button
                 onClick={() => {
@@ -706,21 +702,13 @@ export default function ItemsView() {
 
               <div className="flex items-center gap-2">
                 {/* Inventory Sort Selector */}
-                <div className="flex items-center gap-1 bg-[#141414] border border-[#333] px-2 py-0.5">
-                  <ArrowUpDown className="w-3 h-3 text-[#da291c] shrink-0" />
-                  <select
-                    value={inventorySort}
-                    onChange={(e) => handleInventorySortChange(e.target.value as InventorySortOption)}
-                    className="bg-transparent text-neutral-300 hover:text-white text-xs font-medium focus:outline-none cursor-pointer py-0.5"
-                    title="จัดเรียงรายการใน Inventory"
-                  >
-                    <option value="purchased_desc" className="bg-[#181818] text-slate-200">📅 วันที่ซื้อ (ล่าสุด ➔ เก่าสุด)</option>
-                    <option value="price_desc" className="bg-[#181818] text-slate-200">💰 มูลค่า (มาก ➔ น้อย)</option>
-                    <option value="price_asc" className="bg-[#181818] text-slate-200">🪙 มูลค่า (น้อย ➔ มาก)</option>
-                    <option value="warranty_asc" className="bg-[#181818] text-slate-200">🛡️ ประกัน (ใกล้หมดก่อน)</option>
-                    <option value="date_desc" className="bg-[#181818] text-slate-200">🕒 บันทึกล่าสุด (ใหม่สุด)</option>
-                  </select>
-                </div>
+                <ItemSortDropdown
+                  value={inventorySort}
+                  onChange={handleInventorySortChange}
+                  options={INVENTORY_SORT_OPTIONS}
+                  accentColor="red"
+                  title="จัดเรียงรายการใน Inventory"
+                />
 
                 <button
                   onClick={() => {

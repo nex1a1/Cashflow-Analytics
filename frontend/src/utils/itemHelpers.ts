@@ -232,6 +232,26 @@ export function getCategoryAccent(categoryId: number, categoryName = ''): Catego
 export type WishlistSortOption = 'priority_desc' | 'price_desc' | 'price_asc' | 'date_desc';
 export type InventorySortOption = 'purchased_desc' | 'price_desc' | 'price_asc' | 'warranty_asc' | 'date_desc';
 
+export interface SortOption<T extends string = string> {
+  value: T;
+  label: string;
+}
+
+export const WISHLIST_SORT_OPTIONS: SortOption<WishlistSortOption>[] = [
+  { value: 'priority_desc', label: 'ความสำคัญ (มาก → น้อย)' },
+  { value: 'price_desc', label: 'ราคาประเมิน (มาก → น้อย)' },
+  { value: 'price_asc', label: 'ราคาประเมิน (น้อย → มาก)' },
+  { value: 'date_desc', label: 'บันทึกล่าสุด (ใหม่สุด)' },
+];
+
+export const INVENTORY_SORT_OPTIONS: SortOption<InventorySortOption>[] = [
+  { value: 'purchased_desc', label: 'วันที่ซื้อ (ล่าสุด → เก่าสุด)' },
+  { value: 'price_desc', label: 'มูลค่า (มาก → น้อย)' },
+  { value: 'price_asc', label: 'มูลค่า (น้อย → มาก)' },
+  { value: 'warranty_asc', label: 'ประกัน (ใกล้หมดก่อน)' },
+  { value: 'date_desc', label: 'บันทึกล่าสุด (ใหม่สุด)' },
+];
+
 /**
  * Sorts wishlist items based on chosen sorting criteria.
  */
