@@ -6,6 +6,15 @@ export const EXCLUDED_HEATMAP_CATEGORIES = ['ค่าเช่า/ค่าห�
 const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const DAY_NAMES = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
 
+function getDayOfWeek(dateStr: string): number {
+  if (dateStr.includes('-')) {
+    const [y, m, d] = dateStr.split('-');
+    return new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
+  }
+  const [d, m, y] = dateStr.split('/');
+  return new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
+}
+
 export interface HeatmapEngineOptions {
   selectedCategories?: 'ALL' | string[];
   includeFixedCosts?: boolean;
@@ -31,10 +40,6 @@ export function useHeatmapEngine(
   const expenseTransactions = useMemo(() =>
     displayTransactions.filter(t => {
       const cat = categories.find(c => c.name === t.category || c.id === t.category_id);
-      // We assume group_type is equivalent to 'type' in Category if not found, but Category doesn't have type in type def.
-      // Wait, Category interface has cashflow_group_id, we should check group_type from t or cashflow_group.
-      // The original code checks cat?.type !== 'expense'. In the provided types, Category does not have 'type'.
-      // But the original code relied on it. Let's cast as any if necessary, or just use t.group_type.
       const isExpense = (cat as any)?.type === 'expense' || t.group_type === 'expense';
       if (!isExpense) return false;
       
@@ -61,15 +66,7 @@ export function useHeatmapEngine(
 
       // 4. Day type filter (weekday / weekend)
       if (dayTypeFilter !== 'ALL') {
-        let dow: number;
-        if (t.date.includes('-')) {
-          const [y, m, d] = t.date.split('-');
-          dow = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-        } else {
-          const [d, m, y] = t.date.split('/');
-          dow = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-        }
-        const isWeekend = (dow === 0 || dow === 6);
+        const isWeekend = [0, 6].includes(getDayOfWeek(t.date));
         if (dayTypeFilter === 'WEEKEND' && !isWeekend) return false;
         if (dayTypeFilter === 'WEEKDAY' && isWeekend) return false;
       }
@@ -97,15 +94,7 @@ export function useHeatmapEngine(
     // Filter day type on dates
     if (dayTypeFilter !== 'ALL') {
       dates = dates.filter(dateStr => {
-        let dow: number;
-        if (dateStr.includes('-')) {
-          const [y, m, d] = dateStr.split('-');
-          dow = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-        } else {
-          const [d, m, y] = dateStr.split('/');
-          dow = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-        }
-        const isWeekend = (dow === 0 || dow === 6);
+        const isWeekend = [0, 6].includes(getDayOfWeek(dateStr));
         return dayTypeFilter === 'WEEKEND' ? isWeekend : !isWeekend;
       });
     }

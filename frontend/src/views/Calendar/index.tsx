@@ -423,16 +423,6 @@ function CalendarView({
     };
   }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
-  const prevMonth = useCallback(() => {
-    const d = new Date(y, m - 1, 1);
-    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
-  }, [y, m, setFilterPeriod]);
-
-  const nextMonth = useCallback(() => {
-    const d = new Date(y, m + 1, 1);
-    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
-  }, [y, m, setFilterPeriod]);
-
   const goToCurrentMonth = useCallback(() => {
     const now = new Date();
     const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
@@ -476,9 +466,6 @@ function CalendarView({
           monthInc={monthInc}
           monthExp={monthExp}
           monthNet={monthNet}
-          prevMonth={prevMonth}
-          nextMonth={nextMonth}
-          goToCurrentMonth={goToCurrentMonth}
           calendarData={calendarData}
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}

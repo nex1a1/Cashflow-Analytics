@@ -306,87 +306,46 @@ function AllocationOverviewSection({
   legendLayoutMode,
   hexToRgb
 }: { allocationTotals: any; legendLayoutMode: 'compact' | 'grouped'; hexToRgb: (hex: string | null | undefined) => string; }) {
+  const rows = [
+    { label: 'จำเป็น (Needs)', dot: '#EF4444', pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
+    { label: 'ทั่วไป (Wants)', dot: '#F59E0B', pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
+    { label: 'เงินออม (Savings)', dot: '#10B981', pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
+  ];
+
   return (
     <div className="w-full lg:w-[320px] shrink-0 pl-0 lg:pl-5 border-t lg:border-t-0 lg:border-l border-[#2d2d2d]/50 flex flex-col gap-2.5 pt-1 justify-start relative overflow-hidden select-none">
       <span className="text-[10px] font-black text-slate-500 tracking-wider uppercase flex items-center gap-1.5 z-10">
         สัดส่วนการใช้จ่าย (Allocation)
       </span>
-      
+
       <div className="flex flex-col gap-1.5 text-[11px] font-bold text-slate-300 z-10">
-        {/* Needs */}
-        <div className="flex justify-between items-center">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#EF4444]" /> จำเป็น (Needs)
-          </span>
-          <span className="font-bold tabular-nums tracking-tight text-white">
-            {formatValue(allocationTotals.need)} ฿ ({allocationTotals.needPct}%)
-          </span>
-        </div>
-        {legendLayoutMode === 'grouped' && allocationTotals.needCats.length > 0 && (
-          <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.needCats.map((cat: any) => (
-              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
-                  <span className="truncate">
-                    {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
-                  </span>
-                </span>
-                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+        {rows.map(row => (
+          <React.Fragment key={row.label}>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-none" style={{ backgroundColor: row.dot }} /> {row.label}
+              </span>
+              <span className="font-bold tabular-nums tracking-tight text-white">
+                {formatValue(row.total)} ฿ ({row.pct}%)
+              </span>
+            </div>
+            {legendLayoutMode === 'grouped' && row.cats.length > 0 && (
+              <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
+                {row.cats.map((cat: any) => (
+                  <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="truncate">
+                        {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
+                      </span>
+                    </span>
+                    <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Wants */}
-        <div className="flex justify-between items-center">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#F59E0B]" /> ทั่วไป (Wants)
-          </span>
-          <span className="font-bold tabular-nums tracking-tight text-white">
-            {formatValue(allocationTotals.want)} ฿ ({allocationTotals.wantPct}%)
-          </span>
-        </div>
-        {legendLayoutMode === 'grouped' && allocationTotals.wantCats.length > 0 && (
-          <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.wantCats.map((cat: any) => (
-              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
-                  <span className="truncate">
-                    {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
-                  </span>
-                </span>
-                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Savings */}
-        <div className="flex justify-between items-center">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-none bg-[#10B981]" /> เงินออม (Savings)
-          </span>
-          <span className="font-bold tabular-nums tracking-tight text-white">
-            {formatValue(allocationTotals.savings)} ฿ ({allocationTotals.savingsPct}%)
-          </span>
-        </div>
-        {legendLayoutMode === 'grouped' && allocationTotals.savingsCats.length > 0 && (
-          <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
-            {allocationTotals.savingsCats.map((cat: any) => (
-              <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
-                  <span className="truncate">
-                    {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
-                  </span>
-                </span>
-                <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
-              </div>
-            ))}
-          </div>
-        )}
+            )}
+          </React.Fragment>
+        ))}
       </div>
 
       {/* Stacked Progress Bar */}

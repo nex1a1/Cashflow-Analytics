@@ -126,6 +126,7 @@ interface LedgerStatCardProps {
   uniqueMonths: number;
   formatMoney: (val: number | string) => string;
   isActive: boolean;
+  isSavings: boolean;
   onCardClick: () => void;
 }
 
@@ -137,12 +138,12 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
   uniqueMonths,
   formatMoney,
   isActive,
+  isSavings,
   onCardClick
 }) => {
   const total = breakdown?.total || 0;
   const txCount = breakdown?.txCount || 0;
   const isIncome = g.type === 'income';
-  const isSavings = g.type === 'savings' || g.name.includes('ลงทุน') || g.name.includes('ออม');
 
   const pctOfTotal = resolveGroupPct(isIncome, isSavings, total, sumInc, sumExp);
   const theme = resolveCardTheme(g, isIncome, isSavings);
@@ -344,7 +345,7 @@ export function useLedgerStats({
 
   const periodDays = Math.max(1, allDatesInPeriod?.length || 1);
 
-  const getSubValue = (total: number, isGroup = false, groupType = 'expense') => {
+  const getSubValue = (total: number) => {
     if (uniqueMonths > 1) {
       return `เฉลี่ย ฿${formatMoney(total / uniqueMonths)} / เดือน`;
     }
@@ -361,6 +362,7 @@ export function useLedgerStats({
       uniqueMonths={uniqueMonths}
       formatMoney={formatMoney}
       isActive={advancedFilterGroup === g.id}
+      isSavings={isSavingsGroup(g)}
       onCardClick={() => {
         if (setAdvancedFilterGroup) {
           setAdvancedFilterGroup(advancedFilterGroup === g.id ? 'ALL' : g.id);

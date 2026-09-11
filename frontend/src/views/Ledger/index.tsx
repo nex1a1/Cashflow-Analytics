@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { formatMoney } from '../../utils/formatters';
 import { isDateInFilter } from '../../utils/dateHelpers';
+import { useConfirmTimeout } from '../../hooks/useConfirmTimeout';
 
 // Shared Components
 import FilterBar from './components/Shared/FilterBar';
@@ -90,7 +91,7 @@ function LedgerView({
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'horizontal'>('list');
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
-  const [confirmDeleteMonth, setConfirmDeleteMonth] = useState(false);
+  const { confirming: confirmDeleteMonth, trigger: triggerDeleteMonth } = useConfirmTimeout();
 
   // ── Logic: Dedicated Horizontal Ledger Filters (Approach A) ──
   const [horizontalFilterOpen, setHorizontalFilterOpen] = useState(false);
@@ -145,20 +146,7 @@ function LedgerView({
     return (transactions || []).filter(t => isDateInFilter(t.date, filterPeriod));
   }, [transactions, filterPeriod]);
 
-  useEffect(() => {
-    if (!confirmDeleteMonth) return;
-    const timer = setTimeout(() => setConfirmDeleteMonth(false), 3000);
-    return () => clearTimeout(timer);
-  }, [confirmDeleteMonth]);
-
-  const handleDeleteMonthClick = () => {
-    if (confirmDeleteMonth) {
-      handleDeleteMonth(filterPeriod);
-      setConfirmDeleteMonth(false);
-    } else {
-      setConfirmDeleteMonth(true);
-    }
-  };
+  const handleDeleteMonthClick = () => triggerDeleteMonth(() => handleDeleteMonth(filterPeriod));
 
   // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
   const showSkeleton = isLoading && (!displayTransactions || displayTransactions.length === 0) && (!transactions || transactions.length === 0);

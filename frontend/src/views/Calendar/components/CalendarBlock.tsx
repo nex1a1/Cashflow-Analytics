@@ -1,7 +1,7 @@
 import React from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
-import { resolveDefaultDayTypeId } from '../utils/calendarPeriodHelpers';
+import { resolveDefaultDayTypeId, THAI_MONTHS, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 import { formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 
@@ -14,9 +14,6 @@ export interface CalendarBlockProps {
   monthInc: number;
   monthExp: number;
   monthNet: number;
-  prevMonth: () => void;
-  nextMonth: () => void;
-  goToCurrentMonth: () => void;
   calendarData: Record<number, {
     exp: number;
     inc: number;
@@ -44,9 +41,6 @@ const CalendarBlock = React.memo(function CalendarBlock({
   monthInc,
   monthExp,
   monthNet,
-  prevMonth,
-  nextMonth,
-  goToCurrentMonth,
   calendarData,
   dayTypes,
   dayTypeConfig,
@@ -59,12 +53,6 @@ const CalendarBlock = React.memo(function CalendarBlock({
   toggleCategory,
   maxDailyExpense
 }: CalendarBlockProps): React.ReactElement {
-  const thaiMonths = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-  ];
-  const DAYS_LABEL = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-  const WEEKEND_IDX = new Set([0, 6]);
   const today = new Date();
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
@@ -77,60 +65,37 @@ const CalendarBlock = React.memo(function CalendarBlock({
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Header (Navigation & Stats Summary) */}
       <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4 flex-wrap">
-            <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
-              <CalendarIcon className="w-5 h-5 text-[#da291c]" />
-              {thaiMonths[m]} {y}
-            </h2>
-            <div className="flex items-center gap-2 flex-wrap">
-              {monthInc > 0 && (
-                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
-                  ▲ {formatAmount(monthInc)} ฿
-                </span>
-              )}
-              {monthExp > 0 && (
-                <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-red-950/40 text-red-400 border-red-800/40">
-                  ▼ {formatAmount(monthExp)} ฿
-                </span>
-              )}
-              {(monthInc > 0 || monthExp > 0) && (
-                <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
-                  คงเหลือ {formatAmount(monthNet)} ฿
-                </span>
-              )}
-              {excludedCategoryIds?.size > 0 && (
-                <button
-                  onClick={() => toggleCategory?.('CLEAR_ALL')}
-                  className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-none"
-                  title="คลิกเพื่อแสดงทุกหมวดหมู่"
-                >
-                  <span>⚠️ ซ่อน {excludedCategoryIds.size} หมวดหมู่</span>
-                  <span className="underline ml-0.5">[แสดงทั้งหมด]</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button 
-              onClick={prevMonth} 
-              className="p-1.5 rounded-none border disabled:opacity-30 disabled:cursor-not-allowed border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={goToCurrentMonth} 
-              className="px-3 py-1.5 rounded-none border text-[12px] font-bold border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
-            >
-              เดือนปัจจุบัน
-            </button>
-            <button 
-              onClick={nextMonth} 
-              className="p-1.5 rounded-none border disabled:opacity-30 disabled:cursor-not-allowed border-[#2d2d2d] bg-[#121212] hover:bg-[#1d1d1d] hover:border-[#da291c] text-slate-300 transition-none"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        <div className="flex items-center gap-4 flex-wrap">
+          <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
+            <CalendarIcon className="w-5 h-5 text-[#da291c]" />
+            {THAI_MONTHS[m]} {y}
+          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            {monthInc > 0 && (
+              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
+                ▲ {formatAmount(monthInc)} ฿
+              </span>
+            )}
+            {monthExp > 0 && (
+              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-red-950/40 text-red-400 border-red-800/40">
+                ▼ {formatAmount(monthExp)} ฿
+              </span>
+            )}
+            {(monthInc > 0 || monthExp > 0) && (
+              <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                คงเหลือ {formatAmount(monthNet)} ฿
+              </span>
+            )}
+            {excludedCategoryIds?.size > 0 && (
+              <button
+                onClick={() => toggleCategory?.('CLEAR_ALL')}
+                className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-none"
+                title="คลิกเพื่อแสดงทุกหมวดหมู่"
+              >
+                <span>⚠️ ซ่อน {excludedCategoryIds.size} หมวดหมู่</span>
+                <span className="underline ml-0.5">[แสดงทั้งหมด]</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -138,11 +103,11 @@ const CalendarBlock = React.memo(function CalendarBlock({
       {/* 2. Calendar Grid */}
       <div className="rounded-none border border-[#2d2d2d] overflow-hidden flex-1 flex flex-col">
         <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b border-[#2d2d2d]">
-          {DAYS_LABEL.map((label, i) => (
-            <div 
-              key={label} 
+          {DAY_OF_WEEK_LABELS.map((label, i) => (
+            <div
+              key={label}
               className={`py-2 text-center text-[14px] font-black tracking-wider bg-[#121212] ${
-                WEEKEND_IDX.has(i) ? 'text-red-400' : 'text-slate-400'
+                i === 0 || i === 6 ? 'text-red-400' : 'text-slate-400'
               }`}
             >
               {label}
@@ -162,7 +127,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
             const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
             const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
             const dow = new Date(y, m, d).getDay();
-            const isWeekend = WEEKEND_IDX.has(dow);
+            const isWeekend = dow === 0 || dow === 6;
             const defType = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
             const dayType = dayTypes[dateStr] || defType || '';
 

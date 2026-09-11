@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { DollarSign, Flame, Award, UtensilsCrossed } from 'lucide-react';
-
-const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+import { formatWholeBaht as formatVal } from '../../utils/calendarPeriodHelpers';
 
 export interface WorkVsRestData {
   workDays?: number;

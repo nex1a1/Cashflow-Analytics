@@ -17,8 +17,6 @@ interface HeatmapCellProps {
   formatMoney: (val: number | string) => string;
 }
 
-export const formatCellAmount = formatMoney;
-
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity,
   dm, border, ROW_H, maxCellValue,

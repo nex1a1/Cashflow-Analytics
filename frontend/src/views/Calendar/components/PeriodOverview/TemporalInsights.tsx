@@ -1,9 +1,7 @@
 import React from 'react';
 import { Briefcase, Coffee, PieChart } from 'lucide-react';
-import { DayOfWeekStat, DayTypeStat, RankedCategory } from '../../utils/calendarPeriodHelpers';
+import { DayOfWeekStat, DayTypeStat, RankedCategory, formatWholeBaht as formatVal } from '../../utils/calendarPeriodHelpers';
 import { WorkVsRestData } from './PeriodExecutiveHUD';
-
-const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 function getHumanInsight(workAvg: number, restAvg: number, ratio: string) {
   if (workAvg <= 0 || restAvg <= 0) {

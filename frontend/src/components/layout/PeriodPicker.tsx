@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronRight, ChevronDown, Check, LayoutGrid, CalendarRange, ListChecks, X, CalendarDays, Zap } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, ChevronDown, Check, LayoutGrid, CalendarRange, ListChecks, X, CalendarDays, CalendarCheck, Zap } from 'lucide-react';
 import { getFilterLabel, getThaiMonth, THAI_MONTHS_SHORT } from '../../utils/formatters';
 import { GroupedOptions } from '../../types';
 
@@ -123,6 +123,17 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
     setFilterPeriod(val);
     setOpen(false);
   };
+
+  // Single-month stepper: only meaningful when filterPeriod is a plain YYYY-MM.
+  // ALL / years / quarters / ranges / multi-select have no coherent "next month".
+  const isSingleMonth = /^\d{4}-\d{2}$/.test(filterPeriod);
+
+  const stepMonth = useCallback((delta: number) => {
+    if (!/^\d{4}-\d{2}$/.test(filterPeriod)) return;
+    const [yStr, mStr] = filterPeriod.split('-');
+    const d = new Date(Number.parseInt(yStr, 10), Number.parseInt(mStr, 10) - 1 + delta, 1);
+    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+  }, [filterPeriod, setFilterPeriod]);
 
   // Switch mode and clear pending states from the previous mode
   const handleModeChange = (newMode: string) => {
@@ -248,20 +259,55 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
   return (
     <div className="relative" ref={ref}>
-      {/* ── Trigger Button ─────────────────────────────────────────────── */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-[#121212] border border-[#383838] rounded-none hover:border-[#da291c] text-slate-100 text-xs font-bold transition-all focus:outline-none min-w-[190px]"
-      >
-        <CalendarDays className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-        <span className="flex-1 text-left truncate">{getFilterLabel(filterPeriod)}</span>
-        {modeBadge && (
-          <span className={`text-[9px] font-bold px-1 py-0.5 border rounded-none shrink-0 ${modeBadge.cls}`}>
-            {modeBadge.label}
-          </span>
-        )}
-        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
-      </button>
+      {/* ── Trigger Cluster: Jump-to-current + Stepper + Dropdown (merged) ── */}
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => setFilterPeriod(currentMonth)}
+          disabled={filterPeriod === currentMonth}
+          title="ไปเดือนปัจจุบัน"
+          className="p-1.5 rounded-none border border-[#383838] bg-[#121212] text-slate-300 hover:border-[#da291c] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#383838] disabled:hover:text-slate-300 shrink-0"
+        >
+          <CalendarCheck className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="flex items-center rounded-none border border-[#383838] bg-[#121212] shrink-0">
+          <button
+            onClick={() => stepMonth(-1)}
+            disabled={!isSingleMonth}
+            title="เดือนก่อนหน้า"
+            className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+
+          <span className="w-[1px] h-5 bg-[#2a2a2a] shrink-0" />
+
+          <button
+            onClick={() => setOpen(o => !o)}
+            className="flex items-center gap-2 px-3 py-1.5 text-slate-100 text-xs font-bold transition-all hover:text-white focus:outline-none min-w-[170px]"
+          >
+            <CalendarDays className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
+            <span className="flex-1 text-left truncate">{getFilterLabel(filterPeriod)}</span>
+            {modeBadge && (
+              <span className={`text-[9px] font-bold px-1 py-0.5 border rounded-none shrink-0 ${modeBadge.cls}`}>
+                {modeBadge.label}
+              </span>
+            )}
+            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+          </button>
+
+          <span className="w-[1px] h-5 bg-[#2a2a2a] shrink-0" />
+
+          <button
+            onClick={() => stepMonth(1)}
+            disabled={!isSingleMonth}
+            title="เดือนถัดไป"
+            className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-72 bg-[#181818] border border-[#3e3e3e] rounded-none shadow-2xl ring-1 ring-white/10 z-50 overflow-hidden">

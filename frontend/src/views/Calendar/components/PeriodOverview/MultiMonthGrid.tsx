@@ -1,8 +1,6 @@
 import React from 'react';
 import { CalendarDays, ChevronRight, TableProperties } from 'lucide-react';
-import { MonthlyMatrix } from '../../utils/calendarPeriodHelpers';
-
-const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+import { MonthlyMatrix, formatWholeBaht as formatVal } from '../../utils/calendarPeriodHelpers';
 
 export interface MultiMonthGridProps {
   displayMonths: MonthlyMatrix[];

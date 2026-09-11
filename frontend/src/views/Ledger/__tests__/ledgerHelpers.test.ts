@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { formatCellAmount } from '../components/HorizontalView/HeatmapCell';
+import { formatMoney } from '../../../utils/formatters';
 
-describe('formatCellAmount', () => {
+describe('formatMoney (heatmap cell amounts)', () => {
   it('always formats numbers with exactly 2 decimal places', () => {
-    expect(formatCellAmount(0)).toBe('0.00');
-    expect(formatCellAmount(43)).toBe('43.00');
-    expect(formatCellAmount(750)).toBe('750.00');
-    expect(formatCellAmount(1781)).toBe('1,781.00');
-    expect(formatCellAmount(1000)).toBe('1,000.00');
-    expect(formatCellAmount(593.5)).toBe('593.50');
-    expect(formatCellAmount(12500.75)).toBe('12,500.75');
+    expect(formatMoney(0)).toBe('0.00');
+    expect(formatMoney(43)).toBe('43.00');
+    expect(formatMoney(750)).toBe('750.00');
+    expect(formatMoney(1781)).toBe('1,781.00');
+    expect(formatMoney(1000)).toBe('1,000.00');
+    expect(formatMoney(593.5)).toBe('593.50');
+    expect(formatMoney(12500.75)).toBe('12,500.75');
   });
 });
 

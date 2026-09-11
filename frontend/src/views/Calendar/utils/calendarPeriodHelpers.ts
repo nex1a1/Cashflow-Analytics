@@ -14,6 +14,11 @@ export const THAI_SHORT_MONTHS = [
 export const DAY_OF_WEEK_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 export const DAY_OF_WEEK_FULL_LABELS = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
 
+// Whole-Baht formatting for Period Overview summary surfaces (HUD, matrix, insights, outliers).
+// Deliberately rounds to 0 decimals — unlike utils/formatters.formatAmount, which keeps up to 2.
+export const formatWholeBaht = (val: number) =>
+  (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
 export interface MonthEntry {
   monthStr: string;
   year: number;
@@ -549,7 +554,7 @@ export function calculateTemporalInsights({
       else monthCycleStats.late.days += 1;
 
       // 3. Day type mapping
-      const defaultTypeId = isWeekend ? (dayTypeConfig[1]?.id || 'weekend') : (dayTypeConfig[0]?.id || 'work');
+      const defaultTypeId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend) || (isWeekend ? 'weekend' : 'work');
       const assignedTypeId = dayTypes[dateStr] || defaultTypeId;
 
       if (!dayTypeMap[assignedTypeId]) {
@@ -608,7 +613,7 @@ export function calculateTemporalInsights({
     }
 
     // Day type
-    const defaultTypeId = isWeekend ? (dayTypeConfig[1]?.id || 'weekend') : (dayTypeConfig[0]?.id || 'work');
+    const defaultTypeId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend) || (isWeekend ? 'weekend' : 'work');
     const assignedTypeId = dayTypes[t.date] || defaultTypeId;
     if (dayTypeMap[assignedTypeId]) {
       dayTypeMap[assignedTypeId].totalExpense += amt;
@@ -902,7 +907,7 @@ export function calculatePeakOutliers({
     const dow = new Date(y, m, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
 
-    const defaultTypeId = isWeekend ? (dayTypeConfig[1]?.id || 'weekend') : (dayTypeConfig[0]?.id || 'work');
+    const defaultTypeId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend) || (isWeekend ? 'weekend' : 'work');
     const assignedTypeId = dayTypes[item.dateStr] || defaultTypeId;
     const matchedDayType = dayTypeConfig.find(dt => dt.id === assignedTypeId) || {
       id: assignedTypeId,

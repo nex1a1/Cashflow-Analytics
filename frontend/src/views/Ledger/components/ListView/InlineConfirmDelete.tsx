@@ -1,32 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Trash2 } from 'lucide-react';
+import { useConfirmTimeout } from '../../../../hooks/useConfirmTimeout';
 
 interface InlineConfirmDeleteProps {
   onDelete: () => void;
   isDarkMode?: boolean;
 }
 
-export default function InlineConfirmDelete({ onDelete, isDarkMode }: InlineConfirmDeleteProps) {
-  const [confirming, setConfirming] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (confirming) { 
-      if (timer.current) clearTimeout(timer.current); 
-      onDelete(); 
-    } else { 
-      setConfirming(true); 
-      timer.current = setTimeout(() => setConfirming(false), 3000); 
-    }
-  };
-
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+export default function InlineConfirmDelete({ onDelete }: InlineConfirmDeleteProps) {
+  const { confirming, trigger } = useConfirmTimeout();
 
   return (
     <button
-      onClick={handleClick}
+      onClick={() => trigger(onDelete)}
       className={`rounded-none ${
         confirming
           ? 'bg-[#da291c] text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-widest font-mono border border-[#da291c]'

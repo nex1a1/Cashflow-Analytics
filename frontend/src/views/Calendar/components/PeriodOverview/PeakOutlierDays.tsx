@@ -1,8 +1,6 @@
 import React from 'react';
 import { Calendar, ExternalLink, ShieldCheck, Zap } from 'lucide-react';
-import { FormattedOutlierDay } from '../../utils/calendarPeriodHelpers';
-
-const formatVal = (val: number) => (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+import { FormattedOutlierDay, formatWholeBaht as formatVal } from '../../utils/calendarPeriodHelpers';
 
 function getRankBadgeStyle(idx: number) {
   if (idx === 0) return 'bg-[#da291c] text-white';
