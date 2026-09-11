@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { 
+import {
   Layers, Check, Search, X, Sparkles, Tag, ChevronDown
 } from 'lucide-react';
 import { hexToRgb } from '../../../../utils/formatters';
 import { Category, CashflowGroup } from '../../../../types';
+import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 interface GroupedCategory {
   group: {
@@ -243,10 +244,19 @@ export default function CategoryMatrixFilter({
     }
     if (selectedCatNames.size <= 2) {
       const names = Array.from(selectedCatNames);
-      return names.map(n => {
-        const cat = availableCategories.find(c => c.name === n);
-        return `${cat?.icon || '🏷️'} ${n}`;
-      }).join(', ');
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          {names.map((n, idx) => {
+            const cat = availableCategories.find(c => c.name === n);
+            return (
+              <span key={n} className="inline-flex items-center gap-1 shrink-0">
+                <CategoryGlyph icon={cat?.icon} color={cat?.color} size={12} fallbackEmoji="🏷️" />
+                <span>{n}{idx < names.length - 1 ? ',' : ''}</span>
+              </span>
+            );
+          })}
+        </span>
+      );
     }
     return `เลือกแล้ว ${selectedCatNames.size} หมวด (${activeGroupCount} กลุ่ม)`;
   }, [selectedCategories, allAvailableNames.length, selectedCatNames, isOnlyActiveSelected, availableCategories, activeGroupCount]);
@@ -427,7 +437,7 @@ export default function CategoryMatrixFilter({
                         }`}
                         title={`คลิกเพื่อสลับเลือกหมวดหมู่ทั้งหมดในกลุ่ม ${group.name}`}
                       >
-                        <span className="text-xs shrink-0">{group.icon || '📁'}</span>
+                        <CategoryGlyph icon={group.icon} color={group.color} size={12} className="shrink-0" fallbackEmoji="📁" />
                         <span className="truncate max-w-[110px]">{group.name}</span>
                         <span className={`ml-0.5 px-1 rounded-none text-[8.5px] font-black tabular-nums leading-none ${
                           isGroupFullySelected
@@ -462,7 +472,7 @@ export default function CategoryMatrixFilter({
                       {/* Group Title Tag on Left */}
                       <div className="w-auto sm:w-28 shrink-0 flex items-center justify-between gap-1 text-[9.5px] font-black text-slate-400 font-mono select-none">
                         <div className="flex items-center gap-1 truncate">
-                          <span className="text-xs shrink-0">{group.icon || '📁'}</span>
+                          <CategoryGlyph icon={group.icon} color={group.color} size={12} className="shrink-0" fallbackEmoji="📁" />
                           <span className="truncate">{group.name}</span>
                         </div>
 
@@ -516,7 +526,7 @@ export default function CategoryMatrixFilter({
                                 {isCatActive && <Check className="w-2 h-2 stroke-[3]" />}
                               </div>
 
-                              <span className="text-xs shrink-0 leading-none">{cat.icon || '🏷️'}</span>
+                              <CategoryGlyph icon={cat.icon} color={cat.color} size={12} className="shrink-0 leading-none" fallbackEmoji="🏷️" />
                               <span className="truncate">{cat.name}</span>
                             </button>
                           );
