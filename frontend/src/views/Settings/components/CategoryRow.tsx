@@ -61,7 +61,7 @@ const CategoryRow = memo(({
           disabled={isFirst}
           className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
         >
-          <ChevronUp className="w-3.5 h-3.5" />
+          <ChevronUp className="w-4 h-4" />
         </button>
         <button
           type="button"
@@ -69,7 +69,7 @@ const CategoryRow = memo(({
           disabled={isLast}
           className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
         >
-          <ChevronDown className="w-3.5 h-3.5" />
+          <ChevronDown className="w-4 h-4" />
         </button>
       </div>
 
@@ -99,7 +99,7 @@ const CategoryRow = memo(({
           ))}
         </select>
         {!currentGroupValid && (
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 absolute -top-1 -right-1 pointer-events-none" />
+          <AlertTriangle className="w-4 h-4 text-amber-400 absolute -top-1 -right-1 pointer-events-none" />
         )}
       </div>
 

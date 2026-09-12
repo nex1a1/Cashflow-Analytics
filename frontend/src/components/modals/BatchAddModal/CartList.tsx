@@ -75,7 +75,7 @@ function CartList({
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-1 mt-1 overflow-hidden w-full">
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-none shrink-0 ${
+                        <span className={`h-[22px] px-2 flex items-center text-[10px] font-black rounded-none shrink-0 ${
                           item._isInc 
                             ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
                             : 'bg-rose-950/40 text-red-400 border border-rose-900/30'
@@ -83,25 +83,25 @@ function CartList({
                           {item._isInc ? 'รายรับ' : 'รายจ่าย'}
                         </span>
                         <span 
-                          className="text-[9px] font-bold px-1.5 py-0.5 rounded-none border shrink min-w-0 flex items-center gap-1 text-slate-100"
+                          className="h-[22px] px-2 flex items-center gap-1.5 text-[10px] font-bold rounded-none border shrink min-w-0 text-slate-100"
                           style={{ 
                             backgroundColor: `rgba(${catRgb}, 0.2)`, 
                             borderColor: `rgba(${catRgb}, 0.4)` 
                           }}
                         >
-                          <CategoryGlyph icon={item._catObj?.icon} color={item._catObj?.color} size={10} className="shrink-0" />
+                          <CategoryGlyph icon={item._catObj?.icon} color={item._catObj?.color} size={15} className="shrink-0" />
                           {item._catObj?._group?.name && (
                             <>
                               <span className="opacity-60 font-medium truncate max-w-[70px]" title={`กลุ่ม: ${item._catObj._group.name}`}>
                                 {item._catObj._group.name}
                               </span>
-                              <span className="opacity-35 text-[8px] select-none">›</span>
+                              <span className="opacity-35 text-[9px] select-none">›</span>
                             </>
                           )}
                           <span className="truncate">{item.category}</span>
                         </span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-none border flex items-center gap-1 shrink-0 text-slate-200 border-[#3e3e3e] bg-[#303030]/40">
-                          <CalendarDays className="w-2.5 h-2.5 text-slate-400" /> {item.date}
+                        <span className="h-[22px] px-2 flex items-center gap-1.5 text-[10px] font-bold rounded-none border shrink-0 text-slate-200 border-[#3e3e3e] bg-[#303030]/40">
+                          <CalendarDays className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {item.date}
                         </span>
                       </div>
                     </div>
@@ -121,7 +121,7 @@ function CartList({
                           : 'text-slate-400 hover:text-amber-400 hover:bg-amber-400/10'
                       }`}
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="w-4 h-4" />
                     </button>
                     <button 
                       type="button" 
@@ -130,7 +130,7 @@ function CartList({
                       title="ลบรายการนี้"
                       className="p-1.5 rounded-none transition-colors disabled:opacity-50 text-slate-500 hover:text-[#da291c] hover:bg-[#da291c]/10"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

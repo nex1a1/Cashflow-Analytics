@@ -124,7 +124,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
         title="เลือกไอคอน"
         aria-label="เลือกไอคอน"
       >
-        <CategoryGlyph icon={icon} color={color} size={16} />
+        <CategoryGlyph icon={icon} color={color} size={18} />
       </button>
 
       {open && createPortal(
@@ -135,7 +135,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
         >
           {/* 1. Search Bar */}
           <div className="flex items-center gap-2.5 bg-[#121212] border border-[#3e3e3e] px-3 py-2 rounded-none focus-within:border-neutral-400">
-            <Search size={15} className="text-neutral-400 shrink-0" />
+            <Search size={16} className="text-neutral-400 shrink-0" />
             <input
               ref={searchInputRef}
               type="text"
@@ -151,7 +151,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 className="text-neutral-400 hover:text-white shrink-0 p-0.5"
                 title="ล้างคำค้นหา"
               >
-                <X size={14} />
+                <X size={15} />
               </button>
             )}
             <span className="text-[11px] font-mono text-neutral-400 shrink-0 pl-2 border-l border-neutral-800">
@@ -175,7 +175,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                       : 'bg-[#121212] text-neutral-400 hover:text-white hover:bg-neutral-800 border-[#303030]'
                   }`}
                 >
-                  <TabIcon size={12} className={isSelected ? 'text-black' : 'text-neutral-400'} />
+                  <TabIcon size={14} className={isSelected ? 'text-black' : 'text-neutral-400'} />
                   <span>{cat.label}</span>
                 </button>
               );
@@ -186,14 +186,14 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
           <div className="flex items-center justify-between px-2 py-1 bg-[#121212] border border-[#303030] text-xs min-h-[26px]">
             {hoveredIcon ? (
               <div className="flex items-center gap-2 truncate">
-                <hoveredIcon.Icon size={14} className="text-white shrink-0" />
+                <hoveredIcon.Icon size={16} className="text-white shrink-0" />
                 <span className="text-white font-medium truncate">{hoveredIcon.label}</span>
                 <span className="text-neutral-500 font-mono text-[10px] shrink-0">({hoveredIcon.key})</span>
               </div>
             ) : currentSelectedDef ? (
               <div className="flex items-center gap-2 truncate">
                 <span className="text-neutral-400 text-[11px]">เลือกอยู่:</span>
-                <currentSelectedDef.Icon size={14} style={{ color: color || '#ffffff' }} className="shrink-0" />
+                <currentSelectedDef.Icon size={16} style={{ color: color || '#ffffff' }} className="shrink-0" />
                 <span className="text-white font-medium truncate">{currentSelectedDef.label}</span>
                 <span className="text-neutral-500 font-mono text-[10px] shrink-0">({currentSelectedDef.key})</span>
               </div>
@@ -222,7 +222,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                       isSelected ? 'ring-1 ring-[#da291c] z-10 bg-[#262626]' : ''
                     }`}
                   >
-                    <Icon size={20} style={{ color: isSelected ? (color || '#ffffff') : '#94a3b8' }} />
+                    <Icon size={22} style={{ color: isSelected ? (color || '#ffffff') : '#94a3b8' }} />
                   </button>
                 );
               })}
@@ -248,7 +248,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 className="w-8 h-8 flex items-center justify-center border border-[#3e3e3e] bg-[#121212] shrink-0"
                 title="ไอคอนปัจจุบัน"
               >
-                <CategoryGlyph icon={icon} color={color} size={18} />
+                <CategoryGlyph icon={icon} color={color} size={20} />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-neutral-200">
@@ -268,7 +268,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                   className="px-2.5 py-1 text-xs text-neutral-400 hover:text-[#da291c] hover:bg-[#202020] border border-transparent hover:border-[#3e3e3e] transition-colors flex items-center gap-1"
                   title="ล้างไอคอน ไม่ใช้งาน"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={14} />
                   <span>ล้างไอคอน</span>
                 </button>
               )}

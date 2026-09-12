@@ -207,7 +207,7 @@ export default function DailyForm({
               : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-700 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
           }`}
         >
-          {isProcessing ? <><Zap className="w-4 h-4 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-4 h-4" /> บันทึก (Enter)</>}
+          {isProcessing ? <><Zap className="w-5 h-5 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-5 h-5" /> บันทึก (Enter)</>}
         </button>
       </div>
     </form>

@@ -67,7 +67,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
       <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
-            <CalendarIcon className="w-5 h-5 text-[#da291c]" />
+            <CalendarIcon className="w-6 h-6 text-[#da291c]" />
             {THAI_MONTHS[m]} {y}
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
@@ -174,7 +174,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 color: dt.color || undefined,
               }}
             >
-              <div className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: dt.color || undefined }} />
+              <div className="w-3.5 h-3.5 rounded-none" style={{ backgroundColor: dt.color || undefined }} />
               <span>{dt.label} (<span className="tabular-nums tracking-tight">{count}</span>)</span>
             </div>
           );

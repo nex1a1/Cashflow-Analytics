@@ -22,6 +22,7 @@ export interface QuickSuggestProps {
   frequentItems?: FrequentItem[];
   className?: string;
   cashflowGroups?: CashflowGroup[];
+  defaultLimit?: number;
 }
 
 function QuickSuggest({
@@ -35,7 +36,8 @@ function QuickSuggest({
   isProcessing,
   frequentItems = [],
   className = "",
-  cashflowGroups = []
+  cashflowGroups = [],
+  defaultLimit = 10
 }: QuickSuggestProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -84,8 +86,13 @@ function QuickSuggest({
   const [amountFilter, setAmountFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('frequent');
   
-  // Default limitCount to 10
-  const [limitCount, setLimitCount] = useState('10');
+  // Default limitCount to defaultLimit
+  const [limitCount, setLimitCount] = useState(String(defaultLimit));
+
+  // Sync limitCount if defaultLimit changes
+  useEffect(() => {
+    setLimitCount(String(defaultLimit));
+  }, [defaultLimit]);
 
   // Reset filters when formType (income/expense) changes
   useEffect(() => {
@@ -95,9 +102,9 @@ function QuickSuggest({
     setAllocationFilter('ALL');
     setAmountFilter('ALL');
     setSortBy('frequent');
-    setLimitCount('10');
+    setLimitCount(String(defaultLimit));
     setShowFilterMenu(false);
-  }, [formType]);
+  }, [formType, defaultLimit]);
 
   // Click-Outside Listener to close floating overlay filter
   useEffect(() => {
@@ -127,9 +134,9 @@ function QuickSuggest({
     if (allocationFilter !== 'ALL' && formType === 'expense') count++;
     if (amountFilter !== 'ALL') count++;
     if (sortBy !== 'frequent') count++;
-    if (limitCount !== '10') count++;
+    if (limitCount !== String(defaultLimit)) count++;
     return count;
-  }, [selectedGroup, selectedCatIds, allocationFilter, amountFilter, sortBy, limitCount, formType]);
+  }, [selectedGroup, selectedCatIds, allocationFilter, amountFilter, sortBy, limitCount, formType, defaultLimit]);
 
   // Filter Categories by Form Type
   const activeCategories = useMemo(() => {
@@ -284,8 +291,18 @@ function QuickSuggest({
     setAllocationFilter('ALL');
     setAmountFilter('ALL');
     setSortBy('frequent');
-    setLimitCount('10');
+    setLimitCount(String(defaultLimit));
   };
+
+  const limitOptions = useMemo(() => {
+    const opts = [
+      { val: String(defaultLimit), label: `${defaultLimit} รายการ` },
+      { val: '20', label: '20 รายการ' },
+      { val: '30', label: '30 รายการ' },
+      { val: 'ALL', label: 'ทั้งหมด' }
+    ];
+    return opts.filter((opt, idx, arr) => arr.findIndex(o => o.val === opt.val) === idx);
+  }, [defaultLimit]);
 
   const tokens = {
     input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
@@ -297,13 +314,13 @@ function QuickSuggest({
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
       {/* Header */}
-      <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-3 text-slate-300">
+      <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-2 text-slate-300">
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
         Quick Suggestions {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
       </h4>
       
       {/* Filtering Inputs Section */}
-      <div className="space-y-2 mb-3 shrink-0">
+      <div className="space-y-2 mb-2 shrink-0">
         {/* Search & In-line Toggle */}
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -364,7 +381,7 @@ function QuickSuggest({
                   color: cat.color || '#e2e8f0' 
                 }}
               >
-                <CategoryGlyph icon={cat.icon} color={cat.color} size={10} fallbackEmoji="📌" />
+                <CategoryGlyph icon={cat.icon} color={cat.color} size={15} fallbackEmoji="📌" />
                 <span>{cat.name}</span>
                 <button 
                   type="button" 
@@ -380,7 +397,7 @@ function QuickSuggest({
             {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
             {selectedCatObjs.length === 0 && activeGroupObj && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
-                <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={10} fallbackEmoji="📁" />
+                <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} fallbackEmoji="📁" />
                 <span>กลุ่ม: {activeGroupObj.name}</span>
                 <button 
                   type="button" 
@@ -417,12 +434,12 @@ function QuickSuggest({
                 </button>
               </span>
             )}
-            {limitCount !== '10' && (
+            {limitCount !== String(defaultLimit) && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
                 <span>{limitCount === 'ALL' ? 'แสดงทั้งหมด' : `แสดง ${limitCount}`}</span>
                 <button 
                   type="button" 
-                  onClick={() => setLimitCount('10')}
+                  onClick={() => setLimitCount(String(defaultLimit))}
                   className="hover:text-red-400 ml-0.5 cursor-pointer"
                 >
                   <X className="w-2.5 h-2.5" />
@@ -443,13 +460,13 @@ function QuickSuggest({
       {/* Main Container for Suggestions List and Floating Overlay Filter Window */}
       <div className="flex-1 min-h-0 relative flex flex-col">
         {/* Suggestions List (Always full height, never pushed or shrunk!) */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 relative z-10">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 relative z-10">
           {quickSuggestions.length === 0 ? (
             <p className="text-xs text-center py-10 text-slate-500 font-medium">
               ไม่พบคำแนะนำที่ตรงกับตัวกรอง
             </p>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1">
               {quickSuggestions.map((s, idx) => {
                 const catObj = catLookup[s.categoryId] || catLookup[s.categoryName];
                 const catColor = catObj?.color || '#cbd5e1';
@@ -469,7 +486,7 @@ function QuickSuggest({
                     style={{
                       ['--cat-rgb' as any]: hexToRgb(catColor),
                     }}
-                    className="sugg-item w-full flex items-center justify-between gap-2 px-3 py-2 rounded-none border transition-none relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
+                    className="sugg-item w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border transition-none relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
                   >
                     {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
                     <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: catColor }} />
@@ -477,13 +494,13 @@ function QuickSuggest({
                       <div className="absolute left-1 top-0 bottom-0 w-1" style={{ backgroundColor: allocColor }} title={s.allocation_type.toUpperCase()} />
                     )}
                     
-                    <div className="flex items-center flex-1 min-w-0 pl-1.5 gap-2">
+                    <div className="flex items-center flex-1 min-w-0 pl-1.5 gap-2.5">
                       {/* Icon with colored background */}
                       <div 
-                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] transition-transform duration-75 group-hover:scale-105"
+                        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] transition-transform duration-75 group-hover:scale-105"
                         style={{ backgroundColor: `rgba(${hexToRgb(catColor)}, ${bgAlpha})` }}
                       >
-                        <CategoryGlyph icon={catObj?.icon} color={catColor} size={12} fallbackEmoji="📌" />
+                        <CategoryGlyph icon={catObj?.icon} color={catColor} size={18} fallbackEmoji="📌" />
                       </div>
                       
                       <div className="flex flex-col items-start min-w-0 overflow-hidden leading-tight flex-1">
@@ -596,7 +613,7 @@ function QuickSuggest({
                               : 'border-[#303030] bg-[#181818] text-slate-400 hover:text-slate-200 hover:border-slate-500'
                         }`}
                       >
-                        {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={11} />}
+                        {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={16} />}
                         <span>{g.name}</span>
                         {selectedCountInGroup > 0 && (
                           <span className="ml-0.5 px-1 py-0.2 rounded-full text-[8px] font-black bg-[#da291c] text-white leading-none">
@@ -613,7 +630,7 @@ function QuickSuggest({
                   <div className="mt-1.5 p-1.5 bg-[#121212] border border-[#262626]">
                     <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-[#222222] text-[9px]">
                       <span className="text-slate-400 font-bold flex items-center gap-1">
-                        {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={10} />}
+                        {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} />}
                         <span>หมวดในกลุ่ม: <strong className="text-white">{activeGroupObj?.name}</strong></span>
                       </span>
                       <div className="flex items-center gap-2">
@@ -666,7 +683,7 @@ function QuickSuggest({
                             }`}
                           >
                             {isCatActive && <Check className="w-2.5 h-2.5 text-white shrink-0" />}
-                            {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={10} />}
+                            {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={15} />}
                             <span>{c.name}</span>
                           </button>
                         );
@@ -744,12 +761,7 @@ function QuickSuggest({
               <div>
                 <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
                 <div className="grid grid-cols-4 gap-1 bg-[#121212] border border-[#262626] p-0.5">
-                  {[
-                    { val: '10', label: '10 รายการ' },
-                    { val: '20', label: '20 รายการ' },
-                    { val: '30', label: '30 รายการ' },
-                    { val: 'ALL', label: 'ทั้งหมด' }
-                  ].map(opt => {
+                  {limitOptions.map(opt => {
                     const isActive = limitCount === opt.val;
                     return (
                       <button

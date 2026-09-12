@@ -8,13 +8,7 @@ import {
     DayType,
     CalendarDay,
     DashboardAnalytics,
-    BackupFileInfo,
-    ItemWithDetails,
-    ItemCategory,
-    ItemStatus,
-    CreateItemPayload,
-    UpdateItemPayload,
-    LinkedTransactionInfo
+    BackupFileInfo
 } from '../types';
 
 const CATEGORIES_API_URL = API_URL.replace('/transactions', '/categories');
@@ -23,8 +17,6 @@ const DAY_TYPES_API_URL = API_URL.replace('/transactions', '/day-types');
 const ANALYTICS_API_URL = API_URL.replace('/transactions', '/analytics');
 const BACKUP_API_URL = API_URL.replace('/transactions', '/backup');
 const BACKUPS_API_URL = API_URL.replace('/transactions', '/backups');
-const ITEMS_API_URL = API_URL.replace('/transactions', '/items');
-const ITEM_CATEGORIES_API_URL = API_URL.replace('/transactions', '/item-categories');
 
 const handleResponse = async <T = any>(response: Response): Promise<T> => {
     if (!response.ok) {
@@ -132,62 +124,4 @@ export const backupService = {
     }).then(handleResponse<{ success: boolean; message: string; filename: string }>)
 };
 
-export const itemService = {
-    getAll: (params?: { status?: string; categoryId?: number; includeCancelled?: boolean }): Promise<ItemWithDetails[]> => {
-        let url = ITEMS_API_URL;
-        const qp = new URLSearchParams();
-        if (params?.status) qp.append('status', params.status);
-        if (params?.categoryId) qp.append('category_id', String(params.categoryId));
-        if (params?.includeCancelled) qp.append('include_cancelled', 'true');
-        const qs = qp.toString();
-        if (qs) url += `?${qs}`;
-        return fetch(url).then(handleResponse<ItemWithDetails[]>);
-    },
-    getById: (id: number): Promise<ItemWithDetails & { linked_transactions: import('../types').LinkedTransactionInfo[] }> => fetch(`${ITEMS_API_URL}/${id}`).then(handleResponse<ItemWithDetails & { linked_transactions: import('../types').LinkedTransactionInfo[] }>),
-    create: (item: CreateItemPayload): Promise<ItemWithDetails> => fetch(ITEMS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
-    }).then(handleResponse<ItemWithDetails>),
-    update: (id: number, item: UpdateItemPayload): Promise<ItemWithDetails> => fetch(`${ITEMS_API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
-    }).then(handleResponse<ItemWithDetails>),
-    updateStatus: (id: number, status: ItemStatus, dates?: { purchased_at?: string | null; broken_at?: string | null }): Promise<ItemWithDetails> => fetch(`${ITEMS_API_URL}/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, ...dates })
-    }).then(handleResponse<ItemWithDetails>),
-    delete: (id: number): Promise<{ success: boolean }> => fetch(`${ITEMS_API_URL}/${id}`, {
-        method: 'DELETE'
-    }).then(handleResponse<{ success: boolean }>),
-    linkTransactions: (id: number, transactionIds: string[]): Promise<ItemWithDetails & { linked_transactions: LinkedTransactionInfo[] }> => fetch(`${ITEMS_API_URL}/${id}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transaction_ids: transactionIds })
-    }).then(handleResponse<ItemWithDetails & { linked_transactions: LinkedTransactionInfo[] }>),
-    unlinkTransaction: (id: number, transactionId: string): Promise<ItemWithDetails & { linked_transactions: LinkedTransactionInfo[] }> => fetch(`${ITEMS_API_URL}/${id}/transactions/${transactionId}`, {
-        method: 'DELETE'
-    }).then(handleResponse<ItemWithDetails & { linked_transactions: LinkedTransactionInfo[] }>),
-    getCategories: (): Promise<ItemCategory[]> => fetch(ITEM_CATEGORIES_API_URL).then(handleResponse<ItemCategory[]>),
-    createCategory: (name: string): Promise<ItemCategory> => fetch(ITEM_CATEGORIES_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-    }).then(handleResponse<ItemCategory>),
-    updateCategory: (id: number, name: string): Promise<ItemCategory> => fetch(`${ITEM_CATEGORIES_API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-    }).then(handleResponse<ItemCategory>),
-    reorderCategories: (orderedIds: number[]): Promise<{ success: boolean }> => fetch(`${ITEM_CATEGORIES_API_URL}/reorder`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderedIds })
-    }).then(handleResponse<{ success: boolean }>),
-    deleteCategory: (id: number): Promise<{ success: boolean }> => fetch(`${ITEM_CATEGORIES_API_URL}/${id}`, {
-        method: 'DELETE'
-    }).then(handleResponse<{ success: boolean }>)
-};
 

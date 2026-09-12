@@ -316,7 +316,7 @@ function BatchForm({
               className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]"
               title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
             >
-              <RotateCcw className="w-3.5 h-3.5 mr-1 text-slate-400" /> ล้าง
+              <RotateCcw className="w-4 h-4 mr-1 text-slate-400" /> ล้าง
             </button>
             <button 
               type="submit" 

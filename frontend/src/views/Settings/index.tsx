@@ -9,8 +9,8 @@ import CashflowGroupsCard from './components/CashflowGroupsCard';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
 
-const EXPENSE_ICON = <Wallet className="w-3.5 h-3.5" />;
-const INCOME_ICON = <Coins className="w-3.5 h-3.5" />;
+const EXPENSE_ICON = <Wallet className="w-4 h-4" />;
+const INCOME_ICON = <Coins className="w-4 h-4" />;
 
 export interface SettingsViewProps {
   categories: Category[];
@@ -155,7 +155,7 @@ const SettingsView = memo(function SettingsView({
           <span>การตั้งค่าระบบ</span>
         </h1>
         <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-full bg-[#1c1c1c] border-[#303030] text-[#cbd5e1]">
-          <Info className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
+          <Info className="w-4 h-4 shrink-0 text-[#da291c]" />
           <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>

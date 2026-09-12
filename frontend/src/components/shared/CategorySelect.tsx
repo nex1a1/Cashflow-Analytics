@@ -335,24 +335,6 @@ export default function CategorySelect({
     };
   }, [pillColor]);
 
-  // Allocation Tag Helper
-  const renderAllocationBadge = (alloc?: string | null) => {
-    if (!alloc) return null;
-    let colorClass = 'bg-sky-950/60 text-sky-400 border-sky-800/40';
-    let label = 'WANT';
-    if (alloc === 'need') {
-      colorClass = 'bg-rose-950/60 text-rose-400 border-rose-800/40';
-      label = 'NEED';
-    } else if (alloc === 'savings') {
-      colorClass = 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40';
-      label = 'SAVE';
-    }
-    return (
-      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-none border shrink-0 ${colorClass}`}>
-        {label}
-      </span>
-    );
-  };
 
   return (
     <>
@@ -375,7 +357,7 @@ export default function CategorySelect({
           title={selectedCategory ? `หมวดหมู่: ${selectedCategory.name}` : placeholder}
         >
           <div className="w-full flex items-center pl-2 pr-6 py-1 text-xs select-none min-w-0">
-            <CategoryGlyph icon={selectedCategory?.icon} color={selectedCategory?.color} size={12} className="shrink-0 mr-1.5" />
+            <CategoryGlyph icon={selectedCategory?.icon} color={selectedCategory?.color} size={20} className="shrink-0 mr-2" />
             <div className="truncate flex items-center gap-1 min-w-0" style={{ color: pillStyles.textColor }}>
               {selectedCategoryGroup?.name && (
                 <>
@@ -415,7 +397,7 @@ export default function CategorySelect({
                 <CategoryGlyph
                   icon={selectedCategory.icon}
                   color={selectedCategory.color}
-                  size={14}
+                  size={20}
                   className="shrink-0"
                 />
                 <div className="flex items-center gap-1.5 min-w-0 truncate">
@@ -435,8 +417,7 @@ export default function CategorySelect({
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            {selectedCategory?.allocation_type && renderAllocationBadge(selectedCategory.allocation_type)}
+          <div className="flex items-center shrink-0 ml-2">
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           </div>
         </button>
@@ -509,7 +490,7 @@ export default function CategorySelect({
                             : 'bg-[#1a1a1a] border-[#303030] text-slate-300 hover:border-slate-400 hover:text-white'
                         }`}
                       >
-                        <CategoryGlyph icon={cat.icon} color={cat.color} size={10} />
+                        <CategoryGlyph icon={cat.icon} color={cat.color} size={15} />
                         <span>{cat.name}</span>
                       </button>
                     );
@@ -534,7 +515,7 @@ export default function CategorySelect({
                           className="w-1.5 h-3 rounded-none shrink-0"
                           style={{ backgroundColor: group.color || '#da291c' }}
                         />
-                        <CategoryGlyph icon={group.icon} color={group.color} size={11} className="shrink-0" />
+                        <CategoryGlyph icon={group.icon} color={group.color} size={17} className="shrink-0" />
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 truncate">
                           {group.name}
                         </span>
@@ -570,13 +551,13 @@ export default function CategorySelect({
                             >
                               <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                                 <span
-                                  className="w-6 h-6 flex items-center justify-center rounded-none shrink-0 border"
+                                  className="w-7 h-7 flex items-center justify-center rounded-none shrink-0 border"
                                   style={{
                                     backgroundColor: `rgba(${hexToRgb(cat.color || '#94a3b8')}, 0.12)`,
                                     borderColor: `rgba(${hexToRgb(cat.color || '#94a3b8')}, 0.35)`
                                   }}
                                 >
-                                  <CategoryGlyph icon={cat.icon} color={cat.color} size={12} />
+                                  <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
                                 </span>
                                 <div className="min-w-0 truncate">
                                   <span className="text-xs font-bold block truncate text-slate-100 group-hover:text-white">
@@ -590,12 +571,11 @@ export default function CategorySelect({
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {cat.allocation_type && renderAllocationBadge(cat.allocation_type)}
-                                {isSelected && (
+                              {isSelected && (
+                                <div className="flex items-center shrink-0 ml-2">
                                   <Check className="w-3.5 h-3.5 text-[#da291c] shrink-0" />
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </button>
                           );
                         })}

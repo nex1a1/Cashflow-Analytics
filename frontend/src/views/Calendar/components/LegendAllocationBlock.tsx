@@ -232,7 +232,7 @@ function CategoryLegendSection({
                   color: color,
                 }}
               >
-                <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
+                <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                 <span className="opacity-90">{cat.name}</span>
                 <span className="text-[11px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
               </button>
@@ -256,9 +256,9 @@ function CategoryLegendSection({
             return (
               <div key={groupObj.id} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
                 <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-[#2d2d2d]/50">
-                  <span className="text-[12px] font-black text-slate-300 tracking-wide flex items-center gap-1.5 truncate">
-                    <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
-                    {groupObj.icon && <CategoryGlyph icon={groupObj.icon} color={groupObj.color} size={11} className="shrink-0" />}
+                  <span className="text-[13px] font-black text-slate-200 tracking-wide flex items-center gap-2 truncate">
+                    <span className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
+                    {groupObj.icon && <CategoryGlyph icon={groupObj.icon} color={groupObj.color} size={20} className="shrink-0" />}
                     <span className="truncate">{groupObj.name}</span>
                   </span>
                   <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>
@@ -274,8 +274,8 @@ function CategoryLegendSection({
                     
                     return (
                       <button 
-                        key={cat.id}
-                        type="button"
+                        key={cat.id} 
+                        type="button" 
                         onClick={() => toggleCategory(cat.id)}
                         className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
                           isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
@@ -286,7 +286,7 @@ function CategoryLegendSection({
                           color: color,
                         }}
                       >
-                        <div className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
+                        <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                         <span className="opacity-90">{cat.name}</span>
                         <span className="text-[10px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
                       </button>
@@ -324,7 +324,7 @@ function AllocationOverviewSection({
           <React.Fragment key={row.label}>
             <div className="flex justify-between items-center">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-none" style={{ backgroundColor: row.dot }} /> {row.label}
+                <span className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: row.dot }} /> {row.label}
               </span>
               <span className="font-bold tabular-nums tracking-tight text-white">
                 {formatValue(row.total)} ฿ ({row.pct}%)
@@ -335,7 +335,7 @@ function AllocationOverviewSection({
                 {row.cats.map((cat: any) => (
                   <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
                     <span className="flex items-center gap-1.5 min-w-0">
-                      <span className="w-1.5 h-1.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
                       <span className="truncate">
                         {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
                       </span>

@@ -9,24 +9,6 @@ import * as categoryController from '../controllers/categoryController';
 import * as groupController from '../controllers/groupController';
 import * as dayTypeController from '../controllers/dayTypeController';
 import * as analyticsController from '../controllers/analyticsController';
-import * as itemController from '../controllers/itemController';
-
-// Items & Item Tracker
-router.get('/items', itemController.getItems);
-router.get('/items/:id', itemController.getItemById);
-router.post('/items', itemController.createItem);
-router.put('/items/:id', itemController.updateItem);
-router.patch('/items/:id/status', itemController.updateItemStatus);
-router.delete('/items/:id', itemController.deleteItem);
-router.post('/items/:id/transactions', itemController.linkTransactions);
-router.delete('/items/:id/transactions/:transactionId', itemController.unlinkTransaction);
-
-// Item Categories
-router.get('/item-categories', itemController.getItemCategories);
-router.post('/item-categories', itemController.createItemCategory);
-router.put('/item-categories/reorder', itemController.reorderItemCategories);
-router.put('/item-categories/:id', itemController.updateItemCategory);
-router.delete('/item-categories/:id', itemController.deleteItemCategory);
 
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);

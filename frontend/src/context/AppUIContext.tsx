@@ -15,7 +15,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   // localStorage instead of leaving returning users on a tab id that no longer exists.
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
-    return stored === 'dashboard' || stored === 'calendar' ? 'insights' : (stored || 'insights');
+    return stored === 'dashboard' || stored === 'calendar' || stored === 'items' ? 'insights' : (stored || 'insights');
   });
   const [insightsMode, setInsightsMode] = useState<InsightsMode>(() => {
     const storedMode = localStorage.getItem(STORAGE_KEYS.INSIGHTS_MODE);

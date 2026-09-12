@@ -97,7 +97,7 @@ const SectionCard = memo(function SectionCard({
               onClick={action.onClick}
               className={`text-[10px] font-bold px-2 py-1 flex items-center gap-1 rounded-none ${a.btn}`}
             >
-              <PlusCircle className="w-3.5 h-3.5" /> {action.label}
+              <PlusCircle className="w-4 h-4" /> {action.label}
             </button>
           )}
         </div>

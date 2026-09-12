@@ -86,7 +86,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="opacity-0 group-hover:opacity-100 text-[#da291c] hover:text-white transition-none cursor-pointer"
               title="เพิ่มรายการวันนี้"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-4.5 h-4.5" />
             </button>
           )}
         </div>
@@ -168,7 +168,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
-              <div className="w-[2.5px] h-3 rounded-none shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-[3px] h-3.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-200 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
@@ -188,7 +188,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
-              <div className="w-[2.5px] h-3 rounded-none shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-[3px] h-3.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>

@@ -52,7 +52,7 @@ const ConfirmDeleteButton = memo(({
         }`}
         title={confirming ? 'ยืนยันการลบ?' : tooltip}
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-4 h-4" />
         {confirming ? 'ยืนยัน? คลิกอีกครั้ง' : 'ล้างข้อมูลทั้งหมด'}
       </button>
     );
@@ -72,7 +72,7 @@ const ConfirmDeleteButton = memo(({
       className={`p-1.5 transition-all active:scale-95 rounded-none ${stateCls}`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}
     >
-      <Trash2 className="w-3.5 h-3.5" />
+      <Trash2 className="w-4 h-4" />
     </button>
   );
 });

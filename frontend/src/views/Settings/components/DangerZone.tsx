@@ -4,7 +4,7 @@ import ConfirmDeleteButton from './ConfirmDeleteButton';
 import SectionCard from './SectionCard';
 import { TransactionDisplay } from '../../../types';
 
-const DANGER_ICON = <AlertCircle className="w-3.5 h-3.5" />;
+const DANGER_ICON = <AlertCircle className="w-4 h-4" />;
 
 export interface DangerZoneProps {
   transactions: TransactionDisplay[];

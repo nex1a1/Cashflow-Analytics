@@ -2,7 +2,7 @@ import React from 'react';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, Clock, Package
+  Calendar as CalendarIcon, HelpCircle, Clock
 } from 'lucide-react';
 import sharkBlack from '../../assets/images/shark-black.svg';
 import sharkWhite from '../../assets/images/shark-white.svg';
@@ -34,7 +34,6 @@ export interface AppHeaderProps {
 
 const TABS = [
   { id: 'insights', label: 'เจาะลึกวิเคราะห์', icon: BarChart3 },
-  { id: 'items',    label: 'บันทึกสิ่งของ',    icon: Package },
   { id: 'ledger',   label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'settings', label: 'ตั้งค่าระบบ',       icon: Settings },
 ];

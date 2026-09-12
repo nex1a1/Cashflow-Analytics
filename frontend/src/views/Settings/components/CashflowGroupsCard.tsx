@@ -6,7 +6,7 @@ import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
 import IconPicker from '@/components/shared/IconPicker';
 
-const GROUPS_ICON = <Grid className="w-3.5 h-3.5" />;
+const GROUPS_ICON = <Grid className="w-4 h-4" />;
 
 const getAllocBadgeCls = (allocationType: string) => {
   if (allocationType === 'need') {
@@ -63,11 +63,11 @@ const CashflowGroupsCard = memo(({
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-[#666666]'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
                     className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
-                    <ChevronUp className="w-3.5 h-3.5" />
+                    <ChevronUp className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
                     className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -122,7 +122,7 @@ const CashflowGroupsCard = memo(({
                 <div className="flex items-center justify-center w-[28px] shrink-0">
                   {group.isDefault ? (
                     <span title="กลุ่ม Default ลบไม่ได้">
-                      <Lock className="w-3.5 h-3.5 text-[#666666]" />
+                      <Lock className="w-4 h-4 text-[#666666]" />
                     </span>
                   ) : (
                     <ConfirmDeleteButton
@@ -138,7 +138,7 @@ const CashflowGroupsCard = memo(({
                 <p className={`text-[11px] font-semibold px-2 py-1 border flex items-center gap-1 ${
                   'bg-red-900/20 border-red-800/50 text-[#da291c]'
                 }`}>
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                   {cashflowDeleteError.msg}
                 </p>
               )}

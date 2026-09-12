@@ -56,8 +56,8 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }: TxRowProps) 
         </div>
 
         {/* Group Breadcrumb & Category */}
-        <div className="text-[10px] font-medium flex items-center gap-1 mt-0.5 min-w-0" style={{ color, filter: 'brightness(1.25)' }}>
-          <CategoryGlyph icon={catObj?.icon} color={color} size={10} className="shrink-0" />
+        <div className="text-[10px] font-medium flex items-center gap-1.5 mt-0.5 min-w-0" style={{ color, filter: 'brightness(1.25)' }}>
+          <CategoryGlyph icon={catObj?.icon} color={color} size={18} className="shrink-0" />
           {groupObj?.name && (
             <>
               <span className="opacity-60 font-medium truncate max-w-[90px]" title={`กลุ่ม: ${groupObj.name}`}>
@@ -79,7 +79,7 @@ const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }: TxRowProps) 
       <button 
         type="button"
         onClick={() => onDeleteClick(tx.id)}
-        className={`shrink-0 px-2 py-1.5 rounded-none text-xs font-bold transition-colors ${
+        className={`shrink-0 px-1.5 py-1.5 rounded-none text-xs font-bold transition-colors ${
           isConfirming 
             ? 'bg-[#da291c] text-white border border-[#da291c] animate-pulse' 
             : 'text-slate-400 hover:text-red-400 hover:bg-[#303030] border border-transparent hover:border-red-800/20'
@@ -121,7 +121,7 @@ export default function TransactionList({
       {income.length > 0 && (
         <div>
           <p className="text-xs font-black mb-2 flex items-center gap-1.5 text-emerald-400 uppercase tracking-wider font-sans">
-            <Coins className="w-3.5 h-3.5" /> รายรับ ({income.length})
+            <Coins className="w-4.5 h-4.5" /> รายรับ ({income.length})
           </p>
           <div className="space-y-1.5">
             {income.map(tx => (
@@ -139,7 +139,7 @@ export default function TransactionList({
       {expenses.length > 0 && (
         <div>
           <p className="text-xs font-black mb-2 flex items-center gap-1.5 text-rose-400 uppercase tracking-wider font-sans">
-            <Wallet className="w-3.5 h-3.5" /> รายจ่าย ({expenses.length})
+            <Wallet className="w-4.5 h-4.5" /> รายจ่าย ({expenses.length})
           </p>
           <div className="space-y-1.5">
             {expenses.map(tx => (

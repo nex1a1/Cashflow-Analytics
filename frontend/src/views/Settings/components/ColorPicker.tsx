@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Pipette } from 'lucide-react';
 
 // Helper to convert HSL values to standard HEX format
 function hslToHex(h: number, s: number, l: number): string {
@@ -251,7 +252,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
             />
             
             <div className="relative w-8 h-8 border border-[#3e3e3e] bg-[#121212] flex items-center justify-center hover:bg-[#303030] hover:border-[#da291c] shrink-0 cursor-pointer">
-              <span className="text-xs select-none">🎨</span>
+              <Pipette className="w-4 h-4 text-slate-300 pointer-events-none" />
               <input 
                 type="color" 
                 value={color} 

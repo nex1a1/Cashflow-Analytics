@@ -6,7 +6,7 @@ import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
 import { DayType } from '../../../types';
 
-const DAY_TYPES_ICON = <CalendarClock className="w-3.5 h-3.5" />;
+const DAY_TYPES_ICON = <CalendarClock className="w-4 h-4" />;
 
 export interface DayTypesCardProps {
   dayTypeConfig: DayType[];
@@ -50,7 +50,7 @@ const DayTypesCard = memo(({
                   disabled={idx === 0}
                   className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
                 >
-                  <ChevronUp className="w-3.5 h-3.5" />
+                  <ChevronUp className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
@@ -58,7 +58,7 @@ const DayTypesCard = memo(({
                   disabled={idx === dayTypeConfig.length - 1}
                   className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
                 >
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
 
@@ -74,7 +74,7 @@ const DayTypesCard = memo(({
 
               {isProtected ? (
                 <span title="ลบไม่ได้ (ต้องมีอย่างน้อย 2)">
-                  <Lock className="w-3.5 h-3.5 text-[#666666]" />
+                  <Lock className="w-4 h-4 text-[#666666]" />
                 </span>
               ) : (
                 <ConfirmDeleteButton onConfirm={() => handleDeleteDayType(dt.id)} />

@@ -192,14 +192,14 @@ export default function DayDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div 
-        className={`${tokens.surface} shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[80vh] md:min-h-[550px] md:max-h-[800px] h-[90vh]`}
+        className={`${tokens.surface} shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[625px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
         style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
       >
 
         <button onClick={onClose} className={tokens.closeBtn}>
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>

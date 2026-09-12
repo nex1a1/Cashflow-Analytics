@@ -21,7 +21,7 @@ export default function MonthOnlyNotice({
   return (
     <div className="flex flex-col items-center justify-center text-center border border-[#2d2d2d] bg-[#181818] min-h-[520px] px-6 py-20">
       <div className="p-3.5 border border-[#2d2d2d] bg-[#121212] shrink-0">
-        <CalendarClock className="w-6 h-6 text-neutral-500" strokeWidth={1.75} />
+        <CalendarClock className="w-8 h-8 text-neutral-500" strokeWidth={1.75} />
       </div>
 
       <h2 className="mt-5 text-lg font-black text-slate-100 tracking-wide">
@@ -40,7 +40,7 @@ export default function MonthOnlyNotice({
           onClick={goToCurrentMonth}
           className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none cursor-pointer"
         >
-          <CalendarClock className="w-3.5 h-3.5" />
+          <CalendarClock className="w-4.5 h-4.5" />
           <span>ไปเดือนปัจจุบัน ({currentMonthLabel})</span>
         </button>
 
@@ -50,7 +50,7 @@ export default function MonthOnlyNotice({
             onClick={onSwitchToAnalysisMode}
             className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider border border-[#333333] bg-[#121212] text-slate-300 hover:text-white hover:border-slate-500 transition-none cursor-pointer"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="w-4.5 h-4.5" />
             <span>ดูภาพรวมช่วงนี้ในโหมดวิเคราะห์</span>
           </button>
         )}
