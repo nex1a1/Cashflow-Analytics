@@ -6,6 +6,7 @@ import DailyForm from './DailyForm';
 import QuickSuggest from './QuickSuggest';
 import TransactionList from './TransactionList';
 import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../../../types';
+import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
 
 export interface DayDetailModalProps {
   dateStr: string;
@@ -43,7 +44,9 @@ export default function DayDetailModal({
   const displayDate = `${d} ${THAI_MONTHS[m - 1] || ''} ${y}`;
   const thaiDay = getThaiDayInfo(dateStr);
 
-  const dayTypeId = dayTypes[dateStr];
+  const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+  const defaultTypeId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
+  const dayTypeId = dayTypes[dateStr] || defaultTypeId;
   const currentDayType = dayTypeId ? dayTypeConfig.find(dt => dt.id === dayTypeId) : null;
 
   const defaultExpenseCatId = categories.find(c => c.type === 'expense')?.id || '';
@@ -194,7 +197,7 @@ export default function DayDetailModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div 
-        className={`${tokens.surface} shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[625px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
+        className={`${tokens.surface} shadow-[0_0_60px_rgba(0,0,0,0.95)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-[#3e3e3e] overflow-hidden relative md:h-[750px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
         style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
       >
 

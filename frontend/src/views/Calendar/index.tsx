@@ -265,28 +265,34 @@ function CalendarView({
 
     const groupsMap: Record<string, LegendGroupItem> = {};
     const getGroupObj = (groupId: string | null | undefined, categoryType: string | undefined) => {
-      if (groupId) {
+      const type = categoryType || 'expense';
+      const fallbackId = `uncategorized_${type}`;
+      if (groupId && groupId !== 'uncategorized') {
         const found = cashflowGroups.find(g => g.id === groupId);
         if (found) return found;
       }
       return {
-        id: groupId || 'uncategorized',
-        name: categoryType === 'income' ? 'รายรับอื่นๆ' : 'หมวดหมู่อื่นๆ',
-        type: categoryType || 'expense',
-        icon: categoryType === 'income' ? '💰' : '📌',
+        id: (groupId && groupId !== 'uncategorized') ? groupId : fallbackId,
+        name: type === 'income' ? 'รายรับอื่นๆ' : (type === 'savings' ? 'เงินออมอื่นๆ' : 'หมวดหมู่อื่นๆ'),
+        type: type,
+        icon: type === 'income' ? 'coins' : (type === 'savings' ? 'piggy-bank' : 'tag'),
         color: '#64748b',
         order_index: 9999
       };
     };
 
     activeCatsArray.forEach(cat => {
-      const groupId = cat.cashflowGroup || cat.cashflow_group_id || 'uncategorized';
-      const groupKey = `${cat.type}_${groupId}`;
+      const effectiveType = cat.type || 'expense';
+      const rawGroupId = cat.cashflowGroup || cat.cashflow_group_id;
+      const groupId = (!rawGroupId || rawGroupId === 'uncategorized')
+        ? `uncategorized_${effectiveType}`
+        : rawGroupId;
+      const groupKey = `${effectiveType}_${groupId}`;
       const amt = catAmounts[cat.id] || 0;
 
       if (!groupsMap[groupKey]) {
         groupsMap[groupKey] = {
-          groupObj: getGroupObj(cat.cashflowGroup || cat.cashflow_group_id, cat.type),
+          groupObj: getGroupObj(rawGroupId, effectiveType),
           categories: [],
           groupTotal: 0
         };

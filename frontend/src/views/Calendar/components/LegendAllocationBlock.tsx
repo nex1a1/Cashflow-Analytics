@@ -254,7 +254,7 @@ function CategoryLegendSection({
             }
             
             return (
-              <div key={groupObj.id} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
+              <div key={`${groupObj.type}_${groupObj.id}`} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
                 <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-[#2d2d2d]/50">
                   <span className="text-[13px] font-black text-slate-200 tracking-wide flex items-center gap-2 truncate">
                     <span className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />

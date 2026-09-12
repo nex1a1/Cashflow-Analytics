@@ -485,7 +485,7 @@ const CashflowTableHeader = React.memo(({
                       fallbackEmoji="📦"
                     />
                     {cats.length > 0 && (
-                      <span className={`text-[9px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-slate-400'}`}>
+                      <span className={`text-[20px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-slate-400'}`}>
                         {isExpanded ? '«' : '»'}
                       </span>
                     )}

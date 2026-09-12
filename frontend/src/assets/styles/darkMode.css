@@ -42,9 +42,13 @@
   border-radius: 9999px !important;
 }
 
-/* Category Pill Trigger: subtle 4px corner matching adjacent inputs */
+/* Category Pill Trigger, Day Badge Pill, & Amount Box: subtle 4px corner matching adjacent inputs */
 .dark-mode .category-pill-trigger,
-.dark-mode [class*="category-pill-trigger"] {
+.dark-mode [class*="category-pill-trigger"],
+.dark-mode .day-badge-pill,
+.dark-mode [class*="day-badge-pill"],
+.dark-mode .amount-editable-box,
+.dark-mode [class*="amount-editable-box"] {
   border-radius: 4px !important;
 }
 

@@ -3,7 +3,7 @@ import {
   Layers, Check, Search, X, Sparkles, Tag, ChevronDown
 } from 'lucide-react';
 import { hexToRgb } from '../../../../utils/formatters';
-import { Category, CashflowGroup } from '../../../../types';
+import { Category, CashflowGroup, GroupType } from '../../../../types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 interface GroupedCategory {
@@ -12,6 +12,7 @@ interface GroupedCategory {
     name: string;
     icon?: string | null;
     color?: string | null;
+    type?: GroupType;
   };
   categories: Category[];
 }
@@ -38,6 +39,17 @@ export default function CategoryMatrixFilter({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus search input on initial open WITHOUT scrolling the viewport
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus({ preventScroll: true });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   // Close dropdown on click outside or Escape key
   useEffect(() => {
@@ -167,6 +179,21 @@ export default function CategoryMatrixFilter({
     return result;
   }, [cashflowGroups, availableCategories, searchTerm]);
 
+  // Income groups run few categories in total, so they share a single condensed row
+  // instead of each claiming a full-width row like the denser expense groups.
+  const { incomeGroupRows, otherGroupRows } = useMemo(() => {
+    const income: GroupedCategory[] = [];
+    const other: GroupedCategory[] = [];
+    groupedCategories.forEach(item => {
+      if (item.group.type === 'income') {
+        income.push(item);
+      } else {
+        other.push(item);
+      }
+    });
+    return { incomeGroupRows: income, otherGroupRows: other };
+  }, [groupedCategories]);
+
   // Count active groups that have at least one selected category
   const activeGroupCount = useMemo(() => {
     let count = 0;
@@ -178,54 +205,111 @@ export default function CategoryMatrixFilter({
     return count;
   }, [groupedCategories, selectedCatNames]);
 
-  // 4. Action Handlers
-  const handleToggleCategory = (catName: string) => {
-    const nextSet = new Set(selectedCatNames);
-    if (nextSet.has(catName)) {
-      nextSet.delete(catName);
-    } else {
-      nextSet.add(catName);
+  // 4. Action Handlers with Scroll Preservation
+  const preserveScroll = (action: () => void) => {
+    const currentScroll = popoverRef.current?.scrollTop;
+    action();
+    if (currentScroll !== undefined && popoverRef.current) {
+      requestAnimationFrame(() => {
+        if (popoverRef.current) {
+          popoverRef.current.scrollTop = currentScroll;
+        }
+      });
     }
-    onChange(Array.from(nextSet));
   };
 
-  const handleToggleGroup = (groupCats: Category[]) => {
-    const groupCatNames = groupCats.map(c => c.name);
-    const isGroupFullySelected = groupCatNames.every(name => selectedCatNames.has(name));
-    const nextSet = new Set(selectedCatNames);
-
-    if (isGroupFullySelected) {
-      // Deselect all categories in this group
-      groupCatNames.forEach(name => nextSet.delete(name));
-    } else {
-      // Select all categories in this group
-      groupCatNames.forEach(name => nextSet.add(name));
+  const handleToggleCategory = (catName: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+    preserveScroll(() => {
+      const nextSet = new Set(selectedCatNames);
+      if (nextSet.has(catName)) {
+        nextSet.delete(catName);
+      } else {
+        nextSet.add(catName);
+      }
+      onChange(Array.from(nextSet));
+    });
+  };
 
-    onChange(Array.from(nextSet));
+  const handleToggleGroup = (groupCats: Category[], e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    preserveScroll(() => {
+      const groupCatNames = groupCats.map(c => c.name);
+      const isGroupFullySelected = groupCatNames.every(name => selectedCatNames.has(name));
+      const nextSet = new Set(selectedCatNames);
+
+      if (isGroupFullySelected) {
+        // Deselect all categories in this group
+        groupCatNames.forEach(name => nextSet.delete(name));
+      } else {
+        // Select all categories in this group
+        groupCatNames.forEach(name => nextSet.add(name));
+      }
+
+      onChange(Array.from(nextSet));
+    });
   };
 
   const handleIsolateGroup = (groupCats: Category[], e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const groupCatNames = groupCats.map(c => c.name);
-    onChange(groupCatNames);
-  };
-
-  const handleSelectAll = () => {
-    onChange(allAvailableNames);
-  };
-
-  const handleSelectActiveOnly = () => {
-    if (!activeCategoryNames || activeCategoryNames.size === 0) {
-      onChange('ALL');
-      return;
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-    const activeNames = allAvailableNames.filter(name => activeCategoryNames.has(name));
-    onChange(activeNames);
+    preserveScroll(() => {
+      const groupCatNames = groupCats.map(c => c.name);
+      onChange(groupCatNames);
+    });
   };
 
-  const handleClearAll = () => {
-    onChange([]);
+  const handleIsolateCategory = (catName: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    preserveScroll(() => {
+      onChange([catName]);
+    });
+  };
+
+  const handleSelectAll = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    preserveScroll(() => {
+      onChange(allAvailableNames);
+    });
+  };
+
+  const handleSelectActiveOnly = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    preserveScroll(() => {
+      if (!activeCategoryNames || activeCategoryNames.size === 0) {
+        onChange('ALL');
+        return;
+      }
+      const activeNames = allAvailableNames.filter(name => activeCategoryNames.has(name));
+      onChange(activeNames);
+    });
+  };
+
+  const handleClearAll = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    preserveScroll(() => {
+      onChange([]);
+    });
   };
 
   // 5. Trigger Display Label
@@ -250,7 +334,7 @@ export default function CategoryMatrixFilter({
             const cat = availableCategories.find(c => c.name === n);
             return (
               <span key={n} className="inline-flex items-center gap-1 shrink-0">
-                <CategoryGlyph icon={cat?.icon} color={cat?.color} size={12} fallbackEmoji="🏷️" />
+                <CategoryGlyph icon={cat?.icon} color={cat?.color} size={15} fallbackEmoji="🏷️" />
                 <span>{n}{idx < names.length - 1 ? ',' : ''}</span>
               </span>
             );
@@ -260,6 +344,120 @@ export default function CategoryMatrixFilter({
     }
     return `เลือกแล้ว ${selectedCatNames.size} หมวด (${activeGroupCount} กลุ่ม)`;
   }, [selectedCategories, allAvailableNames.length, selectedCatNames, isOnlyActiveSelected, availableCategories, activeGroupCount]);
+
+  // 6. Shared Tier-2 category chip renderer (single click toggles, double-click isolates it alone)
+  const renderCategoryChip = (cat: Category, isIncome = false) => {
+    const isCatActive = selectedCatNames.has(cat.name);
+    const activeColor = cat.color || (isIncome ? '#10b981' : '#da291c');
+    const rgb = hexToRgb(activeColor);
+
+    return (
+      <button
+        key={cat.id || cat.name}
+        type="button"
+        onClick={() => handleToggleCategory(cat.name)}
+        onDoubleClick={(e) => handleIsolateCategory(cat.name, e)}
+        style={{
+          borderColor: isCatActive ? activeColor : '#2c2c2c',
+          ['--tint-border-color' as any]: isCatActive ? activeColor : '#2c2c2c',
+          backgroundColor: isCatActive ? `rgba(${rgb}, 0.2)` : '#121212'
+        }}
+        className={`px-1.5 py-0.5 text-[10px] font-mono border tint-border rounded-none transition-all flex items-center gap-1 select-none cursor-pointer ${
+          isCatActive
+            ? 'text-white font-black shadow-sm'
+            : isIncome
+              ? 'text-emerald-500/70 hover:text-emerald-300 hover:border-emerald-600/50'
+              : 'text-slate-500 hover:text-slate-300 hover:border-slate-600'
+        }`}
+        title={`คลิก: เปิด/ปิดหมวดหมู่ "${cat.name}" • ดับเบิลคลิก: เลือกเฉพาะหมวดนี้`}
+      >
+        {/* Checkbox indicator */}
+        <div
+          className={`w-3 h-3 border tint-border flex items-center justify-center rounded-none shrink-0 transition-colors ${
+            isCatActive ? 'text-white' : 'border-[#404040] bg-[#181818]'
+          }`}
+          style={{
+            borderColor: isCatActive ? activeColor : '#404040',
+            ['--tint-border-color' as any]: isCatActive ? activeColor : '#404040',
+            backgroundColor: isCatActive ? activeColor : undefined
+          }}
+        >
+          {isCatActive && <Check className="w-2 h-2 stroke-[3]" />}
+        </div>
+
+        <CategoryGlyph
+          icon={cat.icon}
+          color={cat.color || (isIncome ? '#10b981' : undefined)}
+          size={15}
+          className="shrink-0 leading-none"
+          fallbackEmoji="🏷️"
+        />
+        <span className="truncate">{cat.name}</span>
+      </button>
+    );
+  };
+
+  // 7. Shared Tier-1 group chip renderer
+  const renderGroupChip = (
+    group: GroupedCategory['group'],
+    groupCats: Category[],
+    isIncome = false,
+    fullWidth = false
+  ) => {
+    const selectedCount = groupCats.filter(c => selectedCatNames.has(c.name)).length;
+    const isGroupFullySelected = selectedCount === groupCats.length && groupCats.length > 0;
+    const isGroupPartiallySelected = selectedCount > 0 && !isGroupFullySelected;
+
+    let buttonStyle = 'border-[#303030] bg-[#141414] text-slate-400 hover:text-slate-200 hover:border-[#484848]';
+    let badgeStyle = 'bg-[#222222] text-slate-500';
+
+    if (isIncome) {
+      if (isGroupFullySelected) {
+        buttonStyle = 'border-emerald-500 bg-emerald-500/25 text-white font-black shadow-[0_0_8px_rgba(16,185,129,0.2)]';
+        badgeStyle = 'bg-emerald-500 text-white';
+      } else if (isGroupPartiallySelected) {
+        buttonStyle = 'border-emerald-500/70 bg-emerald-950/40 text-emerald-300 font-bold';
+        badgeStyle = 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40';
+      } else {
+        buttonStyle = 'border-emerald-900/60 bg-[#0d1612] text-emerald-400/80 hover:text-emerald-200 hover:border-emerald-500/50';
+        badgeStyle = 'bg-[#13241b] text-emerald-500';
+      }
+    } else {
+      if (isGroupFullySelected) {
+        buttonStyle = 'border-[#da291c] bg-[#da291c]/20 text-white font-black shadow-[0_0_8px_rgba(218,41,28,0.12)]';
+        badgeStyle = 'bg-[#da291c] text-white';
+      } else if (isGroupPartiallySelected) {
+        buttonStyle = 'border-amber-500/70 bg-amber-950/25 text-amber-300 font-bold';
+        badgeStyle = 'bg-amber-500/30 text-amber-300 border border-amber-500/40';
+      }
+    }
+
+    return (
+      <button
+        key={group.id}
+        type="button"
+        onClick={() => handleToggleGroup(groupCats)}
+        className={`px-2 py-0.5 text-[10px] font-bold border transition-all flex items-center ${
+          fullWidth ? 'w-full justify-between' : ''
+        } gap-1 rounded-none cursor-pointer font-mono select-none ${buttonStyle}`}
+        title={`คลิกเพื่อสลับเลือกหมวดหมู่ทั้งหมดในกลุ่ม ${group.name}`}
+      >
+        <div className="flex items-center gap-1 truncate">
+          <CategoryGlyph
+            icon={group.icon}
+            color={group.color || (isIncome ? '#10b981' : undefined)}
+            size={15}
+            className="shrink-0"
+            fallbackEmoji="📁"
+          />
+          <span className="truncate max-w-[110px]">{group.name}</span>
+        </div>
+        <span className={`ml-0.5 px-1 rounded-none text-[8.5px] font-black tabular-nums leading-none ${badgeStyle}`}>
+          {selectedCount}/{groupCats.length}
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div ref={containerRef} className={`relative z-50 w-full ${className}`}>
@@ -317,6 +515,7 @@ export default function CategoryMatrixFilter({
       {/* ── Floating 2-Tier Chips Matrix Popover ── */}
       {isOpen && (
         <div
+          ref={popoverRef}
           className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-[#3e3e3e] shadow-2xl p-3 bg-[#181818] select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
           style={{ backdropFilter: 'blur(12px)' }}
         >
@@ -334,12 +533,12 @@ export default function CategoryMatrixFilter({
             <div className="relative">
               <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-[#666666]" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="ค้นหา..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-24 sm:w-28 pl-6 pr-5 py-0.5 border rounded-none outline-none text-[10px] font-semibold bg-[#121212] border-[#303030] text-[#cbd5e1] focus:border-[#da291c] placeholder-[#555555]"
-                autoFocus
               />
               {searchTerm && (
                 <button 
@@ -417,62 +616,93 @@ export default function CategoryMatrixFilter({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {groupedCategories.map(({ group, categories: groupCats }) => {
-                    const selectedCount = groupCats.filter(c => selectedCatNames.has(c.name)).length;
-                    const isGroupFullySelected = selectedCount === groupCats.length && groupCats.length > 0;
-                    const isGroupPartiallySelected = selectedCount > 0 && !isGroupFullySelected;
+                <div className="flex flex-wrap items-stretch gap-1.5">
+                  {/* Income Groups (Green Box - Stacked 2 lines) */}
+                  {incomeGroupRows.length > 0 && (
+                    <div className="flex flex-col justify-center gap-1 p-1 bg-emerald-950/20 border border-emerald-500/40 rounded-none shrink-0 min-w-[125px]">
+                      {incomeGroupRows.map(({ group, categories: groupCats }) =>
+                        renderGroupChip(group, groupCats, true, true)
+                      )}
+                    </div>
+                  )}
 
-                    return (
-                      <button
-                        key={group.id}
-                        type="button"
-                        onClick={() => handleToggleGroup(groupCats)}
-                        className={`px-2 py-0.5 text-[10px] font-bold border transition-all flex items-center gap-1 rounded-none cursor-pointer font-mono select-none ${
-                          isGroupFullySelected
-                            ? 'border-[#da291c] bg-[#da291c]/20 text-white font-black shadow-[0_0_8px_rgba(218,41,28,0.12)]'
-                            : isGroupPartiallySelected
-                              ? 'border-amber-500/70 bg-amber-950/25 text-amber-300 font-bold'
-                              : 'border-[#303030] bg-[#141414] text-slate-400 hover:text-slate-200 hover:border-[#484848]'
-                        }`}
-                        title={`คลิกเพื่อสลับเลือกหมวดหมู่ทั้งหมดในกลุ่ม ${group.name}`}
-                      >
-                        <CategoryGlyph icon={group.icon} color={group.color} size={12} className="shrink-0" fallbackEmoji="📁" />
-                        <span className="truncate max-w-[110px]">{group.name}</span>
-                        <span className={`ml-0.5 px-1 rounded-none text-[8.5px] font-black tabular-nums leading-none ${
-                          isGroupFullySelected
-                            ? 'bg-[#da291c] text-white'
-                            : isGroupPartiallySelected
-                              ? 'bg-amber-500/30 text-amber-300 border border-amber-500/40'
-                              : 'bg-[#222222] text-slate-500'
-                        }`}>
-                          {selectedCount}/{groupCats.length}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  {/* Expense & Savings Groups Box */}
+                  {otherGroupRows.length > 0 && (
+                    <div className="flex-1 flex flex-wrap items-center content-center gap-1 p-1 bg-[#141414] border border-[#282828] rounded-none">
+                      {otherGroupRows.map(({ group, categories: groupCats }) =>
+                        renderGroupChip(group, groupCats, false)
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Tier 2: Sub-categories Matrix */}
               <div className="flex flex-col gap-1 pt-1 border-t border-[#242424]">
                 <div className="flex items-center justify-between text-[9.5px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  <span>ชั้นที่ 2: หมวดหมู่ย่อย (คลิกเพื่อเปิด/ปิดทีละรายการ)</span>
+                  <span>ชั้นที่ 2: หมวดหมู่ย่อย (คลิก: เปิด/ปิด • ดับเบิลคลิก: เฉพาะหมวดนั้น)</span>
                   <span className="text-[#da291c] font-bold">
                     เลือก {selectedCatNames.size} / {allAvailableNames.length} หมวด
                   </span>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  {groupedCategories.map(({ group, categories: groupCats }) => (
-                    <div 
-                      key={group.id} 
+                  {/* Income groups in a Green Box split in half (50% / 50%) */}
+                  {incomeGroupRows.length > 0 && (
+                    <div className={`grid ${
+                      incomeGroupRows.length === 1
+                        ? 'grid-cols-1'
+                        : 'grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/30'
+                    } bg-emerald-950/20 border border-emerald-500/40 rounded-none hover:border-emerald-500/60 transition-colors`}>
+                      {incomeGroupRows.map(({ group, categories: groupCats }) => (
+                        <div
+                          key={group.id}
+                          className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-2 group/row"
+                        >
+                          {/* Group Title Tag on Left */}
+                          <div className="w-auto sm:w-28 shrink-0 flex items-center justify-between gap-1 text-[9.5px] font-black text-emerald-400 font-mono select-none">
+                            <div className="flex items-center gap-1 truncate">
+                              <CategoryGlyph
+                                icon={group.icon}
+                                color={group.color || '#10b981'}
+                                size={15}
+                                className="shrink-0"
+                                fallbackEmoji="📁"
+                              />
+                              <span className="truncate">{group.name}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => handleIsolateGroup(groupCats, e)}
+                                className="opacity-0 group-hover/row:opacity-100 text-[8px] font-black uppercase tracking-wider text-emerald-500/70 hover:text-emerald-300 transition-opacity cursor-pointer font-mono mr-0.5"
+                                title={`เลือกเฉพาะกลุ่ม ${group.name}`}
+                              >
+                                [เฉพาะ]
+                              </button>
+                              <span className="text-emerald-600/60 hidden sm:inline">›</span>
+                            </div>
+                          </div>
+
+                          {/* Sub-category Chips on Right */}
+                          <div className="flex flex-wrap items-center gap-1 flex-1">
+                            {groupCats.map(cat => renderCategoryChip(cat, true))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {otherGroupRows.map(({ group, categories: groupCats }) => (
+                    <div
+                      key={group.id}
                       className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-1.5 bg-[#141414] border border-[#242424] rounded-none group/row hover:border-[#383838] transition-colors"
                     >
                       {/* Group Title Tag on Left */}
                       <div className="w-auto sm:w-28 shrink-0 flex items-center justify-between gap-1 text-[9.5px] font-black text-slate-400 font-mono select-none">
                         <div className="flex items-center gap-1 truncate">
-                          <CategoryGlyph icon={group.icon} color={group.color} size={12} className="shrink-0" fallbackEmoji="📁" />
+                          <CategoryGlyph icon={group.icon} color={group.color} size={15} className="shrink-0" fallbackEmoji="📁" />
                           <span className="truncate">{group.name}</span>
                         </div>
 
@@ -491,46 +721,7 @@ export default function CategoryMatrixFilter({
 
                       {/* Sub-category Chips on Right */}
                       <div className="flex flex-wrap items-center gap-1 flex-1">
-                        {groupCats.map(cat => {
-                          const isCatActive = selectedCatNames.has(cat.name);
-                          const rgb = hexToRgb(cat.color || '#94a3b8');
-
-                          return (
-                            <button
-                              key={cat.id || cat.name}
-                              type="button"
-                              onClick={() => handleToggleCategory(cat.name)}
-                              style={{
-                                borderColor: isCatActive ? (cat.color || '#da291c') : '#2c2c2c',
-                                ['--tint-border-color' as any]: isCatActive ? (cat.color || '#da291c') : '#2c2c2c',
-                                backgroundColor: isCatActive ? `rgba(${rgb}, 0.2)` : '#121212'
-                              }}
-                              className={`px-1.5 py-0.5 text-[10px] font-mono border tint-border rounded-none transition-all flex items-center gap-1 select-none cursor-pointer ${
-                                isCatActive
-                                  ? 'text-white font-black shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-300 hover:border-slate-600'
-                              }`}
-                              title={`คลิกเพื่อเปิด/ปิดหมวดหมู่ "${cat.name}"`}
-                            >
-                              {/* Checkbox indicator */}
-                              <div
-                                className={`w-3 h-3 border tint-border flex items-center justify-center rounded-none shrink-0 transition-colors ${
-                                  isCatActive ? 'text-white' : 'border-[#404040] bg-[#181818]'
-                                }`}
-                                style={{
-                                  borderColor: isCatActive ? (cat.color || '#da291c') : '#404040',
-                                  ['--tint-border-color' as any]: isCatActive ? (cat.color || '#da291c') : '#404040',
-                                  backgroundColor: isCatActive ? (cat.color || '#da291c') : undefined
-                                }}
-                              >
-                                {isCatActive && <Check className="w-2 h-2 stroke-[3]" />}
-                              </div>
-
-                              <CategoryGlyph icon={cat.icon} color={cat.color} size={12} className="shrink-0 leading-none" fallbackEmoji="🏷️" />
-                              <span className="truncate">{cat.name}</span>
-                            </button>
-                          );
-                        })}
+                        {groupCats.map(cat => renderCategoryChip(cat, false))}
                       </div>
                     </div>
                   ))}

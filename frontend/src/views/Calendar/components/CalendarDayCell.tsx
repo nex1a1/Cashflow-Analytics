@@ -86,7 +86,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="opacity-0 group-hover:opacity-100 text-[#da291c] hover:text-white transition-none cursor-pointer"
               title="เพิ่มรายการวันนี้"
             >
-              <PlusCircle className="w-4.5 h-4.5" />
+              <PlusCircle className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -164,7 +164,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           const color = tx._catObj?.color || '#10b981';
           return (
             <div 
-              key={tx.id} 
+              key={`inc_${tx.id}`} 
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
@@ -184,7 +184,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           const color = tx._catObj?.color || '#cbd5e1';
           return (
             <div 
-              key={tx.id} 
+              key={`exp_${tx.id}`} 
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >

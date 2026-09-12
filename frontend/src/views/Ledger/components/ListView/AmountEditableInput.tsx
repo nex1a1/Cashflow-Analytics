@@ -57,12 +57,12 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
         setIsEditing(true);
         setTimeout(() => inputRef.current?.focus(), 0);
       }}
-      className={`group/amt relative flex items-center justify-between w-full rounded-none border px-2 py-1 cursor-text transition-all ${
+      className={`group/amt amount-editable-box relative flex items-center justify-between w-full rounded-sm border px-2 py-1 cursor-text transition-all ${
         isEditing 
           ? 'bg-[#121212] border-[#da291c] ring-1 ring-[#da291c]/40' 
           : 'bg-transparent border-transparent hover:bg-[#141414] hover:border-[#383838]'
       }`}
-      style={fontStyle}
+      style={{ ...fontStyle, borderRadius: '4px' }}
     >
       {/* Pinned to far left: Currency Prefix */}
       <span 

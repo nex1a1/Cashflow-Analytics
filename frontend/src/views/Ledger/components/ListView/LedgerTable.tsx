@@ -90,13 +90,13 @@ export default function LedgerTable({
   return (
     <div className="flex flex-col w-full">
       <div className="overflow-auto no-scrollbar relative" style={{ scrollbarWidth: 'thin' }}>
-        <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[760px] bg-[#181818]">
+        <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[780px] bg-[#181818]">
           <thead className="sticky top-0 z-20 border-b bg-[#121212]/95 border-[#303030]/65 backdrop-blur-md">
             <tr>
               <SortHeader 
-                label="วันที่" 
+                label="วันเดือนปี" 
                 sortKey="date" 
-                className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[140px]" 
+                className="sticky left-0 z-30 bg-[#121212] border-r border-[#303030]/60 w-[155px] min-w-[155px]" 
                 sortConfig={sortConfig}
                 handleSort={handleSort}
               />
@@ -135,25 +135,28 @@ export default function LedgerTable({
                   <td className={`sticky left-0 z-10 border-r border-[#303030]/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-3 py-1 group-hover:bg-[#202020] ${stickyBg}`}>
                     {isNewDate ? (
                       <div className="flex items-center justify-between gap-1.5 w-full">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {dayInfo && (
-                            <span 
-                              className="px-1.5 py-0.5 text-[9px] font-black rounded-none border select-none shrink-0 tabular-nums leading-none tracking-tight" 
-                              style={{
-                                color: dayInfo.color,
-                                backgroundColor: dayInfo.bg,
-                                borderColor: dayInfo.border
-                              }}
-                              title={dayInfo.fullName}
-                            >
-                              {dayInfo.label}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-5 flex items-center justify-center shrink-0">
+                            {dayInfo && (
+                              <span 
+                                className="w-full h-full inline-flex items-center justify-center text-[10px] font-black border select-none tabular-nums leading-none tracking-tight rounded-sm day-badge-pill" 
+                                style={{
+                                  color: dayInfo.color,
+                                  backgroundColor: dayInfo.bg,
+                                  borderColor: dayInfo.border,
+                                  borderRadius: '4px'
+                                }}
+                                title={dayInfo.fullName}
+                              >
+                                {dayInfo.label}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-xs font-black tabular-nums text-slate-200 font-mono tracking-tight">
                             {item.date}
                           </span>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'income')} 
@@ -174,12 +177,14 @@ export default function LedgerTable({
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-1.5 w-full">
-                        <div className="flex items-center gap-1.5 min-w-0 pl-3">
-                          <span className="text-slate-600 text-xs font-mono select-none font-bold" title={item.date}>
-                            ↳
-                          </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-5 flex items-center justify-center shrink-0">
+                            <span className="text-slate-600 text-xs font-mono select-none font-bold" title={item.date}>
+                              ↳
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'income')} 
