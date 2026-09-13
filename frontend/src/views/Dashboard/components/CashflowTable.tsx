@@ -320,7 +320,7 @@ const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+          className={`px-3 py-2.5 font-bold border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-[#303030] text-[#ff4d4d]' : 'text-[#ff4d4d] bg-[#121212]'
           }`}
         >
@@ -331,7 +331,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('net')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[140px] z-50 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-            hoveredCol === 'net' ? 'bg-[#303030] text-emerald-400' : 'text-emerald-400 bg-[#121212]'
+            hoveredCol === 'net' ? 'bg-[#303030] text-yellow-400' : 'text-yellow-400 bg-[#121212]'
           }`}
         >
           เงินคงเหลือ
@@ -379,14 +379,12 @@ const CashflowTableHeader = React.memo(({
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                 className={`px-2 py-1.5 font-extrabold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
                 style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
-                title={`${g.name} (รายรับ)`}
               >
                 <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
                     type="button"
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
-                    title={`กลุ่ม: ${g.name}`}
                     onClick={() => toggleGroup(g.id)}
                     className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
@@ -467,14 +465,12 @@ const CashflowTableHeader = React.memo(({
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                 className={`px-2 py-1.5 font-bold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
                 style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
-                title={`${g.name} (รายจ่าย)`}
               >
                 <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
                     type="button"
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
-                    title={`กลุ่ม: ${g.name}`}
                     onClick={() => toggleGroup(g.id)}
                     className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
@@ -602,7 +598,7 @@ function CashflowTableGroupCells({
         }`}
         style={{ color: groupTextColor, backgroundColor: groupBg }}
       >
-        {adjustedGroupVal > 0 ? formatMoney(adjustedGroupVal) : '-'}
+        {adjustedGroupVal > 0 ? formatMoney(adjustedGroupVal) : <span className="text-neutral-600 font-normal select-none">-</span>}
       </td>
       {isExpanded && cats.map((c, cIdx) => {
         const amt = filteredCatMap[c.id]?.[row.monthStr] ?? (analytics.monthlyCatMap?.[c.id]?.[row.monthStr] || 0);
@@ -623,7 +619,7 @@ function CashflowTableGroupCells({
             }`}
             style={{ color: isCatFaded ? undefined : (c.color ?? undefined), backgroundColor: catBg }}
           >
-            {amt > 0 ? formatMoney(amt) : '-'}
+            {amt > 0 ? formatMoney(amt) : <span className="text-neutral-600 font-normal select-none">-</span>}
           </td>
         );
       })}
@@ -668,11 +664,11 @@ function SummaryTrendCell({
     <td
       onMouseEnter={() => onHover('trend')}
       onMouseLeave={() => onHover(null)}
-      className={`px-3 py-2 font-bold border-l border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${bgCls}`}
+      className={`px-3 py-2 font-bold border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
     >
       <div className="flex items-center justify-between gap-1">
         <div className="shrink-0">{expMoMJSX}</div>
-        <span className="text-[11px] tabular-nums">{formatMoney(currentAdjustedExpense)}</span>
+        <span className="text-[13px] font-bold">{formatMoney(currentAdjustedExpense)}</span>
       </div>
     </td>
   );
@@ -688,15 +684,23 @@ interface SummaryNetCellProps {
 }
 
 function SummaryNetCell({ isExcluded, isNetHovered, isRowHovered, thinBorder, netAmount, onHover }: SummaryNetCellProps) {
+  const isDeficit = !isExcluded && netAmount < 0;
   let netColor = '';
-  if (!isExcluded) netColor = netAmount >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]';
-  const bgCls = getSummaryCellBg(isExcluded, isNetHovered, isRowHovered);
+  if (!isExcluded) netColor = netAmount >= 0 ? 'text-yellow-400' : 'text-[#ff4d4d]';
+  let bgCls = getSummaryCellBg(isExcluded, isNetHovered, isRowHovered);
+  if (isDeficit) {
+    bgCls = isNetHovered || isRowHovered
+      ? 'bg-rose-950/35 text-[#ff4d4d]'
+      : 'bg-rose-950/20 text-[#ff4d4d]';
+  }
 
   return (
     <td
       onMouseEnter={() => onHover('net')}
       onMouseLeave={() => onHover(null)}
-      className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${bgCls} ${netColor}`}
+      className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${bgCls} ${netColor} ${
+        isDeficit ? 'shadow-[inset_0_0_0_1px_rgba(244,63,94,0.2)]' : ''
+      }`}
     >
       {formatMoney(netAmount)}
     </td>
@@ -1147,7 +1151,7 @@ const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l border-b ${thinBorder} text-[#ff4d4d] sticky right-[250px] z-30 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors w-[140px] min-w-[140px] max-w-[140px] ${
+          className={`px-3 py-2.5 border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} text-[#ff4d4d] sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -1158,7 +1162,7 @@ const CashflowTableFooter = React.memo(({
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
             hoveredCol === 'net' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-          } ${totalActiveNet >= 0 ? 'text-emerald-400' : 'text-[#ff4d4d]'}`}
+          } ${totalActiveNet >= 0 ? 'text-yellow-400' : 'text-[#ff4d4d]'}`}
         >
           {formatMoney(totalActiveNet)}
         </td>
@@ -1205,7 +1209,10 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
         style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
       >
         <div className="flex flex-col items-center min-w-[170px] max-w-[320px]">
-          <div className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/98 border-[#3e3e3e] text-slate-200">
+          <div
+            className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border bg-[#141414] border-[#3e3e3e] text-slate-200"
+            style={{ backgroundColor: '#141414' }}
+          >
             <div className="flex items-center gap-2 mb-1.5 border-b pb-1.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
               <div
                 className="w-5 h-5 flex items-center justify-center shrink-0 border"
@@ -1274,7 +1281,10 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
       style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
     >
       <div className="flex flex-col items-center min-w-[200px] max-w-[420px]">
-        <div className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border backdrop-blur-md bg-[#121212]/98 border-[#3e3e3e] text-slate-200">
+        <div
+          className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border bg-[#141414] border-[#3e3e3e] text-slate-200"
+          style={{ backgroundColor: '#141414' }}
+        >
           {/* Header with Group Icon, Name & Type Badges */}
           <div
             className="flex items-center justify-between gap-2 border-b pb-1.5 mb-2"

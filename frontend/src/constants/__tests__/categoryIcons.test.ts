@@ -7,8 +7,17 @@ import {
 } from '../categoryIcons';
 
 describe('categoryIcons', () => {
-  it('contains over 200 curated icons', () => {
-    expect(CATEGORY_ICONS.length).toBeGreaterThanOrEqual(200);
+  it('contains over 320 curated icons', () => {
+    expect(CATEGORY_ICONS.length).toBeGreaterThanOrEqual(320);
+  });
+
+  it('includes snowflake (ice / 🧊) with accurate keywords', () => {
+    const snowflake = CATEGORY_ICONS.find((d) => d.key === 'snowflake');
+    expect(snowflake).toBeDefined();
+    expect(snowflake?.category).toBe('food');
+    expect(snowflake?.keywords).toContain('🧊');
+    expect(snowflake?.keywords).toContain('น้ำแข็ง');
+    expect(CATEGORY_ICON_MAP['snowflake']).toBeDefined();
   });
 
   it('has unique keys across all icons', () => {

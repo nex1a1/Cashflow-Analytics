@@ -17,21 +17,27 @@ export interface CategoryGlyphProps {
 const EMOJI_TO_KEY_MAP: Record<string, string> = {
   // Housing / Living
   '🏠': 'home', '🏢': 'building-2', '🏡': 'home', '🛋️': 'sofa', '🛋': 'sofa',
+  '🏨': 'hotel', '🛏️': 'bed-single', '🛏': 'bed-single',
   // Shopping & Lifestyle
   '🛍️': 'shopping-bag', '🛍': 'shopping-bag', '🛒': 'shopping-cart', '📦': 'package',
-  '🏷️': 'tag', '🏷': 'tag', '🎁': 'gift', '👕': 'shirt',
+  '🏷️': 'tag', '🏷': 'tag', '🎁': 'gift', '👕': 'shirt', '🎒': 'backpack', '🧱': 'blocks',
   // Finance & Money
   '💰': 'coins', '💸': 'banknote', '💵': 'banknote', '💳': 'credit-card',
   '🏦': 'landmark', '📈': 'trending-up', '📉': 'trending-down', '🪙': 'coins', '💎': 'diamond',
-  // Food & Dining
+  '⏰': 'alarm-clock',
+  // Food & Dining & Cold
   '🍽️': 'utensils', '🍽': 'utensils', '🍜': 'utensils', '🍔': 'sandwich', '🍕': 'pizza',
   '☕': 'coffee', '🍺': 'beer', '🍻': 'beer', '🍷': 'wine', '🍿': 'popcorn',
+  '🧊': 'snowflake', '🍳': 'egg-fried', '🍇': 'grape', '🫘': 'bean', '🍲': 'cooking-pot',
+  '🧑‍🍳': 'chef-hat', '🍭': 'lollipop', '🍰': 'cake-slice', '🍦': 'ice-cream-2', '🍨': 'ice-cream',
   // Tech & Gadgets
   '💻': 'laptop', '🖥️': 'monitor', '🖥': 'monitor', '📱': 'smartphone', '🎮': 'gamepad-2',
   '🤖': 'bot', '⚡': 'zap', '🌐': 'globe', '📶': 'wifi',
+  '⌨️': 'keyboard', '⌨': 'keyboard', '🖱️': 'mouse', '🖱': 'mouse',
   // Transport
   '🚗': 'car', '🚕': 'car', '🛵': 'bike', '🚲': 'bike', '✈️': 'plane', '✈': 'plane', '⛽': 'fuel',
-  // Utilities & Misc
+  '🚧': 'traffic-cone', '🚡': 'cable-car', '🛄': 'baggage-claim',
+  // Utilities & Misc & Work & Tools
   '✂️': 'scissors', '✂': 'scissors', '🔄': 'repeat', '💧': 'droplet', '🔧': 'wrench',
   '🔨': 'hammer', '📁': 'folder', '📄': 'file-text', '📌': 'pin', '✨': 'sparkles',
   '🎬': 'film', '🎵': 'music-2', '📚': 'book-open', '🎓': 'graduation-cap', '🐶': 'dog',
@@ -39,6 +45,15 @@ const EMOJI_TO_KEY_MAP: Record<string, string> = {
   '🛡': 'shield-check', '🏋️': 'dumbbell', '🏋': 'dumbbell', '💼': 'briefcase',
   '🏖️': 'sun', '🏖': 'sun', '🏆': 'trophy', '🔒': 'lock', '🎯': 'target',
   '📥': 'arrow-down-left',
+  '🖋️': 'pen', '🖋': 'pen', '✒️': 'pen-tool', '✒': 'pen-tool', '✏️': 'pencil', '✏': 'pencil',
+  '🪓': 'axe', '🔦': 'flashlight', '🎸': 'guitar', '🎹': 'piano', '🔪': 'pocket-knife',
+  '🛟': 'life-buoy',
+  // Animals & Nature
+  '🐦': 'bird', '🐰': 'rabbit', '🐢': 'turtle', '🐌': 'snail', '🐿️': 'squirrel', '🐿': 'squirrel',
+  '🐹': 'rat', '🐭': 'rat', '🍃': 'leaf', '🌱': 'sprout',
+  '🌤️': 'cloud-sun', '🌤': 'cloud-sun', '⛈️': 'cloud-lightning', '⛈': 'cloud-lightning',
+  '🌨️': 'cloud-snow', '🌨': 'cloud-snow', '🏔️': 'mountain-snow', '🏔': 'mountain-snow',
+  '💨': 'wind', '🌈': 'rainbow', '🌊': 'waves',
 };
 
 export default function CategoryGlyph({ icon, color, size = 14, className = '', fallbackEmoji }: CategoryGlyphProps) {
