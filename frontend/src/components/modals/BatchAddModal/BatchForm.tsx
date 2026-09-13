@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { PlusCircle, Check, RotateCcw } from 'lucide-react';
+import { PlusCircle, Check, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useForm, UseFormSetValue, UseFormSetFocus, UseFormWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DatePicker from '../../ui/DatePicker';
+import { stepDate, toValueStr } from '@/utils/datePickerHelpers';
 import { Category, CashflowGroup, DayType, AllocationType } from '../../../types';
 import { PendingBatchItem } from './index';
 import CategorySelect from '@/components/shared/CategorySelect';
@@ -194,7 +195,35 @@ function BatchForm({
       {/* Date & Amount Row */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1 min-w-0">
-          <span className={tokens.label}>วันที่</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className={tokens.label} style={{ marginBottom: 0 }}>วันที่</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setValue('date', stepDate(formDate, -1), { shouldValidate: true })}
+                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                title="วันก่อนหน้า (-1 วัน)"
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue('date', toValueStr(new Date()), { shouldValidate: true })}
+                className="px-1 text-[9.5px] font-bold text-slate-400 hover:text-[#da291c] hover:bg-[#303030] transition-colors"
+                title="เลือกวันนี้"
+              >
+                วันนี้
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue('date', stepDate(formDate, 1), { shouldValidate: true })}
+                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                title="วันถัดไป (+1 วัน)"
+              >
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
           <DatePicker 
             value={formDate} 
             onChange={(v) => setValue('date', v, { shouldValidate: true })} 

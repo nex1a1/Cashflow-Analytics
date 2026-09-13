@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react';
 import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../utils/formatters';
 import { useToast } from '../../../context/ToastContext';
 import DailyForm from './DailyForm';
 import QuickSuggest from './QuickSuggest';
 import TransactionList from './TransactionList';
+import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../../../types';
 import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
+import { stepDate } from '@/utils/datePickerHelpers';
 
 export interface DayDetailModalProps {
   dateStr: string;
@@ -19,6 +21,7 @@ export interface DayDetailModalProps {
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
   frequentItems?: FrequentItem[];
+  onDateChange?: (newDateStr: string) => void;
 }
 
 export default function DayDetailModal({ 
@@ -31,22 +34,40 @@ export default function DayDetailModal({
   onDelete, 
   dayTypes = {}, 
   dayTypeConfig = [], 
-  frequentItems = [] 
+  frequentItems = [],
+  onDateChange
 }: DayDetailModalProps) {
   const { showToast } = useToast();
   
-  const [yyyyStr, mmStr, ddStr] = (dateStr || '').split('-');
+  const [activeDateStr, setActiveDateStr] = useState(dateStr);
+
+  useEffect(() => {
+    setActiveDateStr(dateStr);
+  }, [dateStr]);
+
+  const handleDateChange = (newDateStr: string) => {
+    if (!newDateStr || newDateStr === activeDateStr) return;
+    setActiveDateStr(newDateStr);
+    onDateChange?.(newDateStr);
+  };
+
+  const handleStepDay = (step: -1 | 1) => {
+    const nextDateStr = stepDate(activeDateStr, step);
+    handleDateChange(nextDateStr);
+  };
+
+  const [yyyyStr, mmStr, ddStr] = (activeDateStr || '').split('-');
   const d = Number.parseInt(ddStr, 10);
   const m = Number.parseInt(mmStr, 10);
   const y = Number.parseInt(yyyyStr, 10);
   const dateObj = new Date(y, m - 1, d);
-  const dayOfWeek = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dateObj.getDay()];
+  const dayOfWeek = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'][dateObj.getDay()];
   const displayDate = `${d} ${THAI_MONTHS[m - 1] || ''} ${y}`;
-  const thaiDay = getThaiDayInfo(dateStr);
+  const thaiDay = getThaiDayInfo(activeDateStr);
 
   const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
   const defaultTypeId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
-  const dayTypeId = dayTypes[dateStr] || defaultTypeId;
+  const dayTypeId = dayTypes[activeDateStr] || defaultTypeId;
   const currentDayType = dayTypeId ? dayTypeConfig.find(dt => dt.id === dayTypeId) : null;
 
   const defaultExpenseCatId = categories.find(c => c.type === 'expense')?.id || '';
@@ -86,7 +107,7 @@ export default function DayDetailModal({
   const dayTx = useMemo(() => {
     const txIds = new Set(transactions.map(t => t.id));
     const pendingItems = localItems.filter(i => !txIds.has(i.id));
-    const combined = [...transactions.filter(t => t.date === dateStr), ...pendingItems];
+    const combined = [...transactions.filter(t => t.date === activeDateStr), ...pendingItems];
     
     // Sankey-Style Logic Sorting
     return combined.sort((a, b) => {
@@ -117,7 +138,7 @@ export default function DayDetailModal({
       // 5. Fallback to ID for stability
       return String(a.id).localeCompare(String(b.id));
     });
-  }, [transactions, localItems, dateStr, catMap]);
+  }, [transactions, localItems, activeDateStr, catMap]);
 
   const expenses   = dayTx.filter(t => {
     const cat = (t.category_id && catMap[t.category_id]) || (t.category && catMap[t.category]);
@@ -151,7 +172,7 @@ export default function DayDetailModal({
     const targetCatName = catObj?.name || 'อื่นๆ';
     const newItem = {
       id: crypto.randomUUID(),
-      date: dateStr, 
+      date: activeDateStr, 
       category: targetCatName,
       category_id: data.categoryId, 
       description: data.description || targetCatName, 
@@ -201,17 +222,29 @@ export default function DayDetailModal({
         style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
       >
 
-        <button onClick={onClose} className={tokens.closeBtn}>
+        <button onClick={onClose} className={tokens.closeBtn} title="ปิด (Esc)">
           <X className="w-4 h-4" />
         </button>
 
         <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
           <div className={`flex items-start justify-between px-5 py-3.5 border-b ${tokens.border} shrink-0 pr-12`}>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Header Date Navigation Bar */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {/* Previous Day Button */}
+                <button
+                  type="button"
+                  onClick={() => handleStepDay(-1)}
+                  className="p-1 rounded-none border border-[#3e3e3e] bg-[#141414] hover:bg-[#303030] hover:border-[#da291c] text-slate-300 hover:text-white transition-all cursor-pointer"
+                  title="วันก่อนหน้า ( -1 วัน )"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Thai Day Color Badge */}
                 {thaiDay && (
                   <span 
-                    className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-none border shrink-0 select-none shadow-sm"
+                    className="w-6 h-6 flex items-center justify-center text-[10px] font-black rounded-none border shrink-0 select-none shadow-sm"
                     style={{ 
                       backgroundColor: thaiDay.bg, 
                       borderColor: thaiDay.border, 
@@ -222,12 +255,43 @@ export default function DayDetailModal({
                     {thaiDay.label}
                   </span>
                 )}
-                <h2 className={`text-base font-black tracking-tight ${tokens.textPri}`}>
-                  {displayDate}
-                </h2>
-                <span className={`text-xs font-bold ${tokens.textMuted}`}>
-                  วัน{dayOfWeek}
-                </span>
+
+                {/* Interactive Date Picker Trigger */}
+                <div className="relative inline-block">
+                  <DatePicker
+                    value={activeDateStr}
+                    onChange={handleDateChange}
+                    dayTypes={dayTypes}
+                    dayTypeConfig={dayTypeConfig}
+                    customTrigger={({ setOpen, open }) => (
+                      <button
+                        type="button"
+                        onClick={() => setOpen(!open)}
+                        className="group flex items-center gap-1.5 px-2 py-0.5 rounded-none border border-transparent hover:border-[#3e3e3e] hover:bg-[#141414] transition-all cursor-pointer text-left"
+                        title="คลิกเพื่อเลือกวัน/เดือน/ปี"
+                      >
+                        <h2 className={`text-base font-black tracking-tight ${tokens.textPri} group-hover:text-[#da291c] transition-colors`}>
+                          {displayDate}
+                        </h2>
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#da291c] transition-colors" />
+                        <span className={`text-xs font-bold ${tokens.textMuted}`}>
+                          วัน{dayOfWeek}
+                        </span>
+                        <ChevronDown className="w-3 h-3 text-slate-500 group-hover:text-white transition-colors" />
+                      </button>
+                    )}
+                  />
+                </div>
+
+                {/* Next Day Button */}
+                <button
+                  type="button"
+                  onClick={() => handleStepDay(1)}
+                  className="p-1 rounded-none border border-[#3e3e3e] bg-[#141414] hover:bg-[#303030] hover:border-[#da291c] text-slate-300 hover:text-white transition-all cursor-pointer"
+                  title="วันถัดไป ( +1 วัน )"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
 
                 {currentDayType && (
                   <span
@@ -243,6 +307,7 @@ export default function DayDetailModal({
                 )}
               </div>
 
+              {/* Day Financial HUD Summary */}
               <div className="flex items-center gap-2 mt-2 flex-wrap tabular-nums tracking-tight">
                 {totalInc > 0 && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-emerald-950/40 text-[#34d399] border border-emerald-800/40 flex items-center gap-1">

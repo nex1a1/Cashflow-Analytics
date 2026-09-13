@@ -512,6 +512,7 @@ function CalendarView({
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}
           frequentItems={frequentItems}
+          onDateChange={setSelectedDate}
         />
       )}
     </div>
