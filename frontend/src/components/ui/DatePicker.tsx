@@ -21,10 +21,11 @@ import {
   getDatesInRange,
   groupContiguousDates,
   formatDisplay,
-  getDecadeWindow,
   stepMonth,
   stepYear,
   getPresetDates,
+  MIN_YEAR,
+  MAX_YEAR,
 } from '@/utils/datePickerHelpers';
 
 export { DAY_LABELS, splitDateValue, parseValue, toValueStr, getDatesInRange, groupContiguousDates, formatDisplay };
@@ -115,6 +116,7 @@ interface DatePickerDayCellProps {
   dayTypeConfig: any[];
   textMain: string;
   hoverDay: string;
+  onDayClick: (d: number) => void;
   onMouseDown: (d: number, e: React.MouseEvent) => void;
   onMouseEnter: (d: number) => void;
 }
@@ -132,6 +134,7 @@ function DatePickerDayCell({
   dayTypeConfig,
   textMain,
   hoverDay,
+  onDayClick,
   onMouseDown,
   onMouseEnter,
 }: DatePickerDayCellProps) {
@@ -166,6 +169,7 @@ function DatePickerDayCell({
     <button
       key={d}
       type="button"
+      onClick={() => onDayClick(d)}
       onMouseDown={(e) => onMouseDown(d, e)}
       onMouseEnter={() => onMouseEnter(d)}
       className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
@@ -333,13 +337,6 @@ export default function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
-  const [viewMode, setViewMode] = useState<'days' | 'months' | 'years'>('days');
-
-  // Year Decade Window for Years Mode
-  const [yearWindowStart, setYearWindowStart] = useState(() => {
-    const initialYear = parseValue(value, filterPeriod).getFullYear();
-    return Math.floor(initialYear / 12) * 12;
-  });
 
   // Draft dates set for multi-selection (Set of YYYY-MM-DD strings)
   const [draftDates, setDraftDates] = useState(() => parseDraftDatesFromValue(value));
@@ -353,18 +350,19 @@ export default function DatePicker({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [resolvedAlign, setResolvedAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+  const [resolvedVerticalAlign, setResolvedVerticalAlign] = useState<'bottom' | 'top'>('bottom');
 
-  // Auto-detect horizontal alignment to avoid overflow clipping
+  // Auto-detect horizontal and vertical alignment to avoid overflow clipping
   useEffect(() => {
     if (!open) return;
     if (align === 'left' || align === 'right') {
       setResolvedAlign(align);
-      return;
     }
 
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       let limitRight = window.innerWidth;
+      let limitBottom = window.innerHeight;
       let parent = containerRef.current.parentElement;
       while (parent && parent !== document.body) {
         const style = window.getComputedStyle(parent);
@@ -377,15 +375,27 @@ export default function DatePicker({
         ) {
           const pRect = parent.getBoundingClientRect();
           limitRight = Math.min(limitRight, pRect.right);
+          limitBottom = Math.min(limitBottom, pRect.bottom);
         }
         parent = parent.parentElement;
       }
 
-      // Popover width is w-80 (320px) + buffer (16px)
-      if (rect.left + 336 > limitRight) {
-        setResolvedAlign('right');
+      // Horizontal check: Popover width is w-80 (320px) + buffer (16px)
+      if (align !== 'left' && align !== 'right') {
+        if (rect.left + 336 > limitRight) {
+          setResolvedAlign('right');
+        } else {
+          setResolvedAlign('left');
+        }
+      }
+
+      // Vertical check: Popover height is ~380px (header, mode buttons, grid, summary, presets, footer)
+      const popoverHeight = 380;
+      const spaceBelow = limitBottom - rect.bottom;
+      if (spaceBelow < popoverHeight && rect.top > popoverHeight) {
+        setResolvedVerticalAlign('top');
       } else {
-        setResolvedAlign('left');
+        setResolvedVerticalAlign('bottom');
       }
     }
   }, [open, align]);
@@ -395,9 +405,7 @@ export default function DatePicker({
     if (!open) return;
     const parsed = parseValue(value, filterPeriod);
     setViewDate(parsed);
-    setYearWindowStart(Math.floor(parsed.getFullYear() / 12) * 12);
     setDraftDates(parseDraftDatesFromValue(value));
-    setViewMode('days');
   }, [open, value, filterPeriod]);
 
   // Click outside listener
@@ -412,13 +420,18 @@ export default function DatePicker({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Escape key listener
+  // Escape key listener (Capture phase to prevent bubbling to parent modals)
   useEffect(() => {
+    if (!open) return;
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) setOpen(false);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
+      }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener('keydown', handleEsc, true);
+    return () => window.removeEventListener('keydown', handleEsc, true);
   }, [open]);
 
   // Global mouseup handler to release drag even if mouse leaves window
@@ -448,6 +461,9 @@ export default function DatePicker({
   const m = viewDate.getMonth();
   const today = new Date();
 
+  const isAtMinYear = y <= MIN_YEAR;
+  const isAtMaxYear = y >= MAX_YEAR;
+
   const firstDay = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const blanks = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDay);
@@ -470,14 +486,26 @@ export default function DatePicker({
   const prevMonth = () => setViewDate(stepMonth(viewDate, -1));
   const nextMonth = () => setViewDate(stepMonth(viewDate, 1));
   const prevYear = () => {
+    if (isAtMinYear) return;
     const next = stepYear(viewDate, -1);
     setViewDate(next);
-    setYearWindowStart(Math.floor(next.getFullYear() / 12) * 12);
   };
   const nextYear = () => {
+    if (isAtMaxYear) return;
     const next = stepYear(viewDate, 1);
     setViewDate(next);
-    setYearWindowStart(Math.floor(next.getFullYear() / 12) * 12);
+  };
+
+  // Click on day cell
+  const handleDayClick = (d: number) => {
+    const monthStr = String(m + 1).padStart(2, '0');
+    const dayStr = String(d).padStart(2, '0');
+    const dateStr = `${y}-${monthStr}-${dayStr}`;
+
+    if (!isMulti) {
+      onChange(dateStr);
+      setOpen(false);
+    }
   };
 
   // Mouse Down handler on day cell (Start drag / single click)
@@ -522,6 +550,7 @@ export default function DatePicker({
 
   // Confirm multi-selection
   const handleConfirm = () => {
+    if (draftDates.size === 0) return;
     onChange(formatConfirmedValue(draftDates, allowAll));
     setOpen(false);
   };
@@ -533,7 +562,7 @@ export default function DatePicker({
     } else {
       onChange(mode);
     }
-    setOpen(false);
+    // Do NOT auto-close so the user sees the mode change
   };
 
   const handleClear = () => {
@@ -546,8 +575,6 @@ export default function DatePicker({
     const [py, pm, pd] = targetDateStr.split('-').map(Number);
     const targetDate = new Date(py, pm - 1, pd);
     setViewDate(targetDate);
-    setYearWindowStart(Math.floor(py / 12) * 12);
-    setViewMode('days');
 
     if (!isMulti) {
       onChange(targetDateStr);
@@ -572,14 +599,16 @@ export default function DatePicker({
     return groupContiguousDates(Array.from(draftDates));
   }, [draftDates]);
 
-  const decadeInfo = useMemo(() => getDecadeWindow(yearWindowStart, 12), [yearWindowStart]);
-
   /* ── Styles ── */
   const surface = 'bg-[#1c1c1c]';
   const border = 'border-[#3e3e3e]';
   const textMain = 'text-[#e0e0e0]';
   const textMuted = 'text-[#888888]';
   const hoverDay = 'hover:bg-[#303030] hover:text-white';
+
+  const verticalPositionClass = resolvedVerticalAlign === 'top' 
+    ? 'bottom-[calc(100%+6px)]' 
+    : 'top-[calc(100%+6px)]';
 
   return (
     <div ref={containerRef} className={`relative ${open ? 'z-[60]' : 'z-20'} w-full`}>
@@ -606,7 +635,7 @@ export default function DatePicker({
 
       {open && (
         <div
-          className={`absolute top-[calc(100%+6px)] ${
+          className={`absolute ${verticalPositionClass} ${
             resolvedAlign === 'right' ? 'right-0' : 'left-0'
           } z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}
         >
@@ -650,325 +679,147 @@ export default function DatePicker({
             </div>
           )}
 
-          {/* ================= HEADER CONTROLS (DAYS VIEW) ================= */}
-          {viewMode === 'days' && (
-            <div className="flex items-center justify-between mb-2 bg-[#141414] p-1 border border-[#303030]">
-              {/* Prev Year / Month */}
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={prevYear}
-                  title="ปีก่อนหน้า ( -1 ปี )"
-                  className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
-                >
-                  <ChevronsLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={prevMonth}
-                  title="เดือนก่อนหน้า ( -1 เดือน )"
-                  className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Clickable Month & Year Selectors */}
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('months')}
-                  className="px-2 py-0.5 text-xs font-bold rounded-none flex items-center gap-1 transition-all text-slate-200 hover:bg-[#252525] hover:text-white border border-transparent hover:border-[#3e3e3e]"
-                  title="คลิกเพื่อเลือกเดือน"
-                >
-                  <span>{THAI_MONTHS[m]}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setYearWindowStart(Math.floor(y / 12) * 12);
-                    setViewMode('years');
-                  }}
-                  className="px-2 py-0.5 text-xs font-bold font-mono rounded-none flex items-center gap-1 transition-all text-slate-200 hover:bg-[#252525] hover:text-white border border-transparent hover:border-[#3e3e3e]"
-                  title="คลิกเพื่อเลือกปี"
-                >
-                  <span>{y}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
-              </div>
-
-              {/* Next Month / Year */}
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={nextMonth}
-                  title="เดือนถัดไป ( +1 เดือน )"
-                  className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={nextYear}
-                  title="ปีถัดไป ( +1 ปี )"
-                  className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
-                >
-                  <ChevronsRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ================= HEADER CONTROLS (MONTHS VIEW) ================= */}
-          {viewMode === 'months' && (
-            <div className="flex items-center justify-between mb-2 bg-[#141414] p-1 border border-[#303030]">
+          {/* ================= HEADER CONTROLS (CLEAN FLAT TITLE + « < > ») ================= */}
+          <div className="flex items-center justify-between mb-2.5 bg-[#141414] px-2 py-1.5 border border-[#303030]">
+            {/* Prev Year ( -1 ปี ) & Prev Month ( -1 เดือน ) */}
+            <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={prevYear}
-                title="ปีก่อนหน้า"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                disabled={isAtMinYear}
+                title={isAtMinYear ? `จำกัดปีขั้นต่ำ ${MIN_YEAR}` : 'ปีก่อนหน้า ( -1 ปี )'}
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronsLeft className="w-3.5 h-3.5" />
               </button>
+              <button
+                type="button"
+                onClick={prevMonth}
+                title="เดือนก่อนหน้า ( -1 เดือน )"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-400">เลือกเดือน (ปี</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setYearWindowStart(Math.floor(y / 12) * 12);
-                    setViewMode('years');
-                  }}
-                  className="text-xs font-bold font-mono text-[#da291c] hover:underline flex items-center gap-1"
-                  title="คลิกเพื่อเปลี่ยนปี"
-                >
-                  {y} <ChevronDown className="w-3 h-3" />
-                </button>
-                <span className="text-xs font-bold text-slate-400">)</span>
-              </div>
+            {/* Clean Flat Title: e.g. "กันยายน 2026" */}
+            <div className="flex items-center justify-center">
+              <span className="text-xs font-bold font-mono tracking-wider text-slate-100 select-none">
+                {THAI_MONTHS[m]} {y}
+              </span>
+            </div>
 
+            {/* Next Month ( +1 เดือน ) & Next Year ( +1 ปี ) */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={nextMonth}
+                title="เดือนถัดไป ( +1 เดือน )"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
               <button
                 type="button"
                 onClick={nextYear}
-                title="ปีถัดไป"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                disabled={isAtMaxYear}
+                title={isAtMaxYear ? `จำกัดปีสูงสุด ${MAX_YEAR}` : 'ปีถัดไป ( +1 ปี )'}
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronsRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          )}
+          </div>
 
-          {/* ================= HEADER CONTROLS (YEARS VIEW) ================= */}
-          {viewMode === 'years' && (
-            <div className="flex items-center justify-between mb-2 bg-[#141414] p-1 border border-[#303030]">
-              <button
-                type="button"
-                onClick={() => setYearWindowStart((prev) => prev - 12)}
-                title="12 ปีก่อนหน้า"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+          {/* Day Labels */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAY_LABELS.map((l, i) => (
+              <div
+                key={l}
+                className={`text-center text-[11px] font-bold py-1 ${
+                  i === 0 || i === 6 ? 'text-red-400' : textMuted
+                }`}
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+                {l}
+              </div>
+            ))}
+          </div>
 
-              <span className="text-xs font-mono font-bold text-slate-200">
-                {decadeInfo.start} - {decadeInfo.end}
-              </span>
+          {/* Calendar Day Grid with Connected Range Styling */}
+          <div className="grid grid-cols-7 gap-y-0.5">
+            {blanks.map((blankKey) => (
+              <div key={blankKey} />
+            ))}
+            {days.map((d) => (
+              <DatePickerDayCell
+                key={d}
+                d={d}
+                y={y}
+                m={m}
+                activeDraftDates={activeDraftDates}
+                draftDatesSize={draftDates.size}
+                hasData={hasData}
+                isToday={isToday}
+                value={value}
+                dayTypes={dayTypes}
+                dayTypeConfig={dayTypeConfig}
+                textMain={textMain}
+                hoverDay={hoverDay}
+                onDayClick={handleDayClick}
+                onMouseDown={handleMouseDown}
+                onMouseEnter={handleMouseEnter}
+              />
+            ))}
+          </div>
 
-              <button
-                type="button"
-                onClick={() => setYearWindowStart((prev) => prev + 12)}
-                title="12 ปีถัดไป"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          {/* Smart Grouped Selected Dates Summary Box (Only shown in Multi-Selection Mode) */}
+          {isMulti && (
+            <div className="mt-2.5 pt-2 border-t border-[#303030]">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 font-mono">
+                  สรุปวันที่เลือก ({draftDates.size} วัน):
+                </span>
+                <span className="text-[9.5px] text-[#666666] font-mono">
+                  คลิก หรือลากค้างเพื่อเลือก
+                </span>
+              </div>
 
-          {/* ================= MONTHS GRID VIEW ================= */}
-          {viewMode === 'months' && (
-            <div>
-              <div className="grid grid-cols-3 gap-1.5 py-1">
-                {THAI_MONTHS.map((monthName, idx) => {
-                  const isSelected = idx === m;
-                  const isCurrentActualMonth = idx === today.getMonth() && y === today.getFullYear();
-                  return (
-                    <button
-                      key={monthName}
-                      type="button"
-                      onClick={() => {
-                        const daysInTargetMonth = new Date(y, idx + 1, 0).getDate();
-                        const safeDay = Math.min(viewDate.getDate(), daysInTargetMonth);
-                        setViewDate(new Date(y, idx, safeDay));
-                        setViewMode('days');
-                      }}
-                      className={`py-2 px-1.5 rounded-none text-xs font-bold border transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#da291c] text-white border-[#da291c] shadow-sm'
-                          : isCurrentActualMonth
-                          ? 'bg-[#222222] text-white border-[#da291c]/50 hover:bg-[#303030]'
-                          : 'bg-[#141414] text-slate-300 border-[#303030] hover:bg-[#252525] hover:text-white hover:border-[#454545]'
-                      }`}
-                    >
-                      <span className="font-extrabold text-xs">{THAI_MONTHS_SHORT[idx]}</span>
-                      <span className="text-[9.5px] font-normal opacity-70 truncate max-w-full">
-                        {monthName}
+              <div className="bg-[#121212] border border-[#303030] p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
+                {dateRanges.length === 0 ? (
+                  <span className="text-[10px] text-[#555555] font-mono pl-1">
+                    ยังไม่ได้เลือกวัน
+                  </span>
+                ) : (
+                  dateRanges.map((range) => {
+                    const [, m1, d1] = range[0].split('-').map(Number);
+                    const lastDate = range[range.length - 1] || '';
+                    const [, , d2] = lastDate.split('-').map(Number);
+
+                    const label =
+                      range.length === 1
+                        ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
+                        : `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} (${range.length} วัน)`;
+
+                    return (
+                      <span
+                        key={`${range[0]}_${lastDate}`}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
+                      >
+                        {label}
+                        <button
+                          type="button"
+                          onClick={() => removeRange(range)}
+                          className="hover:text-white text-[#da291c]/70 transition-colors"
+                          title="ลบช่วงนี้"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-[#303030] flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('days')}
-                  className="text-[10.5px] font-bold px-2 py-1 text-slate-400 hover:text-white transition-colors"
-                >
-                  กลับไปปฏิทินวัน ›
-                </button>
+                    );
+                  })
+                )}
               </div>
             </div>
-          )}
-
-          {/* ================= YEARS GRID VIEW ================= */}
-          {viewMode === 'years' && (
-            <div>
-              <div className="grid grid-cols-3 gap-1.5 py-1">
-                {decadeInfo.years.map((yr) => {
-                  const isSelected = yr === y;
-                  const isCurrentActualYear = yr === today.getFullYear();
-                  return (
-                    <button
-                      key={yr}
-                      type="button"
-                      onClick={() => {
-                        const daysInMonthSafe = new Date(yr, m + 1, 0).getDate();
-                        const safeDay = Math.min(viewDate.getDate(), daysInMonthSafe);
-                        setViewDate(new Date(yr, m, safeDay));
-                        setViewMode('months');
-                      }}
-                      className={`py-2.5 px-2 rounded-none text-xs font-mono font-bold border transition-all flex items-center justify-center cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#da291c] text-white border-[#da291c] shadow-sm font-black'
-                          : isCurrentActualYear
-                          ? 'bg-[#222222] text-white border-[#da291c]/50 hover:bg-[#303030]'
-                          : 'bg-[#141414] text-slate-300 border-[#303030] hover:bg-[#252525] hover:text-white hover:border-[#454545]'
-                      }`}
-                    >
-                      <span>{yr}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-[#303030] flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('days')}
-                  className="text-[10.5px] font-bold px-2 py-1 text-slate-400 hover:text-white transition-colors"
-                >
-                  กลับไปปฏิทินวัน ›
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ================= DAYS GRID VIEW ================= */}
-          {viewMode === 'days' && (
-            <>
-              {/* Day Labels */}
-              <div className="grid grid-cols-7 mb-1">
-                {DAY_LABELS.map((l, i) => (
-                  <div
-                    key={l}
-                    className={`text-center text-[11px] font-bold py-1 ${
-                      i === 0 || i === 6 ? 'text-red-400' : textMuted
-                    }`}
-                  >
-                    {l}
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar Day Grid with Connected Range Styling */}
-              <div className="grid grid-cols-7 gap-y-0.5">
-                {blanks.map((blankKey) => (
-                  <div key={blankKey} />
-                ))}
-                {days.map((d) => (
-                  <DatePickerDayCell
-                    key={d}
-                    d={d}
-                    y={y}
-                    m={m}
-                    activeDraftDates={activeDraftDates}
-                    draftDatesSize={draftDates.size}
-                    hasData={hasData}
-                    isToday={isToday}
-                    value={value}
-                    dayTypes={dayTypes}
-                    dayTypeConfig={dayTypeConfig}
-                    textMain={textMain}
-                    hoverDay={hoverDay}
-                    onMouseDown={handleMouseDown}
-                    onMouseEnter={handleMouseEnter}
-                  />
-                ))}
-              </div>
-
-              {/* Smart Grouped Selected Dates Summary Box (Only shown in Multi-Selection Mode) */}
-              {isMulti && (
-                <div className="mt-2.5 pt-2 border-t border-[#303030]">
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[10px] font-black uppercase text-slate-400 font-mono">
-                      สรุปวันที่เลือก ({draftDates.size} วัน):
-                    </span>
-                    <span className="text-[9.5px] text-[#666666] font-mono">
-                      คลิก หรือลากค้างเพื่อเลือก
-                    </span>
-                  </div>
-
-                  <div className="bg-[#121212] border border-[#303030] p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
-                    {dateRanges.length === 0 ? (
-                      <span className="text-[10px] text-[#555555] font-mono pl-1">
-                        ยังไม่ได้เลือกวัน
-                      </span>
-                    ) : (
-                      dateRanges.map((range) => {
-                        const [, m1, d1] = range[0].split('-').map(Number);
-                        const lastDate = range[range.length - 1] || '';
-                        const [, , d2] = lastDate.split('-').map(Number);
-
-                        const label =
-                          range.length === 1
-                            ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
-                            : `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} (${range.length} วัน)`;
-
-                        return (
-                          <span
-                            key={`${range[0]}_${lastDate}`}
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
-                          >
-                            {label}
-                            <button
-                              type="button"
-                              onClick={() => removeRange(range)}
-                              className="hover:text-white text-[#da291c]/70 transition-colors"
-                              title="ลบช่วงนี้"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
           )}
 
           {/* ================= QUICK PRESETS BAR ================= */}
@@ -976,28 +827,28 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => handleApplyPreset(todayStr)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
             >
               วันนี้
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(yesterdayStr)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
             >
               เมื่อวาน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.startOfMonth)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
             >
               ต้นเดือน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.endOfMonth)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
             >
               สิ้นเดือน
             </button>
@@ -1009,7 +860,7 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-[11px] font-bold px-2 py-1 rounded-none transition-colors text-[#888888] hover:text-white hover:bg-[#303030] flex items-center gap-1"
+                className="text-[11px] font-bold px-2 py-1 rounded-none transition-colors text-[#888888] hover:text-white hover:bg-[#303030] flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3 text-[#666666]" /> ล้าง
               </button>
@@ -1019,7 +870,9 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-[#da291c] bg-[#da291c] text-white hover:bg-[#b81d13] transition-colors shadow-sm font-mono cursor-pointer"
+                disabled={draftDates.size === 0}
+                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-[#da291c] bg-[#da291c] text-white hover:bg-[#b81d13] transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#da291c]"
+                title={draftDates.size === 0 ? 'กรุณาเลือกวันที่ก่อนยืนยัน' : undefined}
               >
                 <Check className="w-3 h-3" />
                 {draftDates.size > 0 ? `ยืนยัน (${draftDates.size})` : 'ยืนยัน'}

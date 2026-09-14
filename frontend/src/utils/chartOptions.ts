@@ -59,24 +59,47 @@ const getScaleOptions = (isDarkMode: boolean, beginAtZero = false, yType = 'line
   },
 });
 
-export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) => ({
-  maintainAspectRatio: false,
-  interaction: { mode: 'index' as const, intersect: false },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      ...getTooltipOptions(isDarkMode),
-      callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
+export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true, secondaryAxisColor?: string) => {
+  const scales: any = getScaleOptions(isDarkMode, false, yType, autoSkip);
+
+  // A derived metric (e.g. net Cashflow) plotted alongside its raw components (Income/Expense)
+  // needs its own scale — sharing one axis flattens the derived line against the larger bars.
+  if (secondaryAxisColor) {
+    scales.y1 = {
+      type: 'linear',
+      position: 'right',
+      grace: '20%',
+      ticks: {
+        color: secondaryAxisColor,
+        font: { size: 10, weight: '500' },
+        padding: 8,
+        maxTicksLimit: 8,
+        callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,
+      },
+      grid: { drawOnChartArea: false },
+      border: { display: true, color: `${secondaryAxisColor}66`, dash: [4, 4] },
+    };
+  }
+
+  return {
+    maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...getTooltipOptions(isDarkMode),
+        callbacks: {
+          label: (ctx: any) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
+        },
       },
     },
-  },
-  maxBarThickness: 80,
-  barPercentage: 0.6,
-  categoryPercentage: 0.8,
-  animation: false as const,
-  scales: getScaleOptions(isDarkMode, false, yType, autoSkip),
-});
+    maxBarThickness: 80,
+    barPercentage: 0.6,
+    categoryPercentage: 0.8,
+    animation: false as const,
+    scales,
+  };
+};
 
 export const getBarChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) =>
   getComboChartOptions(isDarkMode, yType, autoSkip);

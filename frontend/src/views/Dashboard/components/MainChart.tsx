@@ -45,6 +45,7 @@ interface MainChartHeaderProps {
   setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
   filterPeriod: string;
   mainChartType?: string;
+  isBreakdown: boolean;
 }
 
 interface MainChartCategorySelectorProps {
@@ -57,6 +58,7 @@ interface MainChartCategorySelectorProps {
 }
 
 interface MainChartFilterMenuProps {
+  showSkeleton?: boolean;
   showCatMenu: boolean;
   setShowCatMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
   filterMenuRef: React.RefObject<HTMLDivElement>;
@@ -64,6 +66,12 @@ interface MainChartFilterMenuProps {
   setDashboardCategory: (v: string[]) => void;
   categories: Category[];
   categoriesWithData: Set<string>;
+  isLogScale: boolean;
+  setIsLogScale: (v: boolean | ((prev: boolean) => boolean)) => void;
+  hideFixedExpenses: boolean;
+  setHideFixedExpenses: (v: boolean) => void;
+  hideWantExpenses: boolean;
+  setHideWantExpenses: (v: boolean) => void;
 }
 
 interface BreakdownLegendItemProps {
@@ -120,8 +128,6 @@ interface ToolbarViewModesProps {
   showSkeleton?: boolean;
   isBreakdown: boolean;
   setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
-  isLogScale: boolean;
-  setIsLogScale: (v: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 interface ToolbarAllocationSelectorProps {
@@ -140,6 +146,7 @@ interface ToolbarLineStyleSelectorProps {
 
 interface MainChartToolbarProps {
   chartViewType: string;
+  mainChartType?: string;
   showSkeleton?: boolean;
   isBreakdown: boolean;
   setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
@@ -168,17 +175,25 @@ interface MainChartToolbarProps {
 // TITLE & CONTRAST HELPERS
 // ==========================================
 
-function getMainChartTitle(chartViewType: string, mainChartType?: string): string {
+function getMainChartTitle(chartViewType: string, mainChartType?: string, isBreakdown?: boolean): string {
   if (chartViewType === 'sankey') {
     return 'โครงสร้างกระแสเงินสด (Sankey Flow)';
   }
+  if (isBreakdown) {
+    return 'แจกแจงรายจ่ายตามหมวดหมู่';
+  }
+  // Only the true 3-series (Income + Expense + Net Cashflow) view earns the "analysis" title —
+  // a single expense-only series ('daily-expense') has no income/net context to analyze.
   if (mainChartType === 'combo') {
     return 'วิเคราะห์กระแสเงินสด';
+  }
+  if (mainChartType === 'daily-expense') {
+    return 'รายจ่ายรายวัน';
   }
   if (mainChartType === 'bar') {
     return 'เทรนด์เปรียบเทียบ';
   }
-  return 'รายจ่ายรายวัน';
+  return 'เปรียบเทียบรายจ่ายตามหมวดหมู่';
 }
 
 const getContrastTextColor = (hexColor: string | null | undefined): string => {
@@ -291,11 +306,11 @@ const MainChartHeader = memo(({
   chartViewType, setChartViewType,
   chartGroupBy, setChartGroupBy,
   setIsBreakdown, filterPeriod,
-  mainChartType
+  mainChartType, isBreakdown
 }: MainChartHeaderProps) => {
   const isSingleMonth = /^\d{4}-\d{2}$/.exec(filterPeriod);
   const showGroupBy = chartViewType !== 'sankey' && !isSingleMonth;
-  const title = getMainChartTitle(chartViewType, mainChartType);
+  const title = getMainChartTitle(chartViewType, mainChartType, isBreakdown);
 
   return (
     <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] flex-wrap relative z-20 w-full gap-3">
@@ -494,9 +509,12 @@ const MainChartCategorySelector = memo(({
 MainChartCategorySelector.displayName = 'MainChartCategorySelector';
 
 const MainChartFilterMenu = memo(({
-  showCatMenu, setShowCatMenu, filterMenuRef,
+  showSkeleton, showCatMenu, setShowCatMenu, filterMenuRef,
   dashboardCategory, setDashboardCategory,
-  categories, categoriesWithData
+  categories, categoriesWithData,
+  isLogScale, setIsLogScale,
+  hideFixedExpenses, setHideFixedExpenses,
+  hideWantExpenses, setHideWantExpenses
 }: MainChartFilterMenuProps) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -507,15 +525,16 @@ const MainChartFilterMenu = memo(({
     }
   }, [showCatMenu]);
 
-  const isFiltered = Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL');
+  const isCatFiltered = Array.isArray(dashboardCategory) && !dashboardCategory.includes('ALL');
+  const hasActiveModifiers = isCatFiltered || isLogScale || hideFixedExpenses || hideWantExpenses;
 
   return (
     <div className="relative" ref={filterMenuRef}>
       <button
         onClick={() => setShowCatMenu(prev => !prev)}
-        style={isFiltered ? { boxShadow: 'inset 0 0 0 1px rgba(218,41,28,0.5)' } : undefined}
+        style={hasActiveModifiers ? { boxShadow: 'inset 0 0 0 1px rgba(218,41,28,0.5)' } : undefined}
         className={`px-3 py-1.5 border border-[#303030] rounded-none text-[11px] font-bold outline-none flex items-center gap-1.5 transition-colors ${
-          isFiltered
+          hasActiveModifiers
             ? 'bg-[#181818] text-[#da291c]'
             : showCatMenu
               ? 'bg-[#303030] text-slate-100'
@@ -523,9 +542,9 @@ const MainChartFilterMenu = memo(({
         }`}
       >
         <Filter className="w-3.5 h-3.5" />
-        ตัวกรองแสดงผล
-        {isFiltered && (
-          <span className="px-1.5 rounded-full text-[9px] font-black bg-[#da291c]/20 text-[#da291c] border border-[#da291c]/40">
+        ตัวเลือกแสดงผล
+        {isCatFiltered && (
+          <span className="px-1.5 rounded-full text-[10px] font-black bg-[#da291c]/20 text-[#da291c] border border-[#da291c]/40">
             {dashboardCategory.length}
           </span>
         )}
@@ -538,7 +557,7 @@ const MainChartFilterMenu = memo(({
           <div className="px-3.5 py-2.5 border-b flex items-center justify-between border-[#303030] text-slate-200">
             <div className="flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-[#da291c]" />
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">เลือกหมวดหมู่ย่อย</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider">ตัวเลือกกราฟ</span>
             </div>
             <button
               onClick={() => setShowCatMenu(false)}
@@ -550,14 +569,45 @@ const MainChartFilterMenu = memo(({
 
           {/* Body */}
           <div className="p-3.5 flex flex-col gap-3">
-            <MainChartCategorySelector
-              dashboardCategory={dashboardCategory}
-              setDashboardCategory={setDashboardCategory}
-              categories={categories}
-              categoriesWithData={categoriesWithData}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-            />
+            {/* Y-axis scale */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">สเกลแกน Y (Logarithmic)</span>
+              <button
+                disabled={showSkeleton}
+                onClick={() => setIsLogScale(prev => !prev)}
+                title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-none text-[10px] font-bold disabled:opacity-40 ${
+                  isLogScale ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {isLogScale ? 'เปิด' : 'ปิด'}
+                <ToolbarToggleSwitch isActive={isLogScale} activeColor="bg-emerald-500" />
+              </button>
+            </div>
+
+            {/* Allocation filter */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">แสดงเฉพาะ</span>
+              <ToolbarAllocationSelector
+                showSkeleton={showSkeleton}
+                hideFixedExpenses={hideFixedExpenses}
+                setHideFixedExpenses={setHideFixedExpenses}
+                hideWantExpenses={hideWantExpenses}
+                setHideWantExpenses={setHideWantExpenses}
+              />
+            </div>
+
+            <div className="border-t border-[#303030]/60 pt-3 flex flex-col gap-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">เลือกหมวดหมู่ย่อย</span>
+              <MainChartCategorySelector
+                dashboardCategory={dashboardCategory}
+                setDashboardCategory={setDashboardCategory}
+                categories={categories}
+                categoriesWithData={categoriesWithData}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -658,6 +708,7 @@ const StandardLegendItem = memo(({ dataset, isHidden, onToggle }: StandardLegend
       />
       <span className="text-[10px] font-medium leading-none text-slate-400">
         {label}
+        {dataset.yAxisID === 'y1' && <span className="text-slate-500"> (แกนขวา)</span>}
       </span>
     </button>
   );
@@ -734,12 +785,10 @@ const ToolbarToggleSwitch = memo(({ isActive, activeColor = 'bg-[#da291c]' }: To
 ));
 ToolbarToggleSwitch.displayName = 'ToolbarToggleSwitch';
 
-const ToolbarViewModes = memo(({ 
-  showSkeleton, 
-  isBreakdown, 
-  setIsBreakdown, 
-  isLogScale, 
-  setIsLogScale
+const ToolbarViewModes = memo(({
+  showSkeleton,
+  isBreakdown,
+  setIsBreakdown
 }: ToolbarViewModesProps) => (
   <div className="flex gap-[1px] bg-[#303030]/60 p-[1px] rounded-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] bg-neutral-900 shrink-0">
     <button
@@ -755,21 +804,6 @@ const ToolbarViewModes = memo(({
       <Layers className={`w-3.5 h-3.5 ${isBreakdown ? 'text-[#da291c]' : 'text-slate-400'}`} />
       <span>แจกแจง</span>
       <ToolbarToggleSwitch isActive={isBreakdown} activeColor="bg-[#da291c]" />
-    </button>
-
-    <button
-      disabled={showSkeleton}
-      onClick={() => setIsLogScale(prev => !prev)}
-      title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
-      className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-        isLogScale
-          ? 'bg-emerald-600/20 text-emerald-300 shadow-sm'
-          : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
-      }`}
-    >
-      <BarChart className={`w-3.5 h-3.5 ${isLogScale ? 'text-emerald-400' : 'text-slate-400'}`} />
-      <span>สเกล Log</span>
-      <ToolbarToggleSwitch isActive={isLogScale} activeColor="bg-emerald-500" />
     </button>
   </div>
 ));
@@ -810,9 +844,9 @@ const ToolbarAllocationSelector = memo(({
       <button
         disabled={showSkeleton}
         onClick={() => { setHideFixedExpenses(false); setHideWantExpenses(true); }}
-        style={isNeedOnly ? { ['--tint-border-color' as any]: 'rgba(59, 130, 246, 0.3)' } : undefined}
+        style={isNeedOnly ? { ['--tint-border-color' as any]: 'rgba(212, 212, 212, 0.3)' } : undefined}
         className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
-          isNeedOnly ? 'bg-blue-950/40 text-blue-400 shadow-sm border tint-border' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+          isNeedOnly ? 'bg-neutral-700/40 text-white shadow-sm border tint-border' : 'bg-[#181818] text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
         }`}
         title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น (NEED)"
       >
@@ -850,7 +884,7 @@ const ToolbarLineStyleSelector = memo(({ showSkeleton, isSmoothLine, setIsSmooth
 ToolbarLineStyleSelector.displayName = 'ToolbarLineStyleSelector';
 
 const MainChartToolbar = memo(({
-  chartViewType, showSkeleton, isBreakdown, setIsBreakdown,
+  chartViewType, mainChartType, showSkeleton, isBreakdown, setIsBreakdown,
   isLogScale, setIsLogScale,
   hideFixedExpenses, setHideFixedExpenses,
   hideWantExpenses, setHideWantExpenses,
@@ -861,6 +895,9 @@ const MainChartToolbar = memo(({
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
 }: MainChartToolbarProps) => {
+  // The line-style toggle matters wherever a Cashflow line is actually drawn — that's the
+  // 'line' view, and the true multi-series combo chart even while its bars render as 'bar'.
+  const showLineStyleSelector = chartViewType === 'line' || mainChartType === 'combo';
   // Balanced layout: If in Sankey view, render dedicated Sankey controls in the toolbar
   if (chartViewType === 'sankey') {
     return (
@@ -897,23 +934,11 @@ const MainChartToolbar = memo(({
           showSkeleton={showSkeleton}
           isBreakdown={isBreakdown}
           setIsBreakdown={setIsBreakdown}
-          isLogScale={isLogScale}
-          setIsLogScale={setIsLogScale}
-        />
-
-        <span className="w-px h-4 shrink-0 bg-[#303030]" />
-
-        <ToolbarAllocationSelector
-          showSkeleton={showSkeleton}
-          hideFixedExpenses={hideFixedExpenses}
-          setHideFixedExpenses={setHideFixedExpenses}
-          hideWantExpenses={hideWantExpenses}
-          setHideWantExpenses={setHideWantExpenses}
         />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap ml-auto">
-        {chartViewType === 'line' && (
+        {showLineStyleSelector && (
           <ToolbarLineStyleSelector
             showSkeleton={showSkeleton}
             isSmoothLine={isSmoothLine}
@@ -921,10 +946,14 @@ const MainChartToolbar = memo(({
           />
         )}
 
-        <MainChartFilterMenu 
+        <MainChartFilterMenu
+          showSkeleton={showSkeleton}
           showCatMenu={showCatMenu} setShowCatMenu={setShowCatMenu} filterMenuRef={filterMenuRef}
           dashboardCategory={dashboardCategory} setDashboardCategory={setDashboardCategory}
           categories={categories} categoriesWithData={categoriesWithData}
+          isLogScale={isLogScale} setIsLogScale={setIsLogScale}
+          hideFixedExpenses={hideFixedExpenses} setHideFixedExpenses={setHideFixedExpenses}
+          hideWantExpenses={hideWantExpenses} setHideWantExpenses={setHideWantExpenses}
         />
       </div>
     </div>
@@ -951,7 +980,7 @@ export default function MainChart() {
   const [sankeySortMode, setSankeySortMode] = useState('value');
   const [sankeyMode, setSankeyMode] = useState('standard');
   const [isBreakdown, setIsBreakdown] = useState(false);
-  const [isSmoothLine, setIsSmoothLine] = useState(true);
+  const [isSmoothLine, setIsSmoothLine] = useState(false);
   const [isLogScale, setIsLogScale] = useState(false);
   const [showCatMenu, setShowCatMenu] = useState(false);
   
@@ -992,7 +1021,7 @@ export default function MainChart() {
 
   return (
     <div className={`${card} min-h-0`}>
-      <MainChartHeader 
+      <MainChartHeader
         chartViewType={chartViewType}
         setChartViewType={setChartViewType}
         chartGroupBy={chartGroupBy}
@@ -1000,11 +1029,13 @@ export default function MainChart() {
         setIsBreakdown={setIsBreakdown}
         filterPeriod={filterPeriod}
         mainChartType={analytics.mainChartType}
+        isBreakdown={isBreakdown}
       />
 
       <div className="p-4 flex flex-col flex-1 min-h-0 gap-3">
         <MainChartToolbar
           chartViewType={chartViewType}
+          mainChartType={analytics.mainChartType}
           showSkeleton={showSkeleton}
           isBreakdown={isBreakdown}
           setIsBreakdown={setIsBreakdown}

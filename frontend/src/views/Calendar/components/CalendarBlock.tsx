@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
 import { resolveDefaultDayTypeId, THAI_MONTHS, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 import { formatAmount } from '../../../utils/formatters';
@@ -77,12 +77,12 @@ const CalendarBlock = React.memo(function CalendarBlock({
               </span>
             )}
             {monthExp > 0 && (
-              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-red-950/40 text-red-400 border-red-800/40">
+              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30">
                 ▼ {formatAmount(monthExp)} ฿
               </span>
             )}
             {(monthInc > 0 || monthExp > 0) && (
-              <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+              <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30'}`}>
                 คงเหลือ {formatAmount(monthNet)} ฿
               </span>
             )}
@@ -92,7 +92,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-none"
                 title="คลิกเพื่อแสดงทุกหมวดหมู่"
               >
-                <span>⚠️ ซ่อน {excludedCategoryIds.size} หมวดหมู่</span>
+                <AlertTriangle className="w-3 h-3" />
+                <span>ซ่อน {excludedCategoryIds.size} หมวดหมู่</span>
                 <span className="underline ml-0.5">[แสดงทั้งหมด]</span>
               </button>
             )}
@@ -107,7 +108,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
             <div
               key={label}
               className={`py-2 text-center text-[14px] font-black tracking-wider bg-[#121212] ${
-                i === 0 || i === 6 ? 'text-red-400' : 'text-slate-400'
+                i === 0 || i === 6 ? 'text-[#da291c]' : 'text-slate-400'
               }`}
             >
               {label}

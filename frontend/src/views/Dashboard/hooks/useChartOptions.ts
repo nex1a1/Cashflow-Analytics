@@ -87,7 +87,7 @@ function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, dm
     return getLineChartOptions(isDark, yType, autoSkip);
   }
   if (mainChartType === 'combo') {
-    return getComboChartOptions(isDark, yType, autoSkip);
+    return getComboChartOptions(isDark, yType, autoSkip, '#ffffff');
   }
   return getBarChartOptions(isDark, yType, autoSkip);
 }

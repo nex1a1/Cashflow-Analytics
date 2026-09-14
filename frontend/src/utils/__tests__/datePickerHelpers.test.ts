@@ -106,12 +106,19 @@ describe('datePickerHelpers', () => {
       expect(nextMonth.getDate()).toBe(28);
     });
 
-    it('steps years correctly', () => {
+    it('steps years correctly and clamps within MIN_YEAR and MAX_YEAR', () => {
       const date = new Date(2026, 8, 13);
       const prevYear = stepYear(date, -1);
       expect(prevYear.getFullYear()).toBe(2025);
       const nextYear = stepYear(date, 2);
       expect(nextYear.getFullYear()).toBe(2028);
+
+      // Clamping test
+      const clampedMin = stepYear(new Date(2002, 0, 1), -10);
+      expect(clampedMin.getFullYear()).toBe(2000);
+
+      const clampedMax = stepYear(new Date(2045, 0, 1), 20);
+      expect(clampedMax.getFullYear()).toBe(2050);
     });
   });
 

@@ -83,14 +83,14 @@ export default function AppHeader({
           
           <div className="flex flex-col min-w-0 font-mono">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl md:text-2xl font-black uppercase tracking-wider leading-none bg-gradient-to-r from-white via-neutral-200 to-neutral-500 bg-clip-text text-transparent truncate select-none">
-                Cashflow Analytics
+              <h1 className="text-xl md:text-2xl font-black uppercase tracking-wider leading-none text-white truncate select-none">
+                Cashflow Shark
               </h1>
               <span className="text-[9px] font-black tracking-[0.2em] px-2 py-0.5 rounded-none border border-[#da291c] uppercase leading-none shrink-0 bg-red-950/20 text-[#da291c] shadow-[0_0_8px_rgba(218,41,28,0.2)] select-none">
                 MASTER
               </span>
               {isDemoMode && (
-                <span className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-none border border-yellow-500/50 uppercase leading-none shrink-0 animate-pulse bg-yellow-950/60 text-yellow-400">
+                <span className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-none border border-amber-500/50 uppercase leading-none shrink-0 animate-pulse bg-amber-950/60 text-amber-400">
                   DEMO MODE
                 </span>
               )}
@@ -172,7 +172,7 @@ export default function AppHeader({
           {/* Primary Action Button (Quick Add) - Upgraded to elegant tactical badge */}
           <button
             onClick={onClickAddQuick}
-            className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 rounded-none border border-emerald-500/50 bg-emerald-950/30 hover:bg-emerald-500 hover:border-emerald-400 hover:text-[#121212] hover:shadow-[0_0_15px_rgba(16,185,129,0.35)] text-emerald-400 transition-all shrink-0 cursor-pointer"
+            className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 rounded-none border border-[#da291c]/50 bg-[#da291c]/10 hover:bg-[#da291c] hover:border-[#da291c] hover:text-white text-[#da291c] transition-all shrink-0 cursor-pointer"
           >
             <CalendarPlus className="w-4 h-4" />
             <span>เพิ่มข้อมูลด่วน</span>

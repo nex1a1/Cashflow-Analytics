@@ -118,7 +118,7 @@ const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeCo
   );
   
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex flex-col gap-1.5">
       {dayTypeConfig
         .filter((dt) => (dayTypeCounts?.[dt.id] || 0) > 0)
         .map((dt) => {
@@ -150,7 +150,7 @@ interface TimelineHeatmapLegendProps {
 
 const TimelineHeatmapLegend: React.FC<TimelineHeatmapLegendProps> = ({ globalMaxThreshold }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center flex-wrap gap-1.5">
       <div className="relative group/info cursor-help mr-1">
         <Info className="w-3.5 h-3.5 text-slate-400" />
         <div className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible">
@@ -202,7 +202,7 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
     >
       <div className="flex flex-col items-center">
         <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
-          <div className="text-slate-400 font-medium text-[9px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
+          <div className="text-slate-400 font-medium text-[10px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
           {viewMode === 'dayType' ? (
             <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
               <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: dayType?.color || '#cbd5e1' }} />
@@ -514,7 +514,7 @@ export default function ActivityTimeline() {
                 {/* Week Day Header (Consistent Thai abbreviations) */}
                 <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
                   {THAI_DAYS_MINI.map((day, i) => (
-                    <div key={day} className={`w-[20px] text-center text-[8.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
+                    <div key={day} className={`w-[20px] text-center text-[9.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
                       {day}
                     </div>
                   ))}
@@ -560,17 +560,17 @@ export default function ActivityTimeline() {
     }
 
     return (
-      <div className="overflow-x-auto pb-4 pt-6 px-3 flex justify-center custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <div className="flex w-max gap-x-[1px] mx-auto">
+      <div className="overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex w-max gap-x-[1px] pr-3">
           {/* Day Labels (Sticky) */}
           <div 
-            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pr-1 border-r border-[#303030] bg-[#121212]"
+            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-[#303030] bg-[#121212] select-none"
           >
             <div className="h-4" />
             {THAI_DAYS.map((day, i) => (
               <div 
                 key={day} 
-                className={`h-4 flex items-center justify-end text-[9px] font-black ${
+                className={`h-4 flex items-center justify-end text-[10px] font-black ${
                   i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-500'
                 }`}
               >
@@ -589,7 +589,7 @@ export default function ActivityTimeline() {
                   {week.monthLabel && (
                     <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
                       <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
-                      <span className="text-[9px] font-black leading-none uppercase tracking-tighter text-slate-400">
+                      <span className="text-[10px] font-black leading-none uppercase tracking-tighter text-slate-400">
                         {week.monthLabel}
                       </span>
                     </div>
@@ -647,30 +647,33 @@ export default function ActivityTimeline() {
         </div>
       </div>
 
-      <div className="p-4 flex flex-col gap-3">
-        {/* Legend Row */}
-        <div className="flex justify-end min-h-[20px]">
-          {showSkeleton ? (
-            <div className="h-4 w-48 rounded-none animate-pulse bg-[#303030]" />
-          ) : (
-            <div>
-              {viewMode === 'dayType' ? (
-                <TimelineDayTypeLegend 
-                  dayTypeConfig={dayTypeConfig} 
-                  dayTypeCounts={analytics.dayTypeCounts} 
-                />
-              ) : (
-                <TimelineHeatmapLegend 
-                  globalMaxThreshold={globalMaxThreshold} 
-                />
-              )}
-            </div>
-          )}
+      <div className="p-4 flex flex-col lg:flex-row lg:items-stretch gap-3">
+        {/* Timeline Grid */}
+        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] min-h-[130px] flex flex-col justify-center">
+          {renderTimelineContent()}
         </div>
 
-        {/* Timeline Grid */}
-        <div className="border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] min-h-[164px] flex flex-col justify-center">
-          {renderTimelineContent()}
+        {/* Legend Rail */}
+        <div className="lg:w-[220px] shrink-0 border rounded-none bg-[#121212] border-[#3e3e3e] p-3 flex flex-col justify-center gap-2 min-h-[130px]">
+          {showSkeleton ? (
+            <div className="h-4 w-full rounded-none animate-pulse bg-[#303030]" />
+          ) : (
+            <>
+              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-neutral-500">
+                {viewMode === 'dayType' ? 'สรุปประเภทวัน' : 'ระดับความเข้ม'}
+              </span>
+              {viewMode === 'dayType' ? (
+                <TimelineDayTypeLegend
+                  dayTypeConfig={dayTypeConfig}
+                  dayTypeCounts={analytics.dayTypeCounts}
+                />
+              ) : (
+                <TimelineHeatmapLegend
+                  globalMaxThreshold={globalMaxThreshold}
+                />
+              )}
+            </>
+          )}
         </div>
       </div>
 

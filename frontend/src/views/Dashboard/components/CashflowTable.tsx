@@ -197,7 +197,7 @@ function renderMoMBadge(currentAdjustedExpense: number, prevAdjustedExpense: num
   let arrow = '-';
   if (!isFlat) {
     if (isUp) {
-      badgeClass = 'bg-[#da291c]/10 text-[#ff4d4d] border-[#da291c]/25';
+      badgeClass = 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/25';
       arrow = '↑';
     } else {
       badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -207,7 +207,7 @@ function renderMoMBadge(currentAdjustedExpense: number, prevAdjustedExpense: num
 
   return (
     <span
-      className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[9px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}
+      className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[10px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}
     >
       {arrow} {Math.abs(percent).toFixed(1)}%
     </span>
@@ -286,7 +286,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
-            hoveredCol === 'month' ? 'bg-[#303030] text-blue-300' : 'text-blue-300 bg-[#121212]'
+            hoveredCol === 'month' ? 'bg-[#303030] text-white' : 'text-neutral-200 bg-[#121212]'
           }`}
         >
           ช่วงเวลา
@@ -320,8 +320,8 @@ const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
-            hoveredCol === 'trend' ? 'bg-[#303030] text-[#ff4d4d]' : 'text-[#ff4d4d] bg-[#121212]'
+          className={`px-3 py-2.5 font-bold border-l !border-l-[#3e3e3e] border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+            hoveredCol === 'trend' ? 'bg-[#303030] text-[#da291c]' : 'text-[#da291c] bg-[#121212]'
           }`}
         >
           รวมรายจ่าย (Trend)
@@ -331,7 +331,7 @@ const CashflowTableHeader = React.memo(({
           onMouseEnter={() => setHoveredCol('net')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 font-bold border-l border-b ${thinBorder} align-middle sticky right-[140px] z-50 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-            hoveredCol === 'net' ? 'bg-[#303030] text-yellow-400' : 'text-yellow-400 bg-[#121212]'
+            hoveredCol === 'net' ? 'bg-[#303030] text-white' : 'text-neutral-200 bg-[#121212]'
           }`}
         >
           เงินคงเหลือ
@@ -343,7 +343,7 @@ const CashflowTableHeader = React.memo(({
           onMouseLeave={() => setHoveredCol(null)}
           title="(เงินคงเหลือ ÷ รายรับรวม) × 100 — อัตราการออม"
           className={`px-2 py-2.5 font-bold border-l border-b text-center align-middle sticky right-[70px] z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors cursor-help ${
-            hoveredCol === 'pct-left' ? 'bg-[#303030] text-teal-400' : 'text-teal-400 bg-[#121212]'
+            hoveredCol === 'pct-left' ? 'bg-[#303030] text-white' : 'text-neutral-200 bg-[#121212]'
           }`}
         >
           %เหลือ
@@ -355,7 +355,7 @@ const CashflowTableHeader = React.memo(({
           onMouseLeave={() => setHoveredCol(null)}
           title="(รายจ่ายรวม ÷ รายรับรวม) × 100 — อัตราการใช้จ่าย"
           className={`px-2 py-2.5 font-bold border-l border-r border-b text-center align-middle sticky right-0 z-50 w-[70px] min-w-[70px] max-w-[70px] ${thinBorder} transition-colors cursor-help ${
-            hoveredCol === 'pct-spent' ? 'bg-[#303030] text-pink-400' : 'text-pink-400 bg-[#121212]'
+            hoveredCol === 'pct-spent' ? 'bg-[#303030] text-white' : 'text-neutral-200 bg-[#121212]'
           }`}
         >
           %จ่าย
@@ -395,7 +395,7 @@ const CashflowTableHeader = React.memo(({
                       fallbackEmoji="💰"
                     />
                     {cats.length > 0 && (
-                      <span className={`text-[9px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-emerald-400/70'}`}>
+                      <span className={`text-[10px] font-mono leading-none ${isExpanded ? 'text-[#da291c]' : 'text-emerald-400/70'}`}>
                         {isExpanded ? '«' : '»'}
                       </span>
                     )}
@@ -405,7 +405,7 @@ const CashflowTableHeader = React.memo(({
                     onClick={(e) => { e.stopPropagation(); toggleGroupExclusion(g.id); }}
                     className={`p-1 rounded-none transition-colors inline-flex items-center justify-center shrink-0 ${
                       isExcluded
-                        ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
+                        ? 'text-neutral-400 hover:text-neutral-300 hover:bg-[#303030]'
                         : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                     }`}
                     title={isExcluded ? `นำกลุ่ม ${g.name} กลับมารวมคำนวณ` : `ยกเว้นกลุ่ม ${g.name} จากการคำนวณ`}
@@ -425,7 +425,7 @@ const CashflowTableHeader = React.memo(({
                     key={c.id}
                     onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
                     onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
+                    className={`px-2 py-1.5 font-black text-center text-[10px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
                     style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
                     title={c.name}
                   >
@@ -435,7 +435,7 @@ const CashflowTableHeader = React.memo(({
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
                         className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
                           isCatExcluded
-                            ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
+                            ? 'text-neutral-400 hover:text-neutral-300 hover:bg-[#303030]'
                             : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                         }`}
                         title={isCatExcluded ? `นำหมวด ${c.name} กลับมารวมคำนวณ` : `ยกเว้นหมวด ${c.name} จากการคำนวณ`}
@@ -481,7 +481,7 @@ const CashflowTableHeader = React.memo(({
                       fallbackEmoji="📦"
                     />
                     {cats.length > 0 && (
-                      <span className={`text-[20px] font-mono leading-none ${isExpanded ? 'text-[#ff4d4d]' : 'text-slate-400'}`}>
+                      <span className={`text-[20px] font-mono leading-none ${isExpanded ? 'text-[#da291c]' : 'text-slate-400'}`}>
                         {isExpanded ? '«' : '»'}
                       </span>
                     )}
@@ -491,7 +491,7 @@ const CashflowTableHeader = React.memo(({
                     onClick={(e) => { e.stopPropagation(); toggleGroupExclusion(g.id); }}
                     className={`p-1 rounded-none transition-colors inline-flex items-center justify-center shrink-0 ${
                       isExcluded
-                        ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
+                        ? 'text-neutral-400 hover:text-neutral-300 hover:bg-[#303030]'
                         : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                     }`}
                     title={isExcluded ? `นำกลุ่ม ${g.name} กลับมารวมคำนวณ` : `ยกเว้นกลุ่ม ${g.name} จากการคำนวณ`}
@@ -511,7 +511,7 @@ const CashflowTableHeader = React.memo(({
                     key={c.id}
                     onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
                     onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
-                    className={`px-2 py-1.5 font-black text-center text-[9px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
+                    className={`px-2 py-1.5 font-black text-center text-[10px] uppercase border-l border-b transition-colors ${thinBorder} border-t-[#3e3e3e]/65 border-b-[#3e3e3e]/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
                     style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
                     title={c.name}
                   >
@@ -521,7 +521,7 @@ const CashflowTableHeader = React.memo(({
                         onClick={(e) => { e.stopPropagation(); toggleCategoryExclusion(c.id); }}
                         className={`p-0.5 rounded transition-colors inline-flex items-center justify-center shrink-0 ${
                           isCatExcluded
-                            ? 'text-neutral-500 hover:text-neutral-300 hover:bg-[#303030]'
+                            ? 'text-neutral-400 hover:text-neutral-300 hover:bg-[#303030]'
                             : 'text-neutral-400 hover:text-white hover:bg-[#303030]/50'
                         }`}
                         title={isCatExcluded ? `นำหมวด ${c.name} กลับมารวมคำนวณ` : `ยกเว้นหมวด ${c.name} จากการคำนวณ`}
@@ -594,7 +594,7 @@ function CashflowTableGroupCells({
         onMouseEnter={() => setHoveredCol(colId)}
         onMouseLeave={() => setHoveredCol(null)}
         className={`px-3 py-2 truncate ${isIncome ? 'font-semibold' : 'font-medium'} border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${boundaryCls} ${GROUP_COL_CLS} ${
-          isCellFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
+          isCellFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''
         }`}
         style={{ color: groupTextColor, backgroundColor: groupBg }}
       >
@@ -615,7 +615,7 @@ function CashflowTableGroupCells({
             onMouseEnter={() => setHoveredCol(catColId)}
             onMouseLeave={() => setHoveredCol(null)}
             className={`px-2 py-2 text-[10px] tabular-nums font-black truncate border-l border-b transition-colors ${catBoundaryCls} ${CAT_COL_CLS} ${
-              isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''
+              isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''
             }`}
             style={{ color: isCatFaded ? undefined : (c.color ?? undefined), backgroundColor: catBg }}
           >
@@ -651,13 +651,13 @@ function SummaryTrendCell({
   currentAdjustedExpense, prevAdjustedExpense, onHover,
 }: SummaryTrendCellProps) {
   const expMoMJSX = !isExcluded ? renderMoMBadge(currentAdjustedExpense, prevAdjustedExpense) : null;
-  let bgCls = 'text-[#ff4d4d] bg-[#181818] group-hover:bg-[#1c1c1c]';
+  let bgCls = 'text-[#da291c] bg-[#181818] group-hover:bg-[#1c1c1c]';
   if (isExcluded) {
     bgCls = 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through';
   } else if (isTrendHovered) {
-    bgCls = 'text-[#ff4d4d] bg-[#1c1c1c]';
+    bgCls = 'text-[#da291c] bg-[#1c1c1c]';
   } else if (isRowHovered) {
-    bgCls = 'text-[#ff4d4d] bg-[#1c1c1c]/80';
+    bgCls = 'text-[#da291c] bg-[#1c1c1c]/80';
   }
 
   return (
@@ -686,12 +686,12 @@ interface SummaryNetCellProps {
 function SummaryNetCell({ isExcluded, isNetHovered, isRowHovered, thinBorder, netAmount, onHover }: SummaryNetCellProps) {
   const isDeficit = !isExcluded && netAmount < 0;
   let netColor = '';
-  if (!isExcluded) netColor = netAmount >= 0 ? 'text-yellow-400' : 'text-[#ff4d4d]';
+  if (!isExcluded) netColor = netAmount >= 0 ? 'text-emerald-400' : 'text-[#da291c]';
   let bgCls = getSummaryCellBg(isExcluded, isNetHovered, isRowHovered);
   if (isDeficit) {
     bgCls = isNetHovered || isRowHovered
-      ? 'bg-rose-950/35 text-[#ff4d4d]'
-      : 'bg-rose-950/20 text-[#ff4d4d]';
+      ? 'bg-rose-950/35 text-[#da291c]'
+      : 'bg-rose-950/20 text-[#da291c]';
   }
 
   return (
@@ -723,7 +723,7 @@ function SummaryPctLeftCell({
 }: SummaryPctLeftCellProps) {
   let pctLeftColor = '';
   if (!isExcluded) {
-    pctLeftColor = currentAdjustedIncome > 0 && netAmount < 0 ? 'text-[#ff4d4d]' : 'text-teal-400';
+    pctLeftColor = currentAdjustedIncome > 0 && netAmount < 0 ? 'text-[#da291c]' : 'text-emerald-400';
   }
   const pctLeftText =
     currentAdjustedIncome > 0 ? ((netAmount / currentAdjustedIncome) * 100).toFixed(1) + '%' : '0.0%';
@@ -757,7 +757,7 @@ function SummaryPctSpentCell({
   let pctSpentColor = '';
   if (!isExcluded) {
     const isOverSpent = currentAdjustedIncome > 0 && currentAdjustedExpense / currentAdjustedIncome * 100 > 100;
-    pctSpentColor = isOverSpent ? 'text-[#ff4d4d]' : 'text-pink-400';
+    pctSpentColor = isOverSpent ? 'text-[#da291c]' : 'text-neutral-200';
   }
   const pctSpentText =
     currentAdjustedIncome > 0
@@ -878,13 +878,13 @@ const CashflowTableRow = React.memo(({
   );
 
   const isMonthHovered = hoveredCol === 'month';
-  let monthCellBg = 'text-blue-300 bg-[#181818] group-hover:bg-[#1c1c1c]';
+  let monthCellBg = 'text-neutral-200 bg-[#181818] group-hover:bg-[#1c1c1c]';
   if (isExcluded) {
-    monthCellBg = 'text-neutral-500 bg-[#0f0f0f] line-through decoration-neutral-600';
+    monthCellBg = 'text-neutral-400 bg-[#0f0f0f] line-through decoration-neutral-600';
   } else if (isMonthHovered) {
-    monthCellBg = 'text-blue-300 bg-[#1c1c1c]';
+    monthCellBg = 'text-white bg-[#1c1c1c]';
   } else if (isRowHovered) {
-    monthCellBg = 'text-blue-300 bg-[#1c1c1c]/80';
+    monthCellBg = 'text-neutral-200 bg-[#1c1c1c]/80';
   }
 
   return (
@@ -1060,7 +1060,7 @@ const CashflowTableFooter = React.memo(({
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${GROUP_COL_CLS} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
+                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#34d399') }}
               >
                 {formatMoney(calculateActiveMonthGroupTotal({
@@ -1078,9 +1078,9 @@ const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[9px] font-black uppercase truncate border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${CAT_COL_CLS} ${
+                    className={`px-2 py-2.5 text-[10px] font-black uppercase truncate border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${CAT_COL_CLS} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                    } ${isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
+                    } ${isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
                     style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
                   >
                     {formatMoney(
@@ -1111,7 +1111,7 @@ const CashflowTableFooter = React.memo(({
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${GROUP_COL_CLS} ${
                   isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
+                } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
                 style={{ color: isGroupExcluded ? undefined : (g.color || '#cbd5e1') }}
               >
                 {formatMoney(calculateActiveMonthGroupTotal({
@@ -1129,9 +1129,9 @@ const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[9px] font-black uppercase truncate border-l border-b transition-colors ${thinBorder} ${CAT_COL_CLS} ${
+                    className={`px-2 py-2.5 text-[10px] font-black uppercase truncate border-l border-b transition-colors ${thinBorder} ${CAT_COL_CLS} ${
                       isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-                    } ${isCatFaded ? 'opacity-40 select-none text-neutral-500 line-through' : ''}`}
+                    } ${isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
                     style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
                   >
                     {formatMoney(
@@ -1151,7 +1151,7 @@ const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} text-[#ff4d4d] sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+          className={`px-3 py-2.5 border-l !border-l-[#3e3e3e] border-b ${thinBorder} text-[#da291c] sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -1162,14 +1162,14 @@ const CashflowTableFooter = React.memo(({
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
             hoveredCol === 'net' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-          } ${totalActiveNet >= 0 ? 'text-yellow-400' : 'text-[#ff4d4d]'}`}
+          } ${totalActiveNet >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}
         >
           {formatMoney(totalActiveNet)}
         </td>
         <td
           onMouseEnter={() => setHoveredCol('pct-left')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-2 py-2.5 border-l border-b ${thinBorder} text-center text-teal-400 sticky right-[70px] z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+          className={`px-2 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[70px] z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
             hoveredCol === 'pct-left' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -1178,7 +1178,7 @@ const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('pct-spent')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-2 py-2.5 border-l border-r border-b ${thinBorder} text-center text-pink-400 sticky right-0 z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
+          className={`px-2 py-2.5 border-l border-r border-b ${thinBorder} text-center text-neutral-200 sticky right-0 z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
             hoveredCol === 'pct-spent' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
           }`}
         >
@@ -1241,7 +1241,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
               </span>
             </div>
             <div
-              className="mt-2 pt-1 border-t text-[8.5px] text-neutral-500"
+              className="mt-2 pt-1 border-t text-[9.5px] text-neutral-400"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}
             >
               กดรูปตาเพื่อเปิด/ปิดการคำนวณหมวดหมู่นี้
@@ -1306,7 +1306,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`px-1.5 py-0.5 text-[9px] font-black border uppercase leading-none ${
+              <span className={`px-1.5 py-0.5 text-[10px] font-black border uppercase leading-none ${
                 isIncome
                   ? 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30'
                   : allocationColorCls
@@ -1321,7 +1321,7 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-[9.5px] font-bold text-neutral-400">
                 <span>หมวดหมู่ย่อย ({cats.length}):</span>
-                <span className="text-neutral-500 text-[9px]">คลิกคอลัมน์เพื่อดูแจกแจง</span>
+                <span className="text-neutral-400 text-[10px]">คลิกคอลัมน์เพื่อดูแจกแจง</span>
               </div>
               <div className="flex flex-wrap gap-1 max-h-[160px] overflow-y-auto custom-scrollbar">
                 {cats.map((c) => {
@@ -1344,14 +1344,14 @@ const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState | null
               </div>
             </div>
           ) : (
-            <div className="text-[9.5px] text-neutral-500 italic py-0.5">
+            <div className="text-[9.5px] text-neutral-400 italic py-0.5">
               ไม่มีหมวดหมู่ย่อยที่บันทึกข้อมูลในรอบนี้
             </div>
           )}
 
           {/* Micro Footer Hint */}
           <div
-            className="mt-2 pt-1.5 border-t text-[8.5px] text-neutral-500 flex items-center justify-between"
+            className="mt-2 pt-1.5 border-t text-[9.5px] text-neutral-400 flex items-center justify-between"
             style={{ borderColor: 'rgba(255,255,255,0.06)' }}
           >
             <span>คลิกหัวตารางเพื่อ {cats.length > 0 ? 'ยุบ/ขยาย' : 'เลือก'}</span>
@@ -1650,7 +1650,7 @@ export default function CashflowTable() {
             >
               <Filter
                 className={`w-3.5 h-3.5 transition-colors ${
-                  isFilterBarOpen || totalExcludedCount > 0 ? 'text-[#ff4d4d]' : 'text-neutral-400 group-hover:text-white'
+                  isFilterBarOpen || totalExcludedCount > 0 ? 'text-[#da291c]' : 'text-neutral-400 group-hover:text-white'
                 }`}
               />
               {totalExcludedCount > 0 && (
@@ -1660,7 +1660,7 @@ export default function CashflowTable() {
               )}
               <ChevronDown
                 className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  isFilterBarOpen ? 'rotate-180 text-white' : 'text-neutral-500 group-hover:text-neutral-300'
+                  isFilterBarOpen ? 'rotate-180 text-white' : 'text-neutral-400 group-hover:text-neutral-300'
                 }`}
               />
             </button>

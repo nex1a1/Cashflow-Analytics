@@ -449,9 +449,9 @@ const buildMonthlyComboChartData = (
 ) => ({
   labels: xLabels,
   datasets: [
-    { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#38bdf8', backgroundColor: '#38bdf8', borderWidth: 4, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+    { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#ffffff', backgroundColor: '#ffffff', borderWidth: 4, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
     { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 0 },
-    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: '#EF4444', borderColor: '#EF4444', borderRadius: 0 },
+    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: '#da291c', borderColor: '#da291c', borderRadius: 0 },
   ],
 });
 
@@ -463,16 +463,16 @@ const buildDailyComboChartData = (
   hideWantExpenses: boolean
 ) => {
   let barLabel = 'รายจ่ายจริง';
-  let barBg = 'rgba(239,68,68,0.6)';
-  let barBorder = '#EF4444';
+  let barBg = 'rgba(218,41,28,0.6)';
+  let barBorder = '#da291c';
   if (hideFixedExpenses) {
-    barLabel = 'รายจ่ายไลฟ์สไตล์';
-    barBg = 'rgba(216,26,33,0.6)';
-    barBorder = '#D81A21';
+    barLabel = 'รายจ่ายไลฟ์สไตล์ (WANT)';
+    barBg = 'rgba(245,158,11,0.6)';
+    barBorder = '#F59E0B';
   } else if (hideWantExpenses) {
-    barLabel = 'รายจ่ายจำเป็น';
-    barBg = 'rgba(59,130,246,0.6)';
-    barBorder = '#3B82F6';
+    barLabel = 'รายจ่ายจำเป็น (NEED)';
+    barBg = 'rgba(163,163,163,0.6)';
+    barBorder = '#A3A3A3';
   }
 
   return {
@@ -516,7 +516,9 @@ export const generateMainChartData = ({
 
   if (!showMonthly && isOnlyAll) {
     return {
-      chartType: 'combo',
+      // A single expense-only series is not a Cashflow "analysis" (no income/net context) —
+      // tag it distinctly from the true multi-series combo so the title never over-promises.
+      chartType: 'daily-expense',
       chartData: buildDailyComboChartData(xLabels, datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses),
     };
   }

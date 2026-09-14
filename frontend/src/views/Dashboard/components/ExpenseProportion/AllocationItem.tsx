@@ -156,7 +156,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                 </span>
                 <div className={`w-full flex ${arrowAlignClass}`}>
                   <span 
-                    className={`text-[8px] leading-none -mt-0.5 font-bold ${
+                    className={`text-[9px] leading-none -mt-0.5 font-bold ${
                       isOverBudget ? 'text-[#da291c]' : 'text-amber-400'
                     }`}
                   >
@@ -195,12 +195,12 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
                       
                       {/* Segment Hover Tooltip */}
-                      <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none`}>
+                      <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[10px] pointer-events-none`}>
                         <div className="flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color || item.color }} />
                           <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={g.icon} color={g.color} size={14} /> {g.name}</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
+                        <div className="flex items-center gap-2 mt-0.5 text-[9.5px]">
                           <span className="text-slate-400">฿{formatMoney(g.amount)}</span>
                           <span className="font-black text-[#da291c]">
                             {relPct.toFixed(0)}% ของส่วนนี้
@@ -221,12 +221,12 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                   <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_6px)]" />
                   
                   {/* Over-budget Hover Tooltip */}
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#da291c] shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none">
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#da291c] shadow-2xl rounded-none z-[50] text-[10px] pointer-events-none">
                     <div className="flex items-center gap-1 text-red-400 font-black">
                       <AlertCircle size={13} className="shrink-0" />
                       <span>เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
                     </div>
-                    <div className="text-[8.5px] text-slate-300 mt-0.5">
+                    <div className="text-[9.5px] text-slate-300 mt-0.5">
                       ส่วนที่เกิน: ฿{formatMoney(Math.abs(varianceAmount))}
                     </div>
                   </div>
@@ -239,12 +239,12 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                   className="h-full bg-amber-500/10 border-r border-dashed border-amber-500/40 relative group/under cursor-pointer"
                   style={{ width: `${savingsDeficitPct}%` }}
                 >
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-amber-500/50 shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none">
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-amber-500/50 shadow-2xl rounded-none z-[50] text-[10px] pointer-events-none">
                     <div className="flex items-center gap-1 text-amber-400 font-black">
                       <AlertTriangle size={13} className="shrink-0" />
                       <span>ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
                     </div>
-                    <div className="text-[8.5px] text-slate-300 mt-0.5">
+                    <div className="text-[9.5px] text-slate-300 mt-0.5">
                       ยอดออมที่ขาด: ฿{formatMoney(Math.abs(varianceAmount))}
                     </div>
                   </div>

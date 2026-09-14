@@ -20,7 +20,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
   // Responsive center typography based on digit count and cutout diameter
   const fontClass = useMemo(() => {
     if (isGroupMode) {
-      if (amtLength > 12) return 'text-[8.5px]';
+      if (amtLength > 12) return 'text-[9.5px]';
       if (amtLength > 9) return 'text-[9.5px]';
       return 'text-[10.5px]';
     }
@@ -61,7 +61,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
           }`}
         >
           <span 
-            className="text-[8px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
+            className="text-[9px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
             title={displayLabel}
           >
             {displayLabel}

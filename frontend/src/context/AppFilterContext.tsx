@@ -89,7 +89,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     };
     const tabLabel = tabLabels[activeTab] || 'Home';
     const periodLabel = getFilterLabel(filterPeriod);
-    document.title = `CS | ${tabLabel} [${periodLabel}]`;
+    document.title = `SHARK | ${tabLabel} [${periodLabel}]`;
   }, [activeTab, filterPeriod]);
 
   // Toggle Exclude Future

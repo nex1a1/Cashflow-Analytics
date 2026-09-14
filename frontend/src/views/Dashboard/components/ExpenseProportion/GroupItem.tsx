@@ -113,12 +113,12 @@ export const GroupItem = React.memo<GroupItemProps>(({
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
                     
                     {/* Segment Hover Popover Tooltip */}
-                    <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[9px] pointer-events-none`}>
+                    <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] shadow-2xl rounded-none z-[50] text-[10px] pointer-events-none`}>
                       <div className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color || item.color }} />
                         <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={c.icon} color={c.color} size={14} /> {c.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[8.5px]">
+                      <div className="flex items-center gap-2 mt-0.5 text-[9.5px]">
                         <span className="text-slate-400">฿{formatMoney(c.amount)}</span>
                         <span className="font-black text-[#da291c]">{c.relativePercentage}% ของกลุ่ม</span>
                       </div>

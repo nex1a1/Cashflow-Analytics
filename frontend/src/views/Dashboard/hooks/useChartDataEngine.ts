@@ -28,6 +28,7 @@ function processStandardDataset(ds: any, { chartViewType, isSmoothLine, hiddenDa
     return {
       ...ds,
       type: 'line',
+      yAxisID: 'y1',
       tension: isSmoothLine ? 0.4 : 0,
       borderWidth: 4,
       hidden: hiddenDatasets?.includes(ds.label)

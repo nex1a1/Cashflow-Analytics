@@ -171,7 +171,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Sticky first column (date cell) row hover */
 .heatmap-table tbody tr:hover td:first-child > div {
   background-color: rgba(255, 255, 255, 0.07) !important;
-  border-left-color: #3b82f6 !important;
+  border-left-color: #da291c !important;
 }
 
 /* Sparkline bar row hover highlight inside date cell */
@@ -181,7 +181,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Daily total (sticky last column) row hover */
 .heatmap-table tbody tr:hover td:last-child {
-  background-color: rgba(239, 68, 68, 0.12) !important;
+  background-color: rgba(218, 41, 28, 0.12) !important;
 }
 
 /* Cell hover glow */

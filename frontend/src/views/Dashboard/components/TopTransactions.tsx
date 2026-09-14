@@ -109,7 +109,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
           
           {/* Date Tag */}
           {tx.date && (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030] text-slate-400 group-hover:border-[#404040]">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030] text-slate-400 group-hover:border-[#404040]">
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
           )}
@@ -266,13 +266,13 @@ export default function TopTransactions() {
         {/* Real-time sum & Pareto indicator pill */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
-            className="px-2 py-0.5 rounded-none border text-[9px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-[#242424] border-[#303030] text-neutral-300"
+            className="px-2 py-0.5 rounded-none border text-[10px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-[#242424] border-[#303030] text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (฿${formatMoney(allFilteredExpenseSum)})`}
           >
             <span className="text-neutral-400">ยอดรวม:</span>
             <span className="text-[#da291c] font-bold tabular-nums">{formatMoney(topSum)}</span>
             {allFilteredExpenseSum > 0 && (
-              <span className="text-[8px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
+              <span className="text-[9px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
                 {topPctOfTotal}%
               </span>
             )}
@@ -310,7 +310,7 @@ export default function TopTransactions() {
                 <p className="text-sm font-bold text-neutral-400">
                   ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
                 </p>
-                <p className="text-[10px] mt-1 text-neutral-500">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
+                <p className="text-[10px] mt-1 text-neutral-400">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
               </div>
             )
           )}

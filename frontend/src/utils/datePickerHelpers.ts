@@ -124,13 +124,19 @@ export function formatDisplay(v?: string | null, placeholder = 'เลือก�
   return `${summaryParts.join(', ')} ${THAI_MONTHS_SHORT[(lm || 1) - 1]}`;
 }
 
+export const MIN_YEAR = 2000;
+export const MAX_YEAR = 2050;
+
 export function getDecadeWindow(year: number, windowSize = 12): { start: number; end: number; years: number[] } {
-  const start = Math.floor(year / windowSize) * windowSize;
-  const years = Array.from({ length: windowSize }, (_, i) => start + i);
+  const clampedYear = Math.max(MIN_YEAR, Math.min(MAX_YEAR, year));
+  const start = Math.max(MIN_YEAR, Math.floor(clampedYear / windowSize) * windowSize);
+  const years = Array.from({ length: windowSize }, (_, i) => start + i).filter(
+    (y) => y >= MIN_YEAR && y <= MAX_YEAR
+  );
   return {
     start,
-    end: start + windowSize - 1,
-    years
+    end: years[years.length - 1] || start,
+    years,
   };
 }
 
@@ -142,20 +148,22 @@ export function stepDate(dateStr: string, stepDays: number): string {
 }
 
 export function stepMonth(date: Date, stepMonths: number): Date {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const d = date.getDate();
-  const target = new Date(y, m + stepMonths, 1);
+  const target = new Date(date.getFullYear(), date.getMonth() + stepMonths, 1);
+  const clampedYear = Math.max(MIN_YEAR, Math.min(MAX_YEAR, target.getFullYear()));
+  if (clampedYear !== target.getFullYear()) {
+    return date;
+  }
   const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
-  target.setDate(Math.min(d, maxDay));
+  target.setDate(Math.min(date.getDate(), maxDay));
   return target;
 }
 
 export function stepYear(date: Date, stepYears: number): Date {
   const y = date.getFullYear();
+  const nextYear = Math.max(MIN_YEAR, Math.min(MAX_YEAR, y + stepYears));
   const m = date.getMonth();
   const d = date.getDate();
-  const target = new Date(y + stepYears, m, 1);
+  const target = new Date(nextYear, m, 1);
   const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
   target.setDate(Math.min(d, maxDay));
   return target;

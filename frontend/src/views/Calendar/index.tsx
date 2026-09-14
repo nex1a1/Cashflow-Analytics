@@ -355,7 +355,7 @@ function CalendarView({
           name: cat.name,
           groupName,
           amount: allocs.need,
-          color: cat.color || groupObj?.color || '#EF4444',
+          color: cat.color || groupObj?.color || '#A3A3A3',
           groupOrder,
           catOrder
         });

@@ -74,7 +74,7 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         }`}
       >
         <ArrowDownWideNarrow className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
-        {isAmount && <span className="text-[9px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>}
+        {isAmount && <span className="text-[10px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>}
       </button>
 
       <button
@@ -85,7 +85,7 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         }`}
       >
         <ListOrdered className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
-        {isOrder && <span className="text-[9px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>}
+        {isOrder && <span className="text-[10px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>}
       </button>
     </div>
   );
@@ -161,7 +161,7 @@ export function ExpenseProportionHeader({
           />
         )}
       </div>
-      <span className="text-[9px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
+      <span className="text-[10px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
         {countText}
       </span>
     </div>

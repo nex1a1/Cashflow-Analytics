@@ -142,7 +142,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelNeed,
       flow: totalNeed,
-      color: '#F43F5E',
+      color: '#A3A3A3',
       percent: formatPercent(totalNeed, totalInc, '% of Cash used')
     });
   }
@@ -152,7 +152,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelWant,
       flow: totalWant,
-      color: '#0EA5E9',
+      color: '#F59E0B',
       percent: formatPercent(totalWant, totalInc, '% of Cash used')
     });
   }
@@ -172,7 +172,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelRemaining,
       flow: netSavings,
-      color: '#3B82F6',
+      color: '#10B981',
       percent: formatPercent(netSavings, totalInc, '% เงินคงเหลือสุทธิ')
     });
   }
@@ -231,7 +231,7 @@ function buildAllocationSankeyFlows({
           from: labelNeed,
           to: catLabel,
           flow: cat.allocs.need,
-          color: cat.color || '#F43F5E',
+          color: cat.color || '#A3A3A3',
           percent: formatPercent(cat.allocs.need, totalNeed, '% of Need'),
           allocBreakdown: breakdown
         });
@@ -241,7 +241,7 @@ function buildAllocationSankeyFlows({
           from: labelWant,
           to: catLabel,
           flow: cat.allocs.want,
-          color: cat.color || '#0EA5E9',
+          color: cat.color || '#F59E0B',
           percent: formatPercent(cat.allocs.want, totalWant, '% of Want'),
           allocBreakdown: breakdown
         });
@@ -307,7 +307,7 @@ function buildStandardSankeyFlows({
       from: labelTotalCash,
       to: labelRemaining,
       flow: netSavings,
-      color: '#3B82F6',
+      color: '#10B981',
       percent: formatPercent(netSavings, totalInc, '% เงินคงเหลือสุทธิ')
     });
   }

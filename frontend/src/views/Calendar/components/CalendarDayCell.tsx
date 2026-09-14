@@ -55,7 +55,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
   if (isToday) {
     dayBadgeCls = 'bg-[#da291c] text-white font-black';
   } else if (isWeekend) {
-    dayBadgeCls = 'text-red-400 bg-red-950/30 font-bold';
+    dayBadgeCls = 'text-[#da291c] bg-[#da291c]/10 font-bold';
   }
 
   return (
@@ -121,15 +121,15 @@ const CalendarDayCell = memo(function CalendarDayCell({
         {(cellData.exp > 0 || cellData.inc > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-[#2d2d2d]/20 pb-0.5">
              {cellData.exp > 0 ? (
-              <span className="text-red-400 tabular-nums tracking-tight flex items-center gap-1">
+              <span className="text-[#da291c] tabular-nums tracking-tight flex items-center gap-1">
                 {formatAmount(cellData.exp)} ฿
                 {hiddenExpCount > 0 && (
-                  <span 
+                  <span
                     className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
                     style={{
                       backgroundColor: 'rgba(218, 41, 28, 0.08)',
                       borderColor: 'rgba(218, 41, 28, 0.25)',
-                      color: '#f87171',
+                      color: '#da291c',
                     }}
                     title={`มีรายการจ่ายซ่อนอยู่อีก ${hiddenExpCount} รายการ`}
                   >
@@ -192,7 +192,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
-              <span className="font-bold shrink-0 ml-1 pr-0.5 text-red-400 tabular-nums tracking-tight">
+              <span className="font-bold shrink-0 ml-1 pr-0.5 text-[#da291c] tabular-nums tracking-tight">
                 {formatAmount(tx.amount)}
               </span>
             </div>

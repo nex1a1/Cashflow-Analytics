@@ -243,7 +243,7 @@ function CategoryLegendSection({
         <div className="flex flex-col flex-grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || '#64748b';
-            let amtColor = 'text-red-400';
+            let amtColor = 'text-[#da291c]';
             let amtPrefix = '-';
             if (groupObj.type === 'income') {
               amtColor = 'text-emerald-400';
@@ -308,7 +308,7 @@ function AllocationOverviewSection({
   hexToRgb
 }: { allocationTotals: any; legendLayoutMode: 'compact' | 'grouped'; hexToRgb: (hex: string | null | undefined) => string; }) {
   const rows = [
-    { label: 'จำเป็น (Needs)', dot: '#EF4444', pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
+    { label: 'จำเป็น (Needs)', dot: '#A3A3A3', pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
     { label: 'ทั่วไป (Wants)', dot: '#F59E0B', pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
     { label: 'เงินออม (Savings)', dot: '#10B981', pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
   ];
@@ -352,9 +352,9 @@ function AllocationOverviewSection({
       {/* Stacked Progress Bar */}
       {allocationTotals.totalExpense > 0 && (
         <div className="h-1.5 w-full bg-[#121212] border border-[#2d2d2d] flex rounded-none overflow-hidden mt-1 shrink-0 z-10">
-          <div 
-            style={{ width: `${allocationTotals.needPct}%`, backgroundColor: '#EF4444' }} 
-            title={`Needs: ${allocationTotals.needPct}%`} 
+          <div
+            style={{ width: `${allocationTotals.needPct}%`, backgroundColor: '#A3A3A3' }}
+            title={`Needs: ${allocationTotals.needPct}%`}
           />
           <div 
             style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: '#F59E0B' }} 
