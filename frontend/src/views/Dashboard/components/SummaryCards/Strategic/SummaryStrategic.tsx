@@ -34,7 +34,7 @@ const AnalysisTabHeader = ({
           type="button"
           onClick={() => onChange(tab.id)}
           aria-pressed={activeTab === tab.id}
-          className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+          className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
             activeTab === tab.id
               ? 'text-neutral-100 border-b-[#da291c]'
               : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
@@ -45,11 +45,11 @@ const AnalysisTabHeader = ({
       ))}
     </div>
     {activeTab === 'strategic' ? (
-      <span className="hidden sm:inline-block text-[9px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
+      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
         ภาระคงที่ • พฤติกรรมใช้จ่าย • จังหวะรายวัน
       </span>
     ) : (
-      <span className="hidden sm:inline-block text-[9px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
+      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
         PROJECTION &amp; SAFE ZONE
       </span>
     )}
@@ -93,50 +93,68 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
       <AnalysisTabHeader activeTab={effectiveTab} tabs={visibleTabs} onChange={setActiveTab} />
 
       {effectiveTab === 'strategic' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
+        <div className="flex flex-col flex-1">
           {/* Row 1: Fixed Burdens & Wants (3 cards) */}
-          <StrategicRentCard
-            rentPercentageNum={rentPercentageNum}
-            rentTotal={rentTotal}
-            rentSub={rentSub}
-            showSkeleton={showSkeleton}
-          />
-          <StrategicSubscriptionCard
-            subscriptionTotal={subscriptionTotal}
-            subscriptionPctOfIncome={subscriptionPctOfIncome}
-            subscriptionPercentage={subscriptionPercentage}
-            subscriptionCount={subscriptionCount}
-            topSubscriptionServices={topSubscriptionServices}
-            totalIncome={totalIncome}
-            showSkeleton={showSkeleton}
-          />
-          <StrategicLifestyleCard
-            lifestyleRatio={lifestyleRatio}
-            variableTotal={variableTotal}
-            topWantCategories={topWantCategories}
-            showSkeleton={showSkeleton}
-          />
+          <div className="px-3 py-1 bg-[#141414] border-b border-[#2d2d2d] flex items-center gap-1.5">
+            <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
+            <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
+              ภาระคงที่ • พฤติกรรมใช้จ่าย
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d]">
+            <StrategicRentCard
+              rentPercentageNum={rentPercentageNum}
+              rentTotal={rentTotal}
+              rentSub={rentSub}
+              showSkeleton={showSkeleton}
+            />
+            <StrategicSubscriptionCard
+              subscriptionTotal={subscriptionTotal}
+              subscriptionPctOfIncome={subscriptionPctOfIncome}
+              subscriptionPercentage={subscriptionPercentage}
+              subscriptionCount={subscriptionCount}
+              topSubscriptionServices={topSubscriptionServices}
+              totalIncome={totalIncome}
+              showSkeleton={showSkeleton}
+            />
+            <StrategicLifestyleCard
+              lifestyleRatio={lifestyleRatio}
+              variableTotal={variableTotal}
+              topWantCategories={topWantCategories}
+              showSkeleton={showSkeleton}
+            />
+          </div>
 
-          {/* Row 2: Daily Velocity & Cashflow (3 cards) */}
-          <StrategicFoodCard
-            foodDailyAvg={foodDailyAvg}
-            foodTotal={foodTotal}
-            foodPercentage={foodPercentage}
-            foodPctOfIncome={foodPctOfIncome}
-            foodWorkdayAvg={foodWorkdayAvg}
-            foodHolidayAvg={foodHolidayAvg}
-            maxFoodDayAmount={maxFoodDayAmount}
-            showSkeleton={showSkeleton}
-          />
-          <StrategicDailyExpenseCard
-            dailyAvg={dailyAvg}
-            totalExpense={totalExpense}
-            dailyWorkdayAvg={dailyWorkdayAvg}
-            dailyHolidayAvg={dailyHolidayAvg}
-            dailyFixed={dailyFixed}
-            dailyVariable={dailyVariable}
-            showSkeleton={showSkeleton}
-          />
+          {/* Row 2: Daily Velocity (2 cards) */}
+          <div className="px-3 py-1 bg-[#141414] border-y border-[#2d2d2d] flex items-center gap-1.5">
+            <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
+            <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
+              จังหวะรายวัน
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-[#2d2d2d]">
+            <StrategicFoodCard
+              foodDailyAvg={foodDailyAvg}
+              foodTotal={foodTotal}
+              foodPercentage={foodPercentage}
+              foodPctOfIncome={foodPctOfIncome}
+              foodWorkdayAvg={foodWorkdayAvg}
+              foodHolidayAvg={foodHolidayAvg}
+              maxFoodDayAmount={maxFoodDayAmount}
+              showSkeleton={showSkeleton}
+            />
+            <StrategicDailyExpenseCard
+              dailyAvg={dailyAvg}
+              totalExpense={totalExpense}
+              dailyWorkdayAvg={dailyWorkdayAvg}
+              dailyHolidayAvg={dailyHolidayAvg}
+              dailyFixed={dailyFixed}
+              dailyVariable={dailyVariable}
+              showSkeleton={showSkeleton}
+            />
+          </div>
+
+          {/* Verdict: the bottom-line answer, given distinct full-width weight instead of co-equal card treatment */}
           <StrategicVictoryCard
             dailyVictory={dailyVictory}
             periodDays={periodDays}

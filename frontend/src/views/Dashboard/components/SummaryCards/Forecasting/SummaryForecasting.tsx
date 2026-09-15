@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import {
   TrendingDown, Gauge, ShieldCheck, Home, Wallet, Navigation,
-  Zap, Repeat, Award, ArrowDownToLine, PiggyBank, AlertTriangle, CheckCircle2
+  Zap, Award, AlertTriangle, CheckCircle2
 } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -32,6 +32,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
   const maxAllowedExpense        = details.maxAllowedExpense       || 0;
   const requiredReduction        = details.requiredReduction       || 0;
   const requiredDailyReduction   = details.requiredDailyReduction  || 0;
+  const actualDailySeries        = details.actualDailySeries        || [];
   const paceStatus  = details.paceStatus  || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
   const eomStatus   = details.eomStatus   || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
 
@@ -46,31 +47,27 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
 
   return (
     <div className="flex flex-col h-full bg-[#181818]">
-      {/* 1. Telemetry Control Bar */}
-      <div className="px-3.5 py-1.5 bg-[#141414] border-b border-[#2d2d2d] flex items-center justify-between gap-2 flex-wrap">
-        {/* Left: Burn Pace & EOM Status */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">Pace:</span>
-            <span
-              className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 border"
-              style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}
-            >
-              {paceStatus.label}
-            </span>
-          </div>
-
-          <div
-            className={`px-1.5 py-0.5 border text-[9px] font-mono font-black tracking-wider uppercase flex items-center gap-1 ${eomStatus.bg} ${eomStatus.border}`}
-            style={{ color: eomStatus.color }}
+      {/* 1. Status Bar — the one place pace/EOM status and day-count live; the ceiling value itself lives on the chart and next to Pod 1's headline, not repeated here. */}
+      <div className="px-3.5 py-1.5 bg-[#141414] border-b border-[#2d2d2d] flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">Pace:</span>
+          <span
+            className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 border"
+            style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}
           >
-            <ShieldCheck className="w-3 h-3 shrink-0" />
-            <span>{eomStatus.label}</span>
-          </div>
+            {paceStatus.label}
+          </span>
         </div>
 
-        {/* Center: Calendar Progress */}
+        <div
+          className={`px-1.5 py-0.5 border text-[9px] font-mono font-black tracking-wider uppercase flex items-center gap-1 ${eomStatus.bg} ${eomStatus.border}`}
+          style={{ color: eomStatus.color }}
+        >
+          <ShieldCheck className="w-3 h-3 shrink-0" />
+          <span>{eomStatus.label}</span>
+        </div>
+
         <div className="flex items-center gap-2 text-[10px] font-mono">
           <span className="text-neutral-400">
             วันในงวด: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
@@ -86,11 +83,6 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
             เหลือ <span className="text-neutral-200 font-bold">{remainingDays} วัน</span>
           </span>
         </div>
-
-        {/* Right: Income Ceiling */}
-        <div className="text-[10px] text-neutral-300 font-mono bg-neutral-900 px-2 py-0.5 border border-neutral-800">
-          เพดานงบทั้งเดือน: <span className="text-emerald-400 font-bold">฿{formatMoney(maxAllowedExpense)}</span>
-        </div>
       </div>
 
       {/* 2. Trajectory Radar Sparkline Graph with Waypoint HUD */}
@@ -102,6 +94,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
         variableUpToToday={variableUpToToday}
         projectedExpense={projectedExpense}
         projectedSurplus={projectedSurplus}
+        actualDailySeries={actualDailySeries}
         paceColor={paceStatus.color}
       />
 
@@ -109,14 +102,11 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
 
         {/* POD 1: Monthly Outflow Forecast */}
-        <div className="relative p-3 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l border-l-rose-500">
-          <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
+        <div className="relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l border-l-rose-500">
+          <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <TrendingDown size={13} className="text-rose-400 shrink-0" />
               พยากรณ์รายจ่ายเดือนนี้
-            </span>
-            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 border text-rose-400 border-rose-500/30 bg-rose-950/40">
-              FORECAST
             </span>
           </div>
 
@@ -174,20 +164,13 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
         </div>
 
         {/* POD 2: Safe Daily Living Ceiling */}
-        <div className={`relative p-3 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l ${
+        <div className={`relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l ${
           headroom >= 0 ? 'border-l-emerald-500' : 'border-l-[#da291c]'
         }`}>
-          <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
+          <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Zap size={13} className={headroom >= 0 ? 'text-emerald-400 shrink-0' : 'text-[#da291c] shrink-0'} />
               เพดานใช้วันละไม่เกิน
-            </span>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border ${
-              headroom >= 0
-                ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40'
-                : 'text-[#da291c] border-[#da291c]/30 bg-red-950/40'
-            }`}>
-              {headroom >= 0 ? 'SAFE ZONE' : 'OVER PACED'}
             </span>
           </div>
 
@@ -225,13 +208,6 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex flex-col gap-1 text-[10px] font-mono">
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
-                <Gauge size={12} className="text-neutral-400 shrink-0" />
-                สปีดใช้จ่ายรายวันจริง:
-              </span>
-              <span className="text-white font-bold tabular-nums">฿{formatMoney(actualDailyVariableAvg)}/วัน</span>
-            </div>
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-neutral-400 flex items-center gap-1.5">
                 <ShieldCheck size={12} className={headroom >= 0 ? 'text-emerald-400 shrink-0' : 'text-[#da291c] shrink-0'} />
                 ส่วนต่างปลอดภัย (Headroom):
               </span>
@@ -241,31 +217,17 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 <span className="text-[#da291c] font-black tabular-nums">-฿{formatMoney(requiredDailyReduction)}/วัน</span>
               )}
             </div>
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-neutral-400 flex items-center gap-1.5">
-                <Repeat size={12} className="text-neutral-400 shrink-0" />
-                เพดานเฉลี่ยทั้งงวด:
-              </span>
-              <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(maxAllowedExpense / lastDayOfMonth)}/วัน</span>
-            </div>
           </div>
         </div>
 
         {/* POD 3: Projected EOM Surplus */}
-        <div className={`relative p-3 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l ${
+        <div className={`relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l ${
           projectedSurplus >= 0 ? 'border-l-emerald-500' : 'border-l-[#da291c]'
         }`}>
-          <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
+          <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Award size={13} className={projectedSurplus >= 0 ? 'text-emerald-400 shrink-0' : 'text-[#da291c] shrink-0'} />
               เงินเหลือสุทธิคาดการณ์
-            </span>
-            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border ${
-              projectedSurplus >= 0
-                ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40'
-                : 'text-[#da291c] border-[#da291c]/30 bg-red-950/40'
-            }`}>
-              {projectedSurplus >= 0 ? 'SURPLUS' : 'DEFICIT RISK'}
             </span>
           </div>
 
@@ -302,22 +264,6 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
           </div>
 
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex flex-col gap-1 text-[10px] font-mono">
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-neutral-400 flex items-center gap-1.5">
-                <ArrowDownToLine size={12} className="text-emerald-400 shrink-0" />
-                เพดานรายรับรวมทั้งงวด:
-              </span>
-              <span className="text-neutral-200 font-bold tabular-nums">฿{formatMoney(maxAllowedExpense)}</span>
-            </div>
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-neutral-400 flex items-center gap-1.5">
-                <PiggyBank size={12} className="text-emerald-400 shrink-0" />
-                อัตราเงินสดคงเหลือสะสม:
-              </span>
-              <span className={`font-black tabular-nums ${projectedSurplus >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}>
-                {projectedSurplus >= 0 ? `+${projectedSurplusPct}%` : `${projectedSurplusPct}%`}
-              </span>
-            </div>
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 {requiredReduction > 0 ? (

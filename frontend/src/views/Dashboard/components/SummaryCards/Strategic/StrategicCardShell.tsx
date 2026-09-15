@@ -32,7 +32,7 @@ export const StrategicCardShell = memo(({
       <div className="flex-1 flex flex-col justify-between w-full h-full transition-none gap-2">
         {/* Top: Label + Tactical Badge */}
         <div className="flex items-center justify-between gap-1.5 leading-none">
-          <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate">
+          <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate">
             {label}
           </span>
           {badge}
@@ -54,7 +54,7 @@ export const StrategicCardShell = memo(({
       {showOverlay && overlayBody && (
         <div className="absolute inset-0 p-2.5 bg-[#181818] opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-none z-20 flex flex-col justify-between">
           {overlayTitle && (
-            <div className="text-[10px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1.5 flex justify-between items-center shrink-0 gap-1">
+            <div className="text-[11px] font-black uppercase tracking-wider text-neutral-400 border-b border-[#303030] pb-1.5 flex justify-between items-center shrink-0 gap-1">
               <span className="truncate">{overlayTitle}</span>
               {overlayBadge}
             </div>

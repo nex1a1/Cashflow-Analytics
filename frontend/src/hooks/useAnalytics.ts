@@ -186,6 +186,7 @@ function calculateForecastingDetails({
   totals,
   expenseUpToToday,
   rentUpToToday,
+  dailySumMap,
 }: any) {
   if (!isCurrentMonth || datesInPeriod.length === 0) {
     return { showForecasting: false, effectiveDays: datesInPeriod.length || 1, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
@@ -202,6 +203,20 @@ function calculateForecastingDetails({
   const dailyLivingUpToToday = Math.max(0, expenseUpToToday - rentUpToToday);
   const dailyLivingRunRate = dailyLivingUpToToday / currentDay;
   const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
+
+  // Real per-day cumulative spend (day 1 -> today), sourced from actual transactions rather
+  // than an interpolated shape — the trajectory chart plots what actually happened.
+  const actualDailySeries: number[] = [];
+  let runningSpend = 0;
+  for (let day = 1; day <= currentDay; day++) {
+    const iso = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    runningSpend += (dailySumMap && dailySumMap[iso]) || 0;
+    actualDailySeries.push(runningSpend);
+  }
+  // Pin the final point to the same spend-to-date figure used everywhere else in this panel.
+  if (actualDailySeries.length > 0) {
+    actualDailySeries[actualDailySeries.length - 1] = fixedCommitment + dailyLivingUpToToday;
+  }
 
   const projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
   const projectedSurplus = totals.income - projectedExpense;
@@ -250,6 +265,7 @@ function calculateForecastingDetails({
     maxAllowedExpense,
     requiredReduction,
     requiredDailyReduction,
+    actualDailySeries,
     paceStatus,
     eomStatus
   };
@@ -1026,6 +1042,7 @@ export default function useAnalytics({
       totals,
       expenseUpToToday,
       rentUpToToday,
+      dailySumMap: state.globalDailySum,
     });
 
     const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);

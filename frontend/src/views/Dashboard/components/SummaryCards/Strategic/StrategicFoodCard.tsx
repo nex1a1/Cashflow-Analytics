@@ -39,12 +39,12 @@ export const StrategicFoodCard = memo(({
       hoverBgClass="hover:bg-[#1c1c1c]"
       label="ค่าอาหาร & สัดส่วน"
       badge={
-        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border ${foodStatus.cls}`}>
+        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${foodStatus.cls}`}>
           {pctOfExpense.toFixed(1)}% จ่ายรวม
         </span>
       }
       thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 leading-none">
+        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์สัดส่วน</span>
           <span className="text-white font-bold">&lt; 25% ของรายจ่าย</span>
         </div>
@@ -52,28 +52,34 @@ export const StrategicFoodCard = memo(({
       showOverlay={!showSkeleton}
       overlayTitle="เจาะลึกพฤติกรรมอาหาร"
       overlayBadge={
-        <span className={`font-extrabold text-[9px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
+        <span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
           {foodStatus.label}
         </span>
       }
       overlayBody={(
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
+          {foodTotal === 0 ? (
+            <div className="col-span-2 bg-[#181818] p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
+              ไม่มีข้อมูลค่าอาหารในงวดนี้
+            </div>
+          ) : (
+          <>
           <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <UtensilsCrossed size={13} className="shrink-0 text-orange-400" /> รวมค่าอาหาร
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(foodTotal)}</span>
           </div>
           <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนงบ
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">
-              {pctOfExpense.toFixed(1)}% <span className="text-[10px] text-neutral-400 font-normal">({pctOfIncome.toFixed(1)}% รับ)</span>
+              {pctOfExpense.toFixed(1)}% <span className="text-[11px] text-neutral-400 font-normal">({pctOfIncome.toFixed(1)}% รับ)</span>
             </span>
           </div>
           <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Briefcase size={13} className="shrink-0 text-neutral-400" /> วันทำงาน vs หยุด
             </span>
             <span className="text-[12px] font-black text-neutral-200 tabular-nums leading-tight mt-1">
@@ -81,11 +87,13 @@ export const StrategicFoodCard = memo(({
             </span>
           </div>
           <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Trophy size={13} className="shrink-0 text-amber-400" /> พีคสูงสุดใน 1 วัน
             </span>
             <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">฿{formatMoney(maxFoodDayAmount)}</span>
           </div>
+          </>
+          )}
         </div>
       )}
     >
@@ -108,7 +116,7 @@ export const StrategicFoodCard = memo(({
               style={{ width: `${barWidth}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 leading-none">
+          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
             <span>ทำงาน ฿{formatMoney(foodWorkdayAvg)}</span>
             <span className="text-neutral-500">หยุด ฿{formatMoney(foodHolidayAvg)}</span>
           </div>

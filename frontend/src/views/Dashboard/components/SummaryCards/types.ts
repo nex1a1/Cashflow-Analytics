@@ -55,6 +55,7 @@ export interface ForecastingDetails {
   maxAllowedExpense: number;
   requiredReduction: number;
   requiredDailyReduction: number;
+  actualDailySeries: number[];
   paceStatus: PaceStatus;
   eomStatus: EomStatus;
 }

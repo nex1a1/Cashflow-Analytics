@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { formatMoney } from '@/utils/formatters';
 
 interface TrajectoryChartProps {
@@ -9,6 +9,7 @@ interface TrajectoryChartProps {
   variableUpToToday: number;
   projectedExpense: number;
   projectedSurplus: number;
+  actualDailySeries: number[];
   paceColor?: string;
 }
 
@@ -20,29 +21,43 @@ export const ForecastingTrajectoryChart = memo(({
   variableUpToToday,
   projectedExpense,
   projectedSurplus,
+  actualDailySeries,
 }: TrajectoryChartProps) => {
   const spentToDate = fixedTotal + variableUpToToday;
   const ceiling = Math.max(1, maxAllowedExpense);
   const totalDays = Math.max(1, lastDayOfMonth);
   const curDayClamped = Math.max(1, Math.min(currentDay, totalDays));
 
+  // Measure real pixel width so the viewBox maps 1:1 to CSS pixels.
+  // preserveAspectRatio="none" over a fixed 800-unit viewBox stretched
+  // non-uniformly to fill wide cards, distorting strokes/text — see bug report.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [viewW, setViewW] = useState(800);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      if (w > 0) setViewW(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Chart dimensions inside SVG viewBox
-  const viewW = 800;
-  const viewH = 96;
+  const viewH = 202;
   const padL = 48;
   const padR = 136;
-  const padT = 16;
-  const padB = 22;
+  const padT = 20;
+  const padB = 26;
   const plotW = viewW - padL - padR;
   const plotH = viewH - padT - padB;
 
   const maxY = Math.max(ceiling, projectedExpense, spentToDate, 1) * 1.12;
 
-  const getX = (day: number) => padL + Math.max(0, Math.min(1, (day - 1) / Math.max(1, totalDays - 1))) * plotW;
+  // 0-indexed day axis: day 0 is the true, honest start of the month (฿0 spent).
+  const getX = (dayIndex: number) => padL + Math.max(0, Math.min(1, dayIndex / totalDays)) * plotW;
   const getY = (val: number) => padT + plotH - Math.max(0, Math.min(1, val / maxY)) * plotH;
-
-  const xStart = getX(1);
-  const yStart = getY(Math.min(spentToDate, fixedTotal * 0.85));
 
   const xToday = getX(curDayClamped);
   const yToday = getY(spentToDate);
@@ -52,11 +67,14 @@ export const ForecastingTrajectoryChart = memo(({
 
   const yCeil = getY(ceiling);
 
-  const xMidActual = getX(Math.max(1, Math.floor(curDayClamped * 0.5)));
-  const yMidActual = getY(Math.min(spentToDate, (fixedTotal * 0.85) + (variableUpToToday * 0.35)));
+  // Real cumulative spend, plotted point-for-point from actual daily totals — no interpolated shape.
+  const actualPoints: [number, number][] = [[getX(0), getY(0)]];
+  actualDailySeries.forEach((cumulative, idx) => {
+    actualPoints.push([getX(idx + 1), getY(cumulative)]);
+  });
 
-  const actualPath = `M ${xStart} ${yStart} Q ${xMidActual} ${yMidActual} ${xToday} ${yToday}`;
-  const actualArea = `M ${xStart} ${padT + plotH} L ${xStart} ${yStart} Q ${xMidActual} ${yMidActual} ${xToday} ${yToday} L ${xToday} ${padT + plotH} Z`;
+  const actualPath = actualPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+  const actualArea = `${actualPath} L ${xToday} ${padT + plotH} L ${getX(0)} ${padT + plotH} Z`;
 
   const projectedPath = `M ${xToday} ${yToday} L ${xEOM} ${yEOM}`;
   const isSurplus = projectedSurplus >= 0;
@@ -79,54 +97,41 @@ export const ForecastingTrajectoryChart = memo(({
   const isNearCeilingAbove = Math.abs((yToday - 18) - yCeil) < 14;
   const isNearTop = yToday < padT + 22;
   const placeBelow = isNearTop || isNearCeilingAbove;
-  const pillY = placeBelow ? yToday + 8 : yToday - 22;
   const pillW = 104;
   const pillH = 16;
+  const rawPillY = placeBelow ? yToday + 8 : yToday - 22;
+  const pillY = Math.max(padT + 2, Math.min(rawPillY, padT + plotH - pillH - 2));
   const clampedPillX = Math.max(padL + pillW / 2, Math.min(xEOM - pillW / 2, xToday));
 
   return (
     <div className="relative w-full bg-[#121212] border-b border-[#2d2d2d] select-none">
-      {/* Waypoint Telemetry HUD */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] font-mono select-none flex-wrap gap-2">
+      {/* Trajectory Legend — colors are decoded here once; the numbers themselves live on the chart's own waypoint badges and the pods below, not repeated in this row. */}
+      <div className="flex items-center gap-4 px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-[10px] font-black uppercase tracking-wider text-neutral-200">
             TRAJECTORY RADAR
           </span>
-          <span className="text-neutral-500 hidden xl:inline">| วิถีรายจ่ายสะสม vs เพดานงบทั้งเดือน</span>
         </div>
 
-        <div className="flex items-center gap-2.5 sm:gap-3.5 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
-            <span className="text-neutral-400">จ่ายจริงถึงวันนี้ (Day {curDayClamped}):</span>
-            <span className="text-rose-400 font-bold tabular-nums">฿{formatMoney(spentToDate)}</span>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-[2px] bg-rose-400 inline-block" />
+          <span className="text-neutral-400">จ่ายจริงสะสม</span>
+        </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${isSurplus ? 'bg-emerald-400' : 'bg-[#da291c]'} inline-block`} />
-            <span className="text-neutral-400">คาดการณ์จบเดือน:</span>
-            <span className={`font-bold tabular-nums ${isSurplus ? 'text-emerald-400' : 'text-[#da291c]'}`}>
-              ฿{formatMoney(projectedExpense)}
-            </span>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <span className={`w-2.5 h-[2px] border-t border-dashed ${isSurplus ? 'border-emerald-400' : 'border-[#da291c]'} inline-block`} />
+          <span className="text-neutral-400">แนวโน้มถึงสิ้นเดือน</span>
+        </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-[2px] border-t border-dashed border-neutral-400 inline-block" />
-            <span className="text-neutral-400">เพดานงบ:</span>
-            <span className="text-neutral-200 font-bold tabular-nums">฿{formatMoney(ceiling)}</span>
-          </div>
-
-          <div className={`px-1.5 py-0.5 border text-[9px] font-bold ${
-            isSurplus ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30' : 'text-[#da291c] border-[#da291c]/30 bg-red-950/30'
-          }`}>
-            {isSurplus ? 'กันชน' : 'เสี่ยงเกินงบ'} {isSurplus ? '+' : ''}฿{formatMoney(projectedSurplus)}
-          </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-[2px] border-t border-dashed border-neutral-400 inline-block" />
+          <span className="text-neutral-400">เพดานงบ</span>
         </div>
       </div>
 
       {/* SVG Trajectory Chart */}
-      <div className="w-full h-[96px] relative px-1">
+      <div ref={containerRef} className="w-full h-[202px] relative px-1">
         <svg
           viewBox={`0 0 ${viewW} ${viewH}`}
           className="w-full h-full overflow-visible"
@@ -141,11 +146,6 @@ export const ForecastingTrajectoryChart = memo(({
             <linearGradient id="forecastSurplusGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity={isSurplus ? "0.22" : "0.28"} />
               <stop offset="100%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity="0.03" />
-            </linearGradient>
-
-            <linearGradient id="forecastActualStrokeGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#38bdf8" />
-              <stop offset="100%" stopColor="#f43f5e" />
             </linearGradient>
           </defs>
 
@@ -174,13 +174,14 @@ export const ForecastingTrajectoryChart = memo(({
             </text>
           </g>
 
-          {/* 5. Actual Spend Curve */}
+          {/* 5. Actual Spend Curve — real per-day cumulative points, straight segments, single color */}
           <path
             d={actualPath}
             fill="none"
-            stroke="url(#forecastActualStrokeGrad)"
+            stroke="#f43f5e"
             strokeWidth="2.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
           {/* 6. Projected Trajectory Line (Dashed) */}

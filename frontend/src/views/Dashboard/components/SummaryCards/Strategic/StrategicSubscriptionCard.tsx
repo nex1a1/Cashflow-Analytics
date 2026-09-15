@@ -68,12 +68,12 @@ export const StrategicSubscriptionCard = memo(({
       hoverBgClass="hover:bg-[#1c1c1c]"
       label="บริการรายเดือน"
       badge={
-        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border ${statusBadge.cls}`}>
+        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${statusBadge.cls}`}>
           {statusBadge.label}
         </span>
       }
       thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 leading-none">
+        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
           <span className="text-white font-bold">
             {isIncomeBased ? '< 5% ของรายรับ' : '< 8% ของรายจ่าย'}
@@ -82,7 +82,7 @@ export const StrategicSubscriptionCard = memo(({
       )}
       showOverlay={!showSkeleton}
       overlayTitle="เจาะลึกรายเดือน"
-      overlayBadge={<span className={`font-extrabold text-[9px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{subscriptionCount} รายการ</span>}
+      overlayBadge={<span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{subscriptionCount} รายการ</span>}
       overlayBody={(
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {renderTopItemsOverlay(serviceEntries, 'ไม่มีข้อมูลรายเดือน', Repeat, 'text-purple-400', 'ยอดรวมทั้งหมด', subscriptionTotal)}
@@ -96,6 +96,7 @@ export const StrategicSubscriptionCard = memo(({
           <div className="flex items-baseline justify-between gap-2">
             <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${statusBadge.colorText}`}>
               {displayPct.toFixed(1)}%
+              <span className="text-xs text-neutral-400 font-normal ml-1">{isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย'}</span>
             </div>
             <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
               ฿{formatMoney(subscriptionTotal)}
