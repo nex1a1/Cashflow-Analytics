@@ -8,31 +8,26 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
   activeChartData,
   options,
   isAllocationMode,
-  isGroupMode,
   activeTotal,
   onMouseLeave,
   isSliceHovered = false,
   hoveredItem = null,
+  activeItems,
 }) => {
   const formattedAmt = formatMoney(activeTotal);
   const amtLength = formattedAmt.length;
 
-  // Responsive center typography based on digit count and cutout diameter
+  // Responsive center typography based on digit count
   const fontClass = useMemo(() => {
-    if (isGroupMode) {
-      if (amtLength > 12) return 'text-[9.5px]';
-      if (amtLength > 9) return 'text-[9.5px]';
-      return 'text-[10.5px]';
-    }
     if (amtLength > 12) return 'text-[10px]';
     if (amtLength > 9) return 'text-[11px]';
     return 'text-[12px]';
-  }, [isGroupMode, amtLength]);
+  }, [amtLength]);
 
   // When hovering on grid, show the hovered item in the center
-  const displayLabel = hoveredItem 
-    ? (hoveredItem.name || 'Category')
-    : (isAllocationMode ? 'Income' : 'Total');
+  const displayLabel = hoveredItem
+    ? (hoveredItem.name || 'หมวดหมู่')
+    : (isAllocationMode ? 'รายได้' : 'รวม');
 
   const displayValue = hoveredItem 
     ? formatMoney(hoveredItem.amount)
@@ -47,26 +42,26 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
       onMouseLeave={onMouseLeave}
       className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20"
     >
-      <div className="relative w-[140px] h-[140px]">
+      <div className="relative w-[140px] h-[140px]" aria-hidden="true">
         <Doughnut data={activeChartData} options={options} />
 
-        {/* 
-          Center HUD Layer: 
-          Hides completely (opacity-0) when hovering over a chart slice so Chart.js tooltip 
+        {/*
+          Center HUD Layer:
+          Hides completely (opacity-0) when hovering over a chart slice so Chart.js tooltip
           can take center stage with zero text collision or overlapping.
         */}
-        <div 
+        <div
           className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-1 transition-opacity duration-150 ${
             isSliceHovered ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <span 
+          <span
             className="text-[9px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
             title={displayLabel}
           >
             {displayLabel}
           </span>
-          <span 
+          <span
             className={`${fontClass} font-black tabular-nums max-w-[76px] truncate text-center tracking-tight`}
             style={{ color: valueColor }}
             title={`฿${displayValue}`}
@@ -80,6 +75,27 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
           )}
         </div>
       </div>
+
+      {/* Screen-reader equivalent: the doughnut canvas exposes none of this data to assistive tech */}
+      <table className="sr-only">
+        <caption>สัดส่วนรายจ่าย {isAllocationMode ? 'ตามสัดส่วน 50/30/20' : 'ตามหมวดหมู่'} รวม ฿{formattedAmt}</caption>
+        <thead>
+          <tr>
+            <th scope="col">รายการ</th>
+            <th scope="col">จำนวนเงิน</th>
+            <th scope="col">สัดส่วน</th>
+          </tr>
+        </thead>
+        <tbody>
+          {activeItems.map((item) => (
+            <tr key={item.id || item.name}>
+              <td>{item.name}</td>
+              <td>฿{formatMoney(item.amount)}</td>
+              <td>{item.percentage}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 });

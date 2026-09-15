@@ -8,7 +8,6 @@ import {
   DisplayMode,
   SortMode,
   AllocationItemData,
-  GroupItemData,
   CategoryItemData,
 } from './types';
 import {
@@ -25,7 +24,10 @@ function ExpenseProportionEmpty() {
   return (
     <div className="rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10 p-10 items-center justify-center text-center opacity-60">
       <Inbox className="w-10 h-10 mb-2 opacity-20" />
-      <p className="text-sm font-bold uppercase tracking-widest">No Expense Data</p>
+      <p className="text-sm font-bold uppercase tracking-widest">ไม่มีข้อมูลรายจ่าย</p>
+      <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
+        ลองเปลี่ยนเดือน หรือเพิ่มรายการรายจ่ายใหม่
+      </p>
     </div>
   );
 }
@@ -36,11 +38,12 @@ function ExpenseProportionSkeleton() {
   return (
     <div className="flex flex-row items-stretch h-32">
       <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-[#303030]/40 bg-[#303030]/30">
-        <div className="w-20 h-24 rounded-full animate-pulse bg-[#303030]" />
+        {/* animate-spin is the Static Performance Engine's one carve-out for loading feedback (animate-pulse is globally neutralized) */}
+        <div className="w-10 h-10 rounded-full border-4 border-[#303030] border-t-[#da291c] animate-spin" />
       </div>
       <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
         {SKELETON_KEYS.map((key) => (
-          <div key={key} className="p-2 animate-pulse bg-[#303030]/40">
+          <div key={key} className="p-2 bg-[#303030]/40">
             <div className="h-2 w-12 mb-2 rounded-none bg-[#303030]" />
             <div className="h-4 w-16 mb-2 rounded-none bg-[#303030]" />
             <div className="h-1 w-full rounded-none bg-[#303030]" />
@@ -65,15 +68,12 @@ export function ExpenseProportion() {
   const { 
     sortedCats = [] as CategoryItemData[], 
     chartTotal = 0,
-    sortedGroups = [] as GroupItemData[], 
     totalExpense = 0,
     sortedAllocation = [] as AllocationItemData[], 
     totalIncome = 0,
     netCashflow = 0,
-    isSingleMonthView = false,
   } = analytics;
 
-  const isGroupMode = displayMode === 'group';
   const isAllocationMode = displayMode === 'allocation';
 
   const toggleGroupExclusion = useCallback((groupId: string) => {
@@ -100,10 +100,9 @@ export function ExpenseProportion() {
   }, [isAllocationMode, excludedGroupIds, sortedAllocation, totalIncome, totalExpense, netCashflow]);
 
   const rawItems = useMemo(() => {
-    if (isGroupMode) return sortedGroups;
     if (isAllocationMode) return simulatedAllocation;
     return sortedCats;
-  }, [isGroupMode, isAllocationMode, sortedGroups, simulatedAllocation, sortedCats]);
+  }, [isAllocationMode, simulatedAllocation, sortedCats]);
 
   const handleSortToggle = useCallback((targetType: 'amount' | 'order') => {
     setSortMode(prev => {
@@ -122,18 +121,17 @@ export function ExpenseProportion() {
   }, [rawItems, sortMode, isAllocationMode]);
 
   const activeChartData = useMemo(() => {
-    return buildDoughnutChartData(activeItems, isGroupMode, hoveredIdx);
-  }, [activeItems, isGroupMode, hoveredIdx]);
+    return buildDoughnutChartData(activeItems, hoveredIdx);
+  }, [activeItems, hoveredIdx]);
 
   const activeTotal = useMemo(() => {
-    if (isGroupMode) return chartTotal;
     if (isAllocationMode) {
       return totalIncome || (totalExpense + Math.max(0, netCashflow || 0));
     }
     return chartTotal;
-  }, [isGroupMode, isAllocationMode, totalExpense, totalIncome, netCashflow, chartTotal]);
+  }, [isAllocationMode, totalExpense, totalIncome, netCashflow, chartTotal]);
 
-  const gridColsClass = (isGroupMode || isAllocationMode) ? 'grid-cols-3' : 'grid-cols-5';
+  const gridColsClass = isAllocationMode ? 'grid-cols-3' : 'grid-cols-5';
   const itemCount = activeItems.length;
 
   const handleChartMouseLeave = useCallback(() => {
@@ -145,11 +143,11 @@ export function ExpenseProportion() {
     const baseOptions = getDoughnutChartOptions(Boolean(dm));
     return {
       ...baseOptions,
-      cutout: isGroupMode ? '54%' : '72%', 
+      cutout: '72%', 
       onHover: (_event: any, elements: any[]) => {
         const hasElements = Boolean(elements && elements.length > 0);
         setIsSliceHovered(hasElements);
-        const hoverIdx = resolveDoughnutHoverIndex(elements, isGroupMode, activeItems);
+        const hoverIdx = resolveDoughnutHoverIndex(elements);
         setHoveredIdx(hoverIdx);
       },
       plugins: {
@@ -181,7 +179,7 @@ export function ExpenseProportion() {
         }
       }
     };
-  }, [dm, isGroupMode, activeItems]);
+  }, [dm, activeItems]);
   
   const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
 
@@ -201,7 +199,6 @@ export function ExpenseProportion() {
         sortMode={sortMode}
         onToggleSort={handleSortToggle}
         isAllocationMode={isAllocationMode}
-        isGroupMode={isGroupMode}
         excludedGroupIds={excludedGroupIds}
         totalReduced={totalReduced}
         onResetExclusions={resetExclusions}
@@ -212,27 +209,25 @@ export function ExpenseProportion() {
       {showSkeleton ? (
         <ExpenseProportionSkeleton />
       ) : (
-        <div className="flex flex-row items-stretch min-h-[140px]">
+        <div className="flex flex-row items-stretch min-h-[196px]">
           <ExpenseProportionChart
             activeChartData={activeChartData}
             options={options}
             isAllocationMode={isAllocationMode}
-            isGroupMode={isGroupMode}
             activeTotal={activeTotal}
             onMouseLeave={handleChartMouseLeave}
             isSliceHovered={isSliceHovered}
             hoveredItem={activeHoveredItem}
+            activeItems={activeItems}
           />
           <ExpenseProportionGrid
             activeItems={activeItems}
             isAllocationMode={isAllocationMode}
-            isGroupMode={isGroupMode}
             hoveredIdx={hoveredIdx}
             onHover={setHoveredIdx}
             activeTotal={activeTotal}
             excludedGroupIds={excludedGroupIds}
             onToggleGroup={toggleGroupExclusion}
-            isSingleMonthView={isSingleMonthView}
             sortMode={sortMode}
             gridColsClass={gridColsClass}
           />

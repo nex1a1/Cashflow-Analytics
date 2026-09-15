@@ -16,8 +16,7 @@ interface ModeSwitcherProps {
 }
 
 const MODES: Array<{ id: DisplayMode; label: string }> = [
-  { id: 'category', label: 'รายหมวด' },
-  { id: 'group', label: 'ตามกลุ่ม' },
+  { id: 'category', label: 'รายหมวดหมู่' },
   { id: 'allocation', label: 'สัดส่วน 50/30/20' },
 ];
 
@@ -28,7 +27,8 @@ function ModeSwitcher({ displayMode, onChangeMode }: ModeSwitcherProps) {
         <button
           key={m.id}
           onClick={() => onChangeMode(m.id)}
-          className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none ${
+          aria-pressed={displayMode === m.id}
+          className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter rounded-none transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
             displayMode === m.id
               ? 'bg-[#da291c] text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
@@ -69,22 +69,26 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
       <button
         onClick={() => onToggleSort('amount')}
         title={amountTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+        aria-label={amountTitle}
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[10px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
           isAmount ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <ArrowDownWideNarrow className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
+        <ArrowDownWideNarrow className={`w-3.5 h-3.5 shrink-0 transition-transform duration-100 ${sortMode === 'amount-asc' ? 'rotate-180' : ''}`} />
+        <span className="text-[8.5px] font-black uppercase tracking-wider">ยอด</span>
         {isAmount && <span className="text-[10px] font-black">{sortMode === 'amount-asc' ? '↑' : '↓'}</span>}
       </button>
 
       <button
         onClick={() => onToggleSort('order')}
         title={orderTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-0.5 text-[10px] font-bold ${
+        aria-label={orderTitle}
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[10px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
           isOrder ? 'bg-[#da291c]/20 text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <ListOrdered className={`w-3.5 h-3.5 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
+        <ListOrdered className={`w-3.5 h-3.5 shrink-0 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
+        <span className="text-[8.5px] font-black uppercase tracking-wider">ลำดับ</span>
         {isOrder && <span className="text-[10px] font-black">{sortMode === 'order-desc' ? '↓' : '↑'}</span>}
       </button>
     </div>
@@ -107,7 +111,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
       </span>
       <button
         onClick={onReset}
-        className="ml-1 px-1.5 py-0.2 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none"
+        className="ml-1 px-1.5 py-0.5 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300"
         title="คืนค่าหมวดหมู่ทั้งหมด"
       >
         <RotateCcw className="w-2.5 h-2.5" />
@@ -123,19 +127,13 @@ export function ExpenseProportionHeader({
   sortMode,
   onToggleSort,
   isAllocationMode,
-  isGroupMode,
   excludedGroupIds,
   totalReduced,
   onResetExclusions,
   showSkeleton,
   itemCount,
 }: ExpenseProportionHeaderProps) {
-  let countLabel = 'หมวดหมู่';
-  if (isAllocationMode) {
-    countLabel = 'ส่วน';
-  } else if (isGroupMode) {
-    countLabel = 'กลุ่ม';
-  }
+  const countLabel = isAllocationMode ? 'ส่วน' : 'หมวดหมู่';
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
 
   return (

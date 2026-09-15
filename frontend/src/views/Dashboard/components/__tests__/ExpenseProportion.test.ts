@@ -5,7 +5,7 @@ import {
   buildDoughnutChartData,
   resolveDoughnutHoverIndex,
 } from '../ExpenseProportion/proportionHelpers';
-import { AllocationItemData, GroupItemData, CategoryItemData } from '../ExpenseProportion/types';
+import { AllocationItemData, CategoryItemData } from '../ExpenseProportion/types';
 
 describe('ExpenseProportion helpers', () => {
   describe('calculateSimulatedAllocation', () => {
@@ -115,88 +115,38 @@ describe('ExpenseProportion helpers', () => {
   });
 
   describe('resolveDoughnutHoverIndex', () => {
-    const mockGroups: GroupItemData[] = [
-      {
-        id: 'g-1',
-        name: 'Group 1',
-        amount: 3000,
-        color: '#f00',
-        percentage: '30',
-        categories: [
-          { id: 'c-1', name: 'Cat 1', amount: 1000, relativePercentage: 33 },
-          { id: 'c-2', name: 'Cat 2', amount: 2000, relativePercentage: 67 },
-        ],
-      },
-      {
-        id: 'g-2',
-        name: 'Group 2',
-        amount: 7000,
-        color: '#0f0',
-        percentage: '70',
-        categories: [
-          { id: 'c-3', name: 'Cat 3', amount: 3000, relativePercentage: 43 },
-          { id: 'c-4', name: 'Cat 4', amount: 4000, relativePercentage: 57 },
-        ],
-      },
-    ];
-
     it('returns -1 for empty elements', () => {
-      expect(resolveDoughnutHoverIndex([], true, mockGroups)).toBe(-1);
+      expect(resolveDoughnutHoverIndex([])).toBe(-1);
     });
 
-    it('returns direct element index for single dataset mode', () => {
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 2 }], false, mockGroups)).toBe(2);
-    });
-
-    it('maps outer subcategory index back to parent group index in group mode', () => {
-      // Outer ring index 0 (Cat 1) -> Group 0
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 0 }], true, mockGroups)).toBe(0);
-      // Outer ring index 1 (Cat 2) -> Group 0
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 1 }], true, mockGroups)).toBe(0);
-      // Outer ring index 2 (Cat 3) -> Group 1
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 2 }], true, mockGroups)).toBe(1);
-      // Outer ring index 3 (Cat 4) -> Group 1
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 3 }], true, mockGroups)).toBe(1);
-    });
-
-    it('returns inner ring group index directly in group mode', () => {
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 1, index: 1 }], true, mockGroups)).toBe(1);
+    it('returns direct element index for selected element', () => {
+      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 2 }])).toBe(2);
+      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 0 }])).toBe(0);
     });
   });
 
   describe('buildDoughnutChartData', () => {
-    it('creates two datasets in group mode with outer subcategories and inner groups', () => {
-      const mockGroups: GroupItemData[] = [
-        {
-          id: 'g-1',
-          name: 'Group 1',
-          amount: 500,
-          color: '#ff0000',
-          percentage: '100',
-          categories: [
-            { id: 'c-1', name: 'C1', amount: 200, relativePercentage: 40, color: '#f55' },
-            { id: 'c-2', name: 'C2', amount: 300, relativePercentage: 60, color: '#faa' },
-          ],
-        },
-      ];
-
-      const chartData = buildDoughnutChartData(mockGroups, true, -1);
-      expect(chartData.datasets).toHaveLength(2);
-      expect(chartData.datasets[0].label).toContain('Outer');
-      expect(chartData.datasets[0].data).toEqual([200, 300]);
-      expect(chartData.datasets[1].label).toContain('Inner');
-      expect(chartData.datasets[1].data).toEqual([500]);
-    });
-
     it('creates single dataset for category mode with highlighting for hovered index', () => {
       const mockCats: CategoryItemData[] = [
         { id: 'c-1', name: 'C1', amount: 200, color: '#f00', percentage: '40' },
         { id: 'c-2', name: 'C2', amount: 300, color: '#0f0', percentage: '60' },
       ];
 
-      const chartData = buildDoughnutChartData(mockCats, false, 1);
+      const chartData = buildDoughnutChartData(mockCats, 1);
       expect(chartData.datasets).toHaveLength(1);
       expect(chartData.datasets[0].borderColor).toEqual(['#303030', '#da291c']);
+      expect(chartData.datasets[0].data).toEqual([200, 300]);
+    });
+
+    it('creates chart data with default borders when no index is hovered', () => {
+      const mockCats: CategoryItemData[] = [
+        { id: 'c-1', name: 'C1', amount: 200, color: '#f00', percentage: '40' },
+        { id: 'c-2', name: 'C2', amount: 300, color: '#0f0', percentage: '60' },
+      ];
+
+      const chartData = buildDoughnutChartData(mockCats, -1);
+      expect(chartData.datasets).toHaveLength(1);
+      expect(chartData.datasets[0].borderColor).toEqual(['#303030', '#303030']);
     });
   });
 });

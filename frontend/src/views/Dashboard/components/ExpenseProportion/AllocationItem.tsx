@@ -90,11 +90,17 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   let cumulativePct = 0;
 
   return (
-    <div 
+    <div
       onMouseEnter={() => onHover(idx)}
       onMouseLeave={() => onHover(-1)}
+      onFocus={() => onHover(idx)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) onHover(-1);
+      }}
+      role="group"
+      aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${varianceText}`}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
-        isHovered 
+        isHovered
           ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
           : 'bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]'
       }`}
@@ -278,7 +284,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               type="button"
               key={g.id} 
               onClick={() => onToggleGroup?.(g.id)}
-              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal ${
+              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
                 isExcluded 
                   ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
                   : 'hover:bg-[#282828]'
@@ -345,7 +351,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
 
         {groups.length === 0 && !isSavings && (
           <div className="flex-1 flex items-center justify-center py-1">
-            <span className="text-[9.5px] font-bold uppercase tracking-widest text-slate-600">No Data</span>
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-slate-600">ไม่มีข้อมูล</span>
           </div>
         )}
       </div>

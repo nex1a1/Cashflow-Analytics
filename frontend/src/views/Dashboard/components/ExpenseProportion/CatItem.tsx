@@ -8,11 +8,15 @@ import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
  * Sub-component for individual category cell (Table-like HUD)
  */
 export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover }) => (
-  <div 
+  <div
     onMouseEnter={() => onHover(idx)}
     onMouseLeave={() => onHover(-1)}
-    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 ${
-      isHovered 
+    onFocus={() => onHover(idx)}
+    onBlur={() => onHover(-1)}
+    tabIndex={0}
+    aria-label={`${cat.name}: ฿${formatMoney(cat.amount)} (${cat.percentage}%)`}
+    className={`flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
+      isHovered
         ? 'bg-[#303030]/90 border-[#da291c] shadow-md z-10'
         : 'bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]'
     }`}
