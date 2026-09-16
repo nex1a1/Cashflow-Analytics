@@ -26,40 +26,52 @@
 
 ## ✨ Elite Features (ฟีเจอร์เด่นระดับพรีเมียม)
 
-### 📊 1. 3-Column HUD Cards & Command Center
+### 📊 1. 3-Column HUD Cards & Command Center (Modular Domain Architecture)
+*   **Domain Modularization:** จัดหมวดหมู่การ์ดข้อมูลออกเป็น 3 โดเมนหลักตามบทบาทการวิเคราะห์อย่างเด็ดขาด (`VitalsDomainCard`, `StrategicDomainCard`, `ForecastingDomainCard`)
 *   **Hybrid Hero Insights:** ผสานรวมข้อมูลกระแสเงินสดสุทธิ (Net Cashflow) และอัตราการออมตามมาตรฐาน CPA (CPA-Standard Savings Rate) ออกมาเป็นเกรดชี้วัดวินัยทางการเงิน (**Discipline Grade A-F Pill**) ภายในการ์ดความหนาแน่นสูงใบเดียว
 *   **Run-Rate Projection:** พยากรณ์กระแสเงินสดล่วงหน้าอิงตามพฤติกรรมการจ่ายเงินจริง พร้อมคำนวณยอดเงินที่จ่ายได้จริงต่อวัน (**Safe-to-Spend Per Day**)
-*   **Expense Proportion Breakdown:** วิเคราะห์โครงสร้างสัดส่วนค่าใช้จ่ายด้วย Dynamic Pie & Bar Charts แยกกลุ่มหมวดหมู่ย่อยอย่างชัดเจน
+*   **Zero-Shift Expense Proportion:** วิเคราะห์โครงสร้างสัดส่วนค่าใช้จ่ายด้วยเทคนิค Pure CSS Grid Stacking (`[grid-area:1/1]`) ล็อกความสูงของการ์ดให้เท่ากัน 100% ระหว่างโหมดแยกตามหมวดหมู่ (Categories) และโหมดจัดสรร (Allocation) โดยไม่ต้องใช้ scrollbar หรือเดาความสูง พร้อมระบบแจ้งเตือนอัจฉริยะเมื่อไม่มีข้อมูลรายได้บันทึก (**No-Income Warning**)
 
-### 🌊 2. Elite Sankey Flow Engine
+### 🌊 2. Elite Sankey Flow Engine & Modular Multi-Chart System
 *   **5-Column Visualizer:** ระบบแสดงทิศทางการไหลเวียนของเงินระดับ Elite เชื่อมโยงมิติข้อมูลแบบ 5 คอลัมน์ตั้งแต่ `Income Groups` ➔ `Total Cash` ➔ `Expenses & Savings Groups` ➔ `Categories` ➔ `Detailed Segments`
 *   **Strict Layout Stability:** ล็อกตำแหน่ง Nodes ด้วย Node Priority และ Column Anchoring เพื่อป้องกันแผนภาพกระตุกหรือสลับตำแหน่งขณะฟิลเตอร์ข้อมูล
+*   **Modular Multi-Engine Architecture:** ตัวกราฟหลักแยกย่อยสถาปัตยกรรมออกเป็น Sub-components อิสระ (`MainChartHeader`, `MainChartToolbar`, `MainChartLegend`, `MainChartCategoryFilter`) พร้อม Custom Hooks ควบคุม Logic โดยเฉพาะ (`useSankeyEngine`, `useChartDataEngine`, `useChartOptions`) ลดความซับซ้อนของไฟล์หลักลงมากกว่า 85%
 
-### ⚡ 3. Pure CSS Heatmap Matrix Ledger (Horizontal Spreadsheet)
+### 📑 3. Modular Cashflow Matrix & Dynamic Group Cells
+*   **Decomposed Architecture:** ตารางกระแสเงินสดสรุปรายเดือนความหนาแน่นสูงถูกแยกเป็นสถาปัตยกรรมระดับโมดูลาร์ (`CashflowTableHeader`, `CashflowTableRow`, `CashflowTableGroupCells`, `CashflowTableSummaryCells`, `CashflowTableFooter`, `FilterToolbar`, `GroupTooltip`) ควบคุมการประมวลผลด้วย Custom Hook `useFilteredMaps`
+*   **High-Performance Active Mapping:** ปรับปรุงประสิทธิภาพการวนลูปข้อมูลด้วยการ Precompute แมปหมวดหมู่ที่ใช้งานจริง (`activeCatsByGroup`) เพียงครั้งเดียวต่อการเปลี่ยนข้อมูล แทนการสแกนซ้ำซ้อนในทุกเซลล์
+*   **Monolithic UI Density:** Group headers ทำหน้าที่เป็น cell splitters แทรกคอลัมน์ย่อยของแต่ละหมวดหมู่อัตโนมัติ ซ่อนคอลัมน์ที่ยอดเป็น 0 เมื่อฟิลเตอร์เพื่อความกระชับสูงสุด
+
+### ⚡ 4. Pure CSS Heatmap Matrix Ledger (Horizontal Spreadsheet)
 *   **Zero-JS Crosshair Hover:** ระบบไฮไลต์แกนตั้ง (Column) และแกนนอน (Row) ด้วยเทคนิค Pure CSS Pseudo-elements (`.heatmap-cell:hover::after`) มอบความเร็ว 60fps ลื่นไหลไร้การ re-render ของ React
 *   **Sticky Excel Columns:** ล็อกคอลัมน์แรก (วันที่) และคอลัมน์สุดท้าย (ยอดรวมรายวัน) แบบ `position: sticky` พร้อมเลเยอร์ z-index ช่วยให้การสแกนข้อมูลตารางแนวนอนทำได้ง่ายดายเหมือนโปรแกรม Spreadsheet ระดับโปร
 *   **Inline Quick Editing:** รองรับการคลิกแก้ไขยอดเงินและคำอธิบายธุรกรรมได้ทันทีในมุมมองรายการ
 
-### 📅 4. Modular Calendar & Work-Day Logger
+### 📅 5. Modular Calendar & Work-Day Logger
 *   **Work-Life Integration:** บันทึกสถานะวันทำงาน (ทำงาน, วันหยุด, ลาป่วย, ลากิจ, ลาพักร้อน, ทำ OT ฯลฯ) ควบคู่ไปกับการทำธุรกรรมเพื่อตรวจจับพฤติกรรมการจ่ายเงินช่วงวันหยุด (Weekend Spending Traps)
 *   **Wrapped 12-Month Timeline:** ปฏิทินแสดงผล Timeline 12 เดือนแบบสลับโหมด Strip แนวนอน หรือ Centered Grid พร้อมล็อกมิติเซลล์ที่ 118px เพื่อตัดปัญหา browser subpixel shift
+*   **Stabilized Legend Rail Height:** ใช้เทคนิค Off-screen Cloned Measuring (`hiddenLegendCloneRef`) ในมุมมอง GitHub Layout เพื่อล็อกความสูงของ Legend Rail และ Grid ให้สมดุลเสมอเมื่อสลับระหว่างโหมด Day-Type และ Heatmap พร้อมจัดกึ่งกลางตารางอย่างสมบูรณ์แบบ (`justify-[safe_center]`)
 
-### 🔍 5. Shark Full-Text Search (FTS5) & Fast Modals
+### 🎨 6. Curated Lucide Icon System (327 Icons - Pure Monochrome Mandate)
+*   **Zero Free-Typed Emojis:** ห้ามใช้อิโมจิยูนิโค้ดทั่วไปโดยเด็ดขาด ควบคุมไอคอนและสัญลักษณ์ทั่วทั้งระบบด้วย Lucide Icons Monochrome คุณภาพสูงระดับพิกเซลเพอร์เฟกต์
+*   **Categorized Icon Picker:** ระบบเลือกไอคอนมากกว่า 327 ตัว แบ่งตามหมวดหมู่ไลฟ์สไตล์ เทคโนโลยี การเงิน และการใช้ชีวิต พร้อมระบบค้นหาแบบ Real-time และ Lucide Fallbacks มาตรฐาน (`coins`, `piggy-bank`, `tag`)
+
+### 🔍 7. Shark Full-Text Search (FTS5) & Fast Modals
 *   **Instant Real-Time Search:** ค้นหาประวัติธุรกรรมข้ามปีได้ทันทีในระดับมิลลิวินาทีด้วย **SQLite FTS5 Virtual Table**
 *   **Batch Add & Quick Suggest:** เพิ่มธุรกรรมหลายรายการพร้อมกันในหน้าต่างเดียว พร้อมระบบดึงประวัติการจดบันทึกเก่ามาแนะนำอัจฉริยะ (Smart Auto-suggestions)
 *   **Direct Database Export Stream:** ส่งออกข้อมูล CSV/JSON โดยดึงข้อมูลโดยตรงจากฐานข้อมูล ป้องกันข้อมูลตกหล่นจาก UI Filter
 
-### 🎛️ 6. Advanced Analytics & Filtering
+### 🎛️ 8. Advanced Analytics & Filtering
 *   **Future Transaction Filter:** สวิตช์ "ซ่อนข้อมูลอนาคต" กรองรายการล่วงหน้าไม่ให้บิดเบือนสถิติปัจจุบัน โดยมีข้อยกเว้นอัตโนมัติสำหรับรายการจำเป็นประจำเดือน (เช่น เงินเดือน และค่าเช่า/ที่พัก) พร้อมจดจำสถานะผ่าน `localStorage`
 *   **Hide WANT Toggle:** ฟิลเตอร์แยกกลุ่มค่าใช้จ่ายฟุ่มเฟือยออกจากระบบคำนวณ ช่วยให้สามารถวิเคราะห์ความจำเป็น (Needs) และการออม (Savings) ได้อย่างแม่นยำ
 *   **Recurring Services Classification:** จัดหมวดหมู่บริการรายเดือนอัตโนมัติเป็น 'ซอฟต์แวร์ & AI', 'สมาชิกช้อปปิ้ง', และ 'ความบันเทิง & สตรีมมิ่ง'
 
-### 📦 7. Automated Database Backup Engine & Mutation Tracking
+### 📦 9. Automated Database Backup Engine & Mutation Tracking
 *   **Startup Auto-Backup:** สำรองฐานข้อมูลอัตโนมัติทุกครั้งที่เริ่มรันเซิร์ฟเวอร์ลงในโฟลเดอร์ `/backups/`
 *   **On-Demand Terminal Hotkey & API:** กดปุ่ม `[B]` บนหน้าต่าง Terminal เพื่อสั่งสร้างไฟล์ Backup ด่วนได้ทันที หรือเรียกสั่งการผ่าน REST API Endpoint `/api/backup`
 *   **Real-time DB Mutation Logger:** ระบบดักจับคำสั่ง SQL และแสดง Log การเปลี่ยนแปลงข้อมูล (เพิ่ม/แก้ไข/ลบ) ในรูปแบบไอคอนภาษาไทยที่อ่านเข้าใจง่ายทันทีบน Terminal
 
-### 🛡️ 8. Security & Resilience
+### 🛡️ 10. Security & Resilience
 *   **Helmet Security Headers:** เพิ่ม HTTP Security Headers อัตโนมัติผ่าน `helmet v8.3.0` ป้องกันการโจมตีพื้นฐาน (XSS, Clickjacking, MIME sniffing)
 *   **CORS Origin Whitelist:** จำกัดการเข้าถึง API เฉพาะ Origins ที่อนุญาต (`localhost:5173`, `127.0.0.1:5173`, `localhost:3000`) พร้อม override ผ่าน `ALLOWED_ORIGINS` env
 *   **Graceful Shutdown:** ระบบปิดตัวอย่างปลอดภัย — ปิด HTTP Server, ระบาย Requests, ปิดการเชื่อมต่อ SQLite ก่อน Exit พร้อม 5 วินาที Force-exit timeout
@@ -80,7 +92,7 @@
 | **API Framework** | `Express.js v4.18.2`, `TypeScript v5.3.3`, `tsx v4.7.1` | RESTful API, typed controllers and services |
 | **Database Engine** | `better-sqlite3 ^9.4.3` (SQLite C++ bindings) | Ultra-fast synchronous SQLite, FTS5 search, STRICT mode |
 | **Security** | `helmet v8.3.0`, `cors v2.8.5` | HTTP security headers, origin-restricted CORS whitelist |
-| **Testing** | `Vitest v4.1.11` (Backend), `Vitest v2.1.9` (Frontend) | Unit tests for financial math, formatters, CRUD, and FTS |
+| **Testing** | `Vitest v4.1.11` (Backend), `Vitest v2.1.9` (Frontend) | 102+ unit tests covering financial math, formatters, CRUD, FTS, and UI components |
 
 ---
 
@@ -216,12 +228,20 @@ cd frontend
 npm test
 ```
 
-### Test Coverage:
-| ไฟล์ | ขอบเขต |
+### Test Coverage (100+ Tests):
+| ไฟล์ | ขอบเขตการทดสอบ |
 | :--- | :--- |
-| `transactionService.test.ts` | Upsert, Delete, DeleteByMonth (index-friendly range), FTS5 Search, STRICT schema verification |
-| `formatters.test.ts` | Satang↔Baht conversion, `formatMoney`, Thai months/days, `hexToRgb`, Period-over-Period delta |
-| `analyticsHelpers.test.ts` | `createCategoryMap`, `extractYearMonth`, `generateCashflowMap` (income/expense/savings aggregation), `calculateDayTypeCounts` |
+| `transactionService.test.ts` (Backend) | Upsert, Delete, DeleteByMonth (index-friendly range), FTS5 Search, STRICT schema verification |
+| `formatters.test.ts` (Frontend) | Satang↔Baht conversion, `formatMoney`, Thai months/days, `hexToRgb`, Period-over-Period delta |
+| `analyticsHelpers.test.ts` (Frontend) | `createCategoryMap`, `extractYearMonth`, `generateCashflowMap` (income/expense/savings aggregation), `calculateDayTypeCounts` |
+| `ExpenseProportion.test.ts` (Frontend) | ตรรกะการคำนวณสัดส่วนค่าใช้จ่าย, การซิมูเลชันลดหมวดหมู่ (Simulation exclusions), Sort order และการจัดสรรงบประมาณ |
+| `ActivityTimeline.test.ts` (Frontend) | การคำนวณและแจกแจงประเภทวัน, Heatmap intensity thresholds, โหมด GitHub layout และ Calendar layout |
+| `exportUtils.test.ts` (Frontend) | การแปลงข้อมูลธุรกรรมเป็น CSV/JSON ที่สะอาด ปลอดข้อผิดพลาดจาก UI filters |
+| `datePickerHelpers.test.ts` (Frontend) | การคำนวณขอบเขตวันที่, การแปลงปี พ.ศ. / ค.ศ., Date bounds และ Thai date parsing |
+| `ledgerHelpers.test.ts` (Frontend) | การสร้าง Pivot Matrix สำหรับตารางบัญชีแนวนอน และผลรวมรายวัน/หมวดหมู่ |
+| `categoryIcons.test.ts` (Frontend) | ตรวจสอบความถูกต้องของผังแมปไอคอน Lucide กว่า 327 ไอคอน และความสมบูรณ์ของ Glyph mapping |
+| `categorySelectHelpers.test.ts` (Frontend) | ตรรกะการจัดกลุ่มหมวดหมู่ย่อยและการค้นหาหมวดหมู่แบบหลายมิติ |
+| `guideUtils.test.ts` (Frontend) | ตัวช่วยแนะนำการนำเข้าข้อมูล (Import Guide) และการประเมินโครงสร้างไฟล์ข้อมูลนำเข้า |
 
 ---
 
