@@ -162,9 +162,35 @@ class TransactionService {
             }
         });
         transactionAction(transactions);
+        const totalSatang = transactions.reduce((sum, tx) => sum + Math.round((Number(tx.amount) || 0) * 100), 0);
+        const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        console.log(`💳 [Service: Upsert] บันทึกข้อมูลสำเร็จทั้งหมด ${transactions.length} รายการ | ยอดรวม: ฿${totalBaht}`);
+        if (transactions.length <= 15) {
+            transactions.forEach((tx, idx) => {
+                const itemBaht = (Number(tx.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                console.log(`   ${idx + 1}. [${tx.date}] ID: ${tx.id || 'auto-generated'} | "${tx.description || 'ไม่ระบุ'}" | ฿${itemBaht} (${tx.allocation_type || 'default'})`);
+            });
+        }
+        else {
+            console.log(`   (รายการทั้งหมด ${transactions.length} รายการ ถูกบันทึกลงฐานข้อมูลเรียบร้อยแล้ว)`);
+        }
     }
     delete(id) {
-        return db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+        const target = db_1.default.prepare(`
+      SELECT t.id, t.date, t.description, t.amount, c.name as category 
+      FROM transactions t 
+      LEFT JOIN categories c ON t.category_id = c.id 
+      WHERE t.id = ?
+    `).get(id);
+        const result = db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+        if (target) {
+            const baht = (target.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            console.log(`🗑️ [Service: Delete] ลบธุรกรรมสำเร็จ | ID: ${target.id} | วันที่: ${target.date} | "${target.description}" | ฿${baht} | หมวดหมู่: "${target.category || 'ไม่ระบุ'}" | (ผลลัพธ์: ${result.changes} แถว)`);
+        }
+        else {
+            console.log(`🗑️ [Service: Delete] ลบธุรกรรม ID: ${id} | (ผลลัพธ์: ${result.changes} แถว)`);
+        }
+        return result;
     }
     deleteByMonth(isoMonth) {
         const [yearStr, monthStr] = isoMonth.split('-');
@@ -174,13 +200,34 @@ class TransactionService {
         const nextMonth = month === 12 ? 1 : month + 1;
         const startDate = `${yearStr}-${monthStr.padStart(2, '0')}-01`;
         const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-        return db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ?')
+        // Query affected items before deletion to log exact details without truncation
+        const targetRows = db_1.default.prepare(`
+      SELECT t.id, t.date, t.description, t.amount, c.name as category
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.date >= ? AND t.date < ? AND t.is_deleted = 0
+    `).all(startDate, endDate);
+        const totalSatang = targetRows.reduce((sum, r) => sum + (r.amount || 0), 0);
+        const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const result = db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ? AND is_deleted = 0')
             .run(startDate, endDate);
+        console.log(`🗑️ [Service: Delete Month] ลบข้อมูลทั้งเดือน: ${isoMonth} (ช่วงวันที่: ${startDate} ถึง ${endDate}) | จำนวนที่ได้รับผลกระทบ: ${result.changes} รายการ | ยอดเงินรวม: ฿${totalBaht}`);
+        if (targetRows.length > 0) {
+            console.log(`📋 [Service: Delete Month Details] รายการที่ถูกลบในเดือน ${isoMonth} (${targetRows.length} รายการ):`);
+            targetRows.forEach((r, idx) => {
+                const itemBaht = (r.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                console.log(`   ${idx + 1}. [${r.date}] ID: ${r.id} | "${r.description}" | ฿${itemBaht} | หมวดหมู่: "${r.category || 'ไม่ระบุ'}"`);
+            });
+        }
+        return result;
     }
     deleteAll() {
         return db_1.default.transaction(() => {
-            db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP').run();
-            db_1.default.prepare('DELETE FROM calendar_days').run();
+            const txCount = db_1.default.prepare('SELECT COUNT(*) as c FROM transactions WHERE is_deleted = 0').get().c;
+            const calCount = db_1.default.prepare('SELECT COUNT(*) as c FROM calendar_days').get().c;
+            const txResult = db_1.default.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE is_deleted = 0').run();
+            const calResult = db_1.default.prepare('DELETE FROM calendar_days').run();
+            console.log(`🚨 [Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
         })();
     }
     /**

@@ -19,8 +19,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
 
   // Responsive center typography based on digit count
   const fontClass = useMemo(() => {
-    if (amtLength > 12) return 'text-[10px]';
-    if (amtLength > 9) return 'text-[11px]';
+    if (amtLength > 12) return 'text-[11px]';
     return 'text-[12px]';
   }, [amtLength]);
 
@@ -56,7 +55,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
           }`}
         >
           <span
-            className="text-[9px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
+            className="text-[11px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
             title={displayLabel}
           >
             {displayLabel}
@@ -69,7 +68,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
             {displayValue}
           </span>
           {hoveredItem && 'percentage' in hoveredItem && (
-            <span className="text-[7.5px] font-black tabular-nums text-slate-400 -mt-0.5">
+            <span className="text-[11px] font-black tabular-nums text-slate-400 -mt-0.5">
               {hoveredItem.percentage}%
             </span>
           )}

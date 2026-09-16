@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   CalendarClock, CalendarDays, Flame, Info, TableProperties 
@@ -125,9 +125,9 @@ const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeCo
           const count = dayTypeCounts[dt.id] || 0;
           const percentage = totalDays > 0 ? ((count / totalDays) * 100).toFixed(1) : '0.0';
           return (
-            <div key={dt.id} className="flex items-center gap-1.5">
-              <div 
-                className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20" 
+            <div key={dt.id} className="flex items-center justify-center gap-1.5">
+              <div
+                className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20"
                 style={{ backgroundColor: dt.color || '#475569' }} 
               />
               <span className="text-xs font-bold text-slate-400">
@@ -210,7 +210,7 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
             </div>
           ) : (
             <div className={`flex flex-col items-center ${amount > 0 ? 'text-orange-400' : 'text-slate-400'}`}>
-              <div className="text-[13px] leading-none tabular-nums font-mono">
+              <div className="text-[13px] leading-none tabular-nums">
                 {amount > 0 ? `${formatMoney(amount)} ฿` : 'ไม่มีรายจ่าย'}
               </div>
             </div>
@@ -337,6 +337,22 @@ export default function ActivityTimeline() {
 
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dayType');
   const [layoutMode, setLayoutMode] = useState<TimelineLayoutMode>('github');
+
+  // GitHub mode only: keep the legend rail (and, via flex-stretch, the grid) the same height
+  // whether dayType or heatmap is selected. Scoped to layoutMode === 'github' only — calendar
+  // mode stays fully independent, sized to its own content.
+  const legendRailRef = useRef<HTMLDivElement>(null);
+  const hiddenLegendCloneRef = useRef<HTMLDivElement>(null);
+  const [githubLegendHeight, setGithubLegendHeight] = useState(0);
+  const otherViewMode: TimelineViewMode = viewMode === 'dayType' ? 'heatmap' : 'dayType';
+
+  useLayoutEffect(() => {
+    if (layoutMode !== 'github') return;
+    const liveHeight = legendRailRef.current?.offsetHeight || 0;
+    const otherHeight = hiddenLegendCloneRef.current?.offsetHeight || 0;
+    const tallest = Math.max(liveHeight, otherHeight);
+    if (tallest) setGithubLegendHeight(tallest);
+  }, [layoutMode, viewMode, showSkeleton, analytics.dayTypeCounts, dayTypeConfig]);
 
   const [tooltip, setTooltip] = useState<TimelineTooltipState>({
     active: false,
@@ -560,7 +576,7 @@ export default function ActivityTimeline() {
     }
 
     return (
-      <div className="overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+      <div className="w-full flex justify-[safe_center] overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex w-max gap-x-[1px] pr-3">
           {/* Day Labels (Sticky) */}
           <div 
@@ -628,6 +644,29 @@ export default function ActivityTimeline() {
     );
   };
 
+  const renderLegendBody = (mode: TimelineViewMode) => {
+    if (showSkeleton) {
+      return <div className="h-4 w-full rounded-none animate-pulse bg-[#303030]" />;
+    }
+    return (
+      <>
+        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-neutral-500">
+          {mode === 'dayType' ? 'สรุปประเภทวัน' : 'ระดับความเข้ม'}
+        </span>
+        {mode === 'dayType' ? (
+          <TimelineDayTypeLegend
+            dayTypeConfig={dayTypeConfig}
+            dayTypeCounts={analytics.dayTypeCounts}
+          />
+        ) : (
+          <TimelineHeatmapLegend
+            globalMaxThreshold={globalMaxThreshold}
+          />
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]">
       {/* ─── HEADER (Editorial Style) ─── */}
@@ -649,30 +688,21 @@ export default function ActivityTimeline() {
 
       <div className="p-4 flex flex-col lg:flex-row lg:items-stretch gap-3">
         {/* Timeline Grid */}
-        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] min-h-[130px] flex flex-col justify-center">
+        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] flex flex-col justify-center min-h-[210px]">
           {renderTimelineContent()}
         </div>
 
         {/* Legend Rail */}
-        <div className="lg:w-[220px] shrink-0 border rounded-none bg-[#121212] border-[#3e3e3e] p-3 flex flex-col justify-center gap-2 min-h-[130px]">
-          {showSkeleton ? (
-            <div className="h-4 w-full rounded-none animate-pulse bg-[#303030]" />
-          ) : (
-            <>
-              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-neutral-500">
-                {viewMode === 'dayType' ? 'สรุปประเภทวัน' : 'ระดับความเข้ม'}
-              </span>
-              {viewMode === 'dayType' ? (
-                <TimelineDayTypeLegend
-                  dayTypeConfig={dayTypeConfig}
-                  dayTypeCounts={analytics.dayTypeCounts}
-                />
-              ) : (
-                <TimelineHeatmapLegend
-                  globalMaxThreshold={globalMaxThreshold}
-                />
-              )}
-            </>
+        <div
+          ref={legendRailRef}
+          className="lg:w-[220px] shrink-0 border rounded-none relative bg-[#121212] border-[#3e3e3e] p-3 flex flex-col items-center justify-center gap-2 min-h-[210px] overflow-x-hidden"
+          style={layoutMode === 'github' && githubLegendHeight ? { minHeight: githubLegendHeight } : undefined}
+        >
+          {renderLegendBody(viewMode)}
+          {layoutMode === 'github' && (
+            <div ref={hiddenLegendCloneRef} aria-hidden="true" className="absolute inset-x-0 top-0 invisible pointer-events-none flex flex-col items-center gap-2 p-3">
+              {renderLegendBody(otherViewMode)}
+            </div>
           )}
         </div>
       </div>

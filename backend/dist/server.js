@@ -12,6 +12,7 @@ const schema_1 = require("./src/models/schema");
 const api_1 = __importDefault(require("./src/routes/api"));
 const backupService_1 = __importDefault(require("./src/services/backupService"));
 const db_1 = __importDefault(require("./src/config/db"));
+const auditLogger_1 = require("./src/middleware/auditLogger");
 const app = (0, express_1.default)();
 // Security Middlewares (Helmet & Restricted CORS)
 app.use((0, helmet_1.default)({
@@ -35,6 +36,8 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 app.use(express_1.default.json({ limit: '5mb' }));
+// Audit Logging Middleware (Tracks WHO, WHAT, WHERE, HOW with zero truncation)
+app.use(auditLogger_1.auditLogger);
 // Initialize Database Schema
 (0, schema_1.initSchema)();
 // Auto-backup on startup

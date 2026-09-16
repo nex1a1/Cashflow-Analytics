@@ -260,6 +260,12 @@ const initSchema = () => {
   `);
     // ตรวจสอบและยกระดับโครงสร้างตารางเดิมให้เป็น STRICT Mode หากยังไม่ได้เป็น
     migrateTablesToStrict();
+    // ล้างตารางที่เลิกใช้งานแล้วจากฟีเจอร์เก่าที่ถูกถอดออก (Purge deprecated tables)
+    db_1.default.exec(`
+    DROP TABLE IF EXISTS item_transactions;
+    DROP TABLE IF EXISTS items;
+    DROP TABLE IF EXISTS item_categories;
+  `);
     // ตรวจสอบว่าระบบเคยบันทึกสถานะตรวจสอบโครงสร้างและรัน Migration ไปแล้วหรือยัง
     let schemaVerified = false;
     try {

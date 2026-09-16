@@ -66,6 +66,7 @@ export interface ExpenseProportionHeaderProps {
   onResetExclusions: () => void;
   showSkeleton?: boolean;
   itemCount: number;
+  hasNoIncomeData?: boolean;
 }
 
 export interface ExpenseProportionChartProps {
@@ -80,13 +81,12 @@ export interface ExpenseProportionChartProps {
 }
 
 export interface ExpenseProportionGridProps {
-  activeItems: ProportionItem[];
+  categoryItems: CategoryItemData[];
+  allocationItems: AllocationItemData[];
   isAllocationMode: boolean;
   hoveredIdx: number;
   onHover: (idx: number) => void;
-  activeTotal: number;
+  allocationTotal: number;
   excludedGroupIds: string[];
   onToggleGroup: (groupId: string) => void;
-  sortMode: SortMode;
-  gridColsClass: string;
 }

@@ -22,7 +22,7 @@ import { ExpenseProportionGrid } from './ExpenseProportionGrid';
 
 function ExpenseProportionEmpty() {
   return (
-    <div className="rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10 p-10 items-center justify-center text-center opacity-60">
+    <div className="flex flex-col w-full items-center justify-center text-center opacity-60 p-10">
       <Inbox className="w-10 h-10 mb-2 opacity-20" />
       <p className="text-sm font-bold uppercase tracking-widest">ไม่มีข้อมูลรายจ่าย</p>
       <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
@@ -120,18 +120,22 @@ export function ExpenseProportion() {
     return sortProportionItems(rawItems, sortMode, isAllocationMode);
   }, [rawItems, sortMode, isAllocationMode]);
 
+  // Sorted independently of the active mode, since the Grid always mounts both
+  // modes' cells (stacked in the same CSS grid cell) to keep their heights in sync.
+  const categoryActiveItems = useMemo(() => {
+    return sortProportionItems(sortedCats, sortMode, false);
+  }, [sortedCats, sortMode]);
+
   const activeChartData = useMemo(() => {
     return buildDoughnutChartData(activeItems, hoveredIdx);
   }, [activeItems, hoveredIdx]);
 
-  const activeTotal = useMemo(() => {
-    if (isAllocationMode) {
-      return totalIncome || (totalExpense + Math.max(0, netCashflow || 0));
-    }
-    return chartTotal;
-  }, [isAllocationMode, totalExpense, totalIncome, netCashflow, chartTotal]);
+  const allocationTotal = useMemo(() => {
+    return totalIncome || (totalExpense + Math.max(0, netCashflow || 0));
+  }, [totalExpense, totalIncome, netCashflow]);
 
-  const gridColsClass = isAllocationMode ? 'grid-cols-3' : 'grid-cols-5';
+  const activeTotal = isAllocationMode ? allocationTotal : chartTotal;
+
   const itemCount = activeItems.length;
 
   const handleChartMouseLeave = useCallback(() => {
@@ -181,14 +185,12 @@ export function ExpenseProportion() {
     };
   }, [dm, activeItems]);
   
-  const cardClass = "rounded-none border shadow-sm flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
+  const cardClass = "rounded-none border flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
+  const isEmpty = itemCount === 0 && !showSkeleton;
+  const hasNoIncomeData = isAllocationMode && totalIncome <= 0;
 
-  if (itemCount === 0 && !showSkeleton) {
-    return <ExpenseProportionEmpty />;
-  }
-
-  const activeHoveredItem = (!isSliceHovered && hoveredIdx >= 0 && hoveredIdx < activeItems.length) 
-    ? activeItems[hoveredIdx] 
+  const activeHoveredItem = (!isSliceHovered && hoveredIdx >= 0 && hoveredIdx < activeItems.length)
+    ? activeItems[hoveredIdx]
     : null;
 
   return (
@@ -204,10 +206,13 @@ export function ExpenseProportion() {
         onResetExclusions={resetExclusions}
         showSkeleton={showSkeleton}
         itemCount={itemCount}
+        hasNoIncomeData={hasNoIncomeData}
       />
 
       {showSkeleton ? (
         <ExpenseProportionSkeleton />
+      ) : isEmpty ? (
+        <ExpenseProportionEmpty />
       ) : (
         <div className="flex flex-row items-stretch min-h-[196px]">
           <ExpenseProportionChart
@@ -221,15 +226,14 @@ export function ExpenseProportion() {
             activeItems={activeItems}
           />
           <ExpenseProportionGrid
-            activeItems={activeItems}
+            categoryItems={categoryActiveItems}
+            allocationItems={simulatedAllocation}
             isAllocationMode={isAllocationMode}
             hoveredIdx={hoveredIdx}
             onHover={setHoveredIdx}
-            activeTotal={activeTotal}
+            allocationTotal={allocationTotal}
             excludedGroupIds={excludedGroupIds}
             onToggleGroup={toggleGroupExclusion}
-            sortMode={sortMode}
-            gridColsClass={gridColsClass}
           />
         </div>
       )}
