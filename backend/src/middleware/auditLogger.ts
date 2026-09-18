@@ -14,8 +14,7 @@ export function getLocalTimestamp(): string {
 }
 
 /**
- * Detailed Comprehensive Audit Logger
- * Logs Who, What, Where, and How for every API interaction with zero text truncation.
+ * Audit Logger — one line per API mutation/error (IP, method, path, status, duration, action).
  */
 export function auditLogger(req: Request, res: Response, next: NextFunction): void {
   // Only monitor API routes
@@ -32,8 +31,6 @@ export function auditLogger(req: Request, res: Response, next: NextFunction): vo
     || req.socket.remoteAddress
     || req.ip
     || '127.0.0.1';
-  const origin = (req.headers.origin as string) || (req.headers.referer as string) || 'direct (Local / CLI)';
-  const userAgent = (req.headers['user-agent'] as string) || 'Unknown User-Agent';
 
   // 2. ที่ไหน (WHERE)
   const method = req.method;
@@ -90,13 +87,8 @@ export function auditLogger(req: Request, res: Response, next: NextFunction): vo
 
     if (isMutation || isError) {
       const icon = isError ? '❌' : '⚡';
-      console.log(`\n${icon} [AUDIT LOG] [${timestamp}]`);
-      console.log(`   👤 [ใคร - WHO]       : IP: ${ip} | ที่มา (Origin): ${origin} | Client: ${userAgent}`);
-      console.log(`   📍 [ที่ไหน - WHERE]  : ${method} ${path}`);
-      if (actionDetail) {
-        console.log(`   🎯 [ทำอะไร - WHAT]   : ${actionDetail}`);
-      }
-      console.log(`   ⚙️  [อย่างไร - HOW]   : ผลลัพธ์: HTTP ${status} | ระยะเวลาประมวลผล: ${duration}ms`);
+      const what = actionDetail ? ` | ${actionDetail}` : '';
+      console.log(`${icon} [AUDIT] [${timestamp}] ${method} ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]${what}`);
     } else {
       // Read requests (GET) logged cleanly
       console.log(`[API ${method}] [${timestamp}] ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]`);

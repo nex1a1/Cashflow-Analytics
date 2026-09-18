@@ -200,18 +200,7 @@ class TransactionService {
     });
 
     transactionAction(transactions);
-
-    const totalSatang = transactions.reduce((sum: number, tx: any) => sum + Math.round((Number(tx.amount) || 0) * 100), 0);
-    const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    console.log(`💳 [Service: Upsert] บันทึกข้อมูลสำเร็จทั้งหมด ${transactions.length} รายการ | ยอดรวม: ฿${totalBaht}`);
-    if (transactions.length <= 15) {
-      transactions.forEach((tx: any, idx: number) => {
-        const itemBaht = (Number(tx.amount) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        console.log(`   ${idx + 1}. [${tx.date}] ID: ${tx.id || 'auto-generated'} | "${tx.description || 'ไม่ระบุ'}" | ฿${itemBaht} (${tx.allocation_type || 'default'})`);
-      });
-    } else {
-      console.log(`   (รายการทั้งหมด ${transactions.length} รายการ ถูกบันทึกลงฐานข้อมูลเรียบร้อยแล้ว)`);
-    }
+    // Per-row detail already logged by db.ts's verbose mutation hook — avoid double-printing here.
   }
 
   delete(id: string) {
