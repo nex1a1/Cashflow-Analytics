@@ -55,18 +55,18 @@ const CashflowGroupsCard = memo(({
           const inUse    = categories.some(c => c.cashflowGroup === group.id);
           return (
             <div key={group.id} className="flex flex-col gap-1">
-              <div className={`flex items-center gap-1.5 p-1.5 border rounded-none group/cg ${
+              <div className={`flex items-center gap-1.5 p-1.5 border rounded-sm group/cg transition-colors ${
                 hasError
                   ? ('border-red-850 bg-red-950/25')
                   : 'bg-[#121212]/50 border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50'
               }`}>
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-[#666666]'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
+                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
                     <ChevronUp className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
-                    className={`p-0.5 disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
+                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-[#da291c] hover:bg-[#303030]'}`}>
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
@@ -111,7 +111,7 @@ const CashflowGroupsCard = memo(({
 
                 <div className="flex items-center justify-end min-w-[32px] shrink-0">
                   {txCount > 0 && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 leading-none rounded-none tabular-nums ${
+                    <span className={`text-[10px] font-bold px-2 py-0.5 leading-none rounded-full tabular-nums ${
                       'bg-[#1e1e1e] text-[#a0a0a0] border border-[#383838]'
                     }`} title={`มี ${txCount} รายการในกลุ่มนี้ (ในมุมมองปัจจุบัน)`}>
                       {txCount}
@@ -135,7 +135,7 @@ const CashflowGroupsCard = memo(({
               </div>
 
               {hasError && (
-                <p className={`text-[11px] font-semibold px-2 py-1 border flex items-center gap-1 ${
+                <p className={`text-[11px] font-semibold px-2 py-1 border rounded-sm flex items-center gap-1 ${
                   'bg-red-900/20 border-red-800/50 text-[#da291c]'
                 }`}>
                   <AlertTriangle className="w-4 h-4 shrink-0" />

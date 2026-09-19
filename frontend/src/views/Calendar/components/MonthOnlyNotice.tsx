@@ -19,8 +19,8 @@ export default function MonthOnlyNotice({
   onSwitchToAnalysisMode
 }: MonthOnlyNoticeProps): React.ReactElement {
   return (
-    <div className="flex flex-col items-center justify-center text-center border border-[#2d2d2d] bg-[#181818] min-h-[520px] px-6 py-20">
-      <div className="p-3.5 border border-[#2d2d2d] bg-[#121212] shrink-0">
+    <div className="flex flex-col items-center justify-center text-center border border-neutral-800/90 bg-[#181818] rounded-md min-h-[520px] px-6 py-20">
+      <div className="p-3.5 border border-neutral-800 bg-[#121212] rounded-md shrink-0">
         <CalendarClock className="w-8 h-8 text-neutral-500" strokeWidth={1.75} />
       </div>
 
@@ -38,7 +38,7 @@ export default function MonthOnlyNotice({
         <button
           type="button"
           onClick={goToCurrentMonth}
-          className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-[#da291c] hover:bg-[#b01e0a] text-white transition-none cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-[#da291c] hover:bg-[#b01e0a] text-white rounded-sm transition-colors cursor-pointer shadow-sm"
         >
           <CalendarClock className="w-4.5 h-4.5" />
           <span>ไปเดือนปัจจุบัน ({currentMonthLabel})</span>
@@ -48,7 +48,7 @@ export default function MonthOnlyNotice({
           <button
             type="button"
             onClick={onSwitchToAnalysisMode}
-            className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider border border-[#333333] bg-[#121212] text-slate-300 hover:text-white hover:border-slate-500 transition-none cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider border border-[#333333] bg-[#121212] text-slate-300 hover:text-white hover:border-slate-500 rounded-sm transition-colors cursor-pointer"
           >
             <BarChart3 className="w-4.5 h-4.5" />
             <span>ดูภาพรวมช่วงนี้ในโหมดวิเคราะห์</span>

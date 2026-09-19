@@ -45,7 +45,7 @@ const ConfirmDeleteButton = memo(({
       <button 
         onClick={handleClick} 
         disabled={disabled}
-        className={`flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed border rounded-none ${
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed border rounded-sm cursor-pointer ${
           confirming
             ? 'bg-[#da291c] text-white border-[#da291c] animate-pulse'
             : 'bg-red-950/20 text-red-400 hover:bg-[#da291c] hover:text-white border-red-900/50 hover:border-[#da291c]'
@@ -69,7 +69,7 @@ const ConfirmDeleteButton = memo(({
     <button 
       onClick={handleClick} 
       disabled={disabled}
-      className={`p-1.5 transition-all active:scale-95 rounded-none ${stateCls}`}
+      className={`p-1.5 transition-all active:scale-95 rounded-sm cursor-pointer ${stateCls}`}
       title={confirming ? 'ยืนยันการลบ?' : tooltip}
     >
       <Trash2 className="w-4 h-4" />

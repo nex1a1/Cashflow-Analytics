@@ -992,7 +992,7 @@ export default function useAnalytics({
     const chartTotal = stateRef.chartTotal;
     prevTotals.net = prevTotals.income - prevTotals.expense;
 
-    if (useBackendTotals) {
+    if (useBackendTotals && !windowMeta.isSingleMonthView) {
       applyBackendSummaryTotals(totals, summaryData);
     }
 
@@ -1005,7 +1005,7 @@ export default function useAnalytics({
     const { sortedGroups, groupChartData } = buildGroupBreakdown(state.catMapData, catMapLookup, state.groupTotals, cashflowGroups, numMonths, chartTotal);
     const { sortedAllocation, allocationChartData } = buildAllocationBreakdown(state.allocTotals, state.allocGroupsMap, totals, netCashflow);
 
-    if (useBackendTotals) {
+    if (useBackendTotals && !windowMeta.isSingleMonthView) {
       applyBackendMonthlyCashflow(cashflowMap, summaryData);
     }
 

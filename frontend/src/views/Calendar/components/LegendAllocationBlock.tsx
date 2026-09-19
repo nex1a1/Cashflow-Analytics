@@ -89,7 +89,7 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
 }: LegendAllocationBlockProps): React.ReactElement {
   if (!sortedGroups || sortedGroups.length === 0) {
     return (
-      <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4 text-center select-none">
+      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-4 text-center select-none">
         <p className="text-xs font-bold text-slate-500 font-mono tracking-wider uppercase">
           ไม่มีรายการธุรกรรมในเดือนนี้ (NO TRANSACTIONS IN THIS MONTH)
         </p>
@@ -98,7 +98,7 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
   }
 
   return (
-    <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-3.5 px-4">
+    <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-3.5 px-4">
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
         {/* Left Side: Category Legend */}
         <CategoryLegendSection
@@ -145,14 +145,14 @@ function CategoryLegendSection({
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-none bg-[#da291c]" /> หมวดหมู่ธุรกรรม (Categories)
+          <span className="w-1.5 h-1.5 rounded-full bg-[#da291c]" /> หมวดหมู่ธุรกรรม (Categories)
         </span>
         
         {/* Layout Switcher */}
-        <div className="flex items-center gap-1 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5" title="รูปแบบการแสดงผล">
+        <div className="flex items-center gap-1 shrink-0 border border-neutral-800 bg-neutral-900/90 p-0.5 rounded-sm" title="รูปแบบการแสดงผล">
           <button
             onClick={() => handleSetLayoutMode('compact')}
-            className={`p-1 rounded-none transition-none cursor-pointer ${
+            className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendLayoutMode === 'compact'
                 ? 'bg-[#da291c] text-white font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
@@ -163,7 +163,7 @@ function CategoryLegendSection({
           </button>
           <button
             onClick={() => handleSetLayoutMode('grouped')}
-            className={`p-1 rounded-none transition-none cursor-pointer ${
+            className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendLayoutMode === 'grouped'
                 ? 'bg-[#da291c] text-white font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
@@ -175,10 +175,10 @@ function CategoryLegendSection({
         </div>
 
         {/* Sort Switcher */}
-        <div className="flex items-center gap-1 shrink-0 border border-[#2d2d2d] bg-[#121212] p-0.5" title="การจัดเรียง">
+        <div className="flex items-center gap-1 shrink-0 border border-neutral-800 bg-neutral-900/90 p-0.5 rounded-sm" title="การจัดเรียง">
           <button
             onClick={() => handleSetSortMode('structure')}
-            className={`p-1 rounded-none transition-none cursor-pointer ${
+            className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendSortMode === 'structure'
                 ? 'bg-[#da291c] text-white font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
@@ -189,7 +189,7 @@ function CategoryLegendSection({
           </button>
           <button
             onClick={() => handleSetSortMode('amount')}
-            className={`p-1 rounded-none transition-none cursor-pointer ${
+            className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendSortMode === 'amount'
                 ? 'bg-[#da291c] text-white font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
@@ -205,7 +205,7 @@ function CategoryLegendSection({
         {hasExclusions && (
           <button
             onClick={() => toggleCategory('CLEAR_ALL')}
-            className="px-2 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-none border border-[#da291c] bg-[#da291c]/10 text-[#da291c] hover:bg-[#da291c]/20 transition-none cursor-pointer shrink-0"
+            className="px-3 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-full border border-[#da291c] bg-[#da291c]/10 text-[#da291c] hover:bg-[#da291c]/20 transition-colors cursor-pointer shrink-0"
           >
             แสดงทั้งหมด
           </button>
@@ -351,7 +351,7 @@ function AllocationOverviewSection({
 
       {/* Stacked Progress Bar */}
       {allocationTotals.totalExpense > 0 && (
-        <div className="h-1.5 w-full bg-[#121212] border border-[#2d2d2d] flex rounded-none overflow-hidden mt-1 shrink-0 z-10">
+        <div className="h-2 w-full bg-[#121212] border border-neutral-800 flex rounded-full overflow-hidden mt-1 shrink-0 z-10">
           <div
             style={{ width: `${allocationTotals.needPct}%`, backgroundColor: '#A3A3A3' }}
             title={`Needs: ${allocationTotals.needPct}%`}

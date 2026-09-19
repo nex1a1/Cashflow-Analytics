@@ -41,14 +41,14 @@ const DayTypesCard = memo(({
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-2 px-2 py-1.5 border rounded-none group/dt bg-[#121212]/50 border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50"
+              className="flex items-center gap-2 px-2 py-1.5 border rounded-sm group/dt bg-[#121212]/50 border-[#3e3e3e] hover:bg-[#303030]/50 hover:border-[#da291c]/50 transition-colors"
             >
               <div className="flex flex-col items-center shrink-0 opacity-0 group-hover/dt:opacity-100 text-[#666666]">
                 <button
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'UP')}
                   disabled={idx === 0}
-                  className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
+                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -56,7 +56,7 @@ const DayTypesCard = memo(({
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'DOWN')}
                   disabled={idx === dayTypeConfig.length - 1}
-                  className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
+                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-[#da291c] hover:bg-[#303030]"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>

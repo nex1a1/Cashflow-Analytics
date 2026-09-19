@@ -101,6 +101,24 @@ describe('analyticsHelpers utility', () => {
       expect(result.totals.variable).toBe(800);
       expect(result.totals.expense).toBe(2000);
     });
+
+    it('does not double or pollute expenses when transactions include prior comparison month (PoP data)', () => {
+      const catMap = createCategoryMap(mockCategories);
+      const mockTransactions: TransactionDisplay[] = [
+        // August transactions (fetched as PoP comparison data)
+        { id: '1', date: '2026-08-10', category: 'อาหาร', category_id: 'cat_food', description: 'Aug Food', amount: 2000, allocation_type: 'want' },
+        { id: '2', date: '2026-08-25', category: 'อาหาร', category_id: 'cat_food', description: 'Aug Food 2', amount: 3000, allocation_type: 'want' },
+        // September transactions (active single month)
+        { id: '3', date: '2026-09-05', category: 'อาหาร', category_id: 'cat_food', description: 'Sep Food', amount: 2500, allocation_type: 'want' },
+        { id: '4', date: '2026-09-15', category: 'อาหาร', category_id: 'cat_food', description: 'Sep Food 2', amount: 2500, allocation_type: 'want' },
+      ];
+
+      const result = generateCashflowMap(mockTransactions, '2026-09', catMap, mockGroups);
+      // Total expense must be exactly 5,000 (September only), not 10,000 (August + September)
+      expect(result.totals.expense).toBe(5000);
+      expect(result.cashflowMap['2026-09'].totalExp).toBe(5000);
+      expect(result.cashflowMap['2026-08']).toBeUndefined();
+    });
   });
 
   describe('calculateDayTypeCounts', () => {

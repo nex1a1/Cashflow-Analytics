@@ -9,6 +9,7 @@ import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../../../types';
 import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
 import { stepDate } from '@/utils/datePickerHelpers';
+import DayTypeSelect from '@/components/shared/DayTypeSelect';
 
 export interface DayDetailModalProps {
   dateStr: string;
@@ -22,6 +23,7 @@ export interface DayDetailModalProps {
   dayTypeConfig?: DayType[];
   frequentItems?: FrequentItem[];
   onDateChange?: (newDateStr: string) => void;
+  handleDayTypeChange?: (dateStr: string, val: string) => void;
 }
 
 export default function DayDetailModal({ 
@@ -35,7 +37,8 @@ export default function DayDetailModal({
   dayTypes = {}, 
   dayTypeConfig = [], 
   frequentItems = [],
-  onDateChange
+  onDateChange,
+  handleDayTypeChange
 }: DayDetailModalProps) {
   const { showToast } = useToast();
   
@@ -293,7 +296,15 @@ export default function DayDetailModal({
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                {currentDayType && (
+                {handleDayTypeChange ? (
+                  <DayTypeSelect
+                    value={dayTypeId}
+                    onChange={(newVal) => handleDayTypeChange(activeDateStr, newVal)}
+                    dayTypeConfig={dayTypeConfig}
+                    dateStr={activeDateStr}
+                    size="xs"
+                  />
+                ) : currentDayType && (
                   <span
                     className="px-2 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-none border shrink-0"
                     style={{

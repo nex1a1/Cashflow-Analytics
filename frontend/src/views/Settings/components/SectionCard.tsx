@@ -70,13 +70,13 @@ const SectionCard = memo(function SectionCard({
   const a = ACCENT[accentColor] || ACCENT.brand;
 
   return (
-    <div className={`overflow-hidden rounded-none border bg-[#1c1c1c] border-[#303030] ${a.glow}`}>
+    <div className={`overflow-hidden rounded-md border bg-[#1c1c1c] border-[#303030] ${a.glow}`}>
       <div className={`px-3.5 py-2 flex items-center justify-between gap-3 border-b border-[#303030]/60 ${a.header}`}>
         <h2 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5 ${a.title}`}>
           {icon}
           {title}
           {badge != null && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 ml-1 rounded-none tabular-nums bg-[#121212] text-[#a0a0a0] border border-[#383838]">
+            <span className="text-[10px] font-bold px-2 py-0.5 ml-1.5 rounded-full tabular-nums bg-[#121212] text-[#a0a0a0] border border-[#383838]">
               {badge}
             </span>
           )}
@@ -86,7 +86,7 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={subAction.onClick}
-              className="text-[10px] font-bold px-2 py-1 flex items-center gap-1 border rounded-none border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] hover:text-white bg-[#121212]"
+              className="text-[10px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-sm border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] hover:text-white bg-[#121212] cursor-pointer transition-colors"
             >
               {subAction.icon} {subAction.label}
             </button>
@@ -95,7 +95,7 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={action.onClick}
-              className={`text-[10px] font-bold px-2 py-1 flex items-center gap-1 rounded-none ${a.btn}`}
+              className={`text-[10px] font-bold px-2.5 py-1 flex items-center gap-1 rounded-sm cursor-pointer transition-colors ${a.btn}`}
             >
               <PlusCircle className="w-4 h-4" /> {action.label}
             </button>

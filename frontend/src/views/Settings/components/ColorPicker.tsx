@@ -151,7 +151,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
         ref={btnRef} 
         onClick={handleOpen} 
         type="button"
-        className="w-5 h-5 border rounded-none border-[#3e3e3e] cursor-pointer hover:border-[#da291c]/50 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+        className="w-5 h-5 border rounded-sm border-[#3e3e3e] cursor-pointer hover:border-[#da291c]/50 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
         style={{ backgroundColor: color }}
         title="เลือกสี"
         aria-label="เลือกสี"
@@ -160,119 +160,124 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
       {open && createPortal(
         <div 
           ref={paletteRef}
-          className="fixed z-[9999] p-3 shadow-[0_0_24px_rgba(0,0,0,0.85)] border bg-[#181818] border-[#3e3e3e] rounded-none w-[290px] flex flex-col gap-2"
+          className="fixed z-[9999] shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] border bg-[#181818] border-neutral-800/90 rounded-md w-[290px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
-          {/* Tabs Header */}
-          <div className="flex border-b border-[#303030] pb-1 mb-1">
-            <button
-              type="button"
-              onClick={() => setTab('spectrum')}
-              className={`flex-1 pb-1 text-[10px] font-black tracking-wider uppercase border-b-2 transition-all ${
-                tab === 'spectrum' 
-                  ? 'border-[#da291c] text-white font-black' 
-                  : 'border-transparent text-[#666666] hover:text-[#888888]'
-              }`}
-            >
-              แผงสเปกตรัม
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('curated')}
-              className={`flex-1 pb-1 text-[10px] font-black tracking-wider uppercase border-b-2 transition-all ${
-                tab === 'curated' 
-                  ? 'border-[#da291c] text-white font-black' 
-                  : 'border-transparent text-[#666666] hover:text-[#888888]'
-              }`}
-            >
-              ธีมแนะนำ
-            </button>
-          </div>
+          {/* Laser Hairline Accent */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#da291c] to-transparent shrink-0 opacity-80" />
 
-          {/* Tab Content: Spectrum Grid */}
-          {tab === 'spectrum' && (
-            <div 
-              className="grid gap-[1px] bg-[#3e3e3e] p-[1px] border border-[#303030]/50"
-              style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
-            >
-              {COLOR_PALETTE.map(c => {
-                const isSelected = color?.toLowerCase() === c.toLowerCase();
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => { onChange(c); setOpen(false); }}
-                    className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none ${
-                      isSelected ? 'ring-1 ring-white z-10 scale-105 shadow-[0_0_6px_rgba(255,255,255,0.4)]' : ''
-                    }`}
-                    style={{ backgroundColor: c }}
-                    title={c}
-                  />
-                );
-              })}
+          <div className="p-3 flex flex-col gap-2">
+            {/* Tabs Header */}
+            <div className="flex border-b border-[#303030] pb-1 mb-1">
+              <button
+                type="button"
+                onClick={() => setTab('spectrum')}
+                className={`flex-1 pb-1 text-[10px] font-black tracking-wider uppercase border-b-2 transition-all cursor-pointer ${
+                  tab === 'spectrum' 
+                    ? 'border-[#da291c] text-white font-black' 
+                    : 'border-transparent text-[#666666] hover:text-[#888888]'
+                }`}
+              >
+                แผงสเปกตรัม
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('curated')}
+                className={`flex-1 pb-1 text-[10px] font-black tracking-wider uppercase border-b-2 transition-all cursor-pointer ${
+                  tab === 'curated' 
+                    ? 'border-[#da291c] text-white font-black' 
+                    : 'border-transparent text-[#666666] hover:text-[#888888]'
+                }`}
+              >
+                ธีมแนะนำ
+              </button>
             </div>
-          )}
 
-          {/* Tab Content: Curated Palettes */}
-          {tab === 'curated' && (
-            <div className="flex flex-col gap-2.5 py-1">
-              {CURATED_PALETTES.map(grp => (
-                <div key={grp.name} className="flex flex-col">
-                  <span className="text-[8px] font-black tracking-widest text-[#666666] uppercase mb-1">
-                    {grp.name}
-                  </span>
-                  <div className="grid grid-cols-12 gap-[2px]">
-                    {grp.colors.map(c => {
-                      const isSelected = color?.toLowerCase() === c.toLowerCase();
-                      return (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => { onChange(c); setOpen(false); }}
-                          className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none ${
-                            isSelected ? 'ring-1 ring-white z-10 scale-105 shadow-[0_0_6px_rgba(255,255,255,0.4)]' : ''
-                          }`}
-                          style={{ backgroundColor: c }}
-                          title={c}
-                        />
-                      );
-                    })}
+            {/* Tab Content: Spectrum Grid */}
+            {tab === 'spectrum' && (
+              <div 
+                className="grid gap-[1px] bg-[#3e3e3e] p-[1px] rounded-sm border border-[#303030]/50"
+                style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
+              >
+                {COLOR_PALETTE.map(c => {
+                  const isSelected = color?.toLowerCase() === c.toLowerCase();
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => { onChange(c); setOpen(false); }}
+                      className={`aspect-square w-full rounded-[2px] cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none transition-transform hover:scale-105 ${
+                        isSelected ? 'ring-1 ring-white z-10 scale-105 shadow-[0_0_6px_rgba(255,255,255,0.4)]' : ''
+                      }`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Tab Content: Curated Palettes */}
+            {tab === 'curated' && (
+              <div className="flex flex-col gap-2.5 py-1">
+                {CURATED_PALETTES.map(grp => (
+                  <div key={grp.name} className="flex flex-col">
+                    <span className="text-[8px] font-black tracking-widest text-[#666666] uppercase mb-1">
+                      {grp.name}
+                    </span>
+                    <div className="grid grid-cols-12 gap-[2px]">
+                      {grp.colors.map(c => {
+                        const isSelected = color?.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => { onChange(c); setOpen(false); }}
+                            className={`aspect-square w-full rounded-[2px] cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none transition-transform hover:scale-105 ${
+                              isSelected ? 'ring-1 ring-white z-10 scale-105 shadow-[0_0_6px_rgba(255,255,255,0.4)]' : ''
+                            }`}
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {/* Color Preview & Custom Input Footer */}
-          <div className="flex items-center gap-2 pt-2 border-t border-[#303030] mt-1">
-            <div 
-              className="w-8 h-8 rounded-none border border-[#3e3e3e] shrink-0" 
-              style={{ backgroundColor: color }}
-              title="สีปัจจุบัน"
-            />
-            
-            <div className="relative w-8 h-8 border border-[#3e3e3e] bg-[#121212] flex items-center justify-center hover:bg-[#303030] hover:border-[#da291c] shrink-0 cursor-pointer">
-              <Pipette className="w-4 h-4 text-slate-300 pointer-events-none" />
-              <input 
-                type="color" 
-                value={color} 
-                onChange={e => onChange(e.target.value)}
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
-                title="สีกำหนดเอง" 
+            {/* Color Preview & Custom Input Footer */}
+            <div className="flex items-center gap-2 pt-2 border-t border-[#303030] mt-1">
+              <div 
+                className="w-8 h-8 rounded-sm border border-[#3e3e3e] shrink-0 shadow-inner" 
+                style={{ backgroundColor: color }}
+                title="สีปัจจุบัน"
               />
-            </div>
+              
+              <div className="relative w-8 h-8 rounded-sm border border-[#3e3e3e] bg-[#121212] flex items-center justify-center hover:bg-[#303030] hover:border-[#da291c] shrink-0 cursor-pointer transition-colors">
+                <Pipette className="w-4 h-4 text-slate-300 pointer-events-none" />
+                <input 
+                  type="color" 
+                  value={color} 
+                  onChange={e => onChange(e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
+                  title="สีกำหนดเอง" 
+                />
+              </div>
 
-            <div className="flex-1 flex items-center gap-1.5 bg-[#121212] border border-[#3e3e3e] px-2 py-1 h-8">
-              <span className="text-[9px] font-mono text-[#666666] font-black select-none">HEX</span>
-              <input
-                type="text"
-                value={hexInput}
-                onChange={e => handleHexInputChange(e.target.value)}
-                maxLength={7}
-                className="w-full bg-transparent text-xs font-mono font-bold text-[#cbd5e1] outline-none text-right uppercase"
-                placeholder="#000000"
-                aria-label="รหัสสี HEX"
-              />
+              <div className="flex-1 flex items-center gap-1.5 bg-[#121212] border border-[#3e3e3e] px-2 py-1 h-8 rounded-sm focus-within:border-neutral-400 transition-colors">
+                <span className="text-[9px] font-mono text-[#666666] font-black select-none">HEX</span>
+                <input
+                  type="text"
+                  value={hexInput}
+                  onChange={e => handleHexInputChange(e.target.value)}
+                  maxLength={7}
+                  className="w-full bg-transparent text-xs font-mono font-bold text-[#cbd5e1] outline-none text-right uppercase"
+                  placeholder="#000000"
+                  aria-label="รหัสสี HEX"
+                />
+              </div>
             </div>
           </div>
         </div>,

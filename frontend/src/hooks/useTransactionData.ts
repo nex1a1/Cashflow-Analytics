@@ -49,7 +49,11 @@ export default function useTransactionData({
   const [frequentItems, setFrequentItems] = useState<FrequentItem[]>([]); // All-time frequent transactions
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isBootstrapping, setIsBootstrapping] = useState<boolean>(true);
-  const [currentRange, setCurrentRange] = useState<{ start: string | null; end: string | null }>({
+  const [dataRange, setDataRange] = useState<{ start: string | null; end: string | null }>({
+    start: null,
+    end: null
+  });
+  const [analyticsRange, setAnalyticsRange] = useState<{ start: string | null; end: string | null }>({
     start: null,
     end: null
   });
@@ -61,7 +65,7 @@ export default function useTransactionData({
   const loadData = useCallback(
     async (startDate: string | null, endDate: string | null) => {
       try {
-        setCurrentRange({ start: startDate, end: endDate });
+        setDataRange({ start: startDate, end: endDate });
         setDbStatus('กำลังโหลด...');
         const txData = await transactionService.getAll(startDate || undefined, endDate || undefined);
         setTransactions(sortTransactions(txData));
@@ -79,12 +83,13 @@ export default function useTransactionData({
    * Loads aggregated analytics summary for a window
    */
   const loadAnalytics = useCallback(
-    async (startDate: string | null, endDate: string | null) => {
+    async (startDate: string | null, endDate: string | null, excludeFutureOverride?: boolean) => {
       try {
+        setAnalyticsRange({ start: startDate, end: endDate });
         const data = await analyticsService.getDashboardData(
           startDate || undefined,
           endDate || undefined,
-          excludeFuture
+          excludeFutureOverride !== undefined ? excludeFutureOverride : excludeFuture
         );
         setSummaryData(data);
       } catch (err) {
@@ -97,15 +102,15 @@ export default function useTransactionData({
   const refreshData = useCallback(async () => {
     try {
       await Promise.all([
-        loadData(currentRange.start, currentRange.end),
-        loadAnalytics(currentRange.start, currentRange.end),
+        loadData(dataRange.start, dataRange.end),
+        loadAnalytics(analyticsRange.start, analyticsRange.end),
         transactionService.getFrequentItems().then(setFrequentItems),
         transactionService.getPeriods().then(setMasterPeriods)
       ]);
     } catch (err) {
       console.error('Refresh failed', err);
     }
-  }, [loadData, loadAnalytics, currentRange]);
+  }, [loadData, loadAnalytics, dataRange, analyticsRange]);
 
   /**
    * Initial bootstrap of master data

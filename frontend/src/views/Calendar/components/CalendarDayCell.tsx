@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { formatMoney, formatAmount, hexToRgb } from '../../../utils/formatters';
+import { formatMoney, formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
+import DayTypeSelect from '@/components/shared/DayTypeSelect';
 
 export interface CalendarDayCellProps {
   day: number | string;
@@ -29,7 +30,6 @@ const CalendarDayCell = memo(function CalendarDayCell({
   maxDailyExpense = 0
 }: CalendarDayCellProps): React.ReactElement {
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
-  const typeConf = dayTypeConfig.find(dt => dt.id === dayType) || dayTypeConfig[0];
 
   const burnIntensity = maxDailyExpense > 0 && cellData.exp > 0 ? cellData.exp / maxDailyExpense : 0;
 
@@ -73,7 +73,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
       <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-[#2d2d2d]/30 bg-[#121212]">
         <div className="flex items-center gap-1.5">
-          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-none shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
+          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-sm shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
             {day}
           </span>
           {handleOpenAddModal && (
@@ -91,27 +91,13 @@ const CalendarDayCell = memo(function CalendarDayCell({
           )}
         </div>
 
-        <select
-          onClick={(e) => e.stopPropagation()} 
+        <DayTypeSelect
           value={dayType}
-          onChange={e => {
-            e.stopPropagation();
-            handleDayTypeChange(dateStr, e.target.value);
-          }}
-          className="day-type-badge text-[10px] font-black px-1.5 py-0.5 rounded-none cursor-pointer outline-none appearance-none text-center border transition-none"
-          style={{
-            backgroundColor: `rgba(${hexToRgb(typeConf?.color)}, 0.08)`,
-            borderColor: `rgba(${hexToRgb(typeConf?.color)}, 0.25)`,
-            color: typeConf?.color || '#64748b',
-          }}
-          title="คลิกเพื่อเปลี่ยนประเภทวัน"
-        >
-          {dayTypeConfig.map(dt => (
-            <option key={dt.id} value={dt.id} style={{ backgroundColor: '#181818', color: '#ffffff' }}>
-              {dt.label}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleDayTypeChange(dateStr, val)}
+          dayTypeConfig={dayTypeConfig}
+          dateStr={dateStr}
+          size="xs"
+        />
       </div>
 
       {/* ส่วนแสดงรายการธุรกรรม */}
@@ -125,7 +111,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
                 {formatAmount(cellData.exp)} ฿
                 {hiddenExpCount > 0 && (
                   <span
-                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
+                    className="text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
                     style={{
                       backgroundColor: 'rgba(218, 41, 28, 0.08)',
                       borderColor: 'rgba(218, 41, 28, 0.25)',
@@ -142,7 +128,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               <span className="text-emerald-400 tabular-nums tracking-tight flex items-center gap-1">
                 {hiddenIncCount > 0 && (
                   <span 
-                    className="text-[9px] px-1 py-0.2 rounded-none font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
+                    className="text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-normal border tabular-nums tracking-tight shrink-0 select-none"
                     style={{
                       backgroundColor: 'rgba(16, 185, 129, 0.08)',
                       borderColor: 'rgba(16, 185, 129, 0.25)',
@@ -168,7 +154,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
-              <div className="w-[3px] h-3.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-200 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>
@@ -188,7 +174,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
-              <div className="w-[3px] h-3.5 rounded-none shrink-0" style={{ backgroundColor: color }} />
+              <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
                 {tx.description || tx.category}
               </span>

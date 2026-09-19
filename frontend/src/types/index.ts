@@ -207,7 +207,7 @@ export interface AppDataContextValue {
   masterPeriods: string[];
   // CRUD Actions
   refreshData: () => Promise<void>;
-  loadPeriodData: (period: string) => Promise<void>;
+  loadPeriodData: (period: string, excludeFuture?: boolean) => Promise<void>;
   handleSaveTransaction: (tx: any) => Promise<any>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<void>;
   handleDeleteTransaction: (id: string) => Promise<any>;

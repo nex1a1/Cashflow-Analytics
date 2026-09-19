@@ -30,8 +30,12 @@ yarn-error.log*
 # Docker
 .docker/
 
-# Debug and Test Scripts
+# Debug and Test Scripts & Artifacts
 debug_scripts/
+coverage/
+.vitest/
+*.test.db
+*.test.sqlite
 
 # AI Enchancer
 GEMINI.md

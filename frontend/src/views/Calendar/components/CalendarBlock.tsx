@@ -64,7 +64,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
   return (
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Header (Navigation & Stats Summary) */}
-      <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-4">
+      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
             <CalendarIcon className="w-6 h-6 text-[#da291c]" />
@@ -72,24 +72,24 @@ const CalendarBlock = React.memo(function CalendarBlock({
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
             {monthInc > 0 && (
-              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-emerald-950/40 text-emerald-400 border-emerald-800/40">
                 ▲ {formatAmount(monthInc)} ฿
               </span>
             )}
             {monthExp > 0 && (
-              <span className="text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30">
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30">
                 ▼ {formatAmount(monthExp)} ฿
               </span>
             )}
             {(monthInc > 0 || monthExp > 0) && (
-              <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-none border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30'}`}>
+              <span className={`text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30'}`}>
                 คงเหลือ {formatAmount(monthNet)} ฿
               </span>
             )}
             {excludedCategoryIds?.size > 0 && (
               <button
                 onClick={() => toggleCategory?.('CLEAR_ALL')}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-none"
+                className="flex items-center gap-1.5 px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
                 title="คลิกเพื่อแสดงทุกหมวดหมู่"
               >
                 <AlertTriangle className="w-3 h-3" />
@@ -102,7 +102,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
       </div>
 
       {/* 2. Calendar Grid */}
-      <div className="rounded-none border border-[#2d2d2d] overflow-hidden flex-1 flex flex-col">
+      <div className="rounded-md border border-neutral-800/90 overflow-hidden flex-1 flex flex-col">
         <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b border-[#2d2d2d]">
           {DAY_OF_WEEK_LABELS.map((label, i) => (
             <div
@@ -160,7 +160,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
       </div>
 
       {/* 3. Summary Footer (Counts of Day Types) */}
-      <div className="bg-[#181818] rounded-none border border-[#2d2d2d] p-3 px-4 flex flex-wrap gap-2.5 items-center">
+      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-3 px-4 flex flex-wrap gap-2.5 items-center">
         <span className="text-[13px] font-bold mr-1 text-slate-400">สรุป:</span>
         {dayTypeConfig.map(dt => {
           const count = dayTypeCounts[dt.id] || 0;
@@ -168,19 +168,19 @@ const CalendarBlock = React.memo(function CalendarBlock({
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border text-[10px] font-black tracking-wider uppercase"
+              className="flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-[10px] font-black tracking-wider uppercase"
               style={{
                 backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
                 borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
                 color: dt.color || undefined,
               }}
             >
-              <div className="w-3.5 h-3.5 rounded-none" style={{ backgroundColor: dt.color || undefined }} />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dt.color || undefined }} />
               <span>{dt.label} (<span className="tabular-nums tracking-tight">{count}</span>)</span>
             </div>
           );
         })}
-        <div className="ml-auto text-[12px] font-black px-2.5 py-0.5 rounded-none border bg-[#121212] border-[#2d2d2d] text-slate-300 tabular-nums tracking-tight">
+        <div className="ml-auto text-[12px] font-black px-3 py-0.5 rounded-full border bg-[#121212] border-neutral-800 text-slate-300 tabular-nums tracking-tight">
           {daysInMonth} วัน
         </div>
       </div>

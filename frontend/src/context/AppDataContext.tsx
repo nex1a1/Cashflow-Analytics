@@ -87,12 +87,12 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
   // 4. Data Loading for Period
   const [isFetchingPeriod, setIsFetchingPeriod] = useState<boolean>(false);
-  const loadPeriodData = useCallback(async (period: string) => {
+  const loadPeriodData = useCallback(async (period: string, excludeFuture?: boolean) => {
     setIsFetchingPeriod(true);
     const { startDate, endDate, fetchStartDate } = getPeriodDateRange(period);
     try {
       await Promise.all([
-        loadAnalytics(startDate, endDate),
+        loadAnalytics(startDate, endDate, excludeFuture),
         loadData(fetchStartDate || startDate, endDate)
       ]);
     } catch (err) {

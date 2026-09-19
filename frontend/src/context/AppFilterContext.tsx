@@ -74,10 +74,10 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     clearFilters,
   } = useFilters({ transactions, categories, masterPeriods, excludeFuture });
 
-  // Fetch data whenever filterPeriod changes
+  // Fetch data whenever filterPeriod or excludeFuture changes
   useEffect(() => {
-    loadPeriodData(filterPeriod);
-  }, [filterPeriod, loadPeriodData]);
+    loadPeriodData(filterPeriod, excludeFuture);
+  }, [filterPeriod, excludeFuture, loadPeriodData]);
 
   // Document Title Synchronization
   useEffect(() => {

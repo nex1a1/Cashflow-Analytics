@@ -59,7 +59,7 @@ const CategoryRow = memo(({
           type="button"
           onClick={() => onMove(cat.id, 'UP')}
           disabled={isFirst}
-          className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
+          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
         >
           <ChevronUp className="w-4 h-4" />
         </button>
@@ -67,7 +67,7 @@ const CategoryRow = memo(({
           type="button"
           onClick={() => onMove(cat.id, 'DOWN')}
           disabled={isLast}
-          className="p-0.5 disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
+          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-[#303030]"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
