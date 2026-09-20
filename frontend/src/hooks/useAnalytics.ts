@@ -213,17 +213,12 @@ function calculateForecastingDetails({
     runningSpend += (dailySumMap && dailySumMap[iso]) || 0;
     actualDailySeries.push(runningSpend);
   }
-  // Pin the final point to the same spend-to-date figure used everywhere else in this panel.
-  if (actualDailySeries.length > 0) {
-    actualDailySeries[actualDailySeries.length - 1] = fixedCommitment + dailyLivingUpToToday;
-  }
-
   const projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
   const projectedSurplus = totals.income - projectedExpense;
   const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
 
   const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
-  const daysToBudget = Math.max(1, lastDayOfMonth - currentDay + 1);
+  const daysToBudget = remainingDays;
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
   let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };

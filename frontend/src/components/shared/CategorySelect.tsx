@@ -254,6 +254,7 @@ export default function CategorySelect({
 
     if (e.key === 'Escape') {
       e.preventDefault();
+      e.stopPropagation();
       handleClose();
       return;
     }

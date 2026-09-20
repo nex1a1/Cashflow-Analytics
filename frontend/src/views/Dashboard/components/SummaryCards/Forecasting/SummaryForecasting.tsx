@@ -36,8 +36,9 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
   const paceStatus  = details.paceStatus  || { label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
   const eomStatus   = details.eomStatus   || { label: 'โซนปลอดภัยสูง', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
 
-  const headroom     = safeToSpend - actualDailyVariableAvg;
-  const safePaceRatio = safeToSpend > 0 ? Math.min(100, (actualDailyVariableAvg / safeToSpend) * 100) : 100;
+  const headroom            = safeToSpend - actualDailyVariableAvg;
+  const actualSafePaceRatio = safeToSpend > 0 ? (actualDailyVariableAvg / safeToSpend) * 100 : 100;
+  const safePaceBarWidth    = Math.min(100, Math.max(0, actualSafePaceRatio));
 
   // Stacked proportions
   const totalProj  = Math.max(1, projectedExpense);
@@ -195,11 +196,11 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
               <div className="h-1.5 w-full bg-neutral-900 overflow-hidden relative border border-neutral-800">
                 <div
                   className={`h-full ${headroom >= 0 ? 'bg-emerald-400' : 'bg-[#da291c]'}`}
-                  style={{ width: `${Math.min(100, safePaceRatio)}%` }}
+                  style={{ width: `${safePaceBarWidth}%` }}
                 />
               </div>
               <div className="flex justify-between text-[9px] font-mono text-neutral-400">
-                <span>อัตราใช้จริง: {safePaceRatio.toFixed(0)}% ของเพดาน</span>
+                <span>อัตราใช้จริง: {actualSafePaceRatio.toFixed(0)}% ของเพดาน</span>
                 <span>เหลืออีก {remainingDays} วัน</span>
               </div>
             </div>

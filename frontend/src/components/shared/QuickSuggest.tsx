@@ -89,6 +89,9 @@ function QuickSuggest({
   // Default limitCount to defaultLimit
   const [limitCount, setLimitCount] = useState(String(defaultLimit));
 
+  // Amount range / sort / limit are secondary filters, collapsed by default to reduce controls visible at once
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+
   // Sync limitCount if defaultLimit changes
   useEffect(() => {
     setLimitCount(String(defaultLimit));
@@ -137,6 +140,9 @@ function QuickSuggest({
     if (limitCount !== String(defaultLimit)) count++;
     return count;
   }, [selectedGroup, selectedCatIds, allocationFilter, amountFilter, sortBy, limitCount, formType, defaultLimit]);
+
+  // Keep an active secondary filter visible even if the "more filters" section is collapsed
+  const hasSecondaryFilterActive = amountFilter !== 'ALL' || sortBy !== 'frequent' || limitCount !== String(defaultLimit);
 
   // Filter Categories by Form Type
   const activeCategories = useMemo(() => {
@@ -724,62 +730,76 @@ function QuickSuggest({
                 </div>
               )}
 
-              {/* Amount Range & Sort Order (2-Column Compact Row) */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className={tokens.label}>ช่วงจำนวนเงิน</span>
-                  <select
-                    value={amountFilter}
-                    onChange={e => setAmountFilter(e.target.value)}
-                    className={tokens.select}
-                  >
-                    <option value="ALL">ทั้งหมด (ทุกช่วงราคา)</option>
-                    <option value="under100">&lt; 100 ฿</option>
-                    <option value="100to500">100 - 500 ฿</option>
-                    <option value="500to2000">500 - 2,000 ฿</option>
-                    <option value="over2000">&gt; 2,000 ฿</option>
-                  </select>
-                </div>
+              {/* More Filters Toggle (Amount Range / Sort / Limit are secondary, collapsed by default) */}
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters(v => !v)}
+                className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 py-1 cursor-pointer"
+              >
+                <span>ตัวเลือกเพิ่มเติม (ช่วงราคา, การเรียง, จำนวน)</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${showMoreFilters || hasSecondaryFilterActive ? 'rotate-180' : ''}`} />
+              </button>
 
-                <div>
-                  <span className={tokens.label}>เรียงลำดับ</span>
-                  <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value)}
-                    className={tokens.select}
-                  >
-                    <option value="frequent">🔥 ยอดนิยม (ความถี่)</option>
-                    <option value="recent">🕒 ล่าสุด (วันที่)</option>
-                    <option value="amountDesc">💸 แพง ➔ ถูก</option>
-                    <option value="amountAsc">🪙 ถูก ➔ แพง</option>
-                    <option value="alphabetical">🔤 ตามตัวอักษร</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Items Display Limit (10, 20, 30, ทั้งหมด) */}
-              <div>
-                <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
-                <div className="grid grid-cols-4 gap-1 bg-[#121212] border border-[#262626] p-0.5">
-                  {limitOptions.map(opt => {
-                    const isActive = limitCount === opt.val;
-                    return (
-                      <button
-                        key={opt.val}
-                        type="button"
-                        onClick={() => setLimitCount(opt.val)}
-                        className={`py-1 text-[10px] font-bold text-center border transition-all cursor-pointer rounded-none ${
-                          isActive
-                            ? 'border-[#da291c] bg-[#da291c]/20 text-white font-black'
-                            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#202020]'
-                        }`}
+              {(showMoreFilters || hasSecondaryFilterActive) && (
+                <>
+                  {/* Amount Range & Sort Order (2-Column Compact Row) */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className={tokens.label}>ช่วงจำนวนเงิน</span>
+                      <select
+                        value={amountFilter}
+                        onChange={e => setAmountFilter(e.target.value)}
+                        className={tokens.select}
                       >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                        <option value="ALL">ทั้งหมด (ทุกช่วงราคา)</option>
+                        <option value="under100">&lt; 100 ฿</option>
+                        <option value="100to500">100 - 500 ฿</option>
+                        <option value="500to2000">500 - 2,000 ฿</option>
+                        <option value="over2000">&gt; 2,000 ฿</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <span className={tokens.label}>เรียงลำดับ</span>
+                      <select
+                        value={sortBy}
+                        onChange={e => setSortBy(e.target.value)}
+                        className={tokens.select}
+                      >
+                        <option value="frequent">🔥 ยอดนิยม (ความถี่)</option>
+                        <option value="recent">🕒 ล่าสุด (วันที่)</option>
+                        <option value="amountDesc">💸 แพง ➔ ถูก</option>
+                        <option value="amountAsc">🪙 ถูก ➔ แพง</option>
+                        <option value="alphabetical">🔤 ตามตัวอักษร</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Items Display Limit (10, 20, 30, ทั้งหมด) */}
+                  <div>
+                    <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
+                    <div className="grid grid-cols-4 gap-1 bg-[#121212] border border-[#262626] p-0.5">
+                      {limitOptions.map(opt => {
+                        const isActive = limitCount === opt.val;
+                        return (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() => setLimitCount(opt.val)}
+                            className={`py-1 text-[10px] font-bold text-center border transition-all cursor-pointer rounded-none ${
+                              isActive
+                                ? 'border-[#da291c] bg-[#da291c]/20 text-white font-black'
+                                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#202020]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Bottom Action Bar */}

@@ -80,6 +80,7 @@ export default function DayDetailModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [suggCatFilter, setSuggCatFilter]     = useState('ALL');
   const [currentFormType, setCurrentFormType] = useState('expense');
+  const [sortBy, setSortBy] = useState<'category' | 'amount'>('category');
 
   const formMethodsRef = useRef<any>(null);
 
@@ -303,6 +304,7 @@ export default function DayDetailModal({
                     dayTypeConfig={dayTypeConfig}
                     dateStr={activeDateStr}
                     size="xs"
+                    topOffset={44}
                   />
                 ) : currentDayType && (
                   <span
@@ -344,14 +346,17 @@ export default function DayDetailModal({
             </div>
           </div>
 
-          <TransactionList 
+          <TransactionList
             dayTx={dayTx}
             catMap={catMap}
             confirmDeleteId={confirmDeleteId}
             handleDelete={handleDelete}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
           />
 
-          <DailyForm 
+          <DailyForm
+            key={activeDateStr}
             onSubmitItem={handleSave}
             categories={categories}
             cashflowGroups={cashflowGroups}

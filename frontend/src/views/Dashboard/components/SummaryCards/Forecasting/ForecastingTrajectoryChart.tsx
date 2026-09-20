@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatAmount } from '@/utils/formatters';
 
 interface TrajectoryChartProps {
   currentDay: number;
@@ -23,7 +23,9 @@ export const ForecastingTrajectoryChart = memo(({
   projectedSurplus,
   actualDailySeries,
 }: TrajectoryChartProps) => {
-  const spentToDate = fixedTotal + variableUpToToday;
+  const spentToDate = actualDailySeries && actualDailySeries.length > 0
+    ? actualDailySeries[actualDailySeries.length - 1]
+    : (fixedTotal + variableUpToToday);
   const ceiling = Math.max(1, maxAllowedExpense);
   const totalDays = Math.max(1, lastDayOfMonth);
   const curDayClamped = Math.max(1, Math.min(currentDay, totalDays));
@@ -33,6 +35,8 @@ export const ForecastingTrajectoryChart = memo(({
   // non-uniformly to fill wide cards, distorting strokes/text — see bug report.
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewW, setViewW] = useState(800);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -46,7 +50,7 @@ export const ForecastingTrajectoryChart = memo(({
 
   // Chart dimensions inside SVG viewBox
   const viewH = 202;
-  const padL = 48;
+  const padL = 54;
   const padR = 136;
   const padT = 20;
   const padB = 26;
@@ -103,6 +107,102 @@ export const ForecastingTrajectoryChart = memo(({
   const pillY = Math.max(padT + 2, Math.min(rawPillY, padT + plotH - pillH - 2));
   const clampedPillX = Math.max(padL + pillW / 2, Math.min(xEOM - pillW / 2, xToday));
 
+  // Mid-axis day ticks (5, 10, 15…) — skipped near the edges and near the today marker to avoid label collision
+  const tickStep = totalDays > 20 ? 5 : totalDays > 10 ? 2 : 1;
+  const dayTicks: number[] = [];
+  for (let d = tickStep; d < totalDays; d += tickStep) dayTicks.push(d);
+
+  // Data-driven vertical grid — one faint hairline per day
+  const vGridDays: number[] = [];
+  for (let d = 1; d < totalDays; d++) vGridDays.push(d);
+
+  // Data-driven horizontal grid — quarter marks of the budget ceiling
+  const hGridFractions = [0.25, 0.5, 0.75];
+
+  // Interactive Hover Calculations
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const svgX = ((e.clientX - rect.left) / rect.width) * viewW;
+    if (svgX < padL - 6 || svgX > xEOM + 6) {
+      if (hoveredDay !== null) setHoveredDay(null);
+      return;
+    }
+    const ratio = Math.max(0, Math.min(1, (svgX - padL) / plotW));
+    const day = Math.max(1, Math.min(totalDays, Math.round(ratio * totalDays)));
+    if (day !== hoveredDay) {
+      setHoveredDay(day);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hoveredDay !== null) setHoveredDay(null);
+  };
+
+  let hoverData: {
+    day: number;
+    x: number;
+    y: number;
+    cumulative: number;
+    dailyAmount: number;
+    isFuture: boolean;
+    isToday: boolean;
+    pctOfCeiling: number;
+  } | null = null;
+
+  if (hoveredDay !== null) {
+    const day = hoveredDay;
+    const isToday = day === curDayClamped;
+    const isFuture = day > curDayClamped;
+    let cumulative = 0;
+    let dailyAmount = 0;
+
+    if (!isFuture) {
+      cumulative = actualDailySeries && actualDailySeries.length >= day
+        ? actualDailySeries[day - 1]
+        : (day === curDayClamped ? spentToDate : 0);
+      const prevCumulative = day > 1 && actualDailySeries && actualDailySeries.length >= day - 1
+        ? actualDailySeries[day - 2]
+        : 0;
+      dailyAmount = Math.max(0, cumulative - prevCumulative);
+    } else {
+      const remainingSpan = Math.max(1, totalDays - curDayClamped);
+      const futureProgress = (day - curDayClamped) / remainingSpan;
+      cumulative = spentToDate + (projectedExpense - spentToDate) * futureProgress;
+      dailyAmount = (projectedExpense - spentToDate) / remainingSpan;
+    }
+
+    const x = getX(day);
+    const y = getY(cumulative);
+    const pctOfCeiling = ceiling > 0 ? (cumulative / ceiling) * 100 : 0;
+
+    hoverData = {
+      day,
+      x,
+      y,
+      cumulative,
+      dailyAmount,
+      isFuture,
+      isToday,
+      pctOfCeiling,
+    };
+  }
+
+  let tooltipX = 0;
+  let tooltipY = 0;
+  const tipW = 192;
+  const tipH = 52;
+
+  if (hoverData) {
+    if (hoverData.x + tipW + 14 > viewW) {
+      tooltipX = hoverData.x - tipW - 12;
+    } else {
+      tooltipX = hoverData.x + 12;
+    }
+    tooltipX = Math.max(padL + 2, Math.min(viewW - tipW - 8, tooltipX));
+    tooltipY = Math.max(padT + 2, Math.min(hoverData.y - tipH / 2, padT + plotH - tipH - 2));
+  }
+
   return (
     <div className="relative w-full bg-[#121212] border-b border-[#2d2d2d] select-none">
       {/* Trajectory Legend — colors are decoded here once; the numbers themselves live on the chart's own waypoint badges and the pods below, not repeated in this row. */}
@@ -134,8 +234,10 @@ export const ForecastingTrajectoryChart = memo(({
       <div ref={containerRef} className="w-full h-[202px] relative px-1">
         <svg
           viewBox={`0 0 ${viewW} ${viewH}`}
-          className="w-full h-full overflow-visible"
+          className="w-full h-full overflow-visible cursor-crosshair"
           preserveAspectRatio="none"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
           <defs>
             <linearGradient id="forecastActualAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -147,7 +249,135 @@ export const ForecastingTrajectoryChart = memo(({
               <stop offset="0%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity={isSurplus ? "0.22" : "0.28"} />
               <stop offset="100%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity="0.03" />
             </linearGradient>
+
+            <filter id="tooltipShadow" x="-10%" y="-10%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000000" floodOpacity="0.75" />
+            </filter>
           </defs>
+
+          {/* 0a. Vertical Grid — faint line per date interval (day 5, 10, 15…) plus Today */}
+          {vGridDays.map((d) => (
+            <line
+              key={`vgrid-${d}`}
+              x1={getX(d)}
+              y1={padT}
+              x2={getX(d)}
+              y2={padT + plotH}
+              stroke="#2d2d2d"
+              strokeWidth="1"
+            />
+          ))}
+
+          {/* 0b. Horizontal Grid — quarter marks of the budget ceiling (25% / 50% / 75%) */}
+          {hGridFractions.map((f) => {
+            const y = getY(ceiling * f);
+            const isSafeRight = Math.abs(y - ceilLabelY) >= 14 && Math.abs(y - eomLabelY) >= 14;
+            return (
+              <g key={`hgrid-${f}`}>
+                <line
+                  x1={padL}
+                  y1={y}
+                  x2={xEOM}
+                  y2={y}
+                  stroke="#2d2d2d"
+                  strokeWidth="1"
+                />
+                {/* Left Y-axis tick and amount */}
+                <line
+                  x1={padL - 3}
+                  y1={y}
+                  x2={padL}
+                  y2={y}
+                  stroke="#3d3d3d"
+                  strokeWidth="1"
+                />
+                <text
+                  x={padL - 6}
+                  y={y + 3}
+                  fill="#666666"
+                  fontSize="8"
+                  fontFamily="monospace"
+                  textAnchor="end"
+                >
+                  ฿{formatAmount(Math.round(ceiling * f))}
+                </text>
+                {/* Right side guideline */}
+                {isSafeRight && (
+                  <g>
+                    <line
+                      x1={xEOM}
+                      y1={y}
+                      x2={xEOM + 4}
+                      y2={y}
+                      stroke="#3d3d3d"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={xEOM + 7}
+                      y={y + 3}
+                      fill="#525252"
+                      fontSize="8"
+                      fontFamily="monospace"
+                    >
+                      {f * 100}%
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Left Y-axis tick and label for Ceiling line */}
+          <line
+            x1={padL - 3}
+            y1={yCeil}
+            x2={padL}
+            y2={yCeil}
+            stroke="#525252"
+            strokeWidth="1"
+          />
+          <text
+            x={padL - 6}
+            y={yCeil + 3}
+            fill="#a3a3a3"
+            fontSize="8"
+            fontFamily="monospace"
+            fontWeight="bold"
+            textAnchor="end"
+          >
+            ฿{formatAmount(Math.round(ceiling))}
+          </text>
+
+          {/* Left & Right Y-axis tick and label for 0 (Baseline) */}
+          <line
+            x1={padL - 3}
+            y1={padT + plotH}
+            x2={padL}
+            y2={padT + plotH}
+            stroke="#3d3d3d"
+            strokeWidth="1"
+          />
+          <text
+            x={padL - 6}
+            y={padT + plotH + 3}
+            fill="#525252"
+            fontSize="8"
+            fontFamily="monospace"
+            textAnchor="end"
+          >
+            ฿0
+          </text>
+          {Math.abs((padT + plotH) - ceilLabelY) >= 14 && Math.abs((padT + plotH) - eomLabelY) >= 14 && (
+            <text
+              x={xEOM + 7}
+              y={padT + plotH + 3}
+              fill="#444444"
+              fontSize="8"
+              fontFamily="monospace"
+            >
+              0%
+            </text>
+          )}
 
           {/* 1. Surplus / Deficit Buffer Area */}
           <path d={surplusPolygon} fill="url(#forecastSurplusGrad)" />
@@ -266,6 +496,130 @@ export const ForecastingTrajectoryChart = memo(({
           <text x={xEOM} y={padT + plotH + 12} fill="#737373" fontSize="8.5" fontFamily="monospace" textAnchor="end">
             Day {totalDays}
           </text>
+
+          {/* 10b. Mid-axis Day Number Ticks (5, 10, 15…) */}
+          {dayTicks.map((d) => {
+            const x = getX(d);
+            if (x < padL + 16 || x > xEOM - 16) return null;
+            if (Math.abs(x - xToday) < 22) return null;
+            return (
+              <g key={d}>
+                <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke="#525252" strokeWidth="1" />
+                <text x={x} y={padT + plotH + 12} fill="#5e5e5e" fontSize="8" fontFamily="monospace" textAnchor="middle">
+                  {d}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* 11. Interactive Hover Crosshair & Tooltip HUD */}
+          {hoverData && (
+            <g className="pointer-events-none select-none">
+              {/* Vertical Crosshair Line */}
+              <line
+                x1={hoverData.x}
+                y1={padT}
+                x2={hoverData.x}
+                y2={padT + plotH}
+                stroke={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                strokeWidth="1"
+                strokeDasharray="2 2"
+                opacity="0.8"
+              />
+
+              {/* Node on Curve */}
+              <circle
+                cx={hoverData.x}
+                cy={hoverData.y}
+                r="5.5"
+                fill={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                fillOpacity="0.35"
+              />
+              <circle
+                cx={hoverData.x}
+                cy={hoverData.y}
+                r="2.5"
+                fill={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+              />
+
+              {/* Tooltip HUD Card */}
+              <g transform={`translate(${tooltipX}, ${tooltipY})`}>
+                <rect
+                  x="0"
+                  y="0"
+                  width={tipW}
+                  height={tipH}
+                  fill="#1c1c1c"
+                  stroke={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                  strokeWidth="1.2"
+                  rx="3"
+                  filter="url(#tooltipShadow)"
+                />
+                {/* Hairline Divider */}
+                <line
+                  x1="8"
+                  y1="26"
+                  x2={tipW - 8}
+                  y2="26"
+                  stroke="#2d2d2d"
+                  strokeWidth="0.8"
+                />
+                {/* Row 1: Day & Daily Spend */}
+                <text
+                  x="8"
+                  y="17"
+                  fill="#ffffff"
+                  fontSize="11"
+                  fontFamily="monospace"
+                  fontWeight="bold"
+                >
+                  Day {hoverData.day}
+                  <tspan fill={hoverData.isToday ? '#f43f5e' : hoverData.isFuture ? '#888888' : '#737373'} fontSize="9.5" fontWeight="normal">
+                    {hoverData.isToday ? ' (วันนี้)' : hoverData.isFuture ? ' (คาดการณ์)' : ''}
+                  </tspan>
+                </text>
+                <text
+                  x={tipW - 8}
+                  y="17"
+                  fill={hoverData.isFuture ? '#a3a3a3' : hoverData.dailyAmount > 0 ? '#f43f5e' : '#737373'}
+                  fontSize="10.5"
+                  fontFamily="monospace"
+                  fontWeight="bold"
+                  textAnchor="end"
+                >
+                  {hoverData.isFuture
+                    ? `วันละ ฿${formatAmount(Math.round(hoverData.dailyAmount))}`
+                    : hoverData.dailyAmount > 0
+                      ? `+฿${formatAmount(Math.round(hoverData.dailyAmount))}`
+                      : '฿0'}
+                </text>
+
+                {/* Row 2: Cumulative Spend & % of ceiling */}
+                <text
+                  x="8"
+                  y="42"
+                  fill="#a3a3a3"
+                  fontSize="10"
+                  fontFamily="monospace"
+                >
+                  สะสม: <tspan fill="#ffffff" fontWeight="bold">฿{formatMoney(hoverData.cumulative)}</tspan>
+                </text>
+                <text
+                  x={tipW - 8}
+                  y="42"
+                  fill="#888888"
+                  fontSize="9.5"
+                  fontFamily="monospace"
+                  textAnchor="end"
+                >
+                  <tspan fill={hoverData.pctOfCeiling > 100 ? '#da291c' : '#a3a3a3'} fontWeight="bold">
+                    {hoverData.pctOfCeiling.toFixed(0)}%
+                  </tspan>{' '}
+                  เพดาน
+                </text>
+              </g>
+            </g>
+          )}
         </svg>
       </div>
     </div>

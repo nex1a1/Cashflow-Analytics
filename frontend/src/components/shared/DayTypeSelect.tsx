@@ -12,6 +12,8 @@ export interface DayTypeSelectProps {
   disabled?: boolean;
   className?: string;
   size?: 'xs' | 'sm';
+  /** Extra vertical gap below the trigger when opening downward, for callers with content directly beneath the trigger (default 4). */
+  topOffset?: number;
 }
 
 export default function DayTypeSelect({
@@ -21,7 +23,8 @@ export default function DayTypeSelect({
   dateStr,
   disabled = false,
   className = '',
-  size = 'xs'
+  size = 'xs',
+  topOffset = 4
 }: DayTypeSelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -86,11 +89,11 @@ export default function DayTypeSelect({
     if (openUpwards) {
       bottom = window.innerHeight - rect.top + 4;
     } else {
-      top = rect.bottom + 4;
+      top = rect.bottom + topOffset;
     }
 
     setCoords({ top, bottom, left, width: popoverWidth, openUpwards });
-  }, [dayTypeConfig.length]);
+  }, [dayTypeConfig.length, topOffset]);
 
   // Toggle open
   const handleToggle = useCallback((e: React.MouseEvent) => {
