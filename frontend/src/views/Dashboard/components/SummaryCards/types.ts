@@ -60,6 +60,36 @@ export interface ForecastingDetails {
   eomStatus: EomStatus;
 }
 
+export interface GhostPacerStatus {
+  code: 'LEAD' | 'TRAIL' | 'TIED';
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+export interface GhostPacerDetails {
+  hasData: boolean;
+  currentPeriod: string;
+  prevPeriod: string;
+  currentDay: number;
+  lastDayOfMonth: number;
+  currentDailySeries: number[];
+  prevDailySeries: number[];
+  benchmarkDailySeries: number[];
+  currentSpendToDate: number;
+  ghostSpendToDate: number;
+  benchmarkSpendToDate: number;
+  deltaVsGhost: number;
+  deltaVsGhostPct: number;
+  deltaVsBenchmark: number;
+  deltaVsBenchmarkPct: number;
+  projectedExpense: number;
+  ghostTotalExpense: number;
+  deltaEom: number;
+  paceStatus: GhostPacerStatus;
+}
+
 export interface SummaryAnalytics {
   // Vitals
   totalIncome: number;
@@ -99,6 +129,8 @@ export interface SummaryAnalytics {
   safeToSpend: number;
   projectedSurplus: number;
   forecastingDetails?: ForecastingDetails;
+  ghostPacerDetails?: GhostPacerDetails;
+  isSingleMonthView?: boolean;
 }
 
 export interface BreakdownEntry {

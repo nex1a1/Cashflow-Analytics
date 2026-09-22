@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Trash2, Wallet, Coins, Inbox, Tag, ArrowDownWideNarrow } from 'lucide-react';
+import { Trash2, Wallet, Coins, Inbox } from 'lucide-react';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 
@@ -21,8 +21,8 @@ export interface TransactionListProps {
   catMap: Record<string, any>;
   confirmDeleteId: string | null;
   handleDelete: (id: string) => void;
-  sortBy: 'category' | 'amount';
-  setSortBy: (sortBy: 'category' | 'amount') => void;
+  sortBy?: 'category' | 'amount';
+  setSortBy?: (sortBy: 'category' | 'amount') => void;
 }
 
 const TxRow = memo(({ tx, catObj, confirmDeleteId, onDeleteClick }: TxRowProps) => {
@@ -108,8 +108,7 @@ export default function TransactionList({
   catMap,
   confirmDeleteId,
   handleDelete,
-  sortBy,
-  setSortBy
+  sortBy = 'category'
 }: TransactionListProps) {
   const sortedTx = sortBy === 'amount'
     ? [...dayTx].sort((a, b) => (Number.parseFloat(String(b.amount)) || 0) - (Number.parseFloat(String(a.amount)) || 0))
@@ -122,42 +121,8 @@ export default function TransactionList({
     textMuted: 'text-slate-400',
   };
 
-  const sortBtnCls = (mode: 'category' | 'amount') =>
-    `flex items-center gap-1 px-1.5 py-1 rounded-none border transition-colors ${
-      sortBy === mode
-        ? 'bg-[#da291c]/15 border-[#da291c]/40 text-[#f87171]'
-        : 'border-[#303030] text-slate-500 hover:text-slate-300 hover:border-[#404040]'
-    }`;
-
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5" style={{ scrollbarWidth: 'thin' }}>
-      {dayTx.length > 0 && (
-        <div className="flex items-center gap-1.5 pb-2 mb-1 border-b border-[#2d2d2d]/60">
-          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">เรียงตาม</span>
-          <button
-            type="button"
-            onClick={() => setSortBy('category')}
-            title="เรียงตามหมวดหมู่"
-            aria-label="เรียงตามหมวดหมู่"
-            aria-pressed={sortBy === 'category'}
-            className={sortBtnCls('category')}
-          >
-            <Tag className="w-3 h-3 shrink-0" />
-            <span className="text-[9px] font-medium">หมวดหมู่</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSortBy('amount')}
-            title="เรียงตามจำนวนเงิน"
-            aria-label="เรียงตามจำนวนเงิน"
-            aria-pressed={sortBy === 'amount'}
-            className={sortBtnCls('amount')}
-          >
-            <ArrowDownWideNarrow className="w-3 h-3 shrink-0" />
-            <span className="text-[9px] font-medium">จำนวนเงิน</span>
-          </button>
-        </div>
-      )}
       {dayTx.length === 0 && (
         <div className={`h-full flex flex-col items-center justify-center ${tokens.textMuted} opacity-80`}>
           <Inbox className="w-12 h-12 mb-3 opacity-50" />

@@ -14,17 +14,26 @@ import { DisplayMode, ExpenseProportionHeaderProps, SortMode } from './types';
 interface ModeSwitcherProps {
   displayMode: DisplayMode;
   onChangeMode: (mode: DisplayMode) => void;
+  evolutionEligible: boolean;
+  evolutionLabel: string;
 }
 
-const MODES: Array<{ id: DisplayMode; label: string }> = [
-  { id: 'category', label: 'รายหมวดหมู่' },
-  { id: 'allocation', label: 'สัดส่วน 50/30/20' },
-];
+function buildModes(evolutionEligible: boolean, evolutionLabel: string): Array<{ id: DisplayMode; label: string }> {
+  const modes: Array<{ id: DisplayMode; label: string }> = [
+    { id: 'category', label: 'รายหมวดหมู่' },
+    { id: 'allocation', label: 'สัดส่วน 50/30/20' },
+  ];
+  if (evolutionEligible) {
+    modes.push({ id: 'evolution', label: evolutionLabel || 'แนวโน้ม 50/30/20' });
+  }
+  return modes;
+}
 
-function ModeSwitcher({ displayMode, onChangeMode }: ModeSwitcherProps) {
+function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionLabel }: ModeSwitcherProps) {
+  const modes = buildModes(evolutionEligible, evolutionLabel);
   return (
     <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
-      {MODES.map(m => (
+      {modes.map(m => (
         <button
           key={m.id}
           onClick={() => onChangeMode(m.id)}
@@ -146,8 +155,10 @@ export function ExpenseProportionHeader({
   showSkeleton,
   itemCount,
   hasNoIncomeData,
+  evolutionEligible,
+  evolutionLabel,
 }: ExpenseProportionHeaderProps) {
-  const countLabel = isAllocationMode ? 'ส่วน' : 'หมวดหมู่';
+  const countLabel = isAllocationMode ? 'ส่วน' : displayMode === 'evolution' ? 'เดือน' : 'หมวดหมู่';
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
 
   return (
@@ -159,9 +170,14 @@ export function ExpenseProportionHeader({
           สัดส่วนรายจ่าย (Proportions)
         </span>
 
-        <ModeSwitcher displayMode={displayMode} onChangeMode={onChangeMode} />
+        <ModeSwitcher
+          displayMode={displayMode}
+          onChangeMode={onChangeMode}
+          evolutionEligible={evolutionEligible}
+          evolutionLabel={evolutionLabel}
+        />
 
-        {!isAllocationMode && (
+        {displayMode === 'category' && (
           <SortSwitcher sortMode={sortMode} onToggleSort={onToggleSort} />
         )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown, Tag, ArrowDownWideNarrow } from 'lucide-react';
 import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../utils/formatters';
 import { useToast } from '../../../context/ToastContext';
 import DailyForm from './DailyForm';
@@ -231,8 +231,8 @@ export default function DayDetailModal({
         </button>
 
         <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-[#1c1c1c]`}>
-          <div className={`flex items-start justify-between px-5 py-3.5 border-b ${tokens.border} shrink-0 pr-12`}>
-            <div>
+          <div className={`flex items-start justify-between gap-3 px-5 py-3.5 border-b ${tokens.border} shrink-0 pr-12 md:pr-5`}>
+            <div className="min-w-0">
               {/* Header Date Navigation Bar */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {/* Previous Day Button */}
@@ -344,6 +344,43 @@ export default function DayDetailModal({
                 )}
               </div>
             </div>
+
+            {/* Sort Controls */}
+            {dayTx.length > 0 && (
+              <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mr-0.5 select-none">เรียงตาม</span>
+                <button
+                  type="button"
+                  onClick={() => setSortBy('category')}
+                  title="เรียงตามหมวดหมู่"
+                  aria-label="เรียงตามหมวดหมู่"
+                  aria-pressed={sortBy === 'category'}
+                  className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[9px] font-medium transition-colors cursor-pointer ${
+                    sortBy === 'category'
+                      ? 'bg-[#da291c]/15 border-[#da291c]/40 text-[#f87171]'
+                      : 'border-[#3e3e3e] bg-[#141414] text-slate-400 hover:text-slate-200 hover:border-[#da291c]'
+                  }`}
+                >
+                  <Tag className="w-3 h-3 shrink-0" />
+                  <span>หมวดหมู่</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSortBy('amount')}
+                  title="เรียงตามจำนวนเงิน"
+                  aria-label="เรียงตามจำนวนเงิน"
+                  aria-pressed={sortBy === 'amount'}
+                  className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[9px] font-medium transition-colors cursor-pointer ${
+                    sortBy === 'amount'
+                      ? 'bg-[#da291c]/15 border-[#da291c]/40 text-[#f87171]'
+                      : 'border-[#3e3e3e] bg-[#141414] text-slate-400 hover:text-slate-200 hover:border-[#da291c]'
+                  }`}
+                >
+                  <ArrowDownWideNarrow className="w-3 h-3 shrink-0" />
+                  <span>จำนวนเงิน</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <TransactionList
@@ -352,7 +389,6 @@ export default function DayDetailModal({
             confirmDeleteId={confirmDeleteId}
             handleDelete={handleDelete}
             sortBy={sortBy}
-            setSortBy={setSortBy}
           />
 
           <DailyForm

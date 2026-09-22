@@ -1,6 +1,6 @@
 // src/views/Dashboard/components/ExpenseProportion/index.tsx
 import React, { useMemo, useState, useCallback } from 'react';
-import { Inbox } from 'lucide-react';
+import { Inbox, TrendingUp } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
 import { getDoughnutChartOptions } from '@/utils/chartOptions';
 import { useDashboardContext } from '../../context/DashboardContext';
@@ -19,14 +19,28 @@ import {
 import { ExpenseProportionHeader } from './ExpenseProportionHeader';
 import { ExpenseProportionChart } from './ExpenseProportionChart';
 import { ExpenseProportionGrid } from './ExpenseProportionGrid';
+import { AllocationEvolutionChart } from './AllocationEvolutionChart';
+import type { AllocationEvolutionData } from '@/utils/allocationEvolutionHelpers';
 
 function ExpenseProportionEmpty() {
   return (
-    <div className="flex flex-col w-full items-center justify-center text-center opacity-60 p-10">
+    <div className="flex flex-col w-full h-full items-center justify-center text-center opacity-60 p-10">
       <Inbox className="w-10 h-10 mb-2 opacity-20" />
       <p className="text-sm font-bold uppercase tracking-widest">ไม่มีข้อมูลรายจ่าย</p>
       <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
         ลองเปลี่ยนเดือน หรือเพิ่มรายการรายจ่ายใหม่
+      </p>
+    </div>
+  );
+}
+
+function AllocationEvolutionEmpty() {
+  return (
+    <div className="flex flex-col w-full h-full items-center justify-center text-center opacity-60 p-10">
+      <TrendingUp className="w-10 h-10 mb-2 opacity-20" />
+      <p className="text-sm font-bold uppercase tracking-widest">ยังไม่มีข้อมูลย้อนหลังพอ</p>
+      <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
+        บันทึกรายการต่อเนื่องอย่างน้อย 2 เดือนเพื่อดูแนวโน้ม 50/30/20
       </p>
     </div>
   );
@@ -65,16 +79,24 @@ export function ExpenseProportion() {
   const [isSliceHovered, setIsSliceHovered] = useState<boolean>(false);
   const [excludedGroupIds, setExcludedGroupIds] = useState<string[]>([]);
 
-  const { 
-    sortedCats = [] as CategoryItemData[], 
+  const {
+    sortedCats = [] as CategoryItemData[],
     chartTotal = 0,
     totalExpense = 0,
-    sortedAllocation = [] as AllocationItemData[], 
+    sortedAllocation = [] as AllocationItemData[],
     totalIncome = 0,
     netCashflow = 0,
+    allocationEvolution,
   } = analytics;
 
-  const isAllocationMode = displayMode === 'allocation';
+  const evolutionData = (allocationEvolution as AllocationEvolutionData | undefined) || { eligible: false, hasData: false, months: [], label: '' };
+
+  // Fall back to Category if the period filter changed underneath an active
+  // Evolution selection and it's no longer eligible (e.g. switched to a
+  // single month) — mirrors SummaryStrategic's effectiveTab pattern.
+  const effectiveDisplayMode: DisplayMode = (displayMode === 'evolution' && !evolutionData.eligible) ? 'category' : displayMode;
+  const isAllocationMode = effectiveDisplayMode === 'allocation';
+  const isEvolutionMode = effectiveDisplayMode === 'evolution';
 
   const toggleGroupExclusion = useCallback((groupId: string) => {
     setExcludedGroupIds(prev => 
@@ -136,7 +158,9 @@ export function ExpenseProportion() {
 
   const activeTotal = isAllocationMode ? allocationTotal : chartTotal;
 
-  const itemCount = activeItems.length;
+  const itemCount = isEvolutionMode
+    ? evolutionData.months.filter(m => m.total > 0).length
+    : activeItems.length;
 
   const handleChartMouseLeave = useCallback(() => {
     setIsSliceHovered(false);
@@ -186,17 +210,50 @@ export function ExpenseProportion() {
   }, [dm, activeItems]);
   
   const cardClass = "rounded-none border flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
-  const isEmpty = itemCount === 0 && !showSkeleton;
+  const isEmpty = !isEvolutionMode && itemCount === 0 && !showSkeleton;
   const hasNoIncomeData = isAllocationMode && totalIncome <= 0;
 
   const activeHoveredItem = (!isSliceHovered && hoveredIdx >= 0 && hoveredIdx < activeItems.length)
     ? activeItems[hoveredIdx]
     : null;
 
+  const categoryAllocationBody = isEmpty ? (
+    <ExpenseProportionEmpty />
+  ) : (
+    <div className="flex flex-row items-stretch h-full min-h-[196px]">
+      <ExpenseProportionChart
+        activeChartData={activeChartData}
+        options={options}
+        isAllocationMode={isAllocationMode}
+        activeTotal={activeTotal}
+        onMouseLeave={handleChartMouseLeave}
+        isSliceHovered={isSliceHovered}
+        hoveredItem={activeHoveredItem}
+        activeItems={activeItems}
+      />
+      <ExpenseProportionGrid
+        categoryItems={categoryActiveItems}
+        allocationItems={simulatedAllocation}
+        isAllocationMode={isAllocationMode}
+        hoveredIdx={hoveredIdx}
+        onHover={setHoveredIdx}
+        allocationTotal={allocationTotal}
+        excludedGroupIds={excludedGroupIds}
+        onToggleGroup={toggleGroupExclusion}
+      />
+    </div>
+  );
+
+  const evolutionBody = evolutionData.hasData ? (
+    <AllocationEvolutionChart months={evolutionData.months} />
+  ) : (
+    <AllocationEvolutionEmpty />
+  );
+
   return (
     <div className={cardClass}>
       <ExpenseProportionHeader
-        displayMode={displayMode}
+        displayMode={effectiveDisplayMode}
         onChangeMode={changeDisplayMode}
         sortMode={sortMode}
         onToggleSort={handleSortToggle}
@@ -207,35 +264,33 @@ export function ExpenseProportion() {
         showSkeleton={showSkeleton}
         itemCount={itemCount}
         hasNoIncomeData={hasNoIncomeData}
+        evolutionEligible={evolutionData.eligible}
+        evolutionLabel={evolutionData.label}
       />
 
       {showSkeleton ? (
         <ExpenseProportionSkeleton />
-      ) : isEmpty ? (
-        <ExpenseProportionEmpty />
-      ) : (
-        <div className="flex flex-row items-stretch min-h-[196px]">
-          <ExpenseProportionChart
-            activeChartData={activeChartData}
-            options={options}
-            isAllocationMode={isAllocationMode}
-            activeTotal={activeTotal}
-            onMouseLeave={handleChartMouseLeave}
-            isSliceHovered={isSliceHovered}
-            hoveredItem={activeHoveredItem}
-            activeItems={activeItems}
-          />
-          <ExpenseProportionGrid
-            categoryItems={categoryActiveItems}
-            allocationItems={simulatedAllocation}
-            isAllocationMode={isAllocationMode}
-            hoveredIdx={hoveredIdx}
-            onHover={setHoveredIdx}
-            allocationTotal={allocationTotal}
-            excludedGroupIds={excludedGroupIds}
-            onToggleGroup={toggleGroupExclusion}
-          />
+      ) : evolutionData.eligible ? (
+        // Both bodies mount at once, stacked in the same CSS grid cell
+        // ([grid-area:1/1]) like ExpenseProportionGrid's own Category/
+        // Allocation stack, so Evolution's height always matches whichever
+        // of the two is taller instead of resizing the card on switch.
+        <div className="grid flex-1">
+          <div
+            className={`[grid-area:1/1] ${isEvolutionMode ? 'invisible pointer-events-none' : ''}`}
+            aria-hidden={isEvolutionMode}
+          >
+            {categoryAllocationBody}
+          </div>
+          <div
+            className={`[grid-area:1/1] ${isEvolutionMode ? '' : 'invisible pointer-events-none'}`}
+            aria-hidden={!isEvolutionMode}
+          >
+            {evolutionBody}
+          </div>
         </div>
+      ) : (
+        categoryAllocationBody
       )}
     </div>
   );

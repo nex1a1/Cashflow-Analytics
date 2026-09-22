@@ -235,11 +235,11 @@ export const getPeriodDateRange = (period: string): PeriodDateRange => {
   let fetchStartDate = startDate;
 
   if (/^\d{4}-\d{2}$/.test(period)) {
-    // Single Month: YYYY-MM -> previous month start
+    // Single Month: YYYY-MM -> previous 3 months start (to support Ghost Pacer & benchmark)
     const [yStr, mStr] = period.split('-');
     const y = Number.parseInt(yStr, 10);
     const m = Number.parseInt(mStr, 10);
-    const prevDate = new Date(y, m - 2, 1);
+    const prevDate = new Date(y, m - 4, 1);
     fetchStartDate = toStr(prevDate);
   } else if (/^(\d{4})-Q([1-4])$/.test(period)) {
     // Quarter: YYYY-Q1..4 -> previous quarter start

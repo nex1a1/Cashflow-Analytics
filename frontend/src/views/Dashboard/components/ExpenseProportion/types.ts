@@ -1,6 +1,6 @@
 // src/views/Dashboard/components/ExpenseProportion/types.ts
 
-export type DisplayMode = 'category' | 'allocation';
+export type DisplayMode = 'category' | 'allocation' | 'evolution';
 
 export type SortMode = 'amount-desc' | 'amount-asc' | 'order-asc' | 'order-desc';
 
@@ -67,6 +67,8 @@ export interface ExpenseProportionHeaderProps {
   showSkeleton?: boolean;
   itemCount: number;
   hasNoIncomeData?: boolean;
+  evolutionEligible: boolean;
+  evolutionLabel: string;
 }
 
 export interface ExpenseProportionChartProps {

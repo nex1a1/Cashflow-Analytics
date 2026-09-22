@@ -6,11 +6,13 @@ import { StrategicFoodCard } from './StrategicFoodCard';
 import { StrategicDailyExpenseCard } from './StrategicDailyExpenseCard';
 import { StrategicVictoryCard } from './StrategicVictoryCard';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
+import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
 import type { SummaryAnalytics } from '../types';
 
 export const ANALYSIS_TABS = [
   { id: 'strategic', label: 'ภาพรวมกลยุทธ์' },
   { id: 'forecast', label: 'พยากรณ์สิ้นเดือน' },
+  { id: 'ghost', label: 'แข่งกับเดือนที่แล้ว' },
 ] as const;
 
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
@@ -44,13 +46,19 @@ const AnalysisTabHeader = ({
         </button>
       ))}
     </div>
-    {activeTab === 'strategic' ? (
+    {activeTab === 'strategic' && (
       <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
         ภาระคงที่ • พฤติกรรมใช้จ่าย • จังหวะรายวัน
       </span>
-    ) : (
+    )}
+    {activeTab === 'forecast' && (
       <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
         PROJECTION &amp; SAFE ZONE
+      </span>
+    )}
+    {activeTab === 'ghost' && (
+      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
+        MULTI-MONTH PACE RADAR
       </span>
     )}
   </div>
@@ -85,8 +93,14 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const rentPercentageNum = Number.parseFloat(String(rentPercentage)) || 0;
   const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
 
-  const visibleTabs = showForecasting ? ANALYSIS_TABS : ANALYSIS_TABS.filter(t => t.id !== 'forecast');
-  const effectiveTab: AnalysisTabId = activeTab === 'forecast' && !showForecasting ? 'strategic' : activeTab;
+  const isSingleMonthView = Boolean(analytics.isSingleMonthView);
+  const visibleTabs = ANALYSIS_TABS.filter(t => {
+    if (t.id === 'forecast') return showForecasting;
+    if (t.id === 'ghost') return isSingleMonthView;
+    return true;
+  });
+  const isTabAvailable = visibleTabs.some(t => t.id === activeTab);
+  const effectiveTab: AnalysisTabId = isTabAvailable ? activeTab : 'strategic';
 
   return (
     <div className="flex flex-col h-full">
@@ -167,9 +181,27 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
         </div>
       )}
 
-      {effectiveTab === 'forecast' && showForecasting && (
-        <div className="flex-1">
-          <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+      {(effectiveTab === 'forecast' || effectiveTab === 'ghost') && (
+        // Both tabs' bodies are mounted at once, stacked in the same CSS grid cell
+        // ([grid-area:1/1]) like ExpenseProportionGrid, so the container is always
+        // exactly as tall as the taller of the two — no height jump when switching.
+        <div className="flex-1 grid">
+          {showForecasting && (
+            <div
+              className={`[grid-area:1/1] ${effectiveTab === 'forecast' ? '' : 'invisible pointer-events-none'}`}
+              aria-hidden={effectiveTab !== 'forecast'}
+            >
+              <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+            </div>
+          )}
+          {isSingleMonthView && (
+            <div
+              className={`[grid-area:1/1] ${effectiveTab === 'ghost' ? '' : 'invisible pointer-events-none'}`}
+              aria-hidden={effectiveTab !== 'ghost'}
+            >
+              <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
+            </div>
+          )}
         </div>
       )}
     </div>

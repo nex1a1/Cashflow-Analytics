@@ -7,6 +7,8 @@ import {
   generateMainChartData, 
   calculateDayTypeCounts 
 } from '../utils/analyticsHelpers';
+import { calculateGhostPacerData } from '../utils/ghostPacerHelpers';
+import { calculateAllocationEvolution } from '../utils/allocationEvolutionHelpers';
 
 function resolveTransactionContext(t: any, catMapLookup: Record<string, any>, cashflowGroups: CashflowGroup[], fallbackExpId: string) {
   const amt = Number.parseFloat(t.amount) || 0;
@@ -96,8 +98,10 @@ function accumulateFilteredExpense(t: any, txContext: any, ym: string, isoDate: 
   monthlyCatMap[catId][ym] = (monthlyCatMap[catId][ym] || 0) + amt;
 
   allocTotals[aType] = (allocTotals[aType] || 0) + amt;
-  if (aType !== 'savings') {
+  if (dailyAllocMap[aType]) {
     dailyAllocMap[aType][isoDate] = (dailyAllocMap[aType][isoDate] || 0) + amt;
+  }
+  if (monthlyAllocMap[aType]) {
     monthlyAllocMap[aType][ym] = (monthlyAllocMap[aType][ym] || 0) + amt;
   }
 
@@ -343,7 +347,7 @@ function accumulateExpenseItem({ t, txContext, ym, isoDate, isFood, isRent, isSu
 
   if (isNeed) {
     totals.fixed += amt;
-  } else {
+  } else if (isWant) {
     totals.variable += amt;
   }
 
@@ -508,16 +512,20 @@ function buildAllocationBreakdown(
       .sort((a: any, b: any) => b.amount - a.amount);
   });
 
-  const netSavingsActual = netCashflow;
+  const explicitSavings = allocTotals.savings || 0;
+  const unspentSurplus = Math.max(0, netCashflow);
+  const totalSavingsActual = explicitSavings + unspentSurplus;
+
   const allocationItems = [
     { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: '#EF4444', icon: 'home', target: 50, groups: allocGroupsMap.need },
     { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: '#F59E0B', icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, netSavingsActual), color: '#10B981', icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
+    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, totalSavingsActual), color: '#10B981', icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
-  if (totals.income <= 0) {
-    allocationTotal = totals.expense + Math.max(0, netSavingsActual);
+  const totalAllocated = allocTotals.need + allocTotals.want + totalSavingsActual;
+  if (totals.income <= 0 || totals.income < totalAllocated) {
+    allocationTotal = totalAllocated;
   }
   const sortedAllocation = allocationItems.map((item: any) => ({
     ...item,
@@ -1040,6 +1048,35 @@ export default function useAnalytics({
       dailySumMap: state.globalDailySum,
     });
 
+    const ghostPacerDetails = calculateGhostPacerData({
+      globalDailySum: state.globalDailySum,
+      filterPeriod,
+      isCurrentMonth: windowMeta.isCurrentMonth,
+      filterYear: windowMeta.filterYear,
+      filterMonth: windowMeta.filterMonth,
+      projectedExpense,
+    });
+
+    const monthlyIncomeMap: Record<string, number> = {};
+    Object.entries(cashflowMap).forEach(([m, data]: [string, any]) => {
+      monthlyIncomeMap[m] = data.income || 0;
+    });
+
+    const currentYm = windowMeta.todayStr ? windowMeta.todayStr.slice(0, 7) : new Date().toISOString().slice(0, 7);
+    const rawPeriodMonths = Array.from(new Set(datesInPeriod.map((d: string) => d.slice(0, 7))));
+    const periodMonths = excludeFuture
+      ? rawPeriodMonths.filter(ym => ym <= currentYm)
+      : rawPeriodMonths;
+
+    const allocationEvolution = calculateAllocationEvolution(
+      state.monthlyAllocMap,
+      filterPeriod,
+      periodMonths,
+      monthlyIncomeMap,
+      excludeFuture,
+      currentYm
+    );
+
     const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
     const adjustedFoodDailyAvg = totals.food / Math.max(1, effectiveDays);
 
@@ -1052,6 +1089,7 @@ export default function useAnalytics({
       foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
       topWantCategories, topSubscriptionServices, pcts,
       showForecasting, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus,
+      ghostPacerDetails, allocationEvolution,
       adjustedDailyAvg, adjustedFoodDailyAvg,
       useBackendTotals,
     };
@@ -1107,6 +1145,8 @@ export default function useAnalytics({
       showForecasting: core.showForecasting, projectedExpense: core.projectedExpense,
       safeToSpend: core.safeToSpend, projectedSurplus: core.projectedSurplus,
       forecastingDetails: core.forecastingDetails,
+      ghostPacerDetails: core.ghostPacerDetails,
+      allocationEvolution: core.allocationEvolution,
       prevTotals: core.prevTotals, totalExpense: core.totals.expense, totalIncome: core.totals.income,
       totalSavings: core.totals.savings || 0, actualSavings: core.actualSavings, explicitSavings: core.explicitSavings,
       netCashflow: core.netCashflow, savingsRate: core.savingsRate, chartTotal: core.chartTotal, numMonths: core.numMonths,
