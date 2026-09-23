@@ -30,58 +30,28 @@ interface WorkLifeAnalysisItem {
   avg_expense: number;
 }
 
-/**
- * Common SQL filter clause when excludeFuture is enabled:
- * Includes transactions up to today, or current month's income and essential housing/rent expenses.
- */
-const FUTURE_EXCLUSION_SQL = `(t.date <= date('now', 'localtime') OR (strftime('%Y-%m', t.date) = strftime('%Y-%m', 'now', 'localtime') AND (cg.type = 'income' OR cg.name LIKE '%หอ%' OR cg.name LIKE '%ที่พัก%' OR cg.name LIKE '%rent%' OR cg.name LIKE '%เช่า%' OR c.name LIKE '%ค่าเช่า%' OR c.name LIKE '%ค่าหอพัก%')))`;
-
 class AnalyticsService {
   /**
    * Get total income, expense, and savings for a period.
    * Utilizes v_monthly_summary view.
    */
-  getSummary(startDate?: string, endDate?: string, excludeFuture?: boolean): SummaryResponse {
-    let query: string;
+  getSummary(startDate?: string, endDate?: string): SummaryResponse {
     const params: string[] = [];
-
-    if (excludeFuture) {
-      query = `
-        SELECT 
-          SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income,
-          SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense,
-          SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE t.is_deleted = 0
-      `;
-      if (startDate) {
-        query += ` AND t.date >= ?`;
-        params.push(startDate);
-      }
-      if (endDate) {
-        query += ` AND t.date <= ?`;
-        params.push(endDate);
-      }
-      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
-    } else {
-      query = `
-        SELECT 
-          SUM(income_satang) as income,
-          SUM(expense_satang) as expense,
-          SUM(savings_satang) as savings
-        FROM v_monthly_summary
-        WHERE 1=1
-      `;
-      if (startDate) {
-        query += ` AND month >= ?`;
-        params.push(startDate.substring(0, 7));
-      }
-      if (endDate) {
-        query += ` AND month <= ?`;
-        params.push(endDate.substring(0, 7));
-      }
+    let query = `
+      SELECT 
+        SUM(income_satang) as income,
+        SUM(expense_satang) as expense,
+        SUM(savings_satang) as savings
+      FROM v_monthly_summary
+      WHERE 1=1
+    `;
+    if (startDate) {
+      query += ` AND month >= ?`;
+      params.push(startDate.substring(0, 7));
+    }
+    if (endDate) {
+      query += ` AND month <= ?`;
+      params.push(endDate.substring(0, 7));
     }
 
     const row = db.prepare(query).get(...params) as { income: number | null; expense: number | null; savings: number | null } | undefined;
@@ -101,56 +71,28 @@ class AnalyticsService {
    * Get category breakdown for a period.
    * Utilizes v_category_monthly view.
    */
-  getCategoryBreakdown(startDate?: string, endDate?: string, excludeFuture?: boolean): CategoryBreakdownItem[] {
-    let query: string;
+  getCategoryBreakdown(startDate?: string, endDate?: string): CategoryBreakdownItem[] {
     const params: string[] = [];
-
-    if (excludeFuture) {
-      query = `
-        SELECT 
-          c.id as id,
-          c.name as name,
-          c.icon as icon,
-          c.color as color,
-          cg.type as group_type,
-          SUM(t.amount) as amount
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE t.is_deleted = 0
-      `;
-      if (startDate) {
-        query += ` AND t.date >= ?`;
-        params.push(startDate);
-      }
-      if (endDate) {
-        query += ` AND t.date <= ?`;
-        params.push(endDate);
-      }
-      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
-      query += ` GROUP BY c.id ORDER BY amount DESC`;
-    } else {
-      query = `
-        SELECT 
-          category_id as id,
-          category_name as name,
-          category_icon as icon,
-          category_color as color,
-          group_type,
-          SUM(amount_satang) as amount
-        FROM v_category_monthly
-        WHERE 1=1
-      `;
-      if (startDate) {
-        query += ` AND month >= ?`;
-        params.push(startDate.substring(0, 7));
-      }
-      if (endDate) {
-        query += ` AND month <= ?`;
-        params.push(endDate.substring(0, 7));
-      }
-      query += ` GROUP BY category_id ORDER BY amount DESC`;
+    let query = `
+      SELECT 
+        category_id as id,
+        category_name as name,
+        category_icon as icon,
+        category_color as color,
+        group_type,
+        SUM(amount_satang) as amount
+      FROM v_category_monthly
+      WHERE 1=1
+    `;
+    if (startDate) {
+      query += ` AND month >= ?`;
+      params.push(startDate.substring(0, 7));
     }
+    if (endDate) {
+      query += ` AND month <= ?`;
+      params.push(endDate.substring(0, 7));
+    }
+    query += ` GROUP BY category_id ORDER BY amount DESC`;
 
     const rows = db.prepare(query).all(...params) as Array<{
       id: string;
@@ -175,49 +117,23 @@ class AnalyticsService {
    * Get monthly aggregated data including group breakdown.
    * Utilizes v_monthly_summary and v_category_monthly.
    */
-  private fetchMonthlyTotals(startDate?: string, endDate?: string, excludeFuture?: boolean) {
-    let query: string;
+  private fetchMonthlyTotals(startDate?: string, endDate?: string) {
     const params: string[] = [];
-
-    if (excludeFuture) {
-      query = `
-        SELECT 
-          strftime('%Y-%m', t.date) as month,
-          SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income,
-          SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense,
-          SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE t.is_deleted = 0
-      `;
-      if (startDate) {
-        query += ` AND t.date >= ?`;
-        params.push(startDate);
-      }
-      if (endDate) {
-        query += ` AND t.date <= ?`;
-        params.push(endDate);
-      }
-      query += ` AND ${FUTURE_EXCLUSION_SQL}`;
-      query += ` GROUP BY month ORDER BY month ASC`;
-    } else {
-      query = `
-        SELECT 
-          month, income_satang as income, expense_satang as expense, savings_satang as savings
-        FROM v_monthly_summary
-        WHERE 1=1
-      `;
-      if (startDate) {
-        query += ` AND month >= ?`;
-        params.push(startDate.substring(0, 7));
-      }
-      if (endDate) {
-        query += ` AND month <= ?`;
-        params.push(endDate.substring(0, 7));
-      }
-      query += ` ORDER BY month ASC`;
+    let query = `
+      SELECT 
+        month, income_satang as income, expense_satang as expense, savings_satang as savings
+      FROM v_monthly_summary
+      WHERE 1=1
+    `;
+    if (startDate) {
+      query += ` AND month >= ?`;
+      params.push(startDate.substring(0, 7));
     }
+    if (endDate) {
+      query += ` AND month <= ?`;
+      params.push(endDate.substring(0, 7));
+    }
+    query += ` ORDER BY month ASC`;
     
     return db.prepare(query).all(...params) as Array<{
       month: string;
@@ -227,48 +143,23 @@ class AnalyticsService {
     }>;
   }
 
-  private fetchMonthlyGroupTotals(startDate?: string, endDate?: string, excludeFuture?: boolean) {
-    let groupQuery: string;
+  private fetchMonthlyGroupTotals(startDate?: string, endDate?: string) {
     const groupParams: string[] = [];
-
-    if (excludeFuture) {
-      groupQuery = `
-        SELECT 
-          strftime('%Y-%m', t.date) as month,
-          cg.id as group_id,
-          SUM(t.amount) as amount
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE t.is_deleted = 0
-      `;
-      if (startDate) {
-        groupQuery += ` AND t.date >= ?`;
-        groupParams.push(startDate);
-      }
-      if (endDate) {
-        groupQuery += ` AND t.date <= ?`;
-        groupParams.push(endDate);
-      }
-      groupQuery += ` AND ${FUTURE_EXCLUSION_SQL}`;
-      groupQuery += ` GROUP BY month, group_id`;
-    } else {
-      groupQuery = `
-        SELECT 
-          month, group_id, SUM(amount_satang) as amount
-        FROM v_category_monthly
-        WHERE 1=1
-      `;
-      if (startDate) {
-        groupQuery += ` AND month >= ?`;
-        groupParams.push(startDate.substring(0, 7));
-      }
-      if (endDate) {
-        groupQuery += ` AND month <= ?`;
-        groupParams.push(endDate.substring(0, 7));
-      }
-      groupQuery += ` GROUP BY month, group_id`;
+    let groupQuery = `
+      SELECT 
+        month, group_id, SUM(amount_satang) as amount
+      FROM v_category_monthly
+      WHERE 1=1
+    `;
+    if (startDate) {
+      groupQuery += ` AND month >= ?`;
+      groupParams.push(startDate.substring(0, 7));
     }
+    if (endDate) {
+      groupQuery += ` AND month <= ?`;
+      groupParams.push(endDate.substring(0, 7));
+    }
+    groupQuery += ` GROUP BY month, group_id`;
     
     return db.prepare(groupQuery).all(...groupParams) as Array<{
       month: string;
@@ -281,9 +172,9 @@ class AnalyticsService {
    * Get monthly aggregated data including group breakdown.
    * Utilizes v_monthly_summary and v_category_monthly.
    */
-  getMonthlyAggregation(startDate?: string, endDate?: string, excludeFuture?: boolean): MonthlyAggregationItem[] {
-    const rows = this.fetchMonthlyTotals(startDate, endDate, excludeFuture);
-    const groupRows = this.fetchMonthlyGroupTotals(startDate, endDate, excludeFuture);
+  getMonthlyAggregation(startDate?: string, endDate?: string): MonthlyAggregationItem[] {
+    const rows = this.fetchMonthlyTotals(startDate, endDate);
+    const groupRows = this.fetchMonthlyGroupTotals(startDate, endDate);
 
     return rows.map(row => {
       const groups: Record<string, number> = {};
@@ -304,7 +195,7 @@ class AnalyticsService {
   /**
    * Get day-type burn rate analysis (Work vs Holiday spend)
    */
-  getWorkLifeAnalysis(startDate?: string, endDate?: string, excludeFuture?: boolean): WorkLifeAnalysisItem[] {
+  getWorkLifeAnalysis(startDate?: string, endDate?: string): WorkLifeAnalysisItem[] {
     let query = `
       SELECT 
         day_type_name,
@@ -322,9 +213,6 @@ class AnalyticsService {
     if (endDate) {
       query += ` AND date <= ?`;
       params.push(endDate);
-    }
-    if (excludeFuture) {
-      query += ` AND date <= date('now', 'localtime')`;
     }
     query += ` GROUP BY day_type_name`;
 

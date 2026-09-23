@@ -187,7 +187,6 @@ function calculateForecastingDetails({
   datesInPeriod,
   filterYear,
   filterMonth,
-  excludeFuture,
   totals,
   expenseUpToToday,
   rentUpToToday,
@@ -197,11 +196,10 @@ function calculateForecastingDetails({
     return { showForecasting: false, effectiveDays: datesInPeriod.length || 1, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
   }
 
-  const periodDays = datesInPeriod.length || 1;
   const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
   const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
   const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
-  const effectiveDays = excludeFuture ? currentDay : periodDays;
+  const effectiveDays = datesInPeriod.length || 1;
   const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
 
   const fixedCommitment = totals.rent;
@@ -996,7 +994,6 @@ export interface UseAnalyticsProps {
   dayTypeConfig?: DayType[];
   isDarkMode?: boolean;
   summaryData?: any;
-  excludeFuture?: boolean;
 }
 
 export default function useAnalytics({
@@ -1012,8 +1009,7 @@ export default function useAnalytics({
   dayTypes,
   dayTypeConfig,
   isDarkMode = true,
-  summaryData,
-  excludeFuture = false
+  summaryData
 }: UseAnalyticsProps) {
   // ── Phase 1: Core Transaction Aggregation ──────────────────────────
   // Heaviest computation — only re-runs when data or filter criteria change
@@ -1092,7 +1088,6 @@ export default function useAnalytics({
       datesInPeriod,
       filterYear: windowMeta.filterYear,
       filterMonth: windowMeta.filterMonth,
-      excludeFuture,
       totals,
       expenseUpToToday,
       rentUpToToday,
@@ -1113,19 +1108,13 @@ export default function useAnalytics({
       monthlyIncomeMap[m] = data.income || 0;
     });
 
-    const currentYm = windowMeta.todayStr ? windowMeta.todayStr.slice(0, 7) : new Date().toISOString().slice(0, 7);
-    const rawPeriodMonths = Array.from(new Set(datesInPeriod.map((d: string) => d.slice(0, 7))));
-    const periodMonths = excludeFuture
-      ? rawPeriodMonths.filter(ym => ym <= currentYm)
-      : rawPeriodMonths;
+    const periodMonths = Array.from(new Set(datesInPeriod.map((d: string) => d.slice(0, 7))));
 
     const allocationEvolution = calculateAllocationEvolution(
       state.monthlyAllocMap,
       filterPeriod,
       periodMonths,
-      monthlyIncomeMap,
-      excludeFuture,
-      currentYm
+      monthlyIncomeMap
     );
 
     const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
@@ -1144,7 +1133,7 @@ export default function useAnalytics({
       adjustedDailyAvg, adjustedFoodDailyAvg,
       useBackendTotals,
     };
-  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, dayTypes, dayTypeConfig, summaryData, excludeFuture]);
+  }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, dayTypes, dayTypeConfig, summaryData]);
 
   // ── Phase 2: Chart & Sparkline Generation ─────────────────────────
   // Re-runs only when chart display settings change (chartGroupBy, topXLimit, isDarkMode)

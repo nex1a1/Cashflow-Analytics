@@ -207,7 +207,7 @@ export interface AppDataContextValue {
   masterPeriods: string[];
   // CRUD Actions
   refreshData: () => Promise<void>;
-  loadPeriodData: (period: string, excludeFuture?: boolean) => Promise<void>;
+  loadPeriodData: (period: string) => Promise<void>;
   handleSaveTransaction: (tx: any) => Promise<any>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<void>;
   handleDeleteTransaction: (id: string) => Promise<any>;
@@ -234,8 +234,6 @@ export interface AppDataContextValue {
 export interface AppFilterContextValue {
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
-  excludeFuture: boolean;
-  handleToggleExcludeFuture: () => void;
   masterPeriods: string[];
   groupedOptions: GroupedOptions;
   rawAvailableMonths: string[];
@@ -245,7 +243,6 @@ export interface AppFilterContextValue {
   isFilterActive: boolean;
   clearFilters: () => void;
   displayTransactions: TransactionDisplay[];
-  dashboardTransactions: TransactionDisplay[];
   analytics: any;
   allDatesInPeriod: string[];
   availableDatesInPeriod: string[];

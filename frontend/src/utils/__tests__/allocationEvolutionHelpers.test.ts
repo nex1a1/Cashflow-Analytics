@@ -147,18 +147,6 @@ describe('allocationEvolutionHelpers', () => {
     expect(mar.savingsPct).toBeCloseTo(40);
   });
 
-  it('excludes future months when excludeFuture is enabled', () => {
-    const map = {
-      need: { '2026-08': 500, '2026-09': 500, '2026-10': 500, '2026-11': 500 },
-      want: {},
-      savings: {},
-    };
-    const periodMonths = ['2026-08', '2026-09', '2026-10', '2026-11'];
-    const result = calculateAllocationEvolution(map, 'ALL', periodMonths, undefined, true, '2026-09');
-
-    expect(result.months.map(m => m.ym)).toEqual(['2026-08', '2026-09']);
-  });
-
   it('handles more than 12 months (e.g. 19-month window) correctly', () => {
     const months19: string[] = [];
     const needMap: Record<string, number> = {};
