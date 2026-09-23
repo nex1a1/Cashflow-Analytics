@@ -9,6 +9,9 @@ export function getMainChartTitle(chartViewType: string, mainChartType?: string,
   if (chartViewType === 'sankey') {
     return 'โครงสร้างกระแสเงินสด (Sankey Flow)';
   }
+  if (chartViewType === 'multiples') {
+    return 'เทรนด์รายหมวด (Sparkline)';
+  }
   if (isBreakdown) {
     return 'แจกแจงรายจ่ายตามหมวดหมู่';
   }
@@ -24,6 +27,33 @@ export function getMainChartTitle(chartViewType: string, mainChartType?: string,
     return 'เทรนด์เปรียบเทียบ';
   }
   return 'เปรียบเทียบรายจ่ายตามหมวดหมู่';
+}
+
+export interface ChartViewOption {
+  id: string;
+  label: string;
+  disabled?: boolean;
+  title?: string;
+}
+
+export const ALL_CHART_VIEWS = [
+  { id: 'line', label: 'เส้น' },
+  { id: 'bar', label: 'แท่ง' },
+  { id: 'sankey', label: 'Sankey' },
+  { id: 'multiples', label: 'Sparkline' },
+] as const;
+
+export function getAvailableChartViews(isSingleMonth: boolean): ChartViewOption[] {
+  return ALL_CHART_VIEWS.map(v => {
+    if (v.id === 'multiples' && isSingleMonth) {
+      return {
+        ...v,
+        disabled: true,
+        title: 'ต้องเลือกช่วงเวลามากกว่า 1 เดือน เพื่อดู Sparkline',
+      };
+    }
+    return { ...v, disabled: false };
+  });
 }
 
 export const getContrastTextColor = (hexColor: string | null | undefined): string => {

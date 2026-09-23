@@ -11,6 +11,7 @@ export interface ViewTypeSwitcherProps {
   chartViewType: string;
   setChartViewType: (v: string) => void;
   setIsBreakdown: (v: boolean | ((prev: boolean) => boolean)) => void;
+  isSingleMonth?: boolean;
 }
 
 export interface SankeyControlsProps {

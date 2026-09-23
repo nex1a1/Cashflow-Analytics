@@ -21,6 +21,20 @@ export const MainChartToolbar = memo(({
   // The line-style toggle matters wherever a Cashflow line is actually drawn — that's the
   // 'line' view, and the true multi-series combo chart even while its bars render as 'bar'.
   const showLineStyleSelector = chartViewType === 'line' || mainChartType === 'combo';
+  if (chartViewType === 'multiples') {
+    return (
+      <div className="flex items-center gap-2.5 relative z-10 flex-wrap w-full text-[10px] select-none">
+        <span className="uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 text-slate-500">
+          <Activity className="w-3 h-3 text-[#da291c]" /> CATEGORY TRENDS
+        </span>
+        <span className="w-px h-4 shrink-0 bg-[#303030]" />
+        <span className="text-slate-400">
+          ตัวเลขหลัก = เฉลี่ยต่องวดตามช่วงที่เลือก · ล่าสุด = เฉลี่ย 3 งวดล่าสุด (แถบสว่าง) · % = เทียบกับก่อนหน้า · เส้นประ = ยังไม่จบงวด
+        </span>
+      </div>
+    );
+  }
+
   // Balanced layout: If in Sankey view, render dedicated Sankey controls in the toolbar
   if (chartViewType === 'sankey') {
     return (

@@ -18,35 +18,50 @@ interface ModeSwitcherProps {
   evolutionLabel: string;
 }
 
-function buildModes(evolutionEligible: boolean, evolutionLabel: string): Array<{ id: DisplayMode; label: string }> {
-  const modes: Array<{ id: DisplayMode; label: string }> = [
+function buildModes(evolutionLabel: string): Array<{ id: DisplayMode; label: string }> {
+  return [
     { id: 'category', label: 'รายหมวดหมู่' },
     { id: 'allocation', label: 'สัดส่วน 50/30/20' },
+    { id: 'evolution', label: evolutionLabel || 'แนวโน้ม 3 เดือน' },
   ];
-  if (evolutionEligible) {
-    modes.push({ id: 'evolution', label: evolutionLabel || 'แนวโน้ม 50/30/20' });
-  }
-  return modes;
 }
 
 function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionLabel }: ModeSwitcherProps) {
-  const modes = buildModes(evolutionEligible, evolutionLabel);
+  const modes = buildModes(evolutionLabel);
   return (
     <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
-      {modes.map(m => (
-        <button
-          key={m.id}
-          onClick={() => onChangeMode(m.id)}
-          aria-pressed={displayMode === m.id}
-          className={`px-2 py-0.5 text-[11px] font-black uppercase tracking-tighter rounded-none transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
-            displayMode === m.id
-              ? 'bg-[#da291c] text-white'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          {m.label}
-        </button>
-      ))}
+      {modes.map(m => {
+        const isDisabled = m.id === 'evolution' && !evolutionEligible;
+        const isActive = displayMode === m.id && !isDisabled;
+        const tooltip = isDisabled ? 'ต้องเลือกช่วงเวลามากกว่า 1 เดือน (อย่างน้อย 3 เดือน) เพื่อดูแนวโน้ม' : undefined;
+        return (
+          <div key={m.id} className="relative group/modebtn flex items-center">
+            <button
+              disabled={isDisabled}
+              onClick={() => !isDisabled && onChangeMode(m.id)}
+              aria-pressed={isActive}
+              aria-disabled={isDisabled}
+              className={`px-2 py-0.5 text-[11px] font-black uppercase tracking-tighter rounded-none transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
+                isDisabled
+                  ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
+                  : isActive
+                  ? 'bg-[#da291c] text-white'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {m.label}
+            </button>
+            {isDisabled && tooltip && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 opacity-0 group-hover/modebtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/modebtn:visible whitespace-nowrap">
+                <div className="rounded-none py-1 px-2.5 text-[10px] font-medium shadow-2xl bg-[#121212] text-neutral-300 border border-[#3e3e3e] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" />
+                  <span>{tooltip}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -20,7 +20,7 @@ describe('DayDetailModal transaction sorting logic', () => {
 
   it('preserves natural category order when sortBy is category', () => {
     const sortBy = 'category';
-    const sorted = sortBy === 'amount'
+    const sorted = (sortBy as string) === 'amount'
       ? [...sampleTransactions].sort((a, b) => (Number.parseFloat(String(b.amount)) || 0) - (Number.parseFloat(String(a.amount)) || 0))
       : sampleTransactions;
 

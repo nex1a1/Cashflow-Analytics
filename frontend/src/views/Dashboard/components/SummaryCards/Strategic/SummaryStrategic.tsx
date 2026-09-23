@@ -18,33 +18,57 @@ export const ANALYSIS_TABS = [
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
 export type AnalysisTab = typeof ANALYSIS_TABS[number];
 
+export interface AnalysisTabItem {
+  id: AnalysisTabId;
+  label: string;
+  disabled?: boolean;
+  title?: string;
+}
+
 const AnalysisTabHeader = ({
   activeTab,
   tabs,
   onChange
 }: {
   activeTab: AnalysisTabId;
-  tabs: readonly AnalysisTab[];
+  tabs: readonly AnalysisTabItem[];
   onChange: (id: AnalysisTabId) => void;
 }) => (
   <div className="flex items-center justify-between px-2 border-b border-[#2d2d2d] bg-[#121212]/80">
     <div className="flex items-center gap-0.5">
       <div className="w-[3px] h-3 bg-[#da291c] shrink-0 mr-1.5" />
-      {tabs.map(tab => (
-        <button
-          key={tab.id}
-          type="button"
-          onClick={() => onChange(tab.id)}
-          aria-pressed={activeTab === tab.id}
-          className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
-            activeTab === tab.id
-              ? 'text-neutral-100 border-b-[#da291c]'
-              : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
+      {tabs.map(tab => {
+        const isDisabled = Boolean(tab.disabled);
+        const isActive = activeTab === tab.id && !isDisabled;
+        return (
+          <div key={tab.id} className="relative group/tabbtn flex items-center">
+            <button
+              type="button"
+              disabled={isDisabled}
+              onClick={() => !isDisabled && onChange(tab.id)}
+              aria-disabled={isDisabled}
+              aria-pressed={isActive}
+              className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+                isDisabled
+                  ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
+                  : isActive
+                  ? 'text-neutral-100 border-b-[#da291c]'
+                  : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+            {isDisabled && tab.title && (
+              <div className="absolute top-full left-0 mt-1.5 opacity-0 group-hover/tabbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/tabbtn:visible whitespace-nowrap">
+                <div className="rounded-none py-1 px-2.5 text-[10px] font-medium shadow-2xl bg-[#121212] text-neutral-300 border border-[#3e3e3e] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" />
+                  <span>{tab.title}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
     {activeTab === 'strategic' && (
       <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
@@ -94,17 +118,31 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
 
   const isSingleMonthView = Boolean(analytics.isSingleMonthView);
-  const visibleTabs = ANALYSIS_TABS.filter(t => {
-    if (t.id === 'forecast') return showForecasting;
-    if (t.id === 'ghost') return isSingleMonthView;
-    return true;
-  });
-  const isTabAvailable = visibleTabs.some(t => t.id === activeTab);
+  const tabItems: AnalysisTabItem[] = [
+    {
+      id: 'strategic',
+      label: 'ภาพรวมกลยุทธ์',
+      disabled: false,
+    },
+    {
+      id: 'forecast',
+      label: 'พยากรณ์สิ้นเดือน',
+      disabled: !showForecasting,
+      title: !showForecasting ? 'ต้องเลือกเดือนปัจจุบันเท่านั้น (เพื่อคำนวณวันคงเหลือในเดือน)' : undefined,
+    },
+    {
+      id: 'ghost',
+      label: 'แข่งกับเดือนที่แล้ว',
+      disabled: !isSingleMonthView,
+      title: !isSingleMonthView ? 'ต้องเลือกมุมมองรายเดือนเท่านั้น (เพื่อแข่งกับเดือนก่อนหน้าแบบวันต่อวัน)' : undefined,
+    },
+  ];
+  const isTabAvailable = tabItems.some(t => t.id === activeTab && !t.disabled);
   const effectiveTab: AnalysisTabId = isTabAvailable ? activeTab : 'strategic';
 
   return (
     <div className="flex flex-col h-full">
-      <AnalysisTabHeader activeTab={effectiveTab} tabs={visibleTabs} onChange={setActiveTab} />
+      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} />
 
       {effectiveTab === 'strategic' && (
         <div className="flex flex-col flex-1">

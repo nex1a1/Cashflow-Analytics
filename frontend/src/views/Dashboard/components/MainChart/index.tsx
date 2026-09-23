@@ -6,9 +6,11 @@ import { useDashboardContext } from '../../context/DashboardContext';
 import { useSankeyEngine } from '../../hooks/useSankeyEngine';
 import { useChartDataEngine } from '../../hooks/useChartDataEngine';
 import { useChartOptions } from '../../hooks/useChartOptions';
+import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { MainChartHeader } from './MainChartHeader';
 import { MainChartToolbar } from './MainChartToolbar';
 import { MainChartLegend } from './MainChartLegend';
+import { CategoryMultiples } from './CategoryMultiples';
 
 export default function MainChart() {
   const {
@@ -36,6 +38,13 @@ export default function MainChart() {
   useEffect(() => {
     setHiddenDatasets([]);
   }, [chartViewType, isBreakdown, dashboardCategory, filterPeriod]);
+
+  // Fall back to bar chart if current view is 'multiples' but period is single unit (<= 1 month)
+  useEffect(() => {
+    if (isSingleUnitPeriod(filterPeriod) && chartViewType === 'multiples') {
+      setChartViewType('bar');
+    }
+  }, [filterPeriod, chartViewType]);
 
   // Filter Menu Click-Outside Logic
   const filterMenuRef = useRef<HTMLDivElement>(null);
@@ -108,6 +117,8 @@ export default function MainChart() {
         <div className="relative w-full flex-1 min-h-[350px]">
           {showSkeleton ? (
             <div className="absolute inset-0 rounded-none animate-pulse bg-[#303030]/40" />
+          ) : chartViewType === 'multiples' ? (
+            <CategoryMultiples />
           ) : (
             <div className="absolute inset-0">
               <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any} data={displayChartData as any} options={options} />
@@ -115,7 +126,7 @@ export default function MainChart() {
           )}
         </div>
 
-        <MainChartLegend
+        {chartViewType !== 'multiples' && <MainChartLegend
           legendDatasets={legendDatasets}
           hiddenDatasets={hiddenDatasets}
           setHiddenDatasets={setHiddenDatasets}
@@ -124,7 +135,7 @@ export default function MainChart() {
           setDashboardCategory={setDashboardCategory}
           categories={categories}
           categoriesWithData={categoriesWithData}
-        />
+        />}
       </div>
     </div>
   );
