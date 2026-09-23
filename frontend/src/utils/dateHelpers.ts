@@ -1,4 +1,5 @@
 // src/utils/dateHelpers.ts
+import { isCyclePeriod, stripCycle, toCycleKey, cycleRange, shiftMonth } from './payCycle';
 
 /**
  * แปลง DD/MM/YYYY เป็น YYYY-MM-DD
@@ -42,7 +43,9 @@ const matchQuarterOrHalf = (fType: string, m: number): boolean => {
   return false;
 };
 
-export const isDateInFilter = (dateStr: string, filter: string): boolean => {
+export const isDateInFilter = (dateStr: string, period: string): boolean => {
+  const cycle = isCyclePeriod(period);
+  const filter = stripCycle(period);
   if (filter === 'ALL') return true;
   if (!dateStr) return false;
   
@@ -50,7 +53,10 @@ export const isDateInFilter = (dateStr: string, filter: string): boolean => {
   const parts = displayDate.split('/');
   if (parts.length !== 3) return false;
   const m = Number.parseInt(parts[1], 10), y = parts[2];
-  const currentDate = `${y}-${String(m).padStart(2, '0')}`;
+  // โหมดรอบ: "เดือน" ของวันที่ = รอบเงินเดือนที่วันนั้นอยู่ แล้วใช้ตรรกะเดิมทั้งหมด (เดี่ยว / ช่วง / หลายเดือน)
+  const currentDate = cycle
+    ? toCycleKey(`${y}-${String(m).padStart(2, '0')}-${parts[0].padStart(2, '0')}`)
+    : `${y}-${String(m).padStart(2, '0')}`;
 
   // Support Multi-select: YYYY-MM,YYYY-MM,...
   if (filter.includes(',')) {
@@ -63,6 +69,7 @@ export const isDateInFilter = (dateStr: string, filter: string): boolean => {
     return currentDate >= start && currentDate <= end;
   }
 
+  if (/^\d{4}-\d{2}$/.test(filter)) return filter === currentDate;
   if (filter === y) return true;
   if (filter.includes('-')) {
     const [fy, fType] = filter.split('-');
@@ -92,7 +99,23 @@ export const buildDateSequence = (start: Date, end: Date, maxDays = 3650): strin
   return dateArray;
 };
 
+/** ISO dates of one calendar month (`YYYY-MM`) or one pay cycle (same key, 25 → 24) */
+export const periodUnitDates = (key: string, cycle: boolean): string[] => {
+  if (cycle) {
+    const { start, end } = cycleRange(key);
+    return buildDateSequence(parseDateStrToObj(start), parseDateStrToObj(end));
+  }
+  const y = Number(key.slice(0, 4)), m = Number(key.slice(5, 7));
+  return buildDateSequence(new Date(y, m - 1, 1), new Date(y, m, 0));
+};
+
 export const resolvePeriodDateBounds = (period: string): { start: Date; end: Date } | null => {
+  if (isCyclePeriod(period)) {
+    const base = stripCycle(period);
+    if (!/^\d{4}-\d{2}(_\d{4}-\d{2})?$/.test(base)) return null;
+    const [first, last = first] = base.split('_');
+    return { start: parseDateStrToObj(cycleRange(first).start), end: parseDateStrToObj(cycleRange(last).end) };
+  }
   if (/^\d{4}$/.test(period)) {
     return {
       start: new Date(Number.parseInt(period, 10), 0, 1),
@@ -152,6 +175,13 @@ const generateMultiSelectDates = (months: string[]): string[] => {
   return dateArray;
 };
 
+/** first day of the calendar month / pay cycle containing `d` */
+const periodUnitStart = (d: Date, period: string): Date => {
+  if (!isCyclePeriod(period)) return new Date(d.getFullYear(), d.getMonth(), 1);
+  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return parseDateStrToObj(cycleRange(toCycleKey(iso)).start);
+};
+
 const getAllTransactionsBounds = (allTransactions: any[], period: string): { start: Date; end: Date } | null => {
   if (!allTransactions || allTransactions.length === 0) return null;
   const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
@@ -162,7 +192,7 @@ const getAllTransactionsBounds = (allTransactions: any[], period: string): { sta
   const maxTxDate = new Date(Math.max(...txDates));
 
   return {
-    start: new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1),
+    start: periodUnitStart(minTxDate, period),
     end: maxTxDate,
   };
 };
@@ -172,7 +202,8 @@ const clampBoundsToTransactions = (
   period: string,
   allTransactions: any[]
 ): { start: Date; end: Date } => {
-  if (period === 'ALL' || /^\d{4}-\d{2}$/.test(period) || !allTransactions || allTransactions.length === 0) {
+  const base = stripCycle(period);
+  if (base === 'ALL' || /^\d{4}-\d{2}$/.test(base) || !allTransactions || allTransactions.length === 0) {
     return bounds;
   }
   const filteredTx = allTransactions.filter(t => isDateInFilter(t.isoDate || t.date, period));
@@ -184,18 +215,19 @@ const clampBoundsToTransactions = (
 
   let { start, end } = bounds;
   if (end > maxTxDate) end = maxTxDate;
-  const minMonthStart = new Date(minTxDate.getFullYear(), minTxDate.getMonth(), 1);
+  const minMonthStart = periodUnitStart(minTxDate, period);
   if (start < minMonthStart) start = minMonthStart;
   return { start, end };
 };
 
 export const generateDatesForPeriod = (period: string, allTransactions: any[]): string[] => {
   if (period.includes(',')) {
-    return generateMultiSelectDates(period.split(','));
+    const keys = stripCycle(period).split(',').sort((a, b) => a.localeCompare(b));
+    return isCyclePeriod(period) ? keys.flatMap((k) => periodUnitDates(k, true)) : generateMultiSelectDates(keys);
   }
 
   let bounds: { start: Date; end: Date } | null = null;
-  if (period === 'ALL') {
+  if (stripCycle(period) === 'ALL') {
     bounds = getAllTransactionsBounds(allTransactions, period);
     if (!bounds) return [];
   } else {
@@ -219,7 +251,7 @@ export interface PeriodDateRange {
  * so that Period-over-Period comparisons can calculate historical deltas accurately.
  */
 export const getPeriodDateRange = (period: string): PeriodDateRange => {
-  if (period === 'ALL') return { startDate: null, endDate: null, fetchStartDate: null };
+  if (stripCycle(period) === 'ALL') return { startDate: null, endDate: null, fetchStartDate: null };
   const bounds = resolvePeriodDateBounds(period);
   if (!bounds) return { startDate: null, endDate: null, fetchStartDate: null };
 
@@ -234,7 +266,10 @@ export const getPeriodDateRange = (period: string): PeriodDateRange => {
   const endDate = toStr(bounds.end);
   let fetchStartDate = startDate;
 
-  if (/^\d{4}-\d{2}$/.test(period)) {
+  if (isCyclePeriod(period) && /^\d{4}-\d{2}$/.test(stripCycle(period))) {
+    // Single Cycle -> 3 cycles back (Ghost Pacer benchmark)
+    fetchStartDate = cycleRange(shiftMonth(stripCycle(period), -3)).start;
+  } else if (/^\d{4}-\d{2}$/.test(period)) {
     // Single Month: YYYY-MM -> previous 3 months start (to support Ghost Pacer & benchmark)
     const [yStr, mStr] = period.split('-');
     const y = Number.parseInt(yStr, 10);

@@ -9,7 +9,7 @@ import {
 } from '../utils/analyticsHelpers';
 import { calculateGhostPacerData } from '../utils/ghostPacerHelpers';
 import { calculateAllocationEvolution } from '../utils/allocationEvolutionHelpers';
-import { toCycleKey, cycleRange } from '../utils/payCycle';
+import { isCyclePeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso } from '../utils/payCycle';
 
 function resolveTransactionContext(t: any, catMapLookup: Record<string, any>, cashflowGroups: CashflowGroup[], fallbackExpId: string) {
   const amt = Number.parseFloat(t.amount) || 0;
@@ -185,8 +185,6 @@ function calculateSparklines({ useBackendTotals, summaryData, isSingleMonthView,
 function calculateForecastingDetails({
   isCurrentMonth,
   datesInPeriod,
-  filterYear,
-  filterMonth,
   totals,
   expenseUpToToday,
   rentUpToToday,
@@ -196,8 +194,9 @@ function calculateForecastingDetails({
     return { showForecasting: false, effectiveDays: datesInPeriod.length || 1, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
   }
 
-  const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
-  const currentDay = Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth));
+  // day N = N-th day of the month / pay cycle (datesInPeriod is the full unit for single-month views)
+  const lastDayOfMonth = datesInPeriod.length;
+  const currentDay = Math.max(1, datesInPeriod.indexOf(localTodayIso()) + 1);
   const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
   const effectiveDays = datesInPeriod.length || 1;
   const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
@@ -211,8 +210,7 @@ function calculateForecastingDetails({
   // than an interpolated shape — the trajectory chart plots what actually happened.
   const actualDailySeries: number[] = [];
   let runningSpend = 0;
-  for (let day = 1; day <= currentDay; day++) {
-    const iso = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  for (const iso of datesInPeriod.slice(0, currentDay)) {
     runningSpend += (dailySumMap && dailySumMap[iso]) || 0;
     actualDailySeries.push(runningSpend);
   }
@@ -360,12 +358,12 @@ function processAnalyticsTx({
   fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
   hideFixedExpenses, hideWantExpenses, activeFilters,
   uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
-  stateRef, totals, keyFn
+  stateRef, totals
 }: any) {
   if (!isDateInFilter(isoDate, filterPeriod)) return null;
 
   const { amt, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp } = txContext;
-  const ym = keyFn ? keyFn(isoDate) : isoDate.substring(0, 7);
+  const ym = monthKeyOf(isoDate, filterPeriod);
   uniqueMonthsSet.add(ym);
 
   ensureCashflowMonth(cashflowMap, ym, cashflowGroups);
@@ -648,13 +646,19 @@ function resolveCashflowGroups(cashflowGroups: CashflowGroup[]) {
   };
 }
 
-function calculatePeriodWindow(filterPeriod: string, datesInPeriod: string[]) {
+function calculatePeriodWindow(period: string, datesInPeriod: string[]) {
   let startPrev: string | null = null;
   let endPrev: string | null = null;
   let periodLabel = 'PoP';
+  // โหมดรอบ: ตรรกะ shape เดิมใช้กับ period ที่ตัด "cycle:" ออก; รอบเดี่ยวเทียบรอบก่อนหน้า, ช่วงรอบตกไป PoP ด้านล่าง
+  const isCycle = isCyclePeriod(period);
+  const filterPeriod = stripCycle(period);
 
   if (filterPeriod === 'ALL' || !datesInPeriod || datesInPeriod.length === 0) {
     periodLabel = 'ALL';
+  } else if (isCycle && /^\d{4}-\d{2}$/.test(filterPeriod)) {
+    ({ start: startPrev, end: endPrev } = cycleRange(shiftMonth(filterPeriod, -1)));
+    periodLabel = 'MoM';
   } else if (/^\d{4}-\d{2}$/.test(filterPeriod)) {
     // 1. Single Month: YYYY-MM -> MoM
     const [yStr, mStr] = filterPeriod.split('-');
@@ -728,17 +732,11 @@ function calculatePeriodWindow(filterPeriod: string, datesInPeriod: string[]) {
 
   const isSingleMonthView = Boolean(filterPeriod.match(/^\d{4}-\d{2}$/));
   let todayStr = '';
-  let filterYear = 0;
-  let filterMonth = 0;
   let isCurrentMonth = false;
 
   if (isSingleMonthView) {
-    const parts = filterPeriod.split('-');
-    filterYear = Number.parseInt(parts[0], 10);
-    filterMonth = Number.parseInt(parts[1], 10) - 1;
-    const today = new Date();
-    isCurrentMonth = today.getFullYear() === filterYear && today.getMonth() === filterMonth;
-    todayStr = today.toISOString().split('T')[0];
+    todayStr = localTodayIso();
+    isCurrentMonth = datesInPeriod.includes(todayStr); // today inside this month / pay cycle
   }
 
   return {
@@ -747,8 +745,6 @@ function calculatePeriodWindow(filterPeriod: string, datesInPeriod: string[]) {
     periodLabel,
     isSingleMonthView,
     todayStr,
-    filterYear,
-    filterMonth,
     isCurrentMonth,
   };
 }
@@ -839,8 +835,7 @@ function executeTransactionAggregation({
   hideFixedExpenses,
   hideWantExpenses,
   activeFilters,
-  state,
-  keyFn
+  state
 }: any) {
   const { fallbackIncId, fallbackSavId, fallbackExpId, foodGroupId, rentGroupId, subscriptionGroupId } = groupMeta;
   const { startPrev, endPrev, isCurrentMonth, todayStr } = windowMeta;
@@ -867,7 +862,7 @@ function executeTransactionAggregation({
       fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
       hideFixedExpenses, hideWantExpenses, activeFilters,
       uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
-      stateRef, totals, keyFn
+      stateRef, totals
     });
 
     if (flags) {
@@ -884,55 +879,6 @@ function executeTransactionAggregation({
       });
     }
   });
-}
-
-/** CashflowTable รอบเงินเดือน: รัน aggregation เดิมทั้งชุด (hideWant/hideFixed/dashboardCategory มีผลเหมือนโหมดปฏิทิน)
- *  แต่ key แถวด้วยรอบ 25–24 แทนเดือนปฏิทิน. ไม่ใช้ backend summary เพราะ backend ตัดตามเดือนปฏิทิน */
-export function buildPayCycleTable({
-  transactions, categories, cashflowGroups, filterPeriod,
-  hideFixedExpenses = false, hideWantExpenses = false, dashboardCategory = 'ALL',
-}: {
-  transactions: TransactionDisplay[];
-  categories: Category[];
-  cashflowGroups: CashflowGroup[];
-  filterPeriod: string;
-  hideFixedExpenses?: boolean;
-  hideWantExpenses?: boolean;
-  dashboardCategory?: string | string[];
-}) {
-  const state = createInitialAnalyticsState();
-  executeTransactionAggregation({
-    transactions,
-    catMapLookup: createCategoryMap(categories),
-    cashflowGroups,
-    groupMeta: resolveCashflowGroups(cashflowGroups),
-    windowMeta: {}, // trend/forecast side outputs are discarded here
-    filterPeriod,
-    hideFixedExpenses,
-    hideWantExpenses,
-    activeFilters: Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory],
-    state,
-    keyFn: toCycleKey,
-  });
-
-  const sortedCashflow = (Object.values(state.cashflowMap) as any[]).sort((a: any, b: any) => a.monthStr.localeCompare(b.monthStr));
-
-  // รอบไม่เต็ม: ช่วง 25–24 ถูกตัดด้วย filterPeriod, เริ่มก่อนข้อมูลวันแรก, หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
-  const now = new Date();
-  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  let firstDate = '';
-  transactions.forEach((t) => {
-    const iso = toISODate(t.date);
-    if (iso && isDateInFilter(iso, filterPeriod) && (!firstDate || iso < firstDate)) firstDate = iso;
-  });
-  const partialKeys = sortedCashflow
-    .map((r: any) => r.monthStr as string)
-    .filter((key) => {
-      const { start, end } = cycleRange(key);
-      return start < firstDate || start > todayIso || !isDateInFilter(start, filterPeriod) || !isDateInFilter(end, filterPeriod);
-    });
-
-  return { sortedCashflow, monthlyCatMap: state.monthlyCatMap, numMonths: sortedCashflow.length, partialKeys };
 }
 
 function applyBackendSummaryTotals(totals: any, summaryData: any) {
@@ -1015,7 +961,8 @@ export default function useAnalytics({
   // Heaviest computation — only re-runs when data or filter criteria change
   const coreAggregation = useMemo(() => {
     const catMapLookup = createCategoryMap(categories);
-    const useBackendTotals = Boolean(summaryData);
+    // backend summary is grouped by calendar month — pay-cycle periods are aggregated client-side only
+    const useBackendTotals = Boolean(summaryData) && !isCyclePeriod(filterPeriod);
     const groupMeta = resolveCashflowGroups(cashflowGroups);
 
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);
@@ -1086,8 +1033,6 @@ export default function useAnalytics({
     } = calculateForecastingDetails({
       isCurrentMonth: windowMeta.isCurrentMonth,
       datesInPeriod,
-      filterYear: windowMeta.filterYear,
-      filterMonth: windowMeta.filterMonth,
       totals,
       expenseUpToToday,
       rentUpToToday,
@@ -1098,8 +1043,6 @@ export default function useAnalytics({
       globalDailySum: state.globalDailySum,
       filterPeriod,
       isCurrentMonth: windowMeta.isCurrentMonth,
-      filterYear: windowMeta.filterYear,
-      filterMonth: windowMeta.filterMonth,
       projectedExpense,
     });
 
@@ -1108,7 +1051,7 @@ export default function useAnalytics({
       monthlyIncomeMap[m] = data.income || 0;
     });
 
-    const periodMonths = Array.from(new Set(datesInPeriod.map((d: string) => d.slice(0, 7))));
+    const periodMonths = Array.from(new Set(datesInPeriod.map((d: string) => monthKeyOf(d, filterPeriod))));
 
     const allocationEvolution = calculateAllocationEvolution(
       state.monthlyAllocMap,

@@ -185,7 +185,8 @@ function LedgerView({
     formatMoney,
     advancedFilterGroup,
     setAdvancedFilterGroup,
-    allDatesInPeriod
+    allDatesInPeriod,
+    filterPeriod
   });
 
   const totalPages = pages.length || 1;
@@ -234,7 +235,8 @@ function LedgerView({
             setHorizontalFilterOpen={setHorizontalFilterOpen}
             isHorizontalFilterActive={isHorizontalFilterActive}
             handleOpenAddModal={handleOpenAddModal}
-            hasTransactions={displayTransactions.length > 0 || monthTransactions.length > 0}
+            // "ลบเดือนนี้" ลบตามเดือนปฏิทินฝั่ง backend — ซ่อนเมื่อ period ไม่ใช่เดือนปฏิทินเดี่ยว (เช่น รอบเงินเดือน)
+            hasTransactions={/^\d{4}-\d{2}$/.test(filterPeriod) && (displayTransactions.length > 0 || monthTransactions.length > 0)}
             confirmDeleteMonth={confirmDeleteMonth}
             handleDeleteMonthClick={handleDeleteMonthClick}
           />

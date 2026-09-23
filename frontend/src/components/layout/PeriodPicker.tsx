@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, ChevronDown, Check, LayoutGrid, CalendarRange, ListChecks, X, CalendarDays, CalendarCheck, Zap } from 'lucide-react';
 import { getFilterLabel, getThaiMonth, THAI_MONTHS_SHORT } from '../../utils/formatters';
 import { GroupedOptions } from '../../types';
+import { CYCLE_PREFIX, isCyclePeriod, stripCycle, convertPeriodMode, toCycleKey, shiftMonth, localTodayIso, cycleRangeLabel, cycleSpanLabel, CYCLE_PRESETS, cyclePresetRange, matchCyclePreset } from '../../utils/payCycle';
 
 interface ModeBtnProps {
   id: string;
@@ -33,9 +34,37 @@ export interface PeriodPickerProps {
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
   groupedOptions: GroupedOptions;
+  /** show the ปฏิทิน / รอบเงินเดือน switch (off for Export, which is always calendar) */
+  allowCycle?: boolean;
+  /** which edge the 620px dropdown anchors to (left when the trigger sits near the left edge, e.g. Export sidebar) */
+  align?: 'left' | 'right';
 }
 
-export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOptions }: PeriodPickerProps) {
+export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod: setRawPeriod, groupedOptions: calendarOptions, allowCycle = false, align = 'right' }: PeriodPickerProps) {
+  // โหมดรอบ: ข้างในทำงานกับ period แบบไม่มี "cycle:" เหมือนเดิมทั้งหมด แล้วเติม prefix ตอนส่งออก
+  const isCycle = isCyclePeriod(rawPeriod);
+  const filterPeriod = stripCycle(rawPeriod);
+  const setFilterPeriod = useCallback(
+    (val: string) => setRawPeriod(isCycle ? CYCLE_PREFIX + val : val),
+    [isCycle, setRawPeriod],
+  );
+
+  // รอบที่มีข้อมูล: เดือน M ที่มีรายการ → รอบ M (25 ขึ้นไป) และรอบ M−1 (1–24)
+  const groupedOptions: GroupedOptions = useMemo(() => {
+    if (!isCycle) return calendarOptions;
+    const keys = new Set<string>();
+    Object.values(calendarOptions?.yearsMap || {}).forEach(({ months }) =>
+      months.forEach((m: string) => { keys.add(m); keys.add(shiftMonth(m, -1)); }),
+    );
+    const yearsMap: GroupedOptions['yearsMap'] = {};
+    keys.forEach((k) => {
+      const y = k.slice(0, 4);
+      if (!yearsMap[y]) yearsMap[y] = { months: new Set(), quarters: new Set(), halves: new Set() };
+      yearsMap[y].months.add(k);
+    });
+    return { yearsMap, sortedYears: Object.keys(yearsMap).sort((a, b) => b.localeCompare(a)) };
+  }, [isCycle, calendarOptions]);
+
   const [open, setOpen] = useState<boolean>(false);
   // Multi-expand: Set of expanded year keys (range/multi allow multiple open at once)
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
@@ -51,16 +80,18 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
   // Quick-access shortcut values (computed once)
   const { currentMonth, lastMonth, currentYear } = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth() + 1;
-    const cm = `${y}-${String(m).padStart(2, '0')}`;
-    const lmDate = new Date(y, m - 2, 1);
-    const ly = lmDate.getFullYear();
-    const lm = lmDate.getMonth() + 1;
-    const lmStr = `${ly}-${String(lm).padStart(2, '0')}`;
-    return { currentMonth: cm, lastMonth: lmStr, currentYear: String(y) };
-  }, []);
+    const today = localTodayIso();
+    const cm = isCycle ? toCycleKey(today) : today.slice(0, 7);
+    return { currentMonth: cm, lastMonth: shiftMonth(cm, -1), currentYear: cm.slice(0, 4) };
+  }, [isCycle]);
+  const unitWord = isCycle ? 'รอบ' : 'เดือน';
+  // ปี/H/Q ในโหมดรอบเป็น range ธรรมดา แต่ถือเป็นตัวเลือก "เดี่ยว"
+  const isCyclePreset = isCycle && !!matchCyclePreset(filterPeriod);
+  const yearValue = isCycle ? cyclePresetRange(currentYear, 1, 12) : currentYear;
+  const spanShort = (range: string) => {
+    const [s, e] = range.split('_');
+    return `${cycleRangeLabel(s).split(' – ')[0]} – ${cycleRangeLabel(e).split(' – ')[1]}`;
+  };
 
   // Click outside to close
   useEffect(() => {
@@ -86,7 +117,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
     const initialExpanded = new Set<string>();
 
-    if (filterPeriod?.includes('_')) {
+    if (filterPeriod?.includes('_') && !isCyclePreset) {
       setMode('range');
       const [s, e] = filterPeriod.split('_');
       setRangeStart(s);
@@ -117,7 +148,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
     }
 
     setExpandedYears(initialExpanded);
-  }, [open, filterPeriod, groupedOptions]);
+  }, [open, filterPeriod, groupedOptions, isCyclePreset]);
 
   const select = (val: string) => {
     setFilterPeriod(val);
@@ -208,21 +239,22 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
 
   // Range footer text — step-aware instructions
   const rangeFooterText = useMemo(() => {
-    if (rangeStart && rangeEnd) return `${getThaiMonth(rangeStart)} — ${getThaiMonth(rangeEnd)}`;
-    if (rangeStart) return `จาก: ${getThaiMonth(rangeStart)} → เลือกเดือนสิ้นสุด`;
-    return 'คลิกเดือนเริ่มต้น จากนั้นเลือกเดือนสิ้นสุด';
-  }, [rangeStart, rangeEnd]);
+    const name = (m: string) => (isCycle ? `รอบ ${getThaiMonth(m)}` : getThaiMonth(m));
+    if (rangeStart && rangeEnd) return `${name(rangeStart)} — ${name(rangeEnd)}`;
+    if (rangeStart) return `จาก: ${name(rangeStart)} → เลือก${unitWord}สิ้นสุด`;
+    return `คลิก${unitWord}เริ่มต้น จากนั้นเลือก${unitWord}สิ้นสุด`;
+  }, [rangeStart, rangeEnd, isCycle, unitWord]);
 
   // Mode badge shown on trigger button when period is range/multi
   const modeBadge = useMemo(() => {
-    if (filterPeriod?.includes('_')) {
+    if (filterPeriod?.includes('_') && !isCyclePreset) {
       return { label: 'RANGE', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' };
     }
     if (filterPeriod?.includes(',')) {
-      return { label: `${filterPeriod.split(',').length}M`, cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' };
+      return { label: `${filterPeriod.split(',').length}${isCycle ? ' รอบ' : 'M'}`, cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' };
     }
     return null;
-  }, [filterPeriod]);
+  }, [filterPeriod, isCyclePreset]);
 
   // Whether a year has any selection inside (for dot indicator)
   const yearHasSelection = (year: string): boolean => {
@@ -264,7 +296,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
         <button
           onClick={() => setFilterPeriod(currentMonth)}
           disabled={filterPeriod === currentMonth}
-          title="ไปเดือนปัจจุบัน"
+          title={`ไป${unitWord}ปัจจุบัน`}
           className="p-1.5 rounded-none border border-[#383838] bg-[#121212] text-slate-300 hover:border-[#da291c] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#383838] disabled:hover:text-slate-300 shrink-0"
         >
           <CalendarCheck className="w-3.5 h-3.5" />
@@ -274,7 +306,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           <button
             onClick={() => stepMonth(-1)}
             disabled={!isSingleMonth}
-            title="เดือนก่อนหน้า"
+            title={`${unitWord}ก่อนหน้า`}
             className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -287,7 +319,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
             className="flex items-center gap-2 px-3 py-1.5 text-slate-100 text-xs font-bold transition-all hover:text-white focus:outline-none min-w-[170px]"
           >
             <CalendarDays className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-            <span className="flex-1 text-left truncate">{getFilterLabel(filterPeriod)}</span>
+            <span className="flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
             {modeBadge && (
               <span className={`text-[9px] font-bold px-1 py-0.5 border rounded-none shrink-0 ${modeBadge.cls}`}>
                 {modeBadge.label}
@@ -301,7 +333,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           <button
             onClick={() => stepMonth(1)}
             disabled={!isSingleMonth}
-            title="เดือนถัดไป"
+            title={`${unitWord}ถัดไป`}
             className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
           >
             <ChevronRight className="w-3.5 h-3.5" />
@@ -310,13 +342,39 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
       </div>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-72 bg-[#181818] border border-[#3e3e3e] rounded-none shadow-2xl ring-1 ring-white/10 z-50 overflow-hidden">
+        <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-[#181818] border border-[#3e3e3e] rounded-none shadow-2xl ring-1 ring-white/10 z-50 overflow-hidden`}>
+
+          {/* ── Calendar / Pay-cycle switch ─────────────────────────────── */}
+          {allowCycle && (
+            <div className="flex items-center gap-2 px-2 py-1.5 border-b border-[#303030] bg-[#101010]">
+              <span className="text-[9px] text-[#666666] uppercase font-bold tracking-wider shrink-0">นับเดือนแบบ</span>
+              <div className="flex flex-1 border border-[#333333]">
+                {([[false, 'ปฏิทิน'], [true, 'รอบเงินเดือน 25–24']] as const).map(([cycle, label]) => (
+                  <button
+                    key={label}
+                    onClick={() => { if (cycle !== isCycle) setRawPeriod(convertPeriodMode(rawPeriod, cycle)); }}
+                    className={`flex-1 py-1 text-[10px] font-bold rounded-none ${
+                      cycle === isCycle ? 'bg-[#2a2a2a] text-white' : 'bg-[#141414] text-[#777777] hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isCycle && (
+            <div className="px-2.5 py-1.5 border-b border-[#303030] bg-[#101010] text-[10px] text-[#888888] leading-snug">
+              1 รอบ = วันที่ 25 (เงินเดือนเข้า) ถึงวันที่ 24 ของเดือนถัดไป · ชื่อรอบตามเดือนที่เงินเดือนเข้า
+            </div>
+          )}
 
           {/* ── Mode Switcher Tabs ──────────────────────────────────────── */}
           <div className="flex border-b border-[#303030] p-1.5 bg-[#121212] gap-1.5">
             <ModeBtn id="standard"  icon={LayoutGrid}   label="เดี่ยว"      title="เลือก 1 เดือน, ไตรมาส, หรือปี"          active={mode === 'standard'} onClick={handleModeChange} />
             <ModeBtn id="range"     icon={CalendarRange} label="ช่วงเวลา"   title="เลือกช่วงเดือนต่อเนื่อง"                 active={mode === 'range'}    onClick={handleModeChange} />
-            <ModeBtn id="multi"     icon={ListChecks}    label="หลายเดือน"  title="เลือกหลายเดือนแบบอิสระ ไม่ต้องต่อเนื่อง" active={mode === 'multi'}    onClick={handleModeChange} />
+            <ModeBtn id="multi"   icon={ListChecks}    label={`หลาย${unitWord}`}  title={`เลือกหลาย${unitWord}แบบอิสระ ไม่ต้องต่อเนื่อง`} active={mode === 'multi'}    onClick={handleModeChange} />
           </div>
 
           {/* ── Quick Shortcuts (Standard mode only) ───────────────────── */}
@@ -335,7 +393,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                       : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
                   }`}
                 >
-                  เดือนนี้
+                  {unitWord}นี้{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleRangeLabel(currentMonth)}</span>}
                 </button>
               )}
               {hasLastMonth && (
@@ -347,19 +405,19 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                       : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
                   }`}
                 >
-                  เดือนก่อน
+                  {unitWord}ก่อน{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleRangeLabel(lastMonth)}</span>}
                 </button>
               )}
               {hasCurrentYear && (
                 <button
-                  onClick={() => select(currentYear)}
+                  onClick={() => select(yearValue)}
                   className={`flex-1 text-center text-[10px] font-semibold px-1 py-0.5 border transition-all rounded-none ${
-                    filterPeriod === currentYear
+                    filterPeriod === yearValue
                       ? 'bg-[#da291c]/15 border-[#da291c] text-white'
                       : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
                   }`}
                 >
-                  ทั้งปี {currentYear}
+                  ทั้งปี {currentYear}{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleSpanLabel(currentYear + "-01", currentYear + "-12").split(" · ")[0]}</span>}
                 </button>
               )}
             </div>
@@ -381,9 +439,9 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
               }`}>2</span>
               <span className="text-[10px] text-emerald-400/70 flex-1 truncate">
                 {!rangeStart
-                  ? 'เลือกเดือนเริ่มต้น'
+                  ? `เลือก${unitWord}เริ่มต้น`
                   : !rangeEnd
-                  ? 'เลือกเดือนสิ้นสุด'
+                  ? `เลือก${unitWord}สิ้นสุด`
                   : '✓ พร้อมยืนยัน'}
               </span>
             </div>
@@ -392,7 +450,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           {/* ── Multi Mode Instruction (shown only when empty) ──────────── */}
           {mode === 'multi' && multiSelected.length === 0 && (
             <div className="px-2.5 py-1.5 border-b border-amber-500/20 bg-amber-950/20">
-              <span className="text-[10px] text-amber-400/70">คลิกเดือนใดก็ได้เพื่อเพิ่มเข้าการเลือก</span>
+              <span className="text-[10px] text-amber-400/70">คลิก{unitWord}ใดก็ได้เพื่อเพิ่มเข้าการเลือก</span>
             </div>
           )}
 
@@ -407,7 +465,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                   {filterPeriod === 'ALL'
                     ? <Check className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
                     : <span className="w-3.5 h-3.5 shrink-0" />}
-                  <span className="font-bold">ดูข้อมูลทั้งหมด (ALL TIME)</span>
+                  <span className="font-bold">{isCycle ? 'ทุกรอบเงินเดือน (ALL TIME)' : 'ดูข้อมูลทั้งหมด (ALL TIME)'}</span>
                 </button>
               </div>
             )}
@@ -440,14 +498,14 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                           )}
                         </span>
                         <span className="text-[10px] text-neutral-500 font-mono">
-                          {data.months.size} เดือน
+                          {data.months.size} {unitWord}
                         </span>
                       </button>
 
                       {isExpanded && (
                         <div className="ml-1.5 pl-1.5 border-l space-y-1 mt-1 mb-1 border-[#383838]">
                           {/* Year/Half/Quarter shortcuts — Standard mode only */}
-                          {mode === 'standard' && (
+                          {mode === 'standard' && !isCycle && (
                             <>
                               <button onClick={() => select(year)} className={`${itemBase} ${filterPeriod === year ? itemActive : itemHover}`}>
                                 {filterPeriod === year
@@ -486,8 +544,42 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                             </>
                           )}
 
+                          {/* Year/Half/Quarter in cycle mode — ranges of cycles named by salary month */}
+                          {mode === 'standard' && isCycle && (() => {
+                            const monthsArr = Array.from(data.months) as string[];
+                            const presets = CYCLE_PRESETS.map((p) => {
+                              const value = cyclePresetRange(year, p.from, p.to);
+                              const [s, e] = value.split('_');
+                              return { ...p, value, has: monthsArr.some((m) => m >= s && m <= e), title: cycleSpanLabel(s, e) };
+                            });
+                            const pill = (p: typeof presets[number]) => (
+                              p.has ? (
+                                <button key={p.id} onClick={() => select(p.value)} title={p.title} className={`${pillBase} ${filterPeriod === p.value ? pillActive : pillIdle}`}>
+                                  <span className="block font-bold">{p.id}</span>
+                                  <span className="block text-[9px] opacity-70 tabular-nums whitespace-nowrap">{spanShort(p.value)}</span>
+                                </button>
+                              ) : <span key={p.id} />
+                            );
+                            const [y, ...rest] = presets;
+                            return (
+                              <>
+                                {y.has && (
+                                  <button onClick={() => select(y.value)} className={`${itemBase} ${filterPeriod === y.value ? itemActive : itemHover}`}>
+                                    {filterPeriod === y.value
+                                      ? <Check className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
+                                      : <span className="w-3.5 h-3.5 shrink-0" />}
+                                    <span>ทั้งปี {year}</span>
+                                    <span className="ml-auto text-[10px] opacity-60 tabular-nums">{y.title}</span>
+                                  </button>
+                                )}
+                                <div className="grid grid-cols-2 gap-1 px-0.5">{rest.slice(0, 2).map(pill)}</div>
+                                <div className="grid grid-cols-4 gap-1 px-0.5">{rest.slice(2).map(pill)}</div>
+                              </>
+                            );
+                          })()}
+
                           {/* Month Grid */}
-                          <div className="grid grid-cols-3 gap-1 px-0.5 pt-0.5">
+                          <div className={`grid ${isCycle ? 'grid-cols-1' : 'grid-cols-3'} gap-1 px-0.5 pt-0.5`}>
                             {months.map((m: string) => {
                               const [, mo] = m.split('-');
                               const selected = isMonthSelected(m);
@@ -504,8 +596,15 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                               }
 
                               return (
-                                <button key={m} onClick={() => handleMonthClick(m)} className={`${pillBase} ${currentStyle}`}>
-                                  {THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}
+                                <button key={m} onClick={() => handleMonthClick(m)} className={`${pillBase} ${currentStyle} ${isCycle ? 'flex items-center gap-2 px-2' : ''}`}>
+                                  {isCycle ? (
+                                    <>
+                                      <span className="w-14 text-left font-bold">รอบ {THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}</span>
+                                      <span className="flex-1 text-left tabular-nums">{cycleSpanLabel(m)}</span>
+                                      {m === currentMonth && <span className="text-[9px] font-bold px-1 border border-current rounded-full">ปัจจุบัน</span>}
+                                      {m > currentMonth && <span className="text-[9px] px-1 opacity-60">ยังไม่เริ่ม</span>}
+                                    </>
+                                  ) : THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}
                                 </button>
                               );
                             })}
@@ -523,7 +622,12 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
           {mode === 'range' && (
             <div className="p-1.5 border-t flex flex-col gap-1.5 border-[#303030] bg-[#0f0f0f]">
               <div className="relative py-1 px-2 border flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-400 min-h-[28px]">
-                <p className="text-[10px] font-bold flex-1">{rangeFooterText}</p>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold">{rangeFooterText}</p>
+                  {isCycle && rangeStart && (
+                    <p className="text-[10px] text-emerald-300/70 tabular-nums">{cycleSpanLabel(rangeStart, rangeEnd || rangeStart)}</p>
+                  )}
+                </div>
                 {(rangeStart || rangeEnd) && (
                   <button
                     onClick={() => { setRangeStart(null); setRangeEnd(null); }}
@@ -550,7 +654,8 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                 <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-0.5 custom-scrollbar">
                   {[...multiSelected].sort((a, b) => a.localeCompare(b)).map(m => (
                     <div key={m} className="flex items-center gap-1 px-1 py-0.5 rounded-none border bg-amber-500/20 border-amber-500/50 text-amber-300 text-[10px]">
-                      {THAI_MONTHS_SHORT[Number.parseInt(m.split('-')[1], 10) - 1]} {m.split('-')[0].slice(2)}
+                      {isCycle && 'รอบ '}{THAI_MONTHS_SHORT[Number.parseInt(m.split('-')[1], 10) - 1]} {m.split('-')[0].slice(2)}
+                      {isCycle && <span className="opacity-70 tabular-nums">· {cycleRangeLabel(m)}</span>}
                       <button
                         onClick={() => setMultiSelected(prev => prev.filter(x => x !== m))}
                         className="hover:text-red-400 transition-colors ml-0.5"
@@ -577,7 +682,7 @@ export default function PeriodPicker({ filterPeriod, setFilterPeriod, groupedOpt
                 >
                   {multiSelected.length > 0
                     ? `ยืนยันการเลือก (${multiSelected.length})`
-                    : 'เลือกเดือนที่ต้องการ'}
+                    : `เลือก${unitWord}ที่ต้องการ`}
                 </button>
               </div>
             </div>

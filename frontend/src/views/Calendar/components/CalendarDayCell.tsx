@@ -73,7 +73,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
       <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-[#2d2d2d]/30 bg-[#121212]">
         <div className="flex items-center gap-1.5">
-          <span className={`text-[12px] font-black leading-none w-5 h-5 flex items-center justify-center rounded-sm shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
+          <span className={`text-[12px] font-black leading-none min-w-[20px] px-0.5 whitespace-nowrap h-5 flex items-center justify-center rounded-sm shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
             {day}
           </span>
           {handleOpenAddModal && (

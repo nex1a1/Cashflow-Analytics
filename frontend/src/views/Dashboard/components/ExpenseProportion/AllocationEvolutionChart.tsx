@@ -6,6 +6,8 @@ import type { AllocationEvolutionMonth } from '@/utils/allocationEvolutionHelper
 
 interface AllocationEvolutionChartProps {
   months: AllocationEvolutionMonth[];
+  /** month / pay-cycle key containing today — later buckets are future-dated entries */
+  currentKey: string;
 }
 
 // Matches the Needs/Wants/Savings palette already used by the Allocation-mode
@@ -27,7 +29,7 @@ function monthFull(ym: string): string {
   return `${THAI_MONTHS_SHORT[mIdx] || m} ${y}`;
 }
 
-export const AllocationEvolutionChart = memo(({ months }: AllocationEvolutionChartProps) => {
+export const AllocationEvolutionChart = memo(({ months, currentKey }: AllocationEvolutionChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewW, setViewW] = useState(800);
   // Tracks the actual available height too (not a fixed constant) so the
@@ -325,8 +327,7 @@ export const AllocationEvolutionChart = memo(({ months }: AllocationEvolutionCha
 
       {/* Discipline callout for the most recent month */}
       {months.length > 0 && (() => {
-        const currentYm = new Date().toISOString().slice(0, 7);
-        const activePastOrCurrent = months.filter(m => m.ym <= currentYm && m.total > 0);
+        const activePastOrCurrent = months.filter(m => m.ym <= currentKey && m.total > 0);
         const latest = activePastOrCurrent.length > 0 
           ? activePastOrCurrent[activePastOrCurrent.length - 1] 
           : months[months.length - 1];

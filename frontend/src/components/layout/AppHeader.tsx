@@ -241,6 +241,7 @@ export default function AppHeader({
               filterPeriod={filterPeriod}
               setFilterPeriod={setFilterPeriod}
               groupedOptions={groupedOptions}
+              allowCycle
             />
           </div>
         )}

@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/CashflowTable/index.tsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDashboardContext } from '../../context/DashboardContext';
 import { CashflowGroup, Category } from '@/types';
 import { FilterToolbar } from './FilterToolbar';
@@ -9,35 +9,34 @@ import { CashflowTableFooter } from './CashflowTableFooter';
 import { GroupTooltip } from './GroupTooltip';
 import { useFilteredMaps } from './useFilteredMaps';
 import { CommonTableProps, HoveredGroupState, MonthRow } from './types';
-import { buildPayCycleTable } from '@/hooks/useAnalytics';
-import { toCycleKey } from '@/utils/payCycle';
-import { STORAGE_KEYS } from '@/constants/storageKeys';
+import { isDateInFilter, toISODate } from '@/utils/dateHelpers';
+import { isCyclePeriod, toCycleKey, cycleRange, localTodayIso } from '@/utils/payCycle';
 
 const EMPTY_SET: Set<string> = new Set();
 
-function readCycleMode(): boolean {
-  try { return localStorage.getItem(STORAGE_KEYS.CASHFLOW_TABLE_CYCLE_MODE) === 'cycle'; } catch { return false; }
-}
-
 export default function CashflowTable() {
-  const {
-    analytics: calendarAnalytics, transactions = [], cashflowGroups = [], categories = [], dm, showSkeleton,
-    filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory,
-  } = useDashboardContext();
-  const [isCycleMode, setIsCycleMode] = useState<boolean>(readCycleMode);
+  const { analytics, transactions = [], cashflowGroups = [], categories = [], dm, showSkeleton, filterPeriod } =
+    useDashboardContext();
+  const isCycleMode = isCyclePeriod(filterPeriod);
 
-  // โหมดรอบเงินเดือน: สลับ sortedCashflow/monthlyCatMap/numMonths เป็นแถวรอบ 25–24 — ที่เหลือของตาราง key ด้วย row.monthStr อยู่แล้ว
-  const cycle = useMemo(
-    () => (isCycleMode
-      ? buildPayCycleTable({ transactions, categories, cashflowGroups, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory })
-      : null),
-    [isCycleMode, transactions, categories, cashflowGroups, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory],
-  );
-  const analytics = useMemo(
-    () => (cycle && calendarAnalytics ? { ...calendarAnalytics, ...cycle } : calendarAnalytics),
-    [cycle, calendarAnalytics],
-  );
-  const partialKeys = useMemo(() => (cycle ? new Set(cycle.partialKeys) : EMPTY_SET), [cycle]);
+  // รอบไม่เต็ม (โหมดรอบ): เริ่มก่อนข้อมูลวันแรกของช่วง หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
+  const partialKeys = useMemo(() => {
+    if (!isCycleMode || !analytics?.sortedCashflow) return EMPTY_SET;
+    let firstDate = '';
+    transactions.forEach((t) => {
+      const iso = toISODate(t.date);
+      if (iso && isDateInFilter(iso, filterPeriod) && (!firstDate || iso < firstDate)) firstDate = iso;
+    });
+    const today = localTodayIso();
+    return new Set<string>(
+      (analytics.sortedCashflow as MonthRow[])
+        .map((r) => r.monthStr)
+        .filter((key) => {
+          const { start } = cycleRange(key);
+          return start < firstDate || start > today;
+        }),
+    );
+  }, [isCycleMode, analytics?.sortedCashflow, transactions, filterPeriod]);
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [hoveredGroup, setHoveredGroup] = useState<HoveredGroupState | null>(null);
@@ -63,11 +62,8 @@ export default function CashflowTable() {
     [excludedMonths, partialKeys],
   );
 
-  const setCycleMode = useCallback((on: boolean) => {
-    setIsCycleMode(on);
-    setExcludedMonths(new Set()); // key YYYY-MM หมายถึงช่วงคนละช่วงในสองโหมด
-    try { localStorage.setItem(STORAGE_KEYS.CASHFLOW_TABLE_CYCLE_MODE, on ? 'cycle' : 'calendar'); } catch { /* ignore */ }
-  }, []);
+  // key YYYY-MM หมายถึงคนละช่วงในสองโหมด — ล้างเดือนที่คลิกตัดไว้เมื่อสลับโหมด
+  useEffect(() => { setExcludedMonths(new Set()); }, [isCycleMode]);
 
   // ─── Callbacks ─────────────────────────────────────────────────────────────
   const toggleMonth = useCallback((monthStr: string) => {
@@ -248,8 +244,6 @@ export default function CashflowTable() {
         toggleAllocationFilter={toggleAllocationFilter}
         resetFilters={resetFilters}
         totalExcludedCount={totalExcludedCount}
-        isCycleMode={isCycleMode}
-        setCycleMode={setCycleMode}
       />
 
       <div

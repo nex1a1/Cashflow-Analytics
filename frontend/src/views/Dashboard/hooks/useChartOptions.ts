@@ -6,6 +6,7 @@ import {
 } from '@/utils/chartOptions';
 import { formatMoney } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
+import { isSingleUnitPeriod } from '@/utils/payCycle';
 
 interface ChartOptionsProps {
   chartViewType: string;
@@ -101,7 +102,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
     // Check if the current period is a single month (e.g., "2024-03")
     // If it is, we don't want to skip days on the X-axis.
     // If it's a longer period (H1, Q1, YYYY, all), we enable autoSkip.
-    const isSingleMonth = /^\d{4}-\d{2}$/.test(filterPeriod);
+    const isSingleMonth = isSingleUnitPeriod(filterPeriod);
     const autoSkip = !isSingleMonth;
 
     if (chartViewType === 'sankey') {

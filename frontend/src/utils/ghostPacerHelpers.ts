@@ -1,12 +1,12 @@
 // src/utils/ghostPacerHelpers.ts
 import { GhostPacerDetails, GhostPacerStatus } from '../views/Dashboard/components/SummaryCards/types';
+import { periodUnitDates } from './dateHelpers';
+import { isCyclePeriod, stripCycle, shiftMonth, localTodayIso } from './payCycle';
 
 interface CalculateGhostPacerParams {
   globalDailySum: Record<string, number>;
   filterPeriod: string;
   isCurrentMonth: boolean;
-  filterYear: number;
-  filterMonth: number; // 0-indexed
   projectedExpense: number;
 }
 
@@ -19,20 +19,23 @@ export function buildCumulativeDailySeries(
   globalDailySum: Record<string, number>,
   cutoffDay?: number
 ): { series: number[]; total: number; daysCount: number } {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const maxDay = cutoffDay ? Math.min(cutoffDay, daysInMonth) : daysInMonth;
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  return cumulativeSeries(periodUnitDates(key, false), globalDailySum, cutoffDay);
+}
+
+/** Running total over an ordered date list, optionally cut off after `cutoffDay` days */
+function cumulativeSeries(
+  dates: string[],
+  globalDailySum: Record<string, number>,
+  cutoffDay?: number
+): { series: number[]; total: number; daysCount: number } {
   const series: number[] = [];
   let runningTotal = 0;
-
-  const monthStr = String(month + 1).padStart(2, '0');
-  for (let d = 1; d <= maxDay; d++) {
-    const dayStr = String(d).padStart(2, '0');
-    const isoDate = `${year}-${monthStr}-${dayStr}`;
-    runningTotal += globalDailySum[isoDate] || 0;
+  for (const iso of cutoffDay ? dates.slice(0, cutoffDay) : dates) {
+    runningTotal += globalDailySum[iso] || 0;
     series.push(runningTotal);
   }
-
-  return { series, total: runningTotal, daysCount: daysInMonth };
+  return { series, total: runningTotal, daysCount: dates.length };
 }
 
 /**
@@ -43,11 +46,12 @@ export function calculateGhostPacerData({
   globalDailySum,
   filterPeriod,
   isCurrentMonth,
-  filterYear,
-  filterMonth,
   projectedExpense,
 }: CalculateGhostPacerParams): GhostPacerDetails {
-  const isSingleMonth = /^\d{4}-\d{2}$/.test(filterPeriod);
+  // Works on a calendar month or a pay cycle ("cycle:YYYY-MM") — day N = N-th day of that unit
+  const cycle = isCyclePeriod(filterPeriod);
+  const key = stripCycle(filterPeriod);
+  const isSingleMonth = /^\d{4}-\d{2}$/.test(key);
   
   // Default empty state when not in single month view or missing data
   const emptyStatus: GhostPacerStatus = {
@@ -82,38 +86,23 @@ export function calculateGhostPacerData({
     };
   }
 
-  const lastDayOfMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
-  const currentDay = isCurrentMonth
-    ? Math.max(1, Math.min(new Date().getDate(), lastDayOfMonth))
-    : lastDayOfMonth;
+  const unitDates = (offset: number) => periodUnitDates(shiftMonth(key, offset), cycle);
+  const currentDates = unitDates(0);
+  const lastDayOfMonth = currentDates.length;
+  const todayIdx = currentDates.indexOf(localTodayIso());
+  const currentDay = isCurrentMonth && todayIdx >= 0 ? todayIdx + 1 : lastDayOfMonth;
 
-  // 1. Current Month Cumulative Series (up to currentDay)
-  const currentPeriod = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}`;
-  const { series: currentDailySeries, total: currentSpendToDate } = buildCumulativeDailySeries(
-    filterYear,
-    filterMonth,
-    globalDailySum,
-    currentDay
-  );
+  // 1. Current unit cumulative series (up to currentDay)
+  const currentPeriod = key;
+  const { series: currentDailySeries, total: currentSpendToDate } = cumulativeSeries(currentDates, globalDailySum, currentDay);
 
-  // 2. Previous Month Series (Ghost — full month)
-  const prevDate = new Date(filterYear, filterMonth - 1, 1);
-  const prevYear = prevDate.getFullYear();
-  const prevMonth = prevDate.getMonth();
-  const prevPeriod = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+  // 2. Previous unit series (Ghost — full length)
+  const prevPeriod = shiftMonth(key, -1);
+  const { series: prevDailySeries, total: ghostTotalExpense } = cumulativeSeries(unitDates(-1), globalDailySum);
 
-  const { series: prevDailySeries, total: ghostTotalExpense } = buildCumulativeDailySeries(
-    prevYear,
-    prevMonth,
-    globalDailySum
-  );
-
-  // 3. Month -2 and Month -3 for 3-Month Benchmark
-  const m2Date = new Date(filterYear, filterMonth - 2, 1);
-  const m3Date = new Date(filterYear, filterMonth - 3, 1);
-
-  const { series: m2Series } = buildCumulativeDailySeries(m2Date.getFullYear(), m2Date.getMonth(), globalDailySum);
-  const { series: m3Series } = buildCumulativeDailySeries(m3Date.getFullYear(), m3Date.getMonth(), globalDailySum);
+  // 3. Unit -2 and -3 for 3-period benchmark
+  const { series: m2Series } = cumulativeSeries(unitDates(-2), globalDailySum);
+  const { series: m3Series } = cumulativeSeries(unitDates(-3), globalDailySum);
 
   // Calculate 3-Month Average Benchmark Series (up to current month's lastDayOfMonth)
   const benchmarkDailySeries: number[] = [];

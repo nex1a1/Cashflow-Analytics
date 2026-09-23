@@ -30,8 +30,6 @@ describe('ghostPacerHelpers', () => {
       globalDailySum: dailyMap,
       filterPeriod: '2026-09',
       isCurrentMonth: false, // will use lastDayOfMonth or we can pass
-      filterYear: 2026,
-      filterMonth: 8,
       projectedExpense: 1500,
     });
 
@@ -53,8 +51,6 @@ describe('ghostPacerHelpers', () => {
       globalDailySum: dailyMap,
       filterPeriod: '2026-09',
       isCurrentMonth: false,
-      filterYear: 2026,
-      filterMonth: 8,
       projectedExpense: 1000,
     });
 
@@ -63,13 +59,26 @@ describe('ghostPacerHelpers', () => {
     expect(pacer.deltaVsGhost).toBe(-450);
   });
 
+  it('compares pay cycles (25 → 24) in cycle mode', () => {
+    const pacer = calculateGhostPacerData({
+      globalDailySum: { '2026-08-25': 300, '2026-09-24': 100, '2026-07-25': 200, '2026-08-24': 50 },
+      filterPeriod: 'cycle:2026-08',
+      isCurrentMonth: false,
+      projectedExpense: 0,
+    });
+
+    expect(pacer.currentPeriod).toBe('2026-08');
+    expect(pacer.prevPeriod).toBe('2026-07');
+    expect(pacer.lastDayOfMonth).toBe(31); // 25 Aug – 24 Sep
+    expect(pacer.currentSpendToDate).toBe(400);
+    expect(pacer.ghostTotalExpense).toBe(250);
+  });
+
   it('handles multi-month period gracefully by returning hasData: false', () => {
     const pacer = calculateGhostPacerData({
       globalDailySum: {},
       filterPeriod: 'ALL',
       isCurrentMonth: false,
-      filterYear: 2026,
-      filterMonth: 8,
       projectedExpense: 0,
     });
 

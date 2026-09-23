@@ -1,3 +1,5 @@
+import { isCyclePeriod, stripCycle, cycleLabel, cycleRangeLabel, cycleSpanLabel, matchCyclePreset } from './payCycle';
+
 export const THAI_MONTHS: readonly string[] = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
@@ -89,6 +91,21 @@ const SUB_PERIOD_LABELS: Record<string, (y: string) => string> = {
 };
 
 export const getFilterLabel = (period: string): string => {
+  if (isCyclePeriod(period)) {
+    const base = stripCycle(period);
+    if (base === 'ALL') return 'ทุกรอบเงินเดือน (All Time)';
+    if (base.includes(',')) return `เลือกเฉพาะเจาะจง (${base.split(',').length} รอบ)`;
+    if (base.includes('_')) {
+      const [start, end] = base.split('_');
+      const preset = matchCyclePreset(base);
+      if (preset) {
+        const name = preset.id === 'Y' ? `รอบปี ${preset.year}` : `รอบ ${preset.id}/${preset.year}`;
+        return `${name} (${cycleSpanLabel(start, end).split(' · ')[0]})`;
+      }
+      return `${cycleLabel(start)} - ${cycleLabel(end)}`;
+    }
+    return `${cycleLabel(base)} (${cycleRangeLabel(base)})`;
+  }
   if (period === 'ALL') return 'ดูภาพรวมทั้งหมด (All Time)';
   if (/^\d{4}$/.test(period)) return `ปี ${period}`;
   

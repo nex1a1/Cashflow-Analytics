@@ -1,14 +1,16 @@
 import React from 'react';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
-import { resolveDefaultDayTypeId, THAI_MONTHS, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
-import { formatAmount } from '../../../utils/formatters';
+import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
+import { formatAmount, THAI_MONTHS_SHORT } from '../../../utils/formatters';
+import { parseDateStrToObj } from '../../../utils/dateHelpers';
+import { localTodayIso } from '../../../utils/payCycle';
 import { DayType, TransactionDisplay } from '../../../types';
 
 export interface CalendarBlockProps {
-  y: number;
-  m: number;
-  daysInMonth: number;
+  /** ISO dates shown in order — a calendar month or a 25 → 24 pay cycle */
+  dates: string[];
+  title: string;
   firstDayOfMonth: number;
   suffixDaysCount: number;
   monthInc: number;
@@ -33,9 +35,8 @@ export interface CalendarBlockProps {
 }
 
 const CalendarBlock = React.memo(function CalendarBlock({
-  y,
-  m,
-  daysInMonth,
+  dates,
+  title,
   firstDayOfMonth,
   suffixDaysCount,
   monthInc,
@@ -53,7 +54,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
   toggleCategory,
   maxDailyExpense
 }: CalendarBlockProps): React.ReactElement {
-  const today = new Date();
+  const today = localTodayIso();
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
   const suffixBlankKeys = [
@@ -68,7 +69,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
             <CalendarIcon className="w-6 h-6 text-[#da291c]" />
-            {THAI_MONTHS[m]} {y}
+            {title}
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
             {monthInc > 0 && (
@@ -124,18 +125,23 @@ const CalendarBlock = React.memo(function CalendarBlock({
             />
           ))}
 
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
-            const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-            const isToday = d === today.getDate() && m === today.getMonth() && y === today.getFullYear();
-            const dow = new Date(y, m, d).getDay();
+          {dates.map((dateStr, idx) => {
+            const d = Number(dateStr.slice(8, 10));
+            const isToday = dateStr === today;
+            const dow = parseDateStrToObj(dateStr).getDay();
+            // รอบข้ามเดือน: ติดชื่อเดือนที่ช่องแรกและวันที่ 1 ของเดือนถัดไป
+            const crossesMonth = dates[0].slice(0, 7) !== dates[dates.length - 1].slice(0, 7);
+            const dayLabel = crossesMonth && (idx === 0 || d === 1)
+              ? `${d} ${THAI_MONTHS_SHORT[Number(dateStr.slice(5, 7)) - 1]}`
+              : d;
             const isWeekend = dow === 0 || dow === 6;
             const defType = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
             const dayType = dayTypes[dateStr] || defType || '';
 
             return (
               <CalendarDayCell
-                key={d}
-                day={d}
+                key={dateStr}
+                day={dayLabel}
                 data={calendarData[d]}
                 dateStr={dateStr}
                 isToday={isToday}
@@ -181,7 +187,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           );
         })}
         <div className="ml-auto text-[12px] font-black px-3 py-0.5 rounded-full border bg-[#121212] border-neutral-800 text-slate-300 tabular-nums tracking-tight">
-          {daysInMonth} วัน
+          {dates.length} วัน
         </div>
       </div>
     </div>

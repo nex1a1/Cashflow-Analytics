@@ -3,6 +3,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { isDateInFilter, parseDateStrToObj, generateDatesForPeriod } from '../utils/dateHelpers';
 import { transactionService } from '../services/api';
 import { Category, GroupedOptions, GroupedPeriodOption, TransactionDisplay } from '../types';
+import { isSingleUnitPeriod, isCyclePeriod, toCycleKey, localTodayIso, CYCLE_PREFIX } from '../utils/payCycle';
+import { STORAGE_KEYS } from '../constants/storageKeys';
 
 export interface UseFiltersProps {
   transactions: TransactionDisplay[];
@@ -17,9 +19,16 @@ export default function useFilters({
 }: UseFiltersProps) {
   // ── Period ───────────────────────────────────────────────────
   const [filterPeriod, setFilterPeriod] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    let cycle = false;
+    try { cycle = localStorage.getItem(STORAGE_KEYS.PERIOD_MODE) === 'cycle'; } catch { /* private mode */ }
+    const today = localTodayIso();
+    return cycle ? CYCLE_PREFIX + toCycleKey(today) : today.slice(0, 7);
   });
+
+  // remember ปฏิทิน / รอบเงินเดือน across reloads
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.PERIOD_MODE, isCyclePeriod(filterPeriod) ? 'cycle' : 'calendar'); } catch { /* ignore */ }
+  }, [filterPeriod]);
 
   // ── Advanced filters (LedgerView) ───────────────────────────
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -123,7 +132,7 @@ export default function useFilters({
   }, [masterPeriods]);
 
   // ── Derived booleans ─────────────────────────────────────────
-  const isReadOnlyView = !/^\d{4}-\d{2}$/.exec(filterPeriod);
+  const isReadOnlyView = !isSingleUnitPeriod(filterPeriod);
 
   // ── Dates ที่มีใน period ปัจจุบัน (ใช้ใน LedgerView filter) ──
   const availableDatesInPeriod: string[] = useMemo(() => {

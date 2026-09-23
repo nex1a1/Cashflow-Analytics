@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
+import { toISODate } from '../../../utils/dateHelpers';
+import { monthKeyOf } from '../../../utils/payCycle';
 
 interface GroupBreakdownCategory {
   id: string;
@@ -24,6 +26,7 @@ interface LedgerStatsProps {
   advancedFilterGroup?: string;
   setAdvancedFilterGroup?: (groupId: string) => void;
   allDatesInPeriod?: string[];
+  filterPeriod?: string;
 }
 
 function resolveGroupPct(isIncome: boolean, isSavings: boolean, total: number, sumInc: number, sumExp: number) {
@@ -262,7 +265,8 @@ export function useLedgerStats({
   formatMoney,
   advancedFilterGroup,
   setAdvancedFilterGroup,
-  allDatesInPeriod = []
+  allDatesInPeriod = [],
+  filterPeriod = ''
 }: LedgerStatsProps) {
   const catTypeMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -328,21 +332,14 @@ export function useLedgerStats({
     return breakdowns;
   }, [displayTransactions, categories, cashflowGroups]);
 
-  // Calculate Monthly Average if period is long
+  // Calculate Monthly Average if period is long (months = pay cycles in cycle mode)
   const uniqueMonths = useMemo(() => {
     const months = new Set<string>();
     displayTransactions.forEach(t => {
-      if (!t.date) return;
-      if (t.date.includes('-')) {
-        const parts = t.date.split('-');
-        if (parts.length >= 2) months.add(`${parts[0]}-${parts[1]}`);
-      } else {
-        const parts = t.date.split('/');
-        if (parts.length === 3) months.add(`${parts[2]}-${parts[1]}`);
-      }
+      if (t.date) months.add(monthKeyOf(toISODate(t.date), filterPeriod));
     });
     return months.size;
-  }, [displayTransactions]);
+  }, [displayTransactions, filterPeriod]);
 
   const periodDays = Math.max(1, allDatesInPeriod?.length || 1);
 

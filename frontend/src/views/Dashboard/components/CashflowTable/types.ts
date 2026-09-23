@@ -183,6 +183,4 @@ export interface FilterToolbarProps {
   toggleAllocationFilter: (allocType: string) => void;
   resetFilters: () => void;
   totalExcludedCount: number;
-  isCycleMode: boolean;
-  setCycleMode: (on: boolean) => void;
 }

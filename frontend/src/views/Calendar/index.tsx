@@ -6,7 +6,9 @@ import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem } from './components/LegendAllocationBlock';
 import MonthOnlyNotice from './components/MonthOnlyNotice';
-import { resolveDefaultDayTypeId } from './utils/calendarPeriodHelpers';
+import { resolveDefaultDayTypeId, THAI_MONTHS } from './utils/calendarPeriodHelpers';
+import { periodUnitDates, parseDateStrToObj, toISODate } from '../../utils/dateHelpers';
+import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, localTodayIso, CYCLE_PREFIX, cycleLabel, cycleRangeLabel } from '../../utils/payCycle';
 import {
   CashflowGroup,
   Category,
@@ -151,18 +153,21 @@ function CalendarView({
   // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
   const showSkeleton = isLoading && (!transactions || transactions.length === 0) && (!dayTypes || Object.keys(dayTypes).length === 0);
 
-  const viewDate = useMemo(() => {
-    if (filterPeriod && /^\d{4}-\d{2}$/.exec(filterPeriod)) {
-      const [yearStr, monthStr] = filterPeriod.split('-');
-      return new Date(Number.parseInt(yearStr, 10), Number.parseInt(monthStr, 10) - 1, 1);
-    }
-    return new Date();
-  }, [filterPeriod]);
+  // วันในตาราง: เดือนปฏิทิน (1 → สิ้นเดือน) หรือรอบเงินเดือน (25 → 24 ข้ามสองเดือน).
+  // เลขวันไม่ซ้ำกันภายในรอบเดียว (25..สิ้นเดือน, 1..24) จึงใช้เลขวันเป็น key ของ dayData ได้เหมือนเดิม
+  const isCycle = isCyclePeriod(filterPeriod);
+  const periodDates = useMemo(() => {
+    const today = localTodayIso();
+    const key = isSingleUnitPeriod(filterPeriod) ? stripCycle(filterPeriod) : (isCycle ? toCycleKey(today) : today.slice(0, 7));
+    return periodUnitDates(key, isCycle);
+  }, [filterPeriod, isCycle]);
+  const periodDateSet = useMemo(() => new Set(periodDates), [periodDates]);
 
-  const y = viewDate.getFullYear();
-  const m = viewDate.getMonth();
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const firstDayOfMonth = new Date(y, m, 1).getDay();
+  const daysInMonth = periodDates.length;
+  const firstDayOfMonth = parseDateStrToObj(periodDates[0]).getDay();
+  const calendarTitle = isCycle
+    ? `${cycleLabel(toCycleKey(periodDates[0]))} · ${cycleRangeLabel(toCycleKey(periodDates[0]))}`
+    : `${THAI_MONTHS[Number(periodDates[0].slice(5, 7)) - 1]} ${periodDates[0].slice(0, 4)}`;
 
   const suffixDaysCount = useMemo(() => {
     const totalCells = firstDayOfMonth + daysInMonth;
@@ -171,10 +176,10 @@ function CalendarView({
   }, [firstDayOfMonth, daysInMonth]);
 
   // Pre-filter transactions for the current month once for performance
-  const currentMonthTransactions = useMemo(() => {
-    const targetMonthYear = `${y}-${(m + 1).toString().padStart(2, '0')}`;
-    return transactions.filter(t => t.date?.startsWith(targetMonthYear));
-  }, [transactions, y, m]);
+  const currentMonthTransactions = useMemo(
+    () => transactions.filter(t => t.date && periodDateSet.has(toISODate(t.date))),
+    [transactions, periodDateSet],
+  );
 
   // O(1) category lookup shared by every aggregation pass below, instead of each
   // transaction doing its own O(n) categories.find(...) scan.
@@ -197,8 +202,8 @@ function CalendarView({
     const totals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0 };
     const catAllocAmounts: Record<string, CategoryAllocationAmount> = {};
 
-    for (let i = 1; i <= daysInMonth; i++) {
-      dayData[i] = { inc: 0, exp: 0, items: [], incItems: [] };
+    for (const iso of periodDates) {
+      dayData[Number(iso.slice(8, 10))] = { inc: 0, exp: 0, items: [], incItems: [] };
     }
 
     currentMonthTransactions.forEach(t => {
@@ -206,7 +211,7 @@ function CalendarView({
     });
 
     let maxDailyExpense = 0;
-    for (let i = 1; i <= daysInMonth; i++) {
+    for (const i of Object.keys(dayData).map(Number)) {
       dayData[i].items.sort((a, b) => b.amount - a.amount);
       dayData[i].incItems.sort((a, b) => b.amount - a.amount);
       if (dayData[i].exp > maxDailyExpense) {
@@ -215,22 +220,21 @@ function CalendarView({
     }
 
     return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts, maxDailyExpense };
-  }, [currentMonthTransactions, daysInMonth, findCategory, cashflowGroups, excludedCategoryIds]);
+  }, [currentMonthTransactions, periodDates, findCategory, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     dayTypeConfig.forEach(dt => { counts[dt.id] = 0; });
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-      const dow = new Date(y, m, d).getDay();
+    for (const dateStr of periodDates) {
+      const dow = parseDateStrToObj(dateStr).getDay();
       const isWeekend = dow === 0 || dow === 6;
       const def = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
       const cur = dayTypes[dateStr] || def;
       if (cur) counts[cur] = (counts[cur] || 0) + 1;
     }
     return counts;
-  }, [dayTypes, daysInMonth, m, y, dayTypeConfig]);
+  }, [dayTypes, periodDates, dayTypeConfig]);
 
   // Grouped active categories with totals for the current month
   const groupedLegendData = useMemo(() => {
@@ -430,15 +434,10 @@ function CalendarView({
     };
   }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
-  const goToCurrentMonth = useCallback(() => {
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    setFilterPeriod(currentMonthStr);
-  }, [setFilterPeriod]);
+  const currentMonthStr = isCycle ? CYCLE_PREFIX + toCycleKey(localTodayIso()) : localTodayIso().slice(0, 7);
+  const goToCurrentMonth = useCallback(() => setFilterPeriod(currentMonthStr), [setFilterPeriod, currentMonthStr]);
 
   const monthNet = monthInc - monthExp;
-  const now = new Date();
-  const currentMonthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
 
   let content: React.ReactNode = null;
 
@@ -458,9 +457,8 @@ function CalendarView({
       <div className="flex flex-col h-full space-y-3.5 w-full">
         {/* 1. Calendar Block (Header, Grid, Footer) */}
         <CalendarBlock
-          y={y}
-          m={m}
-          daysInMonth={daysInMonth}
+          dates={periodDates}
+          title={calendarTitle}
           firstDayOfMonth={firstDayOfMonth}
           suffixDaysCount={suffixDaysCount}
           monthInc={monthInc}

@@ -23,6 +23,7 @@ import {
   ExportTypeFilter,
   HeaderLanguage,
 } from './types';
+import { convertPeriodMode } from '../../../utils/payCycle';
 
 export default function ExportModal({
   isOpen,
@@ -36,7 +37,8 @@ export default function ExportModal({
   getFilterLabel,
   initialPeriod = 'ALL',
 }: ExportModalProps) {
-  const [exportPeriod, setExportPeriod] = useState<string>(initialPeriod);
+  // Export นับตามเดือนปฏิทินเสมอ — period รอบเงินเดือนถูกแปลงเป็นเดือนที่ทับกันมากที่สุด
+  const [exportPeriod, setExportPeriod] = useState<string>(() => convertPeriodMode(initialPeriod, false));
   const [exportFormat, setExportFormat] = useState<ExportFormatKey>('long');
   const [delimiter, setDelimiter] = useState<DelimiterChar>(',');
   const [headerLang, setHeaderLang] = useState<HeaderLanguage>('th');
@@ -50,7 +52,7 @@ export default function ExportModal({
   // Sync initial period when modal opens
   useEffect(() => {
     if (isOpen) {
-      setExportPeriod(initialPeriod || 'ALL');
+      setExportPeriod(convertPeriodMode(initialPeriod || 'ALL', false));
       setPreviewSearch('');
       setIsExporting(false);
 

@@ -1,4 +1,5 @@
 // src/utils/allocationEvolutionHelpers.ts
+import { stripCycle } from './payCycle';
 
 export interface AllocationEvolutionMonth {
   ym: string;
@@ -28,7 +29,8 @@ const MIN_CUSTOM_RANGE_MONTHS = 3;
  * for quarter/half/year/ALL, and shown for a custom range or multi-select
  * only once it spans at least MIN_CUSTOM_RANGE_MONTHS distinct months.
  */
-function isEvolutionEligible(filterPeriod: string, periodMonths: string[]): boolean {
+function isEvolutionEligible(period: string, periodMonths: string[]): boolean {
+  const filterPeriod = stripCycle(period);
   if (/^\d{4}-\d{2}$/.test(filterPeriod)) return false; // single month
   if (filterPeriod.includes(',') || filterPeriod.includes('_')) {
     return periodMonths.length >= MIN_CUSTOM_RANGE_MONTHS; // custom range / multi-select

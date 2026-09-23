@@ -2,6 +2,7 @@
 import { isDateInFilter, parseDateStrToObj } from './dateHelpers';
 import { getThaiMonth, hexToRgb } from './formatters';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
+import { isSingleUnitPeriod } from './payCycle';
 
 /**
  * Creates a map of category names to category objects for fast lookup.
@@ -500,7 +501,7 @@ export const generateMainChartData = ({
   datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
   dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap
 }: MainChartDataParams) => {
-  const isSingleMonthView = Boolean(/^\d{4}-\d{2}$/.exec(filterPeriod));
+  const isSingleMonthView = isSingleUnitPeriod(filterPeriod);
   const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
   const activeCats = Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory];
   const isOnlyAll = activeCats.length === 1 && activeCats[0] === 'ALL';

@@ -1,4 +1,5 @@
 import { THAI_MONTHS_SHORT } from './formatters';
+import { isCyclePeriod, isSingleUnitPeriod, stripCycle, PAY_DAY } from './payCycle';
 
 export const DAY_LABELS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as const;
 
@@ -17,9 +18,9 @@ export function parseValue(v?: string | null, filterPeriod?: string | null): Dat
       if (y && m && d) return new Date(y, m - 1, d);
     }
   }
-  if (filterPeriod?.match(/^\d{4}-\d{2}$/)) {
-    const [py, pm] = filterPeriod.split('-').map(Number);
-    return new Date(py, pm - 1, 1);
+  if (filterPeriod && isSingleUnitPeriod(filterPeriod)) {
+    const [py, pm] = stripCycle(filterPeriod).split('-').map(Number);
+    return new Date(py, pm - 1, isCyclePeriod(filterPeriod) ? PAY_DAY : 1);
   }
   return new Date();
 }

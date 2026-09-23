@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isDateInFilter } from '@/utils/dateHelpers';
+import { isSingleUnitPeriod } from '@/utils/payCycle';
 
 interface ChartDataEngineProps {
   chartViewType: string;
@@ -85,7 +86,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
   const displayChartData = useMemo(() => {
     if (chartViewType === 'sankey') return sankeyData;
     if (!analytics?.mainChartData) return null;
-    const isSingleMonthView = !!filterPeriod.match(/^\d{4}-\d{2}$/);
+    const isSingleMonthView = isSingleUnitPeriod(filterPeriod);
     const showMonthly = !isSingleMonthView && chartGroupBy === 'monthly';
     const xLabels = analytics.mainChartData.labels;
 
