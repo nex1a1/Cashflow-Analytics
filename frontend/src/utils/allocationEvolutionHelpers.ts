@@ -54,21 +54,15 @@ export function calculateAllocationEvolution(
   monthlyAllocMap: MonthlyAllocMap,
   filterPeriod: string,
   periodMonths: string[],
-  monthlyIncomeMap?: Record<string, number>,
-  excludeFuture?: boolean,
-  currentYm?: string
+  monthlyIncomeMap?: Record<string, number>
 ): AllocationEvolutionData {
-  let activeMonths = periodMonths;
-  if (excludeFuture && currentYm) {
-    activeMonths = periodMonths.filter(ym => ym <= currentYm);
-  }
 
-  const eligible = isEvolutionEligible(filterPeriod, activeMonths);
+  const eligible = isEvolutionEligible(filterPeriod, periodMonths);
   if (!eligible) {
     return { eligible: false, hasData: false, months: [], label: '' };
   }
 
-  const months: AllocationEvolutionMonth[] = activeMonths.map(ym => {
+  const months: AllocationEvolutionMonth[] = periodMonths.map(ym => {
     const needAmt = monthlyAllocMap.need[ym] || 0;
     const wantAmt = monthlyAllocMap.want[ym] || 0;
     const explicitSav = monthlyAllocMap.savings[ym] || 0;

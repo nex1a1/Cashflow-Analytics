@@ -8,14 +8,12 @@ export interface UseFiltersProps {
   transactions: TransactionDisplay[];
   categories: Category[];
   masterPeriods?: string[];
-  excludeFuture?: boolean;
 }
 
 export default function useFilters({
   transactions,
   categories,
-  masterPeriods = [],
-  excludeFuture = false
+  masterPeriods = []
 }: UseFiltersProps) {
   // ── Period ───────────────────────────────────────────────────
   const [filterPeriod, setFilterPeriod] = useState<string>(() => {
@@ -99,19 +97,10 @@ export default function useFilters({
     setDayTypeFilter('ALL');
   };
 
-  const filteredMasterPeriods = useMemo(() => {
-    if (excludeFuture) {
-      const d = new Date();
-      const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      return masterPeriods.filter(p => p <= currentMonthStr);
-    }
-    return masterPeriods;
-  }, [masterPeriods, excludeFuture]);
-
   // ── Period picker options (Using Master List from DB) ────────
   const groupedOptions: GroupedOptions = useMemo(() => {
     const yearsMap: Record<string, GroupedPeriodOption> = {};
-    filteredMasterPeriods.forEach(periodStr => {
+    masterPeriods.forEach(periodStr => {
       // periodStr is YYYY-MM
       const [y, mStr] = periodStr.split('-');
       const m = Number.parseInt(mStr, 10);
@@ -126,12 +115,12 @@ export default function useFilters({
       if (m >= 7 && m <= 12) yearsMap[y].halves.add(`${y}-H2`);
     });
     return { yearsMap, sortedYears: Object.keys(yearsMap).sort((a, b) => b.localeCompare(a)) };
-  }, [filteredMasterPeriods]);
+  }, [masterPeriods]);
 
   // ── เดือนที่มีข้อมูล (Master List) ──
   const rawAvailableMonths: string[] = useMemo(() => {
-    return [...filteredMasterPeriods].sort((a, b) => b.localeCompare(a));
-  }, [filteredMasterPeriods]);
+    return [...masterPeriods].sort((a, b) => b.localeCompare(a));
+  }, [masterPeriods]);
 
   // ── Derived booleans ─────────────────────────────────────────
   const isReadOnlyView = !/^\d{4}-\d{2}$/.exec(filterPeriod);

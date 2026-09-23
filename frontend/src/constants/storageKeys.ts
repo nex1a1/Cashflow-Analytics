@@ -1,5 +1,4 @@
 export const STORAGE_KEYS = {
-  EXCLUDE_FUTURE: 'excludeFuture',
   ACTIVE_TAB: 'activeTab',
   INSIGHTS_MODE: 'shark_insights_mode',
   CALENDAR_LEGEND_SORT: 'shark_calendar_legend_sort',

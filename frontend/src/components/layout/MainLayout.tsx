@@ -55,11 +55,10 @@ export default function MainLayout() {
 
   const {
     filterPeriod, setFilterPeriod,
-    excludeFuture, handleToggleExcludeFuture,
     groupedOptions, rawAvailableMonths, isReadOnlyView,
     searchQuery, setSearchQuery,
     isFilterActive, clearFilters,
-    displayTransactions, dashboardTransactions,
+    displayTransactions,
     analytics,
     allDatesInPeriod, availableDatesInPeriod,
     advancedFilterCategory, setAdvancedFilterCategory,
@@ -109,8 +108,6 @@ export default function MainLayout() {
           onFileUpload={handleFileUpload}
           onClickImportGuide={() => setShowImportGuide(true)}
           fileInputRef={fileInputRef}
-          excludeFuture={excludeFuture}
-          onToggleExcludeFuture={handleToggleExcludeFuture}
         />
 
         <div className="p-6 relative z-0 flex-grow bg-[#181818]">
@@ -119,7 +116,7 @@ export default function MainLayout() {
               {insightsMode === 'analysis' ? (
                 <DashboardView
                   analytics={analytics}
-                  transactions={dashboardTransactions}
+                  transactions={transactions}
                   cashflowGroups={cashflowGroups}
                   filterPeriod={filterPeriod}
                   getFilterLabel={getFilterLabel}

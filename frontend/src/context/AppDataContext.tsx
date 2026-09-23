@@ -64,7 +64,6 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     setDayTypeConfig,
     setDbStatus,
     setCashflowGroups,
-    excludeFuture: false,
   });
 
   // 3. CSV Import Hook
@@ -87,12 +86,12 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
   // 4. Data Loading for Period
   const [isFetchingPeriod, setIsFetchingPeriod] = useState<boolean>(false);
-  const loadPeriodData = useCallback(async (period: string, excludeFuture?: boolean) => {
+  const loadPeriodData = useCallback(async (period: string) => {
     setIsFetchingPeriod(true);
     const { startDate, endDate, fetchStartDate } = getPeriodDateRange(period);
     try {
       await Promise.all([
-        loadAnalytics(startDate, endDate, excludeFuture),
+        loadAnalytics(startDate, endDate),
         loadData(fetchStartDate || startDate, endDate)
       ]);
     } catch (err) {

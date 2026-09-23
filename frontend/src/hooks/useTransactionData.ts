@@ -31,7 +31,6 @@ export interface UseTransactionDataProps {
   setDayTypeConfig: React.Dispatch<React.SetStateAction<DayType[]>>;
   setDbStatus: React.Dispatch<React.SetStateAction<string>>;
   setCashflowGroups: React.Dispatch<React.SetStateAction<CashflowGroup[]>>;
-  excludeFuture?: boolean;
 }
 
 export default function useTransactionData({
@@ -40,8 +39,7 @@ export default function useTransactionData({
   setDayTypes,
   setDayTypeConfig,
   setDbStatus,
-  setCashflowGroups,
-  excludeFuture = false
+  setCashflowGroups
 }: UseTransactionDataProps) {
   const [transactions, setTransactions] = useState<TransactionDisplay[]>([]);
   const [summaryData, setSummaryData] = useState<any>(null); // Aggregated analytics from backend
@@ -83,20 +81,19 @@ export default function useTransactionData({
    * Loads aggregated analytics summary for a window
    */
   const loadAnalytics = useCallback(
-    async (startDate: string | null, endDate: string | null, excludeFutureOverride?: boolean) => {
+    async (startDate: string | null, endDate: string | null) => {
       try {
         setAnalyticsRange({ start: startDate, end: endDate });
         const data = await analyticsService.getDashboardData(
           startDate || undefined,
-          endDate || undefined,
-          excludeFutureOverride !== undefined ? excludeFutureOverride : excludeFuture
+          endDate || undefined
         );
         setSummaryData(data);
       } catch (err) {
         console.error('Failed to load analytics:', err);
       }
     },
-    [excludeFuture]
+    []
   );
 
   const refreshData = useCallback(async () => {
