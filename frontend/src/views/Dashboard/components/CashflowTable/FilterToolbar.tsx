@@ -10,6 +10,8 @@ export function FilterToolbar({
   toggleAllocationFilter,
   resetFilters,
   totalExcludedCount,
+  isCycleMode,
+  setCycleMode,
 }: FilterToolbarProps) {
   return (
     <div className="px-4 py-2 border-b flex flex-col gap-2 bg-[#121212]/80 border-[#2d2d2d]">
@@ -23,6 +25,30 @@ export function FilterToolbar({
         </div>
 
         <div className="flex items-center gap-2">
+          {isCycleMode && (
+            <span
+              className="px-2 py-[3px] text-[10px] font-bold rounded-full border border-[#da291c]/25 bg-[#da291c]/[0.08] text-[#ff6b5e] select-none"
+              title="ตัวเลขในตารางนับตามรอบเงินเดือน 25–24 — ไม่ตรงกับการ์ดสรุปและกราฟด้านบนที่นับตามเดือนปฏิทิน"
+            >
+              รอบ 25–24
+            </span>
+          )}
+          <div className="inline-flex border border-[#333333] text-[11px] font-extrabold select-none">
+            {([['calendar', 'ปฏิทิน'], ['cycle', 'รอบเงินเดือน']] as const).map(([mode, label]) => {
+              const active = (mode === 'cycle') === isCycleMode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setCycleMode(mode === 'cycle')}
+                  className={`px-2.5 py-1 rounded-none cursor-pointer ${
+                    active ? 'bg-[#2a2a2a] text-white' : 'bg-[#181818] text-neutral-500 hover:text-neutral-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <button
             onClick={() => setIsFilterBarOpen((prev) => !prev)}
             className={`group relative inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-none border transition-all duration-150 select-none cursor-pointer ${

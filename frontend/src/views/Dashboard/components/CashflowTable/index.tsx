@@ -9,10 +9,36 @@ import { CashflowTableFooter } from './CashflowTableFooter';
 import { GroupTooltip } from './GroupTooltip';
 import { useFilteredMaps } from './useFilteredMaps';
 import { CommonTableProps, HoveredGroupState, MonthRow } from './types';
+import { buildPayCycleTable } from '@/hooks/useAnalytics';
+import { toCycleKey } from '@/utils/payCycle';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
+
+const EMPTY_SET: Set<string> = new Set();
+
+function readCycleMode(): boolean {
+  try { return localStorage.getItem(STORAGE_KEYS.CASHFLOW_TABLE_CYCLE_MODE) === 'cycle'; } catch { return false; }
+}
 
 export default function CashflowTable() {
-  const { analytics, transactions = [], cashflowGroups = [], categories = [], dm, showSkeleton } =
-    useDashboardContext();
+  const {
+    analytics: calendarAnalytics, transactions = [], cashflowGroups = [], categories = [], dm, showSkeleton,
+    filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory,
+  } = useDashboardContext();
+  const [isCycleMode, setIsCycleMode] = useState<boolean>(readCycleMode);
+
+  // โหมดรอบเงินเดือน: สลับ sortedCashflow/monthlyCatMap/numMonths เป็นแถวรอบ 25–24 — ที่เหลือของตาราง key ด้วย row.monthStr อยู่แล้ว
+  const cycle = useMemo(
+    () => (isCycleMode
+      ? buildPayCycleTable({ transactions, categories, cashflowGroups, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory })
+      : null),
+    [isCycleMode, transactions, categories, cashflowGroups, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory],
+  );
+  const analytics = useMemo(
+    () => (cycle && calendarAnalytics ? { ...calendarAnalytics, ...cycle } : calendarAnalytics),
+    [cycle, calendarAnalytics],
+  );
+  const partialKeys = useMemo(() => (cycle ? new Set(cycle.partialKeys) : EMPTY_SET), [cycle]);
+
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [hoveredGroup, setHoveredGroup] = useState<HoveredGroupState | null>(null);
 
@@ -28,7 +54,20 @@ export default function CashflowTable() {
   // ─── Transaction-level allocation aggregation engine ───────────────────────
   const { filteredCatMap, filteredGroupMap } = useFilteredMaps({
     transactions, categories, cashflowGroups, excludedAllocations, analytics,
+    keyFn: isCycleMode ? toCycleKey : undefined,
   });
+
+  // รอบไม่เต็มถูกตัดออกจาก footer รวม/เฉลี่ย และ MoM เสมอ — แยกจาก excludedMonths ที่ผู้ใช้คลิกเอง
+  const effectiveExcludedMonths = useMemo(
+    () => (partialKeys.size ? new Set([...excludedMonths, ...partialKeys]) : excludedMonths),
+    [excludedMonths, partialKeys],
+  );
+
+  const setCycleMode = useCallback((on: boolean) => {
+    setIsCycleMode(on);
+    setExcludedMonths(new Set()); // key YYYY-MM หมายถึงช่วงคนละช่วงในสองโหมด
+    try { localStorage.setItem(STORAGE_KEYS.CASHFLOW_TABLE_CYCLE_MODE, on ? 'cycle' : 'calendar'); } catch { /* ignore */ }
+  }, []);
 
   // ─── Callbacks ─────────────────────────────────────────────────────────────
   const toggleMonth = useCallback((monthStr: string) => {
@@ -192,11 +231,12 @@ export default function CashflowTable() {
     getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
     handleMouseEnter, handleCategoryMouseEnter, handleMouseLeave,
     hoveredCol, setHoveredCol,
-    excludedMonths, toggleMonth,
+    excludedMonths: effectiveExcludedMonths, toggleMonth,
     excludedGroups, toggleGroupExclusion,
     excludedCategories, toggleCategoryExclusion,
     categories,
     filteredCatMap, filteredGroupMap,
+    isCycleMode,
   };
 
   return (
@@ -208,6 +248,8 @@ export default function CashflowTable() {
         toggleAllocationFilter={toggleAllocationFilter}
         resetFilters={resetFilters}
         totalExcludedCount={totalExcludedCount}
+        isCycleMode={isCycleMode}
+        setCycleMode={setCycleMode}
       />
 
       <div
@@ -229,6 +271,7 @@ export default function CashflowTable() {
                   isRowHovered={hoveredRow === row.monthStr}
                   setHoveredRow={setHoveredRow}
                   isExcluded={excludedMonths.has(row.monthStr)}
+                  isPartial={partialKeys.has(row.monthStr)}
                   {...segmentProps}
                 />
               ))}

@@ -86,6 +86,7 @@ export interface CommonTableProps extends BorderClasses {
   categories: Category[];
   filteredCatMap: MonthlyMap;
   filteredGroupMap: MonthlyMap;
+  isCycleMode: boolean;
 }
 
 export interface HeaderProps extends Omit<CommonTableProps, 'excludedMonths' | 'toggleMonth'> {
@@ -168,6 +169,7 @@ export interface RowProps extends CommonTableProps {
   isRowHovered: boolean;
   setHoveredRow: (monthStr: string | null) => void;
   isExcluded: boolean;
+  isPartial: boolean;
 }
 
 export interface FooterProps extends Omit<CommonTableProps, 'toggleMonth' | 'toggleGroupExclusion' | 'toggleCategoryExclusion' | 'handleMouseEnter' | 'handleMouseLeave'> {
@@ -181,4 +183,6 @@ export interface FilterToolbarProps {
   toggleAllocationFilter: (allocType: string) => void;
   resetFilters: () => void;
   totalExcludedCount: number;
+  isCycleMode: boolean;
+  setCycleMode: (on: boolean) => void;
 }

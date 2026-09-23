@@ -9,6 +9,7 @@ import {
 } from '../utils/analyticsHelpers';
 import { calculateGhostPacerData } from '../utils/ghostPacerHelpers';
 import { calculateAllocationEvolution } from '../utils/allocationEvolutionHelpers';
+import { toCycleKey, cycleRange } from '../utils/payCycle';
 
 function resolveTransactionContext(t: any, catMapLookup: Record<string, any>, cashflowGroups: CashflowGroup[], fallbackExpId: string) {
   const amt = Number.parseFloat(t.amount) || 0;
@@ -361,12 +362,12 @@ function processAnalyticsTx({
   fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
   hideFixedExpenses, hideWantExpenses, activeFilters,
   uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
-  stateRef, totals
+  stateRef, totals, keyFn
 }: any) {
   if (!isDateInFilter(isoDate, filterPeriod)) return null;
 
   const { amt, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp } = txContext;
-  const ym = isoDate.substring(0, 7);
+  const ym = keyFn ? keyFn(isoDate) : isoDate.substring(0, 7);
   uniqueMonthsSet.add(ym);
 
   ensureCashflowMonth(cashflowMap, ym, cashflowGroups);
@@ -840,7 +841,8 @@ function executeTransactionAggregation({
   hideFixedExpenses,
   hideWantExpenses,
   activeFilters,
-  state
+  state,
+  keyFn
 }: any) {
   const { fallbackIncId, fallbackSavId, fallbackExpId, foodGroupId, rentGroupId, subscriptionGroupId } = groupMeta;
   const { startPrev, endPrev, isCurrentMonth, todayStr } = windowMeta;
@@ -867,7 +869,7 @@ function executeTransactionAggregation({
       fallbackIncId, fallbackSavId, fallbackExpId, cashflowGroups,
       hideFixedExpenses, hideWantExpenses, activeFilters,
       uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap,
-      stateRef, totals
+      stateRef, totals, keyFn
     });
 
     if (flags) {
@@ -884,6 +886,55 @@ function executeTransactionAggregation({
       });
     }
   });
+}
+
+/** CashflowTable รอบเงินเดือน: รัน aggregation เดิมทั้งชุด (hideWant/hideFixed/dashboardCategory มีผลเหมือนโหมดปฏิทิน)
+ *  แต่ key แถวด้วยรอบ 25–24 แทนเดือนปฏิทิน. ไม่ใช้ backend summary เพราะ backend ตัดตามเดือนปฏิทิน */
+export function buildPayCycleTable({
+  transactions, categories, cashflowGroups, filterPeriod,
+  hideFixedExpenses = false, hideWantExpenses = false, dashboardCategory = 'ALL',
+}: {
+  transactions: TransactionDisplay[];
+  categories: Category[];
+  cashflowGroups: CashflowGroup[];
+  filterPeriod: string;
+  hideFixedExpenses?: boolean;
+  hideWantExpenses?: boolean;
+  dashboardCategory?: string | string[];
+}) {
+  const state = createInitialAnalyticsState();
+  executeTransactionAggregation({
+    transactions,
+    catMapLookup: createCategoryMap(categories),
+    cashflowGroups,
+    groupMeta: resolveCashflowGroups(cashflowGroups),
+    windowMeta: {}, // trend/forecast side outputs are discarded here
+    filterPeriod,
+    hideFixedExpenses,
+    hideWantExpenses,
+    activeFilters: Array.isArray(dashboardCategory) ? dashboardCategory : [dashboardCategory],
+    state,
+    keyFn: toCycleKey,
+  });
+
+  const sortedCashflow = (Object.values(state.cashflowMap) as any[]).sort((a: any, b: any) => a.monthStr.localeCompare(b.monthStr));
+
+  // รอบไม่เต็ม: ช่วง 25–24 ถูกตัดด้วย filterPeriod, เริ่มก่อนข้อมูลวันแรก, หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  let firstDate = '';
+  transactions.forEach((t) => {
+    const iso = toISODate(t.date);
+    if (iso && isDateInFilter(iso, filterPeriod) && (!firstDate || iso < firstDate)) firstDate = iso;
+  });
+  const partialKeys = sortedCashflow
+    .map((r: any) => r.monthStr as string)
+    .filter((key) => {
+      const { start, end } = cycleRange(key);
+      return start < firstDate || start > todayIso || !isDateInFilter(start, filterPeriod) || !isDateInFilter(end, filterPeriod);
+    });
+
+  return { sortedCashflow, monthlyCatMap: state.monthlyCatMap, numMonths: sortedCashflow.length, partialKeys };
 }
 
 function applyBackendSummaryTotals(totals: any, summaryData: any) {

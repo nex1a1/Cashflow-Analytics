@@ -1,6 +1,7 @@
 // src/views/Dashboard/components/CashflowTable/useFilteredMaps.ts
 import { useMemo } from 'react';
 import { CashflowGroup, Category, TransactionDisplay } from '@/types';
+import { toISODate } from '@/utils/dateHelpers';
 import { Analytics, MonthlyMap, MonthRow } from './types';
 
 interface UseFilteredMapsParams {
@@ -9,6 +10,8 @@ interface UseFilteredMapsParams {
   cashflowGroups: CashflowGroup[];
   excludedAllocations: Set<string>;
   analytics: Analytics | undefined;
+  /** row key from ISO date; defaults to calendar month (YYYY-MM) */
+  keyFn?: (iso: string) => string;
 }
 
 /** Transaction-level allocation aggregation engine — recomputes per-category/per-group monthly
@@ -20,6 +23,7 @@ export function useFilteredMaps({
   cashflowGroups,
   excludedAllocations,
   analytics,
+  keyFn,
 }: UseFilteredMapsParams): { filteredCatMap: MonthlyMap; filteredGroupMap: MonthlyMap } {
   return useMemo<{ filteredCatMap: MonthlyMap; filteredGroupMap: MonthlyMap }>(() => {
     const catMap: MonthlyMap = {};
@@ -76,7 +80,8 @@ export function useFilteredMaps({
 
       const dateStr = (t as { date?: string }).date;
       if (!dateStr) return;
-      const ym = dateStr.substring(0, 7);
+      const iso = toISODate(dateStr);
+      const ym = keyFn ? keyFn(iso) : iso.substring(0, 7);
       const amt = (t as { amount?: number }).amount || 0;
 
       if (catMap[catId]?.[ym] !== undefined) catMap[catId][ym] += amt;
@@ -84,5 +89,5 @@ export function useFilteredMaps({
     });
 
     return { filteredCatMap: catMap, filteredGroupMap: groupMap };
-  }, [transactions, categories, cashflowGroups, excludedAllocations, analytics?.sortedCashflow]);
+  }, [transactions, categories, cashflowGroups, excludedAllocations, analytics?.sortedCashflow, keyFn]);
 }
