@@ -4,48 +4,85 @@ import { buildCategoryTrends } from '../categoryTrendHelpers';
 describe('buildCategoryTrends', () => {
   const keys = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07'];
 
-  it('compares last 3 complete periods with earlier average, excluding the in-progress and future ones', () => {
+  it('compares latest complete period with prior complete period (MoM) in standard mode', () => {
     const map = {
       family: { '2026-01': 100, '2026-02': 300, '2026-03': 400, '2026-04': 500, '2026-05': 600, '2026-06': 9999 },
       rent: { '2026-01': 4500, '2026-02': 4500, '2026-03': 4500, '2026-04': 4500, '2026-05': 4500 },
       future: { '2026-07': 999 },
     };
-    const [top, second, ...rest] = buildCategoryTrends(keys, map, '2026-06');
+    // current is 2026-06 (in progress) -> latest complete is 2026-05, prior complete is 2026-04
+    const [top, second, ...rest] = buildCategoryTrends(keys, map, '2026-06', false);
 
     expect(top.catId).toBe('family');
     expect(top.keys).toEqual(keys.slice(0, 6));
     expect(top.hasPartial).toBe(true);
-    expect(top.totalAmount).toBe(11899);
-    expect(top.periodAvg).toBeCloseTo(11899 / 6, 2);
-    expect(top.recentAvg).toBe(500);   // Mar–May
-    expect(top.priorAvg).toBe(200);    // Jan–Feb
-    expect(top.delta).toBe(300);
+    expect(top.latestKey).toBe('2026-05');
+    expect(top.latestAmount).toBe(600);
+    expect(top.priorKey).toBe('2026-04');
+    expect(top.priorAmount).toBe(500);
+    expect(top.comparisonType).toBe('mom');
+    expect(top.pctChange).toBe(20); // (600 - 500) / 500 * 100 = 20%
+    expect(top.delta).toBe(100);    // grew by 100 Baht MoM
+
     expect(second.catId).toBe('rent');
-    expect(second.totalAmount).toBe(22500);
-    expect(second.periodAvg).toBe(22500 / 6);
+    expect(second.latestAmount).toBe(4500);
+    expect(second.priorAmount).toBe(4500);
+    expect(second.pctChange).toBe(0);
     expect(second.delta).toBe(0);
-    expect(rest).toEqual([]);          // future-only category dropped
+
+    expect(rest).toEqual([]); // future-only category dropped
   });
 
-  it('has no prior average when there are 3 or fewer complete periods', () => {
-    const [t] = buildCategoryTrends(['2026-01', '2026-02'], { a: { '2026-01': 50 } }, '2026-02');
-    expect(t.priorAvg).toBeNull();
-    expect(t.recentAvg).toBe(50);
-    expect(t.totalAmount).toBe(50);
-    expect(t.periodAvg).toBe(25);
-  });
-
-  it('yields recentAvg of 0 when expenses occurred only in prior periods and none in the last 3 complete periods', () => {
-    // Jan & Feb had spending (avg 90), Mar-May had 0 spending
+  it('compares latest complete period with overall period average in ALL mode', () => {
     const map = {
-      gunpla: { '2026-01': 90, '2026-02': 90, '2026-03': 0, '2026-04': 0, '2026-05': 0 },
+      family: { '2026-01': 100, '2026-02': 300, '2026-03': 400, '2026-04': 500, '2026-05': 600, '2026-06': 9999 },
     };
-    const [t] = buildCategoryTrends(keys, map, '2026-06');
-    expect(t.catId).toBe('gunpla');
-    expect(t.totalAmount).toBe(180);
-    expect(t.periodAvg).toBe(30);     // 180 / 6 periods = 30
-    expect(t.recentAvg).toBe(0);      // Mar–May avg = 0
-    expect(t.priorAvg).toBe(90);     // Jan–Feb avg = 90
-    expect(t.delta).toBe(-90);       // delta dropped by 90 (or -100%)
+    const [t] = buildCategoryTrends(keys, map, '2026-06', true);
+
+    expect(t.catId).toBe('family');
+    expect(t.comparisonType).toBe('avg');
+    expect(t.latestKey).toBe('2026-05');
+    expect(t.latestAmount).toBe(600);
+    expect(t.periodAvg).toBeCloseTo(11899 / 6, 2);
+    // delta = 600 - (11899 / 6) = 600 - 1983.17 = -1383.17
+    expect(t.delta).toBeCloseTo(600 - (11899 / 6), 2);
+    expect(t.pctChange).toBeCloseTo(((600 - t.periodAvg) / t.periodAvg) * 100, 2);
+  });
+
+  it('returns null pctChange for newly introduced category with 0 prior spending', () => {
+    const map = {
+      gadgets: { '2026-01': 0, '2026-02': 0, '2026-03': 0, '2026-04': 0, '2026-05': 800 },
+    };
+    const [t] = buildCategoryTrends(keys, map, '2026-06', false);
+
+    expect(t.catId).toBe('gadgets');
+    expect(t.latestAmount).toBe(800);
+    expect(t.priorAmount).toBe(0);
+    expect(t.pctChange).toBeNull(); // displays "ใหม่" instead of infinite percentage
+    expect(t.delta).toBe(800);
+  });
+
+  it('returns 0 pctChange when both latest and prior periods are 0', () => {
+    const map = {
+      seasonal: { '2026-01': 500, '2026-02': 0, '2026-03': 0, '2026-04': 0, '2026-05': 0 },
+    };
+    const [t] = buildCategoryTrends(keys, map, '2026-06', false);
+
+    expect(t.catId).toBe('seasonal');
+    expect(t.latestAmount).toBe(0);
+    expect(t.priorAmount).toBe(0);
+    expect(t.pctChange).toBe(0);
+    expect(t.delta).toBe(0);
+  });
+
+  it('handles series with only 1 complete period gracefully', () => {
+    const [t] = buildCategoryTrends(['2026-01', '2026-02'], { test: { '2026-01': 250 } }, '2026-02', false);
+
+    expect(t.latestKey).toBe('2026-01');
+    expect(t.latestAmount).toBe(250);
+    expect(t.priorKey).toBeNull();
+    expect(t.priorAmount).toBeNull();
+    expect(t.pctChange).toBeNull();
+    expect(t.delta).toBe(250);
   });
 });

@@ -10,7 +10,7 @@ import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { MainChartHeader } from './MainChartHeader';
 import { MainChartToolbar } from './MainChartToolbar';
 import { MainChartLegend } from './MainChartLegend';
-import { CategoryMultiples } from './CategoryMultiples';
+import { SparklineGraph } from './SparklineGraph';
 
 export default function MainChart() {
   const {
@@ -118,7 +118,7 @@ export default function MainChart() {
           {showSkeleton ? (
             <div className="absolute inset-0 rounded-none animate-pulse bg-[#303030]/40" />
           ) : chartViewType === 'multiples' ? (
-            <CategoryMultiples />
+            <SparklineGraph />
           ) : (
             <div className="absolute inset-0">
               <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any} data={displayChartData as any} options={options} />

@@ -1,6 +1,7 @@
-// src/views/Dashboard/components/MainChart/MainChartToolbar.tsx
 import React, { memo } from 'react';
 import { Activity } from 'lucide-react';
+import { useDashboardContext } from '../../context/DashboardContext';
+import { stripCycle } from '@/utils/payCycle';
 import { SankeyControls } from './MainChartHeader';
 import { ToolbarViewModes, ToolbarLineStyleSelector } from './MainChartToolbarControls';
 import { MainChartFilterMenu } from './MainChartCategoryFilter';
@@ -18,6 +19,9 @@ export const MainChartToolbar = memo(({
   dashboardCategory, setDashboardCategory,
   categories, categoriesWithData
 }: MainChartToolbarProps) => {
+  const { filterPeriod } = useDashboardContext();
+  const isAll = stripCycle(filterPeriod) === 'ALL';
+
   // The line-style toggle matters wherever a Cashflow line is actually drawn — that's the
   // 'line' view, and the true multi-series combo chart even while its bars render as 'bar'.
   const showLineStyleSelector = chartViewType === 'line' || mainChartType === 'combo';
@@ -29,7 +33,9 @@ export const MainChartToolbar = memo(({
         </span>
         <span className="w-px h-4 shrink-0 bg-[#303030]" />
         <span className="text-slate-400">
-          ตัวเลขหลัก = เฉลี่ยต่องวดตามช่วงที่เลือก · ล่าสุด = เฉลี่ย 3 งวดล่าสุด (แถบสว่าง) · % = เทียบกับก่อนหน้า · เส้นประ = ยังไม่จบงวด
+          {isAll
+            ? 'ตัวเลขหลัก = เฉลี่ยต่องวด · ล่าสุด = ยอดงวดล่าสุดจริง · % = เทียบค่าเฉลี่ยรวม · เส้นประ = ยังไม่จบงวด'
+            : 'ตัวเลขหลัก = เฉลี่ยต่องวด · ล่าสุด = ยอดงวดล่าสุดจริง · % = เทียบงวดก่อนหน้า (MoM) · เส้นประ = ยังไม่จบงวด'}
         </span>
       </div>
     );

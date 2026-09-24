@@ -1,4 +1,4 @@
-// src/views/Dashboard/components/MainChart/CategoryMultiples.tsx
+// src/views/Dashboard/components/MainChart/SparklineGraph.tsx
 // Small multiples: one mini line chart per expense category, ranked by how much it grew
 // (last 3 complete periods vs the average before them). Each card has its own y-scale —
 // compare shapes across cards, compare sizes via the numbers.
@@ -7,7 +7,7 @@ import { useDashboardContext } from '../../context/DashboardContext';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { buildCategoryTrends, CategoryTrend } from '@/utils/categoryTrendHelpers';
 import { formatAmount, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { isCyclePeriod, localTodayIso, monthKeyOf } from '@/utils/payCycle';
+import { isCyclePeriod, localTodayIso, monthKeyOf, stripCycle } from '@/utils/payCycle';
 import { Category } from '@/types';
 
 const W = 100;
@@ -17,18 +17,32 @@ const baht = (v: number) => formatAmount(Math.round(v));
 const periodTick = (key: string, cycle: boolean) =>
   `${cycle ? 'รอบ ' : ''}${THAI_MONTHS_SHORT[Number(key.slice(5, 7)) - 1]} ${key.slice(2, 4)}`;
 
-function ChangeBadge({ trend }: { trend: CategoryTrend }) {
-  const { priorAvg, recentAvg } = trend;
+function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean }) {
+  const { pctChange, comparisonType, priorAmount, periodAvg, priorKey } = trend;
   let label = 'ใหม่';
   let cls = 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/40';
-  if (priorAvg) {
-    const pct = ((recentAvg - priorAvg) / priorAvg) * 100;
-    label = `${pct > 0 ? '↑' : pct < 0 ? '↓' : ''} ${Math.abs(pct).toFixed(0)}%`;
-    if (pct >= 5) cls = 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/25';
-    else if (pct <= -5) cls = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+  let title = '';
+
+  if (pctChange !== null) {
+    const arrow = pctChange > 0 ? '↑' : pctChange < 0 ? '↓' : '';
+    label = `${arrow} ${Math.abs(pctChange).toFixed(0)}%`;
+    if (pctChange >= 5) cls = 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/25';
+    else if (pctChange <= -5) cls = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+    if (comparisonType === 'avg') {
+      title = `เทียบกับค่าเฉลี่ยรวมทั้งช่วง (${baht(periodAvg)} ฿/${cycle ? 'รอบ' : 'เดือน'})`;
+    } else if (priorKey) {
+      title = `เทียบกับงวดก่อนหน้า (${periodTick(priorKey, cycle)}: ${baht(priorAmount ?? 0)} ฿)`;
+    }
+  } else {
+    title = comparisonType === 'mom' ? 'งวดก่อนหน้าไม่มียอดใช้จ่าย' : 'หมวดใหม่';
   }
+
   return (
-    <span className={`shrink-0 inline-flex items-center px-1.5 py-[2px] text-[10px] font-black leading-none border rounded-none tabular-nums ${cls}`}>
+    <span
+      title={title}
+      className={`shrink-0 inline-flex items-center px-1.5 py-[2px] text-[10px] font-black leading-none border rounded-none tabular-nums cursor-help ${cls}`}
+    >
       {label}
     </span>
   );
@@ -50,8 +64,6 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
   const y = (v: number) => H - 2 - (v / max) * (H - 4);
   const solidEnd = hasPartial ? n - 1 : n;
   const solid = series.slice(0, solidEnd).map((v, i) => `${x(i)},${y(v)}`).join(' ');
-  // Shaded window = the 3 complete periods the badge compares against the earlier average.
-  const winStart = Math.max(0, solidEnd - 3);
 
   // Closed polygon for the subtle fill under the polyline
   const fillPoints = solidEnd > 1
@@ -91,16 +103,6 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
             className={`pointer-events-none transition-none ${
               hoveredIdx !== null ? 'opacity-25' : 'opacity-0 group-hover:opacity-15'
             }`}
-          />
-        )}
-        {solidEnd > 1 && (
-          <rect
-            x={x(winStart)}
-            y={0}
-            width={x(solidEnd - 1) - x(winStart)}
-            height={H}
-            fill="#ffffff"
-            className="opacity-[0.04] group-hover:opacity-[0.08]"
           />
         )}
         <line x1={0} x2={W} y1={H - 2} y2={H - 2} stroke="#303030" strokeWidth={1} vectorEffect="non-scaling-stroke" />
@@ -217,7 +219,7 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
         <span className="text-[12px] font-bold text-neutral-200 group-hover:text-white truncate flex-1 tracking-tight">
           {cat?.name || 'ไม่ระบุ'}
         </span>
-        <ChangeBadge trend={trend} />
+        <ChangeBadge trend={trend} cycle={cycle} />
       </div>
 
       <div className="flex items-baseline justify-between text-[11px] tabular-nums min-h-[18px]">
@@ -237,18 +239,18 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
           </div>
         ) : (
           <>
-            <span className="text-neutral-100 font-bold group-hover:text-white">
+            <span
+              className="text-neutral-100 font-bold group-hover:text-white"
+              title={`เฉลี่ยต่องวดตลอดช่วงที่เลือก (${baht(trend.periodAvg)} ฿)`}
+            >
               {baht(trend.periodAvg)} ฿<span className="text-slate-500 font-normal">/{cycle ? 'รอบ' : 'เดือน'}</span>
             </span>
-            {trend.priorAvg !== null ? (
-              <span className="text-slate-500 group-hover:text-slate-400">
-                ล่าสุด {baht(trend.recentAvg)}
-              </span>
-            ) : (
-              <span className="text-slate-500 group-hover:text-slate-400">
-                รวม {baht(trend.totalAmount)}
-              </span>
-            )}
+            <span
+              className="text-slate-500 group-hover:text-slate-400 cursor-help"
+              title={trend.latestKey ? `ยอดงวดล่าสุด (${periodTick(trend.latestKey, cycle)}): ${baht(trend.latestAmount)} ฿` : undefined}
+            >
+              ล่าสุด {baht(trend.latestAmount)}
+            </span>
           </>
         )}
       </div>
@@ -265,13 +267,19 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
 });
 CategoryTrendCard.displayName = 'CategoryTrendCard';
 
-export const CategoryMultiples = memo(() => {
+export const SparklineGraph = memo(() => {
   const { analytics, categories, filterPeriod } = useDashboardContext();
   const cycle = isCyclePeriod(filterPeriod);
+  const isAll = stripCycle(filterPeriod) === 'ALL';
 
   const trends = useMemo(
-    () => buildCategoryTrends(analytics?.sortedMonthsKeys || [], analytics?.monthlyCatMap || {}, monthKeyOf(localTodayIso(), filterPeriod)),
-    [analytics?.sortedMonthsKeys, analytics?.monthlyCatMap, filterPeriod],
+    () => buildCategoryTrends(
+      analytics?.sortedMonthsKeys || [],
+      analytics?.monthlyCatMap || {},
+      monthKeyOf(localTodayIso(), filterPeriod),
+      isAll,
+    ),
+    [analytics?.sortedMonthsKeys, analytics?.monthlyCatMap, filterPeriod, isAll],
   );
   const catById = useMemo(() => {
     const m: Record<string, Category> = {};
@@ -308,4 +316,4 @@ export const CategoryMultiples = memo(() => {
     </div>
   );
 });
-CategoryMultiples.displayName = 'CategoryMultiples';
+SparklineGraph.displayName = 'SparklineGraph';
