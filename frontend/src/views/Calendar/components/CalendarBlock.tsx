@@ -137,6 +137,11 @@ const CalendarBlock = React.memo(function CalendarBlock({
             const isWeekend = dow === 0 || dow === 6;
             const defType = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
             const dayType = dayTypes[dateStr] || defType || '';
+            // เส้นแบ่งเดือนแบบขั้นบันได: ขอบบนเมื่อช่องด้านบนเป็นคนละเดือน, ขอบซ้ายที่ต้นเดือน (ถ้าไม่ใช่คอลัมน์แรก)
+            const month = dateStr.slice(0, 7);
+            const monthEdgeTop = crossesMonth && idx >= 7 && dates[idx - 7].slice(0, 7) !== month;
+            const monthEdgeLeft = crossesMonth && idx > 0 && (firstDayOfMonth + idx) % 7 !== 0
+              && dates[idx - 1].slice(0, 7) !== month;
 
             return (
               <CalendarDayCell
@@ -152,6 +157,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 onSelectDate={onSelectDate}
                 handleOpenAddModal={handleOpenAddModal}
                 maxDailyExpense={maxDailyExpense}
+                monthEdgeTop={monthEdgeTop}
+                monthEdgeLeft={monthEdgeLeft}
               />
             );
           })}

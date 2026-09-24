@@ -21,13 +21,18 @@ export interface CalendarDayCellProps {
   onSelectDate: (dateStr: string) => void;
   handleOpenAddModal?: (dateStr?: string, type?: string) => void;
   maxDailyExpense?: number;
+  /** โหมดรอบเงินเดือน: วาดเส้นแบ่งเดือนที่ขอบบน / ซ้ายของช่อง */
+  monthEdgeTop?: boolean;
+  monthEdgeLeft?: boolean;
 }
 
 const CalendarDayCell = memo(function CalendarDayCell({
   day, data, dateStr, isToday, isWeekend,
   dayTypeConfig, dayType, handleDayTypeChange, onSelectDate,
   handleOpenAddModal,
-  maxDailyExpense = 0
+  maxDailyExpense = 0,
+  monthEdgeTop = false,
+  monthEdgeLeft = false
 }: CalendarDayCellProps): React.ReactElement {
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
 
@@ -68,6 +73,13 @@ const CalendarDayCell = memo(function CalendarDayCell({
           <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-[#da291c] opacity-45 z-20" />
           <div className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-30 bg-[#da291c]" />
         </>
+      )}
+
+      {monthEdgeTop && (
+        <div className="absolute -top-px -inset-x-px h-[2px] pointer-events-none z-40 bg-slate-400/35" />
+      )}
+      {monthEdgeLeft && (
+        <div className="absolute -left-px -top-px -bottom-px w-[2px] pointer-events-none z-40 bg-slate-400/35" />
       )}
 
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
