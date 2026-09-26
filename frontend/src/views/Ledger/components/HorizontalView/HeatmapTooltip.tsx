@@ -4,6 +4,7 @@ import { formatMoney } from '../../../../utils/formatters';
 import { TransactionDisplay, Category } from '../../../../types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
+import { tc, FONT_MONO } from '@/constants/theme';
 export interface TooltipData {
   x: number;
   y: number;
@@ -60,10 +61,10 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
         }}>
           <CategoryGlyph icon={tooltip.cat?.icon} color={tooltip.cat?.color} size={18} />
           <div>
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: '#f1f5f9', lineHeight: 1.2, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: tc('ink-display'), lineHeight: 1.2, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {tooltip.cat?.name}
             </p>
-            <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: '#888888', lineHeight: 1.3, marginTop: 2, fontFamily: 'monospace', letterSpacing: '0.02em' }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: tc('ink-body'), lineHeight: 1.3, marginTop: 2, fontFamily: FONT_MONO, letterSpacing: '0.02em' }}>
               {tooltip.date}
             </p>
           </div>
@@ -79,10 +80,10 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
               borderBottom: i < tooltip.items.length - 1
                 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
             }}>
-              <p style={{ margin: 0, fontSize: 10.5, color: '#cbd5e1', flex: 1, lineHeight: 1.4, fontWeight: 500 }}>
+              <p style={{ margin: 0, fontSize: 11, color: tc('gray-300'), flex: 1, lineHeight: 1.4, fontWeight: 500 }}>
                 {item.description || <span style={{ opacity: 0.3, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
               </p>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: '#f87171', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 900, color: tc('expense'), whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', fontFamily: FONT_MONO }}>
                 ฿{formatMoney(Number.parseFloat(item.amount as any) || 0)}
               </p>
             </div>
@@ -97,10 +98,10 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
             borderTop: '1px solid rgba(255, 255, 255, 0.06)',
             background: 'rgba(255, 255, 255, 0.02)',
           }}>
-            <p style={{ margin: 0, fontSize: 8.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', fontFamily: 'monospace' }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: tc('ink-muted'), fontFamily: FONT_MONO }}>
               รวม {tooltip.items.length} รายการ
             </p>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: '#f87171', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 900, color: tc('expense'), fontVariantNumeric: 'tabular-nums', fontFamily: FONT_MONO }}>
               ฿{formatMoney(tooltip.items.reduce((s, t) => s + (Number.parseFloat(t.amount as any) || 0), 0))}
             </p>
           </div>

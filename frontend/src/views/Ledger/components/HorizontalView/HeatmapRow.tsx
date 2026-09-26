@@ -3,6 +3,7 @@ import { hexToRgb } from '../../../../utils/formatters';
 import HeatmapCell from './HeatmapCell';
 import { Category, TransactionDisplay, DayType } from '../../../../types';
 
+import { tc, readable } from '@/constants/theme';
 const EMPTY_ARRAY: TransactionDisplay[] = [];
 
 interface HeatmapRowProps {
@@ -19,7 +20,7 @@ interface HeatmapRowProps {
   dayTypes: Record<string, string>;
   dayTypeConfig: DayType[];
   handleCellLeave: () => void;
-  handleCellHover: (e: React.MouseEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
+  handleCellHover: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
   bgBase: string;
   border: string;
   ROW_H: number | string;
@@ -40,7 +41,7 @@ const HeatmapRow = memo(function HeatmapRow({
   const defTypeId = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
   const curTypeId = dayTypes[date] || defTypeId;
   const typeConf  = dayTypeConfig.find(dt => dt.id === curTypeId);
-  const typeColor = typeConf?.color || '#64748b';
+  const typeColor = typeConf?.color || tc('ink-muted');
   const typeRgb   = typeConf?.color ? hexToRgb(typeConf.color) : '100,116,139';
   const sparkPct  = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
 
@@ -90,28 +91,24 @@ const HeatmapRow = memo(function HeatmapRow({
             lineHeight: 1,
           }}>
             <span style={{
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: 800,
-              color: typeColor,
-              filter: 'brightness(1.2)',
-              opacity: 0.8,
+              color: readable(typeColor),
               marginBottom: '1px',
             }}>{dayName}</span>
 
             <span style={{
               fontSize: 14,
               fontWeight: 900,
-              color: typeColor,
-              filter: 'brightness(1.4)',
+              color: readable(typeColor),
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
             }}>
               {day}
               <span style={{
-                fontSize: '8px',
+                fontSize: '11px',
                 fontWeight: 900,
                 marginLeft: '2px',
-                opacity: 0.8,
                 textTransform: 'uppercase',
                 verticalAlign: 'top',
                 display: 'inline-block',
@@ -133,7 +130,7 @@ const HeatmapRow = memo(function HeatmapRow({
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
             border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-            handleCellHover={handleCellHover} formatMoney={formatMoney}
+            handleCellHover={handleCellHover} handleCellLeave={handleCellLeave} formatMoney={formatMoney}
           />
         );
       })}
@@ -154,13 +151,13 @@ const HeatmapRow = memo(function HeatmapRow({
             alignItems: 'baseline',
             width: '100%',
           }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f87171', opacity: 0.6 }}>฿</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: tc('expense') }}>฿</span>
             <span style={{
               fontSize: '13px',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
-              color: '#f87171',
+              color: tc('expense'),
             }}>
               {formatMoney(total)}
             </span>

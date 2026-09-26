@@ -4,6 +4,7 @@ import sharkWhite from '../../../assets/images/shark-white.svg';
 import { formatAmount as formatValue } from '../../../utils/formatters';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
+import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
 export interface LegendCategoryItem {
   id: string;
   name: string;
@@ -89,7 +90,7 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
 }: LegendAllocationBlockProps): React.ReactElement {
   if (!sortedGroups || sortedGroups.length === 0) {
     return (
-      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-4 text-center select-none">
+      <div className="bg-canvas rounded-md border border-neutral-800/90 p-4 text-center select-none">
         <p className="text-xs font-bold text-slate-500 font-mono tracking-wider uppercase">
           ไม่มีรายการธุรกรรมในเดือนนี้ (NO TRANSACTIONS IN THIS MONTH)
         </p>
@@ -98,7 +99,7 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
   }
 
   return (
-    <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-3.5 px-4">
+    <div className="bg-canvas rounded-md border border-neutral-800/90 p-3.5 px-4">
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
         {/* Left Side: Category Legend */}
         <CategoryLegendSection
@@ -145,7 +146,7 @@ function CategoryLegendSection({
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-slate-400 tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#da291c]" /> หมวดหมู่ธุรกรรม (Categories)
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" /> หมวดหมู่ธุรกรรม (Categories)
         </span>
         
         {/* Layout Switcher */}
@@ -154,10 +155,10 @@ function CategoryLegendSection({
             onClick={() => handleSetLayoutMode('compact')}
             className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendLayoutMode === 'compact'
-                ? 'bg-[#da291c] text-white font-bold'
+                ? 'bg-accent text-on-accent font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
             }`}
-            title="แบบย่อ (Compact)"
+            title="แบบย่อ"
           >
             <List className="w-3.5 h-3.5" />
           </button>
@@ -165,10 +166,10 @@ function CategoryLegendSection({
             onClick={() => handleSetLayoutMode('grouped')}
             className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendLayoutMode === 'grouped'
-                ? 'bg-[#da291c] text-white font-bold'
+                ? 'bg-accent text-on-accent font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
             }`}
-            title="แยกกลุ่ม (Grouped)"
+            title="แยกกลุ่ม"
           >
             <Rows className="w-3.5 h-3.5" />
           </button>
@@ -180,10 +181,10 @@ function CategoryLegendSection({
             onClick={() => handleSetSortMode('structure')}
             className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendSortMode === 'structure'
-                ? 'bg-[#da291c] text-white font-bold'
+                ? 'bg-accent text-on-accent font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
             }`}
-            title="เรียงตามโครงสร้าง (Sort by groups)"
+            title="เรียงตามโครงสร้าง"
           >
             <Folders className="w-3.5 h-3.5" />
           </button>
@@ -191,21 +192,21 @@ function CategoryLegendSection({
             onClick={() => handleSetSortMode('amount')}
             className={`p-1 rounded-sm transition-colors cursor-pointer ${
               legendSortMode === 'amount'
-                ? 'bg-[#da291c] text-white font-bold'
+                ? 'bg-accent text-on-accent font-bold'
                 : 'text-slate-400 hover:text-slate-200 bg-transparent'
             }`}
-            title="เรียงตามยอดเงิน (Sort by amount)"
+            title="เรียงตามยอดเงิน"
           >
             <Coins className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="h-[1px] bg-[#2d2d2d] flex-1 min-w-[20px]" />
+        <div className="h-[1px] bg-surface-elevated flex-1 min-w-[20px]" />
         
         {hasExclusions && (
           <button
             onClick={() => toggleCategory('CLEAR_ALL')}
-            className="px-3 py-0.5 text-[10px] font-black tracking-wider uppercase rounded-full border border-[#da291c] bg-[#da291c]/10 text-[#da291c] hover:bg-[#da291c]/20 transition-colors cursor-pointer shrink-0"
+            className="px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-full border border-accent bg-accent/10 text-accent hover:bg-accent/20 transition-colors cursor-pointer shrink-0"
           >
             แสดงทั้งหมด
           </button>
@@ -215,7 +216,7 @@ function CategoryLegendSection({
       {legendLayoutMode === 'compact' ? (
         <div className="flex flex-wrap gap-x-2 gap-y-1.5 content-start">
           {sortedGroups.flatMap(g => g.categories).map(cat => {
-            const color = cat.color || '#94a3b8';
+            const color = cat.color || tc('ink-body');
             const isExcluded = excludedCategoryIds.has(cat.id);
             const amt = catAmounts[cat.id] || 0;
             
@@ -229,12 +230,12 @@ function CategoryLegendSection({
                 style={{
                   backgroundColor: isExcluded ? 'transparent' : `rgba(${hexToRgb(color)}, 0.08)`,
                   borderColor: isExcluded ? `rgba(${hexToRgb(color)}, 0.1)` : `rgba(${hexToRgb(color)}, 0.25)`,
-                  color: color,
+                  color: readable(color),
                 }}
               >
                 <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
-                <span className="opacity-90">{cat.name}</span>
-                <span className="text-[11px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
+                <span>{cat.name}</span>
+                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
               </button>
             );
           })}
@@ -242,8 +243,8 @@ function CategoryLegendSection({
       ) : (
         <div className="flex flex-col flex-grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
-            const groupColor = groupObj.color || '#64748b';
-            let amtColor = 'text-[#da291c]';
+            const groupColor = groupObj.color || tc('ink-muted');
+            let amtColor = 'text-expense';
             let amtPrefix = '-';
             if (groupObj.type === 'income') {
               amtColor = 'text-emerald-400';
@@ -254,8 +255,8 @@ function CategoryLegendSection({
             }
             
             return (
-              <div key={`${groupObj.type}_${groupObj.id}`} className="flex-1 flex flex-row items-stretch gap-4 border-b border-[#2d2d2d]/30 last:border-b-0">
-                <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-[#2d2d2d]/50">
+              <div key={`${groupObj.type}_${groupObj.id}`} className="flex-1 flex flex-row items-stretch gap-4 border-b border-line/30 last:border-b-0">
+                <div className="flex items-center justify-between w-[280px] shrink-0 pr-4 py-3 border-r border-line/50">
                   <span className="text-[13px] font-black text-slate-200 tracking-wide flex items-center gap-2 truncate">
                     <span className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: groupColor }} />
                     {groupObj.icon && <CategoryGlyph icon={groupObj.icon} color={groupObj.color} size={20} className="shrink-0" />}
@@ -268,7 +269,7 @@ function CategoryLegendSection({
 
                 <div className="flex flex-wrap items-center gap-1.5 flex-grow pl-1 py-3">
                   {groupCats.map((cat: any) => {
-                    const color = cat.color || '#94a3b8';
+                    const color = cat.color || tc('ink-body');
                     const isExcluded = excludedCategoryIds.has(cat.id);
                     const amt = catAmounts[cat.id] || 0;
                     
@@ -283,12 +284,12 @@ function CategoryLegendSection({
                         style={{
                           backgroundColor: isExcluded ? 'transparent' : `rgba(${hexToRgb(color)}, 0.08)`,
                           borderColor: isExcluded ? `rgba(${hexToRgb(color)}, 0.1)` : `rgba(${hexToRgb(color)}, 0.25)`,
-                          color: color,
+                          color: readable(color),
                         }}
                       >
                         <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
-                        <span className="opacity-90">{cat.name}</span>
-                        <span className="text-[10px] opacity-75 font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
+                        <span>{cat.name}</span>
+                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
                       </button>
                     );
                   })}
@@ -308,14 +309,14 @@ function AllocationOverviewSection({
   hexToRgb
 }: { allocationTotals: any; legendLayoutMode: 'compact' | 'grouped'; hexToRgb: (hex: string | null | undefined) => string; }) {
   const rows = [
-    { label: 'จำเป็น (Needs)', dot: '#A3A3A3', pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
-    { label: 'ทั่วไป (Wants)', dot: '#F59E0B', pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
-    { label: 'เงินออม (Savings)', dot: '#10B981', pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
+    { label: 'จำเป็น', dot: ALLOCATION_COLORS.need, pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
+    { label: 'ทั่วไป', dot: ALLOCATION_COLORS.want, pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
+    { label: 'เงินออม', dot: ALLOCATION_COLORS.savings, pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
   ];
 
   return (
-    <div className="w-full lg:w-[320px] shrink-0 pl-0 lg:pl-5 border-t lg:border-t-0 lg:border-l border-[#2d2d2d]/50 flex flex-col gap-2.5 pt-1 justify-start relative overflow-hidden select-none">
-      <span className="text-[10px] font-black text-slate-500 tracking-wider uppercase flex items-center gap-1.5 z-10">
+    <div className="w-full lg:w-[320px] shrink-0 pl-0 lg:pl-5 border-t lg:border-t-0 lg:border-l border-line/50 flex flex-col gap-2.5 pt-1 justify-start relative overflow-hidden select-none">
+      <span className="text-[11px] font-black text-slate-500 tracking-wider uppercase flex items-center gap-1.5 z-10">
         สัดส่วนการใช้จ่าย (Allocation)
       </span>
 
@@ -331,13 +332,13 @@ function AllocationOverviewSection({
               </span>
             </div>
             {legendLayoutMode === 'grouped' && row.cats.length > 0 && (
-              <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-[#2d2d2d] ml-1 text-[10.5px] text-slate-300 font-bold">
+              <div className="pl-3.5 mb-1 flex flex-col gap-1 border-l border-line ml-1 text-[11px] text-slate-300 font-bold">
                 {row.cats.map((cat: any) => (
                   <div key={cat.id || `${cat.name}_${cat.groupName}`} className="flex justify-between items-center">
                     <span className="flex items-center gap-1.5 min-w-0">
                       <span className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: cat.color }} />
                       <span className="truncate">
-                        {cat.name} <span className="opacity-60 text-[9px] font-normal font-sans">({cat.groupName})</span>
+                        {cat.name} <span className="text-ink-body text-[11px] font-normal font-sans">({cat.groupName})</span>
                       </span>
                     </span>
                     <span className="font-bold tabular-nums tracking-tight text-slate-100 ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
@@ -351,17 +352,17 @@ function AllocationOverviewSection({
 
       {/* Stacked Progress Bar */}
       {allocationTotals.totalExpense > 0 && (
-        <div className="h-2 w-full bg-[#121212] border border-neutral-800 flex rounded-full overflow-hidden mt-1 shrink-0 z-10">
+        <div className="h-2 w-full bg-surface border border-neutral-800 flex rounded-full overflow-hidden mt-1 shrink-0 z-10">
           <div
-            style={{ width: `${allocationTotals.needPct}%`, backgroundColor: '#A3A3A3' }}
+            style={{ width: `${allocationTotals.needPct}%`, backgroundColor: ALLOCATION_COLORS.need }}
             title={`Needs: ${allocationTotals.needPct}%`}
           />
           <div 
-            style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: '#F59E0B' }} 
+            style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: ALLOCATION_COLORS.want }} 
             title={`Wants: ${allocationTotals.wantPct}%`} 
           />
           <div 
-            style={{ width: `${allocationTotals.savingsPct}%`, backgroundColor: '#10B981' }} 
+            style={{ width: `${allocationTotals.savingsPct}%`, backgroundColor: ALLOCATION_COLORS.savings }} 
             title={`Savings: ${allocationTotals.savingsPct}%`} 
           />
         </div>

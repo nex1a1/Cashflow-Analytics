@@ -27,15 +27,8 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
   return (
     <StrategicCardShell
       icon={Zap}
-      borderColorClass={isOver ? 'border-l-[#da291c]' : 'border-l-amber-500'}
+      borderColorClass={isOver ? 'border-l-danger' : 'border-l-amber-500'}
       label="ดัชนีฟุ่มเฟือย"
-      badge={
-        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${
-          isOver ? 'text-[#da291c] border-[#da291c]/40 bg-[#da291c]/10' : 'text-amber-400 border-amber-500/30 bg-amber-950/40'
-        }`}>
-          WANT RATIO
-        </span>
-      }
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
@@ -56,7 +49,7 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-[#da291c]' : 'text-amber-400'}`}>
+            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-amber-400'}`}>
               {lifestyleRatio.toFixed(1)}%
               <span className="text-xs text-neutral-400 font-normal ml-1">ของรายรับ</span>
             </div>
@@ -66,7 +59,7 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
             <div
-              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-[#da291c]' : 'bg-amber-400'}`}
+              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-danger' : 'bg-amber-400'}`}
               style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }}
             />
           </div>

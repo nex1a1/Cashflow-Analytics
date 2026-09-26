@@ -4,18 +4,18 @@ import { AlertTriangle, TrendingUp } from 'lucide-react';
 import { formatMoney, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import type { AllocationEvolutionMonth } from '@/utils/allocationEvolutionHelpers';
 
+
+import { tc, FONT_MONO, ALLOCATION_COLORS } from '@/constants/theme';
 interface AllocationEvolutionChartProps {
   months: AllocationEvolutionMonth[];
   /** month / pay-cycle key containing today — later buckets are future-dated entries */
   currentKey: string;
 }
 
-// Matches the Needs/Wants/Savings palette already used by the Allocation-mode
-// donut (buildAllocationBreakdown in useAnalytics.ts) so color meaning stays
-// consistent across both modes of this same card.
-const NEED_COLOR = '#EF4444';
-const WANT_COLOR = '#F59E0B';
-const SAVINGS_COLOR = '#10B981';
+// Matches the Needs/Wants/Savings palette (ALLOCATION_COLORS) across the app
+const NEED_COLOR = ALLOCATION_COLORS.need;
+const WANT_COLOR = ALLOCATION_COLORS.want;
+const SAVINGS_COLOR = ALLOCATION_COLORS.savings;
 
 function monthTick(ym: string): string {
   const [y, m] = ym.split('-');
@@ -106,9 +106,9 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#181818]">
+    <div className="flex flex-col w-full h-full bg-canvas">
       {/* Legend */}
-      <div className="flex items-center gap-4 px-3 py-2 bg-[#141414] border-b border-[#242424] text-[11px] font-mono select-none flex-wrap">
+      <div className="flex items-center gap-4 px-3 py-2 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
           <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">
@@ -152,16 +152,16 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                 y1={getY(pct)}
                 x2={padL + plotW}
                 y2={getY(pct)}
-                stroke={pct === 50 || pct === 80 ? '#a3a3a3' : '#282828'}
+                stroke={pct === 50 || pct === 80 ? tc('ink-body') : tc('line')}
                 strokeWidth={pct === 50 || pct === 80 ? 1 : 1}
                 strokeDasharray={pct === 50 || pct === 80 ? '4 3' : undefined}
                 opacity={pct === 50 || pct === 80 ? 0.7 : 1}
               />
-              <text x={padL - 8} y={getY(pct) + 3.5} fill="#a3a3a3" fontSize="9.5" fontFamily="monospace" textAnchor="end">
+              <text x={padL - 8} y={getY(pct) + 3.5} fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
                 {pct}%
               </text>
               {pct === 80 && (
-                <text x={padL + plotW} y={getY(pct) - 5} fill="#c4c4c4" fontSize="9" fontFamily="monospace" textAnchor="end">
+                <text x={padL + plotW} y={getY(pct) - 5} fill={tc('ink-soft')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
                   80% = จำเป็น+ต้องการ
                 </text>
               )}
@@ -177,14 +177,14 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
           <path
             d={needBoundary.map((v, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(v)}`).join(' ')}
             fill="none"
-            stroke="#0a0a0a"
+            stroke={tc('canvas')}
             strokeWidth="1"
             opacity="0.6"
           />
           <path
             d={wantBoundary.map((v, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(v)}`).join(' ')}
             fill="none"
-            stroke="#0a0a0a"
+            stroke={tc('canvas')}
             strokeWidth="1"
             opacity="0.6"
           />
@@ -229,7 +229,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
             y1={padT + plotH}
             x2={padL + plotW}
             y2={padT + plotH}
-            stroke="#383838"
+            stroke={tc('line-strong')}
             strokeWidth={1}
           />
 
@@ -252,9 +252,9 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                   key={m.ym}
                   x={getX(i)}
                   y={viewH - padB + 15}
-                  fill={isHovered ? '#ffffff' : '#a3a3a3'}
-                  fontSize="9.5"
-                  fontFamily="monospace"
+                  fill={isHovered ? '#ffffff' : tc('ink-body')}
+                  fontSize="11"
+                  fontFamily={FONT_MONO}
                   fontWeight={isHovered ? 'bold' : 'normal'}
                   textAnchor="middle"
                 >
@@ -281,41 +281,41 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
               {/* Marker dots pinning the tooltip's numbers to their exact band boundary */}
               {hovered.total > 0 && (
                 <>
-                  <circle cx={getX(hoveredIdx as number)} cy={getY(needBoundary[hoveredIdx as number])} r="4" fill={NEED_COLOR} stroke="#181818" strokeWidth="1.5" />
-                  <circle cx={getX(hoveredIdx as number)} cy={getY(wantBoundary[hoveredIdx as number])} r="4" fill={WANT_COLOR} stroke="#181818" strokeWidth="1.5" />
-                  <circle cx={getX(hoveredIdx as number)} cy={getY(100)} r="4" fill={SAVINGS_COLOR} stroke="#181818" strokeWidth="1.5" />
+                  <circle cx={getX(hoveredIdx as number)} cy={getY(needBoundary[hoveredIdx as number])} r="4" fill={NEED_COLOR} stroke={tc('canvas')} strokeWidth="1.5" />
+                  <circle cx={getX(hoveredIdx as number)} cy={getY(wantBoundary[hoveredIdx as number])} r="4" fill={WANT_COLOR} stroke={tc('canvas')} strokeWidth="1.5" />
+                  <circle cx={getX(hoveredIdx as number)} cy={getY(100)} r="4" fill={SAVINGS_COLOR} stroke={tc('canvas')} strokeWidth="1.5" />
                 </>
               )}
 
               <g transform={`translate(${tooltipX}, ${tooltipY})`}>
                 <rect
                   x="0" y="0" width={tipW} height={tipH}
-                  fill="#1c1c1c" stroke="#4a4a4a" strokeWidth="1.2" rx="3"
+                  fill={tc('surface-hover')} stroke={tc('line-strong')} strokeWidth="1.2" rx="3"
                   filter="url(#evolutionTooltipShadow)"
                 />
-                <text x="10" y="17" fill="#ffffff" fontSize="11.5" fontFamily="monospace" fontWeight="bold">
+                <text x="10" y="17" fill="#ffffff" fontSize="11.5" fontFamily={FONT_MONO} fontWeight="bold">
                   {monthFull(hovered.ym)}
                 </text>
                 {hovered.total === 0 ? (
-                  <text x="10" y="36" fill="#8a8a8a" fontSize="10" fontFamily="monospace">
+                  <text x="10" y="36" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO}>
                     ไม่มีข้อมูล
                   </text>
                 ) : (
                   <>
-                    <text x="10" y="38" fontSize="10.5" fontFamily="monospace">
+                    <text x="10" y="38" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={NEED_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill="#e5e5e5" dx="4">จำเป็น ฿{formatMoney(hovered.needAmt)}</tspan>
-                      <tspan fill={hovered.needPct > 50 ? '#f87171' : '#b5b5b5'} fontWeight="bold" dx="4">({hovered.needPct.toFixed(0)}%)</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">จำเป็น ฿{formatMoney(hovered.needAmt)}</tspan>
+                      <tspan fill={hovered.needPct > 50 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.needPct.toFixed(0)}%)</tspan>
                     </text>
-                    <text x="10" y="58" fontSize="10.5" fontFamily="monospace">
+                    <text x="10" y="58" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={WANT_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill="#e5e5e5" dx="4">ต้องการ ฿{formatMoney(hovered.wantAmt)}</tspan>
-                      <tspan fill={hovered.wantPct > 30 ? '#f87171' : '#b5b5b5'} fontWeight="bold" dx="4">({hovered.wantPct.toFixed(0)}%)</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">ต้องการ ฿{formatMoney(hovered.wantAmt)}</tspan>
+                      <tspan fill={hovered.wantPct > 30 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.wantPct.toFixed(0)}%)</tspan>
                     </text>
-                    <text x="10" y="78" fontSize="10.5" fontFamily="monospace">
+                    <text x="10" y="78" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={SAVINGS_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill="#e5e5e5" dx="4">ออม ฿{formatMoney(hovered.savingsAmt)}</tspan>
-                      <tspan fill={hovered.savingsPct < 20 ? '#f87171' : '#b5b5b5'} fontWeight="bold" dx="4">({hovered.savingsPct.toFixed(0)}%)</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">ออม ฿{formatMoney(hovered.savingsAmt)}</tspan>
+                      <tspan fill={hovered.savingsPct < 20 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.savingsPct.toFixed(0)}%)</tspan>
                     </text>
                   </>
                 )}
@@ -338,7 +338,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         if (latest.savingsPct < 20) breaches.push('เงินออมต่ำกว่าเป้า');
         if (breaches.length === 0) return null;
         return (
-          <div className="flex items-center gap-1.5 px-3 py-2 border-t border-[#2d2d2d] text-[11px] font-mono text-[#da291c] bg-[#da291c]/5">
+          <div className="flex items-center gap-1.5 px-3 py-2 border-t border-line text-[11px] font-mono text-danger bg-danger/5">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span className="font-bold">{monthFull(latest.ym)}: {breaches.join(' • ')}</span>
           </div>

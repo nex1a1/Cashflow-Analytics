@@ -1,11 +1,12 @@
 import React from 'react';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
-import CalendarDayCell from './CalendarDayCell';
+import CalendarDayCell, { burnAlpha, CALENDAR_HEAT_COLORS } from './CalendarDayCell';
 import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 import { formatAmount, THAI_MONTHS_SHORT } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
 import { localTodayIso } from '../../../utils/payCycle';
 import { DayType, TransactionDisplay } from '../../../types';
+import { readable, tc } from '@/constants/theme';
 
 export interface CalendarBlockProps {
   /** ISO dates shown in order — a calendar month or a 25 → 24 pay cycle */
@@ -65,10 +66,10 @@ const CalendarBlock = React.memo(function CalendarBlock({
   return (
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Header (Navigation & Stats Summary) */}
-      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-4">
+      <div className="bg-canvas rounded-md border border-neutral-800/90 p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-slate-100">
-            <CalendarIcon className="w-6 h-6 text-[#da291c]" />
+            <CalendarIcon className="w-6 h-6 text-accent" />
             {title}
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
@@ -78,12 +79,12 @@ const CalendarBlock = React.memo(function CalendarBlock({
               </span>
             )}
             {monthExp > 0 && (
-              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30">
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-expense/10 text-expense border-expense/30">
                 ▼ {formatAmount(monthExp)} ฿
               </span>
             )}
             {(monthInc > 0 || monthExp > 0) && (
-              <span className={`text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/30'}`}>
+              <span className={`text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-danger/10 text-danger border-danger/30'}`}>
                 คงเหลือ {formatAmount(monthNet)} ฿
               </span>
             )}
@@ -104,12 +105,12 @@ const CalendarBlock = React.memo(function CalendarBlock({
 
       {/* 2. Calendar Grid */}
       <div className="rounded-md border border-neutral-800/90 overflow-hidden flex-1 flex flex-col">
-        <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b border-[#2d2d2d]">
+        <div className="grid grid-cols-7 gap-[1px] bg-surface-elevated border-b border-line">
           {DAY_OF_WEEK_LABELS.map((label, i) => (
             <div
               key={label}
-              className={`py-2 text-center text-[14px] font-black tracking-wider bg-[#121212] ${
-                i === 0 || i === 6 ? 'text-[#da291c]' : 'text-slate-400'
+              className={`py-2 text-center text-[14px] font-black tracking-wider bg-surface ${
+                i === 0 || i === 6 ? 'text-weekend' : 'text-slate-400'
               }`}
             >
               {label}
@@ -117,11 +118,11 @@ const CalendarBlock = React.memo(function CalendarBlock({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d] flex-1">
+        <div className="grid grid-cols-7 gap-[1px] bg-surface-elevated flex-1">
           {prefixBlankKeys.map(blankKey => (
             <div 
               key={blankKey} 
-              className="min-h-[120px] 2xl:min-h-[140px] bg-[#121212] bg-[radial-gradient(rgba(218,41,28,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
+              className="min-h-[120px] 2xl:min-h-[140px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
             />
           ))}
 
@@ -142,6 +143,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
             const monthEdgeTop = crossesMonth && idx >= 7 && dates[idx - 7].slice(0, 7) !== month;
             const monthEdgeLeft = crossesMonth && idx > 0 && (firstDayOfMonth + idx) % 7 !== 0
               && dates[idx - 1].slice(0, 7) !== month;
+            const totalRows = Math.ceil((firstDayOfMonth + dates.length + suffixDaysCount) / 7);
+            const popUp = Math.floor((firstDayOfMonth + idx) / 7) >= totalRows - 2;
 
             return (
               <CalendarDayCell
@@ -159,6 +162,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 maxDailyExpense={maxDailyExpense}
                 monthEdgeTop={monthEdgeTop}
                 monthEdgeLeft={monthEdgeLeft}
+                popUp={popUp}
               />
             );
           })}
@@ -166,14 +170,14 @@ const CalendarBlock = React.memo(function CalendarBlock({
           {suffixBlankKeys.map(suffixKey => (
             <div 
               key={suffixKey} 
-              className="min-h-[120px] 2xl:min-h-[140px] bg-[#121212] bg-[radial-gradient(rgba(218,41,28,0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
+              className="min-h-[120px] 2xl:min-h-[140px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
             />
           ))}
         </div>
       </div>
 
       {/* 3. Summary Footer (Counts of Day Types) */}
-      <div className="bg-[#181818] rounded-md border border-neutral-800/90 p-3 px-4 flex flex-wrap gap-2.5 items-center">
+      <div className="bg-canvas rounded-md border border-neutral-800/90 p-3 px-4 flex flex-wrap gap-2.5 items-center">
         <span className="text-[13px] font-bold mr-1 text-slate-400">สรุป:</span>
         {dayTypeConfig.map(dt => {
           const count = dayTypeCounts[dt.id] || 0;
@@ -181,11 +185,11 @@ const CalendarBlock = React.memo(function CalendarBlock({
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-[10px] font-black tracking-wider uppercase"
+              className="flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-[11px] font-black tracking-wider uppercase"
               style={{
                 backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
                 borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
-                color: dt.color || undefined,
+                color: readable(dt.color || undefined),
               }}
             >
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dt.color || undefined }} />
@@ -193,7 +197,27 @@ const CalendarBlock = React.memo(function CalendarBlock({
             </div>
           );
         })}
-        <div className="ml-auto text-[12px] font-black px-3 py-0.5 rounded-full border bg-[#121212] border-neutral-800 text-slate-300 tabular-nums tracking-tight">
+        {maxDailyExpense > 0 && (
+          <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับความเข้มข้นของการใช้จ่าย">
+            <span>ใช้จ่าย:</span>
+            <div className="flex items-center gap-1 font-mono">
+              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-line bg-canvas text-ink-muted text-[10px]">
+                ปกติ
+              </span>
+              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-amber-500/30 text-amber-400 text-[10px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[2] }}>
+                กลาง
+              </span>
+              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-expense/40 text-expense text-[10px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[3] }}>
+                สูง
+              </span>
+              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-accent/60 text-white font-bold text-[10px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[4] }}>
+                พีค
+              </span>
+            </div>
+            <span className="tabular-nums text-ink-body font-mono">(สูงสุด ฿{formatAmount(maxDailyExpense)})</span>
+          </div>
+        )}
+        <div className={`${maxDailyExpense > 0 ? '' : 'ml-auto '}text-[12px] font-black px-3 py-0.5 rounded-full border bg-surface border-neutral-800 text-slate-300 tabular-nums tracking-tight`}>
           {dates.length} วัน
         </div>
       </div>

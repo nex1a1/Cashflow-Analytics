@@ -23,8 +23,8 @@ describe('MainChart helpers', () => {
 
   describe('getMainChartTitle', () => {
     it('returns correct titles for various view modes', () => {
-      expect(getMainChartTitle('sankey')).toBe('โครงสร้างกระแสเงินสด (Sankey Flow)');
-      expect(getMainChartTitle('multiples')).toBe('เทรนด์รายหมวด (Sparkline)');
+      expect(getMainChartTitle('sankey')).toBe('โครงสร้างกระแสเงินสด');
+      expect(getMainChartTitle('multiples')).toBe('เทรนด์รายหมวด');
       expect(getMainChartTitle('bar', 'combo', false)).toBe('วิเคราะห์กระแสเงินสด');
       expect(getMainChartTitle('bar', 'combo', true)).toBe('แจกแจงรายจ่ายตามหมวดหมู่');
     });

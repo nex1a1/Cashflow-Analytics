@@ -261,8 +261,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       await refreshData();
       triggerToast('ทำรายการสำเร็จ!', 'success');
     } catch (err: any) {
+      // saveToDb already toasted; rethrow so BatchAddModal keeps the cart and shows the error inline
       console.error(err);
-      triggerToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message, 'error');
+      throw err;
     } finally {
       setTxProcessing(false);
     }

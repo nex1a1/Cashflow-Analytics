@@ -3,7 +3,7 @@ import { formatMoney, hexToRgb } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { toISODate, isDateInFilter } from '@/utils/dateHelpers';
 import { TransactionDisplay, Category, CashflowGroup } from '@/types';
-
+import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 interface SankeyEngineProps {
   chartViewType: string;
   sankeySortMode: string;
@@ -111,7 +111,7 @@ function buildIncomeSankeyFlows({
       from: labelOverspent,
       to: labelTotalCash,
       flow: deficitAmount,
-      color: '#da291c',
+      color: tc('expense'),
       percent: 'Deficit'
     });
   }
@@ -142,7 +142,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelNeed,
       flow: totalNeed,
-      color: '#A3A3A3',
+      color: ALLOCATION_COLORS.need,
       percent: formatPercent(totalNeed, totalInc, '% of Cash used')
     });
   }
@@ -152,7 +152,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelWant,
       flow: totalWant,
-      color: '#F59E0B',
+      color: ALLOCATION_COLORS.want,
       percent: formatPercent(totalWant, totalInc, '% of Cash used')
     });
   }
@@ -162,7 +162,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelSav,
       flow: totalAllocSav,
-      color: '#10B981',
+      color: ALLOCATION_COLORS.savings,
       percent: formatPercent(totalAllocSav, totalInc, '% of Cash saved')
     });
   }
@@ -172,7 +172,7 @@ function buildAllocationSankeyFlows({
       from: labelTotalCash,
       to: labelRemaining,
       flow: netSavings,
-      color: '#10B981',
+      color: tc('income'),
       percent: formatPercent(netSavings, totalInc, '% เงินคงเหลือสุทธิ')
     });
   }
@@ -231,7 +231,7 @@ function buildAllocationSankeyFlows({
           from: labelNeed,
           to: catLabel,
           flow: cat.allocs.need,
-          color: cat.color || '#A3A3A3',
+          color: cat.color || ALLOCATION_COLORS.need,
           percent: formatPercent(cat.allocs.need, totalNeed, '% of Need'),
           allocBreakdown: breakdown
         });
@@ -241,7 +241,7 @@ function buildAllocationSankeyFlows({
           from: labelWant,
           to: catLabel,
           flow: cat.allocs.want,
-          color: cat.color || '#F59E0B',
+          color: cat.color || ALLOCATION_COLORS.want,
           percent: formatPercent(cat.allocs.want, totalWant, '% of Want'),
           allocBreakdown: breakdown
         });
@@ -261,7 +261,7 @@ function buildAllocationSankeyFlows({
       from: labelSav,
       to: catLabel,
       flow: cat.catTotal,
-      color: cat.color || '#10B981',
+      color: cat.color || ALLOCATION_COLORS.savings,
       percent: formatPercent(cat.catTotal, totalAllocSav, '% of Savings'),
       allocBreakdown: {
         need: cat.allocs.need,
@@ -287,7 +287,7 @@ function buildStandardSankeyFlows({
       from: labelTotalCash,
       to: labelTotalExp,
       flow: totalExp,
-      color: '#64748B',
+      color: tc('ink-muted'),
       percent: formatPercent(totalExp, totalInc, '% of Cash used')
     });
   }
@@ -297,7 +297,7 @@ function buildStandardSankeyFlows({
       from: labelTotalCash,
       to: labelTotalSav,
       flow: totalSav,
-      color: '#10B981',
+      color: tc('income'),
       percent: formatPercent(totalSav, totalInc, '% of Cash saved')
     });
   }
@@ -307,7 +307,7 @@ function buildStandardSankeyFlows({
       from: labelTotalCash,
       to: labelRemaining,
       flow: netSavings,
-      color: '#10B981',
+      color: tc('income'),
       percent: formatPercent(netSavings, totalInc, '% เงินคงเหลือสุทธิ')
     });
   }
@@ -402,7 +402,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
     });
 
     const catAllocTotals: Record<string, any> = {};
-    transactions.forEach(t => {
+    transactions.forEach((t: any) => {
       processSankeyTransaction(t, { filterPeriod, categoryMap, groupMap, categoryTotals, catAllocTotals });
     });
 
@@ -472,26 +472,26 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
         priority,
         column,
         colorFrom: (c: any) => {
-          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          const color = c.dataset?.data?.[c.dataIndex]?.color || tc('ink-muted');
           return `rgba(${hexToRgb(color)}, 0.45)`;
         },
         colorTo: (c: any) => {
-          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          const color = c.dataset?.data?.[c.dataIndex]?.color || tc('ink-muted');
           return `rgba(${hexToRgb(color)}, 0.45)`;
         },
         hoverColorFrom: (c: any) => {
-          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          const color = c.dataset?.data?.[c.dataIndex]?.color || tc('ink-muted');
           return `rgba(${hexToRgb(color)}, 0.9)`;
         },
         hoverColorTo: (c: any) => {
-          const color = c.dataset?.data?.[c.dataIndex]?.color || '#475569';
+          const color = c.dataset?.data?.[c.dataIndex]?.color || tc('ink-muted');
           return `rgba(${hexToRgb(color)}, 0.9)`;
         },
         colorMode: 'gradient',
         size: 'max',
         labels: {
           color: '#FFFFFF',
-          font: { family: "'Inter', 'Bai Jamjuree', sans-serif", size: 10, weight: 'bold' },
+          font: { family: "'Inter', 'Bai Jamjuree', sans-serif", size: 11, weight: 'bold' },
           display: true
         },
         nodeWidth: 15,

@@ -10,6 +10,7 @@ import { formatAmount, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { isCyclePeriod, localTodayIso, monthKeyOf, stripCycle } from '@/utils/payCycle';
 import { Category } from '@/types';
 
+import { tc } from '@/constants/theme';
 const W = 100;
 const H = 40;
 // analytics.monthlyCatMap is already in Baht (transactions are converted on fetch)
@@ -20,13 +21,13 @@ const periodTick = (key: string, cycle: boolean) =>
 function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean }) {
   const { pctChange, comparisonType, priorAmount, periodAvg, priorKey } = trend;
   let label = 'ใหม่';
-  let cls = 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/40';
+  let cls = 'bg-surface-elevated/40 text-slate-400 border-line-strong/40';
   let title = '';
 
   if (pctChange !== null) {
     const arrow = pctChange > 0 ? '↑' : pctChange < 0 ? '↓' : '';
     label = `${arrow} ${Math.abs(pctChange).toFixed(0)}%`;
-    if (pctChange >= 5) cls = 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/25';
+    if (pctChange >= 5) cls = 'bg-danger/10 text-danger border-danger/25';
     else if (pctChange <= -5) cls = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
     if (comparisonType === 'avg') {
@@ -41,7 +42,7 @@ function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean })
   return (
     <span
       title={title}
-      className={`shrink-0 inline-flex items-center px-1.5 py-[2px] text-[10px] font-black leading-none border rounded-none tabular-nums cursor-help ${cls}`}
+      className={`shrink-0 inline-flex items-center px-1.5 py-[2px] text-[11px] font-black leading-none border rounded-none tabular-nums cursor-help ${cls}`}
     >
       {label}
     </span>
@@ -105,7 +106,7 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
             }`}
           />
         )}
-        <line x1={0} x2={W} y1={H - 2} y2={H - 2} stroke="#303030" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <line x1={0} x2={W} y1={H - 2} y2={H - 2} stroke={tc('line')} strokeWidth={1} vectorEffect="non-scaling-stroke" />
         <polyline
           points={solid}
           fill="none"
@@ -122,7 +123,7 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
             cy={lastY}
             r={2.2}
             fill={color}
-            stroke="#181818"
+            stroke={tc('canvas')}
             strokeWidth={0.8}
             className="opacity-0 group-hover:opacity-100"
             vectorEffect="non-scaling-stroke"
@@ -183,7 +184,7 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
             transform: 'translate(-50%, -135%)',
           }}
         >
-          <div className="rounded-none bg-[#121212] border border-[#3e3e3e] shadow-2xl py-0.5 px-1.5 text-[9px] font-mono text-neutral-200 flex items-center gap-1">
+          <div className="rounded-none bg-surface border border-line-strong shadow-2xl py-0.5 px-1.5 text-[11px] font-mono text-neutral-200 flex items-center gap-1">
             <span className="font-bold text-white">{baht(series[hoveredIdx])} ฿</span>
           </div>
         </div>
@@ -200,13 +201,13 @@ interface CategoryTrendCardProps {
 
 const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const color = cat?.color || '#94a3b8';
+  const color = cat?.color || tc('ink-body');
   const { keys, series, hasPartial } = trend;
   const n = keys.length;
 
   return (
     <div
-      className="relative bg-[#181818] hover:bg-[#202020] px-3 pt-2.5 pb-2 flex flex-col gap-1.5 min-w-0 group cursor-default select-none overflow-hidden transition-none"
+      className="relative bg-canvas hover:bg-surface-hover px-3 pt-2.5 pb-2 flex flex-col gap-1.5 min-w-0 group cursor-default select-none overflow-hidden transition-none"
     >
       {/* Razor-sharp top hairline accent in category color */}
       <div
@@ -230,10 +231,10 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
               <span className="text-slate-300 font-mono">{periodTick(keys[hoveredIdx], cycle)}:</span>
               <span className="text-white font-bold">{baht(series[hoveredIdx])} ฿</span>
               {hasPartial && hoveredIdx === n - 1 && (
-                <span className="text-amber-400 text-[10px] font-sans font-medium shrink-0">(ยังไม่จบ)</span>
+                <span className="text-amber-400 text-[11px] font-sans font-medium shrink-0">(ยังไม่จบ)</span>
               )}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono shrink-0 ml-1">
+            <span className="text-[11px] text-slate-500 font-mono shrink-0 ml-1">
               {hoveredIdx + 1}/{n}
             </span>
           </div>
@@ -301,7 +302,7 @@ export const SparklineGraph = memo(() => {
   return (
     <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
       <div
-        className="grid gap-[1px] bg-[#303030]/60 border border-[#303030]/60"
+        className="grid gap-[1px] bg-surface-elevated/60 border border-line/60"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
       >
         {trends.map((t) => (

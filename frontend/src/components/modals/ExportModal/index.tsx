@@ -24,6 +24,8 @@ import {
   HeaderLanguage,
 } from './types';
 import { convertPeriodMode } from '../../../utils/payCycle';
+import { tc } from '@/constants/theme';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export default function ExportModal({
   isOpen,
@@ -37,6 +39,7 @@ export default function ExportModal({
   getFilterLabel,
   initialPeriod = 'ALL',
 }: ExportModalProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>();
   // Export นับตามเดือนปฏิทินเสมอ — period รอบเงินเดือนถูกแปลงเป็นเดือนที่ทับกันมากที่สุด
   const [exportPeriod, setExportPeriod] = useState<string>(() => convertPeriodMode(initialPeriod, false));
   const [exportFormat, setExportFormat] = useState<ExportFormatKey>('long');
@@ -180,15 +183,15 @@ export default function ExportModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-150">
-      <div
-        className="relative shadow-2xl flex flex-col w-full max-w-[1400px] h-[86vh] min-h-[540px] max-h-[880px] border border-[#3e3e3e] bg-[#181818] overflow-hidden"
-        style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="ส่งออกข้อมูล" tabIndex={-1}
+        className="relative shadow-2xl flex flex-col w-full max-w-[1400px] h-[86vh] min-h-[540px] max-h-[880px] border border-line-strong bg-canvas overflow-hidden"
+        style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
         {/* Header */}
         <ExportHeader onClose={onClose} isExporting={isExporting} />
 
         {/* 2-Column Body */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden bg-[#181818]">
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden bg-canvas">
           <ExportSidebar
             exportPeriod={exportPeriod}
             setExportPeriod={setExportPeriod}

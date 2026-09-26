@@ -4,10 +4,11 @@ import { formatMoney, hexToRgb } from '../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup, FrequentItem } from '../../types';
 import CategoryGlyph from './CategoryGlyph';
 
+import { tc, readable } from '@/constants/theme';
 const ALLOC_COLORS: Record<string, string> = {
   need: '#f43f5e',
   want: '#38bdf8',
-  savings: '#34d399'
+  savings: tc('savings')
 };
 
 export interface QuickSuggestProps {
@@ -189,7 +190,7 @@ function QuickSuggest({
   const selectedCatObjs = useMemo(() => {
     return selectedCatIds.map(id => {
       const found = catMap[id] || categories.find(c => String(c.id) === String(id));
-      return (found || { id, name: String(id), icon: '📌', color: '#64748b' }) as Category;
+      return (found || { id, name: String(id), icon: '📌', color: tc('ink-muted') }) as Category;
     });
   }, [selectedCatIds, catMap, categories]);
 
@@ -311,10 +312,10 @@ function QuickSuggest({
   }, [defaultLimit]);
 
   const tokens = {
-    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
-    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-none bg-[#141414] border-[#303030] text-slate-200 focus:border-[#da291c] cursor-pointer",
+    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent focus:ring-accent/30",
+    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-none bg-surface border-line text-slate-200 focus:border-accent cursor-pointer",
     searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
-    label: "block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1",
+    label: "block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1",
   };
 
   return (
@@ -341,7 +342,7 @@ function QuickSuggest({
               <button 
                 type="button" 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[#303030] text-slate-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-surface-elevated text-slate-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -356,21 +357,21 @@ function QuickSuggest({
             onClick={() => setShowFilterMenu(!showFilterMenu)}
             className={`px-3 py-1.5 flex items-center justify-center gap-1.5 border text-xs font-bold transition-all duration-75 rounded-none select-none cursor-pointer ${
               showFilterMenu 
-                ? 'bg-[#222222] border-[#da291c] text-white shadow-sm' 
+                ? 'bg-surface-hover border-accent text-white shadow-sm' 
                 : activeFiltersCount > 0
-                  ? 'bg-[#1e1e1e] border-[#da291c]/70 text-slate-200 hover:bg-[#252525]'
-                  : 'bg-[#181818] border-[#3e3e3e] text-slate-300 hover:bg-[#262626] hover:text-white'
+                  ? 'bg-surface-hover border-accent/70 text-slate-200 hover:bg-surface-elevated'
+                  : 'bg-canvas border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white'
             }`}
             title="ตัวกรองเพิ่มเติม"
           >
-            <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-[#da291c]' : 'text-slate-400'}`} />
+            <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent' : 'text-slate-400'}`} />
             <span>ตัวกรอง</span>
             {activeFiltersCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#da291c] text-white">
+              <span className="px-1.5 py-0.2 rounded-full text-[11px] font-black bg-accent text-on-accent">
                 {activeFiltersCount}
               </span>
             )}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${showFilterMenu ? 'rotate-180 text-[#da291c]' : 'text-slate-400'}`} />
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${showFilterMenu ? 'rotate-180 text-accent' : 'text-slate-400'}`} />
           </button>
         </div>
 
@@ -381,10 +382,10 @@ function QuickSuggest({
             {selectedCatObjs.map(cat => (
               <span 
                 key={cat.id} 
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border text-[9px] font-bold"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border text-[11px] font-bold"
                 style={{ 
-                  borderColor: `rgba(${hexToRgb(cat.color || '#64748b')}, 0.5)`, 
-                  color: cat.color || '#e2e8f0' 
+                  borderColor: `rgba(${hexToRgb(cat.color || tc('ink-muted'))}, 0.5)`, 
+                  color: readable(cat.color || tc('gray-200')) 
                 }}
               >
                 <CategoryGlyph icon={cat.icon} color={cat.color} size={15} fallbackEmoji="📌" />
@@ -392,7 +393,7 @@ function QuickSuggest({
                 <button 
                   type="button" 
                   onClick={() => handleToggleCategory(cat.id)}
-                  className="hover:text-red-400 ml-0.5 cursor-pointer"
+                  className="hover:text-danger ml-0.5 cursor-pointer"
                   title={`ลบหมวด ${cat.name}`}
                 >
                   <X className="w-2.5 h-2.5" />
@@ -402,13 +403,13 @@ function QuickSuggest({
 
             {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
             {selectedCatObjs.length === 0 && activeGroupObj && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} fallbackEmoji="📁" />
                 <span>กลุ่ม: {activeGroupObj.name}</span>
                 <button 
                   type="button" 
                   onClick={() => setSelectedGroup(null)}
-                  className="hover:text-red-400 ml-0.5 cursor-pointer"
+                  className="hover:text-danger ml-0.5 cursor-pointer"
                   title="ลบตัวกรองกลุ่ม"
                 >
                   <X className="w-2.5 h-2.5" />
@@ -417,36 +418,36 @@ function QuickSuggest({
             )}
 
             {formType === 'expense' && allocationFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300 uppercase">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
                 <span>{allocationFilter}</span>
                 <button 
                   type="button" 
                   onClick={() => setAllocationFilter('ALL')}
-                  className="hover:text-red-400 ml-0.5 cursor-pointer"
+                  className="hover:text-danger ml-0.5 cursor-pointer"
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
               </span>
             )}
             {amountFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>ช่วงราคา</span>
                 <button 
                   type="button" 
                   onClick={() => setAmountFilter('ALL')}
-                  className="hover:text-red-400 ml-0.5 cursor-pointer"
+                  className="hover:text-danger ml-0.5 cursor-pointer"
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
               </span>
             )}
             {limitCount !== String(defaultLimit) && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] border border-slate-700 text-[9px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>{limitCount === 'ALL' ? 'แสดงทั้งหมด' : `แสดง ${limitCount}`}</span>
                 <button 
                   type="button" 
                   onClick={() => setLimitCount(String(defaultLimit))}
-                  className="hover:text-red-400 ml-0.5 cursor-pointer"
+                  className="hover:text-danger ml-0.5 cursor-pointer"
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
@@ -455,7 +456,7 @@ function QuickSuggest({
             <button
               type="button"
               onClick={handleResetAll}
-              className="text-[9px] text-[#da291c] hover:underline font-bold ml-auto cursor-pointer"
+              className="text-[11px] text-accent hover:underline font-bold ml-auto cursor-pointer"
             >
               ล้างทั้งหมด
             </button>
@@ -475,11 +476,11 @@ function QuickSuggest({
             <div className="flex flex-col gap-1">
               {quickSuggestions.map((s, idx) => {
                 const catObj = catLookup[s.categoryId] || catLookup[s.categoryName];
-                const catColor = catObj?.color || '#cbd5e1';
+                const catColor = catObj?.color || tc('gray-300');
                 const bgAlpha = 0.2;
                 
                 // Allocation Bar Color
-                const allocColor = (s.allocation_type && ALLOC_COLORS[s.allocation_type]) || '#34d399';
+                const allocColor = (s.allocation_type && ALLOC_COLORS[s.allocation_type]) || tc('income');
 
                 const itemKey = `${s.categoryId}-${s.description}-${s.amount}-${idx}`;
 
@@ -503,7 +504,7 @@ function QuickSuggest({
                     <div className="flex items-center flex-1 min-w-0 pl-1.5 gap-2.5">
                       {/* Icon with colored background */}
                       <div 
-                        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] transition-transform duration-75 group-hover:scale-105"
+                        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] transition-transform duration-75 group-hover:scale-105"
                         style={{ backgroundColor: `rgba(${hexToRgb(catColor)}, ${bgAlpha})` }}
                       >
                         <CategoryGlyph icon={catObj?.icon} color={catColor} size={18} fallbackEmoji="📌" />
@@ -513,13 +514,13 @@ function QuickSuggest({
                         <span className="text-xs font-bold truncate w-full group-hover:text-white transition-colors">
                           {s.description || catObj?.name || 'อื่นๆ'}
                         </span>
-                        <div className="flex items-center gap-1 text-[9px] font-medium truncate w-full mt-0.5 text-slate-500 group-hover:text-slate-400 transition-colors">
+                        <div className="flex items-center gap-1 text-[11px] font-medium truncate w-full mt-0.5 text-slate-500 group-hover:text-slate-400 transition-colors">
                           {catObj?._group?.name && (
                             <>
                               <span className="opacity-75 truncate max-w-[80px]" title={`กลุ่ม: ${catObj._group.name}`}>
                                 {catObj._group.name}
                               </span>
-                              <span className="opacity-40 text-[8px] select-none">›</span>
+                              <span className="opacity-40 text-[11px] select-none">›</span>
                             </>
                           )}
                           <span className="truncate">{catObj?.name || s.categoryName}</span>
@@ -527,11 +528,11 @@ function QuickSuggest({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-1.5 pl-2 shrink-0 border-l border-[#303030]/60">
-                      <span className={`text-xs font-bold tabular-nums tracking-tight ${formType === 'expense' ? 'text-[#f87171] group-hover:text-red-300' : 'text-[#34d399] group-hover:text-emerald-300'} transition-colors`}>
+                    <div className="flex items-center justify-end gap-1.5 pl-2 shrink-0 border-l border-line/60">
+                      <span className={`text-xs font-bold tabular-nums tracking-tight ${formType === 'expense' ? 'text-expense group-hover:text-red-300' : 'text-emerald-400 group-hover:text-emerald-300'} transition-colors`}>
                         {formType === 'expense' ? '-฿' : '+฿'}{formatMoney(s.amount)}
                       </span>
-                      <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
+                      <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
                         {s.count}x
                       </span>
                     </div>
@@ -546,15 +547,15 @@ function QuickSuggest({
         {showFilterMenu && (
           <div 
             ref={filterOverlayRef}
-            className="absolute top-0 left-0 right-0 z-30 bg-[#181818] border border-[#3e3e3e] shadow-md shadow-black/40 p-3 flex flex-col justify-between max-h-[85%] overflow-hidden"
+            className="absolute top-0 left-0 right-0 z-30 bg-canvas border border-line-strong shadow-md shadow-black/40 p-3 flex flex-col justify-between max-h-[85%] overflow-hidden"
           >
             {/* Modal Header */}
-            <div className="pb-1.5 border-b border-[#282828] flex items-center justify-between text-slate-300 shrink-0">
+            <div className="pb-1.5 border-b border-line flex items-center justify-between text-slate-300 shrink-0">
               <div className="flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-[#da291c]" />
+                <SlidersHorizontal className="w-3.5 h-3.5 text-accent" />
                 <span className="text-[11px] font-black uppercase tracking-wider text-white">ตัวกรองคำแนะนำ</span>
                 {activeFiltersCount > 0 && (
-                  <span className="text-[9px] font-bold text-[#da291c] bg-[#da291c]/10 border border-[#da291c]/30 px-1.5 py-0.2 rounded-none">
+                  <span className="text-[11px] font-bold text-accent bg-accent/10 border border-accent/30 px-1.5 py-0.2 rounded-none">
                     {activeFiltersCount} ตัวกรอง
                   </span>
                 )}
@@ -562,7 +563,7 @@ function QuickSuggest({
               <button
                 type="button"
                 onClick={() => setShowFilterMenu(false)}
-                className="text-slate-400 hover:text-white p-1 hover:bg-[#252525] border border-transparent hover:border-[#383838] cursor-pointer"
+                className="text-slate-400 hover:text-white p-1 hover:bg-surface-elevated border border-transparent hover:border-line-strong cursor-pointer"
                 title="ปิดหน้าต่างตัวกรอง"
               >
                 <X className="w-3.5 h-3.5" />
@@ -582,7 +583,7 @@ function QuickSuggest({
                         setSelectedGroup(null);
                         setSelectedCatIds([]);
                       }}
-                      className="text-[9px] text-[#da291c] hover:underline flex items-center gap-0.5 font-bold uppercase tracking-wider cursor-pointer"
+                      className="text-[11px] text-accent hover:underline flex items-center gap-0.5 font-bold uppercase tracking-wider cursor-pointer"
                     >
                       <span>ล้างหมวด {selectedCatIds.length > 0 && `(${selectedCatIds.length})`}</span>
                       <X className="w-2.5 h-2.5" />
@@ -611,18 +612,18 @@ function QuickSuggest({
                             setSelectedGroup(g.id);
                           }
                         }}
-                        className={`px-2 py-0.5 text-[10px] font-bold border transition-all flex items-center gap-1 rounded-none cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-none cursor-pointer ${
                           isGrpActive
-                            ? 'border-[#da291c] bg-[#da291c]/20 text-white font-black'
+                            ? 'border-accent bg-accent/20 text-white font-black'
                             : selectedCountInGroup > 0
-                              ? 'border-slate-500 bg-[#222222] text-slate-200 font-bold'
-                              : 'border-[#303030] bg-[#181818] text-slate-400 hover:text-slate-200 hover:border-slate-500'
+                              ? 'border-slate-500 bg-surface-hover text-slate-200 font-bold'
+                              : 'border-line bg-canvas text-slate-400 hover:text-slate-200 hover:border-slate-500'
                         }`}
                       >
                         {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={16} />}
                         <span>{g.name}</span>
                         {selectedCountInGroup > 0 && (
-                          <span className="ml-0.5 px-1 py-0.2 rounded-full text-[8px] font-black bg-[#da291c] text-white leading-none">
+                          <span className="ml-0.5 px-1 py-0.2 rounded-full text-[11px] font-black bg-accent text-on-accent leading-none">
                             {selectedCountInGroup}
                           </span>
                         )}
@@ -633,8 +634,8 @@ function QuickSuggest({
 
                 {/* Tier 2: Sub-categories ONLY when a specific group is selected (NO "ทุกหมวดในกลุ่มนี้" button) */}
                 {selectedGroup !== null && (
-                  <div className="mt-1.5 p-1.5 bg-[#121212] border border-[#262626]">
-                    <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-[#222222] text-[9px]">
+                  <div className="mt-1.5 p-1.5 bg-surface border border-line">
+                    <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-hairline text-[11px]">
                       <span className="text-slate-400 font-bold flex items-center gap-1">
                         {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} />}
                         <span>หมวดในกลุ่ม: <strong className="text-white">{activeGroupObj?.name}</strong></span>
@@ -660,7 +661,7 @@ function QuickSuggest({
                             const groupCatIdSet = new Set(groupCategories.map(c => String(c.id)));
                             setSelectedCatIds((prev: string[]) => prev.filter((id: string) => !groupCatIdSet.has(String(id))));
                           }}
-                          className="text-slate-400 hover:text-red-400 hover:underline cursor-pointer"
+                          className="text-slate-400 hover:text-danger hover:underline cursor-pointer"
                         >
                           ยกเลิกในกลุ่ม
                         </button>
@@ -670,7 +671,7 @@ function QuickSuggest({
                     <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar w-full">
                       {groupCategories.map(c => {
                         const isCatActive = selectedCatIds.some(id => String(id) === String(c.id));
-                        const rgb = hexToRgb(c.color || '#94a3b8');
+                        const rgb = hexToRgb(c.color || tc('ink-body'));
 
                         return (
                           <button
@@ -678,13 +679,13 @@ function QuickSuggest({
                             type="button"
                             onClick={() => handleToggleCategory(c.id)}
                             style={isCatActive ? {
-                              borderColor: c.color || '#da291c',
+                              borderColor: c.color || tc('expense'),
                               backgroundColor: `rgba(${rgb}, 0.25)`,
                               color: '#ffffff',
                             } : ({
                               ['--chip-rgb' as any]: rgb,
                             } as React.CSSProperties)}
-                            className={`px-2 py-0.5 text-[10px] font-bold border transition-none flex items-center gap-1 rounded-none cursor-pointer ${
+                            className={`px-2 py-0.5 text-[11px] font-bold border transition-none flex items-center gap-1 rounded-none cursor-pointer ${
                               isCatActive ? 'font-black shadow-sm ring-1 ring-white/10' : 'cat-chip-btn'
                             }`}
                           >
@@ -703,12 +704,12 @@ function QuickSuggest({
               {formType === 'expense' && (
                 <div>
                   <span className={tokens.label}>ประเภทการจัดสรร (ALLOCATION)</span>
-                  <div className="grid grid-cols-4 gap-1 bg-[#121212] border border-[#262626] p-0.5">
+                  <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
                     {[
                       { val: 'ALL', label: 'ทั้งหมด', color: 'border-slate-500 text-slate-200 bg-slate-800/30' },
                       { val: 'need', label: 'NEED', color: 'border-rose-500/60 text-rose-400 bg-rose-950/30' },
-                      { val: 'want', label: 'WANT', color: 'border-sky-500/60 text-sky-400 bg-sky-950/30' },
-                      { val: 'savings', label: 'SAVE', color: 'border-emerald-500/60 text-emerald-400 bg-emerald-950/30' }
+                      { val: 'want', label: 'WANT', color: 'border-amber-500/60 text-amber-400 bg-amber-950/30' },
+                      { val: 'savings', label: 'SAVE', color: 'border-savings/60 text-savings bg-savings/10' }
                     ].map(opt => {
                       const isActive = allocationFilter === opt.val;
                       return (
@@ -716,10 +717,10 @@ function QuickSuggest({
                           key={opt.val}
                           type="button"
                           onClick={() => setAllocationFilter(opt.val)}
-                          className={`py-1 text-[10px] font-bold text-center border transition-all cursor-pointer rounded-none ${
+                          className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
                             isActive
                               ? `${opt.color} font-black`
-                              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#202020]'
+                              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
                           }`}
                         >
                           {opt.label}
@@ -734,7 +735,7 @@ function QuickSuggest({
               <button
                 type="button"
                 onClick={() => setShowMoreFilters(v => !v)}
-                className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 py-1 cursor-pointer"
+                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 py-1 cursor-pointer"
               >
                 <span>ตัวเลือกเพิ่มเติม (ช่วงราคา, การเรียง, จำนวน)</span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${showMoreFilters || hasSecondaryFilterActive ? 'rotate-180' : ''}`} />
@@ -778,7 +779,7 @@ function QuickSuggest({
                   {/* Items Display Limit (10, 20, 30, ทั้งหมด) */}
                   <div>
                     <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
-                    <div className="grid grid-cols-4 gap-1 bg-[#121212] border border-[#262626] p-0.5">
+                    <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
                       {limitOptions.map(opt => {
                         const isActive = limitCount === opt.val;
                         return (
@@ -786,10 +787,10 @@ function QuickSuggest({
                             key={opt.val}
                             type="button"
                             onClick={() => setLimitCount(opt.val)}
-                            className={`py-1 text-[10px] font-bold text-center border transition-all cursor-pointer rounded-none ${
+                            className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
                               isActive
-                                ? 'border-[#da291c] bg-[#da291c]/20 text-white font-black'
-                                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#202020]'
+                                ? 'border-accent bg-accent/20 text-white font-black'
+                                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
                             }`}
                           >
                             {opt.label}
@@ -803,22 +804,22 @@ function QuickSuggest({
             </div>
 
             {/* Bottom Action Bar */}
-            <div className="pt-2 border-t border-[#282828] flex items-center gap-2 shrink-0">
+            <div className="pt-2 border-t border-line flex items-center gap-2 shrink-0">
               {activeFiltersCount > 0 && (
                 <button
                   type="button"
                   onClick={handleResetAll}
-                  className="px-2.5 py-1.5 text-[10px] font-black uppercase text-slate-400 hover:text-white border border-[#3e3e3e] bg-[#1a1a1a] hover:bg-[#252525] flex items-center gap-1 cursor-pointer rounded-none"
+                  className="px-2.5 py-1.5 text-[11px] font-black uppercase text-slate-400 hover:text-white border border-line-strong bg-canvas hover:bg-surface-elevated flex items-center gap-1 cursor-pointer rounded-none"
                   title="รีเซ็ตตัวกรองทั้งหมด"
                 >
-                  <RotateCcw className="w-3 h-3 text-red-400" />
+                  <RotateCcw className="w-3 h-3 text-danger" />
                   <span>รีเซ็ต</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setShowFilterMenu(false)}
-                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-white bg-[#da291c] hover:bg-red-700 border border-red-600 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
+                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent shadow-sm flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
               >
                 <span>แสดงผลลัพธ์ ({quickSuggestions.length} รายการ)</span>
               </button>

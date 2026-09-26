@@ -21,6 +21,7 @@ import {
   HeaderLanguage,
   LongVariation,
 } from './guideUtils';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 const DEFAULT_CATEGORIES = [
   'อาหาร',
@@ -36,6 +37,7 @@ const ImportGuideModal = memo(function ImportGuideModal({
   categories: propCategories,
   dayTypeConfig: propDayTypeConfig,
 }: ImportGuideModalProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>();
   const { showToast } = useToast();
   const appData = useAppData();
 
@@ -112,7 +114,7 @@ const ImportGuideModal = memo(function ImportGuideModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm p-4 select-none">
-      <div className="relative rounded-none shadow-2xl flex flex-col w-full max-w-[1240px] h-[86vh] border border-[#3e3e3e] bg-[#181818] overflow-hidden">
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="คู่มือนำเข้าข้อมูล" tabIndex={-1} className="relative rounded-none shadow-2xl flex flex-col w-full max-w-[1240px] h-[86vh] border border-line-strong bg-canvas overflow-hidden">
         {/* Header (Identical to ExportHeader) */}
         <GuideHeader onClose={onClose} />
 

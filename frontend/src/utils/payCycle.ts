@@ -17,6 +17,22 @@ export const shiftMonth = (ym: string, delta: number): string => {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
 };
 
+/** Every YYYY-MM from a to b inclusive (order-insensitive). */
+export const monthsBetween = (a: string, b: string): string[] => {
+  const [s, e] = a <= b ? [a, b] : [b, a];
+  const out: string[] = [];
+  for (let m = s; m <= e; m = shiftMonth(m, 1)) out.push(m);
+  return out;
+};
+
+/** A picked set of months → period string: one month, a contiguous A_B range, or an A,B,C list. */
+export const monthsToPeriod = (months: string[]): string => {
+  const sorted = [...new Set(months)].sort();
+  if (sorted.length <= 1) return sorted[0] ?? '';
+  const contiguous = sorted.every((m, i) => i === 0 || shiftMonth(sorted[i - 1], 1) === m);
+  return contiguous ? `${sorted[0]}_${sorted[sorted.length - 1]}` : sorted.join(',');
+};
+
 /** ISO YYYY-MM-DD → cycle key. ใช้แค่ส่วนวันที่ ไม่แตะเวลา/timezone */
 export const toCycleKey = (iso: string): string =>
   Number(iso.slice(8, 10)) >= PAY_DAY ? iso.slice(0, 7) : shiftMonth(iso.slice(0, 7), -1);

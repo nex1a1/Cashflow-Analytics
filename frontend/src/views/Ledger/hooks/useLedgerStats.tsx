@@ -4,6 +4,7 @@ import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 import { toISODate } from '../../../utils/dateHelpers';
 import { monthKeyOf } from '../../../utils/payCycle';
 
+import { tc, readable } from '@/constants/theme';
 interface GroupBreakdownCategory {
   id: string;
   name: string;
@@ -39,42 +40,39 @@ function resolveGroupPct(isIncome: boolean, isSavings: boolean, total: number, s
 function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolean) {
   if (isIncome) {
     return {
-      activeBorderColor: 'border-[#10b981]',
-      activeBgColor: 'bg-[#121c12]/95',
-      activeGlowColor: 'rgba(16,185,129,0.15)',
-      defaultColor: '#10b981',
+      activeBorderColor: 'border-emerald-500',
+      activeBgColor: 'bg-income/5',
+      defaultColor: tc('income'),
       amtColor: 'text-emerald-400',
       amtSign: '+',
       badgeText: 'IN',
       pulseClass: 'bg-emerald-500',
-      borderColorActive: '#10b981/40',
+      borderColorActive: tc('income', 0.4),
       iconFallback: '💰'
     };
   }
   if (isSavings) {
     return {
-      activeBorderColor: 'border-[#f59e0b]',
+      activeBorderColor: 'border-amber-500',
       activeBgColor: 'bg-[#1c1912]/95',
-      activeGlowColor: 'rgba(245,158,11,0.15)',
       defaultColor: '#f59e0b',
       amtColor: 'text-amber-400',
       amtSign: '±',
       badgeText: 'SAVE',
       pulseClass: 'bg-amber-500',
-      borderColorActive: '#f59e0b/40',
+      borderColorActive: 'rgba(245, 158, 11, 0.4)',
       iconFallback: '💼'
     };
   }
   return {
-    activeBorderColor: 'border-[#da291c]',
-    activeBgColor: 'bg-[#1c1212]/95',
-    activeGlowColor: 'rgba(218,41,28,0.15)',
-    defaultColor: g.color || '#64748b',
-    amtColor: 'text-red-400',
+    activeBorderColor: 'border-expense',
+    activeBgColor: 'bg-expense/5',
+    defaultColor: g.color || tc('ink-muted'),
+    amtColor: 'text-expense',
     amtSign: '-',
     badgeText: 'OUT',
-    pulseClass: 'bg-[#da291c]',
-    borderColorActive: '#da291c/40',
+    pulseClass: 'bg-expense',
+    borderColorActive: tc('expense', 0.4),
     iconFallback: '📉'
   };
 }
@@ -109,9 +107,9 @@ const LedgerStatCategoryRow: React.FC<LedgerStatCategoryRowProps> = ({ cat, tota
           {cat.name}
         </span>
       </span>
-      <div className="flex items-center gap-1.5 shrink-0 font-mono text-[10.5px]">
+      <div className="flex items-center gap-1.5 shrink-0 font-mono text-[11px]">
         <span 
-          className="font-bold opacity-80 text-[10px]"
+          className="font-bold opacity-80 text-[11px]"
           style={{ color: catColor }}
         >
           {relativePct}%
@@ -163,8 +161,8 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
         onClick={onCardClick}
         className={`text-left group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden shadow-sm cursor-pointer select-none transition-all duration-150 ${
           isActive 
-            ? `${theme.activeBgColor} ${theme.activeBorderColor} shadow-[0_0_12px_${theme.activeGlowColor}] z-10` 
-            : 'bg-[#121212] hover:bg-[#1a1a1a] border-[#303030] hover:border-[#444444]'
+            ? `${theme.activeBgColor} ${theme.activeBorderColor} z-10` 
+            : 'bg-surface hover:bg-canvas border-line hover:border-line-strong'
         }`}
         style={{ borderLeftColor: isActive ? undefined : theme.defaultColor }}
       >
@@ -180,7 +178,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
               className="w-[26px] h-[26px] flex items-center justify-center text-[14px] rounded-none border shrink-0"
               style={{ 
                 backgroundColor: `${g.color || theme.defaultColor}20`, 
-                color: g.color || theme.defaultColor,
+                color: readable(g.color || theme.defaultColor),
                 borderColor: isActive ? theme.borderColorActive : `${g.color || theme.defaultColor}30`
               }}
             >
@@ -188,7 +186,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
             </div>
             <span 
               className={`text-[12.5px] font-black uppercase tracking-wider truncate leading-none ${
-                isActive ? 'text-white' : 'text-[#cbd5e1]'
+                isActive ? 'text-white' : 'text-slate-300'
               }`}
               title={g.name}
             >
@@ -201,10 +199,10 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
               <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} animate-pulse shrink-0`} />
             )}
             <span 
-              className="text-[9.5px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border shrink-0 leading-none"
+              className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border shrink-0 leading-none"
               style={{ 
                 backgroundColor: `${g.color || theme.defaultColor}15`, 
-                color: g.color || theme.defaultColor, 
+                color: readable(g.color || theme.defaultColor), 
                 borderColor: `${g.color || theme.defaultColor}30` 
               }}
             >
@@ -226,7 +224,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
               {pctOfTotal}%
             </span>
           </div>
-          <div className="flex justify-between items-center text-[10.5px] text-[#888888] mt-0.5 font-bold">
+          <div className="flex justify-between items-center text-[11px] text-ink-body mt-0.5 font-bold">
             <span>{txCount} รายการ</span>
             {uniqueMonths > 1 && (
               <span 
@@ -241,7 +239,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
 
         {/* Row 3: Inline Category List (Always Visible with max height) */}
         {sortedCats.length > 0 && (
-          <div className="mt-2.5 pt-2.5 border-t border-dashed border-[#2d2d2d] flex flex-col gap-2 z-10 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+          <div className="mt-2.5 pt-2.5 border-t border-dashed border-line flex flex-col gap-2 z-10 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
             {sortedCats.map(cat => (
               <LedgerStatCategoryRow
                 key={cat.id}
@@ -320,7 +318,7 @@ export function useLedgerStats({
               id: cat.id,
               name: cat.name,
               icon: cat.icon,
-              color: cat.color,
+              color: readable(cat.color),
               amount: 0
             };
           }

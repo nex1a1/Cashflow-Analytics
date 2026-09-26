@@ -3,6 +3,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 import { isDateInFilter } from '@/utils/dateHelpers';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 
+import { tc } from '@/constants/theme';
 interface ChartDataEngineProps {
   chartViewType: string;
   isBreakdown: boolean;
@@ -52,7 +53,7 @@ function processStandardDataset(ds: any, { chartViewType, isSmoothLine, hiddenDa
     pointRadius: isLine ? 4 : 0,
     pointBackgroundColor: borderColor,
     pointBorderWidth: 2,
-    pointBorderColor: '#1e293b',
+    pointBorderColor: tc('line'),
     hidden: hiddenDatasets?.includes(ds.label)
   };
 }
@@ -105,7 +106,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
       const datasets = catsToRender.map(catObj => {
         const catName = catObj.name;
         const catId = catObj.id;
-        const catColor = catObj.color || '#64748B';
+        const catColor = catObj.color || tc('ink-muted');
         let data = showMonthly
           ? (analytics.sortedMonthsKeys || []).map(m => analytics.monthlyCatMap?.[catId]?.[m] || 0)
           : (analytics.datesInPeriod || []).map(d => analytics.dailyCatMap?.[catId]?.[d] || 0);
@@ -121,7 +122,7 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
           pointRadius: chartViewType === 'line' ? 3 : 0,
           pointBackgroundColor: catColor,
           pointBorderWidth: 2,
-          pointBorderColor: '#1e293b',
+          pointBorderColor: tc('line'),
           fill: false,
           borderRadius: 0,
           hidden: hiddenDatasets?.includes(catName),

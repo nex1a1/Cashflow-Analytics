@@ -2,11 +2,11 @@ import React from 'react';
 import { DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 
 export default function CalendarSkeleton(): React.ReactElement {
-  const shimmer = 'bg-[#2a2a2a] animate-pulse';
-  const surface = 'bg-[#181818]';
-  const surfaceAlt = 'bg-[#121212]';
-  const border = 'border-[#2d2d2d]';
-  const gapColor = 'bg-[#2d2d2d]';
+  const shimmer = 'bg-surface-elevated animate-pulse';
+  const surface = 'bg-canvas';
+  const surfaceAlt = 'bg-surface';
+  const border = 'border-line';
+  const gapColor = 'bg-surface-elevated';
 
   return (
     <div className="flex flex-col h-full pb-6 space-y-3 max-w-screen-2xl mx-auto w-full">
@@ -29,7 +29,7 @@ export default function CalendarSkeleton(): React.ReactElement {
       {/* Grid skeleton */}
       <div className={`rounded-none border ${border} overflow-hidden flex-1 flex flex-col`}>
         {/* Day labels */}
-        <div className={`grid grid-cols-7 gap-[1px] bg-[#2d2d2d] border-b ${border}`}>
+        <div className={`grid grid-cols-7 gap-[1px] bg-surface-elevated border-b ${border}`}>
           {DAY_OF_WEEK_LABELS.map(label => (
             <div key={label} className={`py-2 flex justify-center ${surfaceAlt}`}>
               <div className={`h-4 w-6 rounded-none ${shimmer}`} />

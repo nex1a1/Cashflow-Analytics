@@ -4,6 +4,7 @@ import { Doughnut } from 'react-chartjs-2';
 import { formatMoney } from '../../../../utils/formatters';
 import { ExpenseProportionChartProps } from './types';
 
+import { tc } from '@/constants/theme';
 export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
   activeChartData,
   options,
@@ -33,13 +34,13 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
     : formattedAmt;
 
   const valueColor = hoveredItem
-    ? (hoveredItem.color || '#da291c')
-    : '#f1f5f9';
+    ? (hoveredItem.color || tc('accent'))
+    : tc('ink-display');
 
   return (
     <div 
       onMouseLeave={onMouseLeave}
-      className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-[#303030] bg-[#181818]/20"
+      className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-line bg-canvas/20"
     >
       <div className="relative w-[140px] h-[140px]" aria-hidden="true">
         <Doughnut data={activeChartData} options={options} />
@@ -55,7 +56,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
           }`}
         >
           <span
-            className="text-[11px] font-black uppercase tracking-widest opacity-60 text-slate-400 max-w-[72px] truncate text-center"
+            className="text-[11px] font-black uppercase tracking-widest text-slate-400 max-w-[72px] truncate text-center"
             title={displayLabel}
           >
             {displayLabel}

@@ -45,20 +45,20 @@ export const CashflowTableRow = React.memo(({
   );
 
   const isMonthHovered = hoveredCol === 'month';
-  let monthCellBg = 'text-neutral-200 bg-[#181818] group-hover:bg-[#1c1c1c]';
+  let monthCellBg = 'text-neutral-200 bg-canvas group-hover:bg-surface-hover';
   if (isExcluded) {
-    monthCellBg = 'text-neutral-400 bg-[#0f0f0f] line-through decoration-neutral-600';
+    monthCellBg = 'text-neutral-400 bg-canvas line-through decoration-neutral-600';
   } else if (isMonthHovered) {
-    monthCellBg = 'text-white bg-[#1c1c1c]';
+    monthCellBg = 'text-white bg-surface-hover';
   } else if (isRowHovered) {
-    monthCellBg = 'text-neutral-200 bg-[#1c1c1c]/80';
+    monthCellBg = 'text-neutral-200 bg-surface-hover/80';
   }
 
   return (
     <tr
       onMouseEnter={() => setHoveredRow(row.monthStr)}
       onMouseLeave={() => setHoveredRow(null)}
-      className={`group hover:bg-[#303030]/10 transition-colors ${isPartial ? 'opacity-40' : ''}`}
+      className={`group hover:bg-surface-elevated/10 transition-colors ${isPartial ? 'opacity-40' : ''}`}
       title={isPartial ? 'รอบไม่เต็ม — ไม่นำไปรวมในยอดรวมและ MoM' : undefined}
     >
       {/* Fix #9: เพิ่ม EyeOff icon บอก state ที่ถูก exclude + cursor hint */}
@@ -70,16 +70,16 @@ export const CashflowTableRow = React.memo(({
         className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${MONTH_COL_CLS} ${monthCellBg}`}
       >
         <div className="flex items-center justify-center gap-1.5">
-          {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-neutral-600" />}
+          {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-ink-muted" aria-label="ยกเว้นจากการคำนวณ" />}
           {isCycleMode ? (
             <div className="flex flex-col items-center leading-tight">
               <span className="inline-flex items-center gap-1">
                 {cycleLabel(row.monthStr)}
                 {row.monthStr === toCycleKey(getLocalTodayString()) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" title="รอบปัจจุบัน (ยังไม่จบ)" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="รอบปัจจุบัน (ยังไม่จบ)" />
                 )}
               </span>
-              <span className="text-[10px] font-normal text-neutral-500">{cycleRangeLabel(row.monthStr)}</span>
+              <span className="text-[11px] font-normal text-neutral-500">{cycleRangeLabel(row.monthStr)}</span>
             </div>
           ) : (
             <span>{getThaiMonth(row.monthStr)}</span>

@@ -20,6 +20,7 @@ import {
 } from '../../types';
 import { STORAGE_KEYS } from '../../constants';
 
+import { tc, readable } from '@/constants/theme';
 export interface CalendarDayData {
   inc: number;
   exp: number;
@@ -253,7 +254,7 @@ function CalendarView({
           catsMap.set(catId, {
             id: catId,
             name: t.category || 'อื่นๆ',
-            color: '#94a3b8',
+            color: tc('ink-body'),
             type: 'expense',
             cashflowGroup: null
           });
@@ -280,7 +281,7 @@ function CalendarView({
         name: type === 'income' ? 'รายรับอื่นๆ' : (type === 'savings' ? 'เงินออมอื่นๆ' : 'หมวดหมู่อื่นๆ'),
         type: type,
         icon: type === 'income' ? 'coins' : (type === 'savings' ? 'piggy-bank' : 'tag'),
-        color: '#64748b',
+        color: tc('ink-muted'),
         order_index: 9999
       };
     };
@@ -359,7 +360,7 @@ function CalendarView({
           name: cat.name,
           groupName,
           amount: allocs.need,
-          color: cat.color || groupObj?.color || '#A3A3A3',
+          color: readable(cat.color || groupObj?.color || tc('ink-body')),
           groupOrder,
           catOrder
         });
@@ -370,7 +371,7 @@ function CalendarView({
           name: cat.name,
           groupName,
           amount: allocs.want,
-          color: cat.color || groupObj?.color || '#F59E0B',
+          color: readable(cat.color || groupObj?.color || '#F59E0B'),
           groupOrder,
           catOrder
         });
@@ -381,7 +382,7 @@ function CalendarView({
           name: cat.name,
           groupName,
           amount: allocs.savings,
-          color: cat.color || groupObj?.color || '#10B981',
+          color: readable(cat.color || groupObj?.color || tc('income')),
           groupOrder,
           catOrder
         });
@@ -394,10 +395,10 @@ function CalendarView({
 
     if (netSavingsActual > 0) {
       savingsCats.push({
-        name: 'เงินเหลือสะสม (Surplus)',
+        name: 'เงินเหลือสะสม',
         groupName: 'กระแสเงินสด',
         amount: netSavingsActual,
-        color: '#10B981',
+        color: tc('income'),
         groupOrder: -1,
         catOrder: -1
       });

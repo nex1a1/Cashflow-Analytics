@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Category } from '../../../../types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
+import { tc, readable } from '@/constants/theme';
 interface HeatmapHeaderProps {
   activeCategories: Category[];
   bgHead: string;
@@ -26,7 +27,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
           fontSize: 11,
           fontWeight: 900,
           letterSpacing: '0.02em',
-          color: '#475569',
+          color: tc('ink-muted'),
         }}>DATE</th>
 
         {activeCategories.map((cat, idx) => (
@@ -65,10 +66,9 @@ const HeatmapHeader = memo(function HeatmapHeader({
             >
               <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
               <span style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 900,
-                color: cat.color || 'inherit',
-                filter: 'brightness(1.4)',
+                color: readable(cat.color),
                 lineHeight: 1.1,
                 maxWidth: '100%',
                 overflow: 'hidden',
@@ -93,7 +93,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
           textAlign: 'right',
           fontSize: 12,
           fontWeight: 900,
-          color: '#475569',
+          color: tc('ink-muted'),
         }}>รวมรายวัน</th>
       </tr>
     </thead>

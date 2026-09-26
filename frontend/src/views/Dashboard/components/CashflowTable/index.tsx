@@ -214,10 +214,10 @@ export default function CashflowTable() {
   if (!showSkeleton && (!analytics || analytics.numMonths === 0 || !cashflowGroups || cashflowGroups.length === 0))
     return null;
 
-  const thinBorder = 'border-[#303030]/60';
-  const boxBorder = 'border-[#3e3e3e]';
-  const boundaryBorder = 'border-r-2 !border-r-[#303030]';
-  const card = 'rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]';
+  const thinBorder = 'border-line/60';
+  const boxBorder = 'border-line-strong';
+  const boundaryBorder = 'border-r-2 !border-r-line';
+  const card = 'rounded-none border shadow-sm transition-colors bg-canvas border-line';
 
   const totalExcludedCount =
     excludedGroups.size + excludedCategories.size + excludedMonths.size + excludedAllocations.size;
@@ -252,12 +252,12 @@ export default function CashflowTable() {
       >
         {showSkeleton ? (
           <div className="p-8">
-            <div className="h-40 w-full rounded-none animate-pulse bg-[#303030]/40" />
+            <div className="h-40 w-full rounded-none animate-pulse bg-surface-elevated/40" />
           </div>
         ) : (
           <table className="w-full min-w-full text-right text-[13px] whitespace-nowrap border-separate border-spacing-0">
             <CashflowTableHeader {...segmentProps} />
-            <tbody className="divide-y divide-[#303030]/40">
+            <tbody className="divide-y divide-line/40">
               {analytics.sortedCashflow.map((row: MonthRow) => (
                 <CashflowTableRow
                   key={row.monthStr}

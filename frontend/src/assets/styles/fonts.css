@@ -1,0 +1,63 @@
+/* Typography faces.
+   Thai: Inter has no Thai glyphs, so Thai text always falls through to Bai Jamjuree. Loading only its
+   Thai subset with size-adjust: 110% renders Thai ~10% larger than Latin at the same font-size, so the
+   11px UI floor reads as ~12px for Thai (stacked vowels/tone marks need the extra size). Change the
+   ratio here, never per element.
+   Digits: font-mono only swaps digits and numeric punctuation to a monospace face (unicode-range);
+   Latin letters stay Inter and Thai stays Bai Jamjuree, so mono never styles words. */
+
+@font-face {
+  font-family: 'Bai Jamjuree';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url('../../../node_modules/@fontsource/bai-jamjuree/files/bai-jamjuree-thai-300-normal.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  size-adjust: 110%;
+}
+
+@font-face {
+  font-family: 'Bai Jamjuree';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../../../node_modules/@fontsource/bai-jamjuree/files/bai-jamjuree-thai-400-normal.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  size-adjust: 110%;
+}
+
+@font-face {
+  font-family: 'Bai Jamjuree';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('../../../node_modules/@fontsource/bai-jamjuree/files/bai-jamjuree-thai-500-normal.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  size-adjust: 110%;
+}
+
+@font-face {
+  font-family: 'Bai Jamjuree';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('../../../node_modules/@fontsource/bai-jamjuree/files/bai-jamjuree-thai-600-normal.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  size-adjust: 110%;
+}
+
+@font-face {
+  font-family: 'Bai Jamjuree';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../../../node_modules/@fontsource/bai-jamjuree/files/bai-jamjuree-thai-700-normal.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  size-adjust: 110%;
+}
+
+@font-face {
+  font-family: 'Shark Digits';
+  src: local('Consolas'), local('SF Mono'), local('SFMono-Regular'), local('Menlo'), local('DejaVu Sans Mono'), local('Liberation Mono');
+  unicode-range: U+0025, U+002B-002E, U+002F-003A;
+}

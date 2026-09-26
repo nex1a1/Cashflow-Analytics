@@ -25,7 +25,6 @@ export default function MainLayout() {
 
   const {
     activeTab, setActiveTab,
-    insightsMode, setInsightsMode,
     showAddModal, setShowAddModal,
     showExportModal, setShowExportModal,
     showImportGuide, setShowImportGuide,
@@ -77,20 +76,17 @@ export default function MainLayout() {
 
   return (
     <div
-      className="min-h-screen flex flex-col transition-colors duration-300 dark-mode bg-[#181818]"
+      className="min-h-screen flex flex-col transition-colors duration-300 dark-mode bg-canvas"
       style={{ fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" }}
     >
       <div
-        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-[#da291c] shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto custom-scrollbar relative transition-colors duration-300 scroll-smooth bg-[#121212]"
-        style={{ scrollbarGutter: 'stable' }}
+        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-accent shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto no-scrollbar relative transition-colors duration-300 scroll-smooth bg-surface"
       >
         <AppHeader
           dbStatus={dbStatus}
           transactionCount={transactions.length}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          insightsMode={insightsMode}
-          setInsightsMode={setInsightsMode}
           filterPeriod={filterPeriod}
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
@@ -110,51 +106,53 @@ export default function MainLayout() {
           fileInputRef={fileInputRef}
         />
 
-        <div className="p-6 relative z-0 flex-grow bg-[#181818]">
+        <div className="p-6 relative z-0 flex-grow bg-canvas">
           {activeTab === 'insights' && (
             <div key="insights">
-              {insightsMode === 'analysis' ? (
-                <DashboardView
-                  analytics={analytics}
-                  transactions={transactions}
-                  cashflowGroups={cashflowGroups}
-                  filterPeriod={filterPeriod}
-                  getFilterLabel={getFilterLabel}
-                  hideFixedExpenses={hideFixedExpenses}
-                  setHideFixedExpenses={setHideFixedExpenses}
-                  hideWantExpenses={hideWantExpenses}
-                  setHideWantExpenses={setHideWantExpenses}
-                  dashboardCategory={dashboardCategory}
-                  setDashboardCategory={setDashboardCategory}
-                  chartGroupBy={chartGroupBy}
-                  setChartGroupBy={setChartGroupBy}
-                  topXLimit={topXLimit}
-                  setTopXLimit={setTopXLimit}
-                  categories={categories}
-                  dayTypeConfig={dayTypeConfig}
-                  dayTypes={dayTypes}
-                  isLoading={isProcessing}
-                />
-              ) : (
-                <CalendarView
-                  transactions={transactions}
-                  filterPeriod={filterPeriod}
-                  setFilterPeriod={setFilterPeriod}
-                  handleOpenAddModal={handleOpenAddModal}
-                  categories={categories}
-                  cashflowGroups={cashflowGroups}
-                  dayTypes={dayTypes}
-                  handleDayTypeChange={handleDayTypeChange}
-                  dayTypeConfig={dayTypeConfig}
-                  getFilterLabel={getFilterLabel}
-                  isReadOnlyView={isReadOnlyView}
-                  onSaveTransaction={handleSaveTransaction}
-                  handleDeleteTransaction={handleDeleteTransaction}
-                  isLoading={isProcessing}
-                  frequentItems={frequentItems}
-                  onSwitchToAnalysisMode={() => setInsightsMode('analysis')}
-                />
-              )}
+              <DashboardView
+                analytics={analytics}
+                transactions={transactions}
+                cashflowGroups={cashflowGroups}
+                filterPeriod={filterPeriod}
+                getFilterLabel={getFilterLabel}
+                hideFixedExpenses={hideFixedExpenses}
+                setHideFixedExpenses={setHideFixedExpenses}
+                hideWantExpenses={hideWantExpenses}
+                setHideWantExpenses={setHideWantExpenses}
+                dashboardCategory={dashboardCategory}
+                setDashboardCategory={setDashboardCategory}
+                chartGroupBy={chartGroupBy}
+                setChartGroupBy={setChartGroupBy}
+                topXLimit={topXLimit}
+                setTopXLimit={setTopXLimit}
+                categories={categories}
+                dayTypeConfig={dayTypeConfig}
+                dayTypes={dayTypes}
+                isLoading={isProcessing}
+              />
+            </div>
+          )}
+
+          {activeTab === 'calendar' && (
+            <div key="calendar">
+              <CalendarView
+                transactions={transactions}
+                filterPeriod={filterPeriod}
+                setFilterPeriod={setFilterPeriod}
+                handleOpenAddModal={handleOpenAddModal}
+                categories={categories}
+                cashflowGroups={cashflowGroups}
+                dayTypes={dayTypes}
+                handleDayTypeChange={handleDayTypeChange}
+                dayTypeConfig={dayTypeConfig}
+                getFilterLabel={getFilterLabel}
+                isReadOnlyView={isReadOnlyView}
+                onSaveTransaction={handleSaveTransaction}
+                handleDeleteTransaction={handleDeleteTransaction}
+                isLoading={isProcessing}
+                frequentItems={frequentItems}
+                onSwitchToAnalysisMode={() => setActiveTab('insights')}
+              />
             </div>
           )}
 
@@ -172,10 +170,7 @@ export default function MainLayout() {
                 handleOpenAddModal={handleOpenAddModal}
                 handleUpdateTransaction={handleUpdateTransaction}
                 handleDeleteTransaction={handleDeleteTransaction}
-                handleDeleteMonth={async (period: string) => {
-                  const ok = await handleDeleteMonth(period);
-                  if (ok) showSuccess();
-                }}
+                handleDeleteMonth={handleDeleteMonth}
                 cashflowGroups={cashflowGroups}
                 categories={categories}
                 advancedFilterCategory={advancedFilterCategory}

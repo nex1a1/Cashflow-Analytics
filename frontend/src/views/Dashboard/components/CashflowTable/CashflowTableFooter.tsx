@@ -5,6 +5,7 @@ import { calculateAdjustedGroupsTotal, calculateActiveMonthGroupTotal } from './
 import { MONTH_COL_CLS, GROUP_COL_CLS, CAT_COL_CLS } from './constants';
 import { FooterProps, MonthRow } from './types';
 
+import { tc } from '@/constants/theme';
 export const CashflowTableFooter = React.memo(({
   activeIncomeGroups, activeExpenseGroups, expandedGroups,
   getActiveCatsForGroup, analytics, thinBorder, boundaryBorder, boxBorder,
@@ -39,7 +40,7 @@ export const CashflowTableFooter = React.memo(({
         <tr>
           <td
             colSpan={999}
-            className={`px-4 py-2 text-center text-[10px] text-neutral-600 italic border-t ${thinBorder} bg-[#121212]`}
+            className={`px-4 py-2 text-center text-[11px] text-neutral-500 italic border-t ${thinBorder} bg-surface`}
           >
             ยอดรวมจะแสดงเมื่อมีข้อมูลมากกว่า 1 เดือน
           </td>
@@ -61,7 +62,7 @@ export const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
-            hoveredCol === 'month' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+            hoveredCol === 'month' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >
           รวมทั้งหมด
@@ -80,9 +81,9 @@ export const CashflowTableFooter = React.memo(({
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${GROUP_COL_CLS} ${
-                  isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+                  isColHovered ? 'bg-surface-hover' : 'bg-canvas'
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
-                style={{ color: isGroupExcluded ? undefined : (g.color || '#34d399') }}
+                style={{ color: isGroupExcluded ? undefined : (g.color || tc('income')) }}
               >
                 {formatMoney(calculateActiveMonthGroupTotal({
                   groupId: g.id, activeMonths, categories, excludedCategories, filteredGroupMap, filteredCatMap, analytics,
@@ -99,10 +100,10 @@ export const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[10px] font-black uppercase truncate border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${CAT_COL_CLS} ${
-                      isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+                    className={`px-2 py-2.5 text-[11px] font-black uppercase truncate border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} ${CAT_COL_CLS} ${
+                      isCatColHovered ? 'bg-surface-hover' : 'bg-canvas'
                     } ${isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
-                    style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
+                    style={{ color: isCatFaded ? tc('ink-muted') : (c.color ?? undefined) }}
                   >
                     {formatMoney(
                       activeMonths.reduce(
@@ -131,9 +132,9 @@ export const CashflowTableFooter = React.memo(({
                 onMouseEnter={() => setHoveredCol(colId)}
                 onMouseLeave={() => setHoveredCol(null)}
                 className={`px-3 py-2.5 truncate border-l border-b transition-colors ${isExpanded ? boxBorder : thinBorder} ${GROUP_COL_CLS} ${
-                  isColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+                  isColHovered ? 'bg-surface-hover' : 'bg-canvas'
                 } ${isGroupExcluded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
-                style={{ color: isGroupExcluded ? undefined : (g.color || '#cbd5e1') }}
+                style={{ color: isGroupExcluded ? undefined : (g.color || tc('gray-300')) }}
               >
                 {formatMoney(calculateActiveMonthGroupTotal({
                   groupId: g.id, activeMonths, categories, excludedCategories, filteredGroupMap, filteredCatMap, analytics,
@@ -150,10 +151,10 @@ export const CashflowTableFooter = React.memo(({
                     key={c.id}
                     onMouseEnter={() => setHoveredCol(catColId)}
                     onMouseLeave={() => setHoveredCol(null)}
-                    className={`px-2 py-2.5 text-[10px] font-black uppercase truncate border-l border-b transition-colors ${thinBorder} ${CAT_COL_CLS} ${
-                      isCatColHovered ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+                    className={`px-2 py-2.5 text-[11px] font-black uppercase truncate border-l border-b transition-colors ${thinBorder} ${CAT_COL_CLS} ${
+                      isCatColHovered ? 'bg-surface-hover' : 'bg-canvas'
                     } ${isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''}`}
-                    style={{ color: isCatFaded ? '#64748B' : (c.color ?? undefined) }}
+                    style={{ color: isCatFaded ? tc('ink-muted') : (c.color ?? undefined) }}
                   >
                     {formatMoney(
                       activeMonths.reduce(
@@ -172,8 +173,8 @@ export const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l !border-l-[#3e3e3e] border-b ${thinBorder} text-[#da291c] sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
-            hoveredCol === 'trend' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+          className={`px-3 py-2.5 border-l !border-l-line-strong border-b ${thinBorder} text-accent sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+            hoveredCol === 'trend' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >
           {formatMoney(totalActiveExpense)}
@@ -182,8 +183,8 @@ export const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('net')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-3 py-2.5 border-l border-b ${thinBorder} sticky right-[140px] z-30 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${
-            hoveredCol === 'net' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
-          } ${totalActiveNet >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}
+            hoveredCol === 'net' ? 'bg-surface-hover' : 'bg-canvas'
+          } ${totalActiveNet >= 0 ? 'text-emerald-400' : 'text-danger'}`}
         >
           {formatMoney(totalActiveNet)}
         </td>
@@ -191,7 +192,7 @@ export const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-left')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 border-l border-b ${thinBorder} text-center text-emerald-400 sticky right-[70px] z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-            hoveredCol === 'pct-left' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+            hoveredCol === 'pct-left' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >
           {totalActiveIncome > 0 ? `${activeSavingsRate}%` : '0%'}
@@ -200,7 +201,7 @@ export const CashflowTableFooter = React.memo(({
           onMouseEnter={() => setHoveredCol('pct-spent')}
           onMouseLeave={() => setHoveredCol(null)}
           className={`px-2 py-2.5 border-l border-r border-b ${thinBorder} text-center text-neutral-200 sticky right-0 z-30 transition-colors w-[70px] min-w-[70px] max-w-[70px] ${
-            hoveredCol === 'pct-spent' ? 'bg-[#1c1c1c]' : 'bg-[#181818]'
+            hoveredCol === 'pct-spent' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >
           {totalActiveIncome > 0 ? `${activePctSpent}%` : '0%'}

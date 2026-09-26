@@ -6,6 +6,7 @@ import { fromISODate } from '../../../utils/dateHelpers';
 import { calculateCategoryTotal } from './exportUtils';
 import { DayTypeInfo } from './types';
 
+import { tc, readable } from '@/constants/theme';
 export interface ExportWideTableProps {
   data: TransactionDisplay[];
   categories: Category[];
@@ -28,46 +29,46 @@ export default function ExportWideTable({
   return (
     <div className="w-full overflow-x-auto custom-scrollbar">
       <table className="w-full text-left text-xs leading-normal border-collapse min-w-[800px]">
-        <thead className="sticky top-0 bg-[#1c1c1c] text-neutral-300 z-10 select-none border-b border-[#303030]">
+        <thead className="sticky top-0 bg-surface-hover text-neutral-300 z-10 select-none border-b border-line">
           <tr>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400 sticky left-0 bg-[#1c1c1c] z-20">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 sticky left-0 bg-surface-hover z-20">
               วันที่ (Date)
             </th>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               ประเภทวัน
             </th>
             {activeCats.map((cat) => (
               <th
                 key={cat.id}
-                className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-right whitespace-nowrap"
-                style={{ color: cat.color || '#a3a3a3' }}
+                className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right whitespace-nowrap"
+                style={{ color: readable(cat.color || tc('ink-body')) }}
               >
                 {cat.name}
               </th>
             ))}
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-right text-[#da291c] sticky right-0 bg-[#1c1c1c] z-20">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent sticky right-0 bg-surface-hover z-20">
               รวมสุทธิ (Total)
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#262626]">
+        <tbody className="divide-y divide-line">
           {dates.map((date) => {
             const dt = getDayTypeInfo(date);
             let rowTotal = 0;
 
             return (
-              <tr key={date} className="hover:bg-[#1a1a1a] transition-colors group">
+              <tr key={date} className="hover:bg-canvas transition-colors group">
                 {/* Date (sticky left) */}
-                <td className="py-2 px-3 text-neutral-300 font-mono text-[11px] whitespace-nowrap sticky left-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 border-r border-[#262626]">
+                <td className="py-2 px-3 text-neutral-300 font-mono text-[11px] whitespace-nowrap sticky left-0 bg-surface group-hover:bg-canvas z-10 border-r border-line">
                   {fromISODate(date)}
                 </td>
 
                 {/* Day Type Badge */}
                 <td className="py-2 px-3 whitespace-nowrap">
                   <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
                     style={{
-                      color: dt.color,
+                      color: readable(dt.color),
                       borderColor: `${dt.color}40`,
                       backgroundColor: `${dt.color}15`,
                     }}
@@ -94,7 +95,7 @@ export default function ExportWideTable({
                 })}
 
                 {/* Row Total (sticky right) */}
-                <td className="py-2 px-3 text-right font-mono font-bold text-xs tabular-nums text-white sticky right-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 border-l border-[#262626]">
+                <td className="py-2 px-3 text-right font-mono font-bold text-xs tabular-nums text-white sticky right-0 bg-surface group-hover:bg-canvas z-10 border-l border-line">
                   {formatMoney(rowTotal)}
                 </td>
               </tr>

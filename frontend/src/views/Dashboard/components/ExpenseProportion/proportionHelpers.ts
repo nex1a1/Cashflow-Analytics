@@ -5,6 +5,7 @@ import {
   SortMode,
 } from './types';
 
+import { tc } from '@/constants/theme';
 /**
  * Recalculates 50/30/20 allocation items when groups are excluded in What-If simulation mode.
  */
@@ -111,8 +112,8 @@ export function buildDoughnutChartData(
         }),
         borderWidth: activeItems.map((_, idx) => (hoveredIdx === idx ? 3 : 2)),
         borderColor: activeItems.map((_, idx) => {
-          if (hoveredIdx === idx) return '#da291c';
-          return '#303030';
+          if (hoveredIdx === idx) return tc('accent');
+          return tc('line');
         }),
       },
     ],

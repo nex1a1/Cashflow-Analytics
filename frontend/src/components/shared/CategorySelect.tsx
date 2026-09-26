@@ -11,6 +11,7 @@ import {
 } from '@/utils/categorySelectHelpers';
 import { hexToRgb } from '@/utils/formatters';
 
+import { tc } from '@/constants/theme';
 export interface CategorySelectProps {
   value?: string | null;
   onChange: (categoryId: string) => void;
@@ -292,12 +293,12 @@ export default function CategorySelect({
   }, [open, flatCategories, activeIndex, handleOpen, handleClose, handleSelect]);
 
   // Pill variant styles for table cell with lightness boost for legibility
-  const pillColor = selectedCategory?.color || (type === 'income' ? '#10b981' : '#f43f5e');
+  const pillColor = selectedCategory?.color || (type === 'income' ? tc('income') : tc('expense'));
   const pillStyles = useMemo(() => {
     const defaultRgb = '148, 163, 184';
     const rgb = hexToRgb(pillColor || '') || defaultRgb;
 
-    let hex = (pillColor || '#94a3b8').replace('#', '');
+    let hex = (pillColor || tc('ink-body')).replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
     let r = 148, g = 163, b = 184;
     if (hex.length === 6) {
@@ -324,7 +325,7 @@ export default function CategorySelect({
     h = Math.round(h * 360);
     s = Math.round(s * 100);
 
-    const targetL = Math.max(l * 100, 65);
+    const targetL = Math.max(l * 100, 72); // ≥72% lightness keeps even deep indigo/purple ≥4.5:1 on the pill
     const targetS = Math.max(s, 60);
     const textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
 
@@ -348,7 +349,7 @@ export default function CategorySelect({
           disabled={disabled}
           onClick={handleOpen}
           onKeyDown={handleKeyDown}
-          className={`category-pill-trigger relative flex items-center justify-between rounded-sm border transition-all h-7 w-full overflow-hidden text-left cursor-pointer outline-none focus:ring-1 focus:ring-[#da291c]/50 ${className}`}
+          className={`category-pill-trigger relative flex items-center justify-between rounded-sm border transition-all h-7 w-full overflow-hidden text-left cursor-pointer outline-none focus:ring-1 focus:ring-accent/50 ${className}`}
           style={{
             backgroundColor: pillStyles.bg,
             borderColor: pillStyles.border,
@@ -362,10 +363,10 @@ export default function CategorySelect({
             <div className="truncate flex items-center gap-1 min-w-0" style={{ color: pillStyles.textColor }}>
               {selectedCategoryGroup?.name && (
                 <>
-                  <span className="opacity-60 font-medium text-[11px] truncate max-w-[80px]">
+                  <span className="text-ink-body font-medium text-[11px] truncate max-w-[80px]">
                     {selectedCategoryGroup.name}
                   </span>
-                  <span className="opacity-35 text-[10px] select-none">›</span>
+                  <span className="text-ink-muted text-[11px] select-none" aria-hidden="true">›</span>
                 </>
               )}
               <span className="truncate font-extrabold">{selectedCategory?.name || placeholder}</span>
@@ -388,8 +389,8 @@ export default function CategorySelect({
             size === 'sm' ? 'h-8 py-1' : 'h-9 py-2'
           } ${
             error
-              ? 'bg-[#181818] border-red-500 text-red-200 focus:ring-1 focus:ring-red-500/30'
-              : 'bg-[#181818] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c] focus:ring-1 focus:ring-[#da291c]/30'
+              ? 'bg-canvas border-danger text-red-200 focus:ring-1 focus:ring-danger/30'
+              : 'bg-canvas border-line-strong text-white hover:border-accent focus:border-accent focus:ring-1 focus:ring-accent/30'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -407,7 +408,7 @@ export default function CategorySelect({
                       <span className="text-[11px] font-medium text-slate-400 truncate max-w-[100px]">
                         {selectedCategoryGroup.name}
                       </span>
-                      <span className="text-[10px] text-slate-600 select-none">›</span>
+                      <span className="text-[11px] text-slate-600 select-none">›</span>
                     </>
                   )}
                   <span className="text-white font-black truncate">{selectedCategory.name}</span>
@@ -429,7 +430,7 @@ export default function CategorySelect({
         createPortal(
           <div
             ref={popoverRef}
-            className="fixed z-[9999] bg-[#141414] border border-neutral-800/90 shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-[9999] bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -440,10 +441,10 @@ export default function CategorySelect({
             }}
           >
             {/* LASER HAIRLINE ACCENT */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#da291c] to-transparent shrink-0 opacity-80" />
+            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
             {/* ZONE 1: SEAMLESS COMMAND SEARCH */}
-            <div className="px-3 py-2.5 border-b border-neutral-800/80 bg-[#161616]/90 shrink-0 flex items-center gap-2">
+            <div className="px-3 py-2.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-neutral-400 shrink-0 pointer-events-none" />
               <input
                 ref={searchInputRef}
@@ -473,8 +474,8 @@ export default function CategorySelect({
 
             {/* ZONE 2: QUICK PICKS (FREQUENT ITEMS) */}
             {quickPicks.length > 0 && !searchQuery && (
-              <div className="px-3 py-2 border-b border-neutral-800/70 bg-[#121212] shrink-0">
-                <div className="flex items-center gap-1 text-[9px] font-bold uppercase text-amber-500/90 mb-1.5 tracking-wider">
+              <div className="px-3 py-2 border-b border-neutral-800/70 bg-surface shrink-0">
+                <div className="flex items-center gap-1 text-[11px] font-bold uppercase text-amber-500/90 mb-1.5 tracking-wider">
                   <Zap className="w-2.5 h-2.5" />
                   <span>ใช้บ่อย</span>
                 </div>
@@ -488,7 +489,7 @@ export default function CategorySelect({
                         onClick={() => handleSelect(cat.id)}
                         className={`flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-full border transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-[#da291c]/15 border-[#da291c]/70 text-white font-bold shadow-[0_0_8px_rgba(218,41,28,0.25)]'
+                            ? 'bg-accent/15 border-accent/70 text-white font-bold'
                             : 'bg-neutral-900/80 border-neutral-800 text-neutral-300 hover:border-neutral-700 hover:text-white hover:bg-neutral-800/60'
                         }`}
                       >
@@ -513,16 +514,16 @@ export default function CategorySelect({
                   return groupedCategories.map(group => (
                     <div key={group.id} className="py-1">
                       {/* Group Header */}
-                      <div className="px-3 py-1.5 flex items-center gap-2 sticky top-0 bg-[#141414]/95 backdrop-blur-sm z-10 select-none">
+                      <div className="px-3 py-1.5 flex items-center gap-2 sticky top-0 bg-surface z-10 select-none">
                         <span
                           className="w-1 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: group.color || '#da291c' }}
+                          style={{ backgroundColor: group.color || tc('expense') }}
                         />
                         <CategoryGlyph icon={group.icon} color={group.color} size={16} className="shrink-0" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 truncate">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 truncate">
                           {group.name}
                         </span>
-                        <span className="text-[9px] font-semibold text-neutral-500 ml-auto bg-neutral-800/60 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[11px] font-semibold text-neutral-500 ml-auto bg-neutral-800/60 px-1.5 py-0.5 rounded-full">
                           {group.categories.length}
                         </span>
                       </div>
@@ -556,7 +557,7 @@ export default function CategorySelect({
                                 <span
                                   className="w-7 h-7 flex items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-105"
                                   style={{
-                                    backgroundColor: `rgba(${hexToRgb(cat.color || '#94a3b8')}, 0.14)`,
+                                    backgroundColor: `rgba(${hexToRgb(cat.color || tc('ink-body'))}, 0.14)`,
                                   }}
                                 >
                                   <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
@@ -566,7 +567,7 @@ export default function CategorySelect({
                                     {cat.name}
                                   </span>
                                   {searchQuery && (
-                                    <span className="text-[9px] text-neutral-400 block truncate">
+                                    <span className="text-[11px] text-neutral-400 block truncate">
                                       {group.name}
                                     </span>
                                   )}
@@ -575,7 +576,7 @@ export default function CategorySelect({
 
                               {isSelected && (
                                 <div className="flex items-center shrink-0 ml-2">
-                                  <Check className="w-3.5 h-3.5 text-[#da291c] shrink-0" />
+                                  <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                                 </div>
                               )}
                             </button>
@@ -589,20 +590,20 @@ export default function CategorySelect({
             </div>
 
             {/* ZONE 5: FOOTER KEYBOARD HINTS */}
-            <div className="px-3 py-2 bg-[#101010] border-t border-neutral-800/80 flex items-center justify-between text-[10px] text-neutral-400 select-none shrink-0 font-medium">
+            <div className="px-3 py-2 bg-canvas border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400 select-none shrink-0 font-medium">
               <div className="flex items-center gap-2.5">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-[3px] bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[9px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">↑↓</kbd>
                   <span>เลือก</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-[3px] bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[9px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Enter</kbd>
                   <span>ยืนยัน</span>
                 </span>
               </div>
               <div>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-[3px] bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[9px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Esc</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Esc</kbd>
                   <span>ปิด</span>
                 </span>
               </div>

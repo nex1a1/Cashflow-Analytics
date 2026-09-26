@@ -158,13 +158,9 @@ export interface QuickAddFormData {
   amount: string;
 }
 
-export type InsightsMode = 'analysis' | 'calendar';
-
 export interface AppUIContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  insightsMode: InsightsMode;
-  setInsightsMode: React.Dispatch<React.SetStateAction<InsightsMode>>;
   hideFixedExpenses: boolean;
   setHideFixedExpenses: React.Dispatch<React.SetStateAction<boolean>>;
   hideWantExpenses: boolean;
@@ -209,7 +205,7 @@ export interface AppDataContextValue {
   refreshData: () => Promise<void>;
   loadPeriodData: (period: string) => Promise<void>;
   handleSaveTransaction: (tx: any) => Promise<any>;
-  handleUpdateTransaction: (id: string, field: string, value: any) => Promise<void>;
+  handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean>;
   handleDeleteTransaction: (id: string) => Promise<any>;
   handleDeleteMonth: (month: string) => Promise<boolean>;
   handleDeleteAllData: (opts?: any) => Promise<void>;

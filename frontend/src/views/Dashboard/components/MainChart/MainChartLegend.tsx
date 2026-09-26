@@ -10,6 +10,7 @@ import {
   MainChartLegendProps,
 } from './types';
 
+import { tc } from '@/constants/theme';
 // ==========================================
 // SUBCOMPONENTS: LEGENDS
 // ==========================================
@@ -26,9 +27,9 @@ export const BreakdownLegendItem = memo(({ category, isActive, onToggle }: Break
     >
       <span
         className="inline-block rounded-none shrink-0 w-2.5 h-2.5"
-        style={{ backgroundColor: category.color || '#64748B' }}
+        style={{ backgroundColor: category.color || tc('ink-muted') }}
       />
-      <span className="text-[10px] font-medium leading-none text-slate-400">
+      <span className="text-[11px] font-medium leading-none text-slate-400">
         {category.icon && <CategoryGlyph icon={category.icon} color={category.color} size={12} className="mr-1 opacity-90 inline" />}
         {category.name}
       </span>
@@ -52,7 +53,7 @@ export const BreakdownLegend = memo(({ categories, categoriesWithData, dashboard
   if (catsWithDataList.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60">
       {catsWithDataList.map(c => {
         const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
         return (
@@ -83,7 +84,7 @@ export const StandardLegendItem = memo(({ dataset, isHidden, onToggle }: Standar
         className="inline-block rounded-none shrink-0"
         style={getDatasetIndicatorStyle(dataset)}
       />
-      <span className="text-[10px] font-medium leading-none text-slate-400">
+      <span className="text-[11px] font-medium leading-none text-slate-400">
         {label}
         {dataset.yAxisID === 'y1' && <span className="text-slate-500"> (แกนขวา)</span>}
       </span>
@@ -102,7 +103,7 @@ export const StandardLegend = memo(({ legendDatasets, hiddenDatasets, setHiddenD
   if (legendDatasets.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-[#303030]/60">
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60">
       {legendDatasets.map((ds, i) => (
         <StandardLegendItem
           key={ds.label || i}

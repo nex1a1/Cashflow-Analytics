@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap } from 'lucide-react';
 import { CATEGORY_ICON_MAP } from '../../constants/categoryIcons';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export interface ImportPreviewModalProps {
   importPreview: any;
@@ -12,6 +13,7 @@ export interface ImportPreviewModalProps {
 }
 
 export default function ImportPreviewModal({ importPreview, setImportPreview, confirmImport, isProcessing, categories }: ImportPreviewModalProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>();
   const [previewPage, setPreviewPage] = useState(1);
   const PER_PAGE = 30;
 
@@ -46,29 +48,29 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
     };
   }, [allItems, previewPage]);
 
-  const inputCls = "w-full bg-[#121212] outline-none text-xs px-2 py-1.5 rounded-none border border-[#3e3e3e] text-[#cbd5e1] focus:border-[#da291c] transition-colors";
+  const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent transition-colors";
 
   return (
     <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="rounded-none shadow-2xl flex flex-col w-full max-w-3xl border border-[#3e3e3e] bg-[#181818]"
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="ตรวจสอบข้อมูลก่อนนำเข้า" tabIndex={-1} className="rounded-none shadow-2xl flex flex-col w-full max-w-3xl border border-line-strong bg-canvas"
         style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#303030] bg-[#121212] flex justify-between items-center shrink-0">
+        <div className="px-5 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
           <div>
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
-              📋 ตรวจสอบก่อน Import <span className="text-[#555555] font-normal">/ Data Import Preview</span>
+              📋 ตรวจสอบก่อน Import <span className="text-ink-muted font-normal">/ Data Import Preview</span>
             </h3>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <span className="text-xs text-[#cbd5e1]">
-                พบ <strong className="text-[#da291c]">{allItems.length} รายการ</strong>
+              <span className="text-xs text-slate-300">
+                พบ <strong className="text-accent">{allItems.length} รายการ</strong>
               </span>
               {importPreview.isCategoryChanged && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-none bg-amber-500/20 text-amber-500 border border-amber-500/30">
                   จะสร้างหมวดหมู่ใหม่
                 </span>
               )}
-              <span className="text-[10px] text-slate-500 font-mono">แก้ไขได้ก่อน import</span>
+              <span className="text-[11px] text-slate-500 font-mono">แก้ไขได้ก่อน import</span>
             </div>
           </div>
           <button onClick={() => setImportPreview(null)} className="p-1.5 text-slate-400 hover:text-white transition-colors">
@@ -77,12 +79,12 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2.5 text-[10px] font-bold border-b shrink-0 bg-[#1c1c1c] border-[#303030] text-[#cbd5e1] uppercase tracking-wider select-none">
+        <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2.5 text-[11px] font-bold border-b shrink-0 bg-surface-hover border-line text-slate-300 uppercase tracking-wider select-none">
           <span>ประเภท</span><span>หมวดหมู่</span><span>รายละเอียด</span><span className="text-right">จำนวนเงิน</span><span />
         </div>
 
         {/* Rows */}
-        <div className="flex-grow overflow-y-auto min-h-0 scrollbar-tactical bg-[#121212]">
+        <div className="flex-grow overflow-y-auto min-h-0 scrollbar-tactical bg-surface">
           {pageItems.length === 0 ? (
             <div className="p-8 text-center text-xs font-mono text-slate-500">ไม่มีรายการข้อมูล</div>
           ) : (
@@ -94,22 +96,22 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
               return (
                 <div key={item.id}>
                   {isNewDate && (
-                    <div className="px-4 py-1.5 text-[10px] font-bold sticky top-0 z-10 border-b bg-[#1c1c1c] text-[#cbd5e1] border-[#303030] select-none font-mono">
+                    <div className="px-4 py-1.5 text-[11px] font-bold sticky top-0 z-10 border-b bg-surface-hover text-slate-300 border-line select-none font-mono">
                       {item.date}
                     </div>
                   )}
-                  <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2 items-center border-b transition-colors border-[#303030]/50 hover:bg-[#1c1c1c]/50">
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-none text-center truncate ${
+                  <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2 items-center border-b transition-colors border-line/50 hover:bg-surface-hover/50">
+                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-none text-center truncate ${
                       isInc 
                         ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
-                        : 'bg-rose-950/20 text-rose-400 border border-rose-900/30'
+                        : 'bg-expense/5 text-expense border border-expense/15'
                     }`}>
                       {isInc ? 'รายรับ' : 'รายจ่าย'}
                     </span>
                     <select 
                       value={item.category} 
                       onChange={e => updateItem(item.id, 'category', e.target.value)}
-                      className="text-[10px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-[#121212] border-[#3e3e3e] text-[#cbd5e1] focus:border-[#da291c] transition-colors"
+                      className="text-[11px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-surface border-line-strong text-slate-300 focus:border-accent transition-colors"
                     >
                       {allCats.map((c: any) => (
                         <option key={c.id} value={c.name}>
@@ -135,7 +137,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                     
                     <button 
                       onClick={() => deleteItem(item.id)} 
-                      className="p-1.5 rounded-none text-slate-500 hover:text-[#da291c] hover:bg-[#da291c]/10 transition-all flex items-center justify-center"
+                      className="p-1.5 rounded-none text-slate-500 hover:text-danger hover:bg-danger/10 transition-all flex items-center justify-center"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -147,12 +149,12 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-[#303030] bg-[#121212] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div className="px-5 py-3 border-t border-line bg-surface flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 select-none">
             <button 
               onClick={() => setPreviewPage(p => Math.max(1, p - 1))} 
               disabled={previewPage === 1}
-              className="p-1.5 rounded-none border border-[#3e3e3e] disabled:opacity-30 bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] transition-colors"
+              className="p-1.5 rounded-none border border-line-strong disabled:opacity-30 bg-surface text-slate-300 hover:bg-surface-hover transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -160,7 +162,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             <button 
               onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))} 
               disabled={previewPage === totalPages || totalPages === 0}
-              className="p-1.5 rounded-none border border-[#3e3e3e] disabled:opacity-30 bg-[#121212] text-[#cbd5e1] hover:bg-[#1c1c1c] transition-colors"
+              className="p-1.5 rounded-none border border-line-strong disabled:opacity-30 bg-surface text-slate-300 hover:bg-surface-hover transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -168,14 +170,14 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
               onClick={() => setImportPreview(null)}
-              className="flex-1 sm:flex-none px-5 py-2.5 rounded-none font-bold text-xs border border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#1c1c1c] transition-colors"
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-none font-bold text-xs border border-line-strong text-slate-300 hover:bg-surface-hover transition-colors"
             >
               ยกเลิก
             </button>
             <button 
               onClick={confirmImport} 
               disabled={isProcessing || allItems.length === 0}
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-white bg-[#da291c] hover:bg-[#b01e0a] border border-[#da291c] transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-on-accent bg-accent hover:bg-accent-active border border-accent transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
             >
               {isProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse" /> : <CheckCircle className="w-3.5 h-3.5" />}
               {isProcessing ? 'กำลัง Import...' : `Import ${allItems.length} รายการ`}

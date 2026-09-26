@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
 import { DayType } from '@/types';
 import { hexToRgb, getThaiDayInfo, THAI_MONTHS_SHORT } from '@/utils/formatters';
+import { readable } from '@/constants/theme';
 
 export interface DayTypeSelectProps {
   value?: string;
@@ -228,7 +229,7 @@ export default function DayTypeSelect({
         style={{
           backgroundColor: `rgba(${currentRgb}, 0.12)`,
           borderColor: `rgba(${currentRgb}, 0.35)`,
-          color: currentColor,
+          color: readable(currentColor),
         }}
         title={`คลิกเพื่อเปลี่ยนประเภทวัน (ปัจจุบัน: ${currentType?.label || ''})`}
       >
@@ -242,7 +243,7 @@ export default function DayTypeSelect({
             ref={popoverRef}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="fixed z-[9999] bg-[#141414] border border-[#303030] shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_1px_1px_rgba(255,255,255,0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
+            className="fixed z-[9999] bg-surface border border-line shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_1px_1px_rgba(255,255,255,0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -253,28 +254,28 @@ export default function DayTypeSelect({
             }}
           >
             {/* LASER HAIRLINE ACCENT */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#da291c] to-transparent shrink-0 opacity-85" />
+            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-85" />
 
             {/* HEADER: DATE CONTEXT */}
-            <div className="px-2.5 py-1.5 border-b border-[#2d2d2d] bg-[#101010] flex items-center justify-between shrink-0">
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+            <div className="px-2.5 py-1.5 border-b border-line bg-canvas flex items-center justify-between shrink-0">
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 font-mono">
                 ประเภทวัน
               </span>
               {dateMeta && (
                 <div className="flex items-center gap-1.5">
                   {dateMeta.thaiDay && (
                     <span
-                      className="px-1 py-0.2 text-[9px] font-black rounded-none border leading-none"
+                      className="px-1 py-0.2 text-[11px] font-black rounded-none border leading-none"
                       style={{
                         backgroundColor: dateMeta.thaiDay.bg,
                         borderColor: dateMeta.thaiDay.border,
-                        color: dateMeta.thaiDay.color
+                        color: readable(dateMeta.thaiDay.color)
                       }}
                     >
                       {dateMeta.thaiDay.label}
                     </span>
                   )}
-                  <span className="text-[10px] font-mono font-bold text-slate-300">
+                  <span className="text-[11px] font-mono font-bold text-slate-300">
                     {dateMeta.displayDate}
                   </span>
                 </div>
@@ -298,10 +299,10 @@ export default function DayTypeSelect({
                     onMouseEnter={() => setActiveIndex(idx)}
                     className={`flex items-center justify-between w-full px-2 py-1.5 text-left rounded-none border transition-colors cursor-pointer group ${
                       isFocused
-                        ? 'bg-[#222222] text-white'
+                        ? 'bg-surface-hover text-white'
                         : isSelected
-                        ? 'bg-[#1a1a1a] text-white'
-                        : 'bg-transparent text-slate-300 hover:bg-[#1e1e1e] hover:text-white'
+                        ? 'bg-canvas text-white'
+                        : 'bg-transparent text-slate-300 hover:bg-surface-hover hover:text-white'
                     }`}
                     style={{
                       borderColor: isSelected
@@ -326,7 +327,7 @@ export default function DayTypeSelect({
                       <span
                         className="text-xs font-bold truncate tracking-tight transition-colors"
                         style={{
-                          color: isSelected ? dtColor : undefined
+                          color: isSelected ? readable(dtColor) : undefined
                         }}
                       >
                         {dt.label}
@@ -337,7 +338,7 @@ export default function DayTypeSelect({
                     {isSelected && (
                       <Check
                         className="w-3.5 h-3.5 shrink-0 ml-1.5"
-                        style={{ color: dtColor }}
+                        style={{ color: readable(dtColor) }}
                       />
                     )}
                   </button>
@@ -346,7 +347,7 @@ export default function DayTypeSelect({
             </div>
 
             {/* FOOTER HINT */}
-            <div className="px-2 py-1 bg-[#0d0d0d] border-t border-[#262626] flex items-center justify-between text-[9px] text-slate-500 font-mono shrink-0 select-none">
+            <div className="px-2 py-1 bg-canvas border-t border-line flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 select-none">
               <span>↑↓ นำทาง</span>
               <span>Esc ปิด</span>
             </div>

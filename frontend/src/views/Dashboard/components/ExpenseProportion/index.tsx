@@ -23,12 +23,13 @@ import { AllocationEvolutionChart } from './AllocationEvolutionChart';
 import { monthKeyOf, localTodayIso } from '@/utils/payCycle';
 import type { AllocationEvolutionData } from '@/utils/allocationEvolutionHelpers';
 
+import { tc } from '@/constants/theme';
 function ExpenseProportionEmpty() {
   return (
-    <div className="flex flex-col w-full h-full items-center justify-center text-center opacity-60 p-10">
+    <div className="flex flex-col w-full h-full items-center justify-center text-center text-ink-body p-10">
       <Inbox className="w-10 h-10 mb-2 opacity-20" />
       <p className="text-sm font-bold uppercase tracking-widest">ไม่มีข้อมูลรายจ่าย</p>
-      <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
+      <p className="text-[11px] font-medium normal-case tracking-normal mt-1">
         ลองเปลี่ยนเดือน หรือเพิ่มรายการรายจ่ายใหม่
       </p>
     </div>
@@ -37,10 +38,10 @@ function ExpenseProportionEmpty() {
 
 function AllocationEvolutionEmpty() {
   return (
-    <div className="flex flex-col w-full h-full items-center justify-center text-center opacity-60 p-10">
+    <div className="flex flex-col w-full h-full items-center justify-center text-center text-ink-body p-10">
       <TrendingUp className="w-10 h-10 mb-2 opacity-20" />
       <p className="text-sm font-bold uppercase tracking-widest">ยังไม่มีข้อมูลย้อนหลังพอ</p>
-      <p className="text-[11px] font-medium normal-case tracking-normal opacity-70 mt-1">
+      <p className="text-[11px] font-medium normal-case tracking-normal mt-1">
         บันทึกรายการต่อเนื่องอย่างน้อย 2 เดือนเพื่อดูแนวโน้ม 50/30/20
       </p>
     </div>
@@ -52,16 +53,16 @@ const SKELETON_KEYS = ['prop-skel-0', 'prop-skel-1', 'prop-skel-2', 'prop-skel-3
 function ExpenseProportionSkeleton() {
   return (
     <div className="flex flex-row items-stretch h-32">
-      <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-[#303030]/40 bg-[#303030]/30">
+      <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-line/40 bg-surface-elevated/30">
         {/* animate-spin is the Static Performance Engine's one carve-out for loading feedback (animate-pulse is globally neutralized) */}
-        <div className="w-10 h-10 rounded-full border-4 border-[#303030] border-t-[#da291c] animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-line border-t-accent animate-spin" />
       </div>
-      <div className="flex-1 grid grid-cols-5 gap-[1px] bg-[#303030]/20">
+      <div className="flex-1 grid grid-cols-5 gap-[1px] bg-surface-elevated/20">
         {SKELETON_KEYS.map((key) => (
-          <div key={key} className="p-2 bg-[#303030]/40">
-            <div className="h-2 w-12 mb-2 rounded-none bg-[#303030]" />
-            <div className="h-4 w-16 mb-2 rounded-none bg-[#303030]" />
-            <div className="h-1 w-full rounded-none bg-[#303030]" />
+          <div key={key} className="p-2 bg-surface-elevated/40">
+            <div className="h-2 w-12 mb-2 rounded-none bg-surface-elevated" />
+            <div className="h-4 w-16 mb-2 rounded-none bg-surface-elevated" />
+            <div className="h-1 w-full rounded-none bg-surface-elevated" />
           </div>
         ))}
       </div>
@@ -183,14 +184,14 @@ export function ExpenseProportion() {
         ...baseOptions.plugins,
         tooltip: {
           enabled: true,
-          backgroundColor: '#121212',
-          borderColor: '#303030',
+          backgroundColor: tc('surface'),
+          borderColor: tc('line'),
           borderWidth: 1,
           cornerRadius: 0, // Sharp Ferrari border
-          titleColor: '#f8fafc',
-          titleFont: { family: 'Inter', size: 10, weight: 'bold' as const },
-          bodyColor: '#cbd5e1',
-          bodyFont: { family: 'Inter', size: 10 },
+          titleColor: tc('ink-display'),
+          titleFont: { family: 'Inter', size: 11, weight: 'bold' as const },
+          bodyColor: tc('gray-300'),
+          bodyFont: { family: 'Inter', size: 11 },
           padding: 8,
           boxPadding: 4,
           usePointStyle: true,
@@ -210,7 +211,7 @@ export function ExpenseProportion() {
     };
   }, [dm, activeItems]);
   
-  const cardClass = "rounded-none border flex flex-col w-full bg-[#181818] border-[#303030] relative overflow-visible z-10";
+  const cardClass = "rounded-none border flex flex-col w-full bg-canvas border-line relative overflow-visible z-10";
   const isEmpty = !isEvolutionMode && itemCount === 0 && !showSkeleton;
   const hasNoIncomeData = isAllocationMode && totalIncome <= 0;
 

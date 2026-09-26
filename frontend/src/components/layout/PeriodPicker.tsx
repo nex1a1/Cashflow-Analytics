@@ -1,34 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Check, LayoutGrid, CalendarRange, ListChecks, X, CalendarDays, CalendarCheck, Zap } from 'lucide-react';
-import { getFilterLabel, getThaiMonth, THAI_MONTHS_SHORT } from '../../utils/formatters';
+import { ChevronLeft, ChevronRight, ChevronDown, X, CalendarDays, ListChecks } from 'lucide-react';
+import { getFilterLabel, THAI_MONTHS_SHORT } from '../../utils/formatters';
 import { GroupedOptions } from '../../types';
-import { CYCLE_PREFIX, isCyclePeriod, stripCycle, convertPeriodMode, toCycleKey, shiftMonth, localTodayIso, cycleRangeLabel, cycleSpanLabel, CYCLE_PRESETS, cyclePresetRange, matchCyclePreset } from '../../utils/payCycle';
-
-interface ModeBtnProps {
-  id: string;
-  icon: React.ElementType;
-  label: string;
-  title: string;
-  active: boolean;
-  onClick: (id: string) => void;
-}
-
-function ModeBtn({ id, icon: Icon, label, title, active, onClick }: ModeBtnProps) {
-  return (
-    <button
-      onClick={() => onClick(id)}
-      title={title}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-none transition-all ${
-        active
-          ? 'bg-[#da291c] text-white font-bold border border-[#da291c] shadow-sm'
-          : 'text-[#888888] hover:text-white bg-[#141414] hover:bg-[#252525] border border-[#303030] hover:border-[#4a4a4a]'
-      }`}
-    >
-      <Icon className="w-3 h-3 shrink-0" />
-      <span className="text-[10px] uppercase font-semibold">{label}</span>
-    </button>
-  );
-}
+import { CYCLE_PREFIX, isCyclePeriod, stripCycle, convertPeriodMode, toCycleKey, shiftMonth, localTodayIso, cycleRangeLabel, cycleSpanLabel, CYCLE_PRESETS, cyclePresetRange, matchCyclePreset, monthsBetween, monthsToPeriod } from '../../utils/payCycle';
 
 export interface PeriodPickerProps {
   filterPeriod: string;
@@ -66,19 +40,17 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   }, [isCycle, calendarOptions]);
 
   const [open, setOpen] = useState<boolean>(false);
-  // Multi-expand: Set of expanded year keys (range/multi allow multiple open at once)
+  // Multi-expand: Set of expanded year keys (multi-select allows several open at once)
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
 
-  const [mode, setMode] = useState<string>('standard');
-
-  // Pending States for Range and Multi
-  const [rangeStart, setRangeStart] = useState<string | null>(null);
-  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
-  const [multiSelected, setMultiSelected] = useState<string[]>([]);
+  // Two modes only: click-to-pick one period, or multi-select (Shift+click fills a span).
+  // Contiguous multi picks save as a range (A_B), scattered ones as a list (A,B,C).
+  const [multi, setMulti] = useState<boolean>(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const lastPicked = useRef<string | null>(null);
 
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // Quick-access shortcut values (computed once)
   const { currentMonth, lastMonth, currentYear } = useMemo(() => {
     const today = localTodayIso();
     const cm = isCycle ? toCycleKey(today) : today.slice(0, 7);
@@ -88,66 +60,38 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   // ปี/H/Q ในโหมดรอบเป็น range ธรรมดา แต่ถือเป็นตัวเลือก "เดี่ยว"
   const isCyclePreset = isCycle && !!matchCyclePreset(filterPeriod);
   const yearValue = isCycle ? cyclePresetRange(currentYear, 1, 12) : currentYear;
-  const spanShort = (range: string) => {
-    const [s, e] = range.split('_');
-    return `${cycleRangeLabel(s).split(' – ')[0]} – ${cycleRangeLabel(e).split(' – ')[1]}`;
-  };
 
-  // Click outside to close
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  // ESC key to close
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) setOpen(false);
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [open]);
-
-  // State sync on open — detect mode from current filterPeriod
+  // Click outside / Esc to close
   useEffect(() => {
     if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+  }, [open]);
 
-    const initialExpanded = new Set<string>();
-
+  // On open: a range / list period reopens in multi-select with its months ticked
+  useEffect(() => {
+    if (!open) return;
+    let months: string[] = [];
     if (filterPeriod?.includes('_') && !isCyclePreset) {
-      setMode('range');
       const [s, e] = filterPeriod.split('_');
-      setRangeStart(s);
-      setRangeEnd(e);
-      // Auto-expand all years involved in the range
-      const sYear = s.split('-')[0];
-      const eYear = e.split('-')[0];
-      initialExpanded.add(sYear);
-      if (eYear !== sYear) initialExpanded.add(eYear);
+      months = monthsBetween(s, e);
     } else if (filterPeriod?.includes(',')) {
-      setMode('multi');
-      const months = filterPeriod.split(',');
-      setMultiSelected(months);
-      // Auto-expand years of all selected months
-      for (const m of months) initialExpanded.add(m.split('-')[0]);
-    } else {
-      setMode('standard');
-      setRangeStart(null);
-      setRangeEnd(null);
-      setMultiSelected([]);
-      const year = filterPeriod?.split('-')[0];
-      if (year && groupedOptions?.yearsMap?.[year]) {
-        initialExpanded.add(year);
-      } else {
-        const firstYear = groupedOptions?.sortedYears?.[0];
-        if (firstYear) initialExpanded.add(firstYear);
-      }
+      months = filterPeriod.split(',');
     }
+    setMulti(months.length > 0);
+    setPicked(months);
+    lastPicked.current = null;
 
-    setExpandedYears(initialExpanded);
+    const years = new Set(months.map(m => m.slice(0, 4)));
+    if (years.size === 0) {
+      const year = filterPeriod?.slice(0, 4);
+      const fallback = year && groupedOptions?.yearsMap?.[year] ? year : groupedOptions?.sortedYears?.[0];
+      if (fallback) years.add(fallback);
+    }
+    setExpandedYears(years);
   }, [open, filterPeriod, groupedOptions, isCyclePreset]);
 
   const select = (val: string) => {
@@ -155,538 +99,393 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
     setOpen(false);
   };
 
-  // Single-month stepper: only meaningful when filterPeriod is a plain YYYY-MM.
-  // ALL / years / quarters / ranges / multi-select have no coherent "next month".
+  // Stepper: only meaningful when filterPeriod is a plain YYYY-MM.
   const isSingleMonth = /^\d{4}-\d{2}$/.test(filterPeriod);
-
   const stepMonth = useCallback((delta: number) => {
-    if (!/^\d{4}-\d{2}$/.test(filterPeriod)) return;
-    const [yStr, mStr] = filterPeriod.split('-');
-    const d = new Date(Number.parseInt(yStr, 10), Number.parseInt(mStr, 10) - 1 + delta, 1);
-    setFilterPeriod(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+    if (/^\d{4}-\d{2}$/.test(filterPeriod)) setFilterPeriod(shiftMonth(filterPeriod, delta));
   }, [filterPeriod, setFilterPeriod]);
 
-  // Switch mode and clear pending states from the previous mode
-  const handleModeChange = (newMode: string) => {
-    if (newMode === mode) return;
-    setMode(newMode);
-    setRangeStart(null);
-    setRangeEnd(null);
-    setMultiSelected([]);
-  };
-
-  // Toggle accordion — single-expand in standard, multi-expand in range/multi
   const toggleYear = (year: string) => {
-    const isMultiExpand = mode === 'range' || mode === 'multi';
     setExpandedYears(prev => {
-      const next = new Set(prev);
-      if (next.has(year)) {
-        next.delete(year);
-      } else {
-        if (!isMultiExpand) next.clear(); // collapse others in standard mode
-        next.add(year);
-      }
+      const next = new Set(multi ? prev : []);
+      if (prev.has(year)) next.delete(year); else next.add(year);
       return next;
     });
   };
 
-  const handleMonthClick = (m: string) => {
-    if (mode === 'standard') {
-      select(m);
-      return;
+  const handleMonthClick = (m: string, e: React.MouseEvent) => {
+    if (!multi) { select(m); return; }
+    if (e.shiftKey && lastPicked.current) {
+      const span = monthsBetween(lastPicked.current, m);
+      setPicked(prev => [...new Set([...prev, ...span])]);
+    } else {
+      setPicked(prev => (prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]));
     }
-    if (mode === 'range') {
-      if (!rangeStart || (rangeStart && rangeEnd)) {
-        setRangeStart(m);
-        setRangeEnd(null);
-      } else {
-        const [s, e] = [rangeStart, m].sort((a, b) => a.localeCompare(b));
-        setRangeStart(s);
-        setRangeEnd(e);
-      }
-      return;
-    }
-    if (mode === 'multi') {
-      setMultiSelected(prev =>
-        prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
-      );
-    }
+    lastPicked.current = m;
   };
 
-  const handleConfirmRange = () => {
-    if (rangeStart && rangeEnd) select(`${rangeStart}_${rangeEnd}`);
-    else if (rangeStart) select(rangeStart);
-  };
+  const exitMulti = () => { setMulti(false); setPicked([]); lastPicked.current = null; };
+  const confirmMulti = () => { if (picked.length) select(monthsToPeriod(picked)); };
 
-  const handleConfirmMulti = () => {
-    if (multiSelected.length === 0) return;
-    if (multiSelected.length === 1) select(multiSelected[0]);
-    else select([...multiSelected].sort((a, b) => a.localeCompare(b)).join(','));
-  };
-
-  const isMonthSelected = (m: string) => {
-    if (mode === 'multi') return multiSelected.includes(m);
-    if (mode === 'range') return m === rangeStart || m === rangeEnd;
-    return filterPeriod === m;
-  };
-
-  const isMonthInRange = (m: string) => {
-    if (mode === 'range' && rangeStart && rangeEnd) {
-      return m >= rangeStart && m <= rangeEnd;
-    }
-    return false;
-  };
-
-  // Range footer text — step-aware instructions
-  const rangeFooterText = useMemo(() => {
-    const name = (m: string) => (isCycle ? `รอบ ${getThaiMonth(m)}` : getThaiMonth(m));
-    if (rangeStart && rangeEnd) return `${name(rangeStart)} — ${name(rangeEnd)}`;
-    if (rangeStart) return `จาก: ${name(rangeStart)} → เลือก${unitWord}สิ้นสุด`;
-    return `คลิก${unitWord}เริ่มต้น จากนั้นเลือก${unitWord}สิ้นสุด`;
-  }, [rangeStart, rangeEnd, isCycle, unitWord]);
-
-  // Mode badge shown on trigger button when period is range/multi
-  const modeBadge = useMemo(() => {
-    if (filterPeriod?.includes('_') && !isCyclePreset) {
-      return { label: 'RANGE', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' };
-    }
-    if (filterPeriod?.includes(',')) {
-      return { label: `${filterPeriod.split(',').length}${isCycle ? ' รอบ' : 'M'}`, cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' };
-    }
-    return null;
-  }, [filterPeriod, isCyclePreset]);
-
-  // Whether a year has any selection inside (for dot indicator)
-  const yearHasSelection = (year: string): boolean => {
-    if (mode === 'multi') return multiSelected.some(m => m.startsWith(`${year}-`));
-    if (mode === 'range') {
-      if (!rangeStart) return false;
-      const sYear = rangeStart.split('-')[0];
-      const eYear = rangeEnd ? rangeEnd.split('-')[0] : sYear;
-      return year >= sYear && year <= eYear;
-    }
-    return filterPeriod?.startsWith(year) && filterPeriod !== 'ALL';
-  };
-
-  // Quick shortcut availability (only show if data exists for that period)
   const hasCurrentMonth = !!groupedOptions?.yearsMap?.[currentYear]?.months?.has(currentMonth);
   const hasLastMonth = !!groupedOptions?.yearsMap?.[lastMonth.split('-')[0]]?.months?.has(lastMonth);
   const hasCurrentYear = !!groupedOptions?.yearsMap?.[currentYear];
 
-  // ── Styling Tokens ────────────────────────────────────────────────────────
-  const itemBase   = 'w-full text-left px-2.5 py-1.5 rounded-none text-xs flex items-center gap-2 transition-all border';
-  const itemHover  = 'border-[#303030] bg-[#141414] text-[#cbd5e1] hover:text-white hover:bg-[#222222] hover:border-[#4a4a4a]';
-  const itemActive = 'border-[#da291c] bg-[#da291c]/15 text-white font-bold pl-2 shadow-sm';
+  // ── Styling ────────────────────────────────────────────────────────────────
+  const subAggregateBase = 'text-[11px] px-2 py-0.5 font-medium border transition-colors';
+  const subAggregateIdle = 'border-line/60 bg-surface/60 text-ink-muted hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong';
+  const subAggregateActive = 'border-accent bg-accent text-on-accent font-bold';
 
-  const pillBase  = 'text-[11px] py-1 px-1.5 rounded-none font-medium transition-all border text-center';
-  const pillIdle  = 'border-[#303030] bg-[#141414] text-[#888888] hover:text-white hover:bg-[#252525] hover:border-[#4a4a4a]';
-  const pillActive = 'border-[#da291c] bg-[#da291c] text-white font-bold shadow-sm';
+  const monthBase = 'text-xs py-1.5 px-2 font-semibold border text-center transition-colors';
+  const monthIdle = 'border-line bg-surface text-ink-display hover:bg-surface-elevated hover:border-line-strong';
+  const monthActive = 'border-accent bg-accent text-on-accent font-bold shadow-sm';
 
-  const pillRangeActive    = 'border-emerald-500 bg-emerald-500 text-white font-bold shadow-sm';
-  const pillRangeBetween   = 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300 font-semibold';
-  const pillMultiActive    = 'border-amber-500 bg-amber-500 text-white font-bold shadow-sm';
-
-  const confirmRangeCls = 'bg-emerald-700 hover:bg-emerald-600 text-white shadow-sm disabled:bg-[#1a2a1a] disabled:text-emerald-900 disabled:cursor-not-allowed';
-  const confirmMultiCls = 'bg-amber-700 hover:bg-amber-600 text-white shadow-sm disabled:bg-[#2a1f00] disabled:text-amber-900 disabled:cursor-not-allowed';
+  const quick = (active: boolean) =>
+    `flex-1 text-center text-[11px] font-medium px-1.5 py-1 border transition-colors ${
+      active
+        ? 'bg-accent/15 border-accent text-ink-display font-bold'
+        : 'border-line/70 bg-surface/80 text-ink-body hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong'
+    }`;
 
   return (
     <div className="relative" ref={ref}>
-      {/* ── Trigger Cluster: Jump-to-current + Stepper + Dropdown (merged) ── */}
-      <div className="flex items-center gap-1.5">
+      {/* ── Trigger: ‹ period › ── */}
+      <div className="flex items-center border border-line-strong bg-surface shrink-0">
         <button
-          onClick={() => setFilterPeriod(currentMonth)}
-          disabled={filterPeriod === currentMonth}
-          title={`ไป${unitWord}ปัจจุบัน`}
-          className="p-1.5 rounded-none border border-[#383838] bg-[#121212] text-slate-300 hover:border-[#da291c] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#383838] disabled:hover:text-slate-300 shrink-0"
+          onClick={() => stepMonth(-1)}
+          disabled={!isSingleMonth}
+          aria-label={`${unitWord}ก่อนหน้า`}
+          title={`${unitWord}ก่อนหน้า`}
+          className="p-1.5 text-ink-soft hover:bg-surface-hover hover:text-ink-display disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent shrink-0"
         >
-          <CalendarCheck className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         </button>
-
-        <div className="flex items-center rounded-none border border-[#383838] bg-[#121212] shrink-0">
-          <button
-            onClick={() => stepMonth(-1)}
-            disabled={!isSingleMonth}
-            title={`${unitWord}ก่อนหน้า`}
-            className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-
-          <span className="w-[1px] h-5 bg-[#2a2a2a] shrink-0" />
-
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="flex items-center gap-2 px-3 py-1.5 text-slate-100 text-xs font-bold transition-all hover:text-white focus:outline-none min-w-[170px]"
-          >
-            <CalendarDays className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-            <span className="flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
-            {modeBadge && (
-              <span className={`text-[9px] font-bold px-1 py-0.5 border rounded-none shrink-0 ${modeBadge.cls}`}>
-                {modeBadge.label}
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
-          </button>
-
-          <span className="w-[1px] h-5 bg-[#2a2a2a] shrink-0" />
-
-          <button
-            onClick={() => stepMonth(1)}
-            disabled={!isSingleMonth}
-            title={`${unitWord}ถัดไป`}
-            className="p-1.5 text-slate-300 hover:bg-[#1d1d1d] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300 shrink-0"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
+        <button
+          onClick={() => setOpen(o => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className="flex items-center gap-2 px-3 py-1.5 text-ink-display text-xs font-bold min-w-[170px]"
+        >
+          <CalendarDays className="w-3.5 h-3.5 shrink-0 text-accent" />
+          <span className="flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
+          <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${open ? 'rotate-180' : ''}`} />
+        </button>
+        <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
+        <button
+          onClick={() => stepMonth(1)}
+          disabled={!isSingleMonth}
+          aria-label={`${unitWord}ถัดไป`}
+          title={`${unitWord}ถัดไป`}
+          className="p-1.5 text-ink-soft hover:bg-surface-hover hover:text-ink-display disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent shrink-0"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {open && (
-        <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-[#181818] border border-[#3e3e3e] rounded-none shadow-2xl ring-1 ring-white/10 z-50 overflow-hidden`}>
-
-          {/* ── Calendar / Pay-cycle switch ─────────────────────────────── */}
+        <div
+          role="dialog"
+          aria-label="เลือกช่วงเวลา"
+          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.45)] z-50 overflow-hidden`}
+        >
+          {/* ── Calendar / Pay-cycle switch ── */}
           {allowCycle && (
-            <div className="flex items-center gap-2 px-2 py-1.5 border-b border-[#303030] bg-[#101010]">
-              <span className="text-[9px] text-[#666666] uppercase font-bold tracking-wider shrink-0">นับเดือนแบบ</span>
-              <div className="flex flex-1 border border-[#333333]">
-                {([[false, 'ปฏิทิน'], [true, 'รอบเงินเดือน 25–24']] as const).map(([cycle, label]) => (
-                  <button
-                    key={label}
-                    onClick={() => { if (cycle !== isCycle) setRawPeriod(convertPeriodMode(rawPeriod, cycle)); }}
-                    className={`flex-1 py-1 text-[10px] font-bold rounded-none ${
-                      cycle === isCycle ? 'bg-[#2a2a2a] text-white' : 'bg-[#141414] text-[#777777] hover:text-white'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isCycle && (
-            <div className="px-2.5 py-1.5 border-b border-[#303030] bg-[#101010] text-[10px] text-[#888888] leading-snug">
-              1 รอบ = วันที่ 25 (เงินเดือนเข้า) ถึงวันที่ 24 ของเดือนถัดไป · ชื่อรอบตามเดือนที่เงินเดือนเข้า
-            </div>
-          )}
-
-          {/* ── Mode Switcher Tabs ──────────────────────────────────────── */}
-          <div className="flex border-b border-[#303030] p-1.5 bg-[#121212] gap-1.5">
-            <ModeBtn id="standard"  icon={LayoutGrid}   label="เดี่ยว"      title="เลือก 1 เดือน, ไตรมาส, หรือปี"          active={mode === 'standard'} onClick={handleModeChange} />
-            <ModeBtn id="range"     icon={CalendarRange} label="ช่วงเวลา"   title="เลือกช่วงเดือนต่อเนื่อง"                 active={mode === 'range'}    onClick={handleModeChange} />
-            <ModeBtn id="multi"   icon={ListChecks}    label={`หลาย${unitWord}`}  title={`เลือกหลาย${unitWord}แบบอิสระ ไม่ต้องต่อเนื่อง`} active={mode === 'multi'}    onClick={handleModeChange} />
-          </div>
-
-          {/* ── Quick Shortcuts (Standard mode only) ───────────────────── */}
-          {mode === 'standard' && (hasCurrentMonth || hasLastMonth || hasCurrentYear) && (
-            <div className="flex items-center gap-1 px-2 py-1.5 border-b border-[#2a2a2a] bg-[#111111]">
-              <span className="flex items-center gap-1 text-[9px] text-[#555555] uppercase font-bold tracking-wider pr-1 shrink-0">
-                <Zap className="w-2.5 h-2.5" />
-                ด่วน
-              </span>
-              {hasCurrentMonth && (
+            <div className="flex border-b border-line">
+              {([
+                [false, 'เดือนปฏิทิน', 'วันที่ 1 ถึงสิ้นเดือน'],
+                [true, 'รอบเงินเดือน 25–24', '1 รอบ = วันที่ 25 (เงินเดือนเข้า) ถึงวันที่ 24 ของเดือนถัดไป · ชื่อรอบตามเดือนที่เงินเดือนเข้า'],
+              ] as const).map(([cycle, label, hint]) => (
                 <button
-                  onClick={() => select(currentMonth)}
-                  className={`flex-1 text-center text-[10px] font-semibold px-1 py-0.5 border transition-all rounded-none ${
-                    filterPeriod === currentMonth
-                      ? 'bg-[#da291c]/15 border-[#da291c] text-white'
-                      : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
+                  key={label}
+                  title={hint}
+                  aria-pressed={cycle === isCycle}
+                  onClick={() => { if (cycle !== isCycle) setRawPeriod(convertPeriodMode(rawPeriod, cycle)); }}
+                  className={`flex-1 py-2 text-[11px] font-bold border-b-2 -mb-px ${
+                    cycle === isCycle ? 'border-b-accent text-ink-display bg-surface' : 'border-b-transparent text-ink-muted hover:text-ink-display'
                   }`}
                 >
-                  {unitWord}นี้{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleRangeLabel(currentMonth)}</span>}
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Quick picks ── */}
+          {!multi && (
+            <div className="flex items-stretch gap-1.5 p-2 border-b border-line bg-surface/50">
+              {hasCurrentMonth && (
+                <button onClick={() => select(currentMonth)} className={quick(filterPeriod === currentMonth)}>
+                  {unitWord}นี้{isCycle && <span className="block font-normal text-ink-muted tabular-nums">{cycleRangeLabel(currentMonth)}</span>}
                 </button>
               )}
               {hasLastMonth && (
-                <button
-                  onClick={() => select(lastMonth)}
-                  className={`flex-1 text-center text-[10px] font-semibold px-1 py-0.5 border transition-all rounded-none ${
-                    filterPeriod === lastMonth
-                      ? 'bg-[#da291c]/15 border-[#da291c] text-white'
-                      : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
-                  }`}
-                >
-                  {unitWord}ก่อน{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleRangeLabel(lastMonth)}</span>}
+                <button onClick={() => select(lastMonth)} className={quick(filterPeriod === lastMonth)}>
+                  {unitWord}ก่อน{isCycle && <span className="block font-normal text-ink-muted tabular-nums">{cycleRangeLabel(lastMonth)}</span>}
                 </button>
               )}
               {hasCurrentYear && (
-                <button
-                  onClick={() => select(yearValue)}
-                  className={`flex-1 text-center text-[10px] font-semibold px-1 py-0.5 border transition-all rounded-none ${
-                    filterPeriod === yearValue
-                      ? 'bg-[#da291c]/15 border-[#da291c] text-white'
-                      : 'border-[#2e2e2e] bg-[#141414] text-[#999999] hover:text-white hover:border-[#4a4a4a] hover:bg-[#1e1e1e]'
-                  }`}
-                >
-                  ทั้งปี {currentYear}{isCycle && <span className="block text-[9px] font-normal opacity-70 tabular-nums">{cycleSpanLabel(currentYear + "-01", currentYear + "-12").split(" · ")[0]}</span>}
+                <button onClick={() => select(yearValue)} className={quick(filterPeriod === yearValue)}>
+                  ทั้งปี {currentYear}
                 </button>
               )}
-            </div>
-          )}
-
-          {/* ── Range Mode Step Instruction ─────────────────────────────── */}
-          {mode === 'range' && (
-            <div className="px-2.5 py-1.5 border-b border-emerald-500/20 bg-emerald-950/30 flex items-center gap-2">
-              <span className={`inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold rounded-none border shrink-0 ${
-                !rangeStart
-                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                  : 'border-emerald-500/40 text-emerald-600'
-              }`}>1</span>
-              <span className="text-[10px] text-emerald-400/70 mx-[-2px]">→</span>
-              <span className={`inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold rounded-none border shrink-0 ${
-                rangeStart && !rangeEnd
-                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                  : 'border-emerald-500/40 text-emerald-600'
-              }`}>2</span>
-              <span className="text-[10px] text-emerald-400/70 flex-1 truncate">
-                {!rangeStart
-                  ? `เลือก${unitWord}เริ่มต้น`
-                  : !rangeEnd
-                  ? `เลือก${unitWord}สิ้นสุด`
-                  : '✓ พร้อมยืนยัน'}
-              </span>
-            </div>
-          )}
-
-          {/* ── Multi Mode Instruction (shown only when empty) ──────────── */}
-          {mode === 'multi' && multiSelected.length === 0 && (
-            <div className="px-2.5 py-1.5 border-b border-amber-500/20 bg-amber-950/20">
-              <span className="text-[10px] text-amber-400/70">คลิก{unitWord}ใดก็ได้เพื่อเพิ่มเข้าการเลือก</span>
-            </div>
-          )}
-
-          {/* ── Scrollable Month List ───────────────────────────────────── */}
-          <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
-            {mode === 'standard' && (
-              <div className="p-2 border-b border-[#2d2d2d]">
-                <button
-                  onClick={() => select('ALL')}
-                  className={`${itemBase} ${filterPeriod === 'ALL' ? itemActive : itemHover}`}
-                >
-                  {filterPeriod === 'ALL'
-                    ? <Check className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-                    : <span className="w-3.5 h-3.5 shrink-0" />}
-                  <span className="font-bold">{isCycle ? 'ทุกรอบเงินเดือน (ALL TIME)' : 'ดูข้อมูลทั้งหมด (ALL TIME)'}</span>
-                </button>
-              </div>
-            )}
-
-            <div className="p-2 space-y-1">
-              {groupedOptions?.sortedYears?.length === 0 ? (
-                <div className="text-center py-4 text-xs text-[#888888]">ยังไม่มีข้อมูลปี</div>
-              ) : (
-                groupedOptions?.sortedYears?.map(year => {
-                  const data = groupedOptions.yearsMap[year];
-                  const isExpanded = expandedYears.has(year);
-                  const hasSelection = yearHasSelection(year);
-                  const months: string[] = Array.from(data.months).sort((a: string, b: string) => b.localeCompare(a));
-
-                  return (
-                    <div key={year} className="space-y-1">
-                      {/* Year Header */}
-                      <button
-                        onClick={() => toggleYear(year)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-none text-xs flex items-center justify-between font-bold text-[#e0e0e0] bg-[#161616] border border-[#303030] hover:border-[#4a4a4a] hover:bg-[#222222] transition-colors"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90 text-[#da291c]' : 'text-[#888888]'}`} />
-                          <span>📅 {year}</span>
-                          {/* Selection dot indicator */}
-                          {hasSelection && (
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              mode === 'range' ? 'bg-emerald-400' : mode === 'multi' ? 'bg-amber-400' : 'bg-[#da291c]'
-                            }`} />
-                          )}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 font-mono">
-                          {data.months.size} {unitWord}
-                        </span>
-                      </button>
-
-                      {isExpanded && (
-                        <div className="ml-1.5 pl-1.5 border-l space-y-1 mt-1 mb-1 border-[#383838]">
-                          {/* Year/Half/Quarter shortcuts — Standard mode only */}
-                          {mode === 'standard' && !isCycle && (
-                            <>
-                              <button onClick={() => select(year)} className={`${itemBase} ${filterPeriod === year ? itemActive : itemHover}`}>
-                                {filterPeriod === year
-                                  ? <Check className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-                                  : <span className="w-3.5 h-3.5 shrink-0" />}
-                                <span>ทั้งปี {year}</span>
-                              </button>
-
-                              {(data.halves.has(`${year}-H1`) || data.halves.has(`${year}-H2`)) && (
-                                <div className="grid grid-cols-2 gap-1 px-0.5">
-                                  {['H1', 'H2'].map(h => {
-                                    const hKey = `${year}-${h}`;
-                                    if (!data.halves.has(hKey)) return null;
-                                    return (
-                                      <button key={h} onClick={() => select(hKey)} className={`${pillBase} ${filterPeriod === hKey ? pillActive : pillIdle}`}>
-                                        {h}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {[1, 2, 3, 4].some(q => data.quarters.has(`${year}-Q${q}`)) && (
-                                <div className="grid grid-cols-4 gap-1 px-0.5">
-                                  {[1, 2, 3, 4].map(q => {
-                                    const qKey = `${year}-Q${q}`;
-                                    if (!data.quarters.has(qKey)) return <span key={q} />;
-                                    return (
-                                      <button key={q} onClick={() => select(qKey)} className={`${pillBase} ${filterPeriod === qKey ? pillActive : pillIdle}`}>
-                                        Q{q}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </>
-                          )}
-
-                          {/* Year/Half/Quarter in cycle mode — ranges of cycles named by salary month */}
-                          {mode === 'standard' && isCycle && (() => {
-                            const monthsArr = Array.from(data.months) as string[];
-                            const presets = CYCLE_PRESETS.map((p) => {
-                              const value = cyclePresetRange(year, p.from, p.to);
-                              const [s, e] = value.split('_');
-                              return { ...p, value, has: monthsArr.some((m) => m >= s && m <= e), title: cycleSpanLabel(s, e) };
-                            });
-                            const pill = (p: typeof presets[number]) => (
-                              p.has ? (
-                                <button key={p.id} onClick={() => select(p.value)} title={p.title} className={`${pillBase} ${filterPeriod === p.value ? pillActive : pillIdle}`}>
-                                  <span className="block font-bold">{p.id}</span>
-                                  <span className="block text-[9px] opacity-70 tabular-nums whitespace-nowrap">{spanShort(p.value)}</span>
-                                </button>
-                              ) : <span key={p.id} />
-                            );
-                            const [y, ...rest] = presets;
-                            return (
-                              <>
-                                {y.has && (
-                                  <button onClick={() => select(y.value)} className={`${itemBase} ${filterPeriod === y.value ? itemActive : itemHover}`}>
-                                    {filterPeriod === y.value
-                                      ? <Check className="w-3.5 h-3.5 shrink-0 text-[#da291c]" />
-                                      : <span className="w-3.5 h-3.5 shrink-0" />}
-                                    <span>ทั้งปี {year}</span>
-                                    <span className="ml-auto text-[10px] opacity-60 tabular-nums">{y.title}</span>
-                                  </button>
-                                )}
-                                <div className="grid grid-cols-2 gap-1 px-0.5">{rest.slice(0, 2).map(pill)}</div>
-                                <div className="grid grid-cols-4 gap-1 px-0.5">{rest.slice(2).map(pill)}</div>
-                              </>
-                            );
-                          })()}
-
-                          {/* Month Grid */}
-                          <div className={`grid ${isCycle ? 'grid-cols-1' : 'grid-cols-3'} gap-1 px-0.5 pt-0.5`}>
-                            {months.map((m: string) => {
-                              const [, mo] = m.split('-');
-                              const selected = isMonthSelected(m);
-                              const ranged = isMonthInRange(m);
-
-                              let currentStyle = pillIdle;
-                              if (mode === 'range') {
-                                if (selected) currentStyle = pillRangeActive;
-                                else if (ranged) currentStyle = pillRangeBetween;
-                              } else if (mode === 'multi') {
-                                if (selected) currentStyle = pillMultiActive;
-                              } else if (selected) {
-                                currentStyle = pillActive;
-                              }
-
-                              return (
-                                <button key={m} onClick={() => handleMonthClick(m)} className={`${pillBase} ${currentStyle} ${isCycle ? 'flex items-center gap-2 px-2' : ''}`}>
-                                  {isCycle ? (
-                                    <>
-                                      <span className="w-14 text-left font-bold">รอบ {THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}</span>
-                                      <span className="flex-1 text-left tabular-nums">{cycleSpanLabel(m)}</span>
-                                      {m === currentMonth && <span className="text-[9px] font-bold px-1 border border-current rounded-full">ปัจจุบัน</span>}
-                                      {m > currentMonth && <span className="text-[9px] px-1 opacity-60">ยังไม่เริ่ม</span>}
-                                    </>
-                                  ) : THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* ── Range Footer (always visible in range mode) ─────────────── */}
-          {mode === 'range' && (
-            <div className="p-1.5 border-t flex flex-col gap-1.5 border-[#303030] bg-[#0f0f0f]">
-              <div className="relative py-1 px-2 border flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-400 min-h-[28px]">
-                <div className="flex-1">
-                  <p className="text-[10px] font-bold">{rangeFooterText}</p>
-                  {isCycle && rangeStart && (
-                    <p className="text-[10px] text-emerald-300/70 tabular-nums">{cycleSpanLabel(rangeStart, rangeEnd || rangeStart)}</p>
-                  )}
-                </div>
-                {(rangeStart || rangeEnd) && (
-                  <button
-                    onClick={() => { setRangeStart(null); setRangeEnd(null); }}
-                    className="text-slate-500 hover:text-red-400 transition-colors shrink-0 ml-1"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={handleConfirmRange}
-                disabled={!rangeStart || !rangeEnd}
-                className={`w-full py-1 rounded-none text-[10.5px] font-bold transition-all active:scale-[0.98] ${confirmRangeCls}`}
-              >
-                {rangeStart && rangeEnd ? 'ยืนยันช่วงเวลานี้' : 'รอเลือกช่วงเวลา...'}
+              <button onClick={() => select('ALL')} className={quick(filterPeriod === 'ALL')}>
+                ทั้งหมด
               </button>
             </div>
           )}
 
-          {/* ── Multi Footer ────────────────────────────────────────────── */}
-          {mode === 'multi' && (
-            <div className="p-1.5 border-t flex flex-col gap-1.5 border-[#303030] bg-[#0f0f0f]">
-              {multiSelected.length > 0 && (
-                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-0.5 custom-scrollbar">
-                  {[...multiSelected].sort((a, b) => a.localeCompare(b)).map(m => (
-                    <div key={m} className="flex items-center gap-1 px-1 py-0.5 rounded-none border bg-amber-500/20 border-amber-500/50 text-amber-300 text-[10px]">
-                      {isCycle && 'รอบ '}{THAI_MONTHS_SHORT[Number.parseInt(m.split('-')[1], 10) - 1]} {m.split('-')[0].slice(2)}
-                      {isCycle && <span className="opacity-70 tabular-nums">· {cycleRangeLabel(m)}</span>}
-                      <button
-                        onClick={() => setMultiSelected(prev => prev.filter(x => x !== m))}
-                        className="hover:text-red-400 transition-colors ml-0.5"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex gap-1">
-                {/* ล้าง = clear selection only, no mode change */}
-                <button
-                  onClick={() => setMultiSelected([])}
-                  disabled={multiSelected.length === 0}
-                  className="px-2 py-0.5 rounded-none text-[10px] font-medium transition-colors bg-[#121212] border border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  ล้าง
-                </button>
-                <button
-                  onClick={handleConfirmMulti}
-                  disabled={multiSelected.length === 0}
-                  className={`flex-1 py-0.5 rounded-none text-[10.5px] font-bold transition-all active:scale-[0.98] ${confirmMultiCls}`}
-                >
-                  {multiSelected.length > 0
-                    ? `ยืนยันการเลือก (${multiSelected.length})`
-                    : `เลือก${unitWord}ที่ต้องการ`}
-                </button>
-              </div>
+          {multi && (
+            <div className="px-2.5 py-2 border-b border-line bg-surface text-[11px] text-ink-body">
+              คลิกเพื่อเลือกทีละ{unitWord} · <span className="font-bold text-ink-soft">Shift+คลิก</span> เพื่อเลือกเป็นช่วง
             </div>
           )}
+
+          {/* ── Year accordion ── */}
+          <div className="max-h-[420px] overflow-y-auto custom-scrollbar p-2 space-y-1">
+            {groupedOptions?.sortedYears?.length === 0 ? (
+              <div className="text-center py-4 text-xs text-ink-body">ยังไม่มีข้อมูล</div>
+            ) : (
+              groupedOptions?.sortedYears?.map(year => {
+                const data = groupedOptions.yearsMap[year];
+                const isExpanded = expandedYears.has(year);
+                const hasSelection = multi
+                  ? picked.some(m => m.startsWith(`${year}-`))
+                  : filterPeriod?.startsWith(year) && filterPeriod !== 'ALL';
+                const months: string[] = Array.from(data.months).sort((a: string, b: string) => b.localeCompare(a));
+                const monthsArr = Array.from(data.months) as string[];
+
+                // Cycle presets for this year
+                const cyclePresets = isCycle
+                  ? CYCLE_PRESETS.map((p) => {
+                      const value = cyclePresetRange(year, p.from, p.to);
+                      const [s, e] = value.split('_');
+                      return { ...p, value, has: monthsArr.some((m) => m >= s && m <= e), title: cycleSpanLabel(s, e) };
+                    })
+                  : [];
+                const [cycleYearPreset, ...cycleRestPresets] = cyclePresets;
+
+                const wholeYearValue = isCycle ? (cycleYearPreset?.value || cyclePresetRange(year, 1, 12)) : year;
+                const canSelectWholeYear = !isCycle || !!cycleYearPreset?.has;
+                const isWholeYearSelected = filterPeriod === wholeYearValue;
+
+                return (
+                  <div key={year} className="space-y-1">
+                    {/* Header: Toggle expand on left, Select Whole Year + Month count on right */}
+                    <div className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold bg-canvas border border-line hover:border-line-strong transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => toggleYear(year)}
+                        aria-expanded={isExpanded}
+                        className="flex-1 flex items-center gap-1.5 text-left text-ink-display hover:text-accent py-0.5"
+                      >
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90 text-accent' : 'text-ink-body'}`} />
+                        <span className="tabular-nums">{year}</span>
+                        {hasSelection && <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-accent" />}
+                      </button>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {!multi && canSelectWholeYear && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              select(wholeYearValue);
+                            }}
+                            title={isCycle && cycleYearPreset ? cycleYearPreset.title : `เลือกทั้งปี ${year}`}
+                            className={`text-[11px] px-2 py-0.5 border font-semibold transition-colors ${
+                              isWholeYearSelected
+                                ? 'bg-accent text-on-accent border-accent'
+                                : 'bg-surface text-ink-muted border-line hover:text-ink-display hover:border-line-strong hover:bg-surface-elevated'
+                            }`}
+                          >
+                            ทั้งปี
+                          </button>
+                        )}
+                        <span className="text-[11px] text-ink-muted font-normal tabular-nums">{data.months.size} {unitWord}</span>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="ml-1.5 pl-1.5 border-l space-y-1.5 mt-1 mb-1 border-line-strong">
+                        {/* Half / Quarter aggregates — subtle secondary segments */}
+                        {!multi && !isCycle && (() => {
+                          const halves = ['H1', 'H2'].filter(k => data.halves.has(`${year}-${k}`));
+                          const quarters = ['Q1', 'Q2', 'Q3', 'Q4'].filter(k => data.quarters.has(`${year}-${k}`));
+                          if (halves.length === 0 && quarters.length === 0) return null;
+
+                          return (
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-surface/40 border border-line/50 text-[11px]">
+                              {halves.length > 0 && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="text-ink-muted font-medium pr-0.5">ครึ่งปี</span>
+                                  {halves.map(k => {
+                                    const key = `${year}-${k}`;
+                                    const isSelected = filterPeriod === key;
+                                    return (
+                                      <button
+                                        key={k}
+                                        type="button"
+                                        onClick={() => select(key)}
+                                        className={`${subAggregateBase} ${isSelected ? subAggregateActive : subAggregateIdle}`}
+                                      >
+                                        {k}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {halves.length > 0 && quarters.length > 0 && (
+                                <span className="w-[1px] h-3.5 bg-line-strong mx-0.5 shrink-0" />
+                              )}
+
+                              {quarters.length > 0 && (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-ink-muted font-medium pr-0.5">ไตรมาส</span>
+                                  {quarters.map(k => {
+                                    const key = `${year}-${k}`;
+                                    const isSelected = filterPeriod === key;
+                                    return (
+                                      <button
+                                        key={k}
+                                        type="button"
+                                        onClick={() => select(key)}
+                                        className={`${subAggregateBase} ${isSelected ? subAggregateActive : subAggregateIdle}`}
+                                      >
+                                        {k}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Year / half / quarter in cycle mode */}
+                        {!multi && isCycle && (() => {
+                          const halves = cycleRestPresets.filter(p => p.id.startsWith('H') && p.has);
+                          const quarters = cycleRestPresets.filter(p => p.id.startsWith('Q') && p.has);
+                          if (halves.length === 0 && quarters.length === 0) return null;
+
+                          return (
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-surface/40 border border-line/50 text-[11px]">
+                              {halves.length > 0 && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="text-ink-muted font-medium pr-0.5">ครึ่งปี</span>
+                                  {halves.map(p => {
+                                    const isSelected = filterPeriod === p.value;
+                                    return (
+                                      <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => select(p.value)}
+                                        title={p.title}
+                                        className={`${subAggregateBase} ${isSelected ? subAggregateActive : subAggregateIdle}`}
+                                      >
+                                        {p.id}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {halves.length > 0 && quarters.length > 0 && (
+                                <span className="w-[1px] h-3.5 bg-line-strong mx-0.5 shrink-0" />
+                              )}
+
+                              {quarters.length > 0 && (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-ink-muted font-medium pr-0.5">ไตรมาส</span>
+                                  {quarters.map(p => {
+                                    const isSelected = filterPeriod === p.value;
+                                    return (
+                                      <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => select(p.value)}
+                                        title={p.title}
+                                        className={`${subAggregateBase} ${isSelected ? subAggregateActive : subAggregateIdle}`}
+                                      >
+                                        {p.id}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Months — Primary selection target */}
+                        <div className={`grid ${isCycle ? 'grid-cols-1' : 'grid-cols-3'} gap-1 px-0.5`}>
+                          {months.map((m: string) => {
+                            const [, mo] = m.split('-');
+                            const selected = multi ? picked.includes(m) : filterPeriod === m;
+                            return (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={(e) => handleMonthClick(m, e)}
+                                aria-pressed={multi ? selected : undefined}
+                                className={`${monthBase} ${selected ? monthActive : monthIdle} ${isCycle ? 'flex items-center gap-2 px-2 text-left' : ''}`}
+                              >
+                                {isCycle ? (
+                                  <>
+                                    <span className="w-14 text-left font-bold">รอบ {THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}</span>
+                                    <span className="flex-1 text-left tabular-nums text-[11px]">{cycleSpanLabel(m)}</span>
+                                    {m === currentMonth && <span className="text-[11px] font-bold px-1.5 py-0.5 border border-current rounded-full">ปัจจุบัน</span>}
+                                    {m > currentMonth && <span className="text-[11px] px-1 text-ink-muted">ยังไม่เริ่ม</span>}
+                                  </>
+                                ) : THAI_MONTHS_SHORT[Number.parseInt(mo, 10) - 1]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ── Footer ── */}
+          <div className="p-2 border-t border-line bg-surface flex items-center gap-1.5">
+            {!multi ? (
+              <button
+                onClick={() => setMulti(true)}
+                className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold text-ink-body hover:text-ink-display"
+              >
+                <ListChecks className="w-3.5 h-3.5" />
+                เลือกหลาย{unitWord} / เป็นช่วง
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={exitMulti}
+                  aria-label="ยกเลิกการเลือกหลายรายการ"
+                  title="ยกเลิก"
+                  className="p-1.5 border border-line text-ink-body hover:text-ink-display hover:border-line-strong"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+                <span className="flex-1 min-w-0 text-[11px] text-ink-body truncate">
+                  {picked.length === 0
+                    ? `ยังไม่ได้เลือก${unitWord}`
+                    : getFilterLabel((isCycle ? CYCLE_PREFIX : '') + monthsToPeriod(picked))}
+                </span>
+                <button
+                  onClick={confirmMulti}
+                  disabled={picked.length === 0}
+                  className="px-3 py-1 text-[11px] font-bold bg-accent text-on-accent hover:bg-accent-active disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {picked.length > 0 ? `ใช้ ${picked.length} ${unitWord}` : 'ใช้'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

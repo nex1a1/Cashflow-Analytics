@@ -1,219 +1,174 @@
 /* src/styles/darkMode.css                                    */
 /* ──────────────────────────────────────────────────────────  */
-/* Ferrari-Inspired Cinematic Editorial Dark Mode Overrides    */
+/* Dark Mode Overrides — colors come from :root tokens         */
+/* (index.css). `.dark-mode .x` outranks a bare utility `.x`   */
+/* on specificity, so no !important is needed except for the   */
+/* border lock below.                                          */
 /* ──────────────────────────────────────────────────────────  */
 
 /* Global Page Base & Typography Rules */
-.dark-mode { 
-  background-color: #181818 !important; 
-  color: #ffffff !important; 
+.dark-mode {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink-display));
 }
 
-/* Force dark-mode borders to be hairline dividers by default */
+/* Border lock: every border renders as a hairline. Colored border
+   classes across the app are intentionally muted by this; opt out
+   with `tint-border` (bottom of file). Kept !important on purpose. */
 .dark-mode *,
 .dark-mode ::before,
 .dark-mode ::after {
-  border-color: #303030 !important;
+  border-color: rgb(var(--line)) !important;
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* SHAPE LANGUAGE - STICT ROUNDED-NONE MANDATE                */
+/* SHAPE LANGUAGE - STRICT ROUNDED-NONE MANDATE               */
+/* Radius scale is locked in tailwind.config.js; these cover  */
+/* the few shapes that deviate from 0px.                      */
 /* ────────────────────────────────────────────────────────── */
-.dark-mode * {
-  border-radius: 0px !important;
-}
 
-/* Exceptions: Inputs use rounded-sm (4px) */
+/* Inputs use rounded-sm (4px) */
 .dark-mode input,
 .dark-mode select,
-.dark-mode textarea,
-.dark-mode input *,
-.dark-mode select *,
-.dark-mode textarea * {
-  border-radius: 4px !important;
+.dark-mode textarea {
+  border-radius: 4px;
 }
 
-/* Exceptions: Badges, pills, and avatar plates use rounded-full (9999px) */
+/* Badges, pills, and avatar plates use rounded-full (9999px) */
 .dark-mode .rounded-full,
 .dark-mode .badge-pill,
 .dark-mode [class*="badge-pill"],
-.dark-mode [class*="day-type-badge"],
-.dark-mode .day-type-badge {
-  border-radius: 9999px !important;
+.dark-mode [class*="day-type-badge"] {
+  border-radius: 9999px;
 }
 
 /* Category Pill Trigger, Day Badge Pill, & Amount Box: subtle 4px corner matching adjacent inputs */
-.dark-mode .category-pill-trigger,
 .dark-mode [class*="category-pill-trigger"],
-.dark-mode .day-badge-pill,
 .dark-mode [class*="day-badge-pill"],
-.dark-mode .amount-editable-box,
 .dark-mode [class*="amount-editable-box"] {
-  border-radius: 4px !important;
+  border-radius: 4px;
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* COLORS & SURFACES - CANVAS (#181818) & ELEVATED (#303030) */
+/* COLORS & SURFACES - legacy slate/white classes → tokens    */
 /* ────────────────────────────────────────────────────────── */
 .dark-mode .bg-slate-950,
 .dark-mode .bg-slate-100,
-.dark-mode .bg-slate-50 { 
-  background-color: #181818 !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-50 {
+  background-color: rgb(var(--canvas));
 }
 
 .dark-mode .bg-white,
-.dark-mode .bg-slate-900 { 
-  background-color: #303030 !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-900,
+.dark-mode .bg-slate-800 {
+  background-color: rgb(var(--surface-elevated));
 }
 
-/* Secondary Panels & Inner Elements */
-.dark-mode .bg-slate-800 { 
-  background-color: #303030 !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-700 {
+  background-color: rgb(var(--gray-700));
 }
 
-.dark-mode .bg-slate-700 { 
-  background-color: #404040 !important; 
+.dark-mode .bg-slate-850 {
+  background-color: rgb(var(--gray-850));
 }
 
-.dark-mode .bg-slate-850 { 
-  background-color: #242424 !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-850\/60 {
+  background-color: rgb(var(--gray-850) / 0.6);
 }
 
-.dark-mode .bg-slate-850\/60 { 
-  background-color: rgba(36, 36, 36, 0.6) !important; 
+.dark-mode .bg-slate-850\/40 {
+  background-color: rgb(var(--gray-850) / 0.4);
 }
 
-.dark-mode .bg-slate-850\/40 { 
-  background-color: rgba(36, 36, 36, 0.4) !important; 
+.dark-mode .bg-slate-900\/90 {
+  background-color: rgb(var(--surface-elevated) / 0.9);
 }
 
-.dark-mode .bg-slate-900\/90 { 
-  background-color: rgba(48, 48, 48, 0.9) !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-800\/50 {
+  background-color: rgb(var(--surface-elevated) / 0.5);
 }
 
-.dark-mode .bg-slate-800\/50 { 
-  background-color: rgba(48, 48, 48, 0.5) !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-50\/80 {
+  background-color: rgb(var(--canvas) / 0.8);
 }
 
-.dark-mode .bg-slate-50\/80 { 
-  background-color: rgba(24, 24, 24, 0.8) !important; 
-  border-color: #303030 !important; 
+.dark-mode .bg-slate-50\/50 {
+  background-color: rgb(var(--canvas) / 0.5);
 }
 
-.dark-mode .bg-slate-50\/50 { 
-  background-color: rgba(24, 24, 24, 0.5) !important; 
-  border-color: #303030 !important; 
-}
-
-/* Rosso Corsa Accent Overlays */
+/* Accent Overlays */
 .dark-mode .bg-blue-50\/50,
-.dark-mode .bg-blue-50 { 
-  background-color: rgba(218, 41, 28, 0.08) !important; 
-  border-color: rgba(218, 41, 28, 0.25) !important; 
+.dark-mode .bg-blue-50 {
+  background-color: rgb(var(--accent) / 0.08);
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* TEXT OVERRIDES - EDITORIAL PURE WHITE & MUTED GRAY          */
+/* TEXT OVERRIDES                                             */
 /* ────────────────────────────────────────────────────────── */
-.dark-mode .text-slate-900          { color: #ffffff !important; }
-.dark-mode .text-slate-800          { color: #ffffff !important; }
-.dark-mode .text-slate-700          { color: #ebebeb !important; }
-.dark-mode .text-slate-600          { color: #969696 !important; }
-.dark-mode .text-slate-500          { color: #666666 !important; }
-.dark-mode .text-slate-400          { color: #666666 !important; }
+.dark-mode .text-slate-900          { color: rgb(var(--ink-display)); }
+.dark-mode .text-slate-800          { color: rgb(var(--ink-display)); }
+.dark-mode .text-slate-700          { color: rgb(var(--gray-100)); }
+.dark-mode .text-slate-600          { color: rgb(var(--ink-body)); }
+.dark-mode .text-slate-500          { color: rgb(var(--ink-muted)); }
+.dark-mode .text-slate-400          { color: rgb(var(--ink-muted)); }
 
-/* Rosso Corsa Accent Overrides (#da291c) */
-.dark-mode .text-\[\#00509E\]       { color: #da291c !important; }
-.dark-mode .hover\:text-\[\#00509E\]:hover { color: #b01e0a !important; }
-.dark-mode .text-blue-400           { color: #da291c !important; }
-
-/* ────────────────────────────────────────────────────────── */
-/* BORDERS & DIVIDERS - HAIRLINES                             */
-/* ────────────────────────────────────────────────────────── */
-.dark-mode .border-slate-100        { border-color: #303030 !important; }
-.dark-mode .border-slate-200        { border-color: #303030 !important; }
-.dark-mode .border-slate-300        { border-color: #303030 !important; }
-.dark-mode .border-slate-700        { border-color: #303030 !important; }
-.dark-mode .border-slate-800        { border-color: #303030 !important; }
-.dark-mode .border-slate-850        { border-color: #303030 !important; }
-.dark-mode .border-slate-850\/80     { border-color: rgba(48, 48, 48, 0.8) !important; }
-.dark-mode .border-slate-850\/60     { border-color: rgba(48, 48, 48, 0.6) !important; }
-.dark-mode .border-slate-750        { border-color: #303030 !important; }
-
-/* Primary Header Accent Border [#00509E] -> Rosso Corsa (#da291c) */
-.dark-mode .border-\[\#00509E\]     { border-color: #da291c !important; }
-.dark-mode .border-blue-200         { border-color: #303030 !important; }
+/* Legacy blue accent classes → accent */
+.dark-mode .text-\[\#00509E\]       { color: rgb(var(--accent)); }
+.dark-mode .hover\:text-\[\#00509E\]:hover { color: rgb(var(--accent-active)); }
+.dark-mode .text-blue-400           { color: rgb(var(--accent)); }
 
 /* ────────────────────────────────────────────────────────── */
-/* HOVER STATES - INTERACTIVE EDITORIAL                      */
+/* HOVER STATES                                               */
 /* ────────────────────────────────────────────────────────── */
-.dark-mode .hover\:bg-slate-50:hover  { background-color: #303030 !important; }
-.dark-mode .hover\:bg-slate-100:hover { background-color: #303030 !important; }
-.dark-mode .hover\:bg-slate-200:hover { background-color: #303030 !important; }
-.dark-mode .hover\:bg-slate-700:hover { background-color: #404040 !important; }
-.dark-mode .hover\:bg-slate-850:hover { background-color: #303030 !important; }
-.dark-mode .hover\:bg-slate-850\/40:hover { background-color: rgba(48, 48, 48, 0.4) !important; }
-.dark-mode .hover\:bg-slate-850\/60:hover { background-color: rgba(48, 48, 48, 0.6) !important; }
-.dark-mode .group:hover .group-hover\:bg-slate-850 { background-color: #303030 !important; }
-.dark-mode .hover\:border-slate-750:hover { border-color: #303030 !important; }
-.dark-mode .group:hover .group-hover\:border-slate-750 { border-color: #303030 !important; }
+.dark-mode .hover\:bg-slate-50:hover,
+.dark-mode .hover\:bg-slate-100:hover,
+.dark-mode .hover\:bg-slate-200:hover,
+.dark-mode .hover\:bg-slate-850:hover,
+.dark-mode .group:hover .group-hover\:bg-slate-850 { background-color: rgb(var(--surface-elevated)); }
+.dark-mode .hover\:bg-slate-700:hover { background-color: rgb(var(--gray-700)); }
+.dark-mode .hover\:bg-slate-850\/40:hover { background-color: rgb(var(--surface-elevated) / 0.4); }
+.dark-mode .hover\:bg-slate-850\/60:hover { background-color: rgb(var(--surface-elevated) / 0.6); }
 
 /* Form elements & Inputs */
 .dark-mode input:not(.amount-input),
 .dark-mode select:not(.day-type-badge):not(.category-select):not(.allocation-select),
-.dark-mode textarea { 
-  background-color: #181818 !important; 
-  border-color: #303030 !important; 
-  color: #ffffff !important; 
+.dark-mode textarea {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink-display));
 }
 
 /* Financial Amount Inputs (Ledger ListView) */
 .dark-mode input.amount-expense {
-  color: #f87171 !important; /* Rose-400 vivid red for expenses */
+  color: rgb(var(--expense));
 }
 .dark-mode input.amount-expense:hover,
 .dark-mode input.amount-expense:focus {
-  color: #fca5a5 !important;
+  color: rgb(var(--expense));
+  filter: brightness(1.15);
 }
 .dark-mode input.amount-income {
-  color: #34d399 !important; /* Emerald-400 green for income */
+  color: rgb(var(--income));
 }
 .dark-mode input.amount-income:hover,
 .dark-mode input.amount-income:focus {
-  color: #6ee7b7 !important;
+  color: rgb(var(--green-300));
 }
 
-.dark-mode select optgroup { 
-  background-color: #181818 !important; 
-  color: #ff4d4f !important; 
-  font-weight: bold; 
+.dark-mode select optgroup {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--accent));
+  font-weight: bold;
 }
 
-.dark-mode select:not(.allocation-select) option { 
-  background-color: #303030 !important; 
-  color: #ffffff !important; 
+.dark-mode select:not(.allocation-select) option {
+  background-color: rgb(var(--surface-elevated));
+  color: rgb(var(--ink-display));
 }
 
 /* Tables */
-.dark-mode table thead th { 
-  background-color: #181818 !important; 
-  color: #ffffff !important; 
-  border-color: #303030 !important; 
-}
-
-/* Custom Scrollbars to blend with near black canvas and Rosso Corsa */
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #303030 !important;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #da291c !important;
+.dark-mode table thead th {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink-display));
 }
 
 /* Category Pill Custom Text Color Override */
@@ -221,19 +176,14 @@
 .category-pill-text *,
 .dark-mode .category-pill-text,
 .dark-mode .category-pill-text * {
-  color: var(--pill-text-color) !important;
+  color: var(--pill-text-color);
 }
 
 /* ────────────────────────────────────────────────────────── */
 /* BORDER COLOR ESCAPE HATCH                                  */
-/* The universal `.dark-mode *` rule above (line 13) hardens  */
-/* every border to a flat hairline gray by !important, which  */
-/* also silently kills intentional colored borders (inline    */
-/* styles and arbitrary Tailwind border classes). Components  */
-/* that need a real colored border opt out by adding the      */
+/* Opts a component out of the border lock above. Add the     */
 /* `tint-border` class plus an inline `--tint-border-color`.  */
-/* Higher selector specificity than `.dark-mode *` lets it win */
-/* regardless of source order.                                */
+/* Must stay !important to beat the lock.                     */
 /* ────────────────────────────────────────────────────────── */
 .tint-border,
 .tint-border::before,
@@ -242,4 +192,10 @@
 .dark-mode .tint-border::before,
 .dark-mode .tint-border::after {
   border-color: var(--tint-border-color) !important;
+}
+
+/* Danger border (invalid field, over-budget, discard warning) — same escape as tint-border. */
+.tint-danger,
+.dark-mode .tint-danger {
+  border-color: rgb(var(--danger) / 0.6) !important;
 }

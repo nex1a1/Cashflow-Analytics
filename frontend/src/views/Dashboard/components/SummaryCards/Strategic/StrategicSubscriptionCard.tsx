@@ -33,17 +33,17 @@ export const StrategicSubscriptionCard = memo(({
   const isModerate = isIncomeBased ? displayPct > 5  : displayPct > 8;
 
   let statusBadge = {
-    label: 'SAFE',       cls: 'text-purple-400 border-purple-500/30 bg-purple-950/40',
+    label: 'ปลอดภัย',    cls: 'text-purple-400 border-purple-500/30 bg-purple-950/40',
     borderLeft: 'border-l-purple-500', barBg: 'bg-purple-500', colorText: 'text-purple-400'
   };
   if (isLeak) {
     statusBadge = {
-      label: 'LEAK ALERT', cls: 'text-[#da291c] border-[#da291c]/30 bg-red-950/40',
-      borderLeft: 'border-l-[#da291c]', barBg: 'bg-[#da291c]', colorText: 'text-[#da291c]'
+      label: 'รั่วไหล', cls: 'text-danger border-danger/30 bg-danger/10',
+      borderLeft: 'border-l-accent', barBg: 'bg-accent', colorText: 'text-accent'
     };
   } else if (isModerate) {
     statusBadge = {
-      label: 'MODERATE',   cls: 'text-amber-400 border-amber-400/30 bg-amber-950/40',
+      label: 'ปานกลาง',   cls: 'text-amber-400 border-amber-400/30 bg-amber-950/40',
       borderLeft: 'border-l-amber-500', barBg: 'bg-amber-500', colorText: 'text-amber-400'
     };
   }
@@ -65,13 +65,8 @@ export const StrategicSubscriptionCard = memo(({
     <StrategicCardShell
       icon={Repeat}
       borderColorClass={statusBadge.borderLeft}
-      hoverBgClass="hover:bg-[#1c1c1c]"
+      hoverBgClass="hover:bg-surface-hover"
       label="บริการรายเดือน"
-      badge={
-        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${statusBadge.cls}`}>
-          {statusBadge.label}
-        </span>
-      }
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>

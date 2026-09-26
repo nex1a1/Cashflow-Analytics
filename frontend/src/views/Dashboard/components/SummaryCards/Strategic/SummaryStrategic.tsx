@@ -12,7 +12,7 @@ import type { SummaryAnalytics } from '../types';
 export const ANALYSIS_TABS = [
   { id: 'strategic', label: 'ภาพรวมกลยุทธ์' },
   { id: 'forecast', label: 'พยากรณ์สิ้นเดือน' },
-  { id: 'ghost', label: 'แข่งกับเดือนที่แล้ว' },
+  { id: 'ghost', label: 'เทียบเดือนที่แล้ว' },
 ] as const;
 
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
@@ -28,15 +28,17 @@ export interface AnalysisTabItem {
 const AnalysisTabHeader = ({
   activeTab,
   tabs,
-  onChange
+  onChange,
+  aside
 }: {
   activeTab: AnalysisTabId;
   tabs: readonly AnalysisTabItem[];
   onChange: (id: AnalysisTabId) => void;
+  aside?: React.ReactNode;
 }) => (
-  <div className="flex items-center justify-between px-2 border-b border-[#2d2d2d] bg-[#121212]/80">
+  <div className="flex items-center justify-between px-2 border-b border-line bg-surface/80">
     <div className="flex items-center gap-0.5">
-      <div className="w-[3px] h-3 bg-[#da291c] shrink-0 mr-1.5" />
+      <div className="w-[3px] h-3 bg-accent shrink-0 mr-1.5" />
       {tabs.map(tab => {
         const isDisabled = Boolean(tab.disabled);
         const isActive = activeTab === tab.id && !isDisabled;
@@ -52,7 +54,7 @@ const AnalysisTabHeader = ({
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'text-neutral-100 border-b-[#da291c]'
+                  ? 'text-neutral-100 border-b-accent'
                   : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
               }`}
             >
@@ -60,8 +62,8 @@ const AnalysisTabHeader = ({
             </button>
             {isDisabled && tab.title && (
               <div className="absolute top-full left-0 mt-1.5 opacity-0 group-hover/tabbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/tabbtn:visible whitespace-nowrap">
-                <div className="rounded-none py-1 px-2.5 text-[10px] font-medium shadow-2xl bg-[#121212] text-neutral-300 border border-[#3e3e3e] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" />
+                <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <span>{tab.title}</span>
                 </div>
               </div>
@@ -70,21 +72,7 @@ const AnalysisTabHeader = ({
         );
       })}
     </div>
-    {activeTab === 'strategic' && (
-      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
-        ภาระคงที่ • พฤติกรรมใช้จ่าย • จังหวะรายวัน
-      </span>
-    )}
-    {activeTab === 'forecast' && (
-      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
-        PROJECTION &amp; SAFE ZONE
-      </span>
-    )}
-    {activeTab === 'ghost' && (
-      <span className="hidden sm:inline-block text-[11px] font-mono font-bold text-neutral-500 tracking-wider pr-2">
-        MULTI-MONTH PACE RADAR
-      </span>
-    )}
+    {aside}
   </div>
 );
 
@@ -117,6 +105,34 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const rentPercentageNum = Number.parseFloat(String(rentPercentage)) || 0;
   const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
 
+  // One grade instead of six per-card pills: count the cards that break their own threshold
+  // (same limits the cards colour themselves by). Deficit weighs double — it's the bottom line.
+  const subPct = Number.parseFloat(String(totalIncome > 0 ? subscriptionPctOfIncome : subscriptionPercentage)) || 0;
+  const breaches = [
+    rentPercentageNum > 30 && 'ที่พัก',
+    subPct > (totalIncome > 0 ? 10 : 15) && 'สมาชิกรายเดือน',
+    lifestyleRatio > 35 && 'ฟุ่มเฟือย',
+    (Number.parseFloat(String(foodPercentage)) || 0) > 25 && 'ค่าอาหาร',
+    netCashflow < 0 && 'ขาดดุล',
+  ].filter(Boolean) as string[];
+  const score = breaches.length + (netCashflow < 0 ? 1 : 0);
+  const grade =
+    score === 0 ? { g: 'A', label: 'ดีเยี่ยม', cls: 'text-income border-income/30 bg-income/10' } :
+    score === 1 ? { g: 'B', label: 'ดี',      cls: 'text-income border-income/30 bg-income/10' } :
+    score === 2 ? { g: 'C', label: 'พอใช้',   cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' } :
+                  { g: 'D', label: 'ต้องปรับ', cls: 'text-danger border-danger/40 bg-danger/10' };
+  const gradePill = !showSkeleton && (
+    <span className="flex items-center gap-2 pr-2 text-[11px] text-ink-muted">
+      {breaches.length > 0 && <span className="hidden md:inline">เกินเกณฑ์: {breaches.join(' · ')}</span>}
+      <span
+        className={`px-2 py-0.5 border font-black ${grade.cls}`}
+        title={breaches.length ? `เกินเกณฑ์ ${breaches.length} ด้าน` : 'ทุกด้านอยู่ในเกณฑ์'}
+      >
+        เกรด {grade.g} · {grade.label}
+      </span>
+    </span>
+  );
+
   const isSingleMonthView = Boolean(analytics.isSingleMonthView);
   const tabItems: AnalysisTabItem[] = [
     {
@@ -132,7 +148,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
     },
     {
       id: 'ghost',
-      label: 'แข่งกับเดือนที่แล้ว',
+      label: 'เทียบเดือนที่แล้ว',
       disabled: !isSingleMonthView,
       title: !isSingleMonthView ? 'ต้องเลือกมุมมองรายเดือนเท่านั้น (เพื่อแข่งกับเดือนก่อนหน้าแบบวันต่อวัน)' : undefined,
     },
@@ -142,18 +158,24 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
 
   return (
     <div className="flex flex-col h-full">
-      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} />
+      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} aside={effectiveTab === 'strategic' && gradePill} />
 
-      {effectiveTab === 'strategic' && (
-        <div className="flex flex-col flex-1">
+      {/* All tabs' bodies mount concurrently, stacked in the same CSS grid cell
+          ([grid-area:1/1]) like ExpenseProportionGrid, so the container maintains
+          an identical 502px height across all 3 modes with zero layout shift on switch. */}
+      <div className="flex-1 grid">
+        <div
+          className={`[grid-area:1/1] flex flex-col ${effectiveTab === 'strategic' ? '' : 'invisible pointer-events-none'}`}
+          aria-hidden={effectiveTab !== 'strategic'}
+        >
           {/* Row 1: Fixed Burdens & Wants (3 cards) */}
-          <div className="px-3 py-1 bg-[#141414] border-b border-[#2d2d2d] flex items-center gap-1.5">
+          <div className="px-3 py-1 bg-surface border-b border-line flex items-center gap-1.5 shrink-0">
             <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
             <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
               ภาระคงที่ • พฤติกรรมใช้จ่าย
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d]">
+          <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-[1px] bg-surface-elevated flex-1">
             <StrategicRentCard
               rentPercentageNum={rentPercentageNum}
               rentTotal={rentTotal}
@@ -178,13 +200,13 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
           </div>
 
           {/* Row 2: Daily Velocity (2 cards) */}
-          <div className="px-3 py-1 bg-[#141414] border-y border-[#2d2d2d] flex items-center gap-1.5">
+          <div className="px-3 py-1 bg-surface border-y border-line flex items-center gap-1.5 shrink-0">
             <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
             <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
               จังหวะรายวัน
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-[#2d2d2d]">
+          <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-[1px] bg-surface-elevated flex-1">
             <StrategicFoodCard
               foodDailyAvg={foodDailyAvg}
               foodTotal={foodTotal}
@@ -207,41 +229,36 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
           </div>
 
           {/* Verdict: the bottom-line answer, given distinct full-width weight instead of co-equal card treatment */}
-          <StrategicVictoryCard
-            dailyVictory={dailyVictory}
-            periodDays={periodDays}
-            dailyIncome={dailyIncome}
-            dailyFixed={dailyFixed}
-            dailyVariable={dailyVariable}
-            dailySavings={dailySavings}
-            showSkeleton={showSkeleton}
-          />
+          <div className="shrink-0">
+            <StrategicVictoryCard
+              dailyVictory={dailyVictory}
+              periodDays={periodDays}
+              dailyIncome={dailyIncome}
+              dailyFixed={dailyFixed}
+              dailyVariable={dailyVariable}
+              dailySavings={dailySavings}
+              showSkeleton={showSkeleton}
+            />
+          </div>
         </div>
-      )}
 
-      {(effectiveTab === 'forecast' || effectiveTab === 'ghost') && (
-        // Both tabs' bodies are mounted at once, stacked in the same CSS grid cell
-        // ([grid-area:1/1]) like ExpenseProportionGrid, so the container is always
-        // exactly as tall as the taller of the two — no height jump when switching.
-        <div className="flex-1 grid">
-          {showForecasting && (
-            <div
-              className={`[grid-area:1/1] ${effectiveTab === 'forecast' ? '' : 'invisible pointer-events-none'}`}
-              aria-hidden={effectiveTab !== 'forecast'}
-            >
-              <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
-            </div>
-          )}
-          {isSingleMonthView && (
-            <div
-              className={`[grid-area:1/1] ${effectiveTab === 'ghost' ? '' : 'invisible pointer-events-none'}`}
-              aria-hidden={effectiveTab !== 'ghost'}
-            >
-              <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
-            </div>
-          )}
-        </div>
-      )}
+        {showForecasting && (
+          <div
+            className={`[grid-area:1/1] ${effectiveTab === 'forecast' ? '' : 'invisible pointer-events-none'}`}
+            aria-hidden={effectiveTab !== 'forecast'}
+          >
+            <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
+          </div>
+        )}
+        {isSingleMonthView && (
+          <div
+            className={`[grid-area:1/1] ${effectiveTab === 'ghost' ? '' : 'invisible pointer-events-none'}`}
+            aria-hidden={effectiveTab !== 'ghost'}
+          >
+            <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
+          </div>
+        )}
+      </div>
     </div>
   );
 });

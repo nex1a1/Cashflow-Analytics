@@ -32,15 +32,15 @@ export default function ExportBackupView({
 
   const cards = [
     {
-      title: 'ประวัติธุรกรรม (Transactions)',
-      subtitle: 'TRANSACTIONS MASTER TABLE',
+      title: 'ประวัติธุรกรรม',
+      subtitle: 'ตารางรายการทั้งหมด',
       count: localTransactions.length,
       unit: 'รายการ',
       icon: Receipt,
-      accent: 'border-[#da291c]/30 text-[#da291c]',
+      accent: 'border-accent/30 text-accent',
     },
     {
-      title: 'หมวดหมู่การเงิน (Categories)',
+      title: 'หมวดหมู่การเงิน',
       subtitle: 'CATEGORIES TAXONOMY',
       count: categories.length,
       unit: 'หมวดหมู่',
@@ -48,7 +48,7 @@ export default function ExportBackupView({
       accent: 'border-emerald-500/30 text-emerald-400',
     },
     {
-      title: 'กลุ่มกระแสเงินสด (Cashflow Groups)',
+      title: 'กลุ่มกระแสเงินสด',
       subtitle: 'GROUP CLASSIFICATIONS',
       count: cashflowGroups.length,
       unit: 'กลุ่ม',
@@ -56,7 +56,7 @@ export default function ExportBackupView({
       accent: 'border-cyan-500/30 text-cyan-400',
     },
     {
-      title: 'ปฏิทินวันทำงาน (Calendar Days)',
+      title: 'ปฏิทินวันทำงาน',
       subtitle: 'CALENDAR MAPPING DICTIONARY',
       count: Object.keys(dayTypes).length,
       unit: 'วันที่บันทึก',
@@ -69,7 +69,7 @@ export default function ExportBackupView({
     <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
       <div>
         <h4 className="text-xs font-black uppercase tracking-widest text-neutral-200 flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-[#da291c]" />
+          <FileJson className="w-4 h-4 text-accent" />
           โครงสร้างชุดข้อมูลสำรองระบบ (System Backup Schema)
         </h4>
         <p className="text-[11px] text-neutral-400 mt-1 leading-normal">
@@ -84,7 +84,7 @@ export default function ExportBackupView({
           return (
             <div
               key={c.subtitle}
-              className="p-3.5 bg-[#121212] border border-[#2e2e2e] flex items-center justify-between"
+              className="p-3.5 bg-surface border border-line flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 border bg-black/40 ${c.accent}`}>
@@ -92,14 +92,14 @@ export default function ExportBackupView({
                 </div>
                 <div>
                   <h5 className="text-xs font-bold text-neutral-200">{c.title}</h5>
-                  <p className="text-[9px] font-mono text-neutral-500">{c.subtitle}</p>
+                  <p className="text-[11px] font-mono text-neutral-500">{c.subtitle}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className="text-sm font-black font-mono text-white tabular-nums">
                   {c.count.toLocaleString()}
                 </span>
-                <span className="text-[10px] text-neutral-500 block font-mono">{c.unit}</span>
+                <span className="text-[11px] text-neutral-500 block font-mono">{c.unit}</span>
               </div>
             </div>
           );
@@ -109,14 +109,14 @@ export default function ExportBackupView({
       {/* JSON Payload Sample Inspector */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">
             ตัวอย่างโครงสร้าง JSON (JSON Payload Preview)
           </span>
-          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+          <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Schema V2.0 Validated
           </span>
         </div>
-        <pre className="p-4 bg-[#0d0d0d] border border-[#2a2a2a] text-[10px] font-mono text-neutral-300 leading-relaxed overflow-x-auto max-h-[220px] custom-scrollbar select-all">
+        <pre className="p-4 bg-canvas border border-line text-[11px] font-mono text-neutral-300 leading-relaxed overflow-x-auto max-h-[220px] custom-scrollbar select-all">
           {jsonPreview}
         </pre>
       </div>

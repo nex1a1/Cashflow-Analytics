@@ -4,6 +4,7 @@ import { formatMoney } from '../../../../utils/formatters';
 import { AllocationGroupItemData, AllocationItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
+import { tc, readable } from '@/constants/theme';
 /**
  * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
  */
@@ -46,7 +47,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   let varianceBadgeCls = 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
   if (!isGood) {
     if (isOver) {
-      varianceBadgeCls = 'bg-red-500/20 text-red-300 border border-red-500/50';
+      varianceBadgeCls = 'bg-danger/20 text-red-300 border border-danger/50';
     } else {
       varianceBadgeCls = 'bg-amber-500/20 text-amber-300 border border-amber-500/50';
     }
@@ -102,8 +103,8 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${varianceText}`}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
         isHovered
-          ? 'bg-[#303030]/90 border-[#da291c] z-10'
-          : 'bg-[#181818]/45 hover:bg-[#303030]/90 border-[#303030]'
+          ? 'bg-surface-elevated/90 border-accent z-10'
+          : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
       }`}
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
     >
@@ -111,7 +112,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       <div className="flex justify-between items-start gap-2 mb-2">
         <div className="flex flex-col min-w-0 gap-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: item.color }}>
+            <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: readable(item.color) }}>
               <CategoryGlyph icon={item.icon} color={item.color} size={17} className="shrink-0 opacity-80" />
               <span className="truncate">{item.name}</span>
             </span>
@@ -125,10 +126,10 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
         
         <div className="flex flex-col items-end shrink-0 gap-0.5">
           <div className="flex items-baseline gap-0.5">
-            <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: item.color }}>
+            <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: readable(item.color) }}>
               {item.percentage}
             </span>
-            <span className="text-xs font-black opacity-60" style={{ color: item.color }}>%</span>
+            <span className="text-xs font-black" style={{ color: readable(item.color) }}>%</span>
           </div>
           <span className="text-[11px] font-bold tabular-nums text-slate-300">
             ฿ {formatMoney(item.amount)}
@@ -155,16 +156,16 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               >
                 <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
                   isOverBudget
-                    ? 'bg-[#da291c] text-white border border-white'
-                    : 'bg-[#0d0d0d] text-amber-300 border border-amber-400/80'
+                    ? 'bg-danger-active text-white border border-white'
+                    : 'bg-canvas text-amber-300 border border-amber-400/80'
                 }`}>
                   <MapPin size={11} className="shrink-0" />
                   <span>{isOverBudget ? `LIMIT ${item.target}%` : `เป้า ${item.target}%`}</span>
                 </span>
                 <div className={`w-full flex ${arrowAlignClass}`}>
                   <span 
-                    className={`text-[9px] leading-none -mt-0.5 font-bold ${
-                      isOverBudget ? 'text-[#da291c]' : 'text-amber-400'
+                    className={`text-[11px] leading-none -mt-0.5 font-bold ${
+                      isOverBudget ? 'text-danger' : 'text-amber-400'
                     }`}
                   >
                     ▼
@@ -174,7 +175,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
             </div>
 
             {/* ─── CLEAN PROGRESS BAR ─── */}
-            <div className="w-full rounded-none h-[10px] flex gap-[1px] bg-[#181818] p-[1px] border border-[#303030]/60 relative z-30">
+            <div className="w-full rounded-none h-[10px] flex gap-[1px] bg-canvas p-[1px] border border-line/60 relative z-30">
               {/* WITHIN-BUDGET GROUP SEGMENTS */}
               <div className="h-full flex gap-[1px] min-w-0" style={{ width: `${withinBudgetPct}%` }}>
                 {activeGroups.map((g: AllocationGroupItemData, gIdx: number) => {
@@ -202,14 +203,14 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/15" />
                       
                       {/* Segment Hover Tooltip */}
-                      <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#303030] rounded-none z-[50] text-[11px] pointer-events-none`}>
+                      <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-line rounded-none z-[50] text-[11px] pointer-events-none`}>
                         <div className="flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color || item.color }} />
                           <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={g.icon} color={g.color} size={14} /> {g.name}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-[11px]">
                           <span className="text-slate-400">฿{formatMoney(g.amount)}</span>
-                          <span className="font-black text-[#da291c]">
+                          <span className="font-black text-danger">
                             {relPct.toFixed(0)}% ของส่วนนี้
                           </span>
                         </div>
@@ -222,14 +223,14 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               {/* OVER-BUDGET RED ALERT ZONE */}
               {overBudgetPct > 0 && (
                 <div
-                  className="h-full bg-gradient-to-r from-[#da291c] to-red-600 relative group/over cursor-pointer"
+                  className="h-full bg-gradient-to-r from-danger to-danger relative group/over cursor-pointer"
                   style={{ width: `${overBudgetPct}%` }}
                 >
                   <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_6px)]" />
 
                   {/* Over-budget Hover Tooltip */}
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-[#da291c] rounded-none z-[50] text-[11px] pointer-events-none">
-                    <div className="flex items-center gap-1 text-red-400 font-black">
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-accent rounded-none z-[50] text-[11px] pointer-events-none">
+                    <div className="flex items-center gap-1 text-danger font-black">
                       <AlertCircle size={13} className="shrink-0" />
                       <span>เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
                     </div>
@@ -246,7 +247,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                   className="h-full bg-amber-500/10 border-r border-dashed border-amber-500/40 relative group/under cursor-pointer"
                   style={{ width: `${savingsDeficitPct}%` }}
                 >
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-[#121212] border border-amber-500/50 rounded-none z-[50] text-[11px] pointer-events-none">
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-amber-500/50 rounded-none z-[50] text-[11px] pointer-events-none">
                     <div className="flex items-center gap-1 text-amber-400 font-black">
                       <AlertTriangle size={13} className="shrink-0" />
                       <span>ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
@@ -263,7 +264,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                 className="absolute top-0 bottom-0 w-[2px] z-30 pointer-events-none" 
                 style={{
                   left: targetPinPos >= 99.5 ? 'calc(100% - 2px)' : `${targetPinPos}%`,
-                  backgroundColor: isOverBudget ? '#da291c' : '#fbbf24'
+                  backgroundColor: isOverBudget ? tc('danger') : '#fbbf24'
                 }}
               />
             </div>
@@ -274,7 +275,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       </div>
 
       {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-[#303030]/60 gap-0.5 justify-start">
+      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-line/60 gap-0.5 justify-start">
         {groups.map((g: AllocationGroupItemData) => {
           const isExcluded = excludedGroupIds.includes(g.id);
           const relPct = item.amount > 0 && !isExcluded ? ((g.amount / item.amount) * 100).toFixed(0) : 0;
@@ -284,17 +285,17 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               type="button"
               key={g.id} 
               onClick={() => onToggleGroup?.(g.id)}
-              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
+              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
                 isExcluded 
                   ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
-                  : 'hover:bg-[#282828]'
+                  : 'hover:bg-surface-elevated'
               }`}
               title={isExcluded ? 'คลิกเพื่อเปิดหมวดหมู่นี้กลับมา' : 'คลิกเพื่อทดลองปิดหมวดหมู่นี้'}
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 <span 
                   className="w-1.5 h-1.5 rounded-full shrink-0" 
-                  style={{ backgroundColor: isExcluded ? '#525252' : (g.color || item.color) }} 
+                  style={{ backgroundColor: isExcluded ? tc('ink-muted') : (g.color || item.color) }} 
                 />
                 <CategoryGlyph icon={g.icon} color={g.color} size={12} className="shrink-0 opacity-70" />
                 <span className={`text-[11px] font-bold truncate ${
@@ -311,7 +312,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                 </span>
                 <span className="text-[11px] font-black tabular-nums w-8 text-right">
                   {isExcluded ? (
-                    <EyeOff className="w-3 h-3 text-red-400/80 inline" />
+                    <EyeOff className="w-3 h-3 text-ink-muted inline" aria-label="ยกเว้นจากการคำนวณ" />
                   ) : (
                     <span className="text-slate-200 group-hover/item:text-white">{relPct}%</span>
                   )}
@@ -330,7 +331,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
           const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
 
           return (
-            <div className="flex items-center justify-between gap-2 py-1 px-1.5 mt-1 border-t border-dotted border-[#303030]/50 min-w-0 group/item">
+            <div className="flex items-center justify-between gap-2 py-1 px-1.5 mt-1 border-t border-dotted border-line/50 min-w-0 group/item">
               <div className="flex items-center gap-1.5 min-w-0">
                 <Waves size={13} className="shrink-0 opacity-80 text-emerald-400" />
                 <span className="text-[11px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">

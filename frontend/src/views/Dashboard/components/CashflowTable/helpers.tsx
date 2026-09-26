@@ -9,6 +9,7 @@ import {
   MonthRow,
 } from './types';
 
+import { tc } from '@/constants/theme';
 // ─── Shared highlight helpers (single source of truth) ────────────────────────
 
 export function resolveTableHighlightOpacity(dm: boolean, isColHovered: boolean, isRowHovered: boolean): number {
@@ -31,7 +32,7 @@ export function getHighlightBgColor(
   isRowHovered: boolean,
   dm: boolean | undefined,
 ): string {
-  const hexColor = group.color || (group.type === 'income' ? '#10B981' : '#64748B');
+  const hexColor = group.color || (group.type === 'income' ? tc('income') : tc('ink-muted'));
   const rgb = hexToRgb(hexColor);
   const opacity = resolveTableHighlightOpacity(dm ?? false, isColHovered, isRowHovered);
   return `rgba(${rgb}, ${opacity})`;
@@ -44,7 +45,7 @@ export function getSubHighlightBgColor(
   isRowHovered: boolean,
   dm: boolean | undefined,
 ): string {
-  const hexColor = subColor || group.color || '#64748B';
+  const hexColor = subColor || group.color || tc('ink-muted');
   const rgb = hexToRgb(hexColor);
   const opacity = resolveTableSubHighlightOpacity(dm ?? false, isColHovered, isRowHovered);
   return `rgba(${rgb}, ${opacity})`;
@@ -136,11 +137,11 @@ export function renderMoMBadge(currentAdjustedExpense: number, prevAdjustedExpen
   const isUp = percent > 0;
   const isFlat = Math.abs(percent) < 0.1;
 
-  let badgeClass = 'bg-[#303030]/40 text-slate-400 border-[#3e3e3e]/30';
+  let badgeClass = 'bg-surface-elevated/40 text-slate-400 border-line-strong/30';
   let arrow = '-';
   if (!isFlat) {
     if (isUp) {
-      badgeClass = 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/25';
+      badgeClass = 'bg-danger/10 text-danger border-danger/25';
       arrow = '↑';
     } else {
       badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -150,7 +151,7 @@ export function renderMoMBadge(currentAdjustedExpense: number, prevAdjustedExpen
 
   return (
     <span
-      className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[10px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}
+      className={`inline-flex items-center justify-center w-[50px] min-w-[50px] max-w-[50px] text-[11px] font-black py-[2px] rounded-none leading-none border ${badgeClass}`}
     >
       {arrow} {Math.abs(percent).toFixed(1)}%
     </span>
@@ -160,8 +161,8 @@ export function renderMoMBadge(currentAdjustedExpense: number, prevAdjustedExpen
 // ─── Shared summary-cell background helper ─────────────────────────────────────
 
 export function getSummaryCellBg(isExcluded: boolean, isColHover: boolean, isRowHovered: boolean): string {
-  if (isExcluded) return 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through';
-  if (isColHover) return 'bg-[#1c1c1c]';
-  if (isRowHovered) return 'bg-[#1c1c1c]/80';
-  return 'bg-[#181818] group-hover:bg-[#1c1c1c]';
+  if (isExcluded) return 'text-neutral-700 bg-canvas opacity-25 select-none line-through';
+  if (isColHover) return 'bg-surface-hover';
+  if (isRowHovered) return 'bg-surface-hover/80';
+  return 'bg-canvas group-hover:bg-surface-hover';
 }

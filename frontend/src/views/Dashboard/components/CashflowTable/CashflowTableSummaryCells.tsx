@@ -15,20 +15,20 @@ function SummaryTrendCell({
   currentAdjustedExpense, prevAdjustedExpense, onHover,
 }: SummaryTrendCellProps) {
   const expMoMJSX = !isExcluded ? renderMoMBadge(currentAdjustedExpense, prevAdjustedExpense) : null;
-  let bgCls = 'text-[#da291c] bg-[#181818] group-hover:bg-[#1c1c1c]';
+  let bgCls = 'text-expense bg-canvas group-hover:bg-surface-hover';
   if (isExcluded) {
-    bgCls = 'text-neutral-700 bg-[#0d0d0d] opacity-25 select-none line-through';
+    bgCls = 'text-neutral-700 bg-canvas opacity-25 select-none line-through';
   } else if (isTrendHovered) {
-    bgCls = 'text-[#da291c] bg-[#1c1c1c]';
+    bgCls = 'text-expense bg-surface-hover';
   } else if (isRowHovered) {
-    bgCls = 'text-[#da291c] bg-[#1c1c1c]/80';
+    bgCls = 'text-accent bg-surface-hover/80';
   }
 
   return (
     <td
       onMouseEnter={() => onHover('trend')}
       onMouseLeave={() => onHover(null)}
-      className={`px-3 py-2 font-bold border-l-2 !border-l-[#3e3e3e] border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
+      className={`px-3 py-2 font-bold border-l-2 !border-l-line-strong border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
     >
       <div className="flex items-center justify-between gap-1">
         <div className="shrink-0">{expMoMJSX}</div>
@@ -41,12 +41,12 @@ function SummaryTrendCell({
 function SummaryNetCell({ isExcluded, isNetHovered, isRowHovered, thinBorder, netAmount, onHover }: SummaryNetCellProps) {
   const isDeficit = !isExcluded && netAmount < 0;
   let netColor = '';
-  if (!isExcluded) netColor = netAmount >= 0 ? 'text-emerald-400' : 'text-[#da291c]';
+  if (!isExcluded) netColor = netAmount >= 0 ? 'text-emerald-400' : 'text-danger';
   let bgCls = getSummaryCellBg(isExcluded, isNetHovered, isRowHovered);
   if (isDeficit) {
     bgCls = isNetHovered || isRowHovered
-      ? 'bg-rose-950/35 text-[#da291c]'
-      : 'bg-rose-950/20 text-[#da291c]';
+      ? 'bg-expense/10 text-expense'
+      : 'bg-expense/5 text-expense';
   }
 
   return (
@@ -68,7 +68,7 @@ function SummaryPctLeftCell({
 }: SummaryPctLeftCellProps) {
   let pctLeftColor = '';
   if (!isExcluded) {
-    pctLeftColor = currentAdjustedIncome > 0 && netAmount < 0 ? 'text-[#da291c]' : 'text-emerald-400';
+    pctLeftColor = currentAdjustedIncome > 0 && netAmount < 0 ? 'text-danger' : 'text-emerald-400';
   }
   const pctLeftText =
     currentAdjustedIncome > 0 ? ((netAmount / currentAdjustedIncome) * 100).toFixed(1) + '%' : '0.0%';
@@ -92,7 +92,7 @@ function SummaryPctSpentCell({
   let pctSpentColor = '';
   if (!isExcluded) {
     const isOverSpent = currentAdjustedIncome > 0 && currentAdjustedExpense / currentAdjustedIncome * 100 > 100;
-    pctSpentColor = isOverSpent ? 'text-[#da291c]' : 'text-neutral-200';
+    pctSpentColor = isOverSpent ? 'text-danger' : 'text-neutral-200';
   }
   const pctSpentText =
     currentAdjustedIncome > 0

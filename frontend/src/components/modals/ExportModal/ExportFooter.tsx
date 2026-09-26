@@ -35,19 +35,19 @@ export default function ExportFooter({
   const isDownloadDisabled = (!stats.hasData && !isBackupJson) || isExporting;
 
   return (
-    <div className="px-6 py-3.5 border-t border-[#303030] bg-[#121212] flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
+    <div className="px-6 py-3.5 border-t border-line bg-surface flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
       {/* Parameters Summary */}
       <div className="flex items-center gap-4 text-xs font-mono select-none flex-wrap">
         <div className="flex items-center gap-1.5">
-          <span className="text-neutral-500 font-bold uppercase text-[10px]">รูปแบบ:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-[#1c1c1c] border border-[#333333]">
+          <span className="text-neutral-500 font-bold uppercase text-[11px]">รูปแบบ:</span>
+          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-surface-hover border border-line">
             {getFormatLabel()}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-neutral-500 font-bold uppercase text-[10px]">ช่วงเวลา:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-[#1c1c1c] border border-[#333333] max-w-[160px] truncate" title={periodLabel}>
+          <span className="text-neutral-500 font-bold uppercase text-[11px]">ช่วงเวลา:</span>
+          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-surface-hover border border-line max-w-[160px] truncate" title={periodLabel}>
             {periodLabel}
           </span>
         </div>
@@ -55,16 +55,16 @@ export default function ExportFooter({
         {!isBackupJson && (
           <>
             <div className="flex items-center gap-1.5 hidden md:flex">
-              <span className="text-neutral-500 font-bold uppercase text-[10px]">คั่น:</span>
+              <span className="text-neutral-500 font-bold uppercase text-[11px]">คั่น:</span>
               <span className="text-neutral-300 font-bold">
                 {delimiter === ',' ? 'Comma (,)' : 'Semicolon (;)'}
               </span>
             </div>
 
             <div className="flex items-center gap-1.5 hidden md:flex">
-              <span className="text-neutral-500 font-bold uppercase text-[10px]">หัวตาราง:</span>
+              <span className="text-neutral-500 font-bold uppercase text-[11px]">หัวตาราง:</span>
               <span className="text-neutral-300 font-bold">
-                {headerLang === 'th' ? 'ไทย (TH)' : 'English (EN)'}
+                {headerLang === 'th' ? 'ไทย' : 'English (EN)'}
               </span>
             </div>
           </>
@@ -77,7 +77,7 @@ export default function ExportFooter({
           type="button"
           onClick={onClose}
           disabled={isExporting}
-          className="px-4 py-2 text-xs font-bold text-neutral-300 hover:text-white hover:bg-[#222222] border border-transparent transition-colors rounded-none disabled:opacity-30"
+          className="px-4 py-2 text-xs font-bold text-neutral-300 hover:text-white hover:bg-surface-hover border border-transparent transition-colors rounded-none disabled:opacity-30"
         >
           ยกเลิก
         </button>
@@ -86,7 +86,7 @@ export default function ExportFooter({
           type="button"
           onClick={executeExport}
           disabled={isDownloadDisabled}
-          className="px-5 py-2 text-xs font-black uppercase tracking-wider bg-[#da291c] hover:bg-[#b01e0a] text-white transition-colors flex items-center gap-2 rounded-none disabled:opacity-30 disabled:hover:bg-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.25)]"
+          className="px-5 py-2 text-xs font-black uppercase tracking-wider bg-accent hover:bg-accent-active text-on-accent transition-colors flex items-center gap-2 rounded-none disabled:opacity-30 disabled:hover:bg-accent"
         >
           {isExporting ? (
             <>

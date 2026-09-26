@@ -20,13 +20,13 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
   if (!ghostPacerDetails || !ghostPacerDetails.hasData) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-[#181818] h-full border-t border-[#2d2d2d]">
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-canvas h-full border-t border-line">
         <History className="w-10 h-10 text-neutral-600 mb-3" />
         <p className="text-sm font-black uppercase tracking-wider text-neutral-300">
-          โหมด Ghost Pacer พร้อมใช้งานในมุมมองรายเดือน
+          การเทียบกับเดือนก่อนใช้ได้ในมุมมองรายเดือน
         </p>
         <p className="text-xs text-neutral-500 mt-1 max-w-md">
-          กรุณาเลือกดูเป็น &quot;รายเดือน&quot; (เช่น เดือนปัจจุบัน หรือเดือนใดเดือนหนึ่ง) เพื่อดึงข้อมูลเปรียบเทียบกับ Ghost ของเดือนก่อนหน้า
+          กรุณาเลือกดูเป็น &quot;รายเดือน&quot; (เช่น เดือนปัจจุบัน หรือเดือนใดเดือนหนึ่ง) เพื่อเทียบกับยอดใช้จ่ายของเดือนก่อนหน้า
         </p>
       </div>
     );
@@ -60,30 +60,30 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
   const monthProgressPct = Math.min(100, Math.round((currentDay / Math.max(1, lastDayOfMonth)) * 100));
 
   return (
-    <div className="flex flex-col h-full bg-[#181818]">
+    <div className="flex flex-col h-full bg-canvas">
       {/* 1. Status Bar */}
-      <div className="px-3.5 py-1.5 bg-[#141414] border-b border-[#2d2d2d] flex items-center justify-between gap-3 flex-wrap">
+      <div className="px-3.5 py-1.5 bg-surface border-b border-line flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5">
             <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400">Pacer Mode:</span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">จังหวะ:</span>
             <span
-              className={`text-[9px] font-mono font-black uppercase px-1.5 py-0.5 border ${paceStatus.bg} ${paceStatus.border}`}
+              className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${paceStatus.bg} ${paceStatus.border}`}
               style={{ color: paceStatus.color }}
             >
               {paceStatus.label}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] font-mono">
+          <div className="flex items-center gap-1.5 text-[11px] font-mono">
             <span className="text-neutral-400">เทียบเดือนก่อน:</span>
-            <span className={`font-bold ${isLeading ? 'text-emerald-400' : 'text-[#da291c]'}`}>
+            <span className={`font-bold ${isLeading ? 'text-emerald-400' : 'text-danger'}`}>
               {isLeading ? '▼ ช้ากว่า' : '▲ เร็วกว่า'} ฿{formatAmount(Math.abs(Math.round(deltaVsGhost)))} ({Math.abs(deltaVsGhostPct).toFixed(1)}%)
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] font-mono">
+        <div className="flex items-center gap-2 text-[11px] font-mono">
           <span className="text-neutral-400">
             วันในงวด: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
             <span className="text-neutral-500"> ({monthProgressPct}%)</span>
@@ -112,19 +112,19 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
       />
 
       {/* 3. 3-Column Telemetry Cockpit Pods */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[#2d2d2d] flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-surface-elevated flex-1">
 
         {/* POD 1: Head-to-Head with Ghost */}
-        <div className="relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l border-l-rose-500">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-expense">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
-              <History size={13} className="text-rose-400 shrink-0" />
-              ดวลกับ Ghost (Day {currentDay})
+            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+              <History size={13} className="text-expense shrink-0" />
+              เทียบเดือนก่อน (วันที่ {currentDay})
             </span>
-            <span className={`text-[9px] font-mono font-black uppercase px-1.5 py-0.5 border ${
-              isLeading ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500' : 'bg-red-950/40 text-[#da291c] border-[#da291c]'
+            <span className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${
+              isLeading ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500' : 'bg-danger/10 text-danger border-danger'
             }`}>
-              {isLeading ? 'นำหน้า (LEAD)' : 'ตามหลัง (TRAIL)'}
+              {isLeading ? 'ใช้น้อยกว่า' : 'ใช้มากกว่า'}
             </span>
           </div>
 
@@ -134,7 +134,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                  isLeading ? 'text-emerald-400' : 'text-[#da291c]'
+                  isLeading ? 'text-emerald-400' : 'text-danger'
                 }`}>
                   {isLeading ? '-' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsGhost))} />
                 </div>
@@ -147,20 +147,20 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             {/* Comparison bars */}
             <div className="space-y-1.5 pt-1">
               <div className="space-y-0.5">
-                <div className="flex justify-between text-[9px] font-mono text-neutral-400">
-                  <span className="text-rose-400 font-bold">{currentPeriod} (เดือนนี้):</span>
+                <div className="flex justify-between text-[11px] font-mono text-neutral-400">
+                  <span className="text-expense font-bold">{currentPeriod} (เดือนนี้):</span>
                   <span className="text-white font-bold tabular-nums">฿{formatMoney(currentSpendToDate)}</span>
                 </div>
                 <div className="h-1 w-full bg-neutral-900 overflow-hidden border border-neutral-800">
                   <div
                     style={{ width: `${Math.min(100, Math.max(5, (currentSpendToDate / Math.max(1, currentSpendToDate, ghostSpendToDate)) * 100))}%` }}
-                    className="h-full bg-rose-500"
+                    className="h-full bg-expense"
                   />
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <div className="flex justify-between text-[9px] font-mono text-neutral-400">
+                <div className="flex justify-between text-[11px] font-mono text-neutral-400">
                   <span className="text-neutral-400 inline-flex items-center gap-1"><Ghost size={10} className="shrink-0" /> {prevPeriod} (เดือนก่อน):</span>
                   <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(ghostSpendToDate)}</span>
                 </div>
@@ -174,23 +174,23 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             </div>
           </div>
 
-          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-400">
-            <span>สถานะการเหยียบคันเร่ง:</span>
-            <span className={isLeading ? 'text-emerald-400 font-bold' : 'text-[#da291c] font-bold'}>
+          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
+            <span>จังหวะการใช้จ่าย:</span>
+            <span className={isLeading ? 'text-emerald-400 font-bold' : 'text-danger font-bold'}>
               {isLeading ? 'ควบคุมงบได้นิ่งกว่า' : 'ใช้จ่ายเร็วกว่ารอบก่อน'}
             </span>
           </div>
         </div>
 
         {/* POD 2: 3-Month Benchmark */}
-        <div className="relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l border-l-sky-500">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-sky-500">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Compass size={13} className="text-sky-400 shrink-0" />
               เกณฑ์เฉลี่ย 3 เดือน
             </span>
-            <span className="text-[9px] font-mono text-sky-400 uppercase tracking-wider font-bold">
-              BENCHMARK
+            <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider font-bold">
+              เดือนก่อน
             </span>
           </div>
 
@@ -210,7 +210,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               </div>
             )}
 
-            <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[10px] font-mono">
+            <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[11px] font-mono">
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400">จ่ายสะสมเฉลี่ย 3 เดือน:</span>
                 <span className="text-sky-400 font-bold tabular-nums">฿{formatMoney(benchmarkSpendToDate)}</span>
@@ -222,7 +222,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             </div>
           </div>
 
-          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-400">
+          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
             <span>ความเร็วเทียบค่าเฉลี่ย:</span>
             <span className={isBenchLeading ? 'text-sky-400 font-bold' : 'text-amber-400 font-bold'}>
               {isBenchLeading ? 'ต่ำกว่าเกณฑ์เฉลี่ย' : 'สูงกว่าเกณฑ์เฉลี่ย'}
@@ -231,14 +231,14 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
         </div>
 
         {/* POD 3: Finish Line Forecast */}
-        <div className="relative p-4 flex flex-col justify-between bg-[#181818] hover:bg-[#1c1c1c] transition-none border-l border-l-emerald-500">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-emerald-500">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Flag size={13} className="text-emerald-400 shrink-0" />
-              คาดการณ์เส้นชัยสิ้นเดือน
+              คาดการณ์ยอดสิ้นเดือน
             </span>
-            <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider font-bold">
-              TARGET EOM
+            <span className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider font-bold">
+              เป้าสิ้นเดือน
             </span>
           </div>
 
@@ -251,7 +251,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
                   ฿<AnimatedNumber value={Math.round(projectedExpense)} />
                 </div>
                 <div className={`text-xs font-mono font-bold tabular-nums flex items-center gap-0.5 ${
-                  isEomLeading ? 'text-emerald-400' : 'text-[#da291c]'
+                  isEomLeading ? 'text-emerald-400' : 'text-danger'
                 }`}>
                   {isEomLeading ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                   ฿{formatAmount(Math.abs(Math.round(deltaEom)))}
@@ -259,7 +259,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               </div>
             )}
 
-            <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[10px] font-mono">
+            <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[11px] font-mono">
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400 inline-flex items-center gap-1"><Ghost size={10} className="shrink-0" /> ยอดจบจริงเดือนก่อน:</span>
                 <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(ghostTotalExpense)}</span>
@@ -271,9 +271,9 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             </div>
           </div>
 
-          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-400">
-            <span>ทิศทางเมื่อเข้าเส้นชัย:</span>
-            <span className={isEomLeading ? 'text-emerald-400 font-bold' : 'text-[#da291c] font-bold'}>
+          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
+            <span>แนวโน้มสิ้นเดือน:</span>
+            <span className={isEomLeading ? 'text-emerald-400 font-bold' : 'text-danger font-bold'}>
               {isEomLeading ? 'ประหยัดกว่าเดือนก่อน' : 'ยอดจบสูงกว่าเดือนก่อน'}
             </span>
           </div>

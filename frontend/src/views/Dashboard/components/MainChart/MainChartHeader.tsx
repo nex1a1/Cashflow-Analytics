@@ -22,16 +22,16 @@ const VIEW_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 export const ChartGroupBySwitcher = memo(({ chartGroupBy, setChartGroupBy }: ChartGroupBySwitcherProps) => (
-  <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+  <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
     <button
       onClick={() => setChartGroupBy('monthly')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายเดือน
     </button>
     <button
       onClick={() => setChartGroupBy('daily')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายวัน
     </button>
@@ -43,7 +43,7 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
   const views = getAvailableChartViews(Boolean(isSingleMonth));
 
   return (
-    <div className="flex items-center p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+    <div className="flex items-center p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
       {views.map(v => {
         const Icon = VIEW_ICONS[v.id] || BarChart;
         const isDisabled = Boolean(v.disabled);
@@ -62,16 +62,16 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'bg-[#303030] text-[#da291c] shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+                  ? 'bg-surface-elevated text-accent shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
               }`}
             >
               <Icon className="w-3.5 h-3.5" /> {v.label}
             </button>
             {isDisabled && v.title && (
               <div className="absolute top-full right-0 mt-1.5 opacity-0 group-hover/viewbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/viewbtn:visible whitespace-nowrap">
-                <div className="rounded-none py-1 px-2.5 text-[10px] font-medium shadow-2xl bg-[#121212] text-neutral-300 border border-[#3e3e3e] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" />
+                <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <span>{v.title}</span>
                 </div>
               </div>
@@ -86,26 +86,26 @@ ViewTypeSwitcher.displayName = 'ViewTypeSwitcher';
 
 export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode, showSkeleton }: SankeyControlsProps) => (
   <div className="flex items-center gap-2 flex-wrap">
-    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
       <button
         disabled={showSkeleton}
         onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeyMode === 'allocation' ? 'bg-[#da291c] text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeyMode === 'allocation' ? 'bg-accent text-on-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
         title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
       >
         <Layers className="w-3 h-3" />
-        {sankeyMode === 'allocation' ? 'ตามการจัดสรร (Need/Want/Save)' : 'แสดง Need/Want/Save'}
+        {sankeyMode === 'allocation' ? 'ตามการจัดสรร' : 'แสดง Need/Want/Save'}
       </button>
     </div>
 
-    <div className="flex p-0.5 rounded-none border shadow-sm bg-[#181818] border-[#303030]/60">
+    <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
       <button
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('value')}
-        className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'value' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามยอดเงิน
@@ -113,8 +113,8 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
       <button
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('index')}
-        className={`px-3 py-1.5 text-[10px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'index' ? 'bg-[#303030] text-[#da291c] shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-[#303030]/50'
+        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
+          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามลำดับ (Settings)
@@ -135,9 +135,9 @@ export const MainChartHeader = memo(({
   const title = getMainChartTitle(chartViewType, mainChartType, isBreakdown);
 
   return (
-    <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] flex-wrap relative z-20 w-full gap-3">
+    <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line flex-wrap relative z-20 w-full gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
+        <div className="w-[3px] h-3 bg-accent shrink-0" />
         {chartViewType === 'sankey' ? (
           <Network className="w-3.5 h-3.5 text-neutral-400" />
         ) : chartViewType === 'multiples' ? (
@@ -145,7 +145,7 @@ export const MainChartHeader = memo(({
         ) : (
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400" />
         )}
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
           {title}
         </span>
       </div>

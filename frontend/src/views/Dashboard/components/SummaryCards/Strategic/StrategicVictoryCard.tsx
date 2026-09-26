@@ -25,24 +25,19 @@ export const StrategicVictoryCard = memo(({
   const isPositive = dailyVictory >= 0;
 
   return (
-    <div className={`relative flex flex-col md:flex-row items-stretch overflow-hidden bg-[#141414] border-t border-[#2d2d2d] ${
-      isPositive ? 'border-t-emerald-500' : 'border-t-[#da291c]'
+    <div className={`relative flex flex-col md:flex-row items-stretch overflow-hidden bg-surface border-t border-line shrink-0 ${
+      isPositive ? 'border-t-emerald-500' : 'border-t-danger'
     }`}>
       <div className="absolute -right-4 -bottom-4 opacity-[0.04] pointer-events-none text-neutral-700">
         <Award size={96} />
       </div>
 
       {/* Verdict: label + hero number — the bottom-line answer, not another equal-weight card */}
-      <div className="relative z-10 flex flex-col justify-center gap-1.5 p-4 md:min-w-[280px] md:border-r border-[#2d2d2d]">
+      <div className="relative z-10 flex flex-col justify-center gap-1.5 p-4 md:min-w-[280px] md:border-r border-line">
         <div className="flex items-center gap-2">
-          <Award size={15} className={isPositive ? 'text-emerald-400 shrink-0' : 'text-[#da291c] shrink-0'} />
+          <Award size={15} className={isPositive ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
           <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-400">
             เงินเหลือรายวัน — สรุปผล
-          </span>
-          <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ml-auto md:ml-2 ${
-            isPositive ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' : 'text-[#da291c] border-[#da291c]/30 bg-red-950/40'
-          }`}>
-            {isPositive ? 'VICTORY' : 'DEFICIT'}
           </span>
         </div>
 
@@ -50,7 +45,7 @@ export const StrategicVictoryCard = memo(({
           <Shimmer className="h-10 w-40 my-1" />
         ) : (
           <div className={`text-3xl xl:text-4xl font-black tabular-nums tracking-tight leading-none ${
-            isPositive ? 'text-emerald-400' : 'text-[#da291c]'
+            isPositive ? 'text-emerald-400' : 'text-danger'
           }`}>
             {formatSignedMoney(dailyVictory)}
           </div>
@@ -66,25 +61,25 @@ export const StrategicVictoryCard = memo(({
       {/* Breakdown behind the verdict — always visible, no hover required to read it */}
       {!showSkeleton && (
         <div className="relative z-10 flex-1 grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-neutral-800/50">
-          <div className="bg-[#181818] p-3 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน
             </span>
             <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">฿{formatMoney(dailyIncome)}</span>
           </div>
-          <div className="bg-[#181818] p-3 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Lock size={13} className="shrink-0 text-neutral-400" /> จำเป็น/วัน
             </span>
             <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(dailyFixed)}</span>
           </div>
-          <div className="bg-[#181818] p-3 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Target size={13} className="shrink-0 text-neutral-400" /> ตามใจ/วัน
             </span>
             <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(dailyVariable)}</span>
           </div>
-          <div className="bg-[#181818] p-3 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <PiggyBank size={13} className="shrink-0 text-emerald-400" /> ออม/วัน
             </span>

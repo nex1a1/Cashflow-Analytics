@@ -33,18 +33,18 @@ export default function StatCard({
   if (variant === 'compact') {
     return (
       <div className={`group flex items-center gap-2 px-3 py-1.5 rounded-none border transition-all duration-300 ${
-        'bg-[#181818]/60 hover:bg-[#303030]/80 border-[#303030]/60 hover:border-[#da291c]/50'
+        'bg-canvas/60 hover:bg-surface-elevated/80 border-line/60 hover:border-accent/50'
       }`} style={{ borderColor: color.border || undefined }}>
         <div className={`p-1.5 rounded-sm ${color.bg} shrink-0 transition-transform group-hover:scale-110`}>
           {icon}
         </div>
         <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
           <div className="min-w-0 flex-1">
-            <p className={`text-[10px] font-black uppercase tracking-widest truncate ${color.text} filter brightness-90`}>
+            <p className={`text-[11px] font-black uppercase tracking-widest truncate ${color.text} filter brightness-90`}>
               {label}
             </p>
             {subValue && (
-              <p className={`text-[8px] font-black truncate leading-tight opacity-70 ${color.text} filter brightness-75`}>
+              <p className={`text-[11px] font-black truncate leading-tight ${color.text}`}>
                 {subValue}
               </p>
             )}
@@ -60,7 +60,7 @@ export default function StatCard({
   // VITALS VARIANT (Vertical - Used at the top of the Ledger/Dashboard)
   return (
     <div className={`relative overflow-hidden flex flex-col px-4 py-2.5 rounded-none border transition-all duration-300 group ${
-      'bg-[#181818] border-[#303030]/80 hover:border-[#da291c]/50 hover:bg-[#1c1c1c] shadow-md'
+      'bg-canvas border-line/80 hover:border-accent/50 hover:bg-surface-hover shadow-md'
     }`}>
       {/* Background Icon Glow */}
       <div className={`absolute -right-2 -bottom-2 opacity-[0.03] transition-transform duration-500 group-hover:scale-125 group-hover:rotate-12 ${color.text}`}>
@@ -72,7 +72,7 @@ export default function StatCard({
           {React.cloneElement(icon, { size: 18 } as any)}
         </div>
         <div className="flex-1 min-w-0 pr-1">
-          <p className={`text-[10px] font-black uppercase tracking-wider leading-none mb-1 truncate ${color.text} filter brightness-90`}>
+          <p className={`text-[11px] font-black uppercase tracking-wider leading-none mb-1 truncate ${color.text} filter brightness-90`}>
             {label}
           </p>
           <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
@@ -80,10 +80,10 @@ export default function StatCard({
               {value}
             </div>
             {trend && (
-              <div className={`flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full mt-0.5 shrink-0 ${
+              <div className={`flex items-center gap-0.5 text-[11px] font-black px-1.5 py-0.5 rounded-full mt-0.5 shrink-0 ${
                 trend.isGood 
                   ? ('bg-emerald-500/10 text-emerald-400')
-                  : ('bg-rose-500/10 text-rose-400')
+                  : ('bg-danger/10 text-danger')
               }`}>
                 {trend.isGood ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                 {trend.value}%
@@ -92,7 +92,7 @@ export default function StatCard({
           </div>
           {subValueJSX}
           {subValue && (
-            <p className={`mt-1 text-[9px] font-black tracking-wide truncate ${color.text} filter brightness-75 opacity-60`}>
+            <p className={`mt-1 text-[11px] font-black tracking-wide truncate ${color.text}`}>
               {subValue}
             </p>
           )}

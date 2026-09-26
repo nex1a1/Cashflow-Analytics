@@ -33,7 +33,7 @@ export default function ExportPreview({
     if (isFetching) {
       return (
         <div className="h-full flex flex-col items-center justify-center space-y-3 font-mono text-xs text-neutral-400">
-          <Loader2 className="w-7 h-7 text-[#da291c] animate-spin" />
+          <Loader2 className="w-7 h-7 text-accent animate-spin" />
           <span className="uppercase tracking-widest text-neutral-400">
             กำลังดึงข้อมูลจากฐานข้อมูล...
           </span>
@@ -44,7 +44,7 @@ export default function ExportPreview({
     if (!stats.hasData && !isBackupJson) {
       return (
         <div className="h-full flex flex-col items-center justify-center space-y-2.5 font-mono text-xs text-neutral-400">
-          <AlertCircle className="w-8 h-8 text-[#da291c]" />
+          <AlertCircle className="w-8 h-8 text-danger" />
           <span className="font-bold text-neutral-300">ไม่พบรายการข้อมูลตามเงื่อนไขที่เลือก</span>
           <p className="text-[11px] text-neutral-500">โปรดลองเปลี่ยนช่วงเวลา หรือเลือกประเภทรายการอื่น</p>
         </div>
@@ -85,7 +85,7 @@ export default function ExportPreview({
   };
 
   return (
-    <div className="flex-1 flex flex-col p-5 bg-[#141414] overflow-hidden">
+    <div className="flex-1 flex flex-col p-5 bg-surface overflow-hidden">
       {/* Preview Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export default function ExportPreview({
             ตัวอย่างเอกสาร <span className="text-neutral-500 font-mono font-normal">/ PREVIEW</span>
           </span>
           {!isBackupJson && dataToExport.length > 0 && (
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-[#202020] border border-[#333333] text-neutral-400">
+            <span className="text-[11px] font-mono px-2 py-0.5 bg-surface-hover border border-line text-neutral-400">
               {dataToExport.length > PREVIEW_LIMIT
                 ? `แสดงตัวอย่าง ${PREVIEW_LIMIT} จาก ${dataToExport.length.toLocaleString()} รายการ`
                 : `แสดงทั้งหมด ${dataToExport.length.toLocaleString()} รายการ`}
@@ -110,7 +110,7 @@ export default function ExportPreview({
               placeholder="ค้นหาในตัวอย่าง..."
               value={previewSearch}
               onChange={(e) => setPreviewSearch(e.target.value)}
-              className="w-full bg-[#121212] border border-[#383838] pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-[#da291c] rounded-none transition-colors"
+              className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent rounded-none transition-colors"
             />
             {previewSearch && (
               <button
@@ -126,7 +126,7 @@ export default function ExportPreview({
       </div>
 
       {/* Main Preview Container */}
-      <div className="flex-1 border border-[#2e2e2e] bg-[#121212] flex flex-col overflow-hidden relative">
+      <div className="flex-1 border border-line bg-surface flex flex-col overflow-hidden relative">
         <div className="flex-1 overflow-auto custom-scrollbar relative">
           {renderContent()}
         </div>
@@ -134,7 +134,7 @@ export default function ExportPreview({
 
       {/* Bottom Hint */}
       <div className="mt-3 flex items-start gap-2 text-[11px] text-neutral-400 shrink-0">
-        <Info className="w-3.5 h-3.5 text-[#da291c] shrink-0 mt-0.5" />
+        <Info className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
         <p className="leading-snug">
           ระบบฝังรหัส <strong className="text-neutral-300">UTF-8 BOM</strong> ในไฟล์ CSV อัตโนมัติ เพื่อให้เปิดใน Microsoft Excel และ Google Sheets ได้โดยภาษาไทยไม่เพี้ยน
         </p>

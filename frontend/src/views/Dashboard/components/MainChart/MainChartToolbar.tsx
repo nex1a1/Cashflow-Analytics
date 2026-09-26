@@ -27,11 +27,11 @@ export const MainChartToolbar = memo(({
   const showLineStyleSelector = chartViewType === 'line' || mainChartType === 'combo';
   if (chartViewType === 'multiples') {
     return (
-      <div className="flex items-center gap-2.5 relative z-10 flex-wrap w-full text-[10px] select-none">
+      <div className="flex items-center gap-2.5 relative z-10 flex-wrap w-full text-[11px] select-none">
         <span className="uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 text-slate-500">
-          <Activity className="w-3 h-3 text-[#da291c]" /> CATEGORY TRENDS
+          <Activity className="w-3 h-3 text-accent" /> CATEGORY TRENDS
         </span>
-        <span className="w-px h-4 shrink-0 bg-[#303030]" />
+        <span className="w-px h-4 shrink-0 bg-surface-elevated" />
         <span className="text-slate-400">
           {isAll
             ? 'ตัวเลขหลัก = เฉลี่ยต่องวด · ล่าสุด = ยอดงวดล่าสุดจริง · % = เทียบค่าเฉลี่ยรวม · เส้นประ = ยังไม่จบงวด'
@@ -46,11 +46,11 @@ export const MainChartToolbar = memo(({
     return (
       <div className="flex items-center justify-between gap-3 relative z-10 flex-wrap w-full">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
-            <Activity className="w-3 h-3 text-[#da291c] animate-pulse" /> SANKEY FLOW
+          <span className="text-[11px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
+            <Activity className="w-3 h-3 text-ink-muted" /> แผนภาพกระแสเงิน
           </span>
 
-          <span className="w-px h-4 shrink-0 bg-[#303030]" />
+          <span className="w-px h-4 shrink-0 bg-surface-elevated" />
 
           <SankeyControls
             sankeyMode={sankeyMode}
@@ -67,11 +67,11 @@ export const MainChartToolbar = memo(({
   return (
     <div className="flex items-center justify-between gap-3 relative z-10 flex-wrap w-full">
       <div className="flex items-center gap-2.5 flex-wrap">
-        <span className="text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
-          <Activity className="w-3 h-3 text-[#da291c] animate-pulse" /> MODES
+        <span className="text-[11px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
+          <Activity className="w-3 h-3 text-ink-muted" /> มุมมอง
         </span>
 
-        <span className="w-px h-4 shrink-0 bg-[#303030]" />
+        <span className="w-px h-4 shrink-0 bg-surface-elevated" />
 
         <ToolbarViewModes
           showSkeleton={showSkeleton}

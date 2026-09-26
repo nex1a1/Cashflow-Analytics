@@ -19,11 +19,11 @@ export const Shimmer = ({ className }: { className?: string }) => (
 );
 
 export const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon; title: string }) => (
-  <div className="px-4 py-1.5 flex items-center justify-between border-b border-[#2d2d2d] bg-[#121212]/80">
+  <div className="px-4 py-1.5 flex items-center justify-between border-b border-line bg-surface/80">
     <div className="flex items-center gap-2">
-      <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
+      <div className="w-[3px] h-3 bg-accent shrink-0" />
       {Icon && <Icon className="w-3.5 h-3.5 text-neutral-400" />}
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
         {title}
       </span>
     </div>
@@ -34,7 +34,7 @@ export function getFoodIncomeStatus(pct: number) {
   const num = Number.parseFloat(String(pct)) || 0;
   if (num <= 20) return { label: 'สมดุลดี',      cls: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' };
   if (num <= 30) return { label: 'ปานกลาง',      cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' };
-  return            { label: 'สัดส่วนสูง',     cls: 'text-[#da291c] border-[#da291c]/30 bg-red-950/40' };
+  return            { label: 'สัดส่วนสูง',     cls: 'text-danger border-danger/30 bg-danger/10' };
 }
 
 export function renderTopItemsOverlay(
@@ -47,14 +47,14 @@ export function renderTopItemsOverlay(
 ): React.ReactNode {
   if (entries.length === 0) {
     return (
-      <div className="col-span-2 bg-[#181818] p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
+      <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
         {emptyLabel}
       </div>
     );
   }
 
   const cell = (wide: boolean, key: React.Key, icon: React.ReactNode, label: string, amount: number, pctLabel?: string) => (
-    <div key={key} className={`bg-[#181818] p-2 flex text-left min-w-0 ${wide ? 'col-span-2 items-center justify-between' : 'flex-col justify-center'}`}>
+    <div key={key} className={`bg-canvas p-2 flex text-left min-w-0 ${wide ? 'col-span-2 items-center justify-between' : 'flex-col justify-center'}`}>
       <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide truncate flex items-center gap-1.5 leading-none">
         {icon} {label}
       </span>

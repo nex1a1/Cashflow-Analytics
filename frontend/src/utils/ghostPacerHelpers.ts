@@ -3,6 +3,7 @@ import { GhostPacerDetails, GhostPacerStatus } from '../views/Dashboard/componen
 import { periodUnitDates } from './dateHelpers';
 import { isCyclePeriod, stripCycle, shiftMonth, localTodayIso } from './payCycle';
 
+import { tc } from '@/constants/theme';
 interface CalculateGhostPacerParams {
   globalDailySum: Record<string, number>;
   filterPeriod: string;
@@ -57,7 +58,7 @@ export function calculateGhostPacerData({
   const emptyStatus: GhostPacerStatus = {
     code: 'TIED',
     label: 'ไม่มีข้อมูลเปรียบเทียบ',
-    color: '#737373',
+    color: tc('ink-muted'),
     bg: 'bg-neutral-900',
     border: 'border-neutral-700',
   };
@@ -152,7 +153,7 @@ export function calculateGhostPacerData({
   if (!hasData || ghostSpendToDate === 0) {
     paceStatus = {
       code: 'TIED',
-      label: 'รวบรวมข้อมูลรอบแข่ง',
+      label: 'กำลังรวบรวมข้อมูล',
       color: '#38bdf8',
       bg: 'bg-sky-950/30',
       border: 'border-sky-500',
@@ -160,23 +161,23 @@ export function calculateGhostPacerData({
   } else if (deltaVsGhost < -100) {
     paceStatus = {
       code: 'LEAD',
-      label: 'คุมงบนำหน้าเดือนก่อน (Pacing Ahead)',
-      color: '#10b981',
+      label: 'ใช้น้อยกว่าเดือนก่อน',
+      color: tc('income'),
       bg: 'bg-emerald-950/30',
       border: 'border-emerald-500',
     };
   } else if (deltaVsGhost > 100) {
     paceStatus = {
       code: 'TRAIL',
-      label: 'เร่งตัวเร็วกว่าเดือนก่อน (Trailing Ghost)',
-      color: '#da291c',
-      bg: 'bg-red-950/40',
-      border: 'border-[#da291c]',
+      label: 'ใช้เร็วกว่าเดือนก่อน',
+      color: tc('expense'),
+      bg: 'bg-danger/10',
+      border: 'border-accent',
     };
   } else {
     paceStatus = {
       code: 'TIED',
-      label: 'ความเร็วใกล้เคียงเดือนก่อน (Pace Tied)',
+      label: 'ใกล้เคียงเดือนก่อน',
       color: '#3b82f6',
       bg: 'bg-blue-950/30',
       border: 'border-blue-500',

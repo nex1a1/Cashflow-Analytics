@@ -7,6 +7,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
+import { tc, readable } from '@/constants/theme';
 // --- Helpers ---
 const getSmartDate = (dateStr?: string) => {
   if (!dateStr) return '';
@@ -53,7 +54,7 @@ const getCardBorderClass = (rank: number) => {
   if (rank === 0) return 'border-amber-500/25 hover:border-amber-500/50 bg-amber-950/15 hover:bg-amber-950/25';
   if (rank === 1) return 'border-slate-400/25 hover:border-slate-400/50 bg-slate-500/[0.05] hover:bg-slate-500/[0.12]';
   if (rank === 2) return 'border-orange-500/25 hover:border-orange-500/50 bg-orange-950/15 hover:bg-orange-950/25';
-  return 'border-[#303030]/60 hover:border-[#404040] bg-[#181818]/40 hover:bg-[#181818]/80';
+  return 'border-line/60 hover:border-line-strong bg-canvas/40 hover:bg-canvas/80';
 };
 
 const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemProps) => {
@@ -69,12 +70,12 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
       {/* Visual Progress Bar Backdrop (High-contrast Rosso Corsa with sharp tip) */}
       <div className="absolute inset-y-0 left-0 right-0 overflow-hidden pointer-events-none z-0">
         <div 
-          className="h-full bg-gradient-to-r from-[#da291c]/[0.06] to-[#da291c]/[0.14] group-hover:from-[#da291c]/[0.10] group-hover:to-[#da291c]/[0.20]"
+          className="h-full bg-gradient-to-r from-expense/[0.06] to-expense/[0.14] group-hover:from-expense/[0.10] group-hover:to-expense/[0.20]"
           style={{ width: `${relativeWidth}%` }}
         />
         {/* Flat solid tip for the progress bar */}
         <div 
-          className="absolute top-0 bottom-0 w-[2px] bg-[#da291c]/40 group-hover:bg-[#da291c]/60"
+          className="absolute top-0 bottom-0 w-[2px] bg-expense/40 group-hover:bg-expense/60"
           style={{ left: `${relativeWidth}%` }}
         />
       </div>
@@ -94,11 +95,11 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
         <div className="flex items-center gap-2 flex-wrap overflow-hidden">
           {/* Category Tag */}
           <span 
-            className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-none truncate" 
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none truncate" 
             style={{ 
-              color: catDef?.color || '#64748B', 
-              backgroundColor: `${catDef?.color || '#64748B'}28`, 
-              borderColor: `${catDef?.color || '#64748B'}40`,
+              color: readable(catDef?.color || tc('ink-muted')), 
+              backgroundColor: `${catDef?.color || tc('ink-muted')}28`, 
+              borderColor: `${catDef?.color || tc('ink-muted')}40`,
               borderWidth: '1px'
             }}
             title={catDef?.name || tx.category}
@@ -109,7 +110,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
           
           {/* Date Tag */}
           {tx.date && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030] text-slate-400 group-hover:border-[#404040]">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-none border shrink-0 bg-canvas border-line text-slate-400 group-hover:border-line-strong">
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
           )}
@@ -118,7 +119,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
 
       {/* Price Block */}
       <div className="relative z-10 shrink-0 flex flex-col items-end justify-start min-w-[95px] pt-0.5">
-        <span className="text-sm font-black tabular-nums whitespace-nowrap text-[#da291c]">
+        <span className="text-sm font-black tabular-nums whitespace-nowrap text-expense">
           {formatMoney(Math.abs(amountNum))}
         </span>
       </div>
@@ -142,7 +143,7 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const cardStyles = 'rounded-none border shadow-sm h-full flex flex-col bg-[#181818] border-[#303030]';
+  const cardStyles = 'rounded-none border shadow-sm h-full flex flex-col bg-canvas border-line';
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum, allFilteredExpenseSum, topPctOfTotal } = useMemo(() => {
@@ -242,11 +243,11 @@ export default function TopTransactions() {
   return (
     <div className={cardStyles}>
       {/* ─── HEADER (Editorial Style) ─── */}
-      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] w-full gap-2">
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line w-full gap-2">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" /> {/* Rosso Corsa racing line brand accent */}
+          <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
             TOP
           </span>
           <div className="relative group shrink-0">
@@ -254,25 +255,25 @@ export default function TopTransactions() {
               value={topXLimit} 
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
-              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-[#181818] border-[#303030] text-white hover:border-[#da291c] focus:border-[#da291c]"
+              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent focus:border-accent"
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
             <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-white" />
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">รายจ่าย</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">รายจ่าย</span>
         </div>
 
         {/* Real-time sum & Pareto indicator pill */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
-            className="px-2 py-0.5 rounded-none border text-[10px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-[#242424] border-[#303030] text-neutral-300"
+            className="px-2 py-0.5 rounded-none border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (฿${formatMoney(allFilteredExpenseSum)})`}
           >
             <span className="text-neutral-400">ยอดรวม:</span>
-            <span className="text-[#da291c] font-bold tabular-nums">{formatMoney(topSum)}</span>
+            <span className="text-expense font-bold tabular-nums">{formatMoney(topSum)}</span>
             {allFilteredExpenseSum > 0 && (
-              <span className="text-[9px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
+              <span className="text-[11px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
                 {topPctOfTotal}%
               </span>
             )}
@@ -286,7 +287,7 @@ export default function TopTransactions() {
           {showSkeleton ? (
             <div className="flex flex-col gap-2">
               {Array.from({ length: topXLimit || 7 }).map((_, idx) => (
-                <div key={`top-skel-${idx}`} className="h-16 w-full rounded-none border animate-pulse bg-[#303030]/40 border-[#303030]/50" />
+                <div key={`top-skel-${idx}`} className="h-16 w-full rounded-none border animate-pulse bg-surface-elevated/40 border-line/50" />
               ))}
             </div>
           ) : (
@@ -304,13 +305,13 @@ export default function TopTransactions() {
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                <div className="p-4 rounded-none border border-[#303030]/60 mb-3 bg-[#181818]/60">
+                <div className="p-4 rounded-none border border-line/60 mb-3 bg-canvas/60">
                   <AlertCircle className="w-8 h-8 opacity-25 text-neutral-400" />
                 </div>
                 <p className="text-sm font-bold text-neutral-400">
                   ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
                 </p>
-                <p className="text-[10px] mt-1 text-neutral-400">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
+                <p className="text-[11px] mt-1 text-neutral-400">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
               </div>
             )
           )}

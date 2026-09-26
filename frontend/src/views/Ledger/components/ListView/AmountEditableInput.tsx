@@ -1,17 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
+import FieldError from '@/components/shared/FieldError';
 import { formatMoney } from '../../../../utils/formatters';
 
+import { tc } from '@/constants/theme';
 interface AmountEditableInputProps {
   initialValue: number | string;
   isInc?: boolean;
-  onSave: (val: number) => void;
+  /** return false when the save failed so the cell can say so */
+  onSave: (val: number) => Promise<boolean> | boolean | void;
   placeholder?: string;
 }
 
 export default function AmountEditableInput({ initialValue, isInc = false, onSave, placeholder }: AmountEditableInputProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState<string | number>('');
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const errorId = useId();
 
   // Sync with initialValue only when not editing
   useEffect(() => {
@@ -20,47 +25,55 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
     }
   }, [initialValue, isEditing]);
 
-  const handleBlur = () => {
-    setIsEditing(false);
+  const revert = () => setValue(initialValue === 0 || initialValue === '0' ? '' : initialValue);
+
+  const handleBlur = async () => {
     // Remove commas, signs, and currency symbols before parsing just in case
     const cleanValue = String(value).replaceAll(',', '').replace('+', '').replace('-', '').replace('฿', '').trim();
-    const numVal = Number.parseFloat(cleanValue);
-    const finalVal = Number.isNaN(numVal) ? 0 : Math.abs(numVal);
-    
-    const initialNum = Number.parseFloat(String(initialValue) || '0');
-    // Only save if the value actually changed
-    if (finalVal !== initialNum) {
-      onSave(finalVal);
-    } else {
-      // Revert to initialValue
-      setValue(initialValue === 0 || initialValue === '0' ? '' : initialValue);
+    const numVal = Number(cleanValue);
+    // Never turn a typo into ฿0: the cell stays open with the message until it's fixed or Esc'd
+    if (cleanValue === '' || !Number.isFinite(numVal) || numVal <= 0) {
+      setError('ใส่จำนวนเงินเป็นตัวเลขมากกว่า 0 (Esc เพื่อยกเลิก)');
+      return;
     }
+    setError(null);
+    setIsEditing(false);
+    const finalVal = Math.abs(numVal);
+    const initialNum = Number.parseFloat(String(initialValue) || '0');
+    if (finalVal === initialNum) { revert(); return; }
+    const ok = await onSave(finalVal);
+    if (ok === false) setError('บันทึกไม่สำเร็จ ค่ากลับเป็นค่าเดิมแล้ว');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') e.currentTarget.blur();
     if (e.key === 'Escape') {
-      setValue(initialValue === 0 || initialValue === '0' ? '' : initialValue);
+      e.preventDefault();
+      revert();
+      setError(null);
       setIsEditing(false);
     }
   };
 
   const hasValue = value !== '' && value !== undefined && value !== null;
   const displayVal = hasValue ? formatMoney(value) : (placeholder || '0.00');
-  const activeColor = isInc ? '#34d399' : '#f87171'; // Emerald for income, Vivid Rose Red for expense
+  const activeColor = isInc ? tc('income') : tc('expense'); // Emerald for income, Vivid Rose Red for expense
   const prefix = isInc ? '+฿' : '-฿';
   const fontStyle: React.CSSProperties = { color: activeColor, fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" };
 
   return (
+    <div>
     <div 
       onClick={() => {
         setIsEditing(true);
         setTimeout(() => inputRef.current?.focus(), 0);
       }}
       className={`group/amt amount-editable-box relative flex items-center justify-between w-full rounded-sm border px-2 py-1 cursor-text transition-all ${
-        isEditing 
-          ? 'bg-[#121212] border-[#da291c] ring-1 ring-[#da291c]/40' 
-          : 'bg-transparent border-transparent hover:bg-[#141414] hover:border-[#383838]'
+        error
+          ? 'bg-surface tint-danger'
+          : isEditing
+          ? 'bg-surface border-accent ring-1 ring-accent/40' 
+          : 'bg-transparent border-transparent hover:bg-surface hover:border-line-strong'
       }`}
       style={{ ...fontStyle, borderRadius: '4px' }}
     >
@@ -79,7 +92,10 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
           type="text"
           inputMode="decimal"
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={e => { setValue(e.target.value); if (error) setError(null); }}
+          aria-label="จำนวนเงิน"
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className="amount-input w-full bg-transparent text-right text-xs font-bold tracking-tight tabular-nums outline-none"
@@ -95,6 +111,8 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
           {displayVal}
         </span>
       )}
+    </div>
+    <FieldError id={errorId} message={error} />
     </div>
   );
 }

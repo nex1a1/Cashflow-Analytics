@@ -6,6 +6,7 @@ import {
   resolveDoughnutHoverIndex,
 } from '../ExpenseProportion/proportionHelpers';
 import { AllocationItemData, CategoryItemData } from '../ExpenseProportion/types';
+import { tc } from '@/constants/theme';
 
 describe('ExpenseProportion helpers', () => {
   describe('calculateSimulatedAllocation', () => {
@@ -134,7 +135,7 @@ describe('ExpenseProportion helpers', () => {
 
       const chartData = buildDoughnutChartData(mockCats, 1);
       expect(chartData.datasets).toHaveLength(1);
-      expect(chartData.datasets[0].borderColor).toEqual(['#303030', '#da291c']);
+      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('accent')]);
       expect(chartData.datasets[0].data).toEqual([200, 300]);
     });
 
@@ -146,7 +147,7 @@ describe('ExpenseProportion helpers', () => {
 
       const chartData = buildDoughnutChartData(mockCats, -1);
       expect(chartData.datasets).toHaveLength(1);
-      expect(chartData.datasets[0].borderColor).toEqual(['#303030', '#303030']);
+      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('line')]);
     });
   });
 });

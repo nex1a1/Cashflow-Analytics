@@ -1,7 +1,7 @@
 // src/views/Dashboard/index.tsx
 import React, { useMemo } from 'react';
 import { Inbox } from 'lucide-react';
-import { DashboardProvider, DashboardContextValue } from './context/DashboardContext';
+import { DashboardProvider } from './context/DashboardContext';
 import DashboardSkeleton from './components/DashboardSkeleton';
 
 // Components
@@ -77,9 +77,10 @@ export default function DashboardView(props: DashboardViewProps) {
   // Case 2: Truly Empty State (Not loading and no transactions)
   if (transactions.length === 0 && !isLoading) {
     return (
-      <div className={`flex flex-col items-center justify-center text-slate-400 py-32 rounded-sm border-2 border-dashed ${'bg-slate-800 border-slate-700'}`}>
-        <Inbox className="w-16 h-16 mb-4 text-slate-300 animate-bounce" style={{ animationDuration: '2s' }} />
-        <p className="text-lg font-bold text-slate-500">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
+      <div className="flex flex-col items-center justify-center gap-3 py-32 border border-line bg-surface text-center">
+        <Inbox className="w-12 h-12 text-ink-muted" aria-hidden="true" />
+        <p className="text-lg font-bold text-ink-display">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
+        <p className="text-sm text-ink-body">เพิ่มรายการแรกด้วยปุ่ม "เพิ่มข้อมูลด่วน" ด้านบน หรือนำเข้าไฟล์ CSV จากเมนู "ข้อมูล"</p>
       </div>
     );
   }
@@ -88,29 +89,16 @@ export default function DashboardView(props: DashboardViewProps) {
     <DashboardProvider value={dashboardContextValue}>
       <div className="w-full pb-10 flex flex-col gap-4">
 
-        {/* ══════════════════════════════════════════════════════════
-            ROW 1 — SUMMARY COMMAND CENTER + EXPENSE PROPORTION
-        ══════════════════════════════════════════════════════════ */}
         <div className="flex flex-col gap-4 w-full">
           <SummaryCards />
           <ExpenseProportion />
         </div>
-        {/* ══════════════════════════════════════════════════════════
-            ROW 2 — MAIN CHART (wide) + TOP X (narrow sidebar)
-        ══════════════════════════════════════════════════════════ */}
+
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-stretch">
           <MainChart />
           <TopTransactions />
         </div>
-
-        {/* ══════════════════════════════════════════════════════════
-            ROW 3 — ACTIVITY TIMELINE
-        ══════════════════════════════════════════════════════════ */}
         <ActivityTimeline />
-
-        {/* ══════════════════════════════════════════════════════════
-            ROW 4 — CASHFLOW TABLE
-        ══════════════════════════════════════════════════════════ */}
         <CashflowTable />
 
       </div>

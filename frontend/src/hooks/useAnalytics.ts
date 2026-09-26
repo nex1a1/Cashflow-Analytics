@@ -11,6 +11,8 @@ import { calculateGhostPacerData } from '../utils/ghostPacerHelpers';
 import { calculateAllocationEvolution } from '../utils/allocationEvolutionHelpers';
 import { isCyclePeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso } from '../utils/payCycle';
 
+
+import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 function resolveTransactionContext(t: any, catMapLookup: Record<string, any>, cashflowGroups: CashflowGroup[], fallbackExpId: string) {
   const amt = Number.parseFloat(t.amount) || 0;
   const catId = t.category_id || (catMapLookup[t.category]?.id) || 'unknown';
@@ -222,22 +224,22 @@ function calculateForecastingDetails({
   const daysToBudget = remainingDays;
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
-  let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี (On Track)', color: '#10b981', bg: 'bg-emerald-950/30' };
+  let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
   if (projectedSurplus < 0) {
-    paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ (Critical)', color: '#da291c', bg: 'bg-red-950/40' };
+    paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
-    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า (High Pace)', color: '#f59e0b', bg: 'bg-amber-950/30' };
+    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า', color: '#f59e0b', bg: 'bg-amber-950/30' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
-    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์ (Moderate)', color: '#3b82f6', bg: 'bg-blue-950/30' };
+    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์', color: '#3b82f6', bg: 'bg-blue-950/30' };
   }
 
-  let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง (Surplus Safe)', color: '#10b981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+  let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
   if (projectedSurplus < 0) {
-    eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล (Deficit Risk)', color: '#da291c', bg: 'bg-red-950/40', border: 'border-[#da291c]' };
+    eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
   } else if (projectedSurplusPct < 5) {
-    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว (Tight Buffer)', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
+    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
   } else if (projectedSurplusPct < 20) {
-    eomStatus = { code: 'STABLE', label: 'โซนสมดุล (Stable)', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
+    eomStatus = { code: 'STABLE', label: 'โซนสมดุล', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
   const maxAllowedExpense = totals.income;
@@ -413,12 +415,12 @@ function filterCategoriesByDashboard(categories: Category[], cashflowGroups: Cas
 function buildSortedCategories(catMapData: any, catMapLookup: any, chartTotal: number, filteredCats: any[]) {
   return Object.entries(catMapData)
     .map(([catId, amount]: [string, any]) => {
-      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'package', color: '#94a3b8', order_index: 999 };
+      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'package', color: tc('ink-body'), order_index: 999 };
       return {
         id: catId,
         name: catObj.name,
         icon: catObj.icon || 'package',
-        color: catObj.color || '#94a3b8',
+        color: catObj.color || tc('ink-body'),
         amount: Number(amount),
         percentage: chartTotal > 0 ? ((Number(amount) / chartTotal) * 100).toFixed(1) : '0.0',
         cashflow_group_id: catObj.cashflowGroup || catObj.cashflow_group_id,
@@ -474,7 +476,7 @@ function buildGroupBreakdown(
       percentage: chartTotal > 0 ? ((groupTotals[g.id] / chartTotal) * 100).toFixed(1) : 0,
       avgPerMonth: groupTotals[g.id] / numMonths,
       icon: g.icon,
-      color: g.color || '#64748B',
+      color: g.color || tc('ink-muted'),
       allocation_type: g.allocation_type,
       order_index: g.order_index || 999,
       categories: groupCatsMap[g.id] || []
@@ -486,7 +488,7 @@ function buildGroupBreakdown(
     datasets: [{
       data: sortedGroups.map((g: any) => g.amount),
       backgroundColor: sortedGroups.map((g: any) => g.color),
-      borderWidth: 2, borderColor: '#1e293b',
+      borderWidth: 2, borderColor: tc('line'),
     }],
   };
 
@@ -514,9 +516,9 @@ function buildAllocationBreakdown(
   const totalSavingsActual = explicitSavings + unspentSurplus;
 
   const allocationItems = [
-    { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: '#EF4444', icon: 'home', target: 50, groups: allocGroupsMap.need },
-    { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: '#F59E0B', icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, totalSavingsActual), color: '#10B981', icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
+    { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
+    { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
+    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
@@ -534,7 +536,7 @@ function buildAllocationBreakdown(
     datasets: [{
       data: sortedAllocation.map((i: any) => i.amount),
       backgroundColor: sortedAllocation.map((i: any) => i.color),
-      borderWidth: 2, borderColor: '#1e293b',
+      borderWidth: 2, borderColor: tc('line'),
     }],
   };
 
@@ -1091,7 +1093,7 @@ export default function useAnalytics({
       datasets: [{
         data: sortedCats.map((c: any) => c.amount),
         backgroundColor: sortedCats.map((c: any) => c.color),
-        borderWidth: 2, borderColor: '#1e293b',
+        borderWidth: 2, borderColor: tc('line'),
       }],
     };
 

@@ -8,6 +8,7 @@ import { stepDate, toValueStr } from '@/utils/datePickerHelpers';
 import { Category, CashflowGroup, DayType, AllocationType } from '../../../types';
 import { PendingBatchItem } from './index';
 import CategorySelect from '@/components/shared/CategorySelect';
+import FieldError from '../../shared/FieldError';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -157,23 +158,22 @@ function BatchForm({
   };
 
   const tokens = {
-    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-[#3e3e3e] text-white focus:border-[#da291c] focus:ring-[#da291c]/30",
-    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-[#181818] border-red-500 text-red-200 focus:ring-red-500/30",
-    label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400",
-    errorText: "text-[10px] font-bold text-red-500 mt-1"
+    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent focus:ring-accent/30",
+    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
+    label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400"
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-[#1c1c1c] border-[#303030]">
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-surface-hover border-line">
       
       {/* Type Toggle: Expense / Income */}
-      <div className="grid grid-cols-2 p-0.5 mb-4 rounded-none border bg-[#181818] border-[#303030] h-9">
+      <div className="grid grid-cols-2 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
         <button 
           type="button" 
           onClick={() => handleTypeChange('expense')}
           className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
             formType === 'expense' 
-              ? 'bg-[#303030] text-red-400 shadow-sm' 
+              ? 'bg-surface-elevated text-expense shadow-sm' 
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -184,7 +184,7 @@ function BatchForm({
           onClick={() => handleTypeChange('income')}
           className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
             formType === 'income' 
-              ? 'bg-[#303030] text-emerald-400 shadow-sm' 
+              ? 'bg-surface-elevated text-emerald-400 shadow-sm' 
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -201,7 +201,7 @@ function BatchForm({
               <button
                 type="button"
                 onClick={() => setValue('date', stepDate(formDate, -1), { shouldValidate: true })}
-                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors"
                 title="วันก่อนหน้า (-1 วัน)"
               >
                 <ChevronLeft className="w-3 h-3" />
@@ -209,7 +209,7 @@ function BatchForm({
               <button
                 type="button"
                 onClick={() => setValue('date', toValueStr(new Date()), { shouldValidate: true })}
-                className="px-1 text-[9.5px] font-bold text-slate-400 hover:text-[#da291c] hover:bg-[#303030] transition-colors"
+                className="px-1 text-[11px] font-bold text-slate-400 hover:text-accent hover:bg-surface-elevated transition-colors"
                 title="เลือกวันนี้"
               >
                 วันนี้
@@ -217,7 +217,7 @@ function BatchForm({
               <button
                 type="button"
                 onClick={() => setValue('date', stepDate(formDate, 1), { shouldValidate: true })}
-                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors"
+                className="p-0.5 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors"
                 title="วันถัดไป (+1 วัน)"
               >
                 <ChevronRight className="w-3 h-3" />
@@ -230,14 +230,14 @@ function BatchForm({
             required 
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
-            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-[#181818] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]"
+            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent focus:border-accent"
           />
-          {errors.date && <p className={tokens.errorText}>{errors.date.message}</p>}
+          <FieldError id="batch-date-err" message={errors.date?.message} />
         </div>
         <div className="flex-1 min-w-0">
           <label htmlFor="batch-amount" className={tokens.label}>จำนวนเงิน ฿</label>
           <div className="relative flex items-center h-9">
-            <span className="absolute left-2.5 text-xs font-bold select-none opacity-50 text-slate-400">
+            <span className="absolute left-2.5 text-xs font-bold select-none text-ink-muted" aria-hidden="true">
               ฿
             </span>
             <input 
@@ -245,12 +245,15 @@ function BatchForm({
               type="number" 
               step="any" 
               {...register('amount', { valueAsNumber: true })} 
+              aria-invalid={!!errors.amount}
+              aria-describedby={errors.amount ? 'batch-amount-err' : undefined}
+              aria-label="จำนวนเงิน"
               onKeyDown={handleKeyDown} 
               placeholder="0.00" 
               className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-bold tabular-nums tracking-tight`} 
             />
           </div>
-          {errors.amount && <p className={tokens.errorText}>{errors.amount.message}</p>}
+          <FieldError id="batch-amount-err" message={errors.amount?.message} />
         </div>
       </div>
 
@@ -272,11 +275,11 @@ function BatchForm({
           </div>
           
           {formType === 'expense' && (
-            <div className="h-9 flex p-0.5 rounded-none border shrink-0 bg-[#181818] border-[#303030]">
+            <div className="h-9 flex p-0.5 rounded-none border shrink-0 bg-canvas border-line">
               {[
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
-                { val: 'want', label: 'WANT', color: 'text-sky-400' },
-                { val: 'savings', label: 'SAVE', color: 'text-emerald-400' }
+                { val: 'want', label: 'WANT', color: 'text-amber-400' },
+                { val: 'savings', label: 'SAVE', color: 'text-savings' }
               ].map(opt => {
                 const isSelected = allocationType === opt.val;
                 return (
@@ -284,8 +287,8 @@ function BatchForm({
                     key={opt.val} 
                     type="button" 
                     onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                    className={`h-full px-2.5 text-[10px] font-black rounded-none transition-all flex items-center justify-center ${
-                      isSelected ? `bg-[#303030] ${opt.color}` : 'text-slate-500 hover:text-slate-300'
+                    className={`h-full px-2.5 text-[11px] font-black rounded-none transition-all flex items-center justify-center ${
+                      isSelected ? `bg-surface-elevated ${opt.color}` : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
                     {opt.label}
@@ -295,7 +298,7 @@ function BatchForm({
             </div>
           )}
         </div>
-        {errors.categoryId && <p className={tokens.errorText}>{errors.categoryId.message}</p>}
+        <FieldError id="batch-categoryId-err" message={errors.categoryId?.message} />
       </div>
 
       {/* Description Input */}
@@ -319,7 +322,7 @@ function BatchForm({
               type="button" 
               onClick={onCancelEdit} 
               disabled={isProcessing}
-              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]"
+              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-surface-elevated/60 hover:bg-surface-elevated text-slate-300 border-line"
               title="ยกเลิกการแก้ไข"
             >
               ยกเลิก
@@ -342,15 +345,15 @@ function BatchForm({
                 setTimeout(() => setFocus('amount'), 10); 
               }} 
               disabled={isProcessing}
-              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-[#303030]/60 hover:bg-[#303030] text-slate-300 border-[#303030]"
-              title="ล้างข้อมูลที่กำลังพิมพ์ (Clear Form)"
+              className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-surface-elevated/60 hover:bg-surface-elevated text-slate-300 border-line"
+              title="ล้างข้อมูลที่กำลังพิมพ์"
             >
               <RotateCcw className="w-4 h-4 mr-1 text-slate-400" /> ล้าง
             </button>
             <button 
               type="submit" 
               disabled={isProcessing}
-              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-[#da291c] hover:bg-[#b01e0a] text-white border-[#da291c]"
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-accent hover:bg-accent-active text-on-accent border-accent"
             >
               <PlusCircle className="w-4 h-4" /> เพิ่มลงตะกร้า (Enter)
             </button>

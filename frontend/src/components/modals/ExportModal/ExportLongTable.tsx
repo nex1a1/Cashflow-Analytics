@@ -6,6 +6,7 @@ import { fromISODate } from '../../../utils/dateHelpers';
 import { DayTypeInfo, ExportFormatKey } from './types';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 
+import { tc, readable } from '@/constants/theme';
 export interface ExportLongTableProps {
   data: TransactionDisplay[];
   categories: Category[];
@@ -27,34 +28,34 @@ export default function ExportLongTable({
   return (
     <div className="w-full overflow-x-auto custom-scrollbar">
       <table className="w-full text-left text-xs leading-normal border-collapse min-w-[700px]">
-        <thead className="sticky top-0 bg-[#1c1c1c] text-neutral-300 z-10 select-none border-b border-[#303030]">
+        <thead className="sticky top-0 bg-surface-hover text-neutral-300 z-10 select-none border-b border-line">
           <tr>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               วันที่
             </th>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               ประเภทวัน
             </th>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               ประเภท
             </th>
             {isFullCsv && (
-              <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+              <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
                 กลุ่มกระแสเงิน
               </th>
             )}
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               หมวดหมู่
             </th>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               รายละเอียด
             </th>
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[10px] text-neutral-400 text-right">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 text-right">
               จำนวนเงิน (฿)
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#262626]">
+        <tbody className="divide-y divide-line">
           {data.map((t, idx) => {
             const cat = categories.find((c) => c.name === t.category || c.id === t.category_id);
             const dt = getDayTypeInfo(t.date);
@@ -63,8 +64,8 @@ export default function ExportLongTable({
             const isIncome = type === 'income';
             const isSavings = type === 'savings';
 
-            let typeBadgeClass = 'text-rose-400 bg-rose-950/30 border-rose-900/40';
-            let amountColor = 'text-rose-400';
+            let typeBadgeClass = 'text-expense bg-expense/5 border-expense/20';
+            let amountColor = 'text-expense';
             let amountPrefix = '-';
 
             if (isIncome) {
@@ -79,10 +80,10 @@ export default function ExportLongTable({
 
             const groupId = cat?.cashflowGroup || cat?.cashflow_group_id;
             const group = groupId ? groupMap.get(groupId) : undefined;
-            const catColor = cat?.color || '#a3a3a3';
+            const catColor = cat?.color || tc('ink-body');
 
             return (
-              <tr key={t.id || idx} className="hover:bg-[#1a1a1a] transition-colors group">
+              <tr key={t.id || idx} className="hover:bg-canvas transition-colors group">
                 {/* Date */}
                 <td className="py-2 px-3 text-neutral-300 font-mono text-[11px] whitespace-nowrap">
                   {fromISODate(t.date)}
@@ -91,9 +92,9 @@ export default function ExportLongTable({
                 {/* Day Type Badge with sharp border */}
                 <td className="py-2 px-3 whitespace-nowrap">
                   <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
                     style={{
-                      color: dt.color,
+                      color: readable(dt.color),
                       borderColor: `${dt.color}40`,
                       backgroundColor: `${dt.color}15`,
                     }}
@@ -104,7 +105,7 @@ export default function ExportLongTable({
 
                 {/* Type */}
                 <td className="py-2 px-3 whitespace-nowrap">
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border ${typeBadgeClass}`}>
+                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${typeBadgeClass}`}>
                     {type.toUpperCase()}
                   </span>
                 </td>

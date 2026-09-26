@@ -21,7 +21,7 @@ const CategoryGrid = React.memo<CategoryGridProps>(({ items, hoveredIdx, onHover
   const emptyCount = (5 - (items.length % 5)) % 5;
   return (
     <div
-      className={`[grid-area:1/1] grid grid-cols-5 gap-px bg-[#303030]/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
+      className={`[grid-area:1/1] grid grid-cols-5 gap-px bg-surface-elevated/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
       aria-hidden={!isActive}
       {...(isActive ? {} : ({ inert: '' } as Record<string, string>))}
     >
@@ -29,7 +29,7 @@ const CategoryGrid = React.memo<CategoryGridProps>(({ items, hoveredIdx, onHover
         <CatItem key={cat.id || cat.name} cat={cat} idx={idx} isHovered={isActive && hoveredIdx === idx} onHover={onHover} />
       ))}
       {EMPTY_CELL_KEYS.slice(0, emptyCount).map((key) => (
-        <div key={key} className="bg-[#181818]/10" />
+        <div key={key} className="bg-canvas/10" />
       ))}
     </div>
   );
@@ -52,7 +52,7 @@ const AllocationGrid = React.memo<AllocationGridProps>(({
   const emptyCount = (3 - (items.length % 3)) % 3;
   return (
     <div
-      className={`[grid-area:1/1] grid grid-cols-3 gap-px bg-[#303030]/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
+      className={`[grid-area:1/1] grid grid-cols-3 gap-px bg-surface-elevated/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
       aria-hidden={!isActive}
       {...(isActive ? {} : ({ inert: '' } as Record<string, string>))}
     >
@@ -69,7 +69,7 @@ const AllocationGrid = React.memo<AllocationGridProps>(({
         />
       ))}
       {EMPTY_CELL_KEYS.slice(0, emptyCount).map((key) => (
-        <div key={key} className="bg-[#181818]/10" />
+        <div key={key} className="bg-canvas/10" />
       ))}
     </div>
   );

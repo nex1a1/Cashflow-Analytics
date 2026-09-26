@@ -10,31 +10,31 @@ interface AccentStyle {
 
 const ACCENT: Record<string, AccentStyle> = {
   emerald: {
-    header: 'bg-[#121212] border-emerald-950/40',
-    title: 'text-emerald-400',
-    glow: 'border-t-2 border-t-emerald-500/90',
-    btn: 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/35'
+    header: 'bg-surface border-line',
+    title: 'text-income',
+    glow: 'border-t-2 border-t-income',
+    btn: 'bg-income/15 hover:bg-income/25 text-income border border-income/35'
   },
   brand: {
-    header: 'bg-[#121212] border-[#da291c]/20',
-    title: 'text-[#da291c]',
-    glow: 'border-t-2 border-t-[#da291c]',
-    btn: 'bg-[#da291c]/15 hover:bg-[#da291c]/25 text-[#da291c] border border-[#da291c]/35'
+    header: 'bg-surface border-line',
+    title: 'text-accent',
+    glow: 'border-t-2 border-t-accent',
+    btn: 'bg-accent/15 hover:bg-accent/25 text-accent border border-accent/35'
   },
   purple: {
-    header: 'bg-[#121212] border-purple-950/40',
-    title: 'text-purple-400',
-    glow: 'border-t-2 border-t-purple-500/90',
-    btn: 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/35'
+    header: 'bg-surface border-line',
+    title: 'text-savings',
+    glow: 'border-t-2 border-t-savings',
+    btn: 'bg-savings/15 hover:bg-savings/25 text-savings border border-savings/35'
   },
   orange: {
-    header: 'bg-[#121212] border-orange-950/40',
-    title: 'text-orange-400',
-    glow: 'border-t-2 border-t-orange-500/90',
-    btn: 'bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/35'
+    header: 'bg-surface border-line',
+    title: 'text-expense',
+    glow: 'border-t-2 border-t-expense',
+    btn: 'bg-expense/15 hover:bg-expense/25 text-expense border border-expense/35'
   },
   sky: {
-    header: 'bg-[#121212] border-sky-950/40',
+    header: 'bg-surface border-line',
     title: 'text-sky-400',
     glow: 'border-t-2 border-t-sky-500/90',
     btn: 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-500/35'
@@ -70,13 +70,13 @@ const SectionCard = memo(function SectionCard({
   const a = ACCENT[accentColor] || ACCENT.brand;
 
   return (
-    <div className={`overflow-hidden rounded-md border bg-[#1c1c1c] border-[#303030] ${a.glow}`}>
-      <div className={`px-3.5 py-2 flex items-center justify-between gap-3 border-b border-[#303030]/60 ${a.header}`}>
+    <div className={`overflow-hidden rounded-none border bg-surface border-line ${a.glow}`}>
+      <div className={`px-3.5 py-2 flex items-center justify-between gap-3 border-b border-line/60 ${a.header}`}>
         <h2 className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5 ${a.title}`}>
           {icon}
           {title}
           {badge != null && (
-            <span className="text-[10px] font-bold px-2 py-0.5 ml-1.5 rounded-full tabular-nums bg-[#121212] text-[#a0a0a0] border border-[#383838]">
+            <span className="text-[11px] font-bold px-2 py-0.5 ml-1.5 rounded-full tabular-nums bg-canvas text-ink-body border border-line">
               {badge}
             </span>
           )}
@@ -86,7 +86,7 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={subAction.onClick}
-              className="text-[10px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-sm border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] hover:text-white bg-[#121212] cursor-pointer transition-colors"
+              className="text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-sm border-line text-slate-300 hover:bg-surface-hover hover:text-white bg-canvas cursor-pointer transition-colors"
             >
               {subAction.icon} {subAction.label}
             </button>
@@ -95,14 +95,14 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={action.onClick}
-              className={`text-[10px] font-bold px-2.5 py-1 flex items-center gap-1 rounded-sm cursor-pointer transition-colors ${a.btn}`}
+              className={`text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 rounded-sm cursor-pointer transition-colors ${a.btn}`}
             >
               <PlusCircle className="w-4 h-4" /> {action.label}
             </button>
           )}
         </div>
       </div>
-      <div className="w-full text-[#cbd5e1]">
+      <div className="w-full text-slate-300">
         {children}
       </div>
     </div>

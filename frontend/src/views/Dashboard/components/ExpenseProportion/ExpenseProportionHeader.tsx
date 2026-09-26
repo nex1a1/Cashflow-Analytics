@@ -29,7 +29,7 @@ function buildModes(evolutionLabel: string): Array<{ id: DisplayMode; label: str
 function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionLabel }: ModeSwitcherProps) {
   const modes = buildModes(evolutionLabel);
   return (
-    <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
+    <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-canvas border-line/60">
       {modes.map(m => {
         const isDisabled = m.id === 'evolution' && !evolutionEligible;
         const isActive = displayMode === m.id && !isDisabled;
@@ -45,7 +45,7 @@ function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionL
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'bg-[#da291c] text-white'
+                  ? 'bg-accent text-on-accent'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -53,8 +53,8 @@ function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionL
             </button>
             {isDisabled && tooltip && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 opacity-0 group-hover/modebtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/modebtn:visible whitespace-nowrap">
-                <div className="rounded-none py-1 px-2.5 text-[10px] font-medium shadow-2xl bg-[#121212] text-neutral-300 border border-[#3e3e3e] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#da291c] shrink-0" />
+                <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <span>{tooltip}</span>
                 </div>
               </div>
@@ -90,12 +90,12 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
   }
 
   return (
-    <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-[#181818] border-[#303030]/60">
+    <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-canvas border-line/60">
       <button
         onClick={() => onToggleSort('amount')}
         title={amountTitle}
         aria-label={amountTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
           isAmount ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
@@ -108,8 +108,8 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         onClick={() => onToggleSort('order')}
         title={orderTitle}
         aria-label={orderTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#da291c] ${
-          isOrder ? 'bg-[#da291c]/20 text-[#da291c]' : 'text-slate-400 hover:text-slate-200'
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+          isOrder ? 'bg-accent/20 text-accent' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
         <ListOrdered className={`w-3.5 h-3.5 shrink-0 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
@@ -149,7 +149,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
 function NoIncomeWarning() {
   return (
     <span
-      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-[#da291c]/10 border border-[#da291c]/40 rounded-none text-[11px] font-black text-[#da291c] uppercase tracking-wider"
+      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-none text-[11px] font-black text-accent uppercase tracking-wider"
       title="ไม่มีรายได้บันทึกในเดือนนี้ — สัดส่วนคำนวณจากยอดรายจ่ายแทน"
     >
       <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -177,9 +177,9 @@ export function ExpenseProportionHeader({
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
 
   return (
-    <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d]">
+    <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line">
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
+        <div className="w-[3px] h-3 bg-accent shrink-0" />
         <PieChart className="w-3.5 h-3.5 text-neutral-400" />
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
           สัดส่วนรายจ่าย (Proportions)
@@ -206,7 +206,7 @@ export function ExpenseProportionHeader({
           />
         )}
       </div>
-      <span className="text-[11px] font-black px-1.5 rounded-full bg-[#da291c]/10 text-[#da291c]">
+      <span className="text-[11px] font-black px-1.5 rounded-full bg-accent/10 text-accent">
         {countText}
       </span>
     </div>

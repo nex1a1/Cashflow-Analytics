@@ -120,7 +120,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className="w-8 h-8 flex items-center justify-center border shrink-0 rounded-sm bg-[#121212] border-[#3e3e3e] hover:border-[#da291c]/50 transition-colors outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+        className="w-8 h-8 flex items-center justify-center border shrink-0 rounded-sm bg-surface border-line-strong hover:border-accent/50 transition-colors outline-none focus:border-white focus:ring-1 focus:ring-white/20"
         title="เลือกไอคอน"
         aria-label="เลือกไอคอน"
       >
@@ -130,11 +130,11 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
       {open && createPortal(
         <div
           ref={paletteRef}
-          className="fixed z-[9999] shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] border bg-[#181818] border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[9999] shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Laser Hairline Accent */}
-          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#da291c] to-transparent shrink-0 opacity-80" />
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
           <div className="p-3.5 flex flex-col gap-2.5">
             {/* 1. Search Bar */}
@@ -192,19 +192,19 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 <div className="flex items-center gap-2 truncate">
                   <hoveredIcon.Icon size={15} className="text-white shrink-0" />
                   <span className="text-white font-medium truncate">{hoveredIcon.label}</span>
-                  <span className="text-neutral-500 font-mono text-[10px] shrink-0">({hoveredIcon.key})</span>
+                  <span className="text-neutral-500 font-mono text-[11px] shrink-0">({hoveredIcon.key})</span>
                 </div>
               ) : currentSelectedDef ? (
                 <div className="flex items-center gap-2 truncate">
                   <span className="text-neutral-400 text-[11px]">เลือกอยู่:</span>
                   <currentSelectedDef.Icon size={15} style={{ color: color || '#ffffff' }} className="shrink-0" />
                   <span className="text-white font-medium truncate">{currentSelectedDef.label}</span>
-                  <span className="text-neutral-500 font-mono text-[10px] shrink-0">({currentSelectedDef.key})</span>
+                  <span className="text-neutral-500 font-mono text-[11px] shrink-0">({currentSelectedDef.key})</span>
                 </div>
               ) : (
                 <span className="text-neutral-500 text-[11px]">เลื่อนเมาส์ชี้บนไอคอนเพื่อดูชื่อ หรือคลิกเพื่อเลือก</span>
               )}
-              <span className="text-[10px] font-mono text-neutral-500 shrink-0 ml-2">
+              <span className="text-[11px] font-mono text-neutral-500 shrink-0 ml-2">
                 {filteredIcons.length} / {CATEGORY_ICONS.length}
               </span>
             </div>
@@ -222,9 +222,9 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                       onMouseEnter={() => setHoveredIcon({ key, label, category: selectedCategory, keywords: '', Icon })}
                       onMouseLeave={() => setHoveredIcon(null)}
                       title={label}
-                      className={`aspect-square w-full flex items-center justify-center rounded-[3px] transition-all cursor-pointer relative focus:outline-none ${
+                      className={`aspect-square w-full flex items-center justify-center rounded-none transition-all cursor-pointer relative focus:outline-none ${
                         isSelected
-                          ? 'bg-[#da291c]/20 ring-1 ring-[#da291c] z-10 text-white shadow-[0_0_8px_rgba(218,41,28,0.3)]'
+                          ? 'bg-accent/20 ring-1 ring-accent z-10 text-white'
                           : 'bg-neutral-900/70 text-neutral-400 hover:text-white hover:bg-neutral-800 hover:scale-105'
                       }`}
                     >
@@ -240,7 +240,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 <button
                   type="button"
                   onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
-                  className="text-xs text-[#da291c] hover:underline font-medium mt-1 cursor-pointer"
+                  className="text-xs text-accent hover:underline font-medium mt-1 cursor-pointer"
                 >
                   ดูไอคอนทั้งหมด
                 </button>
@@ -260,7 +260,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                   <span className="text-xs font-semibold text-neutral-200">
                     {currentSelectedDef ? currentSelectedDef.label : (icon ? icon : 'ยังไม่ได้เลือกไอคอน')}
                   </span>
-                  <span className="text-[10px] font-mono text-neutral-500">
+                  <span className="text-[11px] font-mono text-neutral-500">
                     {icon ? `key: ${icon}` : 'คลิกเลือกไอคอนจากตารางด้านบน'}
                   </span>
                 </div>
@@ -271,7 +271,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                   <button
                     type="button"
                     onClick={() => { onChange(''); setOpen(false); }}
-                    className="px-2.5 py-1 text-xs text-neutral-400 hover:text-[#da291c] hover:bg-[#da291c]/10 rounded-sm border border-transparent hover:border-[#da291c]/30 transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 text-xs text-neutral-400 hover:text-accent hover:bg-accent/10 rounded-sm border border-transparent hover:border-accent/30 transition-all flex items-center gap-1 cursor-pointer"
                     title="ล้างไอคอน ไม่ใช้งาน"
                   >
                     <Trash2 size={13} />

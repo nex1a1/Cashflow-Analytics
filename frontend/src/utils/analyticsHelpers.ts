@@ -4,6 +4,7 @@ import { getThaiMonth, hexToRgb } from './formatters';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
 import { isSingleUnitPeriod } from './payCycle';
 
+import { tc } from '@/constants/theme';
 /**
  * Creates a map of category names to category objects for fast lookup.
  */
@@ -291,7 +292,7 @@ function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolea
   if (hideFixedExpenses) {
     return {
       label: 'รายจ่ายไลฟ์สไตล์ (บาท)',
-      borderColor: '#D81A21',
+      borderColor: tc('expense'),
       backgroundColor: 'rgba(216,26,33,0.1)',
     };
   }
@@ -304,7 +305,7 @@ function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolea
   }
   return {
     label: 'รายจ่ายรวมทั้งหมด (บาท)',
-    borderColor: '#EF4444',
+    borderColor: tc('expense'),
     backgroundColor: 'rgba(239,68,68,0.1)',
   };
 }
@@ -377,7 +378,7 @@ function buildSpecificCategoryDataset(
 
   const catObj: Partial<Category> = catMap[catName] || {};
   const catId = catObj.id || catName;
-  const catColor = catObj.color || '#64748B';
+  const catColor = catObj.color || tc('ink-muted');
   const rgb = hexToRgb(catColor);
 
   const data = showMonthly
@@ -451,8 +452,8 @@ const buildMonthlyComboChartData = (
   labels: xLabels,
   datasets: [
     { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#ffffff', backgroundColor: '#ffffff', borderWidth: 4, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
-    { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: '#10B981', borderColor: '#10B981', borderRadius: 0 },
-    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: '#da291c', borderColor: '#da291c', borderRadius: 0 },
+    { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: tc('income'), borderColor: tc('income'), borderRadius: 0 },
+    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: tc('expense'), borderColor: tc('expense'), borderRadius: 0 },
   ],
 });
 
@@ -464,16 +465,16 @@ const buildDailyComboChartData = (
   hideWantExpenses: boolean
 ) => {
   let barLabel = 'รายจ่ายจริง';
-  let barBg = 'rgba(218,41,28,0.6)';
-  let barBorder = '#da291c';
+  let barBg = tc('expense', 0.6);
+  let barBorder = tc('expense');
   if (hideFixedExpenses) {
-    barLabel = 'รายจ่ายไลฟ์สไตล์ (WANT)';
+    barLabel = 'รายจ่ายไลฟ์สไตล์';
     barBg = 'rgba(245,158,11,0.6)';
     barBorder = '#F59E0B';
   } else if (hideWantExpenses) {
-    barLabel = 'รายจ่ายจำเป็น (NEED)';
+    barLabel = 'รายจ่ายจำเป็น';
     barBg = 'rgba(163,163,163,0.6)';
-    barBorder = '#A3A3A3';
+    barBorder = tc('ink-body');
   }
 
   return {

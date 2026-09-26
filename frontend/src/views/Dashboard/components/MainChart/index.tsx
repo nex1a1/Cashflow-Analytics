@@ -71,7 +71,7 @@ export default function MainChart() {
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
-  const card = 'rounded-none border shadow-sm transition-colors h-full flex flex-col bg-[#181818] border-[#303030]';
+  const card = 'rounded-none border shadow-sm transition-colors h-full flex flex-col bg-canvas border-line';
 
   return (
     <div className={`${card} min-h-0`}>
@@ -116,7 +116,7 @@ export default function MainChart() {
 
         <div className="relative w-full flex-1 min-h-[350px]">
           {showSkeleton ? (
-            <div className="absolute inset-0 rounded-none animate-pulse bg-[#303030]/40" />
+            <div className="absolute inset-0 rounded-none animate-pulse bg-surface-elevated/40" />
           ) : chartViewType === 'multiples' ? (
             <SparklineGraph />
           ) : (

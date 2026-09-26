@@ -1,13 +1,20 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef, ReactNode } from 'react';
+
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
 
 export interface ToastInfo {
   visible: boolean;
   message: string;
   type: string;
+  action?: ToastAction;
 }
 
 export interface ToastContextValue {
-  showToast: (message: string, type?: string) => void;
+  /** `action` adds a button (e.g. เลิกทำ) and keeps the toast up longer so it can be reached. */
+  showToast: (message: string, type?: string, action?: ToastAction) => void;
   hideToast: () => void;
   toast: ToastInfo;
 }
@@ -32,23 +39,19 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     message: '',
     type: 'success',
   });
-
-  const showToast = useCallback((message: string, type: string = 'success') => {
-    setToast({
-      visible: true,
-      message,
-      type,
-    });
-
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      setToast(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  }, []);
+  // One timer at a time — a stale timer from the previous toast must not hide the next one early
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hideToast = useCallback(() => {
-    setToast(prev => ({ ...prev, visible: false }));
+    if (timer.current) clearTimeout(timer.current);
+    setToast(prev => ({ ...prev, visible: false, action: undefined }));
   }, []);
+
+  const showToast = useCallback((message: string, type: string = 'success', action?: ToastAction) => {
+    if (timer.current) clearTimeout(timer.current);
+    setToast({ visible: true, message, type, action });
+    timer.current = setTimeout(hideToast, action ? 8000 : 3000);
+  }, [hideToast]);
 
   const contextValue = useMemo(() => ({
     showToast,

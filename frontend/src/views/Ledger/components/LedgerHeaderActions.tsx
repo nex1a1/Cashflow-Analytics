@@ -1,5 +1,8 @@
 import React from 'react';
-import { SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2 } from 'lucide-react';
+import { SlidersHorizontal, LayoutList, TableProperties, PlusCircle, Trash2, ChevronDown } from 'lucide-react';
+import { useMenu } from '@/hooks/useMenu';
+
+const MENU_ITEM = 'w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-bold text-ink-soft hover:bg-surface-hover hover:text-ink-display focus-visible:bg-surface-hover';
 
 export interface LedgerHeaderActionsProps {
   viewMode: 'list' | 'horizontal';
@@ -30,6 +33,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
   confirmDeleteMonth,
   handleDeleteMonthClick
 }) => {
+  const { open, setOpen, rootRef, triggerRef } = useMenu();
   const isCurrentFilterOpen = viewMode === 'list' ? filterOpen : horizontalFilterOpen;
   const toggleFilter = () => {
     if (viewMode === 'list') {
@@ -45,11 +49,11 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
       <button 
         type="button"
         onClick={toggleFilter} 
-        className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
+        className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
           isCurrentFilterOpen 
-            ? 'bg-[#da291c]/10 border-[#da291c] text-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.12)]' 
-            : 'bg-[#121212] border-[#303030] text-slate-400 hover:bg-[#303030]/40 hover:border-[#404040] hover:text-white'
-        } ${isCurrentFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20 shadow-[0_0_12px_rgba(245,158,11,0.12)]' : ''}`}
+            ? 'bg-accent/10 border-accent text-accent' 
+            : 'bg-surface border-line text-slate-400 hover:bg-surface-elevated/40 hover:border-line-strong hover:text-white'
+        } ${isCurrentFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20' : ''}`}
         title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" /> 
@@ -57,14 +61,14 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         {isCurrentFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400" />}
       </button>
 
-      <div className="flex items-center rounded-none border border-[#303030] overflow-hidden bg-[#121212]">
+      <div className="flex items-center rounded-none border border-line overflow-hidden bg-surface">
         <button 
           onClick={() => setViewMode('list')} 
           title="มุมมองรายการ" 
-          className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-none font-mono ${
+          className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none font-mono ${
             viewMode === 'list' 
-              ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
-              : 'bg-[#121212] text-slate-400 hover:text-slate-200'
+              ? 'bg-surface-elevated/50 text-accent font-extrabold shadow-inner' 
+              : 'bg-surface text-slate-400 hover:text-slate-200'
           }`}
         >
           <LayoutList className="w-3.5 h-3.5" />
@@ -73,10 +77,10 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         <button 
           onClick={() => setViewMode('horizontal')} 
           title="มุมมองตารางแนวนอน" 
-          className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-none border-l border-[#303030] font-mono ${
+          className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none border-l border-line font-mono ${
             viewMode === 'horizontal' 
-              ? 'bg-[#303030]/50 text-[#da291c] font-extrabold shadow-inner' 
-              : 'bg-[#121212] text-slate-400 hover:text-slate-200'
+              ? 'bg-surface-elevated/50 text-accent font-extrabold shadow-inner' 
+              : 'bg-surface text-slate-400 hover:text-slate-200'
           }`}
         >
           <TableProperties className="w-3.5 h-3.5" />
@@ -84,38 +88,58 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         </button>
       </div>
 
-      <button 
-        onClick={() => handleOpenAddModal('', 'income')} 
-        className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border rounded-none font-mono text-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/40 border-emerald-500/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.04)]"
-      >
-        <PlusCircle className="w-3.5 h-3.5" /> 
-        <span>เพิ่มรายรับ</span>
-      </button>
-      
-      <button 
-        onClick={() => handleOpenAddModal('', 'expense')} 
-        className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-4 py-2 border rounded-none font-mono text-[#da291c] bg-[#da291c]/5 hover:bg-[#da291c]/10 border-[#da291c]/40 hover:border-[#da291c] shadow-[0_0_12px_rgba(218,41,28,0.04)]"
-      >
-        <PlusCircle className="w-3.5 h-3.5" /> 
-        <span>เพิ่มรายจ่าย</span>
-      </button>
-      
-      {hasTransactions && (
-        <div className="flex items-center pl-2 ml-1 border-l border-[#303030]/60">
-          <button 
-            onClick={handleDeleteMonthClick} 
-            className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 px-2.5 py-2 border rounded-none font-mono transition-all select-none ${
-              confirmDeleteMonth
-                ? 'text-white bg-[#da291c] border-[#da291c] animate-pulse shadow-[0_0_12px_rgba(218,41,28,0.4)]'
-                : 'text-slate-500 bg-[#121212] border-[#2c2c2c] hover:text-rose-400 hover:bg-rose-950/20 hover:border-rose-500/40 opacity-80 hover:opacity-100'
-            }`} 
-            title={confirmDeleteMonth ? "คลิกอีกครั้งเพื่อยืนยันการลบข้อมูลทั้งหมดในเดือนนี้" : "ลบข้อมูลทั้งเดือนนี้ (กด 2 ครั้งเพื่อยืนยัน)"}
-          >
-            <Trash2 className="w-3.5 h-3.5" /> 
-            <span>{confirmDeleteMonth ? 'กดยืนยันลบ!' : 'ลบเดือนนี้'}</span>
-          </button>
-        </div>
-      )}
+      {/* Split button: the common case (expense) is one click; income + month deletion live behind the caret */}
+      <div ref={rootRef} className="relative flex">
+        <button
+          type="button"
+          onClick={() => handleOpenAddModal('', 'expense')}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-accent text-on-accent hover:bg-accent-active"
+        >
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span>เพิ่มรายจ่าย</span>
+        </button>
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label="ตัวเลือกเพิ่มเติม"
+          onClick={() => setOpen(o => !o)}
+          className="px-2 border-l bg-accent text-on-accent hover:bg-accent-active tint-border"
+          style={{ '--tint-border-color': 'rgb(var(--on-accent) / 0.25)' } as React.CSSProperties}
+        >
+          <ChevronDown className={`w-3.5 h-3.5 ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div role="menu" aria-label="ตัวเลือกเพิ่มเติม" className="absolute right-0 top-full mt-1 z-50 w-56 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => { setOpen(false); handleOpenAddModal('', 'income'); }}
+              className={MENU_ITEM}
+            >
+              <PlusCircle className="w-4 h-4 text-income shrink-0" />
+              <span>เพิ่มรายรับ</span>
+            </button>
+            {hasTransactions && (
+              <>
+                <div className="my-1 h-px bg-line" />
+                <button
+                  role="menuitem"
+                  type="button"
+                  onClick={() => { if (confirmDeleteMonth) setOpen(false); handleDeleteMonthClick(); }}
+                  className={`${MENU_ITEM} ${confirmDeleteMonth ? '!bg-danger-active !text-white' : '!text-danger hover:!bg-danger/10'}`}
+                  title="ลบข้อมูลทั้งเดือนนี้ (กด 2 ครั้งเพื่อยืนยัน)"
+                >
+                  <Trash2 className="w-4 h-4 shrink-0" />
+                  <span>{confirmDeleteMonth ? 'กดอีกครั้งเพื่อยืนยันลบ' : 'ลบข้อมูลเดือนนี้'}</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,10 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { CalendarPlus, X, Zap, CheckCircle } from 'lucide-react';
+import { CalendarPlus, X, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useConfirmTimeout } from '@/hooks/useConfirmTimeout';
+import FieldError from '../../shared/FieldError';
 import AnimatedNumber from '../../ui/AnimatedNumber';
 import BatchForm, { BatchFormValues, ExternalFormControls } from './BatchForm';
 import QuickSuggest from './QuickSuggest';
 import CartList from './CartList';
 import { Category, CashflowGroup, DayType, FrequentItem, AllocationType, TransactionPayload } from '../../../types';
+import { tc } from '@/constants/theme';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export interface PendingBatchItem {
   id: string;
@@ -42,6 +46,7 @@ export default function BatchAddModal({
   dayTypeConfig = [],
   cashflowGroups = []
 }: BatchAddModalProps) {
+  const trapRef = useFocusTrap<HTMLDivElement>();
   const [pendingItems, setPendingItems] = useState<PendingBatchItem[]>([]);
   const [editingItem, setEditingItem] = useState<PendingBatchItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -75,16 +80,18 @@ export default function BatchAddModal({
     prevIsOpen.current = isOpen;
   }, [isOpen, defaultType, defaultCategory, categories]);
 
-  // Safe Close Guard: Prompt before discard if items are pending
+  // Safe Close Guard: with items in the cart, the first close (X / Esc) arms an inline warning;
+  // closing again within 6s discards. Same two-step pattern as every delete in the app.
+  const discardGuard = useConfirmTimeout(6000, { escCancels: false });
   const handleSafeClose = useCallback(() => {
-    if (pendingItems.length > 0) {
-      const confirmed = window.confirm(`คุณมี ${pendingItems.length} รายการในตะกร้าที่ยังไม่ได้บันทึก ต้องการทิ้งข้อมูลและปิดหน้าต่างใช่หรือไม่?`);
-      if (!confirmed) return;
-    }
-    setPendingItems([]);
-    setEditingItem(null);
-    onClose();
-  }, [pendingItems.length, onClose]);
+    const close = () => {
+      setPendingItems([]);
+      setEditingItem(null);
+      onClose();
+    };
+    if (pendingItems.length > 0) discardGuard.trigger(close);
+    else close();
+  }, [pendingItems.length, onClose, discardGuard]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -186,8 +193,10 @@ export default function BatchAddModal({
     }
   }, []);
 
+  const [saveError, setSaveError] = useState<string | null>(null);
   const submitBatch = async () => {
     if (pendingItems.length === 0) return;
+    setSaveError(null);
     setIsProcessing(true);
     try {
       const finalItems: TransactionPayload[] = pendingItems.map((item) => ({
@@ -204,8 +213,9 @@ export default function BatchAddModal({
       setPendingItems([]);
       setEditingItem(null);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Batch save error:', err);
+      setSaveError(`บันทึกไม่สำเร็จ${err?.message ? ` (${err.message})` : ''} รายการยังอยู่ในตะกร้า กดบันทึกอีกครั้งได้`);
     } finally {
       setIsProcessing(false);
     }
@@ -225,34 +235,50 @@ export default function BatchAddModal({
   if (!isOpen) return null;
 
   const tokens = {
-    surface: 'bg-[#181818] border-[#3e3e3e]',
-    headerFooter: 'bg-[#1c1c1c] border-[#303030]',
+    surface: 'bg-canvas border-line-strong',
+    headerFooter: 'bg-surface-hover border-line',
   };
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6">
-      <div 
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-label="สรุปค่าใช้จ่ายประจำวัน" tabIndex={-1} 
         className={`rounded-none shadow-2xl shadow-black/80 flex flex-col w-full max-w-[1460px] h-[82vh] min-h-[540px] max-h-[755px] overflow-hidden border ${tokens.surface}`}
-        style={{ borderTop: '4px solid #da291c', borderRadius: 0 }}
+        style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
 
         {/* Modal Header */}
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className="text-base font-bold flex items-center gap-2 text-slate-100">
-            <CalendarPlus className="w-5 h-5 text-[#da291c]" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
+            <CalendarPlus className="w-5 h-5 text-accent" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
           </h3>
           <button 
             type="button" 
             onClick={handleSafeClose} 
-            className="p-1.5 rounded-none transition-colors text-slate-400 hover:bg-[#303030] hover:text-slate-200"
-            title="ปิดหน้าต่าง (Esc)"
+            className="p-1.5 rounded-none transition-colors text-slate-400 hover:bg-surface-elevated hover:text-slate-200"
+            title="ปิดหน้าต่าง"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {discardGuard.confirming && (
+          <div role="alert" className="px-5 py-2.5 border-b tint-danger bg-danger/10 flex items-center gap-3 shrink-0">
+            <AlertTriangle className="w-4 h-4 text-danger shrink-0" />
+            <span className="text-sm text-ink-display">
+              ยังมี <strong className="tabular-nums">{pendingItems.length}</strong> รายการในตะกร้าที่ยังไม่บันทึก
+            </span>
+            <span className="text-xs text-ink-muted">กดปิดหรือ Esc อีกครั้งเพื่อทิ้ง</span>
+            <button type="button" onClick={discardGuard.cancel} className="ml-auto px-3 py-1.5 text-xs font-bold border border-line text-ink-soft hover:text-ink-display hover:border-line-strong">
+              กลับไปแก้ต่อ
+            </button>
+            <button type="button" onClick={handleSafeClose} className="px-3 py-1.5 text-xs font-bold bg-danger-active text-white">
+              ทิ้งและปิด
+            </button>
+          </div>
+        )}
+
         {/* 3-Column Content Area */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-[#181818]">
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-canvas">
 
           <BatchForm
             onSubmitItem={handleAddSubmit}
@@ -303,7 +329,7 @@ export default function BatchAddModal({
                 {totalExpense > 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">รายจ่าย:</span>
-                    <span className="text-base font-black text-[#da291c] tabular-nums">
+                    <span className="text-base font-black text-expense tabular-nums">
                       <AnimatedNumber value={totalExpense} /> ฿
                     </span>
                   </div>
@@ -317,9 +343,9 @@ export default function BatchAddModal({
                   </div>
                 )}
                 {totalExpense > 0 && totalIncome > 0 && (
-                  <div className="flex items-center gap-1 pl-2 border-l border-[#3e3e3e]">
+                  <div className="flex items-center gap-1 pl-2 border-l border-line-strong">
                     <span className="text-[11px] font-medium text-slate-400">สุทธิ:</span>
-                    <span className={`text-base font-black tabular-nums ${netAmount >= 0 ? 'text-emerald-400' : 'text-[#da291c]'}`}>
+                    <span className={`text-base font-black tabular-nums ${netAmount >= 0 ? 'text-emerald-400' : 'text-danger'}`}>
                       {netAmount >= 0 ? '+' : ''}<AnimatedNumber value={netAmount} /> ฿
                     </span>
                   </div>
@@ -327,12 +353,13 @@ export default function BatchAddModal({
               </div>
             )}
           </div>
+          <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
               type="button" 
               onClick={handleSafeClose} 
               disabled={isProcessing}
-              className="flex-1 sm:flex-none px-4 py-2 border rounded-none font-bold text-xs transition-all active:scale-95 disabled:opacity-50 text-slate-300 bg-[#303030]/60 border-[#303030] hover:bg-[#303030]"
+              className="flex-1 sm:flex-none px-4 py-2 border rounded-none font-bold text-xs transition-all active:scale-95 disabled:opacity-50 text-slate-300 bg-surface-elevated/60 border-line hover:bg-surface-elevated"
             >
               ทิ้งข้อมูล
             </button>
@@ -345,6 +372,8 @@ export default function BatchAddModal({
               {isProcessing ? <Zap className="w-4 h-4 animate-pulse" /> : <CheckCircle className="w-4 h-4" />}
               {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมดลง DB'}
             </button>
+          </div>
+          <FieldError id="batch-submit-err" message={saveError} />
           </div>
         </div>
 

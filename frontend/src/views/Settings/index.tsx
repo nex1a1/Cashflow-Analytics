@@ -151,11 +151,11 @@ const SettingsView = memo(function SettingsView({
 
       <div className="flex items-center justify-between mb-4 gap-4">
         <h1 className="text-lg font-black tracking-wide flex items-center gap-2.5 text-slate-100">
-          <Settings2 className="w-5 h-5 text-[#da291c] drop-shadow-[0_0_8px_rgba(218,41,28,0.35)]" /> 
+          <Settings2 className="w-5 h-5 text-accent" /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
-        <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-full bg-[#1c1c1c] border-[#303030] text-[#cbd5e1]">
-          <Info className="w-4 h-4 shrink-0 text-[#da291c]" />
+        <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-full bg-surface border-line text-ink-soft">
+          <Info className="w-4 h-4 shrink-0 text-accent" />
           <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>
       </div>

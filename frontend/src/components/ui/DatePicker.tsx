@@ -55,22 +55,22 @@ function resolveDayStyle({
 }: ResolveDayStyleProps) {
   if (dayIsSelected) {
     if (hasPrev && hasNext) {
-      return { dayStyle: 'bg-[#da291c]/35 text-white font-bold border-y border-[#da291c]/60 shadow-none', isDimmed: false };
+      return { dayStyle: 'bg-accent/35 text-white font-bold border-y border-accent/60 shadow-none', isDimmed: false };
     }
-    return { dayStyle: 'bg-[#da291c] text-white font-black shadow-sm ring-1 ring-[#da291c]', isDimmed: false };
+    return { dayStyle: 'bg-accent text-on-accent font-black shadow-sm ring-1 ring-accent', isDimmed: false };
   }
   if (value === 'WEEKDAY' && draftDatesSize === 0) {
     return weekend
-      ? { dayStyle: 'text-[#555555] opacity-40', isDimmed: true }
+      ? { dayStyle: 'text-ink-muted opacity-40', isDimmed: true }
       : { dayStyle: 'bg-blue-950/50 text-blue-300 font-bold border border-blue-500/40', isDimmed: false };
   }
   if (value === 'WEEKEND' && draftDatesSize === 0) {
     return weekend
       ? { dayStyle: 'bg-amber-950/50 text-amber-300 font-bold border border-amber-500/40', isDimmed: false }
-      : { dayStyle: 'text-[#555555] opacity-40', isDimmed: true };
+      : { dayStyle: 'text-ink-muted opacity-40', isDimmed: true };
   }
   if (isToday) {
-    return { dayStyle: `ring-1 ring-[#da291c] ${textMain} ${hoverDay}`, isDimmed: false };
+    return { dayStyle: `ring-1 ring-accent ${textMain} ${hoverDay}`, isDimmed: false };
   }
   if (weekend) {
     return { dayStyle: `text-red-400 ${hoverDay}`, isDimmed: false };
@@ -100,7 +100,7 @@ function resolveDayTypeObj(y: number, m: number, d: number, dateStr: string, day
 function getDayDataDotColor(val?: string | null) {
   if (val === 'WEEKDAY') return 'bg-blue-400';
   if (val === 'WEEKEND') return 'bg-amber-400';
-  return 'bg-[#da291c]';
+  return 'bg-accent';
 }
 
 interface DatePickerDayCellProps {
@@ -246,27 +246,27 @@ function DatePickerTrigger({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`relative w-full text-left flex items-center border rounded-none bg-[#121212] cursor-pointer select-none transition-colors ${
+        className={`relative w-full text-left flex items-center border rounded-none bg-surface cursor-pointer select-none transition-colors ${
           isActive
-            ? 'border-[#da291c] text-white bg-[#121212]'
-            : 'border-[#303030] text-[#888888] hover:border-[#da291c]/40 hover:bg-[#303030]/20'
+            ? 'border-accent text-white bg-surface'
+            : 'border-line text-ink-body hover:border-accent/40 hover:bg-surface-elevated/20'
         }`}
       >
         <div
           className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
-            isActive ? 'border-[#da291c]/30 text-[#da291c]' : 'border-[#303030] text-[#666666]'
+            isActive ? 'border-accent/30 text-accent' : 'border-line text-ink-muted'
           }`}
         >
           <Calendar className="w-3 h-3" />
         </div>
 
-        <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-7 truncate text-[#cbd5e1]">
+        <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-7 truncate text-slate-300">
           {formatDisplay(value, placeholder)}
         </div>
 
         <div
           className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-            isActive ? 'text-[#da291c]' : 'text-[#666666]'
+            isActive ? 'text-accent' : 'text-ink-muted'
           }`}
         >
           <ChevronDown className="w-3 h-3" />
@@ -274,7 +274,7 @@ function DatePickerTrigger({
 
         {isActive && (
           <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-[#da291c]"></span>
+            <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
           </span>
         )}
       </button>
@@ -287,13 +287,13 @@ function DatePickerTrigger({
       onClick={() => setOpen(!open)}
       className={
         className ||
-        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-[#181818] border-[#3e3e3e] text-white hover:border-[#da291c] focus:border-[#da291c]'
+        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent focus:border-accent'
       }
     >
       <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
         {formatDisplay(value, placeholder)}
       </span>
-      <Calendar className="w-3.5 h-3.5 shrink-0 text-[#888888]" />
+      <Calendar className="w-3.5 h-3.5 shrink-0 text-ink-body" />
     </button>
   );
 }
@@ -600,11 +600,11 @@ export default function DatePicker({
   }, [draftDates]);
 
   /* ── Styles ── */
-  const surface = 'bg-[#1c1c1c]';
-  const border = 'border-[#3e3e3e]';
-  const textMain = 'text-[#e0e0e0]';
-  const textMuted = 'text-[#888888]';
-  const hoverDay = 'hover:bg-[#303030] hover:text-white';
+  const surface = 'bg-surface-hover';
+  const border = 'border-line-strong';
+  const textMain = 'text-ink-display';
+  const textMuted = 'text-ink-body';
+  const hoverDay = 'hover:bg-surface-elevated hover:text-white';
 
   const verticalPositionClass = resolvedVerticalAlign === 'top' 
     ? 'bottom-[calc(100%+6px)]' 
@@ -640,14 +640,14 @@ export default function DatePicker({
           } z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}
         >
           {allowAll && (
-            <div className="flex rounded-none p-0.5 mb-2.5 border bg-[#121212] border-[#303030]">
+            <div className="flex rounded-none p-0.5 mb-2.5 border bg-surface border-line">
               <button
                 type="button"
                 onClick={() => handleModeSelect('ALL')}
-                className={`flex-1 py-1 text-[10px] font-black uppercase transition-all rounded-none ${
+                className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none ${
                   (value === 'ALL' || !value) && draftDates.size === 0
-                    ? 'bg-[#303030] text-white font-extrabold shadow-sm'
-                    : 'text-[#888888] hover:text-slate-200 hover:bg-[#303030]/30'
+                    ? 'bg-surface-elevated text-white font-extrabold shadow-sm'
+                    : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
                 ทุกวัน
@@ -655,10 +655,10 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={() => handleModeSelect('WEEKDAY')}
-                className={`flex-1 py-1 text-[10px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
+                className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
                   value === 'WEEKDAY'
                     ? 'bg-blue-950/60 border border-blue-500/50 text-blue-400 font-extrabold shadow-sm'
-                    : 'text-[#888888] hover:text-slate-200 hover:bg-[#303030]/30'
+                    : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
                 <Briefcase className="w-3 h-3 shrink-0" />
@@ -667,10 +667,10 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={() => handleModeSelect('WEEKEND')}
-                className={`flex-1 py-1 text-[10px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
+                className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
                   value === 'WEEKEND'
                     ? 'bg-amber-950/60 border border-amber-500/50 text-amber-400 font-extrabold shadow-sm'
-                    : 'text-[#888888] hover:text-slate-200 hover:bg-[#303030]/30'
+                    : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
                 <Palmtree className="w-3 h-3 shrink-0" />
@@ -680,7 +680,7 @@ export default function DatePicker({
           )}
 
           {/* ================= HEADER CONTROLS (CLEAN FLAT TITLE + « < > ») ================= */}
-          <div className="flex items-center justify-between mb-2.5 bg-[#141414] px-2 py-1.5 border border-[#303030]">
+          <div className="flex items-center justify-between mb-2.5 bg-surface px-2 py-1.5 border border-line">
             {/* Prev Year ( -1 ปี ) & Prev Month ( -1 เดือน ) */}
             <div className="flex items-center gap-0.5">
               <button
@@ -688,7 +688,7 @@ export default function DatePicker({
                 onClick={prevYear}
                 disabled={isAtMinYear}
                 title={isAtMinYear ? `จำกัดปีขั้นต่ำ ${MIN_YEAR}` : 'ปีก่อนหน้า ( -1 ปี )'}
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
                 <ChevronsLeft className="w-3.5 h-3.5" />
               </button>
@@ -696,7 +696,7 @@ export default function DatePicker({
                 type="button"
                 onClick={prevMonth}
                 title="เดือนก่อนหน้า ( -1 เดือน )"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors cursor-pointer"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -715,7 +715,7 @@ export default function DatePicker({
                 type="button"
                 onClick={nextMonth}
                 title="เดือนถัดไป ( +1 เดือน )"
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors cursor-pointer"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -724,7 +724,7 @@ export default function DatePicker({
                 onClick={nextYear}
                 disabled={isAtMaxYear}
                 title={isAtMaxYear ? `จำกัดปีสูงสุด ${MAX_YEAR}` : 'ปีถัดไป ( +1 ปี )'}
-                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-[#303030] transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
+                className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
                 <ChevronsRight className="w-3.5 h-3.5" />
               </button>
@@ -737,7 +737,7 @@ export default function DatePicker({
               <div
                 key={l}
                 className={`text-center text-[11px] font-bold py-1 ${
-                  i === 0 || i === 6 ? 'text-red-400' : textMuted
+                  i === 0 || i === 6 ? 'text-weekend' : textMuted
                 }`}
               >
                 {l}
@@ -774,19 +774,19 @@ export default function DatePicker({
 
           {/* Smart Grouped Selected Dates Summary Box (Only shown in Multi-Selection Mode) */}
           {isMulti && (
-            <div className="mt-2.5 pt-2 border-t border-[#303030]">
+            <div className="mt-2.5 pt-2 border-t border-line">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="text-[10px] font-black uppercase text-slate-400 font-mono">
+                <span className="text-[11px] font-black uppercase text-slate-400 font-mono">
                   สรุปวันที่เลือก ({draftDates.size} วัน):
                 </span>
-                <span className="text-[9.5px] text-[#666666] font-mono">
+                <span className="text-[11px] text-ink-muted font-mono">
                   คลิก หรือลากค้างเพื่อเลือก
                 </span>
               </div>
 
-              <div className="bg-[#121212] border border-[#303030] p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
+              <div className="bg-surface border border-line p-1.5 flex flex-wrap gap-1 items-center min-h-[32px]">
                 {dateRanges.length === 0 ? (
-                  <span className="text-[10px] text-[#555555] font-mono pl-1">
+                  <span className="text-[11px] text-ink-muted font-mono pl-1">
                     ยังไม่ได้เลือกวัน
                   </span>
                 ) : (
@@ -803,13 +803,13 @@ export default function DatePicker({
                     return (
                       <span
                         key={`${range[0]}_${lastDate}`}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-[#da291c]/15 border border-[#da291c]/40 text-[#da291c] rounded-none"
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent rounded-none"
                       >
                         {label}
                         <button
                           type="button"
                           onClick={() => removeRange(range)}
-                          className="hover:text-white text-[#da291c]/70 transition-colors"
+                          className="hover:text-white text-accent/70 transition-colors"
                           title="ลบช่วงนี้"
                         >
                           <X className="w-3 h-3" />
@@ -823,46 +823,46 @@ export default function DatePicker({
           )}
 
           {/* ================= QUICK PRESETS BAR ================= */}
-          <div className="mt-2 pt-2 border-t border-[#303030] flex items-center gap-1 flex-wrap">
+          <div className="mt-2 pt-2 border-t border-line flex items-center gap-1 flex-wrap">
             <button
               type="button"
               onClick={() => handleApplyPreset(todayStr)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               วันนี้
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(yesterdayStr)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               เมื่อวาน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.startOfMonth)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               ต้นเดือน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.endOfMonth)}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-[#141414] border border-[#303030] text-slate-300 hover:text-white hover:bg-[#252525] hover:border-[#da291c]/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               สิ้นเดือน
             </button>
           </div>
 
           {/* ================= ACTION & CONFIRMATION FOOTER ================= */}
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#303030] gap-1.5">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-line gap-1.5">
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-[11px] font-bold px-2 py-1 rounded-none transition-colors text-[#888888] hover:text-white hover:bg-[#303030] flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-bold px-2 py-1 rounded-none transition-colors text-ink-body hover:text-white hover:bg-surface-elevated flex items-center gap-1 cursor-pointer"
               >
-                <RotateCcw className="w-3 h-3 text-[#666666]" /> ล้าง
+                <RotateCcw className="w-3 h-3 text-ink-muted" /> ล้าง
               </button>
             </div>
 
@@ -871,7 +871,7 @@ export default function DatePicker({
                 type="button"
                 onClick={handleConfirm}
                 disabled={draftDates.size === 0}
-                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-[#da291c] bg-[#da291c] text-white hover:bg-[#b81d13] transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#da291c]"
+                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent"
                 title={draftDates.size === 0 ? 'กรุณาเลือกวันที่ก่อนยืนยัน' : undefined}
               >
                 <Check className="w-3 h-3" />

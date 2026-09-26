@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toCycleKey, cycleRange, cycleLabel, cycleRangeLabel, cycleSpanLabel, convertPeriodMode, matchCyclePreset } from '../payCycle';
+import { toCycleKey, cycleRange, cycleLabel, cycleRangeLabel, cycleSpanLabel, convertPeriodMode, matchCyclePreset, monthsBetween, monthsToPeriod } from '../payCycle';
 import { getFilterLabel } from '../formatters';
 import { isDateInFilter, getPeriodDateRange, generateDatesForPeriod } from '../dateHelpers';
 
@@ -65,5 +65,16 @@ describe('payCycle', () => {
     expect(convertPeriodMode('cycle:ALL', false)).toBe('ALL');
     expect(convertPeriodMode('2026-02,2026-05', true)).toBe('cycle:2026-01,2026-04');
     expect(convertPeriodMode('2026-Q1', true)).toMatch(/^cycle:\d{4}-\d{2}$/);
+  });
+});
+
+describe('month selection → period', () => {
+  it('expands a span across a year boundary', () => {
+    expect(monthsBetween('2026-02', '2025-11')).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
+  });
+  it('collapses single / contiguous / scattered picks', () => {
+    expect(monthsToPeriod(['2026-03'])).toBe('2026-03');
+    expect(monthsToPeriod(['2026-01', '2025-12', '2026-02'])).toBe('2025-12_2026-02');
+    expect(monthsToPeriod(['2026-04', '2026-01'])).toBe('2026-01,2026-04');
   });
 });

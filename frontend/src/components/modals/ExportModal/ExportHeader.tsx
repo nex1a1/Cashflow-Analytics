@@ -5,10 +5,10 @@ import { ExportHeaderProps } from './types';
 
 export default function ExportHeader({ onClose, isExporting }: ExportHeaderProps) {
   return (
-    <div className="px-6 py-4 border-b border-[#303030] bg-[#121212] flex justify-between items-center shrink-0">
+    <div className="px-6 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
       <div className="flex items-center gap-3">
-        <div className="p-2 border border-[#da291c]/30 bg-[#da291c]/10 rounded-none shrink-0">
-          <FileDown className="w-5 h-5 text-[#da291c]" />
+        <div className="p-2 border border-accent/30 bg-accent/10 rounded-none shrink-0">
+          <FileDown className="w-5 h-5 text-accent" />
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -29,8 +29,8 @@ export default function ExportHeader({ onClose, isExporting }: ExportHeaderProps
         type="button"
         onClick={onClose}
         disabled={isExporting}
-        className="p-1.5 text-neutral-400 hover:text-white hover:bg-[#252525] border border-transparent hover:border-[#383838] transition-colors disabled:opacity-30 rounded-none"
-        title="ปิดหน้าต่าง (Esc)"
+        className="p-1.5 text-neutral-400 hover:text-white hover:bg-surface-elevated border border-transparent hover:border-line-strong transition-colors disabled:opacity-30 rounded-none"
+        title="ปิดหน้าต่าง"
       >
         <X className="w-5 h-5" />
       </button>

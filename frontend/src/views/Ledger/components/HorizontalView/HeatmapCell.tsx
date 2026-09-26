@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { hexToRgb, formatMoney } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
+import { tc } from '@/constants/theme';
 interface HeatmapCellProps {
   idx: number;
   date: string;
@@ -12,14 +13,32 @@ interface HeatmapCellProps {
   border: string;
   ROW_H: number | string;
   maxCellValue: number;
-  handleCellHover: (e: React.MouseEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
+  handleCellHover: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
+  handleCellLeave: () => void;
   formatMoney: (val: number | string) => string;
 }
+
+// Arrow keys jump to the nearest focusable data cell in that direction (empty cells are skipped).
+const moveFocus = (e: React.KeyboardEvent<HTMLTableCellElement>) => {
+  const dir = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  const td = e.currentTarget;
+  const rows = Array.from(td.closest('tbody')?.rows ?? []);
+  let r = rows.indexOf(td.parentElement as HTMLTableRowElement);
+  let c = td.cellIndex;
+  for (;;) {
+    r += dir[0]; c += dir[1];
+    const next = rows[r]?.cells[c];
+    if (!next) return;
+    if (next.tabIndex === 0) { next.focus(); next.scrollIntoView({ block: 'nearest', inline: 'nearest' }); return; }
+  }
+};
 
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity,
   border, ROW_H, maxCellValue,
-  handleCellHover, formatMoney
+  handleCellHover, handleCellLeave, formatMoney
 }: HeatmapCellProps) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
@@ -42,6 +61,11 @@ const HeatmapCell = memo(function HeatmapCell({
         '--cat-color-rgb': hexToRgb(cat.color || '#000000'),
       } as React.CSSProperties}
       onMouseEnter={(e) => handleCellHover(e, date, cat.id, cat, items)}
+      tabIndex={hasData ? 0 : undefined}
+      aria-label={hasData ? `${date} ${cat.name} ฿${formatMoney(cellSum)} (${items.length} รายการ)` : undefined}
+      onFocus={hasData ? (e) => handleCellHover(e, date, cat.id, cat, items) : undefined}
+      onBlur={hasData ? handleCellLeave : undefined}
+      onKeyDown={hasData ? moveFocus : undefined}
     >
       {hasData ? (
         <div style={{
@@ -61,7 +85,7 @@ const HeatmapCell = memo(function HeatmapCell({
               top: 0,
               left: '50%',
               transform: 'translateX(-50%)',
-              fontSize: '9px',
+              fontSize: '11px',
               fontWeight: 900,
               lineHeight: 1,
               color: cat.color || undefined,
@@ -118,7 +142,7 @@ const HeatmapCell = memo(function HeatmapCell({
           }} />
         </div>
       ) : (
-        <span style={{ fontSize: 10, opacity: 0.15, color: '#94a3b8', lineHeight: 1 }}>·</span>
+        <span style={{ fontSize: 11, opacity: 0.15, color: tc('ink-body'), lineHeight: 1 }}>·</span>
       )}
     </td>
   );

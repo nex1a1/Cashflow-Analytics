@@ -3,16 +3,12 @@ import React from 'react';
 const SKELETON_CARD_KEYS = ['card-income', 'card-expense', 'card-savings', 'card-burn'];
 
 export default function DashboardSkeleton() {
-  const shimmer = 'bg-[#303030]/50 animate-pulse';
-  const surface = 'bg-[#1c1c1c]';
-  const border = 'border-[#303030]';
+  const shimmer = 'bg-surface-elevated/50 animate-pulse';
+  const surface = 'bg-surface-hover';
+  const border = 'border-line';
 
   return (
     <div className="w-full pb-10 flex flex-col gap-4 animate-in fade-in duration-300">
-      
-      {/* Smart Insight Header Skeleton */}
-      <div className={`h-12 w-full rounded-none border ${border} ${shimmer}`} />
-
       {/* Summary Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {SKELETON_CARD_KEYS.map((cardKey) => (

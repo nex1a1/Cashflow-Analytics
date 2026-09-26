@@ -35,14 +35,9 @@ export const StrategicFoodCard = memo(({
   return (
     <StrategicCardShell
       icon={UtensilsCrossed}
-      borderColorClass={isOver ? 'border-l-[#da291c]' : 'border-l-orange-500'}
-      hoverBgClass="hover:bg-[#1c1c1c]"
+      borderColorClass={isOver ? 'border-l-danger' : 'border-l-orange-500'}
+      hoverBgClass="hover:bg-surface-hover"
       label="ค่าอาหาร & สัดส่วน"
-      badge={
-        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${foodStatus.cls}`}>
-          {pctOfExpense.toFixed(1)}% จ่ายรวม
-        </span>
-      }
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์สัดส่วน</span>
@@ -59,18 +54,18 @@ export const StrategicFoodCard = memo(({
       overlayBody={(
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {foodTotal === 0 ? (
-            <div className="col-span-2 bg-[#181818] p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
+            <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
               ไม่มีข้อมูลค่าอาหารในงวดนี้
             </div>
           ) : (
           <>
-          <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <UtensilsCrossed size={13} className="shrink-0 text-orange-400" /> รวมค่าอาหาร
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(foodTotal)}</span>
           </div>
-          <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนงบ
             </span>
@@ -78,7 +73,7 @@ export const StrategicFoodCard = memo(({
               {pctOfExpense.toFixed(1)}% <span className="text-[11px] text-neutral-400 font-normal">({pctOfIncome.toFixed(1)}% รับ)</span>
             </span>
           </div>
-          <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Briefcase size={13} className="shrink-0 text-neutral-400" /> วันทำงาน vs หยุด
             </span>
@@ -86,7 +81,7 @@ export const StrategicFoodCard = memo(({
               ฿{formatMoney(foodWorkdayAvg)} <span className="text-neutral-500 font-normal">/</span> ฿{formatMoney(foodHolidayAvg)}
             </span>
           </div>
-          <div className="bg-[#181818] p-2 flex flex-col justify-center text-left">
+          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Trophy size={13} className="shrink-0 text-amber-400" /> พีคสูงสุดใน 1 วัน
             </span>
@@ -102,7 +97,7 @@ export const StrategicFoodCard = memo(({
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-[#da291c]' : 'text-orange-400'}`}>
+            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-orange-400'}`}>
               ฿{formatMoney(foodDailyAvg)}
               <span className="text-xs text-neutral-400 font-normal ml-1">/วัน</span>
             </div>
@@ -112,7 +107,7 @@ export const StrategicFoodCard = memo(({
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
             <div
-              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-[#da291c]' : 'bg-orange-400'}`}
+              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-danger' : 'bg-orange-400'}`}
               style={{ width: `${barWidth}%` }}
             />
           </div>

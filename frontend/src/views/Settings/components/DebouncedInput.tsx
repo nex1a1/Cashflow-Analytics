@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
+import FieldError from '@/components/shared/FieldError';
 
 export interface DebouncedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onDebouncedChange: (value: string) => void;
   debounceMs?: number;
   isNew?: boolean;
+  /** blank values are not saved; this message shows under the field instead, and blur restores the saved value */
+  requiredMessage?: string;
 }
 
 export default function DebouncedInput({
@@ -12,6 +15,7 @@ export default function DebouncedInput({
   onDebouncedChange,
   debounceMs = 400,
   isNew = false,
+  requiredMessage,
   className,
   placeholder,
   ...rest
@@ -21,6 +25,9 @@ export default function DebouncedInput({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestValueRef = useRef<string>(initialValue);
   latestValueRef.current = value;
+  const errorId = useId();
+  const isBlank = (v: string) => !!requiredMessage && v.trim() === '';
+  const error = isBlank(value) ? requiredMessage : null;
 
   // Sync external value changes
   useEffect(() => {
@@ -40,6 +47,7 @@ export default function DebouncedInput({
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    if (isBlank(latestValueRef.current)) return;
     if (latestValueRef.current !== initialValue) {
       onDebouncedChange(latestValueRef.current);
     }
@@ -53,6 +61,7 @@ export default function DebouncedInput({
       clearTimeout(timerRef.current);
     }
 
+    if (isBlank(newVal)) return;
     timerRef.current = setTimeout(() => {
       onDebouncedChange(newVal);
       timerRef.current = null;
@@ -61,6 +70,7 @@ export default function DebouncedInput({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     flush();
+    if (isBlank(latestValueRef.current)) setValue(initialValue);
     rest.onBlur?.(e);
   };
 
@@ -80,7 +90,7 @@ export default function DebouncedInput({
     };
   }, []);
 
-  return (
+  const input = (
     <input
       ref={inputRef}
       type="text"
@@ -88,9 +98,19 @@ export default function DebouncedInput({
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={className}
+      className={`${className ?? ''} ${requiredMessage ? 'w-full' : ''} ${error ? 'tint-danger' : ''}`}
       placeholder={placeholder}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? errorId : undefined}
       {...rest}
     />
+  );
+
+  if (!requiredMessage) return input;
+  return (
+    <div className="flex-1 min-w-0">
+      {input}
+      <FieldError id={errorId} message={error} />
+    </div>
   );
 }

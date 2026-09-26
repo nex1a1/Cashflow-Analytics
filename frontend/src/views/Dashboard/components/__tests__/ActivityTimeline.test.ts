@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { tc } from '@/constants/theme';
 import {
   getExpenseLevel,
   getHeatmapColor,
   getLocalTodayString,
-  FERRARI_HEATMAP_SHADES
+  HEATMAP_SHADES
 } from '../ActivityTimeline';
 
 describe('ActivityTimeline helpers and thermal engine', () => {
@@ -28,15 +29,15 @@ describe('ActivityTimeline helpers and thermal engine', () => {
   });
 
   describe('getHeatmapColor', () => {
-    it('returns canvas near-black #181818 for level 0', () => {
-      expect(getHeatmapColor(0)).toBe('#181818');
+    it('returns canvas for level 0', () => {
+      expect(getHeatmapColor(0)).toBe(tc('canvas'));
     });
 
     it('returns corresponding Ferrari thermal shades for levels 1 to 6', () => {
-      expect(getHeatmapColor(1)).toBe(FERRARI_HEATMAP_SHADES[0]);
-      expect(getHeatmapColor(3)).toBe(FERRARI_HEATMAP_SHADES[2]);
-      expect(getHeatmapColor(6)).toBe(FERRARI_HEATMAP_SHADES[5]);
-      expect(getHeatmapColor(6)).toBe('#da291c'); // Rosso Corsa
+      expect(getHeatmapColor(1)).toBe(HEATMAP_SHADES[0]);
+      expect(getHeatmapColor(3)).toBe(HEATMAP_SHADES[2]);
+      expect(getHeatmapColor(6)).toBe(HEATMAP_SHADES[5]);
+      expect(getHeatmapColor(6)).toBe(tc('expense'));
     });
   });
 
@@ -54,10 +55,10 @@ describe('ActivityTimeline helpers and thermal engine', () => {
     });
   });
 
-  describe('FERRARI_HEATMAP_SHADES', () => {
-    it('has exactly 6 progressive thermal levels ending in Rosso Corsa', () => {
-      expect(FERRARI_HEATMAP_SHADES).toHaveLength(6);
-      expect(FERRARI_HEATMAP_SHADES[5]).toBe('#da291c');
+  describe('HEATMAP_SHADES', () => {
+    it('has exactly 6 progressive thermal levels ending in the expense color', () => {
+      expect(HEATMAP_SHADES).toHaveLength(6);
+      expect(HEATMAP_SHADES[5]).toBe(tc('expense'));
     });
   });
 });

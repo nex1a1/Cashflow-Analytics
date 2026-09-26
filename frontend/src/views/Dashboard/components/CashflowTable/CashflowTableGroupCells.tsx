@@ -5,6 +5,7 @@ import { calculateAdjustedGroupValue, getHighlightBgColor, getSubHighlightBgColo
 import { GROUP_COL_CLS, CAT_COL_CLS } from './constants';
 import { GroupCellsProps } from './types';
 
+import { tc, readable } from '@/constants/theme';
 export function CashflowTableGroupCells({
   g, isLastGroup, isIncome, expandedGroups, getActiveCatsForGroup,
   row, excludedGroups, excludedCategories, categories,
@@ -23,9 +24,9 @@ export function CashflowTableGroupCells({
     groupId: g.id, row, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics,
   });
 
-  const defaultColor = isIncome ? '#34d399' : '#cbd5e1';
-  const groupBg = isCellFaded ? '#0d0d0d' : getHighlightBgColor(g, isColHovered, isRowHovered, dm);
-  const groupTextColor = isCellFaded ? undefined : (g.color || defaultColor);
+  const defaultColor = isIncome ? tc('income') : tc('gray-300');
+  const groupBg = isCellFaded ? tc('canvas') : getHighlightBgColor(g, isColHovered, isRowHovered, dm);
+  const groupTextColor = isCellFaded ? undefined : readable(g.color || defaultColor);
   const boundaryCls = isLastGroup && !isExpanded ? boundaryBorder : '';
 
   return (
@@ -47,14 +48,14 @@ export function CashflowTableGroupCells({
         const isCatExcluded = excludedCategories?.has(c.id);
         const isCatFaded = isCellFaded || isCatExcluded;
         const catBoundaryCls = cIdx === cats.length - 1 && isLastGroup ? boundaryBorder : thinBorder;
-        const catBg = isCatFaded ? '#0d0d0d' : getSubHighlightBgColor(g, c.color, isCatColHovered, isRowHovered, dm);
+        const catBg = isCatFaded ? tc('canvas') : getSubHighlightBgColor(g, c.color, isCatColHovered, isRowHovered, dm);
 
         return (
           <td
             key={c.id}
             onMouseEnter={() => setHoveredCol(catColId)}
             onMouseLeave={() => setHoveredCol(null)}
-            className={`px-2 py-2 text-[10px] tabular-nums font-black truncate border-l border-b transition-colors ${catBoundaryCls} ${CAT_COL_CLS} ${
+            className={`px-2 py-2 text-[11px] tabular-nums font-black truncate border-l border-b transition-colors ${catBoundaryCls} ${CAT_COL_CLS} ${
               isCatFaded ? 'opacity-40 select-none text-neutral-400 line-through' : ''
             }`}
             style={{ color: isCatFaded ? undefined : (c.color ?? undefined), backgroundColor: catBg }}

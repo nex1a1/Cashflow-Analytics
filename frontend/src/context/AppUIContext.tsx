@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { AppUIContextValue, InsightsMode, QuickAddFormData } from '../types';
+import { AppUIContextValue, QuickAddFormData } from '../types';
 import { STORAGE_KEYS } from '../constants';
 
 const AppUIContext = createContext<AppUIContextValue | undefined>(undefined);
@@ -9,19 +9,16 @@ export interface AppUIProviderProps {
 }
 
 export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
-  // Navigation
-  // 'dashboard' and 'calendar' were separate top-level tabs before they merged into the
-  // single 'insights' tab with an analysis/calendar mode switch — migrate stale values from
-  // localStorage instead of leaving returning users on a tab id that no longer exists.
+  // Navigation — tabs: insights | calendar | ledger | settings.
+  // Calendar was briefly a mode inside 'insights' (INSIGHTS_MODE); fold that legacy
+  // value back into a real tab id so returning users land where they left off.
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
-    return stored === 'dashboard' || stored === 'calendar' || stored === 'items' ? 'insights' : (stored || 'insights');
-  });
-  const [insightsMode, setInsightsMode] = useState<InsightsMode>(() => {
-    const storedMode = localStorage.getItem(STORAGE_KEYS.INSIGHTS_MODE);
-    if (storedMode === 'analysis' || storedMode === 'calendar') return storedMode;
-    const storedTab = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
-    return storedTab === 'calendar' ? 'calendar' : 'analysis';
+    const legacyMode = localStorage.getItem(STORAGE_KEYS.INSIGHTS_MODE);
+    localStorage.removeItem(STORAGE_KEYS.INSIGHTS_MODE);
+    if (stored === 'insights' && legacyMode === 'calendar') return 'calendar';
+    if (stored === 'dashboard' || stored === 'items' || !stored) return 'insights';
+    return stored;
   });
 
   // Modals
@@ -48,11 +45,6 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
     localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, activeTab);
   }, [activeTab]);
 
-  // Sync insightsMode to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INSIGHTS_MODE, insightsMode);
-  }, [insightsMode]);
-
   const handleOpenAddModal = useCallback((dateStr?: string, type: string = 'expense') => {
     const formattedDate = dateStr || new Date().toISOString().split('T')[0];
     setAddForm(prev => ({
@@ -69,8 +61,6 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   const value: AppUIContextValue = {
     activeTab,
     setActiveTab,
-    insightsMode,
-    setInsightsMode,
     hideFixedExpenses,
     setHideFixedExpenses,
     hideWantExpenses,

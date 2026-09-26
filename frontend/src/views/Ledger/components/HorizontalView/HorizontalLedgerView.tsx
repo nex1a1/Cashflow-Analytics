@@ -12,6 +12,7 @@ import { TransactionDisplay, Category, DayType } from '../../../../types';
 import { THAI_MONTHS } from '../../../../utils/formatters';
 import { parseDateStrToObj } from '../../../../utils/dateHelpers';
 
+import { tc, FONT_MONO, readable } from '@/constants/theme';
 const parseYearMonth = (dateStr: string) => {
   if (!dateStr) return { year: 0, monthIdx: 0 };
   const dateObj = parseDateStrToObj(dateStr);
@@ -67,7 +68,7 @@ export default function HorizontalLedgerView({
   } = useHeatmapEngine(displayTransactions, categories, allDates, filterOptions);
 
   // ─── 2. Event Handlers ───
-  const handleCellHover = useCallback((e: React.MouseEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => {
+  const handleCellHover = useCallback((e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => {
     if (!items || items.length === 0) {
       setTooltip(null);
       return;
@@ -90,24 +91,24 @@ export default function HorizontalLedgerView({
   // ─── 3. Styles ───
   const border  = 'rgba(255,255,255,0.06)';
   const border2 = 'rgba(255,255,255,0.12)';
-  const bgBase  = '#181818';
-  const bgHead  = '#1c1c1c';
-  const bgFoot  = '#121212';
+  const bgBase  = tc('canvas');
+  const bgHead  = tc('surface-hover');
+  const bgFoot  = tc('surface');
   const ROW_H   = '34px';
 
   if (expenseTransactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 px-4">
-        <div className="p-6 rounded-none border-2 border-[#3e3e3e] mb-6 bg-[#181818] shadow-[0_0_15px_rgba(0,0,0,0.3)]">
-          <Inbox className="w-16 h-16 text-[#666666]" />
+        <div className="p-6 rounded-none border-2 border-line-strong mb-6 bg-canvas">
+          <Inbox className="w-16 h-16 text-ink-muted" />
         </div>
-        <p className="text-lg font-black text-[#cbd5e1]">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className="text-sm mt-2 mb-4 text-[#888888]">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className="text-lg font-black text-slate-300">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
+        <p className="text-sm mt-2 mb-4 text-ink-body">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
         {isFilterActive && clearFilters && (
           <button
             type="button"
             onClick={clearFilters}
-            className="px-4 py-1.5 rounded-none text-xs font-bold border bg-[#303030]/60 border-[#3e3e3e] text-[#cbd5e1] hover:bg-[#303030] hover:text-white cursor-pointer transition-colors font-mono"
+            className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white cursor-pointer transition-colors font-mono"
           >
             ล้างตัวกรองตาราง
           </button>
@@ -169,9 +170,9 @@ export default function HorizontalLedgerView({
                           left: 0,
                           zIndex: 20,
                           background: isNewYear 
-                            ? 'linear-gradient(90deg, rgba(218, 41, 28, 0.2) 0%, rgba(24, 24, 24, 0.95) 100%)' 
+                            ? `linear-gradient(90deg, ${tc('accent', 0.2)} 0%, ${tc('canvas', 0.95)} 100%)` 
                             : 'linear-gradient(90deg, rgba(48, 48, 48, 0.4) 0%, rgba(24, 24, 24, 0.95) 100%)',
-                          borderTop: isNewYear ? '1.5px solid #da291c' : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderTop: isNewYear ? `1.5px solid ${tc('accent')}` : '1px solid rgba(255, 255, 255, 0.08)',
                           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                           padding: '6px 10px',
                           textAlign: 'left',
@@ -180,13 +181,13 @@ export default function HorizontalLedgerView({
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{
-                            background: isNewYear ? 'rgba(218, 41, 28, 0.2)' : 'rgba(100, 116, 139, 0.15)',
-                            border: isNewYear ? '1px solid rgba(218, 41, 28, 0.4)' : '1px solid rgba(100, 116, 139, 0.25)',
-                            color: isNewYear ? '#da291c' : '#888888',
-                            fontSize: '9px',
+                            background: isNewYear ? tc('accent', 0.2) : 'rgba(100, 116, 139, 0.15)',
+                            border: isNewYear ? `1px solid ${tc('accent', 0.4)}` : '1px solid rgba(100, 116, 139, 0.25)',
+                            color: isNewYear ? tc('accent') : tc('ink-body'),
+                            fontSize: '11px',
                             fontWeight: 900,
                             padding: '1px 5px',
-                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Bai Jamjuree', monospace",
+                            fontFamily: FONT_MONO,
                             letterSpacing: '0.05em',
                           }}>
                             {isNewYear ? 'YEAR' : 'MONTH'}
@@ -194,9 +195,9 @@ export default function HorizontalLedgerView({
                           <span style={{
                             fontSize: '12px',
                             fontWeight: 900,
-                            color: isNewYear ? '#da291c' : '#cbd5e1',
+                            color: isNewYear ? tc('accent') : tc('gray-300'),
                             letterSpacing: '0.02em',
-                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Bai Jamjuree', monospace",
+                            fontFamily: FONT_MONO,
                           }}>
                             {THAI_MONTHS[currentYM.monthIdx]} {currentYM.year}
                           </span>
@@ -232,7 +233,7 @@ export default function HorizontalLedgerView({
                 textAlign: 'center',
                 fontSize: 12,
                 fontWeight: 900,
-                color: '#888888',
+                color: tc('ink-body'),
               }}>รวม</td>
 
               {activeCategories.map((cat, idx) => (
@@ -255,13 +256,12 @@ export default function HorizontalLedgerView({
                       width: '100%',
                       whiteSpace: 'nowrap',
                     }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: cat.color || undefined, opacity: 0.7 }}>฿</span>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: readable(cat.color) }}>฿</span>
                       <span style={{
                         fontSize: '13px',
                         fontWeight: 900,
                         fontVariantNumeric: 'tabular-nums',
-                        color: cat.color || undefined,
-                        filter: 'brightness(1.4)',
+                        color: readable(cat.color),
                       }}>
                         {formatMoney(categoryTotal[cat.name])}
                       </span>
@@ -284,12 +284,12 @@ export default function HorizontalLedgerView({
                   alignItems: 'baseline',
                   width: '100%',
                 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#f87171', opacity: 0.8 }}>฿</span>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: tc('expense') }}>฿</span>
                   <span style={{
                     fontSize: '15px',
                     fontWeight: 900,
                     fontVariantNumeric: 'tabular-nums',
-                    color: '#f87171',
+                    color: tc('expense'),
                   }}>
                     {formatMoney(grandTotal)}
                   </span>

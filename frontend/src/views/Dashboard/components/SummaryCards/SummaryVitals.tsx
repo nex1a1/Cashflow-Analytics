@@ -24,12 +24,12 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
   const expensePercent = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : 0;
 
   const getSavingsGradeInfo = (rate: number) => {
-    if (rate >= 30) return { grade: 'A+', label: 'ELITE',     cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-    if (rate >= 20) return { grade: 'A',  label: 'STRONG',    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-    if (rate >= 15) return { grade: 'B',  label: 'GOOD',      cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-    if (rate >= 10) return { grade: 'C',  label: 'FAIR',      cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-    if (rate >= 5)  return { grade: 'D',  label: 'WEAK',      cls: 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/20' };
-    return           { grade: 'F',  label: 'CRITICAL',  cls: 'bg-[#da291c]/10 text-[#da291c] border-[#da291c]/20' };
+    if (rate >= 30) return { grade: 'A+', label: 'ดีเยี่ยม',   cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+    if (rate >= 20) return { grade: 'A',  label: 'ดีมาก',    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+    if (rate >= 15) return { grade: 'B',  label: 'ดี',       cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
+    if (rate >= 10) return { grade: 'C',  label: 'พอใช้',    cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
+    if (rate >= 5)  return { grade: 'D',  label: 'อ่อน',     cls: 'bg-accent/10 text-accent border-accent/20' };
+    return           { grade: 'F',  label: 'วิกฤต',    cls: 'bg-danger/10 text-danger border-danger/20' };
   };
 
   const gradeInfo = getSavingsGradeInfo(savingsRate);
@@ -43,17 +43,17 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
 
   return (
     <div className="flex flex-col h-full">
-      <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก (Core Vitals)" />
-      <div className="flex flex-col gap-[1px] bg-[#2d2d2d] flex-1">
+      <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" />
+      <div className="flex flex-col gap-[1px] bg-surface-elevated flex-1">
 
         {/* INCOME CELL */}
-        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-emerald-500 bg-[#181818] hover:bg-[#1d1d1d] transition-none flex-1">
+        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-emerald-500 bg-canvas hover:bg-surface-hover transition-none flex-1">
           <div className="absolute -right-2 -bottom-2 opacity-[0.03] pointer-events-none w-16 h-16">
             <img src={sharkLogo} alt="" className="w-full h-full object-contain filter grayscale opacity-40" />
           </div>
 
           <div className="flex justify-between items-center mb-1 gap-2 min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
+            <span className="text-[11px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
               รายรับรวม
             </span>
           </div>
@@ -72,13 +72,13 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             {showSkeleton ? (
               <Shimmer className="h-4 w-24" />
             ) : (
-              <span className="text-[10px] font-bold text-neutral-400 tabular-nums truncate">
+              <span className="text-[11px] font-bold text-neutral-400 tabular-nums truncate">
                 เฉลี่ย ฿{formatMoney(avgIncomePerDay)} / วัน
               </span>
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[10px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${incomeDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${incomeDelta.cls}`}
                 title={incomeDelta.tooltipText}
               >
                 {incomeDelta.text}
@@ -88,17 +88,17 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
         </div>
 
         {/* EXPENSE CELL */}
-        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-[#da291c] bg-[#181818] hover:bg-[#1d1d1d] transition-none flex-1">
+        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-accent bg-canvas hover:bg-surface-hover transition-none flex-1">
           <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
             <Wallet size={72} />
           </div>
 
           <div className="flex justify-between items-center mb-1 gap-2 min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
+            <span className="text-[11px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0">
               รายจ่ายรวม
             </span>
             {!showSkeleton && (
-              <div className="px-1.5 py-0.5 border border-[#da291c]/20 bg-[#da291c]/10 text-[#da291c] rounded-none text-[10px] font-black uppercase tracking-widest shrink-0">
+              <div className="px-1.5 py-0.5 border border-expense/20 bg-expense/10 text-expense rounded-none text-[11px] font-black uppercase tracking-widest shrink-0">
                 ใช้ไป {expensePercent}%
               </div>
             )}
@@ -108,7 +108,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             {showSkeleton ? (
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
-              <div className="text-2xl xl:text-3xl font-black text-[#da291c] tabular-nums tracking-tight leading-none">
+              <div className="text-2xl xl:text-3xl font-black text-expense tabular-nums tracking-tight leading-none">
                 <AnimatedNumber value={totalExpense} />
               </div>
             )}
@@ -118,13 +118,13 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             {showSkeleton ? (
               <Shimmer className="h-4 w-24" />
             ) : (
-              <span className="text-[10px] font-bold text-neutral-400 tabular-nums truncate">
+              <span className="text-[11px] font-bold text-neutral-400 tabular-nums truncate">
                 เฉลี่ย ฿{formatMoney(avgExpensePerDay)} / วัน
               </span>
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[10px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${expenseDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${expenseDelta.cls}`}
                 title={expenseDelta.tooltipText}
               >
                 {expenseDelta.text}
@@ -134,19 +134,19 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
         </div>
 
         {/* CASHFLOW CELL */}
-        <div className={`group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l bg-[#181818] hover:bg-[#1d1d1d] transition-none flex-1 ${
-          netCashflow >= 0 ? 'border-l-emerald-500' : 'border-l-[#da291c]'
+        <div className={`group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l bg-canvas hover:bg-surface-hover transition-none flex-1 ${
+          netCashflow >= 0 ? 'border-l-emerald-500' : 'border-l-danger'
         }`}>
           <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
             {netCashflow >= 0 ? <Navigation size={72} /> : <TrendingDown size={72} />}
           </div>
 
           <div className="flex justify-between items-start mb-1 gap-2 min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0 pt-0.5">
+            <span className="text-[11px] font-black uppercase tracking-[0.15em] text-neutral-400 truncate min-w-0 pt-0.5">
               กระแสเงินสดสุทธิ
             </span>
             {!showSkeleton && (
-              <div className={`px-1.5 py-0.5 border flex items-center gap-1.5 rounded-none text-[10px] font-black uppercase tracking-widest shrink-0 ${gradeInfo.cls}`}>
+              <div className={`px-1.5 py-0.5 border flex items-center gap-1.5 rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${gradeInfo.cls}`}>
                 <span>ออม {savingsRate}%</span>
                 <span className="opacity-30">|</span>
                 <span className="font-extrabold">{gradeInfo.grade} {gradeInfo.label}</span>
@@ -159,7 +159,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
               <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                netCashflow >= 0 ? 'text-emerald-400' : 'text-[#da291c]'
+                netCashflow >= 0 ? 'text-emerald-400' : 'text-danger'
               }`}>
                 <AnimatedNumber value={netCashflow} />
               </div>
@@ -170,15 +170,15 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             {showSkeleton ? (
               <Shimmer className="h-4 w-12" />
             ) : (
-              <span className={`text-[10px] font-black tracking-[0.12em] uppercase truncate ${
-                netCashflow >= 0 ? 'text-emerald-400' : 'text-[#da291c]'
+              <span className={`text-[11px] font-black tracking-[0.12em] uppercase truncate ${
+                netCashflow >= 0 ? 'text-emerald-400' : 'text-danger'
               }`}>
                 {netCashflow >= 0 ? 'Surplus (ส่วนเกิน)' : 'Deficit (ติดลบ)'}
               </span>
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[10px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${netDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${netDelta.cls}`}
                 title={netDelta.tooltipText}
               >
                 {netDelta.text}

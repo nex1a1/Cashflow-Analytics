@@ -1,11 +1,12 @@
 // src/utils/chartOptions.ts
 import { formatMoney } from './formatters';
 
+import { tc } from '@/constants/theme';
 const getTooltipOptions = (isDarkMode: boolean) => ({
-  backgroundColor: '#121212',
+  backgroundColor: tc('surface'),
   titleColor:      '#ffffff',
-  bodyColor:       '#cbd5e1',
-  borderColor:     '#303030',
+  bodyColor:       tc('gray-300'),
+  borderColor:     tc('line'),
   borderWidth: 1,
   padding: 12,
   cornerRadius: 0,
@@ -21,8 +22,8 @@ const formatTickValue = (v: number): string => {
 const getScaleOptions = (isDarkMode: boolean, beginAtZero = false, yType = 'linear', autoSkip = true) => ({
   x: {
     ticks: {
-      color: '#94a3b8',
-      font: { size: 9 },
+      color: tc('ink-body'),
+      font: { size: 11 },
       maxRotation: 90,
       minRotation: 0,
       autoSkip: autoSkip,
@@ -40,8 +41,8 @@ const getScaleOptions = (isDarkMode: boolean, beginAtZero = false, yType = 'line
     ...(beginAtZero && { beginAtZero: true }),
     ...(yType === 'linear' && { grace: '15%' }),
     ticks: {
-      color: '#94a3b8',
-      font: { size: 10, weight: '500' },
+      color: tc('ink-body'),
+      font: { size: 11, weight: '500' },
       padding: 8,
       maxTicksLimit: 12,
       callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,
@@ -71,7 +72,7 @@ export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', auto
       grace: '20%',
       ticks: {
         color: secondaryAxisColor,
-        font: { size: 10, weight: '500' },
+        font: { size: 11, weight: '500' },
         padding: 8,
         maxTicksLimit: 8,
         callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,

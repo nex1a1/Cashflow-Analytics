@@ -71,7 +71,7 @@ describe('formatters utility', () => {
 
   describe('getFilterLabel', () => {
     it('formats special period identifiers', () => {
-      expect(getFilterLabel('ALL')).toBe('ดูภาพรวมทั้งหมด (All Time)');
+      expect(getFilterLabel('ALL')).toBe('ดูภาพรวมทั้งหมด');
       expect(getFilterLabel('2026')).toBe('ปี 2026');
       expect(getFilterLabel('2026-Q1')).toBe('ไตรมาส 1 (Q1/2026)');
       expect(getFilterLabel('2026-H1')).toBe('ครึ่งปีแรก (H1/2026)');

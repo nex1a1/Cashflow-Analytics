@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { formatMoney, formatAmount } from '@/utils/formatters';
 
+import { tc, FONT_MONO } from '@/constants/theme';
 interface TrajectoryChartProps {
   currentDay: number;
   lastDayOfMonth: number;
@@ -204,23 +205,23 @@ export const ForecastingTrajectoryChart = memo(({
   }
 
   return (
-    <div className="relative w-full bg-[#121212] border-b border-[#2d2d2d] select-none">
+    <div className="relative w-full bg-surface border-b border-line select-none">
       {/* Trajectory Legend — colors are decoded here once; the numbers themselves live on the chart's own waypoint badges and the pods below, not repeated in this row. */}
-      <div className="flex items-center gap-4 px-3 py-1.5 bg-[#141414] border-b border-[#242424] text-[10px] font-mono select-none flex-wrap">
+      <div className="flex items-center gap-4 px-3 py-1.5 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-neutral-200">
-            TRAJECTORY RADAR
+          <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">
+            เส้นทางยอดใช้จ่าย
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-[2px] bg-rose-400 inline-block" />
+          <span className="w-2.5 h-[2px] bg-expense inline-block" />
           <span className="text-neutral-400">จ่ายจริงสะสม</span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className={`w-2.5 h-[2px] border-t border-dashed ${isSurplus ? 'border-emerald-400' : 'border-[#da291c]'} inline-block`} />
+          <span className={`w-2.5 h-[2px] border-t border-dashed ${isSurplus ? 'border-emerald-400' : 'border-danger'} inline-block`} />
           <span className="text-neutral-400">แนวโน้มถึงสิ้นเดือน</span>
         </div>
 
@@ -241,13 +242,13 @@ export const ForecastingTrajectoryChart = memo(({
         >
           <defs>
             <linearGradient id="forecastActualAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.01" />
+              <stop offset="0%" stopColor={tc('expense')} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={tc('expense')} stopOpacity="0.01" />
             </linearGradient>
 
             <linearGradient id="forecastSurplusGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity={isSurplus ? "0.22" : "0.28"} />
-              <stop offset="100%" stopColor={isSurplus ? "#10b981" : "#da291c"} stopOpacity="0.03" />
+              <stop offset="0%" stopColor={isSurplus ? tc('income') : tc('expense')} stopOpacity={isSurplus ? "0.22" : "0.28"} />
+              <stop offset="100%" stopColor={isSurplus ? tc('income') : tc('expense')} stopOpacity="0.03" />
             </linearGradient>
 
             <filter id="tooltipShadow" x="-10%" y="-10%" width="130%" height="130%">
@@ -263,7 +264,7 @@ export const ForecastingTrajectoryChart = memo(({
               y1={padT}
               x2={getX(d)}
               y2={padT + plotH}
-              stroke="#2d2d2d"
+              stroke={tc('line')}
               strokeWidth="1"
             />
           ))}
@@ -279,7 +280,7 @@ export const ForecastingTrajectoryChart = memo(({
                   y1={y}
                   x2={xEOM}
                   y2={y}
-                  stroke="#2d2d2d"
+                  stroke={tc('line')}
                   strokeWidth="1"
                 />
                 {/* Left Y-axis tick and amount */}
@@ -288,15 +289,15 @@ export const ForecastingTrajectoryChart = memo(({
                   y1={y}
                   x2={padL}
                   y2={y}
-                  stroke="#3d3d3d"
+                  stroke={tc('line-strong')}
                   strokeWidth="1"
                 />
                 <text
                   x={padL - 6}
                   y={y + 3}
-                  fill="#666666"
-                  fontSize="8"
-                  fontFamily="monospace"
+                  fill={tc('ink-muted')}
+                  fontSize="11"
+                  fontFamily={FONT_MONO}
                   textAnchor="end"
                 >
                   ฿{formatAmount(Math.round(ceiling * f))}
@@ -309,15 +310,15 @@ export const ForecastingTrajectoryChart = memo(({
                       y1={y}
                       x2={xEOM + 4}
                       y2={y}
-                      stroke="#3d3d3d"
+                      stroke={tc('line-strong')}
                       strokeWidth="1"
                     />
                     <text
                       x={xEOM + 7}
                       y={y + 3}
-                      fill="#525252"
-                      fontSize="8"
-                      fontFamily="monospace"
+                      fill={tc('ink-muted')}
+                      fontSize="11"
+                      fontFamily={FONT_MONO}
                     >
                       {f * 100}%
                     </text>
@@ -333,15 +334,15 @@ export const ForecastingTrajectoryChart = memo(({
             y1={yCeil}
             x2={padL}
             y2={yCeil}
-            stroke="#525252"
+            stroke={tc('ink-muted')}
             strokeWidth="1"
           />
           <text
             x={padL - 6}
             y={yCeil + 3}
-            fill="#a3a3a3"
-            fontSize="8"
-            fontFamily="monospace"
+            fill={tc('ink-body')}
+            fontSize="11"
+            fontFamily={FONT_MONO}
             fontWeight="bold"
             textAnchor="end"
           >
@@ -354,15 +355,15 @@ export const ForecastingTrajectoryChart = memo(({
             y1={padT + plotH}
             x2={padL}
             y2={padT + plotH}
-            stroke="#3d3d3d"
+            stroke={tc('line-strong')}
             strokeWidth="1"
           />
           <text
             x={padL - 6}
             y={padT + plotH + 3}
-            fill="#525252"
-            fontSize="8"
-            fontFamily="monospace"
+            fill={tc('ink-muted')}
+            fontSize="11"
+            fontFamily={FONT_MONO}
             textAnchor="end"
           >
             ฿0
@@ -371,9 +372,9 @@ export const ForecastingTrajectoryChart = memo(({
             <text
               x={xEOM + 7}
               y={padT + plotH + 3}
-              fill="#444444"
-              fontSize="8"
-              fontFamily="monospace"
+              fill={tc('line-strong')}
+              fontSize="11"
+              fontFamily={FONT_MONO}
             >
               0%
             </text>
@@ -391,15 +392,15 @@ export const ForecastingTrajectoryChart = memo(({
             y1={yCeil}
             x2={xEOM}
             y2={yCeil}
-            stroke="#525252"
+            stroke={tc('ink-muted')}
             strokeWidth="1.2"
             strokeDasharray="4 3"
           />
 
           {/* 4. Ceiling Right Badge */}
           <g transform={`translate(${xEOM + 6}, ${ceilLabelY - 7})`}>
-            <rect x="0" y="0" width="124" height="15" fill="#181818" stroke="#525252" strokeWidth="0.8" rx="2" />
-            <text x="6" y="11" fill="#a3a3a3" fontSize="8.5" fontFamily="monospace" fontWeight="bold">
+            <rect x="0" y="0" width="124" height="15" fill={tc('canvas')} stroke={tc('ink-muted')} strokeWidth="0.8" rx="2" />
+            <text x="6" y="11" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
               เพดาน ฿{formatMoney(ceiling)}
             </text>
           </g>
@@ -408,7 +409,7 @@ export const ForecastingTrajectoryChart = memo(({
           <path
             d={actualPath}
             fill="none"
-            stroke="#f43f5e"
+            stroke={tc('expense')}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -418,7 +419,7 @@ export const ForecastingTrajectoryChart = memo(({
           <path
             d={projectedPath}
             fill="none"
-            stroke={isSurplus ? "#10b981" : "#da291c"}
+            stroke={isSurplus ? tc('income') : tc('expense')}
             strokeWidth="2"
             strokeDasharray="4 3"
             strokeLinecap="round"
@@ -430,12 +431,12 @@ export const ForecastingTrajectoryChart = memo(({
             y1={padT}
             x2={xToday}
             y2={padT + plotH}
-            stroke="#525252"
+            stroke={tc('ink-muted')}
             strokeWidth="1"
             strokeDasharray="2 2"
           />
-          <circle cx={xToday} cy={yToday} r="6" fill="#f43f5e" fillOpacity="0.3" />
-          <circle cx={xToday} cy={yToday} r="2.5" fill="#f43f5e" />
+          <circle cx={xToday} cy={yToday} r="6" fill={tc('expense')} fillOpacity="0.3" />
+          <circle cx={xToday} cy={yToday} r="2.5" fill={tc('expense')} />
 
           {/* 8. Today Floating Badge Callout */}
           <g transform={`translate(${clampedPillX}, ${pillY})`}>
@@ -444,17 +445,17 @@ export const ForecastingTrajectoryChart = memo(({
               y="0"
               width={pillW}
               height={pillH}
-              fill="#181818"
-              stroke="#f43f5e"
+              fill={tc('canvas')}
+              stroke={tc('expense')}
               strokeWidth="1"
               rx="2"
             />
             <text
               x="0"
               y="11"
-              fill="#f43f5e"
-              fontSize="8.5"
-              fontFamily="monospace"
+              fill={tc('expense')}
+              fontSize="11"
+              fontFamily={FONT_MONO}
               fontWeight="bold"
               textAnchor="middle"
             >
@@ -463,24 +464,24 @@ export const ForecastingTrajectoryChart = memo(({
           </g>
 
           {/* 9. EOM Destination Node & Right Badge */}
-          <circle cx={xEOM} cy={yEOM} r="3.5" fill={isSurplus ? "#10b981" : "#da291c"} />
+          <circle cx={xEOM} cy={yEOM} r="3.5" fill={isSurplus ? tc('income') : tc('expense')} />
           <g transform={`translate(${xEOM + 6}, ${eomLabelY - 7})`}>
             <rect
               x="0"
               y="0"
               width="124"
               height="15"
-              fill="#181818"
-              stroke={isSurplus ? "#10b981" : "#da291c"}
+              fill={tc('canvas')}
+              stroke={isSurplus ? tc('income') : tc('expense')}
               strokeWidth="0.8"
               rx="2"
             />
             <text
               x="6"
               y="11"
-              fill={isSurplus ? "#10b981" : "#da291c"}
-              fontSize="8.5"
-              fontFamily="monospace"
+              fill={isSurplus ? tc('income') : tc('expense')}
+              fontSize="11"
+              fontFamily={FONT_MONO}
               fontWeight="bold"
             >
               จบเดือน ฿{formatMoney(projectedExpense)}
@@ -488,12 +489,12 @@ export const ForecastingTrajectoryChart = memo(({
           </g>
 
           {/* 10. Bottom Axis Timeline Ticks */}
-          <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke="#333333" strokeWidth="1" />
-          <text x={padL} y={padT + plotH + 12} fill="#737373" fontSize="8.5" fontFamily="monospace">Day 1</text>
-          <text x={xToday} y={padT + plotH + 12} fill="#a3a3a3" fontSize="8.5" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+          <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke={tc('line')} strokeWidth="1" />
+          <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
+          <text x={xToday} y={padT + plotH + 12} fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle" fontWeight="bold">
             Day {curDayClamped} (วันนี้)
           </text>
-          <text x={xEOM} y={padT + plotH + 12} fill="#737373" fontSize="8.5" fontFamily="monospace" textAnchor="end">
+          <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
             Day {totalDays}
           </text>
 
@@ -504,8 +505,8 @@ export const ForecastingTrajectoryChart = memo(({
             if (Math.abs(x - xToday) < 22) return null;
             return (
               <g key={d}>
-                <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke="#525252" strokeWidth="1" />
-                <text x={x} y={padT + plotH + 12} fill="#5e5e5e" fontSize="8" fontFamily="monospace" textAnchor="middle">
+                <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke={tc('ink-muted')} strokeWidth="1" />
+                <text x={x} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle">
                   {d}
                 </text>
               </g>
@@ -521,7 +522,7 @@ export const ForecastingTrajectoryChart = memo(({
                 y1={padT}
                 x2={hoverData.x}
                 y2={padT + plotH}
-                stroke={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                stroke={hoverData.isFuture ? (isSurplus ? tc('income') : tc('danger')) : tc('expense')}
                 strokeWidth="1"
                 strokeDasharray="2 2"
                 opacity="0.8"
@@ -532,14 +533,14 @@ export const ForecastingTrajectoryChart = memo(({
                 cx={hoverData.x}
                 cy={hoverData.y}
                 r="5.5"
-                fill={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                fill={hoverData.isFuture ? (isSurplus ? tc('income') : tc('danger')) : tc('expense')}
                 fillOpacity="0.35"
               />
               <circle
                 cx={hoverData.x}
                 cy={hoverData.y}
                 r="2.5"
-                fill={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                fill={hoverData.isFuture ? (isSurplus ? tc('income') : tc('danger')) : tc('expense')}
               />
 
               {/* Tooltip HUD Card */}
@@ -549,8 +550,8 @@ export const ForecastingTrajectoryChart = memo(({
                   y="0"
                   width={tipW}
                   height={tipH}
-                  fill="#1c1c1c"
-                  stroke={hoverData.isFuture ? (isSurplus ? '#10b981' : '#da291c') : '#f43f5e'}
+                  fill={tc('surface-hover')}
+                  stroke={hoverData.isFuture ? (isSurplus ? tc('income') : tc('danger')) : tc('expense')}
                   strokeWidth="1.2"
                   rx="3"
                   filter="url(#tooltipShadow)"
@@ -561,7 +562,7 @@ export const ForecastingTrajectoryChart = memo(({
                   y1="26"
                   x2={tipW - 8}
                   y2="26"
-                  stroke="#2d2d2d"
+                  stroke={tc('line')}
                   strokeWidth="0.8"
                 />
                 {/* Row 1: Day & Daily Spend */}
@@ -570,20 +571,20 @@ export const ForecastingTrajectoryChart = memo(({
                   y="17"
                   fill="#ffffff"
                   fontSize="11"
-                  fontFamily="monospace"
+                  fontFamily={FONT_MONO}
                   fontWeight="bold"
                 >
                   Day {hoverData.day}
-                  <tspan fill={hoverData.isToday ? '#f43f5e' : hoverData.isFuture ? '#888888' : '#737373'} fontSize="9.5" fontWeight="normal">
+                  <tspan fill={hoverData.isToday ? tc('accent') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
                     {hoverData.isToday ? ' (วันนี้)' : hoverData.isFuture ? ' (คาดการณ์)' : ''}
                   </tspan>
                 </text>
                 <text
                   x={tipW - 8}
                   y="17"
-                  fill={hoverData.isFuture ? '#a3a3a3' : hoverData.dailyAmount > 0 ? '#f43f5e' : '#737373'}
-                  fontSize="10.5"
-                  fontFamily="monospace"
+                  fill={hoverData.isFuture ? tc('ink-body') : hoverData.dailyAmount > 0 ? tc('expense') : tc('ink-muted')}
+                  fontSize="11"
+                  fontFamily={FONT_MONO}
                   fontWeight="bold"
                   textAnchor="end"
                 >
@@ -598,21 +599,21 @@ export const ForecastingTrajectoryChart = memo(({
                 <text
                   x="8"
                   y="42"
-                  fill="#a3a3a3"
-                  fontSize="10"
-                  fontFamily="monospace"
+                  fill={tc('ink-body')}
+                  fontSize="11"
+                  fontFamily={FONT_MONO}
                 >
                   สะสม: <tspan fill="#ffffff" fontWeight="bold">฿{formatMoney(hoverData.cumulative)}</tspan>
                 </text>
                 <text
                   x={tipW - 8}
                   y="42"
-                  fill="#888888"
-                  fontSize="9.5"
-                  fontFamily="monospace"
+                  fill={tc('ink-body')}
+                  fontSize="11"
+                  fontFamily={FONT_MONO}
                   textAnchor="end"
                 >
-                  <tspan fill={hoverData.pctOfCeiling > 100 ? '#da291c' : '#a3a3a3'} fontWeight="bold">
+                  <tspan fill={hoverData.pctOfCeiling > 100 ? tc('danger') : tc('ink-body')} fontWeight="bold">
                     {hoverData.pctOfCeiling.toFixed(0)}%
                   </tspan>{' '}
                   เพดาน

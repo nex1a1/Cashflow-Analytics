@@ -1,16 +1,17 @@
 // src/views/Dashboard/components/MainChart/helpers.ts
 import { LegendDataset } from './types';
 
+import { tc } from '@/constants/theme';
 // ==========================================
 // TITLE & CONTRAST HELPERS
 // ==========================================
 
 export function getMainChartTitle(chartViewType: string, mainChartType?: string, isBreakdown?: boolean): string {
   if (chartViewType === 'sankey') {
-    return 'โครงสร้างกระแสเงินสด (Sankey Flow)';
+    return 'โครงสร้างกระแสเงินสด';
   }
   if (chartViewType === 'multiples') {
-    return 'เทรนด์รายหมวด (Sparkline)';
+    return 'เทรนด์รายหมวด';
   }
   if (isBreakdown) {
     return 'แจกแจงรายจ่ายตามหมวดหมู่';
@@ -65,7 +66,7 @@ export const getContrastTextColor = (hexColor: string | null | undefined): strin
   const g = Number.parseInt(hex.substring(2, 4), 16);
   const b = Number.parseInt(hex.substring(4, 6), 16);
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 145 ? '#0f172a' : '#ffffff';
+  return brightness > 145 ? tc('surface') : '#ffffff';
 };
 
 // ==========================================
@@ -84,7 +85,7 @@ export function getDatasetIndicatorStyle(ds: LegendDataset) {
     width: isLine ? 16 : 10,
     height: isLine ? 3 : 10,
     backgroundColor: isLine
-      ? (ds.borderColor || ds.backgroundColor || '#64748B')
-      : (ds.backgroundColor || ds.borderColor || '#64748B'),
+      ? (ds.borderColor || ds.backgroundColor || tc('ink-muted'))
+      : (ds.backgroundColor || ds.borderColor || tc('ink-muted')),
   };
 }

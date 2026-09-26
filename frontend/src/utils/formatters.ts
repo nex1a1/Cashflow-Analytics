@@ -1,5 +1,7 @@
 import { isCyclePeriod, stripCycle, cycleLabel, cycleRangeLabel, cycleSpanLabel, matchCyclePreset } from './payCycle';
 
+
+import { tc } from '@/constants/theme';
 export const THAI_MONTHS: readonly string[] = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
@@ -93,7 +95,7 @@ const SUB_PERIOD_LABELS: Record<string, (y: string) => string> = {
 export const getFilterLabel = (period: string): string => {
   if (isCyclePeriod(period)) {
     const base = stripCycle(period);
-    if (base === 'ALL') return 'ทุกรอบเงินเดือน (All Time)';
+    if (base === 'ALL') return 'ทุกรอบเงินเดือน';
     if (base.includes(',')) return `เลือกเฉพาะเจาะจง (${base.split(',').length} รอบ)`;
     if (base.includes('_')) {
       const [start, end] = base.split('_');
@@ -106,7 +108,7 @@ export const getFilterLabel = (period: string): string => {
     }
     return `${cycleLabel(base)} (${cycleRangeLabel(base)})`;
   }
-  if (period === 'ALL') return 'ดูภาพรวมทั้งหมด (All Time)';
+  if (period === 'ALL') return 'ดูภาพรวมทั้งหมด';
   if (/^\d{4}$/.test(period)) return `ปี ${period}`;
   
   if (period.includes(',')) {
@@ -128,7 +130,7 @@ export const getFilterLabel = (period: string): string => {
   return period;
 };
 
-export const hexToRgb = (hexStr: string | null | undefined = '#94a3b8'): string => {
+export const hexToRgb = (hexStr: string | null | undefined = tc('ink-body')): string => {
     if (!hexStr || typeof hexStr !== 'string') return '148, 163, 184';
     const raw = hexStr.replace('#', '');
     const hex = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
@@ -152,7 +154,7 @@ export const THAI_DAY_CONFIG: readonly ThaiDayInfo[] = [
   { label: 'อา.', fullName: 'วันอาทิตย์ (พระอาทิตย์)', color: '#f87171', bg: 'rgba(248, 113, 113, 0.12)', border: 'rgba(248, 113, 113, 0.35)' },
   { label: 'จ.',  fullName: 'วันจันทร์ (พระจันทร์)',    color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)',  border: 'rgba(251, 191, 36, 0.35)' },
   { label: 'อ.',  fullName: 'วันอังคาร (พระอังคาร)',   color: '#f472b6', bg: 'rgba(244, 114, 182, 0.12)', border: 'rgba(244, 114, 182, 0.35)' },
-  { label: 'พ.',  fullName: 'วันพุธ (พระพุธ)',        color: '#34d399', bg: 'rgba(52, 211, 153, 0.12)',  border: 'rgba(52, 211, 153, 0.35)' },
+  { label: 'พ.',  fullName: 'วันพุธ (พระพุธ)',        color: tc('income'), bg: 'rgba(52, 211, 153, 0.12)',  border: 'rgba(52, 211, 153, 0.35)' },
   { label: 'พฤ.', fullName: 'วันพฤหัสบดี (พระพฤหัสบดี)', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.12)',  border: 'rgba(251, 146, 60, 0.35)' },
   { label: 'ศ.',  fullName: 'วันศุกร์ (พระศุกร์)',       color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)',  border: 'rgba(56, 189, 248, 0.35)' },
   { label: 'ส.',  fullName: 'วันเสาร์ (พระเสาร์)',      color: '#c084fc', bg: 'rgba(192, 132, 252, 0.12)', border: 'rgba(192, 132, 252, 0.35)' },
@@ -212,7 +214,7 @@ export const calculatePeriodDelta = ({
       text: isAll ? 'ทั้งหมด' : 'งวดแรก',
       tooltipText: isAll
         ? 'แสดงข้อมูลทั้งหมด (ไม่มีงวดก่อนหน้าสำหรับเปรียบเทียบ)'
-        : 'ไม่มีข้อมูลในงวดก่อนหน้าสำหรับเปรียบเทียบ (Base Period)',
+        : 'ไม่มีข้อมูลในงวดก่อนหน้าสำหรับเปรียบเทียบ',
       cls: 'border-neutral-800/80 bg-neutral-900/60 text-neutral-500',
     };
   }
@@ -249,8 +251,8 @@ export const calculatePeriodDelta = ({
       cls: isGood
         ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
         : (type === 'expense'
-          ? 'border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c]'
-          : 'border-rose-500/30 bg-rose-500/10 text-rose-400'),
+          ? 'border-danger/30 bg-danger/10 text-danger'
+          : 'border-danger/30 bg-danger/10 text-danger'),
     };
   }
 
@@ -273,8 +275,8 @@ export const calculatePeriodDelta = ({
       cls = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
     } else {
       cls = type === 'expense'
-        ? 'border-[#da291c]/30 bg-[#da291c]/10 text-[#da291c]'
-        : 'border-rose-500/30 bg-rose-500/10 text-rose-400';
+        ? 'border-danger/30 bg-danger/10 text-danger'
+        : 'border-danger/30 bg-danger/10 text-danger';
     }
   }
 

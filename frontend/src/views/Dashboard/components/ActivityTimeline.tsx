@@ -7,6 +7,7 @@ import { useDashboardContext } from '../context/DashboardContext';
 import { DayType } from '@/types';
 import { THAI_MONTHS_SHORT, formatMoney } from '@/utils/formatters';
 
+import { tc, readable } from '@/constants/theme';
 // ─── TYPES & INTERFACES ──────────────────────────────────────────
 export type TimelineViewMode = 'dayType' | 'heatmap';
 export type TimelineLayoutMode = 'github' | 'calendar';
@@ -32,14 +33,14 @@ const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']
 const THAI_DAYS_MINI = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as const;
 
 // Ferrari Editorial Thermal Scale: near-black -> deep zinc -> bronze -> racing orange -> Rosso Corsa
-export const FERRARI_HEATMAP_SHADES = [
-  '#27272a', // Level 1: Zinc 800 (Minimal spend)
-  '#3f3f46', // Level 2: Zinc 700 (Low spend)
-  '#78350f', // Level 3: Deep Warm Amber
-  '#b45309', // Level 4: Racing Amber
-  '#c2410c', // Level 5: Racing Orange
-  '#da291c', // Level 6: Rosso Corsa Championship Red (Peak)
-] as const;
+// Spend-intensity ramp: surface → expense in 5 equal steps (level 1 = barely any spend).
+const mixHex = (a: string, b: string, t: number) =>
+  '#' + [1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+export const HEATMAP_SHADES = [
+  tc('line'),
+  ...[0.2, 0.4, 0.6, 0.8].map((t) => mixHex(tc('surface'), tc('expense'), t)),
+  tc('expense'),
+];
 
 // Helper: คำนวณวันที่วันนี้ตาม Local Timezone (ป้องกัน UTC Off-by-One Bug)
 export const getLocalTodayString = (): string => {
@@ -62,8 +63,8 @@ export const getExpenseLevel = (amount: number, maxThreshold: number): number =>
 };
 
 export const getHeatmapColor = (level: number): string => {
-  if (level === 0) return '#181818';
-  return FERRARI_HEATMAP_SHADES[level - 1] || FERRARI_HEATMAP_SHADES[0];
+  if (level === 0) return tc('canvas');
+  return HEATMAP_SHADES[level - 1] || HEATMAP_SHADES[0];
 };
 
 // ─── SUB-COMPONENT: TimelineModeToggle ─────────────────────────
@@ -74,12 +75,12 @@ interface TimelineModeToggleProps {
 
 const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setViewMode }) => {
   const modeButtons: Array<{ id: TimelineViewMode; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
-    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-[#ff4d4d]' },
+    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-accent' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: 'text-orange-400' }
   ];
 
   return (
-    <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
+    <div className="relative flex p-1 rounded-none border shadow-sm bg-surface border-line-strong">
       {modeButtons.map((btn) => {
         const Icon = btn.icon;
         const isActive = viewMode === btn.id;
@@ -89,14 +90,14 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
             type="button"
             aria-pressed={isActive}
             onClick={() => setViewMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
               isActive ? btn.color : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> 
             <span>{btn.label}</span>
             {isActive && (
-              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60" />
+              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-surface-elevated/60" />
             )}
           </button>
         );
@@ -128,11 +129,11 @@ const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeCo
             <div key={dt.id} className="flex items-center justify-center gap-1.5">
               <div
                 className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20"
-                style={{ backgroundColor: dt.color || '#475569' }} 
+                style={{ backgroundColor: dt.color || tc('ink-muted') }} 
               />
               <span className="text-xs font-bold text-slate-400">
                 {dt.label} 
-                <span className="opacity-70 text-[10px] ml-1 tabular-nums">
+                <span className="text-ink-body text-[11px] ml-1 tabular-nums">
                   ({count} วัน / {percentage}%)
                 </span>
               </span>
@@ -154,28 +155,28 @@ const TimelineHeatmapLegend: React.FC<TimelineHeatmapLegendProps> = ({ globalMax
       <div className="relative group/info cursor-help mr-1">
         <Info className="w-3.5 h-3.5 text-slate-400" />
         <div className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible">
-          <div className="text-left rounded-none py-2 px-3 text-[10px] font-medium shadow-2xl w-[260px] leading-relaxed bg-[#121212] text-white border border-[#3e3e3e]">
+          <div className="text-left rounded-none py-2 px-3 text-[11px] font-medium shadow-2xl w-[260px] leading-relaxed bg-surface text-white border border-line-strong">
             <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
             <p className="text-slate-300">
               ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿) 
               เพื่อให้สเกลความร้อนคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
             </p>
           </div>
-          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#121212] md:ml-2 mr-2 md:mr-0" />
+          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-surface md:ml-2 mr-2 md:mr-0" />
         </div>
       </div>
-      <span className="text-[10px] font-bold text-slate-400">น้อย</span>
+      <span className="text-[11px] font-bold text-slate-400">น้อย</span>
       {[0, 1, 2, 3, 4, 5, 6].map((level) => (
         <div 
           key={level} 
           className="w-3 h-3 rounded-none shrink-0 border" 
           style={{ 
             backgroundColor: getHeatmapColor(level), 
-            borderColor: level === 0 ? '#3e3e3e' : 'transparent' 
+            borderColor: level === 0 ? tc('line-strong') : 'transparent' 
           }} 
         />
       ))}
-      <span className="text-[10px] font-bold text-slate-400">มาก</span>
+      <span className="text-[11px] font-bold text-slate-400">มาก</span>
     </div>
   );
 };
@@ -201,11 +202,11 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
       style={{ left: x, top: Math.max(10, y - 6), transform: 'translate(-50%, -100%)' }}
     >
       <div className="flex flex-col items-center">
-        <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-[#121212]/95 backdrop-blur-md border-[#3e3e3e] text-white">
-          <div className="text-slate-400 font-medium text-[10px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
+        <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-surface border-line-strong text-white">
+          <div className="text-slate-400 font-medium text-[11px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
           {viewMode === 'dayType' ? (
-            <div className="flex items-center justify-center gap-1.5" style={{ color: dayType?.color || '#cbd5e1' }}>
-              <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: dayType?.color || '#cbd5e1' }} />
+            <div className="flex items-center justify-center gap-1.5" style={{ color: readable(dayType?.color || tc('gray-300')) }}>
+              <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: dayType?.color || tc('gray-300') }} />
               <span>{dayType?.label || 'ไม่มีข้อมูล'}</span>
             </div>
           ) : (
@@ -216,7 +217,7 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
             </div>
           )}
         </div>
-        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#3e3e3e]" />
+        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-line-strong" />
       </div>
     </div>,
     document.body
@@ -250,7 +251,7 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
   const level = getExpenseLevel(amount, globalMaxThreshold);
   const backgroundColor = viewMode === 'heatmap' 
     ? getHeatmapColor(level) 
-    : (dayType?.color || '#333333');
+    : (dayType?.color || tc('line'));
 
   const [y, m, d] = dateStr.split('-');
   const dateObj = new Date(Number(y), +m - 1, Number(d));
@@ -273,14 +274,14 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
       type="button"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
-      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] focus-visible:z-10 ${
+      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:z-10 ${
         isToday 
-          ? 'ring-1 ring-[#da291c] z-10' 
-          : 'opacity-90 hover:opacity-100 hover:border-[#da291c] hover:z-10'
+          ? 'ring-1 ring-accent z-10' 
+          : 'opacity-90 hover:opacity-100 hover:border-accent hover:z-10'
       }`}
       style={{
         backgroundColor,
-        borderColor: (viewMode === 'heatmap' && level === 0) ? '#2d2d2d' : 'transparent'
+        borderColor: (viewMode === 'heatmap' && level === 0) ? tc('line') : 'transparent'
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -305,7 +306,7 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
   ];
 
   return (
-    <div className="relative flex p-1 rounded-none border shadow-sm bg-[#121212] border-[#3e3e3e]">
+    <div className="relative flex p-1 rounded-none border shadow-sm bg-surface border-line-strong">
       {layoutButtons.map((btn) => {
         const Icon = btn.icon;
         const isActive = layoutMode === btn.id;
@@ -315,14 +316,14 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
             type="button"
             aria-pressed={isActive}
             onClick={() => setLayoutMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#da291c] ${
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
               isActive ? 'text-slate-100' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> 
             <span>{btn.label}</span>
             {isActive && (
-              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-[#303030]/60" />
+              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-surface-elevated/60" />
             )}
           </button>
         );
@@ -467,7 +468,7 @@ export default function ActivityTimeline() {
       id: 'unknown',
       name: 'unknown',
       label: 'ทั่วไป',
-      color: '#475569',
+      color: tc('ink-muted'),
       order_index: 0
     };
     const amount = dailyExpenses[dateStr] || 0;
@@ -502,7 +503,7 @@ export default function ActivityTimeline() {
     if (showSkeleton) {
       return (
         <div className="py-12 px-3">
-          <div className="h-24 w-full rounded-none animate-pulse bg-[#303030]" />
+          <div className="h-24 w-full rounded-none animate-pulse bg-surface-elevated" />
         </div>
       );
     }
@@ -520,24 +521,24 @@ export default function ActivityTimeline() {
         <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
           <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
             {calendarMonths.map(month => (
-              <div key={month.key} className="border border-[#2d2d2d] bg-[#181818] px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
+              <div key={month.key} className="border border-line bg-canvas px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
                 {/* Month Title */}
-                <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-[#2d2d2d] pb-1 w-full text-center flex items-center justify-center gap-1.5">
-                  <div className="w-[3.5px] h-[3.5px] bg-[#da291c] rounded-none shrink-0" />
+                <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-line pb-1 w-full text-center flex items-center justify-center gap-1.5">
+                  <div className="w-[3.5px] h-[3.5px] bg-accent rounded-none shrink-0" />
                   <span>{THAI_MONTHS_SHORT[month.monthIdx]} {month.year.toString().slice(-2)}</span>
                 </div>
 
                 {/* Week Day Header (Consistent Thai abbreviations) */}
                 <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
                   {THAI_DAYS_MINI.map((day, i) => (
-                    <div key={day} className={`w-[20px] text-center text-[9.5px] font-black leading-tight ${i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-400'}`}>
+                    <div key={day} className={`w-[20px] text-center text-[11px] font-black leading-tight ${i === 0 || i === 6 ? 'text-weekend' : 'text-slate-400'}`}>
                       {day}
                     </div>
                   ))}
                 </div>
 
                 {/* Days Grid */}
-                <div className="grid grid-cols-7 gap-[1px] bg-[#2d2d2d]/30 w-[146px]">
+                <div className="grid grid-cols-7 gap-[1px] bg-surface-elevated/30 w-[146px]">
                   {month.gridCells.map((dateStr, idx) => {
                     if (!dateStr) {
                       return <div key={`empty-${month.key}-${idx}`} className="w-[20px] h-[20px] bg-transparent" />;
@@ -545,7 +546,7 @@ export default function ActivityTimeline() {
 
                     const inPeriod = datesInPeriodSet.has(dateStr);
                     if (!inPeriod) {
-                      return <div key={dateStr} className="w-[20px] h-[20px] bg-[#121212]/40 border border-[#2d2d2d]/10 opacity-20" />;
+                      return <div key={dateStr} className="w-[20px] h-[20px] bg-surface/40 border border-line/10 opacity-20" />;
                     }
 
                     const isToday = dateStr === todayStr;
@@ -580,14 +581,14 @@ export default function ActivityTimeline() {
         <div className="flex w-max gap-x-[1px] pr-3">
           {/* Day Labels (Sticky) */}
           <div 
-            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-[#303030] bg-[#121212] select-none"
+            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-line bg-surface select-none"
           >
             <div className="h-4" />
             {THAI_DAYS.map((day, i) => (
               <div 
                 key={day} 
-                className={`h-4 flex items-center justify-end text-[10px] font-black ${
-                  i === 0 || i === 6 ? 'text-red-400/80' : 'text-slate-500'
+                className={`h-4 flex items-center justify-end text-[11px] font-black ${
+                  i === 0 || i === 6 ? 'text-weekend' : 'text-slate-500'
                 }`}
               >
                 {day}
@@ -604,8 +605,8 @@ export default function ActivityTimeline() {
                 <div className="h-4 relative flex items-end pb-1">
                   {week.monthLabel && (
                     <div className="absolute left-0 bottom-0.5 flex items-end whitespace-nowrap">
-                      <div className="w-[3px] h-3 mr-1 rounded-none bg-[#da291c]/50" />
-                      <span className="text-[10px] font-black leading-none uppercase tracking-tighter text-slate-400">
+                      <div className="w-[3px] h-3 mr-1 rounded-none bg-accent/50" />
+                      <span className="text-[11px] font-black leading-none uppercase tracking-tighter text-slate-400">
                         {week.monthLabel}
                       </span>
                     </div>
@@ -646,11 +647,11 @@ export default function ActivityTimeline() {
 
   const renderLegendBody = (mode: TimelineViewMode) => {
     if (showSkeleton) {
-      return <div className="h-4 w-full rounded-none animate-pulse bg-[#303030]" />;
+      return <div className="h-4 w-full rounded-none animate-pulse bg-surface-elevated" />;
     }
     return (
       <>
-        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-neutral-500">
+        <span className="text-[11px] font-black uppercase tracking-[0.15em] text-neutral-500">
           {mode === 'dayType' ? 'สรุปประเภทวัน' : 'ระดับความเข้ม'}
         </span>
         {mode === 'dayType' ? (
@@ -668,13 +669,13 @@ export default function ActivityTimeline() {
   };
 
   return (
-    <div className="rounded-none border shadow-sm transition-colors bg-[#181818] border-[#303030]">
+    <div className="rounded-none border shadow-sm transition-colors bg-canvas border-line">
       {/* ─── HEADER (Editorial Style) ─── */}
-      <div className="px-4 py-2 border-b flex items-center justify-between bg-[#121212]/80 border-[#2d2d2d] w-full gap-4 relative z-20 flex-wrap">
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line w-full gap-4 relative z-20 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-[#da291c] shrink-0" />
+          <div className="w-[3px] h-3 bg-accent shrink-0" />
           <CalendarClock className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-200">
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
             ไทม์ไลน์กิจกรรม
           </span>
           <div className="ml-2">
@@ -688,14 +689,14 @@ export default function ActivityTimeline() {
 
       <div className="p-4 flex flex-col lg:flex-row lg:items-stretch gap-3">
         {/* Timeline Grid */}
-        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-[#121212] border-[#3e3e3e] flex flex-col justify-center min-h-[210px]">
+        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-surface border-line-strong flex flex-col justify-center min-h-[210px]">
           {renderTimelineContent()}
         </div>
 
         {/* Legend Rail */}
         <div
           ref={legendRailRef}
-          className="lg:w-[220px] shrink-0 border rounded-none relative bg-[#121212] border-[#3e3e3e] p-3 flex flex-col items-center justify-center gap-2 min-h-[210px] overflow-x-hidden"
+          className="lg:w-[220px] shrink-0 border rounded-none relative bg-surface border-line-strong p-3 flex flex-col items-center justify-center gap-2 min-h-[210px] overflow-x-hidden"
           style={layoutMode === 'github' && githubLegendHeight ? { minHeight: githubLegendHeight } : undefined}
         >
           {renderLegendBody(viewMode)}

@@ -1,6 +1,8 @@
 // src/hooks/useTransactionData.ts
 import { useState, useCallback } from 'react';
 import { parseDateStrToObj } from '../utils/dateHelpers';
+import { shiftMonth } from '../utils/payCycle';
+import { getThaiMonth } from '../utils/formatters';
 import {
   calendarService,
   categoryService,
@@ -233,36 +235,66 @@ export default function useTransactionData({
         try {
           await saveToDb(updatedItem);
           await refreshData();
+          return true;
         } catch (err) {
           console.error('Update failed:', err);
           setTransactions(previousTransactions);
+          return false;
         }
       }
+      return false;
     },
     [transactions, categories, saveToDb, refreshData]
   );
 
+  // Deletes are soft (is_deleted = 1) and upsert-by-id revives a row, so undo = save the
+  // snapshot back. Confirmation is the caller's ConfirmDeleteButton / useConfirmTimeout.
+  const offerUndo = useCallback(
+    (message: string, snapshot: TransactionDisplay[]) => {
+      if (snapshot.length === 0) return;
+      showToast(message, 'info', {
+        label: 'เลิกทำ',
+        onClick: async () => {
+          try {
+            await transactionService.save(snapshot as any);
+            await refreshData();
+            showToast(`กู้คืน ${snapshot.length} รายการแล้ว`, 'success');
+          } catch (err: any) {
+            showToast('กู้คืนไม่สำเร็จ: ' + err.message, 'error');
+          }
+        },
+      });
+    },
+    [refreshData, showToast]
+  );
+
   const handleDeleteTransaction = useCallback(
     async (id: string) => {
-      if (!window.confirm('ยืนยันการลบรายการนี้?')) return;
+      const snapshot = transactions.filter(t => t.id === id);
       try {
         await transactionService.deleteById(id);
         await refreshData();
+        const label = snapshot[0]?.description || snapshot[0]?.category || 'รายการ';
+        offerUndo(`ลบ "${label}" แล้ว`, snapshot);
       } catch (err: any) {
         showToast('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message, 'error');
       }
     },
-    [refreshData, showToast]
+    [transactions, refreshData, showToast, offerUndo]
   );
 
   const handleDeleteMonth = useCallback(
     async (isoMonth: string): Promise<boolean> => {
       if (!isoMonth.match(/^\d{4}-\d{2}$/)) return false;
-      if (!window.confirm(`ยืนยันการลบข้อมูลเดือน ${isoMonth}?`)) return false;
       setIsProcessing(true);
       try {
+        // Snapshot from the DB (state may be filtered to another range) so undo restores everything
+        const next = shiftMonth(isoMonth, 1);
+        const lastDay = new Date(Number(next.slice(0, 4)), Number(next.slice(5, 7)) - 1, 0).getDate();
+        const snapshot = await transactionService.getAll(`${isoMonth}-01`, `${isoMonth}-${String(lastDay).padStart(2, '0')}`);
         await transactionService.deleteMonth(isoMonth);
         await refreshData();
+        offerUndo(`ลบข้อมูลเดือน ${getThaiMonth(isoMonth)} แล้ว (${snapshot.length} รายการ)`, snapshot);
         return true;
       } catch (err: any) {
         showToast('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message, 'error');
@@ -271,12 +303,11 @@ export default function useTransactionData({
         setIsProcessing(false);
       }
     },
-    [refreshData, showToast]
+    [refreshData, showToast, offerUndo]
   );
 
   const handleDeleteAllData = useCallback(
     async (opts?: { setShowToast?: any }) => {
-      if (!window.confirm('🚨 ยืนยันการลบข้อมูลทั้งหมด?')) return;
       setIsProcessing(true);
       try {
         await transactionService.resetAll();

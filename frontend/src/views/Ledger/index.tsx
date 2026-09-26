@@ -28,7 +28,7 @@ export interface LedgerViewProps {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   handleOpenAddModal: (date: string, type: string) => void;
-  handleUpdateTransaction: (id: string, field: string, value: any) => void;
+  handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
   handleDeleteMonth: (period: string) => void;
   categories: Category[];
@@ -211,15 +211,15 @@ function LedgerView({
         <div className="flex flex-row items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-6 bg-[#da291c] rounded-none shrink-0" />
+              <div className="w-1.5 h-6 bg-accent rounded-none shrink-0" />
               <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-sans">
                 บัญชีแยกประเภท
               </h2>
             </div>
-            <p className="text-[10px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
+            <p className="text-[11px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
-              <span className="text-neutral-800 font-bold">•</span>
-              <span className="text-[#da291c] font-extrabold">
+              <span className="text-ink-muted font-bold" aria-hidden="true">•</span>
+              <span className="text-accent font-extrabold">
                 {viewMode === 'list' ? displayTransactions.length : monthTransactions.length}
               </span>
               <span>รายการ</span>

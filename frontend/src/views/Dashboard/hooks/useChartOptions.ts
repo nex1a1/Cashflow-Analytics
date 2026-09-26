@@ -8,6 +8,7 @@ import { formatMoney } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 
+import { tc } from '@/constants/theme';
 interface ChartOptionsProps {
   chartViewType: string;
   isBreakdown: boolean;
@@ -116,13 +117,13 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
               if (item?.element?.options?.backgroundColor) {
                 return item.element.options.backgroundColor;
               }
-              return '#121212';
+              return tc('surface');
             },
             titleColor: () => '#FFFFFF',
-            bodyColor: () => '#CBD5E1',
+            bodyColor: () => tc('gray-300'),
             borderColor: (ctx: any) => {
               const item = ctx.tooltipItems[0];
-              return item?.element?.options?.backgroundColor || ('#303030');
+              return item?.element?.options?.backgroundColor || (tc('line'));
             },
             borderWidth: 2,
             padding: 12,
@@ -132,7 +133,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
               title: (tooltipItems: any[]) => formatSankeyTooltipTitle(tooltipItems),
               labelColor: (context: any) => {
                 const item = context.raw;
-                const flowColor = item?.color || ('#475569');
+                const flowColor = item?.color || (tc('ink-muted'));
                 return {
                   borderColor: flowColor,
                   backgroundColor: flowColor,
