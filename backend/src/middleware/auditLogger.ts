@@ -66,7 +66,7 @@ export function auditLogger(req: Request, res: Response, next: NextFunction): vo
     } else if (path.includes('/backup')) {
       actionDetail = `[คำสั่งสำรองข้อมูล] ดำเนินการสำรองฐานข้อมูล SQLite`;
     } else if (path.includes('/calendar')) {
-      actionDetail = `[คำสั่งปฏิทิน] อัปเดตประเภทวันของวันที่ ${req.body?.date || 'ไม่ระบุ'} (ประเภท: ${req.body?.day_type_id || 'ไม่ระบุ'}, โน้ต: "${req.body?.note || ''}")`;
+      actionDetail = `[คำสั่งปฏิทิน] อัปเดตประเภทวันของวันที่ ${req.body?.date || 'ไม่ระบุ'} (ประเภท: ${req.body?.type_id || 'ไม่ระบุ'}, โน้ต: "${req.body?.note || ''}")`;
     } else if (path.includes('/settings')) {
       actionDetail = `[คำสั่งตั้งค่า] อัปเดตการตั้งค่า ${req.body?.key} = "${req.body?.value}"`;
     } else if (path.includes('/categories')) {
@@ -89,8 +89,8 @@ export function auditLogger(req: Request, res: Response, next: NextFunction): vo
       const icon = isError ? '❌' : '⚡';
       const what = actionDetail ? ` | ${actionDetail}` : '';
       console.log(`${icon} [AUDIT] [${timestamp}] ${method} ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]${what}`);
-    } else {
-      // Read requests (GET) logged cleanly
+    } else if (process.env.LOG_READS === '1') {
+      // Successful reads are noise (~10 per page load); opt in with LOG_READS=1
       console.log(`[API ${method}] [${timestamp}] ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]`);
     }
   });
