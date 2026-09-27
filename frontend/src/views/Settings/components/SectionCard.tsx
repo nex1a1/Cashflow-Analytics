@@ -17,9 +17,9 @@ const ACCENT: Record<string, AccentStyle> = {
   },
   brand: {
     header: 'bg-surface border-line',
-    title: 'text-accent',
-    glow: 'border-t-2 border-t-accent',
-    btn: 'bg-accent/15 hover:bg-accent/25 text-accent border border-accent/35'
+    title: 'text-accent-ink',
+    glow: 'border-t-2 border-t-accent-ink',
+    btn: 'bg-accent/15 hover:bg-accent/25 text-accent-ink border border-accent/35'
   },
   purple: {
     header: 'bg-surface border-line',

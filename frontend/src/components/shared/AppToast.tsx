@@ -14,16 +14,16 @@ export default function AppToast({ toast }: AppToastProps) {
   const isInfo = toast.type === 'info';
 
   const tone = isError
-    ? 'bg-danger-active border-danger-active text-white'
+    ? 'bg-danger-active border-danger-active text-on-accent'
     : isInfo
       ? 'bg-surface-elevated border-line-strong text-ink-display'
-      : 'bg-emerald-700/95 border-emerald-800 text-white';
+      : 'bg-income border-income text-canvas';
   const Icon = isError ? AlertCircle : isInfo ? Info : CheckCircle;
 
   return (
     <div
       role={isError ? 'alert' : 'status'}
-      className={`fixed bottom-8 left-1/2 -translate-x-1/2 shadow-[0_8px_24px_rgba(0,0,0,0.45)] border flex items-center gap-3 pl-5 pr-2 py-2.5 z-[9999] ${tone}`}
+      className={`fixed bottom-8 left-1/2 -translate-x-1/2 shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] border flex items-center gap-3 pl-5 pr-2 py-2.5 z-[9999] ${tone}`}
     >
       <Icon className={`w-5 h-5 shrink-0 ${isInfo ? 'text-ink-muted' : 'opacity-90'}`} />
       <span className="font-bold text-sm mr-2">{toast.message}</span>
@@ -31,7 +31,7 @@ export default function AppToast({ toast }: AppToastProps) {
         <button
           type="button"
           onClick={() => { toast.action!.onClick(); hideToast(); }}
-          className="px-3 py-1.5 text-sm font-bold text-accent border border-accent/40 hover:bg-accent hover:text-on-accent"
+          className="px-3 py-1.5 text-sm font-bold text-accent-ink border border-accent/40 hover:bg-accent hover:text-on-accent"
         >
           {toast.action.label}
         </button>

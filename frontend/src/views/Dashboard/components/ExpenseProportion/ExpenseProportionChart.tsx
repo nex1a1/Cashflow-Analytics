@@ -34,7 +34,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
     : formattedAmt;
 
   const valueColor = hoveredItem
-    ? (hoveredItem.color || tc('accent'))
+    ? (hoveredItem.color || tc('accent-ink'))
     : tc('ink-display');
 
   return (

@@ -135,7 +135,7 @@ describe('ExpenseProportion helpers', () => {
 
       const chartData = buildDoughnutChartData(mockCats, 1);
       expect(chartData.datasets).toHaveLength(1);
-      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('accent')]);
+      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('accent-ink')]);
       expect(chartData.datasets[0].data).toEqual([200, 300]);
     });
 

@@ -249,7 +249,7 @@ export default function BatchAddModal({
         {/* Modal Header */}
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className="text-base font-bold flex items-center gap-2 text-slate-100">
-            <CalendarPlus className="w-5 h-5 text-accent" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
+            <CalendarPlus className="w-5 h-5 text-accent-ink" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
           </h3>
           <button 
             type="button" 
@@ -271,7 +271,7 @@ export default function BatchAddModal({
             <button type="button" onClick={discardGuard.cancel} className="ml-auto px-3 py-1.5 text-xs font-bold border border-line text-ink-soft hover:text-ink-display hover:border-line-strong">
               กลับไปแก้ต่อ
             </button>
-            <button type="button" onClick={handleSafeClose} className="px-3 py-1.5 text-xs font-bold bg-danger-active text-white">
+            <button type="button" onClick={handleSafeClose} className="px-3 py-1.5 text-xs font-bold bg-danger-active text-on-accent">
               ทิ้งและปิด
             </button>
           </div>
@@ -367,7 +367,7 @@ export default function BatchAddModal({
               type="button" 
               onClick={submitBatch} 
               disabled={pendingItems.length === 0 || isProcessing}
-              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-white rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-emerald-600 hover:bg-emerald-700 border border-emerald-700"
+              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-canvas rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-income hover:bg-income/90 border border-income"
             >
               {isProcessing ? <Zap className="w-4 h-4 animate-pulse" /> : <CheckCircle className="w-4 h-4" />}
               {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมดลง DB'}

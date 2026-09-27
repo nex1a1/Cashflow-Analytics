@@ -4,10 +4,10 @@ import { formatMoney, hexToRgb } from '../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup, FrequentItem } from '../../types';
 import CategoryGlyph from './CategoryGlyph';
 
-import { tc, readable } from '@/constants/theme';
+import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
 const ALLOC_COLORS: Record<string, string> = {
-  need: '#f43f5e',
-  want: '#38bdf8',
+  need: ALLOCATION_COLORS.need,
+  want: ALLOCATION_COLORS.want,
   savings: tc('savings')
 };
 
@@ -312,8 +312,8 @@ function QuickSuggest({
   }, [defaultLimit]);
 
   const tokens = {
-    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent focus:ring-accent/30",
-    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-none bg-surface border-line text-slate-200 focus:border-accent cursor-pointer",
+    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
+    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-none bg-surface border-line text-slate-200 focus:border-accent-ink cursor-pointer",
     searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
     label: "block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1",
   };
@@ -357,21 +357,21 @@ function QuickSuggest({
             onClick={() => setShowFilterMenu(!showFilterMenu)}
             className={`px-3 py-1.5 flex items-center justify-center gap-1.5 border text-xs font-bold transition-all duration-75 rounded-none select-none cursor-pointer ${
               showFilterMenu 
-                ? 'bg-surface-hover border-accent text-white shadow-sm' 
+                ? 'bg-surface-hover border-accent-ink text-white shadow-sm' 
                 : activeFiltersCount > 0
                   ? 'bg-surface-hover border-accent/70 text-slate-200 hover:bg-surface-elevated'
                   : 'bg-canvas border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white'
             }`}
             title="ตัวกรองเพิ่มเติม"
           >
-            <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent' : 'text-slate-400'}`} />
+            <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent-ink' : 'text-slate-400'}`} />
             <span>ตัวกรอง</span>
             {activeFiltersCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[11px] font-black bg-accent text-on-accent">
                 {activeFiltersCount}
               </span>
             )}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${showFilterMenu ? 'rotate-180 text-accent' : 'text-slate-400'}`} />
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${showFilterMenu ? 'rotate-180 text-accent-ink' : 'text-slate-400'}`} />
           </button>
         </div>
 
@@ -456,7 +456,7 @@ function QuickSuggest({
             <button
               type="button"
               onClick={handleResetAll}
-              className="text-[11px] text-accent hover:underline font-bold ml-auto cursor-pointer"
+              className="text-[11px] text-accent-ink hover:underline font-bold ml-auto cursor-pointer"
             >
               ล้างทั้งหมด
             </button>
@@ -552,10 +552,10 @@ function QuickSuggest({
             {/* Modal Header */}
             <div className="pb-1.5 border-b border-line flex items-center justify-between text-slate-300 shrink-0">
               <div className="flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-accent" />
+                <SlidersHorizontal className="w-3.5 h-3.5 text-accent-ink" />
                 <span className="text-[11px] font-black uppercase tracking-wider text-white">ตัวกรองคำแนะนำ</span>
                 {activeFiltersCount > 0 && (
-                  <span className="text-[11px] font-bold text-accent bg-accent/10 border border-accent/30 px-1.5 py-0.2 rounded-none">
+                  <span className="text-[11px] font-bold text-accent-ink bg-accent/10 border border-accent/30 px-1.5 py-0.2 rounded-none">
                     {activeFiltersCount} ตัวกรอง
                   </span>
                 )}
@@ -583,7 +583,7 @@ function QuickSuggest({
                         setSelectedGroup(null);
                         setSelectedCatIds([]);
                       }}
-                      className="text-[11px] text-accent hover:underline flex items-center gap-0.5 font-bold uppercase tracking-wider cursor-pointer"
+                      className="text-[11px] text-accent-ink hover:underline flex items-center gap-0.5 font-bold uppercase tracking-wider cursor-pointer"
                     >
                       <span>ล้างหมวด {selectedCatIds.length > 0 && `(${selectedCatIds.length})`}</span>
                       <X className="w-2.5 h-2.5" />
@@ -614,7 +614,7 @@ function QuickSuggest({
                         }}
                         className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-none cursor-pointer ${
                           isGrpActive
-                            ? 'border-accent bg-accent/20 text-white font-black'
+                            ? 'border-accent-ink bg-accent/20 text-white font-black'
                             : selectedCountInGroup > 0
                               ? 'border-slate-500 bg-surface-hover text-slate-200 font-bold'
                               : 'border-line bg-canvas text-slate-400 hover:text-slate-200 hover:border-slate-500'
@@ -681,7 +681,7 @@ function QuickSuggest({
                             style={isCatActive ? {
                               borderColor: c.color || tc('expense'),
                               backgroundColor: `rgba(${rgb}, 0.25)`,
-                              color: '#ffffff',
+                              color: tc('ink-display'),
                             } : ({
                               ['--chip-rgb' as any]: rgb,
                             } as React.CSSProperties)}
@@ -789,7 +789,7 @@ function QuickSuggest({
                             onClick={() => setLimitCount(opt.val)}
                             className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
                               isActive
-                                ? 'border-accent bg-accent/20 text-white font-black'
+                                ? 'border-accent-ink bg-accent/20 text-white font-black'
                                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
                             }`}
                           >
@@ -819,7 +819,7 @@ function QuickSuggest({
               <button
                 type="button"
                 onClick={() => setShowFilterMenu(false)}
-                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent shadow-sm flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
+                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent-ink shadow-sm flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
               >
                 <span>แสดงผลลัพธ์ ({quickSuggestions.length} รายการ)</span>
               </button>

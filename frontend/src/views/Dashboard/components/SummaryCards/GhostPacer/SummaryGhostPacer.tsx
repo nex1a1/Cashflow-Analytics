@@ -8,6 +8,7 @@ import { formatMoney, formatAmount } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer } from '../helpers';
 import { GhostPacerChart } from './GhostPacerChart';
+import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
 import type { SummaryAnalytics } from '../types';
 
 interface SummaryGhostPacerProps {
@@ -53,6 +54,13 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
     paceStatus,
   } = ghostPacerDetails;
 
+  // Green = spending less, yellow = within ±5%, red = spending more (see paceTone)
+  const ghostTone = paceTone(deltaVsGhost, ghostSpendToDate);
+  const benchTone = paceTone(deltaVsBenchmark, benchmarkSpendToDate);
+  const eomTone = paceTone(deltaEom, ghostTotalExpense);
+  const ghost = PACE_TONE_STYLE[ghostTone];
+  const bench = PACE_TONE_STYLE[benchTone];
+  const eom = PACE_TONE_STYLE[eomTone];
   const isLeading = deltaVsGhost <= 0;
   const isBenchLeading = deltaVsBenchmark <= 0;
   const isEomLeading = deltaEom <= 0;
@@ -77,7 +85,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
           <div className="flex items-center gap-1.5 text-[11px] font-mono">
             <span className="text-neutral-400">เทียบเดือนก่อน:</span>
-            <span className={`font-bold ${isLeading ? 'text-emerald-400' : 'text-danger'}`}>
+            <span className={`font-bold ${ghost.text}`}>
               {isLeading ? '▼ ช้ากว่า' : '▲ เร็วกว่า'} ฿{formatAmount(Math.abs(Math.round(deltaVsGhost)))} ({Math.abs(deltaVsGhostPct).toFixed(1)}%)
             </span>
           </div>
@@ -115,16 +123,14 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-surface-elevated flex-1">
 
         {/* POD 1: Head-to-Head with Ghost */}
-        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-expense">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
-              <History size={13} className="text-expense shrink-0" />
+              <History size={13} className={`${ghost.text} shrink-0`} />
               เทียบเดือนก่อน (วันที่ {currentDay})
             </span>
-            <span className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${
-              isLeading ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500' : 'bg-danger/10 text-danger border-danger'
-            }`}>
-              {isLeading ? 'ใช้น้อยกว่า' : 'ใช้มากกว่า'}
+            <span className={`shrink-0 whitespace-nowrap text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${ghost.bg} ${ghost.text} ${ghost.border}`}>
+              {{ LEAD: 'ใช้น้อยกว่า', TIED: 'ใกล้เคียง', TRAIL: 'ใช้มากกว่า' }[ghostTone]}
             </span>
           </div>
 
@@ -133,9 +139,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               <Shimmer className="h-8 w-32 my-1" />
             ) : (
               <div className="flex items-baseline justify-between gap-2">
-                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                  isLeading ? 'text-emerald-400' : 'text-danger'
-                }`}>
+                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${ghost.text}`}>
                   {isLeading ? '-' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsGhost))} />
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
@@ -148,13 +152,13 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             <div className="space-y-1.5 pt-1">
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[11px] font-mono text-neutral-400">
-                  <span className="text-expense font-bold">{currentPeriod} (เดือนนี้):</span>
+                  <span className={`${ghost.text} font-bold`}>{currentPeriod} (เดือนนี้):</span>
                   <span className="text-white font-bold tabular-nums">฿{formatMoney(currentSpendToDate)}</span>
                 </div>
                 <div className="h-1 w-full bg-neutral-900 overflow-hidden border border-neutral-800">
                   <div
                     style={{ width: `${Math.min(100, Math.max(5, (currentSpendToDate / Math.max(1, currentSpendToDate, ghostSpendToDate)) * 100))}%` }}
-                    className="h-full bg-expense"
+                    className={`h-full ${ghost.bar}`}
                   />
                 </div>
               </div>
@@ -176,14 +180,14 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
             <span>จังหวะการใช้จ่าย:</span>
-            <span className={isLeading ? 'text-emerald-400 font-bold' : 'text-danger font-bold'}>
-              {isLeading ? 'ควบคุมงบได้นิ่งกว่า' : 'ใช้จ่ายเร็วกว่ารอบก่อน'}
+            <span className={`${ghost.text} font-bold text-right`}>
+              {{ LEAD: 'ควบคุมงบได้นิ่งกว่า', TIED: 'ใกล้เคียงรอบก่อน', TRAIL: 'ใช้จ่ายเร็วกว่ารอบก่อน' }[ghostTone]}
             </span>
           </div>
         </div>
 
         {/* POD 2: 3-Month Benchmark */}
-        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-sky-500">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Compass size={13} className="text-sky-400 shrink-0" />
@@ -199,9 +203,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               <Shimmer className="h-8 w-32 my-1" />
             ) : (
               <div className="flex items-baseline justify-between gap-2">
-                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                  isBenchLeading ? 'text-sky-400' : 'text-amber-400'
-                }`}>
+                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${bench.text}`}>
                   {isBenchLeading ? '-' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsBenchmark))} />
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
@@ -224,14 +226,14 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
             <span>ความเร็วเทียบค่าเฉลี่ย:</span>
-            <span className={isBenchLeading ? 'text-sky-400 font-bold' : 'text-amber-400 font-bold'}>
-              {isBenchLeading ? 'ต่ำกว่าเกณฑ์เฉลี่ย' : 'สูงกว่าเกณฑ์เฉลี่ย'}
+            <span className={`${bench.text} font-bold text-right`}>
+              {{ LEAD: 'ต่ำกว่าเกณฑ์เฉลี่ย', TIED: 'ใกล้เคียงเกณฑ์เฉลี่ย', TRAIL: 'สูงกว่าเกณฑ์เฉลี่ย' }[benchTone]}
             </span>
           </div>
         </div>
 
         {/* POD 3: Finish Line Forecast */}
-        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-emerald-500">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
               <Flag size={13} className="text-emerald-400 shrink-0" />
@@ -250,9 +252,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
                 <div className="text-2xl xl:text-3xl font-black text-white tabular-nums tracking-tight leading-none">
                   ฿<AnimatedNumber value={Math.round(projectedExpense)} />
                 </div>
-                <div className={`text-xs font-mono font-bold tabular-nums flex items-center gap-0.5 ${
-                  isEomLeading ? 'text-emerald-400' : 'text-danger'
-                }`}>
+                <div className={`text-xs font-mono font-bold tabular-nums flex items-center gap-0.5 ${eom.text}`}>
                   {isEomLeading ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
                   ฿{formatAmount(Math.abs(Math.round(deltaEom)))}
                 </div>
@@ -273,8 +273,8 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
             <span>แนวโน้มสิ้นเดือน:</span>
-            <span className={isEomLeading ? 'text-emerald-400 font-bold' : 'text-danger font-bold'}>
-              {isEomLeading ? 'ประหยัดกว่าเดือนก่อน' : 'ยอดจบสูงกว่าเดือนก่อน'}
+            <span className={`${eom.text} font-bold text-right`}>
+              {{ LEAD: 'ประหยัดกว่าเดือนก่อน', TIED: 'ใกล้เคียงเดือนก่อน', TRAIL: 'ยอดจบสูงกว่าเดือนก่อน' }[eomTone]}
             </span>
           </div>
         </div>

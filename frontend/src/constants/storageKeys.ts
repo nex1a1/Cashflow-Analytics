@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   CALENDAR_LEGEND_SORT: 'shark_calendar_legend_sort',
   CALENDAR_LEGEND_LAYOUT: 'shark_calendar_legend_layout',
   PERIOD_MODE: 'shark_period_mode',
+  THEME: 'shark_theme',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

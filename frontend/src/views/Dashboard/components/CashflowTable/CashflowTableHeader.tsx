@@ -7,7 +7,7 @@ import { getHighlightBgColor, getSubHighlightBgColor } from './helpers';
 import { MONTH_COL_CLS, GROUP_COL_CLS, CAT_COL_CLS } from './constants';
 import { HeaderProps } from './types';
 
-import { tc } from '@/constants/theme';
+import { tc, readable } from '@/constants/theme';
 export const CashflowTableHeader = React.memo(({
   activeIncomeGroups,
   activeExpenseGroups,
@@ -41,7 +41,7 @@ export const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
+          className={`px-3 py-2.5 font-bold text-center sticky left-0 z-50 align-middle border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgb(0_0_0/calc(0.15*var(--shadow-k)))] transition-colors ${MONTH_COL_CLS} ${
             hoveredCol === 'month' ? 'bg-surface-elevated text-white' : 'text-neutral-200 bg-surface'
           }`}
         >
@@ -76,8 +76,8 @@ export const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold border-l !border-l-line-strong border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
-            hoveredCol === 'trend' ? 'bg-surface-elevated text-accent' : 'text-accent bg-surface'
+          className={`px-3 py-2.5 font-bold border-l !border-l-line-strong border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+            hoveredCol === 'trend' ? 'bg-surface-elevated text-accent-ink' : 'text-accent-ink bg-surface'
           }`}
         >
           รวมรายจ่าย (Trend)
@@ -134,7 +134,7 @@ export const CashflowTableHeader = React.memo(({
                 onMouseEnter={(e) => { handleMouseEnter(e, g); setHoveredCol(colId); }}
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                 className={`px-2 py-1.5 font-extrabold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isLastIncome && !isExpanded ? boundaryBorder : ''} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
-                style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                style={{ color: isExcluded ? undefined : readable(groupColor), backgroundColor: getHeaderGroupBg(g, isColHovered), boxShadow: isExcluded ? undefined : `inset 0 2px 0 ${groupColor}` }}
               >
                 <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
@@ -142,7 +142,7 @@ export const CashflowTableHeader = React.memo(({
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${isExcluded ? 'opacity-40 grayscale' : ''}`}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
                     <CategoryGlyph
                       icon={g.icon}
@@ -151,7 +151,7 @@ export const CashflowTableHeader = React.memo(({
                       fallbackEmoji="💰"
                     />
                     {cats.length > 0 && (
-                      <span className={`text-[11px] font-mono leading-none ${isExpanded ? 'text-accent' : 'text-emerald-400/70'}`}>
+                      <span className={`text-[11px] font-mono leading-none ${isExpanded ? 'text-accent-ink' : 'text-emerald-400/70'}`}>
                         {isExpanded ? '«' : '»'}
                       </span>
                     )}
@@ -182,7 +182,7 @@ export const CashflowTableHeader = React.memo(({
                     onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
                     onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                     className={`px-2 py-1.5 font-black text-center text-[11px] uppercase border-l border-b transition-colors ${cIdx === cats.length - 1 && isLastIncome ? boundaryBorder : thinBorder} border-t-line-strong/65 border-b-line-strong/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
-                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered), boxShadow: `inset 0 2px 0 ${c.color || groupColor}` }}
                     title={c.name}
                   >
                     <div className="flex items-center justify-center gap-1 min-w-0">
@@ -220,7 +220,7 @@ export const CashflowTableHeader = React.memo(({
                 onMouseEnter={(e) => { handleMouseEnter(e, g); setHoveredCol(colId); }}
                 onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                 className={`px-2 py-1.5 font-bold text-center transition-colors border-l border-b ${isExpanded ? boxBorder : thinBorder} ${isExcluded ? 'opacity-40' : ''} ${GROUP_COL_CLS}`}
-                style={{ color: isExcluded ? undefined : groupColor, backgroundColor: getHeaderGroupBg(g, isColHovered) }}
+                style={{ color: isExcluded ? undefined : readable(groupColor), backgroundColor: getHeaderGroupBg(g, isColHovered), boxShadow: isExcluded ? undefined : `inset 0 2px 0 ${groupColor}` }}
               >
                 <div className="flex items-center justify-center gap-1 min-w-0">
                   <button
@@ -228,7 +228,7 @@ export const CashflowTableHeader = React.memo(({
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${isExcluded ? 'opacity-40 grayscale' : ''}`}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
                     <CategoryGlyph
                       icon={g.icon}
@@ -237,7 +237,7 @@ export const CashflowTableHeader = React.memo(({
                       fallbackEmoji="📦"
                     />
                     {cats.length > 0 && (
-                      <span className={`text-[20px] font-mono leading-none ${isExpanded ? 'text-accent' : 'text-slate-400'}`}>
+                      <span className={`text-[20px] font-mono leading-none ${isExpanded ? 'text-accent-ink' : 'text-slate-400'}`}>
                         {isExpanded ? '«' : '»'}
                       </span>
                     )}
@@ -268,7 +268,7 @@ export const CashflowTableHeader = React.memo(({
                     onMouseEnter={(e) => { handleCategoryMouseEnter?.(e, g, c); setHoveredCol(catColId); }}
                     onMouseLeave={() => { handleMouseLeave(); setHoveredCol(null); }}
                     className={`px-2 py-1.5 font-black text-center text-[11px] uppercase border-l border-b transition-colors ${thinBorder} border-t-line-strong/65 border-b-line-strong/65 ${isCatFaded ? 'opacity-30' : ''} ${CAT_COL_CLS}`}
-                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered) }}
+                    style={{ backgroundColor: getHeaderCatBg(g, c.color, isCatColHovered), boxShadow: `inset 0 2px 0 ${c.color || groupColor}` }}
                     title={c.name}
                   >
                     <div className="flex items-center justify-center gap-1 min-w-0">

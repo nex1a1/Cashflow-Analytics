@@ -56,12 +56,12 @@ export const CashflowTableFooter = React.memo(({
     totalActiveIncome > 0 ? ((totalActiveExpense / totalActiveIncome) * 100).toFixed(1) : '0.0';
 
   return (
-    <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`}>
+    <tfoot className={`font-bold border-t ${thinBorder} sticky bottom-0 z-20 shadow-[0_-2px_10px_rgb(0_0_0/calc(0.1*var(--shadow-k)))]`}>
       <tr className="text-slate-200">
         <td
           onMouseEnter={() => setHoveredCol('month')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] transition-colors ${MONTH_COL_CLS} ${
+          className={`px-3 py-2.5 text-center sticky left-0 z-30 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgb(0_0_0/calc(0.15*var(--shadow-k)))] transition-colors ${MONTH_COL_CLS} ${
             hoveredCol === 'month' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >
@@ -173,7 +173,7 @@ export const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l !border-l-line-strong border-b ${thinBorder} text-accent sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+          className={`px-3 py-2.5 border-l !border-l-line-strong border-b ${thinBorder} text-accent-ink sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >

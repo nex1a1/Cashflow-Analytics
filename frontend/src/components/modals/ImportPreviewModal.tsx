@@ -48,7 +48,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
     };
   }, [allItems, previewPage]);
 
-  const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent transition-colors";
+  const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
 
   return (
     <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -63,7 +63,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             </h3>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-slate-300">
-                พบ <strong className="text-accent">{allItems.length} รายการ</strong>
+                พบ <strong className="text-accent-ink">{allItems.length} รายการ</strong>
               </span>
               {importPreview.isCategoryChanged && (
                 <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-none bg-amber-500/20 text-amber-500 border border-amber-500/30">
@@ -111,7 +111,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                     <select 
                       value={item.category} 
                       onChange={e => updateItem(item.id, 'category', e.target.value)}
-                      className="text-[11px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-surface border-line-strong text-slate-300 focus:border-accent transition-colors"
+                      className="text-[11px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-surface border-line-strong text-slate-300 focus:border-accent-ink transition-colors"
                     >
                       {allCats.map((c: any) => (
                         <option key={c.id} value={c.name}>
@@ -177,7 +177,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             <button 
               onClick={confirmImport} 
               disabled={isProcessing || allItems.length === 0}
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-on-accent bg-accent hover:bg-accent-active border border-accent transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-on-accent bg-accent hover:bg-accent-active border border-accent-ink transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
             >
               {isProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse" /> : <CheckCircle className="w-3.5 h-3.5" />}
               {isProcessing ? 'กำลัง Import...' : `Import ${allItems.length} รายการ`}

@@ -4,6 +4,24 @@ import { periodUnitDates } from './dateHelpers';
 import { isCyclePeriod, stripCycle, shiftMonth, localTodayIso } from './payCycle';
 
 import { tc } from '@/constants/theme';
+
+/** Within ±5% of the comparison counts as "close" (yellow), not a win or a loss. */
+export const PACE_NEAR_PCT = 5;
+export type PaceTone = GhostPacerStatus['code'];
+
+/** Spending `delta` over `base`: less = LEAD (green), within PACE_NEAR_PCT = TIED (yellow), more = TRAIL (red). */
+export function paceTone(delta: number, base: number): PaceTone {
+  const pct = base > 0 ? (delta / base) * 100 : delta === 0 ? 0 : Math.sign(delta) * Infinity;
+  if (Math.abs(pct) <= PACE_NEAR_PCT) return 'TIED';
+  return delta < 0 ? 'LEAD' : 'TRAIL';
+}
+
+export const PACE_TONE_STYLE: Record<PaceTone, { color: string; text: string; bg: string; border: string; bar: string }> = {
+  LEAD:  { color: tc('income'), text: 'text-income', bg: 'bg-income/10', border: 'border-income', bar: 'bg-income' },
+  TIED:  { color: tc('warn'),   text: 'text-warn',   bg: 'bg-warn/10',   border: 'border-warn',   bar: 'bg-warn' },
+  TRAIL: { color: tc('danger'), text: 'text-danger', bg: 'bg-danger/10', border: 'border-danger', bar: 'bg-danger' },
+};
+
 interface CalculateGhostPacerParams {
   globalDailySum: Record<string, number>;
   filterPeriod: string;
@@ -154,34 +172,15 @@ export function calculateGhostPacerData({
     paceStatus = {
       code: 'TIED',
       label: 'กำลังรวบรวมข้อมูล',
-      color: '#38bdf8',
+      color: tc('info'),
       bg: 'bg-sky-950/30',
       border: 'border-sky-500',
     };
-  } else if (deltaVsGhost < -100) {
-    paceStatus = {
-      code: 'LEAD',
-      label: 'ใช้น้อยกว่าเดือนก่อน',
-      color: tc('income'),
-      bg: 'bg-emerald-950/30',
-      border: 'border-emerald-500',
-    };
-  } else if (deltaVsGhost > 100) {
-    paceStatus = {
-      code: 'TRAIL',
-      label: 'ใช้เร็วกว่าเดือนก่อน',
-      color: tc('expense'),
-      bg: 'bg-danger/10',
-      border: 'border-accent',
-    };
   } else {
-    paceStatus = {
-      code: 'TIED',
-      label: 'ใกล้เคียงเดือนก่อน',
-      color: '#3b82f6',
-      bg: 'bg-blue-950/30',
-      border: 'border-blue-500',
-    };
+    const code = paceTone(deltaVsGhost, ghostSpendToDate);
+    const { color, bg, border } = PACE_TONE_STYLE[code];
+    const label = { LEAD: 'ใช้น้อยกว่าเดือนก่อน', TIED: 'ใกล้เคียงเดือนก่อน', TRAIL: 'ใช้เร็วกว่าเดือนก่อน' }[code];
+    paceStatus = { code, label, color, bg, border };
   }
 
   return {

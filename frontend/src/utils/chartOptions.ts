@@ -4,7 +4,7 @@ import { formatMoney } from './formatters';
 import { tc } from '@/constants/theme';
 const getTooltipOptions = (isDarkMode: boolean) => ({
   backgroundColor: tc('surface'),
-  titleColor:      '#ffffff',
+  titleColor:      tc('ink-display'),
   bodyColor:       tc('gray-300'),
   borderColor:     tc('line'),
   borderWidth: 1,

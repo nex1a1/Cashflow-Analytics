@@ -29,7 +29,7 @@ export const MainChartToolbar = memo(({
     return (
       <div className="flex items-center gap-2.5 relative z-10 flex-wrap w-full text-[11px] select-none">
         <span className="uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 text-slate-500">
-          <Activity className="w-3 h-3 text-accent" /> CATEGORY TRENDS
+          <Activity className="w-3 h-3 text-accent-ink" /> CATEGORY TRENDS
         </span>
         <span className="w-px h-4 shrink-0 bg-surface-elevated" />
         <span className="text-slate-400">

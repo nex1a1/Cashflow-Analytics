@@ -16,9 +16,9 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
     onBlur={() => onHover(-1)}
     tabIndex={0}
     aria-label={`${cat.name}: ฿${formatMoney(cat.amount)} (${cat.percentage}%)`}
-    className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+    className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
       isHovered
-        ? 'bg-surface-elevated/90 border-accent z-10'
+        ? 'bg-surface-elevated/90 border-accent-ink z-10'
         : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
     }`}
     style={{ borderLeftColor: isHovered ? undefined : cat.color }}
@@ -38,7 +38,7 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
         title={cat.name}
       >
         <CategoryGlyph icon={cat.icon} color={cat.color} size={16} className="shrink-0 leading-none" />
-        <span className="truncate group-hover:text-accent uppercase tracking-tight">{cat.name}</span>
+        <span className="truncate group-hover:text-accent-ink uppercase tracking-tight">{cat.name}</span>
       </span>
       <div className="flex flex-col items-end shrink-0 leading-none">
         <span className="text-[11px] font-bold tabular-nums mb-0.5" style={{ color: tc('ink-body') }}>

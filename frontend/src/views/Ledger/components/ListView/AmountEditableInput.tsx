@@ -72,7 +72,7 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
         error
           ? 'bg-surface tint-danger'
           : isEditing
-          ? 'bg-surface border-accent ring-1 ring-accent/40' 
+          ? 'bg-surface border-accent-ink ring-1 ring-accent/40' 
           : 'bg-transparent border-transparent hover:bg-surface hover:border-line-strong'
       }`}
       style={{ ...fontStyle, borderRadius: '4px' }}

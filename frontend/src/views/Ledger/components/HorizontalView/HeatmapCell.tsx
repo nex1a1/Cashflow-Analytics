@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { hexToRgb, formatMoney } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
-import { tc } from '@/constants/theme';
+import { tc, readable } from '@/constants/theme';
 interface HeatmapCellProps {
   idx: number;
   date: string;
@@ -114,8 +114,7 @@ const HeatmapCell = memo(function HeatmapCell({
               fontSize: `${sz}px`,
               fontWeight: 800,
               fontVariantNumeric: 'tabular-nums',
-              color: cat.color || undefined,
-              filter: 'brightness(1.8) saturate(1.2)',
+              color: cat.color ? readable(cat.color) : undefined,
               lineHeight: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -123,7 +122,7 @@ const HeatmapCell = memo(function HeatmapCell({
               minWidth: 0,
               letterSpacing: '-0.01em',
               textShadow: intensity > 0.4
-                ? `0 1px 2px ${'rgba(0,0,0,0.6)'}`
+                ? `0 1px 2px ${'rgb(0 0 0 / calc(0.6 * var(--shadow-k)))'}`
                 : 'none',
               transform: 'scale(1)',
             }}>

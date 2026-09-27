@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
 import { DayType } from '@/types';
 import { hexToRgb, getThaiDayInfo, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { readable } from '@/constants/theme';
+import { readable, tc, IS_LIGHT } from '@/constants/theme';
 
 export interface DayTypeSelectProps {
   value?: string;
@@ -216,6 +216,21 @@ export default function DayTypeSelect({
     ? 'h-7 px-4 min-w-[72px] text-xs' 
     : 'h-[23px] px-3.5 min-w-[64px] text-[11px]';
 
+  const isWorkDay = currentType?.id === 'work' || currentType?.name === 'work' || currentType?.label === 'ทำงาน';
+  const isXs = size === 'xs';
+
+  const badgeBg = isXs && isWorkDay
+    ? `rgba(${currentRgb}, ${IS_LIGHT ? '0.04' : '0.06'})`
+    : `rgba(${currentRgb}, ${IS_LIGHT ? '0.10' : '0.12'})`;
+
+  const badgeBorder = isXs && isWorkDay
+    ? `rgba(${currentRgb}, ${IS_LIGHT ? '0.14' : '0.20'})`
+    : `rgba(${currentRgb}, ${IS_LIGHT ? '0.28' : '0.35'})`;
+
+  const badgeColor = isXs && isWorkDay && IS_LIGHT
+    ? tc('ink-muted')
+    : readable(currentColor);
+
   return (
     <>
       {/* TRIGGER BUTTON */}
@@ -227,9 +242,9 @@ export default function DayTypeSelect({
         onKeyDown={handleKeyDown}
         className={`day-type-badge ${pillDimensions} font-black rounded-full cursor-pointer outline-none border inline-flex items-center justify-center text-center leading-none select-none transition-all hover:brightness-125 hover:border-opacity-60 active:scale-95 ${className}`}
         style={{
-          backgroundColor: `rgba(${currentRgb}, 0.12)`,
-          borderColor: `rgba(${currentRgb}, 0.35)`,
-          color: readable(currentColor),
+          backgroundColor: badgeBg,
+          borderColor: badgeBorder,
+          color: badgeColor,
         }}
         title={`คลิกเพื่อเปลี่ยนประเภทวัน (ปัจจุบัน: ${currentType?.label || ''})`}
       >
@@ -243,7 +258,7 @@ export default function DayTypeSelect({
             ref={popoverRef}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="fixed z-[9999] bg-surface border border-line shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_1px_1px_rgba(255,255,255,0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
+            className="fixed z-[9999] bg-surface border border-line shadow-[0_16px_40px_rgb(0_0_0/calc(0.95*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -308,7 +323,7 @@ export default function DayTypeSelect({
                       borderColor: isSelected
                         ? `rgba(${dtRgb}, 0.5)`
                         : isFocused
-                        ? 'rgba(255, 255, 255, 0.1)'
+                        ? 'rgb(var(--overlay) / 0.1)'
                         : 'transparent',
                       backgroundColor: isSelected
                         ? `rgba(${dtRgb}, 0.14)`

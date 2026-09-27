@@ -39,7 +39,7 @@ export const StrategicSubscriptionCard = memo(({
   if (isLeak) {
     statusBadge = {
       label: 'รั่วไหล', cls: 'text-danger border-danger/30 bg-danger/10',
-      borderLeft: 'border-l-accent', barBg: 'bg-accent', colorText: 'text-accent'
+      borderLeft: 'border-l-accent-ink', barBg: 'bg-accent', colorText: 'text-accent-ink'
     };
   } else if (isModerate) {
     statusBadge = {

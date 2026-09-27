@@ -155,7 +155,7 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
               y1={0}
               x2={x(hoveredIdx)}
               y2={H - 2}
-              stroke="#ffffff"
+              stroke={tc('ink-display')}
               strokeWidth={1}
               strokeDasharray="2 2"
               opacity={0.4}
@@ -166,7 +166,7 @@ function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
               cy={y(series[hoveredIdx])}
               r={2.8}
               fill={color}
-              stroke="#ffffff"
+              stroke={tc('ink-display')}
               strokeWidth={1.2}
               vectorEffect="non-scaling-stroke"
             />

@@ -57,7 +57,7 @@ function resolveDayStyle({
     if (hasPrev && hasNext) {
       return { dayStyle: 'bg-accent/35 text-white font-bold border-y border-accent/60 shadow-none', isDimmed: false };
     }
-    return { dayStyle: 'bg-accent text-on-accent font-black shadow-sm ring-1 ring-accent', isDimmed: false };
+    return { dayStyle: 'bg-accent text-on-accent font-black shadow-sm ring-1 ring-accent-ink', isDimmed: false };
   }
   if (value === 'WEEKDAY' && draftDatesSize === 0) {
     return weekend
@@ -70,10 +70,10 @@ function resolveDayStyle({
       : { dayStyle: 'text-ink-muted opacity-40', isDimmed: true };
   }
   if (isToday) {
-    return { dayStyle: `ring-1 ring-accent ${textMain} ${hoverDay}`, isDimmed: false };
+    return { dayStyle: `ring-1 ring-accent-ink ${textMain} ${hoverDay}`, isDimmed: false };
   }
   if (weekend) {
-    return { dayStyle: `text-red-400 ${hoverDay}`, isDimmed: false };
+    return { dayStyle: `text-weekend font-bold ${hoverDay}`, isDimmed: false };
   }
   return { dayStyle: `${textMain} ${hoverDay}`, isDimmed: false };
 }
@@ -248,13 +248,13 @@ function DatePickerTrigger({
         onClick={() => setOpen(!open)}
         className={`relative w-full text-left flex items-center border rounded-none bg-surface cursor-pointer select-none transition-colors ${
           isActive
-            ? 'border-accent text-white bg-surface'
+            ? 'border-accent-ink text-white bg-surface'
             : 'border-line text-ink-body hover:border-accent/40 hover:bg-surface-elevated/20'
         }`}
       >
         <div
           className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
-            isActive ? 'border-accent/30 text-accent' : 'border-line text-ink-muted'
+            isActive ? 'border-accent/30 text-accent-ink' : 'border-line text-ink-muted'
           }`}
         >
           <Calendar className="w-3 h-3" />
@@ -266,7 +266,7 @@ function DatePickerTrigger({
 
         <div
           className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-            isActive ? 'text-accent' : 'text-ink-muted'
+            isActive ? 'text-accent-ink' : 'text-ink-muted'
           }`}
         >
           <ChevronDown className="w-3 h-3" />
@@ -287,7 +287,7 @@ function DatePickerTrigger({
       onClick={() => setOpen(!open)}
       className={
         className ||
-        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent focus:border-accent'
+        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink'
       }
     >
       <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
@@ -803,13 +803,13 @@ export default function DatePicker({
                     return (
                       <span
                         key={`${range[0]}_${lastDate}`}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent rounded-none"
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent-ink rounded-none"
                       >
                         {label}
                         <button
                           type="button"
                           onClick={() => removeRange(range)}
-                          className="hover:text-white text-accent/70 transition-colors"
+                          className="hover:text-white text-accent-ink/70 transition-colors"
                           title="ลบช่วงนี้"
                         >
                           <X className="w-3 h-3" />
@@ -871,7 +871,7 @@ export default function DatePicker({
                 type="button"
                 onClick={handleConfirm}
                 disabled={draftDates.size === 0}
-                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent"
+                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent-ink bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent"
                 title={draftDates.size === 0 ? 'กรุณาเลือกวันที่ก่อนยืนยัน' : undefined}
               >
                 <Check className="w-3 h-3" />

@@ -4,7 +4,7 @@ import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 
-import { tc } from '@/constants/theme';
+import { tc, readable } from '@/constants/theme';
 const ALLOCATION_BADGE_STYLES: Record<string, string> = {
   need: 'bg-rose-950/40 text-rose-400 border-rose-800/40',
   want: 'bg-amber-950/40 text-amber-400 border-amber-800/40',
@@ -57,7 +57,7 @@ const TxRow = memo(({ tx, catObj, onDeleteClick }: TxRowProps) => {
         </div>
 
         {/* Group Breadcrumb & Category */}
-        <div className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5 min-w-0" style={{ color, filter: 'brightness(1.25)' }}>
+        <div className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5 min-w-0" style={{ color: readable(color) }}>
           <CategoryGlyph icon={catObj?.icon} color={color} size={18} className="shrink-0" />
           {groupObj?.name && (
             <>

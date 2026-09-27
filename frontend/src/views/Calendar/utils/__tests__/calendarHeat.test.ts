@@ -37,7 +37,7 @@ describe('Calendar Tactical Heat Steps Engine', () => {
       expect(getCalendarHeatLevel(1200, 4000)).toBe(3);
     });
 
-    it('returns level 4 for peak heavy spend (Thunderbolt Crimson)', () => {
+    it('returns level 4 for peak heavy spend (Rosso Corsa)', () => {
       // 5,839 THB out of 6,950 max (~84%)
       expect(getCalendarHeatLevel(5839, 6950)).toBe(4);
       // 6,950 THB out of 6,950 max (100%)
@@ -48,15 +48,12 @@ describe('Calendar Tactical Heat Steps Engine', () => {
   });
 
   describe('getCalendarHeatStyle', () => {
-    it('returns undefined for levels 0 and 1 (keeping daily baseline clean)', () => {
+    it('returns undefined across all levels (gradient-free flat solid cells)', () => {
       expect(getCalendarHeatStyle(0)).toBeUndefined();
       expect(getCalendarHeatStyle(1)).toBeUndefined();
-    });
-
-    it('returns background gradients for levels 2, 3, and 4', () => {
-      expect(getCalendarHeatStyle(2)).toEqual({ backgroundImage: CALENDAR_HEAT_GRADIENTS[2] });
-      expect(getCalendarHeatStyle(3)).toEqual({ backgroundImage: CALENDAR_HEAT_GRADIENTS[3] });
-      expect(getCalendarHeatStyle(4)).toEqual({ backgroundImage: CALENDAR_HEAT_GRADIENTS[4] });
+      expect(getCalendarHeatStyle(2)).toBeUndefined();
+      expect(getCalendarHeatStyle(3)).toBeUndefined();
+      expect(getCalendarHeatStyle(4)).toBeUndefined();
     });
   });
 

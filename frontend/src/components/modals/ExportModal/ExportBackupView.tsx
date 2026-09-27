@@ -37,7 +37,7 @@ export default function ExportBackupView({
       count: localTransactions.length,
       unit: 'รายการ',
       icon: Receipt,
-      accent: 'border-accent/30 text-accent',
+      accent: 'border-accent/30 text-accent-ink',
     },
     {
       title: 'หมวดหมู่การเงิน',
@@ -69,7 +69,7 @@ export default function ExportBackupView({
     <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
       <div>
         <h4 className="text-xs font-black uppercase tracking-widest text-neutral-200 flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-accent" />
+          <FileJson className="w-4 h-4 text-accent-ink" />
           โครงสร้างชุดข้อมูลสำรองระบบ (System Backup Schema)
         </h4>
         <p className="text-[11px] text-neutral-400 mt-1 leading-normal">

@@ -33,7 +33,7 @@ export default function ExportPreview({
     if (isFetching) {
       return (
         <div className="h-full flex flex-col items-center justify-center space-y-3 font-mono text-xs text-neutral-400">
-          <Loader2 className="w-7 h-7 text-accent animate-spin" />
+          <Loader2 className="w-7 h-7 text-accent-ink animate-spin" />
           <span className="uppercase tracking-widest text-neutral-400">
             กำลังดึงข้อมูลจากฐานข้อมูล...
           </span>
@@ -110,7 +110,7 @@ export default function ExportPreview({
               placeholder="ค้นหาในตัวอย่าง..."
               value={previewSearch}
               onChange={(e) => setPreviewSearch(e.target.value)}
-              className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent rounded-none transition-colors"
+              className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent-ink rounded-none transition-colors"
             />
             {previewSearch && (
               <button
@@ -134,7 +134,7 @@ export default function ExportPreview({
 
       {/* Bottom Hint */}
       <div className="mt-3 flex items-start gap-2 text-[11px] text-neutral-400 shrink-0">
-        <Info className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+        <Info className="w-3.5 h-3.5 text-accent-ink shrink-0 mt-0.5" />
         <p className="leading-snug">
           ระบบฝังรหัส <strong className="text-neutral-300">UTF-8 BOM</strong> ในไฟล์ CSV อัตโนมัติ เพื่อให้เปิดใน Microsoft Excel และ Google Sheets ได้โดยภาษาไทยไม่เพี้ยน
         </p>

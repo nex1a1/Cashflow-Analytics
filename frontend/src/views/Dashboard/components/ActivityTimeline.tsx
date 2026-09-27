@@ -75,7 +75,7 @@ interface TimelineModeToggleProps {
 
 const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setViewMode }) => {
   const modeButtons: Array<{ id: TimelineViewMode; label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = [
-    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-accent' },
+    { id: 'dayType', label: 'ประเภทวัน', icon: CalendarDays, color: 'text-accent-ink' },
     { id: 'heatmap', label: 'ระดับการจ่าย', icon: Flame, color: 'text-orange-400' }
   ];
 
@@ -90,7 +90,7 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
             type="button"
             aria-pressed={isActive}
             onClick={() => setViewMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? btn.color : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -129,7 +129,7 @@ const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeCo
             <div key={dt.id} className="flex items-center justify-center gap-1.5">
               <div
                 className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20"
-                style={{ backgroundColor: dt.color || tc('ink-muted') }} 
+                style={{ backgroundColor: dt.color || '#475569' }} 
               />
               <span className="text-xs font-bold text-slate-400">
                 {dt.label} 
@@ -274,10 +274,10 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
       type="button"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
-      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:z-10 ${
+      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink focus-visible:z-10 ${
         isToday 
-          ? 'ring-1 ring-accent z-10' 
-          : 'opacity-90 hover:opacity-100 hover:border-accent hover:z-10'
+          ? 'ring-1 ring-accent-ink z-10' 
+          : 'opacity-90 hover:opacity-100 hover:border-accent-ink hover:z-10'
       }`}
       style={{
         backgroundColor,
@@ -316,7 +316,7 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
             type="button"
             aria-pressed={isActive}
             onClick={() => setLayoutMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? 'text-slate-100' : 'text-slate-400 hover:text-slate-200'
             }`}
           >

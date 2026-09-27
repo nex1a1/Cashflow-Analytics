@@ -95,7 +95,7 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         onClick={() => onToggleSort('amount')}
         title={amountTitle}
         aria-label={amountTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
           isAmount ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
@@ -108,8 +108,8 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         onClick={() => onToggleSort('order')}
         title={orderTitle}
         aria-label={orderTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
-          isOrder ? 'bg-accent/20 text-accent' : 'text-slate-400 hover:text-slate-200'
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
+          isOrder ? 'bg-accent/20 text-accent-ink' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
         <ListOrdered className={`w-3.5 h-3.5 shrink-0 transition-transform duration-100 ${sortMode === 'order-desc' ? 'rotate-180' : ''}`} />
@@ -149,7 +149,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
 function NoIncomeWarning() {
   return (
     <span
-      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-none text-[11px] font-black text-accent uppercase tracking-wider"
+      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-none text-[11px] font-black text-accent-ink uppercase tracking-wider"
       title="ไม่มีรายได้บันทึกในเดือนนี้ — สัดส่วนคำนวณจากยอดรายจ่ายแทน"
     >
       <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -206,7 +206,7 @@ export function ExpenseProportionHeader({
           />
         )}
       </div>
-      <span className="text-[11px] font-black px-1.5 rounded-full bg-accent/10 text-accent">
+      <span className="text-[11px] font-black px-1.5 rounded-full bg-accent/10 text-accent-ink">
         {countText}
       </span>
     </div>

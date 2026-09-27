@@ -1,7 +1,11 @@
 const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 const ramp = (name, steps) => Object.fromEntries(steps.map((s) => [s, v(`${name}-${s}`)]));
 const GRAY = ramp('gray', [50, 100, 200, 300, 400, 500, 600, 700, 750, 800, 850, 900, 950]);
-const GREEN = ramp('green', [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]);
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const GREEN = ramp('green', STEPS);
+// Themed ramps generated in theme.ts (rampFrom): every Tailwind hue family in use resolves to a token.
+const WARN = ramp('warn', STEPS), INFO = ramp('info', STEPS), ORANGE = ramp('orange', STEPS);
+const PURPLE = ramp('purple', STEPS), RED = ramp('danger', STEPS), NEED = ramp('need', STEPS);
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -28,7 +32,16 @@ export default {
       // Legacy gray + emerald palettes are remapped onto theme ramps so old classes follow the theme.
       colors: {
         neutral: GRAY, slate: GRAY, gray: GRAY, zinc: GRAY, stone: GRAY,
-        emerald: GREEN,
+        emerald: GREEN, green: GREEN,
+        amber: WARN, yellow: WARN,
+        sky: INFO, blue: INFO, cyan: INFO,
+        orange: ORANGE,
+        purple: PURPLE, violet: PURPLE, indigo: PURPLE,
+        red: RED,
+        rose: NEED, pink: NEED,
+        // `white` follows the strongest ink so dark-era `text-white` flips in the light theme;
+        // text that must stay white on a solid fill uses `text-on-accent`.
+        white: v('ink-display'),
         canvas: v('canvas'),
         surface: {
           DEFAULT: v('surface'),
@@ -43,12 +56,17 @@ export default {
         accent: {
           DEFAULT: v('accent'),
           active: v('accent-active'),
+          ink: v('accent-ink'),
         },
         'on-accent': v('on-accent'),
+        gold: v('gold'),
+        'on-gold': v('on-gold'),
         income: v('income'),
         expense: v('expense'),
         savings: v('savings'),
         weekend: v('weekend'),
+        warn: v('warn'),
+        info: v('info'),
         danger: {
           DEFAULT: v('danger'),
           active: v('danger-active'),

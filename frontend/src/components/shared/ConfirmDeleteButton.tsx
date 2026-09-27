@@ -28,7 +28,7 @@ const ConfirmDeleteButton = memo(({
   const aria = armed ? `กดอีกครั้งเพื่อยืนยันลบ${itemLabel ? `: ${itemLabel}` : ''}` : `${tooltip}${itemLabel ? `: ${itemLabel}` : ''}`;
 
   const tone = armed
-    ? 'bg-danger-active text-white border-danger-active'
+    ? 'bg-danger-active text-on-accent border-danger-active'
     : variant === 'label'
       ? 'bg-danger/5 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger/60'
       : 'text-ink-muted border-transparent hover:text-danger hover:bg-danger/10';

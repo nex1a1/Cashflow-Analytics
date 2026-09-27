@@ -12,6 +12,7 @@ import {
   type IconCategoryKey,
 } from '@/constants/categoryIcons';
 import CategoryGlyph from './CategoryGlyph';
+import { tc } from '@/constants/theme';
 
 export interface IconPickerProps {
   icon: string | null | undefined;
@@ -130,7 +131,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
       {open && createPortal(
         <div
           ref={paletteRef}
-          className="fixed z-[9999] shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[9999] shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Laser Hairline Accent */}
@@ -197,7 +198,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
               ) : currentSelectedDef ? (
                 <div className="flex items-center gap-2 truncate">
                   <span className="text-neutral-400 text-[11px]">เลือกอยู่:</span>
-                  <currentSelectedDef.Icon size={15} style={{ color: color || '#ffffff' }} className="shrink-0" />
+                  <currentSelectedDef.Icon size={15} style={{ color: color || tc('ink-display') }} className="shrink-0" />
                   <span className="text-white font-medium truncate">{currentSelectedDef.label}</span>
                   <span className="text-neutral-500 font-mono text-[11px] shrink-0">({currentSelectedDef.key})</span>
                 </div>
@@ -224,11 +225,11 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                       title={label}
                       className={`aspect-square w-full flex items-center justify-center rounded-none transition-all cursor-pointer relative focus:outline-none ${
                         isSelected
-                          ? 'bg-accent/20 ring-1 ring-accent z-10 text-white'
+                          ? 'bg-accent/20 ring-1 ring-accent-ink z-10 text-white'
                           : 'bg-neutral-900/70 text-neutral-400 hover:text-white hover:bg-neutral-800 hover:scale-105'
                       }`}
                     >
-                      <Icon size={20} style={{ color: isSelected ? (color || '#ffffff') : undefined }} />
+                      <Icon size={20} style={{ color: isSelected ? (color || tc('ink-display')) : undefined }} />
                     </button>
                   );
                 })}
@@ -240,7 +241,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 <button
                   type="button"
                   onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
-                  className="text-xs text-accent hover:underline font-medium mt-1 cursor-pointer"
+                  className="text-xs text-accent-ink hover:underline font-medium mt-1 cursor-pointer"
                 >
                   ดูไอคอนทั้งหมด
                 </button>
@@ -271,7 +272,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                   <button
                     type="button"
                     onClick={() => { onChange(''); setOpen(false); }}
-                    className="px-2.5 py-1 text-xs text-neutral-400 hover:text-accent hover:bg-accent/10 rounded-sm border border-transparent hover:border-accent/30 transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 text-xs text-neutral-400 hover:text-accent-ink hover:bg-accent/10 rounded-sm border border-transparent hover:border-accent/30 transition-all flex items-center gap-1 cursor-pointer"
                     title="ล้างไอคอน ไม่ใช้งาน"
                   >
                     <Trash2 size={13} />

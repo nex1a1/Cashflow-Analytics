@@ -48,7 +48,7 @@ const DayTypesCard = memo(({
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'UP')}
                   disabled={idx === 0}
-                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent hover:bg-surface-elevated"
+                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent-ink hover:bg-surface-elevated"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -56,7 +56,7 @@ const DayTypesCard = memo(({
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'DOWN')}
                   disabled={idx === dayTypeConfig.length - 1}
-                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent hover:bg-surface-elevated"
+                  className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent-ink hover:bg-surface-elevated"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -66,7 +66,7 @@ const DayTypesCard = memo(({
                 requiredMessage="ต้องมีชื่อชนิดวัน"
                 value={dt.label}
                 onDebouncedChange={val => handleDayTypeConfigChange(dt.id, 'label', val)}
-                className="flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent focus:shadow-none placeholder-ink-muted"
+                className="flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted"
                 placeholder="ชื่อชนิดวัน"
               />
 

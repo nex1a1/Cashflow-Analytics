@@ -113,9 +113,9 @@
 .dark-mode .text-slate-400          { color: rgb(var(--ink-muted)); }
 
 /* Legacy blue accent classes → accent */
-.dark-mode .text-\[\#00509E\]       { color: rgb(var(--accent)); }
-.dark-mode .hover\:text-\[\#00509E\]:hover { color: rgb(var(--accent-active)); }
-.dark-mode .text-blue-400           { color: rgb(var(--accent)); }
+.dark-mode .text-\[\#00509E\]       { color: rgb(var(--accent-ink)); }
+.dark-mode .hover\:text-\[\#00509E\]:hover { color: rgb(var(--ink-display)); }
+.dark-mode .text-blue-400           { color: rgb(var(--accent-ink)); }
 
 /* ────────────────────────────────────────────────────────── */
 /* HOVER STATES                                               */
@@ -156,7 +156,7 @@
 
 .dark-mode select optgroup {
   background-color: rgb(var(--canvas));
-  color: rgb(var(--accent));
+  color: rgb(var(--accent-ink));
   font-weight: bold;
 }
 

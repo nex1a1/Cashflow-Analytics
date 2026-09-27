@@ -293,20 +293,20 @@ function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolea
     return {
       label: 'รายจ่ายไลฟ์สไตล์ (บาท)',
       borderColor: tc('expense'),
-      backgroundColor: 'rgba(216,26,33,0.1)',
+      backgroundColor: tc('expense', 0.1),
     };
   }
   if (hideWantExpenses) {
     return {
       label: 'รายจ่ายจำเป็น (บาท)',
-      borderColor: '#3B82F6',
-      backgroundColor: 'rgba(59,130,246,0.1)',
+      borderColor: tc('alloc-need'),
+      backgroundColor: tc('alloc-need', 0.1),
     };
   }
   return {
     label: 'รายจ่ายรวมทั้งหมด (บาท)',
     borderColor: tc('expense'),
-    backgroundColor: 'rgba(239,68,68,0.1)',
+    backgroundColor: tc('expense', 0.1),
   };
 }
 
@@ -451,9 +451,9 @@ const buildMonthlyComboChartData = (
 ) => ({
   labels: xLabels,
   datasets: [
-    { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: '#ffffff', backgroundColor: '#ffffff', borderWidth: 4, pointRadius: 5, pointBackgroundColor: '#ffffff', pointBorderWidth: 2 },
+    { type: 'line', label: 'Cashflow', data: sortedMonthsKeys.map(m => (cashflowMap[m]?.income || 0) - (cashflowMap[m]?.totalExp || 0)), borderColor: tc('ink-display'), backgroundColor: tc('ink-display'), borderWidth: 4, pointRadius: 5, pointBackgroundColor: tc('ink-display'), pointBorderWidth: 2 },
     { type: 'bar', label: 'รายรับ', data: sortedMonthsKeys.map(m => cashflowMap[m]?.income || 0), backgroundColor: tc('income'), borderColor: tc('income'), borderRadius: 0 },
-    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: tc('expense'), borderColor: tc('expense'), borderRadius: 0 },
+    { type: 'bar', label: 'รายจ่ายรวม', data: sortedMonthsKeys.map(m => cashflowMap[m]?.totalExp || 0), backgroundColor: tc('accent'), borderColor: tc('accent'), borderRadius: 0 },
   ],
 });
 
@@ -465,15 +465,15 @@ const buildDailyComboChartData = (
   hideWantExpenses: boolean
 ) => {
   let barLabel = 'รายจ่ายจริง';
-  let barBg = tc('expense', 0.6);
-  let barBorder = tc('expense');
+  let barBg = tc('accent');
+  let barBorder = tc('accent');
   if (hideFixedExpenses) {
     barLabel = 'รายจ่ายไลฟ์สไตล์';
-    barBg = 'rgba(245,158,11,0.6)';
-    barBorder = '#F59E0B';
+    barBg = tc('warn');
+    barBorder = tc('warn');
   } else if (hideWantExpenses) {
     barLabel = 'รายจ่ายจำเป็น';
-    barBg = 'rgba(163,163,163,0.6)';
+    barBg = tc('ink-body');
     barBorder = tc('ink-body');
   }
 

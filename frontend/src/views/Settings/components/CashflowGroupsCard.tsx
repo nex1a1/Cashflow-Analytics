@@ -53,11 +53,11 @@ const CashflowGroupsCard = memo(({
               }`}>
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-ink-muted'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
-                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent hover:bg-surface-elevated'}`}>
+                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent-ink hover:bg-surface-elevated'}`}>
                     <ChevronUp className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
-                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent hover:bg-surface-elevated'}`}>
+                    className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent-ink hover:bg-surface-elevated'}`}>
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
@@ -71,7 +71,7 @@ const CashflowGroupsCard = memo(({
                   disabled={group.isDefault || inUse}
                   className={`p-1.5 text-[11px] font-bold outline-none border w-[110px] shrink-0 rounded-sm ${
                     'bg-canvas border-line text-ink-display'
-                  } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-accent focus:shadow-none'}`}
+                  } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-accent-ink focus:shadow-none'}`}
                   title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}
                   aria-label="ประเภทคอลัมน์">
                   <option value="income">รายรับ (IN)</option>
@@ -95,7 +95,7 @@ const CashflowGroupsCard = memo(({
                   value={group.name}
                   onDebouncedChange={val => handleChangeCashflowGroup(group.id, 'name', val)}
                   className={`flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm ${
-                    'bg-canvas border-line text-ink-display focus:border-accent focus:shadow-none placeholder-ink-muted'
+                    'bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted'
                   }`}
                   placeholder="ชื่อคอลัมน์"
                 />

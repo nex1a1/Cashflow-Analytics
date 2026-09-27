@@ -38,7 +38,7 @@ export function FilterToolbar({
           >
             <Filter
               className={`w-3.5 h-3.5 transition-colors ${
-                isFilterBarOpen || totalExcludedCount > 0 ? 'text-accent' : 'text-neutral-400 group-hover:text-white'
+                isFilterBarOpen || totalExcludedCount > 0 ? 'text-accent-ink' : 'text-neutral-400 group-hover:text-white'
               }`}
             />
             {totalExcludedCount > 0 && (

@@ -134,16 +134,16 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   // ── Styling ────────────────────────────────────────────────────────────────
   const subAggregateBase = 'text-[11px] px-2 py-0.5 font-medium border transition-colors';
   const subAggregateIdle = 'border-line/60 bg-surface/60 text-ink-muted hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong';
-  const subAggregateActive = 'border-accent bg-accent text-on-accent font-bold';
+  const subAggregateActive = 'border-accent-ink bg-accent text-on-accent font-bold';
 
   const monthBase = 'text-xs py-1.5 px-2 font-semibold border text-center transition-colors';
   const monthIdle = 'border-line bg-surface text-ink-display hover:bg-surface-elevated hover:border-line-strong';
-  const monthActive = 'border-accent bg-accent text-on-accent font-bold shadow-sm';
+  const monthActive = 'border-accent-ink bg-accent text-on-accent font-bold shadow-sm';
 
   const quick = (active: boolean) =>
     `flex-1 text-center text-[11px] font-medium px-1.5 py-1 border transition-colors ${
       active
-        ? 'bg-accent/15 border-accent text-ink-display font-bold'
+        ? 'bg-accent/15 border-accent-ink text-ink-display font-bold'
         : 'border-line/70 bg-surface/80 text-ink-body hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong'
     }`;
 
@@ -167,7 +167,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
           aria-expanded={open}
           className="flex items-center gap-2 px-3 py-1.5 text-ink-display text-xs font-bold min-w-[170px]"
         >
-          <CalendarDays className="w-3.5 h-3.5 shrink-0 text-accent" />
+          <CalendarDays className="w-3.5 h-3.5 shrink-0 text-accent-ink" />
           <span className="flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
           <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${open ? 'rotate-180' : ''}`} />
         </button>
@@ -187,7 +187,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
         <div
           role="dialog"
           aria-label="เลือกช่วงเวลา"
-          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.45)] z-50 overflow-hidden`}
+          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] z-50 overflow-hidden`}
         >
           {/* ── Calendar / Pay-cycle switch ── */}
           {allowCycle && (
@@ -202,7 +202,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                   aria-pressed={cycle === isCycle}
                   onClick={() => { if (cycle !== isCycle) setRawPeriod(convertPeriodMode(rawPeriod, cycle)); }}
                   className={`flex-1 py-2 text-[11px] font-bold border-b-2 -mb-px ${
-                    cycle === isCycle ? 'border-b-accent text-ink-display bg-surface' : 'border-b-transparent text-ink-muted hover:text-ink-display'
+                    cycle === isCycle ? 'border-b-accent-ink text-ink-display bg-surface' : 'border-b-transparent text-ink-muted hover:text-ink-display'
                   }`}
                 >
                   {label}
@@ -277,9 +277,9 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                         type="button"
                         onClick={() => toggleYear(year)}
                         aria-expanded={isExpanded}
-                        className="flex-1 flex items-center gap-1.5 text-left text-ink-display hover:text-accent py-0.5"
+                        className="flex-1 flex items-center gap-1.5 text-left text-ink-display hover:text-accent-ink py-0.5"
                       >
-                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90 text-accent' : 'text-ink-body'}`} />
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90 text-accent-ink' : 'text-ink-body'}`} />
                         <span className="tabular-nums">{year}</span>
                         {hasSelection && <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-accent" />}
                       </button>
@@ -295,7 +295,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                             title={isCycle && cycleYearPreset ? cycleYearPreset.title : `เลือกทั้งปี ${year}`}
                             className={`text-[11px] px-2 py-0.5 border font-semibold transition-colors ${
                               isWholeYearSelected
-                                ? 'bg-accent text-on-accent border-accent'
+                                ? 'bg-accent text-on-accent border-accent-ink'
                                 : 'bg-surface text-ink-muted border-line hover:text-ink-display hover:border-line-strong hover:bg-surface-elevated'
                             }`}
                           >

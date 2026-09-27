@@ -67,7 +67,7 @@ export const CashflowTableRow = React.memo(({
         title={isExcluded ? 'คลิกเพื่อนำกลับมารวมคำนวณ' : 'คลิกเพื่อนำออกจากการคำนวณ'}
         onMouseEnter={() => setHoveredCol('month')}
         onMouseLeave={() => setHoveredCol(null)}
-        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)] cursor-pointer select-none transition-colors ${MONTH_COL_CLS} ${monthCellBg}`}
+        className={`px-3 py-2 font-bold text-center sticky left-0 z-10 border-l border-r border-b ${thinBorder} shadow-[4px_0_8px_-4px_rgb(0_0_0/calc(0.15*var(--shadow-k)))] cursor-pointer select-none transition-colors ${MONTH_COL_CLS} ${monthCellBg}`}
       >
         <div className="flex items-center justify-center gap-1.5">
           {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-ink-muted" aria-label="ยกเว้นจากการคำนวณ" />}

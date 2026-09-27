@@ -80,7 +80,7 @@ export default function MainLayout() {
       style={{ fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" }}
     >
       <div
-        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-accent shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto no-scrollbar relative transition-colors duration-300 scroll-smooth bg-surface"
+        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-accent-ink shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto no-scrollbar relative transition-colors duration-300 scroll-smooth bg-surface"
       >
         <AppHeader
           dbStatus={dbStatus}

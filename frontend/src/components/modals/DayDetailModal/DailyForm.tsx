@@ -127,7 +127,7 @@ export default function DailyForm({
     surfaceAlt: 'bg-surface-hover',
     border: 'border-line',
     textMuted: 'text-slate-400',
-    input: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas border-line-strong text-white focus:border-accent focus:ring-accent/30'}`,
+    input: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30'}`,
     inputError: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas tint-danger text-ink-display focus:ring-danger/30'}`
   };
 
@@ -213,8 +213,8 @@ export default function DailyForm({
         <button type="submit" disabled={isProcessing}
           className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-sm border ${
             formType === 'expense' 
-              ? 'bg-accent hover:bg-accent-active border-accent text-on-accent' 
-              : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-700 text-white'
+              ? 'bg-accent hover:bg-accent-active border-accent-ink text-on-accent' 
+              : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-600 text-canvas'
           }`}
         >
           {isProcessing ? <><Zap className="w-5 h-5 animate-pulse" /> กำลังบันทึก...</> : <><CheckCircle className="w-5 h-5" /> บันทึก (Enter)</>}

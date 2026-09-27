@@ -54,7 +54,7 @@ const AnalysisTabHeader = ({
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'text-neutral-100 border-b-accent'
+                  ? 'text-neutral-100 border-b-accent-ink'
                   : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
               }`}
             >

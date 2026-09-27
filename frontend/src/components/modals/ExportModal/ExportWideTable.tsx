@@ -46,7 +46,7 @@ export default function ExportWideTable({
                 {cat.name}
               </th>
             ))}
-            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent sticky right-0 bg-surface-hover z-20">
+            <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent-ink sticky right-0 bg-surface-hover z-20">
               รวมสุทธิ (Total)
             </th>
           </tr>

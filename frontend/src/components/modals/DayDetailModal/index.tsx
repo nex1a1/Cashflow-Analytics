@@ -219,7 +219,7 @@ export default function DayDetailModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="รายละเอียดรายวัน" tabIndex={-1} 
-        className={`${tokens.surface} shadow-[0_16px_48px_rgba(0,0,0,0.6)] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[750px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
+        className={`${tokens.surface} shadow-[0_16px_48px_rgb(0_0_0/calc(0.6*var(--shadow-k)))] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[750px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
 
@@ -236,7 +236,7 @@ export default function DayDetailModal({
                 <button
                   type="button"
                   onClick={() => handleStepDay(-1)}
-                  className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent text-slate-300 hover:text-white transition-all cursor-pointer"
+                  className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent-ink text-slate-300 hover:text-white transition-all cursor-pointer"
                   title="วันก่อนหน้า ( -1 วัน )"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -271,10 +271,10 @@ export default function DayDetailModal({
                         className="group flex items-center gap-1.5 px-2 py-0.5 rounded-none border border-transparent hover:border-line-strong hover:bg-surface transition-all cursor-pointer text-left"
                         title="คลิกเพื่อเลือกวัน/เดือน/ปี"
                       >
-                        <h2 className={`text-base font-black tracking-tight ${tokens.textPri} group-hover:text-accent transition-colors`}>
+                        <h2 className={`text-base font-black tracking-tight ${tokens.textPri} group-hover:text-accent-ink transition-colors`}>
                           {displayDate}
                         </h2>
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-accent transition-colors" />
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-accent-ink transition-colors" />
                         <span className={`text-xs font-bold ${tokens.textMuted}`}>
                           วัน{dayOfWeek}
                         </span>
@@ -288,7 +288,7 @@ export default function DayDetailModal({
                 <button
                   type="button"
                   onClick={() => handleStepDay(1)}
-                  className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent text-slate-300 hover:text-white transition-all cursor-pointer"
+                  className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent-ink text-slate-300 hover:text-white transition-all cursor-pointer"
                   title="วันถัดไป ( +1 วัน )"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function DayDetailModal({
                   className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[11px] font-medium transition-colors cursor-pointer ${
                     sortBy === 'category'
                       ? 'bg-accent/15 border-accent/40 text-expense'
-                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent'
+                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'
                   }`}
                 >
                   <Tag className="w-3 h-3 shrink-0" />
@@ -370,7 +370,7 @@ export default function DayDetailModal({
                   className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[11px] font-medium transition-colors cursor-pointer ${
                     sortBy === 'amount'
                       ? 'bg-accent/15 border-accent/40 text-expense'
-                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent'
+                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'
                   }`}
                 >
                   <ArrowDownWideNarrow className="w-3 h-3 shrink-0" />

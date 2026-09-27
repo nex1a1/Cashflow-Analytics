@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCumulativeDailySeries, calculateGhostPacerData } from '../ghostPacerHelpers';
+import { buildCumulativeDailySeries, calculateGhostPacerData, paceTone } from '../ghostPacerHelpers';
 
 describe('ghostPacerHelpers', () => {
   it('builds cumulative daily series properly', () => {
@@ -83,5 +83,16 @@ describe('ghostPacerHelpers', () => {
     });
 
     expect(pacer.hasData).toBe(false);
+  });
+});
+
+describe('paceTone', () => {
+  it('green when clearly lower, yellow within ±5%, red when clearly higher', () => {
+    expect(paceTone(-100, 1000)).toBe('LEAD');
+    expect(paceTone(-50, 1000)).toBe('TIED');
+    expect(paceTone(50, 1000)).toBe('TIED');
+    expect(paceTone(51, 1000)).toBe('TRAIL');
+    expect(paceTone(0, 0)).toBe('TIED');
+    expect(paceTone(10, 0)).toBe('TRAIL');
   });
 });

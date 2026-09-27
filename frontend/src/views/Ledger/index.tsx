@@ -219,7 +219,7 @@ function LedgerView({
             <p className="text-[11px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
               <span className="text-ink-muted font-bold" aria-hidden="true">•</span>
-              <span className="text-accent font-extrabold">
+              <span className="text-accent-ink font-extrabold">
                 {viewMode === 'list' ? displayTransactions.length : monthTransactions.length}
               </span>
               <span>รายการ</span>

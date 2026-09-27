@@ -38,16 +38,11 @@ interface TransactionItemProps {
 }
 
 const getRankStyle = (rank: number) => {
-  if (rank === 0) {
-    return 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border-amber-300 shadow-sm';
-  }
-  if (rank === 1) {
-    return 'bg-slate-200 text-slate-950 border-slate-300 shadow-sm';
-  }
-  if (rank === 2) {
-    return 'bg-orange-700/80 text-orange-100 border-orange-500/50 shadow-sm';
-  }
-  return 'bg-slate-800/80 text-slate-400 border-slate-700';
+  // Gold / silver / bronze from theme roles, so the medal reads the same in light and dark.
+  if (rank === 0) return 'bg-gold text-on-gold border-gold';
+  if (rank === 1) return 'bg-line-strong text-ink-display border-line-strong';
+  if (rank === 2) return 'bg-expense text-canvas border-expense'; // copper = bronze
+  return 'bg-surface-elevated text-ink-muted border-line';
 };
 
 const getCardBorderClass = (rank: number) => {
@@ -70,12 +65,12 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
       {/* Visual Progress Bar Backdrop (High-contrast Rosso Corsa with sharp tip) */}
       <div className="absolute inset-y-0 left-0 right-0 overflow-hidden pointer-events-none z-0">
         <div 
-          className="h-full bg-gradient-to-r from-expense/[0.06] to-expense/[0.14] group-hover:from-expense/[0.10] group-hover:to-expense/[0.20]"
+          className="h-full bg-gradient-to-r from-white/[0.02] to-white/[0.06] group-hover:from-white/[0.04] group-hover:to-white/[0.09]"
           style={{ width: `${relativeWidth}%` }}
         />
         {/* Flat solid tip for the progress bar */}
         <div 
-          className="absolute top-0 bottom-0 w-[2px] bg-expense/40 group-hover:bg-expense/60"
+          className="absolute top-0 bottom-0 w-[2px] bg-line-strong group-hover:bg-ink-muted"
           style={{ left: `${relativeWidth}%` }}
         />
       </div>
@@ -255,7 +250,7 @@ export default function TopTransactions() {
               value={topXLimit} 
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
-              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent focus:border-accent"
+              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent-ink focus:border-accent-ink"
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
             </select>

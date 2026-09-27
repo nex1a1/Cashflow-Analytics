@@ -4,6 +4,7 @@ import { Ghost } from 'lucide-react';
 import { formatMoney, formatAmount } from '@/utils/formatters';
 
 import { tc, FONT_MONO } from '@/constants/theme';
+import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
 interface GhostPacerChartProps {
   currentDay: number;
   lastDayOfMonth: number;
@@ -46,7 +47,8 @@ export const GhostPacerChart = memo(({
 
   const viewH = 202;
   const padL = 54;
-  const padR = 136;
+  const padR = 156; // room for the end-of-month badges (BADGE_W + gap)
+  const BADGE_W = 146;
   const padT = 20;
   const padB = 26;
   const plotW = Math.max(10, viewW - padL - padR);
@@ -165,6 +167,7 @@ export const GhostPacerChart = memo(({
     isFuture: boolean;
     isToday: boolean;
   } | null = null;
+  let hoverColor = paceColor;
 
   if (hoveredDay !== null) {
     const day = hoveredDay;
@@ -205,6 +208,7 @@ export const GhostPacerChart = memo(({
       isFuture,
       isToday,
     };
+    hoverColor = PACE_TONE_STYLE[paceTone(deltaGhost, ghostSpend)].color;
   }
 
   const tipW = 210;
@@ -226,14 +230,14 @@ export const GhostPacerChart = memo(({
       {/* Legend Rail */}
       <div className="flex items-center gap-4 px-3 py-1.5 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: paceColor }} />
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: paceColor }} />
           <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">
             จังหวะใช้จ่ายเทียบเดือนก่อน
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-[2px] bg-expense inline-block" />
+          <span className="w-2.5 h-[2px] inline-block" style={{ backgroundColor: paceColor }} />
           <span className="text-neutral-300 font-bold">{currentPeriod} (เดือนนี้)</span>
         </div>
 
@@ -259,8 +263,8 @@ export const GhostPacerChart = memo(({
         >
           <defs>
             <linearGradient id="pacerCurrentAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={tc('expense')} stopOpacity="0.22" />
-              <stop offset="100%" stopColor={tc('expense')} stopOpacity="0.01" />
+              <stop offset="0%" stopColor={paceColor} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={paceColor} stopOpacity="0.01" />
             </linearGradient>
 
             <filter id="pacerTooltipShadow" x="-10%" y="-10%" width="130%" height="130%">
@@ -317,7 +321,7 @@ export const GhostPacerChart = memo(({
             <path
               d={benchmarkPath}
               fill="none"
-              stroke="#38bdf8"
+              stroke={tc('info')}
               strokeWidth="1.2"
               strokeDasharray="3 3"
               opacity="0.65"
@@ -349,7 +353,7 @@ export const GhostPacerChart = memo(({
           <path
             d={currentPath}
             fill="none"
-            stroke={tc('expense')}
+            stroke={paceColor}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -375,16 +379,16 @@ export const GhostPacerChart = memo(({
             strokeWidth="1"
             strokeDasharray="2 2"
           />
-          <circle cx={xToday} cy={yToday} r="6" fill={tc('expense')} fillOpacity="0.3" />
-          <circle cx={xToday} cy={yToday} r="2.5" fill={tc('expense')} />
+          <circle cx={xToday} cy={yToday} r="6" fill={paceColor} fillOpacity="0.3" />
+          <circle cx={xToday} cy={yToday} r="2.5" fill={paceColor} />
 
           {/* 7. Right Badges: EOM Finish Line Comparisons */}
           {/* Ghost EOM Badge */}
           {ghostFinal > 0 && (
             <g transform={`translate(${xEOM + 6}, ${ghostEomY - 7})`}>
-              <rect x="0" y="0" width="124" height="15" fill={tc('canvas')} stroke={tc('ink-body')} strokeWidth="0.8" rx="2" />
+              <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={tc('ink-body')} strokeWidth="0.8" rx="2" />
               <text x="6" y="11" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                GHOST จบก่อน ฿{formatAmount(Math.round(ghostFinal))}
+                เดือนก่อนจบ ฿{formatAmount(Math.round(ghostFinal))}
               </text>
             </g>
           )}
@@ -392,27 +396,31 @@ export const GhostPacerChart = memo(({
           {/* Current Projected EOM Badge */}
           {projectedExpense > 0 && (
             <g transform={`translate(${xEOM + 6}, ${curEomY - 7})`}>
-              <rect x="0" y="0" width="124" height="15" fill={tc('canvas')} stroke={paceColor} strokeWidth="0.8" rx="2" />
+              <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={paceColor} strokeWidth="0.8" rx="2" />
               <text x="6" y="11" fill={paceColor} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                จบเดือนนี้ ฿{formatAmount(Math.round(projectedExpense))}
+                คาดจบเดือนนี้ ฿{formatAmount(Math.round(projectedExpense))}
               </text>
             </g>
           )}
 
           {/* 8. Bottom Axis Timeline Ticks */}
           <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke={tc('line')} strokeWidth="1" />
-          <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
+          {xToday - padL > 90 && (
+            <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
+          )}
           <text x={xToday} y={padT + plotH + 12} fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle" fontWeight="bold">
             Day {curDayClamped} (วันนี้)
           </text>
-          <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-            Day {totalDays}
-          </text>
+          {xEOM - xToday > 100 && (
+            <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
+              Day {totalDays}
+            </text>
+          )}
 
           {dayTicks.map((d) => {
             const x = getX(d);
             if (x < padL + 16 || x > xEOM - 16) return null;
-            if (Math.abs(x - xToday) < 22) return null;
+            if (Math.abs(x - xToday) < 60) return null; // "Day N (วันนี้)" is ~95px wide, centered on today
             return (
               <g key={d}>
                 <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke={tc('ink-muted')} strokeWidth="1" />
@@ -431,13 +439,13 @@ export const GhostPacerChart = memo(({
                 y1={padT}
                 x2={hoverData.x}
                 y2={padT + plotH}
-                stroke={tc('expense')}
+                stroke={hoverColor}
                 strokeWidth="1"
                 strokeDasharray="2 2"
                 opacity="0.8"
               />
 
-              <circle cx={hoverData.x} cy={hoverData.curY} r="4.5" fill={tc('expense')} />
+              <circle cx={hoverData.x} cy={hoverData.curY} r="4.5" fill={hoverColor} />
               {hoverData.ghostSpend > 0 && (
                 <circle cx={hoverData.x} cy={getY(hoverData.ghostSpend)} r="4" fill={tc('ink-body')} />
               )}
@@ -450,7 +458,7 @@ export const GhostPacerChart = memo(({
                   width={tipW}
                   height={tipH}
                   fill={tc('surface-hover')}
-                  stroke={hoverData.deltaGhost < 0 ? tc('income') : tc('danger')}
+                  stroke={hoverColor}
                   strokeWidth="1.2"
                   rx="3"
                   filter="url(#pacerTooltipShadow)"
@@ -458,16 +466,16 @@ export const GhostPacerChart = memo(({
                 <line x1="8" y1="23" x2={tipW - 8} y2="23" stroke={tc('line')} strokeWidth="0.8" />
 
                 {/* Row 1: Header Day */}
-                <text x="8" y="16" fill="#ffffff" fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
+                <text x="8" y="16" fill={tc('ink-display')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
                   Day {hoverData.day}
-                  <tspan fill={hoverData.isToday ? tc('accent') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
+                  <tspan fill={hoverData.isToday ? tc('accent-ink') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
                     {hoverData.isToday ? ' (วันนี้)' : hoverData.isFuture ? ' (คาดการณ์)' : ''}
                   </tspan>
                 </text>
                 <text
                   x={tipW - 8}
                   y="16"
-                  fill={hoverData.deltaGhost < 0 ? tc('income') : tc('danger')}
+                  fill={hoverColor}
                   fontSize="11"
                   fontFamily={FONT_MONO}
                   fontWeight="bold"
@@ -479,8 +487,8 @@ export const GhostPacerChart = memo(({
                 </text>
 
                 {/* Row 2: Current Month Spend */}
-                <text x="8" y="40" fill={tc('expense')} fontSize="11" fontFamily={FONT_MONO}>
-                  เดือนนี้: <tspan fill="#ffffff" fontWeight="bold">฿{formatMoney(hoverData.curSpend)}</tspan>
+                <text x="8" y="40" fill={hoverColor} fontSize="11" fontFamily={FONT_MONO}>
+                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">฿{formatMoney(hoverData.curSpend)}</tspan>
                 </text>
 
                 {/* Row 3: Ghost Month Spend */}
@@ -488,7 +496,7 @@ export const GhostPacerChart = memo(({
                   เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">฿{formatMoney(hoverData.ghostSpend)}</tspan>
                 </text>
                 {hoverData.benchSpend > 0 && (
-                  <text x={tipW - 8} y="58" fill="#38bdf8" fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
+                  <text x={tipW - 8} y="58" fill={tc('info')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
                     เฉลี่ย ฿{formatAmount(Math.round(hoverData.benchSpend))}
                   </text>
                 )}

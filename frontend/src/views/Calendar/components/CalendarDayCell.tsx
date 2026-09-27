@@ -6,7 +6,7 @@ import { formatMoney, formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
 
-import { tc } from '@/constants/theme';
+import { tc, IS_LIGHT } from '@/constants/theme';
 export interface CalendarDayCellProps {
   day: number | string;
   data?: {
@@ -35,29 +35,30 @@ export interface CalendarDayCellProps {
  * Tactical Heat Steps for Calendar Day Cells:
  * Level 0: 0 THB (Clean canvas / surface)
  * Level 1: Normal daily baseline (< 250 THB and < 8% of month's max) -> Clean, un-tinted
- * Level 2: Moderate spend (>= 250 THB or >= 8% of max) -> Warm Amber (rgba(245, 158, 11, 0.10))
- * Level 3: High spend (>= 600 THB or >= 25% of max) -> Thruster Coral (rgba(240, 106, 83, 0.20))
- * Level 4: Peak spend (>= 1,500 THB and >= 60% of max, or >= 3,000 THB) -> Thunderbolt Crimson (rgba(194, 43, 67, 0.32))
+ * Level 2: Moderate spend (>= 250 THB or >= 8% of max) -> warn (amber)
+ * Level 3: High spend (>= 600 THB or >= 25% of max) -> expense coral
+ * Level 4: Peak spend (>= 1,500 THB and >= 60% of max, or >= 3,000 THB) -> stronger expense coral + top bar.
+ *   Never accent: crimson means "today" in this grid.
  */
 export const CALENDAR_HEAT_COLORS: Record<number, string> = {
   0: 'transparent',
   1: 'transparent',
-  2: 'rgba(245, 158, 11, 0.14)',
-  3: 'rgba(240, 106, 83, 0.22)',
-  4: 'rgba(194, 43, 67, 0.32)',
+  2: IS_LIGHT ? tc('warn', 0.08) : tc('warn', 0.14),
+  3: IS_LIGHT ? tc('expense', 0.10) : tc('expense', 0.22),
+  4: IS_LIGHT ? tc('expense', 0.16) : tc('expense', 0.4),
 };
 
 /**
  * Tactical Top-Fade Gradients for Calendar Day Cells:
- * Solves the "Dark Mode Tint Trap" by giving vivid illumination at the top (header & amount)
- * that smoothly dissolves into pure dark canvas at the bottom, keeping transaction text 100% crisp.
+ * In Dark Mode: vivid illumination at the top that dissolves into dark canvas.
+ * In Light Mode: soft, subtle pastel tone that maintains crisp readability without muddy staining.
  */
 export const CALENDAR_HEAT_GRADIENTS: Record<number, string> = {
   0: 'none',
   1: 'none',
-  2: 'linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.05) 45%, transparent 80%)',
-  3: 'linear-gradient(180deg, rgba(240, 106, 83, 0.24) 0%, rgba(240, 106, 83, 0.07) 50%, transparent 85%)',
-  4: 'linear-gradient(180deg, rgba(194, 43, 67, 0.34) 0%, rgba(194, 43, 67, 0.10) 55%, transparent 90%)',
+  2: 'none',
+  3: 'none',
+  4: 'none',
 };
 
 export const getCalendarHeatLevel = (exp: number, max: number): number => {
@@ -69,10 +70,8 @@ export const getCalendarHeatLevel = (exp: number, max: number): number => {
   return 1;
 };
 
-export const getCalendarHeatStyle = (level: number): React.CSSProperties | undefined => {
-  if (level <= 1) return undefined;
-  const gradient = CALENDAR_HEAT_GRADIENTS[level];
-  return gradient && gradient !== 'none' ? { backgroundImage: gradient } : undefined;
+export const getCalendarHeatStyle = (_level: number): React.CSSProperties | undefined => {
+  return undefined; // Flat solid backgrounds — zero gradient overlays
 };
 
 /** Backward-compatible helper */
@@ -97,12 +96,22 @@ const CalendarDayCell = memo(function CalendarDayCell({
   const isPayDay = Number(dateStr.slice(8, 10)) === PAY_DAY;
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
 
-  // Tactical Heat Steps: level 1 is un-tinted to keep daily baseline clean; levels 2-4 highlight escalating spend
-  const heatLevel = getCalendarHeatLevel(cellData.exp, maxDailyExpense);
-  let cellBg = 'bg-canvas';
-  if (isToday) cellBg = 'bg-canvas ring-1 ring-inset ring-accent/50 z-20';
-  else if (isWeekend && heatLevel === 0 && cellData.inc === 0) cellBg = 'bg-surface';
-  const heatStyle = getCalendarHeatStyle(heatLevel);
+  const burnIntensity = maxDailyExpense > 0 && cellData.exp > 0 ? cellData.exp / maxDailyExpense : 0;
+
+  // Flat solid background without gradients (classic Ferrari dark mode)
+  let cellBg = IS_LIGHT ? 'bg-surface-elevated' : 'bg-canvas';
+  let borderTopCls = '';
+  if (isToday) {
+    cellBg = IS_LIGHT ? 'bg-surface-elevated ring-1 ring-inset ring-accent/60 z-20' : 'bg-canvas ring-1 ring-inset ring-accent/50 z-20';
+  } else if (burnIntensity >= 0.75) {
+    cellBg = IS_LIGHT ? 'bg-red-50/70' : 'bg-[#221313]';
+    borderTopCls = 'border-t-2 !border-t-accent';
+  } else if (burnIntensity >= 0.40) {
+    cellBg = IS_LIGHT ? 'bg-amber-50/70' : 'bg-[#1e1915]';
+    borderTopCls = 'border-t !border-t-warn/40';
+  } else if (isWeekend && !(cellData.inc > 0 || cellData.exp > 0)) {
+    cellBg = 'bg-surface';
+  }
 
   const displayedInc = cellData.incItems.slice(0, 1);
   const hiddenIncCount = Math.max(0, cellData.incItems.length - 1);
@@ -111,28 +120,27 @@ const CalendarDayCell = memo(function CalendarDayCell({
   const displayedExp = cellData.items.slice(0, maxExp);
   const hiddenExpCount = Math.max(0, cellData.items.length - maxExp);
 
-  let dayBadgeCls = 'text-slate-200 bg-canvas font-bold';
+  let dayBadgeCls = 'text-ink-display font-black';
   if (isToday) {
-    dayBadgeCls = 'bg-accent text-on-accent font-black';
+    dayBadgeCls = 'bg-accent text-on-accent font-black shadow-sm';
   } else if (isWeekend) {
-    dayBadgeCls = 'text-weekend bg-weekend/10 font-bold';
+    dayBadgeCls = 'text-weekend font-black';
   }
 
   return (
     <div 
       ref={list.rootRef}
       onClick={() => onSelectDate(dateStr)}
-      className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-line/30 ${cellBg} ${list.open ? 'z-50' : ''} cursor-pointer transition-none`}
-      style={heatStyle}
+      className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-line/30 ${cellBg} ${borderTopCls} ${list.open ? 'z-50' : ''} hover:bg-surface-hover cursor-pointer transition-none`}
     >
       <div className="absolute inset-0 pointer-events-none bg-surface-hover opacity-0 group-hover:opacity-60" />
       {isToday && (
         <>
-          <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-accent opacity-45 z-20" />
+          <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-accent-ink opacity-45 z-20" />
           <div className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-30 bg-accent" />
         </>
       )}
-      {!isToday && heatLevel === 4 && (
+      {!isToday && burnIntensity >= 0.75 && (
         <div className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-40 bg-accent" />
       )}
 
@@ -144,9 +152,9 @@ const CalendarDayCell = memo(function CalendarDayCell({
       )}
 
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
-      <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-line/30 bg-surface/75">
+      <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-line/30 bg-surface/50">
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`text-[12px] font-black leading-none min-w-[20px] px-0.5 whitespace-nowrap h-5 flex items-center justify-center rounded-sm shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
+          <span className={`text-[12px] leading-none min-w-[20px] px-1 whitespace-nowrap h-5 flex items-center justify-center rounded-sm shrink-0 tabular-nums tracking-tight ${dayBadgeCls}`}>
             {day}
           </span>
           {isPayDay && (
@@ -165,7 +173,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
                 e.stopPropagation();
                 handleOpenAddModal(dateStr);
               }}
-              className="opacity-0 group-hover:opacity-100 text-accent hover:text-white transition-none cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 text-accent-ink hover:text-ink-display transition-none cursor-pointer"
               title="เพิ่มรายการวันนี้"
             >
               <PlusCircle className="w-4 h-4" />
@@ -195,7 +203,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               </span>
              ) : <span />}
              {cellData.inc > 0 && (
-              <span className="text-emerald-400 tabular-nums tracking-tight flex items-center gap-1">
+              <span className="text-income tabular-nums tracking-tight flex items-center gap-1">
                 {hiddenIncCount > 0 && <MoreButton count={hiddenIncCount} tone="income" onOpen={() => list.setOpen(o => !o)} open={list.open} triggerRef={hiddenExpCount > 0 ? undefined : list.triggerRef} />}
                 +{formatAmount(cellData.inc)} ฿
               </span>
@@ -213,10 +221,10 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="truncate font-medium text-slate-200 flex-1 group-hover/tx:text-white transition-none">
+              <span className="truncate font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
                 {tx.description || tx.category}
               </span>
-              <span className="font-bold shrink-0 ml-1 pr-0.5 text-emerald-400 tabular-nums tracking-tight">
+              <span className="font-bold shrink-0 ml-1 pr-0.5 text-income tabular-nums tracking-tight">
                 +{formatAmount(tx.amount)}
               </span>
             </div>
@@ -225,7 +233,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
 
         {/* Render Expense Transactions */}
         {displayedExp.map(tx => {
-          const color = tx._catObj?.color || tc('gray-300');
+          const color = tx._catObj?.color || tc('ink-muted');
           return (
             <div 
               key={`exp_${tx.id}`} 
@@ -233,7 +241,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="truncate font-medium text-slate-300 flex-1 group-hover/tx:text-white transition-none">
+              <span className="truncate font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 pr-0.5 text-expense tabular-nums tracking-tight">
@@ -249,7 +257,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           role="dialog"
           aria-label={`รายการทั้งหมดวันที่ ${Number(dateStr.slice(8, 10))}`}
           onClick={e => e.stopPropagation()}
-          className={`absolute left-0 w-[max(100%,260px)] z-50 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.5)] cursor-default ${popUp ? 'bottom-0' : 'top-0'}`}
+          className={`absolute left-0 w-[max(100%,260px)] z-50 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.5*var(--shadow-k)))] cursor-default ${popUp ? 'bottom-0' : 'top-0'}`}
         >
           <div className="flex items-center justify-between px-3 py-2 border-b border-line">
             <span className="text-xs font-bold text-ink-display">
@@ -273,7 +281,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           <button
             type="button"
             onClick={() => { list.setOpen(false); onSelectDate(dateStr); }}
-            className="w-full px-3 py-2 border-t border-line text-left text-xs font-bold text-accent hover:bg-surface-hover"
+            className="w-full px-3 py-2 border-t border-line text-left text-xs font-bold text-accent-ink hover:bg-surface-hover"
           >
             เปิดรายละเอียดวันนี้
           </button>
@@ -301,8 +309,8 @@ function MoreButton({ count, tone, open, onOpen, triggerRef }: {
       onClick={e => { e.stopPropagation(); onOpen(); }}
       className={`relative z-10 px-1.5 rounded-full border text-[11px] font-black tabular-nums shrink-0 ${
         tone === 'expense'
-          ? 'text-expense bg-expense/10 border-expense/30 hover:bg-expense hover:text-on-accent'
-          : 'text-income bg-income/10 border-income/30 hover:bg-income hover:text-on-accent'
+          ? 'text-expense bg-expense/10 border-expense/30 hover:bg-expense hover:text-canvas'
+          : 'text-income bg-income/10 border-income/30 hover:bg-income hover:text-canvas'
       }`}
     >
       +{count}

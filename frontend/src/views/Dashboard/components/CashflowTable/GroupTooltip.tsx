@@ -26,7 +26,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
             className="w-full rounded-none p-2.5 text-[11px] font-medium shadow-2xl border bg-surface border-line-strong text-slate-200"
             style={{ backgroundColor: tc('surface') }}
           >
-            <div className="flex items-center gap-2 mb-1.5 border-b pb-1.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2 mb-1.5 border-b pb-1.5" style={{ borderColor: 'rgb(var(--overlay) / 0.08)' }}>
               <div
                 className="w-5 h-5 flex items-center justify-center shrink-0 border"
                 style={{
@@ -55,7 +55,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
             </div>
             <div
               className="mt-2 pt-1 border-t text-[11px] text-neutral-400"
-              style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+              style={{ borderColor: 'rgb(var(--overlay) / 0.06)' }}
             >
               กดรูปตาเพื่อเปิด/ปิดการคำนวณหมวดหมู่นี้
             </div>
@@ -101,7 +101,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
           {/* Header with Group Icon, Name & Type Badges */}
           <div
             className="flex items-center justify-between gap-2 border-b pb-1.5 mb-2"
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+            style={{ borderColor: 'rgb(var(--overlay) / 0.08)' }}
           >
             <div className="flex items-center gap-2 min-w-0">
               <div
@@ -165,7 +165,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
           {/* Micro Footer Hint */}
           <div
             className="mt-2 pt-1.5 border-t text-[11px] text-neutral-400 flex items-center justify-between"
-            style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+            style={{ borderColor: 'rgb(var(--overlay) / 0.06)' }}
           >
             <span>คลิกหัวตารางเพื่อ {cats.length > 0 ? 'ยุบ/ขยาย' : 'เลือก'}</span>
             <span>กดรูปตาเพื่อซ่อน/เปิด</span>

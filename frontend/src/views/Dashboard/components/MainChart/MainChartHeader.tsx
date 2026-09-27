@@ -25,13 +25,13 @@ export const ChartGroupBySwitcher = memo(({ chartGroupBy, setChartGroupBy }: Cha
   <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
     <button
       onClick={() => setChartGroupBy('monthly')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายเดือน
     </button>
     <button
       onClick={() => setChartGroupBy('daily')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายวัน
     </button>
@@ -62,7 +62,7 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'bg-surface-elevated text-accent shadow-sm'
+                  ? 'bg-surface-elevated text-accent-ink shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
               }`}
             >
@@ -105,7 +105,7 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('value')}
         className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามยอดเงิน
@@ -114,7 +114,7 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('index')}
         className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามลำดับ (Settings)

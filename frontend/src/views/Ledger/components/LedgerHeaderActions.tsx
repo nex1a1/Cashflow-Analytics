@@ -51,7 +51,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         onClick={toggleFilter} 
         className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
           isCurrentFilterOpen 
-            ? 'bg-accent/10 border-accent text-accent' 
+            ? 'bg-accent/10 border-accent-ink text-accent-ink' 
             : 'bg-surface border-line text-slate-400 hover:bg-surface-elevated/40 hover:border-line-strong hover:text-white'
         } ${isCurrentFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20' : ''}`}
         title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
@@ -67,7 +67,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
           title="มุมมองรายการ" 
           className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none font-mono ${
             viewMode === 'list' 
-              ? 'bg-surface-elevated/50 text-accent font-extrabold shadow-inner' 
+              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold shadow-inner' 
               : 'bg-surface text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -79,7 +79,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
           title="มุมมองตารางแนวนอน" 
           className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none border-l border-line font-mono ${
             viewMode === 'horizontal' 
-              ? 'bg-surface-elevated/50 text-accent font-extrabold shadow-inner' 
+              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold shadow-inner' 
               : 'bg-surface text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -112,7 +112,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         </button>
 
         {open && (
-          <div role="menu" aria-label="ตัวเลือกเพิ่มเติม" className="absolute right-0 top-full mt-1 z-50 w-56 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+          <div role="menu" aria-label="ตัวเลือกเพิ่มเติม" className="absolute right-0 top-full mt-1 z-50 w-56 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))]">
             <button
               role="menuitem"
               type="button"
@@ -129,7 +129,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
                   role="menuitem"
                   type="button"
                   onClick={() => { if (confirmDeleteMonth) setOpen(false); handleDeleteMonthClick(); }}
-                  className={`${MENU_ITEM} ${confirmDeleteMonth ? '!bg-danger-active !text-white' : '!text-danger hover:!bg-danger/10'}`}
+                  className={`${MENU_ITEM} ${confirmDeleteMonth ? '!bg-danger-active !text-on-accent' : '!text-danger hover:!bg-danger/10'}`}
                   title="ลบข้อมูลทั้งเดือนนี้ (กด 2 ครั้งเพื่อยืนยัน)"
                 >
                   <Trash2 className="w-4 h-4 shrink-0" />

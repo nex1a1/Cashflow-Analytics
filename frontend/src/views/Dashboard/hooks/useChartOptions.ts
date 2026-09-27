@@ -89,7 +89,7 @@ function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, dm
     return getLineChartOptions(isDark, yType, autoSkip);
   }
   if (mainChartType === 'combo') {
-    return getComboChartOptions(isDark, yType, autoSkip, '#ffffff');
+    return getComboChartOptions(isDark, yType, autoSkip, tc('ink-display'));
   }
   return getBarChartOptions(isDark, yType, autoSkip);
 }
@@ -108,7 +108,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
 
     if (chartViewType === 'sankey') {
       return {
-        responsive: true, maintainAspectRatio: false, color: '#FFFFFF',
+        responsive: true, maintainAspectRatio: false, color: tc('ink-display'),
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -119,7 +119,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
               }
               return tc('surface');
             },
-            titleColor: () => '#FFFFFF',
+            titleColor: () => tc('ink-display'),
             bodyColor: () => tc('gray-300'),
             borderColor: (ctx: any) => {
               const item = ctx.tooltipItems[0];

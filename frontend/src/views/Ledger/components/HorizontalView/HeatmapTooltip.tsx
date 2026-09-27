@@ -42,10 +42,10 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
       }}
     >
       <div style={{
-        background: 'rgba(18, 18, 18, 0.96)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: tc('canvas', 0.96),
+        border: '1px solid rgb(var(--overlay) / 0.1)',
         borderRadius: 0,
-        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)',
+        boxShadow: '0 16px 40px rgb(0 0 0 / calc(0.7 * var(--shadow-k)))',
         minWidth: 240,
         maxWidth: 320,
         overflow: 'hidden',
@@ -56,7 +56,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid rgb(var(--overlay) / 0.06)',
           background: `${tooltip.cat?.color}12`,
         }}>
           <CategoryGlyph icon={tooltip.cat?.icon} color={tooltip.cat?.color} size={18} />
@@ -78,7 +78,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
               alignItems: 'flex-start',
               gap: 12,
               borderBottom: i < tooltip.items.length - 1
-                ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
+                ? '1px solid rgb(var(--overlay) / 0.04)' : 'none',
             }}>
               <p style={{ margin: 0, fontSize: 11, color: tc('gray-300'), flex: 1, lineHeight: 1.4, fontWeight: 500 }}>
                 {item.description || <span style={{ opacity: 0.3, fontStyle: 'italic' }}>ไม่มีรายละเอียด</span>}
@@ -95,8 +95,8 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            background: 'rgba(255, 255, 255, 0.02)',
+            borderTop: '1px solid rgb(var(--overlay) / 0.06)',
+            background: 'rgb(var(--overlay) / 0.02)',
           }}>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: tc('ink-muted'), fontFamily: FONT_MONO }}>
               รวม {tooltip.items.length} รายการ

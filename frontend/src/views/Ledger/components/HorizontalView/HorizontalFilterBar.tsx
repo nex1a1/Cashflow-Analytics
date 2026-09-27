@@ -181,7 +181,7 @@ export default function HorizontalFilterBar({
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-3.5 bg-accent rounded-none shrink-0" />
           <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-accent" />
+            <SlidersHorizontal className="w-3.5 h-3.5 text-accent-ink" />
             <span>ตัวกรองตารางวิเคราะห์ความถี่</span>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function HorizontalFilterBar({
             <button
               type="button"
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1 rounded-none border text-accent bg-accent/5 hover:bg-accent/15 border-accent/40 hover:border-accent font-mono transition-colors cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/15 border-accent/40 hover:border-accent-ink font-mono transition-colors cursor-pointer whitespace-nowrap"
               title="ล้างตัวกรองของตารางทั้งหมด"
             >
               <RefreshCw className="w-3 h-3" />
@@ -264,7 +264,7 @@ export default function HorizontalFilterBar({
                   <span>รวมค่าหอ/น้ำ/ไฟ/เน็ต</span>
                 </div>
                 <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
-                  includeFixedCosts ? 'bg-amber-500 border-amber-500 text-black' : 'border-line-strong bg-canvas'
+                  includeFixedCosts ? 'bg-amber-500 border-amber-500 text-canvas' : 'border-line-strong bg-canvas'
                 }`}>
                   {includeFixedCosts && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                 </div>
@@ -275,7 +275,7 @@ export default function HorizontalFilterBar({
                 onClick={toggleHideZeroDays}
                 className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   hideZeroDays
-                    ? 'bg-accent/20 border-accent/60 text-accent'
+                    ? 'bg-accent/20 border-accent/60 text-accent-ink'
                     : 'bg-surface border-line text-slate-400 hover:text-slate-200 hover:border-line-strong'
                 }`}
                 title="ซ่อนแถววันที่ไม่มียอดใช้จ่ายในเดือนนี้"
@@ -285,7 +285,7 @@ export default function HorizontalFilterBar({
                   <span>ซ่อนวันไม่มียอดใช้จ่าย</span>
                 </div>
                 <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
-                  hideZeroDays ? 'bg-accent border-accent text-on-accent' : 'border-line-strong bg-canvas'
+                  hideZeroDays ? 'bg-accent border-accent-ink text-on-accent' : 'border-line-strong bg-canvas'
                 }`}>
                   {hideZeroDays && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                 </div>
@@ -375,7 +375,7 @@ export default function HorizontalFilterBar({
               <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
             </span>
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-accent" />
+              <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
               <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
                 ตัวกรองตารางที่ทำงานอยู่:
               </span>
@@ -388,7 +388,7 @@ export default function HorizontalFilterBar({
           <button
             type="button"
             onClick={clearFilters}
-            className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-none border text-accent bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent font-mono cursor-pointer"
+            className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono cursor-pointer"
           >
             <RefreshCw className="w-3 h-3" />
             ล้างการคัดกรองทั้งหมด

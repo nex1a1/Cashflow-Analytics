@@ -16,14 +16,14 @@ export function resolveTableHighlightOpacity(dm: boolean, isColHovered: boolean,
   if (isColHovered && isRowHovered) return dm ? 0.22 : 0.44;
   if (isColHovered) return dm ? 0.14 : 0.34;
   if (isRowHovered) return dm ? 0.12 : 0.32;
-  return dm ? 0.08 : 0.28;
+  return dm ? 0 : 0.28; // at rest the column is neutral; group color lives in the header's top bar
 }
 
 export function resolveTableSubHighlightOpacity(dm: boolean, isColHovered: boolean, isRowHovered: boolean): number {
   if (isColHovered && isRowHovered) return dm ? 0.18 : 0.36;
   if (isColHovered) return dm ? 0.12 : 0.26;
   if (isRowHovered) return dm ? 0.10 : 0.24;
-  return dm ? 0.06 : 0.20;
+  return dm ? 0 : 0.20;
 }
 
 export function getHighlightBgColor(

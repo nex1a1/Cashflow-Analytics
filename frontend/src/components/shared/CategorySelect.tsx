@@ -11,7 +11,7 @@ import {
 } from '@/utils/categorySelectHelpers';
 import { hexToRgb } from '@/utils/formatters';
 
-import { tc } from '@/constants/theme';
+import { tc, readable } from '@/constants/theme';
 export interface CategorySelectProps {
   value?: string | null;
   onChange: (categoryId: string) => void;
@@ -292,42 +292,13 @@ export default function CategorySelect({
     }
   }, [open, flatCategories, activeIndex, handleOpen, handleClose, handleSelect]);
 
-  // Pill variant styles for table cell with lightness boost for legibility
+  // Pill variant styles for table cell; text goes through readable() for legibility
   const pillColor = selectedCategory?.color || (type === 'income' ? tc('income') : tc('expense'));
   const pillStyles = useMemo(() => {
     const defaultRgb = '148, 163, 184';
     const rgb = hexToRgb(pillColor || '') || defaultRgb;
 
-    let hex = (pillColor || tc('ink-body')).replace('#', '');
-    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-    let r = 148, g = 163, b = 184;
-    if (hex.length === 6) {
-      r = Number.parseInt(hex.substring(0, 2), 16);
-      g = Number.parseInt(hex.substring(2, 4), 16);
-      b = Number.parseInt(hex.substring(4, 6), 16);
-    }
-
-    const rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
-    const max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
-    let h = 0, s = 0, l = (max + min) / 2;
-
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
-        case gNorm: h = (bNorm - rNorm) / d + 2; break;
-        case bNorm: h = (rNorm - gNorm) / d + 4; break;
-      }
-      h /= 6;
-    }
-
-    h = Math.round(h * 360);
-    s = Math.round(s * 100);
-
-    const targetL = Math.max(l * 100, 72); // ≥72% lightness keeps even deep indigo/purple ≥4.5:1 on the pill
-    const targetS = Math.max(s, 60);
-    const textColor = `hsl(${h}, ${targetS}%, ${targetL}%)`;
+    const textColor = readable(pillColor); // theme-aware 4.5:1 (lightens on dark, darkens on light)
 
     return {
       bg: `rgba(${rgb}, 0.15)`,
@@ -390,7 +361,7 @@ export default function CategorySelect({
           } ${
             error
               ? 'bg-canvas border-danger text-red-200 focus:ring-1 focus:ring-danger/30'
-              : 'bg-canvas border-line-strong text-white hover:border-accent focus:border-accent focus:ring-1 focus:ring-accent/30'
+              : 'bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink focus:ring-1 focus:ring-accent/30'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -430,7 +401,7 @@ export default function CategorySelect({
         createPortal(
           <div
             ref={popoverRef}
-            className="fixed z-[9999] bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-[9999] bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -576,7 +547,7 @@ export default function CategorySelect({
 
                               {isSelected && (
                                 <div className="flex items-center shrink-0 ml-2">
-                                  <Check className="w-3.5 h-3.5 text-accent shrink-0" />
+                                  <Check className="w-3.5 h-3.5 text-accent-ink shrink-0" />
                                 </div>
                               )}
                             </button>
@@ -593,17 +564,17 @@ export default function CategorySelect({
             <div className="px-3 py-2 bg-canvas border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400 select-none shrink-0 font-medium">
               <div className="flex items-center gap-2.5">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">↑↓</kbd>
                   <span>เลือก</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Enter</kbd>
                   <span>ยืนยัน</span>
                 </span>
               </div>
               <div>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgba(0,0,0,0.5)]">Esc</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Esc</kbd>
                   <span>ปิด</span>
                 </span>
               </div>

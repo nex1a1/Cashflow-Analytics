@@ -107,7 +107,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
             placeholder="ค้นหาในตัวอย่าง..."
             value={previewSearch}
             onChange={e => setPreviewSearch(e.target.value)}
-            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent rounded-none transition-colors"
+            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent-ink rounded-none transition-colors"
           />
           {previewSearch && (
             <button
@@ -264,7 +264,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                         </th>
                       );
                     })}
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent sticky right-0 bg-surface-hover z-20">
+                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent-ink sticky right-0 bg-surface-hover z-20">
                       {headerLang === 'en' ? 'Total' : 'รวมสุทธิ (Total)'}
                     </th>
                     <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 whitespace-nowrap">
@@ -333,7 +333,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
       {/* Bottom Hint (Matching ExportPreview) */}
       <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-neutral-400 shrink-0">
         <div className="flex items-start gap-2">
-          <Info className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+          <Info className="w-3.5 h-3.5 text-accent-ink shrink-0 mt-0.5" />
           <p className="leading-snug">
             ระบบฝังรหัส <strong className="text-neutral-300">UTF-8 BOM</strong> ในไฟล์ CSV อัตโนมัติ เพื่อให้เปิดใน Microsoft Excel และ Google Sheets ได้โดยภาษาไทยไม่เพี้ยน
           </p>
@@ -345,7 +345,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
           onClick={() => setShowSpecs(!showSpecs)}
           className="flex items-center gap-1 text-[11px] font-mono uppercase text-neutral-400 hover:text-neutral-200 cursor-pointer shrink-0"
         >
-          <Layers className="w-3.5 h-3.5 text-accent" />
+          <Layers className="w-3.5 h-3.5 text-accent-ink" />
           <span>{showSpecs ? 'ซ่อนสเปกการถอดรหัส' : 'ดูกฎเกณฑ์การถอดรหัส (4 ข้อ)'}</span>
           {showSpecs ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>

@@ -46,7 +46,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
     <div className="w-full flex flex-col rounded-none overflow-hidden border shadow-lg bg-canvas border-line">
       <div className="px-3.5 py-2 flex items-center justify-between border-b bg-surface/50 border-line/60">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-accent" />
+          <Activity className="w-4 h-4 text-accent-ink" />
           <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 font-sans">
             แผงวิเคราะห์รายรับ-รายจ่าย
           </span>
@@ -144,12 +144,12 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
         >
           {showGroupBreakdown ? (
             <>
-              <ChevronUp className="w-3.5 h-3.5 text-accent group-hover:-translate-y-0.5 transition-transform" />
+              <ChevronUp className="w-3.5 h-3.5 text-accent-ink group-hover:-translate-y-0.5 transition-transform" />
               <span>หุบการจำแนกตามกลุ่มรายรับ-รายจ่าย</span>
             </>
           ) : (
             <>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-accent group-hover:translate-y-0.5 transition-transform" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-accent-ink group-hover:translate-y-0.5 transition-transform" />
               <span>ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย ({totalActiveGroupCards} กลุ่ม)</span>
             </>
           )}

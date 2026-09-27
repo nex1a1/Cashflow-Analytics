@@ -36,14 +36,14 @@ const FormatCard = ({
       onClick={() => onClick(formatKey)}
       className={`w-full flex items-start gap-3 p-3 rounded-none border text-left transition-colors relative cursor-pointer ${
         isActive
-          ? 'border-accent bg-accent/10 text-white'
+          ? 'border-accent-ink bg-accent/10 text-white'
           : 'border-line bg-surface hover:border-accent/40 text-neutral-400 hover:text-neutral-200'
       }`}
     >
       <div
         className={`p-1.5 rounded-none border mt-0.5 shrink-0 ${
           isActive
-            ? 'border-accent bg-accent/20 text-accent'
+            ? 'border-accent-ink bg-accent/20 text-accent-ink'
             : 'border-line-strong bg-canvas text-neutral-500'
         }`}
       >
@@ -54,7 +54,7 @@ const FormatCard = ({
         <div className="flex items-center justify-between gap-1">
           <h5 className="text-xs font-black uppercase tracking-wide truncate">{title}</h5>
           {badge && (
-            <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-none bg-accent/20 text-accent border border-accent/30 uppercase font-bold shrink-0">
+            <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-none bg-accent/20 text-accent-ink border border-accent/30 uppercase font-bold shrink-0">
               {badge}
             </span>
           )}

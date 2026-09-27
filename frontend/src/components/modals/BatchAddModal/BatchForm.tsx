@@ -158,7 +158,7 @@ function BatchForm({
   };
 
   const tokens = {
-    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent focus:ring-accent/30",
+    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
     inputError: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
     label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400"
   };
@@ -209,7 +209,7 @@ function BatchForm({
               <button
                 type="button"
                 onClick={() => setValue('date', toValueStr(new Date()), { shouldValidate: true })}
-                className="px-1 text-[11px] font-bold text-slate-400 hover:text-accent hover:bg-surface-elevated transition-colors"
+                className="px-1 text-[11px] font-bold text-slate-400 hover:text-accent-ink hover:bg-surface-elevated transition-colors"
                 title="เลือกวันนี้"
               >
                 วันนี้
@@ -230,7 +230,7 @@ function BatchForm({
             required 
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
-            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent focus:border-accent"
+            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink"
           />
           <FieldError id="batch-date-err" message={errors.date?.message} />
         </div>
@@ -330,7 +330,7 @@ function BatchForm({
             <button 
               type="submit" 
               disabled={isProcessing}
-              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-amber-600 hover:bg-amber-500 text-white border-amber-600 shadow-sm"
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-amber-500 hover:bg-amber-400 text-canvas border-amber-600 shadow-sm"
             >
               <Check className="w-4 h-4" /> บันทึกแก้ไข (Enter)
             </button>
@@ -353,7 +353,7 @@ function BatchForm({
             <button 
               type="submit" 
               disabled={isProcessing}
-              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-accent hover:bg-accent-active text-on-accent border-accent"
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-accent hover:bg-accent-active text-on-accent border-accent-ink"
             >
               <PlusCircle className="w-4 h-4" /> เพิ่มลงตะกร้า (Enter)
             </button>

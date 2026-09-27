@@ -64,7 +64,7 @@ const CURATED_PALETTES = [
     ]
   },
   {
-    name: 'NEON & OBSIDIAN (นีออนและมินิมอล)',
+    name: 'VIOLET & OBSIDIAN (ม่วงและมินิมอล)',
     colors: [
       '#8B5CF6', '#9B59B6', '#8E44AD', '#A29BFE', '#E056FD', '#6C5CE7',
       '#94A3B8', '#64748B', '#475569', '#334155', '#1E293B', '#0F172A'
@@ -160,7 +160,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
       {open && createPortal(
         <div 
           ref={paletteRef}
-          className="fixed z-[9999] shadow-[0_24px_50px_rgba(0,0,0,0.92),0_0_1px_1px_rgba(255,255,255,0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[290px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[9999] shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[290px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Laser Hairline Accent */}
@@ -174,7 +174,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                 onClick={() => setTab('spectrum')}
                 className={`flex-1 pb-1 text-[11px] font-black tracking-wider uppercase border-b-2 transition-all cursor-pointer ${
                   tab === 'spectrum' 
-                    ? 'border-accent text-white font-black' 
+                    ? 'border-accent-ink text-white font-black' 
                     : 'border-transparent text-ink-muted hover:text-ink-body'
                 }`}
               >
@@ -185,7 +185,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                 onClick={() => setTab('curated')}
                 className={`flex-1 pb-1 text-[11px] font-black tracking-wider uppercase border-b-2 transition-all cursor-pointer ${
                   tab === 'curated' 
-                    ? 'border-accent text-white font-black' 
+                    ? 'border-accent-ink text-white font-black' 
                     : 'border-transparent text-ink-muted hover:text-ink-body'
                 }`}
               >
@@ -255,7 +255,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                 title="สีปัจจุบัน"
               />
               
-              <div className="relative w-8 h-8 rounded-sm border border-line-strong bg-surface flex items-center justify-center hover:bg-surface-elevated hover:border-accent shrink-0 cursor-pointer transition-colors">
+              <div className="relative w-8 h-8 rounded-sm border border-line-strong bg-surface flex items-center justify-center hover:bg-surface-elevated hover:border-accent-ink shrink-0 cursor-pointer transition-colors">
                 <Pipette className="w-4 h-4 text-slate-300 pointer-events-none" />
                 <input 
                   type="color" 

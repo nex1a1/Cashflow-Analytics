@@ -112,7 +112,7 @@ export function buildDoughnutChartData(
         }),
         borderWidth: activeItems.map((_, idx) => (hoveredIdx === idx ? 3 : 2)),
         borderColor: activeItems.map((_, idx) => {
-          if (hoveredIdx === idx) return tc('accent');
+          if (hoveredIdx === idx) return tc('accent-ink');
           return tc('line');
         }),
       },

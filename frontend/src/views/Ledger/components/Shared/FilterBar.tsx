@@ -98,7 +98,7 @@ export default function FilterBar({
             placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-surface border-line focus:border-accent text-slate-300 placeholder-ink-muted"
+            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-surface border-line focus:border-accent-ink text-slate-300 placeholder-ink-muted"
           />
           {searchQuery && (
             <button 
@@ -127,7 +127,7 @@ export default function FilterBar({
             onClick={() => setIsExpanded(prev => !prev)}
             className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-1.5 rounded-none border font-mono transition-all select-none whitespace-nowrap ${
               isExpanded
-                ? 'bg-accent/10 border-accent text-accent'
+                ? 'bg-accent/10 border-accent-ink text-accent-ink'
                 : 'bg-surface border-line text-slate-400 hover:text-slate-100 hover:border-line-strong'
             } ${advancedActiveCount > 0 ? '!border-amber-500/80 !text-amber-400 !bg-amber-950/20' : ''}`}
             title="เปิด/ปิด แผงตัวกรองขั้นสูง (วันที่, กลุ่ม, หมวดหมู่, ช่วงเงิน, Allocation)"
@@ -139,13 +139,13 @@ export default function FilterBar({
                 {advancedActiveCount}
               </span>
             )}
-            {isExpanded ? <ChevronUp className="w-3 h-3 text-accent" /> : <ChevronDown className="w-3 h-3 text-slate-500" />}
+            {isExpanded ? <ChevronUp className="w-3 h-3 text-accent-ink" /> : <ChevronDown className="w-3 h-3 text-slate-500" />}
           </button>
 
           {isFilterActive && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1.5 rounded-none border text-accent bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent font-mono shrink-0 whitespace-nowrap"
+              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1.5 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono shrink-0 whitespace-nowrap"
               title="ล้างการคัดกรองทั้งหมด"
             >
               <RefreshCw className="w-3 h-3" />
@@ -182,7 +182,7 @@ export default function FilterBar({
                       placeholder="Min" 
                       value={minAmount}
                       onChange={e => setMinAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                   <span className="text-xs font-black text-ink-muted font-mono">—</span>
@@ -193,7 +193,7 @@ export default function FilterBar({
                       placeholder="Max" 
                       value={maxAmount}
                       onChange={e => setMaxAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function FilterBar({
                   <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-accent" />
+                  <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
                     ตัวกรองที่ทำงานอยู่:
                   </span>
@@ -302,7 +302,7 @@ export default function FilterBar({
 
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-none border text-accent bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent font-mono"
+                className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono"
               >
                 <RefreshCw className="w-3 h-3" />
                 ล้างการคัดกรองทั้งหมด

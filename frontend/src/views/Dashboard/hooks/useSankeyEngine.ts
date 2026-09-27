@@ -490,7 +490,7 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
         colorMode: 'gradient',
         size: 'max',
         labels: {
-          color: '#FFFFFF',
+          color: tc('ink-display'),
           font: { family: "'Inter', 'Bai Jamjuree', sans-serif", size: 11, weight: 'bold' },
           display: true
         },

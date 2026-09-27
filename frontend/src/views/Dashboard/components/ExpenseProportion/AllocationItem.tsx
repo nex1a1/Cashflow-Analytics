@@ -103,7 +103,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${varianceText}`}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
         isHovered
-          ? 'bg-surface-elevated/90 border-accent z-10'
+          ? 'bg-surface-elevated/90 border-accent-ink z-10'
           : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
       }`}
       style={{ borderLeftColor: isHovered ? undefined : item.color }}
@@ -156,7 +156,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               >
                 <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
                   isOverBudget
-                    ? 'bg-danger-active text-white border border-white'
+                    ? 'bg-danger-active text-on-accent border border-on-accent'
                     : 'bg-canvas text-amber-300 border border-amber-400/80'
                 }`}>
                   <MapPin size={11} className="shrink-0" />
@@ -229,7 +229,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                   <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_6px)]" />
 
                   {/* Over-budget Hover Tooltip */}
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-accent rounded-none z-[50] text-[11px] pointer-events-none">
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-accent-ink rounded-none z-[50] text-[11px] pointer-events-none">
                     <div className="flex items-center gap-1 text-danger font-black">
                       <AlertCircle size={13} className="shrink-0" />
                       <span>เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
@@ -264,7 +264,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                 className="absolute top-0 bottom-0 w-[2px] z-30 pointer-events-none" 
                 style={{
                   left: targetPinPos >= 99.5 ? 'calc(100% - 2px)' : `${targetPinPos}%`,
-                  backgroundColor: isOverBudget ? tc('danger') : '#fbbf24'
+                  backgroundColor: isOverBudget ? tc('danger') : tc('warn')
                 }}
               />
             </div>
@@ -285,7 +285,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               type="button"
               key={g.id} 
               onClick={() => onToggleGroup?.(g.id)}
-              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
                 isExcluded 
                   ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
                   : 'hover:bg-surface-elevated'

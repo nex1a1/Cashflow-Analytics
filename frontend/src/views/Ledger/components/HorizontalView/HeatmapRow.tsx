@@ -54,7 +54,7 @@ const HeatmapRow = memo(function HeatmapRow({
         background: bgBase,
         borderBottom: `1px solid ${border}`,
         borderRight: `1px solid ${border}`,
-        boxShadow: '2px 0 5px rgba(0,0,0,0.25)',
+        boxShadow: '2px 0 5px rgb(0 0 0 / calc(0.25 * var(--shadow-k)))',
         padding: '2px',
       }}>
         <div style={{
@@ -137,10 +137,10 @@ const HeatmapRow = memo(function HeatmapRow({
 
       <td style={{
         position: 'sticky', right: 0, zIndex: 30,
-        background: 'rgba(239, 68, 68, 0.04)',
+        background: tc('expense', 0.04),
         borderBottom: `1px solid ${border}`,
         borderLeft: `1px solid ${border}`,
-        boxShadow: '-2px 0 5px rgba(0,0,0,0.25)',
+        boxShadow: '-2px 0 5px rgb(0 0 0 / calc(0.25 * var(--shadow-k)))',
         padding: '0 6px',
         height: ROW_H,
       }}>

@@ -53,14 +53,14 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
   }
   if (isSavings) {
     return {
-      activeBorderColor: 'border-amber-500',
-      activeBgColor: 'bg-[#1c1912]/95',
-      defaultColor: '#f59e0b',
-      amtColor: 'text-amber-400',
+      activeBorderColor: 'border-savings',
+      activeBgColor: 'bg-savings/10',
+      defaultColor: tc('savings'),
+      amtColor: 'text-savings',
       amtSign: '±',
       badgeText: 'SAVE',
-      pulseClass: 'bg-amber-500',
-      borderColorActive: 'rgba(245, 158, 11, 0.4)',
+      pulseClass: 'bg-savings',
+      borderColorActive: tc('savings', 0.4),
       iconFallback: '💼'
     };
   }

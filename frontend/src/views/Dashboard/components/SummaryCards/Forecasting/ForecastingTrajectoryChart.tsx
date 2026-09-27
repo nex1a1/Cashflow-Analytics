@@ -569,13 +569,13 @@ export const ForecastingTrajectoryChart = memo(({
                 <text
                   x="8"
                   y="17"
-                  fill="#ffffff"
+                  fill={tc('ink-display')}
                   fontSize="11"
                   fontFamily={FONT_MONO}
                   fontWeight="bold"
                 >
                   Day {hoverData.day}
-                  <tspan fill={hoverData.isToday ? tc('accent') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
+                  <tspan fill={hoverData.isToday ? tc('accent-ink') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
                     {hoverData.isToday ? ' (วันนี้)' : hoverData.isFuture ? ' (คาดการณ์)' : ''}
                   </tspan>
                 </text>
@@ -603,7 +603,7 @@ export const ForecastingTrajectoryChart = memo(({
                   fontSize="11"
                   fontFamily={FONT_MONO}
                 >
-                  สะสม: <tspan fill="#ffffff" fontWeight="bold">฿{formatMoney(hoverData.cumulative)}</tspan>
+                  สะสม: <tspan fill={tc('ink-display')} fontWeight="bold">฿{formatMoney(hoverData.cumulative)}</tspan>
                 </text>
                 <text
                   x={tipW - 8}

@@ -8,7 +8,7 @@ const GuideHeader = memo(function GuideHeader({ onClose }: GuideHeaderProps) {
     <div className="px-6 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
       <div className="flex items-center gap-3">
         <div className="p-2 border border-accent/30 bg-accent/10 rounded-none shrink-0">
-          <FileSpreadsheet className="w-5 h-5 text-accent" />
+          <FileSpreadsheet className="w-5 h-5 text-accent-ink" />
         </div>
         <div>
           <div className="flex items-center gap-2">

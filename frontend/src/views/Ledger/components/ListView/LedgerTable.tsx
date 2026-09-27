@@ -28,7 +28,7 @@ const SortHeader: React.FC<SortHeaderProps> = ({ label, sortKey, className = '',
   return (
     <th
       className={`px-4 py-3 font-bold cursor-pointer select-none group text-${align} ${className} ${
-        `text-slate-400 hover:text-slate-200 ${isActive ? 'text-accent bg-surface/60' : 'hover:bg-surface-elevated/30'}`
+        `text-slate-400 hover:text-slate-200 ${isActive ? 'text-accent-ink bg-surface/60' : 'hover:bg-surface-elevated/30'}`
       }`}
       onClick={() => handleSort(sortKey)}
       title={`เรียงตาม${label}`}
@@ -36,8 +36,8 @@ const SortHeader: React.FC<SortHeaderProps> = ({ label, sortKey, className = '',
       <div className={`inline-flex items-center gap-1.5 text-xs uppercase tracking-wide ${align === 'right' ? 'flex-row-reverse' : ''}`}>
         {label}
         <span className={`flex flex-col text-[11px] leading-[0.55] ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`}>
-          <span className={isActive && sortConfig.direction === 'asc' ? ('text-accent') : ''}>▲</span>
-          <span className={isActive && sortConfig.direction === 'desc' ? ('text-accent') : ''}>▼</span>
+          <span className={isActive && sortConfig.direction === 'asc' ? ('text-accent-ink') : ''}>▲</span>
+          <span className={isActive && sortConfig.direction === 'desc' ? ('text-accent-ink') : ''}>▼</span>
         </span>
       </div>
     </th>
@@ -127,7 +127,7 @@ export default function LedgerTable({
                   }`}
                 >
                   {/* Sticky Date Column */}
-                  <td className={`sticky left-0 z-10 border-r border-line/40 align-middle shadow-[2px_0_5px_rgba(0,0,0,0.12)] px-3 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
+                  <td className={`sticky left-0 z-10 border-r border-line/40 align-middle shadow-[2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-3 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
                     {isNewDate ? (
                       <div className="flex items-center justify-between gap-1.5 w-full">
                         <div className="flex items-center gap-2 min-w-0">
@@ -163,7 +163,7 @@ export default function LedgerTable({
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'expense')} 
-                            className="p-0.5 rounded-none text-expense hover:text-rose-300 hover:bg-expense/15 transition-colors" 
+                            className="p-0.5 rounded-none text-expense hover:text-danger hover:bg-expense/15 transition-colors" 
                             title={`เพิ่มรายจ่าย (${item.date})`}
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
@@ -191,7 +191,7 @@ export default function LedgerTable({
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'expense')} 
-                            className="p-0.5 rounded-none text-expense hover:text-rose-300 hover:bg-expense/15 transition-colors" 
+                            className="p-0.5 rounded-none text-expense hover:text-danger hover:bg-expense/15 transition-colors" 
                             title={`เพิ่มรายจ่าย (${item.date})`}
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
@@ -229,7 +229,7 @@ export default function LedgerTable({
                   
                   <td className="px-3 py-1 group/input relative align-middle">
                     <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-slate-200 hover:bg-surface hover:border-line-strong focus:border-accent focus:bg-surface" placeholder="รายละเอียด..." />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-slate-200 hover:bg-surface hover:border-line-strong focus:border-accent-ink focus:bg-surface" placeholder="รายละเอียด..." />
                   </td>
                   
                   <td className="px-3 py-1 relative align-middle">
@@ -242,7 +242,7 @@ export default function LedgerTable({
                   </td>
                   
                   {/* Sticky Actions Column */}
-                  <td className={`sticky right-0 z-10 border-l border-line/40 align-middle text-center shadow-[-2px_0_5px_rgba(0,0,0,0.12)] px-2 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
+                  <td className={`sticky right-0 z-10 border-l border-line/40 align-middle text-center shadow-[-2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-2 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
                     <ConfirmDeleteButton onConfirm={() => handleDeleteTransaction(item.id)} revealOnHover tooltip="ลบรายการ" itemLabel={item.description || item.category} />
                   </td>
                 </tr>
@@ -348,7 +348,7 @@ export default function LedgerTable({
                 }
               }}
               onBlur={handlePageSubmit}
-              className="w-7 text-center bg-surface-hover text-white font-black border border-line focus:border-accent focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
+              className="w-7 text-center bg-surface-hover text-white font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
             />
             <span className="text-slate-600 font-normal select-none">/</span>
             <span className="text-slate-400 font-extrabold select-none">{totalPages}</span>

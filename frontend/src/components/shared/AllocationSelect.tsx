@@ -249,7 +249,7 @@ export const AllocationSelect = memo(function AllocationSelect({
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
         className={`allocation-trigger group relative w-full inline-flex items-center justify-between font-mono font-black tracking-wider rounded-none border outline-none select-none cursor-pointer transition-all duration-75 hover:brightness-125 active:scale-[0.98] ${
-          open ? 'ring-1 ring-accent border-accent z-20 brightness-110' : ''
+          open ? 'ring-1 ring-accent-ink border-accent-ink z-20 brightness-110' : ''
         } ${sizeClasses} ${className}`}
         style={{
           backgroundColor: `rgba(${currentRgb}, 0.12)`,
@@ -283,7 +283,7 @@ export const AllocationSelect = memo(function AllocationSelect({
             aria-label="เลือกประเภทการจัดสรรเงิน"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="fixed z-[99999] bg-surface border border-line-strong shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_1px_1px_rgba(255,255,255,0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 select-none animate-in fade-in zoom-in-95 duration-75"
+            className="fixed z-[99999] bg-surface border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.95*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 select-none animate-in fade-in zoom-in-95 duration-75"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }

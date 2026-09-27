@@ -3,9 +3,9 @@ import { useMenu } from '@/hooks/useMenu';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, Database, ChevronDown
+  Calendar as CalendarIcon, HelpCircle, Database, ChevronDown, Sun, Moon
 } from 'lucide-react';
-import sharkBlack from '../../assets/images/shark-black.svg';
+import { THEME_NAME, setTheme, regionVars } from '@/constants/theme';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
@@ -62,14 +62,14 @@ function DataMenu({ isProcessing, onExport, onImport, onGuide }: {
         }`}
       >
         {isProcessing
-          ? <Zap className="w-3.5 h-3.5 animate-pulse text-amber-400" />
+          ? <Zap className="w-3.5 h-3.5 text-amber-400" />
           : <Database className="w-3.5 h-3.5 text-ink-muted" />}
         <span>{isProcessing ? 'กำลังนำเข้า...' : 'ข้อมูล'}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-ink-muted ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div role="menu" aria-label="ข้อมูล" className="absolute right-0 top-full mt-1 z-[70] w-60 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+        <div role="menu" aria-label="ข้อมูล" className="absolute right-0 top-full mt-1 z-[70] w-60 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))]">
           <button role="menuitem" type="button" className={MENU_ITEM} onClick={pick(onExport)}>
             <Download className="w-4 h-4 text-ink-muted shrink-0" />
             <span className="flex-1">ส่งออก CSV / สำรองข้อมูล</span>
@@ -101,7 +101,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }: AppHeaderProps) {
-  const dm = true;
+  const dm = THEME_NAME === 'ferrari';
   const showPeriodPicker = ['insights', 'calendar', 'ledger'].includes(activeTab);
 
   // ── Logic: Snappy Processing Indicator ───────────────────
@@ -109,16 +109,17 @@ export default function AppHeader({
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
   return (
-    <div className="flex flex-col relative z-[60]">
+    // Freedom chest plate: the header is always a dark region (midnight in the light theme)
+    <div className="flex flex-col relative z-[60]" style={regionVars('midnight')}>
       {/* ── Top Header (Logo & Global Actions - Tactical HUD) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-4 border-b border-line bg-canvas text-slate-300">
         
         {/* Left: Logo & Status Cockpit */}
         <div className="flex items-center gap-4">
           {/* Logo container: Pure sharp tactical bracket with subtle red glow */}
-          <div className="p-2 rounded-none border border-accent bg-surface shrink-0 hover:border-accent transition-all">
+          <div className="p-2 rounded-none border border-accent-ink bg-surface shrink-0 hover:border-accent-ink transition-all">
             <img 
-              src={dm ? sharkWhite : sharkBlack} 
+              src={sharkWhite} 
               alt="Shark Logo" 
               className="w-7 h-7 object-contain" 
             />
@@ -130,7 +131,7 @@ export default function AppHeader({
                 Cashflow Shark
               </h1>
               {isDemoMode && (
-                <span className="text-[11px] font-black tracking-widest px-2 py-0.5 rounded-none border border-amber-500/50 uppercase leading-none shrink-0 animate-pulse bg-amber-950/60 text-amber-400">
+                <span className="text-[11px] font-black tracking-widest px-2 py-0.5 rounded-none border border-amber-500/50 uppercase leading-none shrink-0 bg-amber-950/60 text-amber-400">
                   DEMO MODE
                 </span>
               )}
@@ -145,7 +146,7 @@ export default function AppHeader({
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-none shrink-0 ${
                   dbStatus.toLowerCase().includes('online') 
-                    ? 'bg-emerald-400 animate-pulse' 
+                    ? 'bg-emerald-400' 
                     : 'bg-amber-500'
                 }`} />
                 <span className="tracking-wider uppercase select-none">{dbStatus}</span>
@@ -166,6 +167,16 @@ export default function AppHeader({
         {/* Right: Action Toolbar (Cockpit Controls) */}
         <div className="flex items-center justify-end gap-2.5 flex-wrap">
           
+          <button
+            type="button"
+            onClick={() => setTheme(dm ? 'freedom' : 'ferrari')}
+            className="p-2.5 border border-line-strong bg-surface hover:bg-surface-elevated text-ink-body hover:text-ink-display transition-colors shrink-0 cursor-pointer"
+            title={dm ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีม Ferrari ดำแดง'}
+            aria-label={dm ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีม Ferrari ดำแดง'}
+          >
+            {dm ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           <DataMenu
             isProcessing={showProcessing}
             onExport={onClickExport}
@@ -184,7 +195,7 @@ export default function AppHeader({
           {/* Primary Action Button (Quick Add) - Upgraded to elegant tactical badge */}
           <button
             onClick={onClickAddQuick}
-            className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 rounded-none border border-accent/50 bg-accent/10 hover:bg-accent hover:border-accent hover:text-on-accent text-accent transition-all shrink-0 cursor-pointer"
+            className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 rounded-none border border-accent/50 bg-accent/10 hover:bg-accent hover:border-accent-ink hover:text-on-accent text-accent-ink transition-all shrink-0 cursor-pointer"
           >
             <CalendarPlus className="w-4 h-4" />
             <span>เพิ่มข้อมูลด่วน</span>
@@ -201,13 +212,14 @@ export default function AppHeader({
               <React.Fragment key={id}>
                 <button
                   onClick={() => setActiveTab(id)}
+                  style={isActive ? regionVars('page') : undefined} // active tab is cut from the page below it
                   className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                     isActive
-                      ? 'bg-canvas text-white border-t-accent border-r-line font-black'
+                      ? 'bg-canvas text-white border-t-accent-ink border-r-line font-black'
                       : 'text-ink-body hover:text-ink-display hover:bg-surface-hover border-t-transparent border-r-line/50'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-105 text-accent' : 'group-hover:scale-105'}`} />
+                  <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-105 text-accent-ink' : 'group-hover:scale-105'}`} />
                   <span>{label}</span>
 
                   {/* Active Indicator Underline - Bold & Sharp Static line matching performance rules */}

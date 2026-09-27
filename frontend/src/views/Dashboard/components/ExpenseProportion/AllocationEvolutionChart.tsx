@@ -197,7 +197,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
               y1={getY(pct)}
               x2={padL + plotW}
               y2={getY(pct)}
-              stroke="#ffffff"
+              stroke={tc('ink-display')}
               strokeOpacity={pct === 80 ? 0.35 : 0.28}
               strokeWidth={1}
               strokeDasharray="4 3"
@@ -215,7 +215,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                 y1={padT}
                 x2={getX(i)}
                 y2={padT + plotH}
-                stroke="#ffffff"
+                stroke={tc('ink-display')}
                 strokeOpacity={isHovered ? 0.8 : isLabeled ? 0.24 : 0.12}
                 strokeWidth={isHovered ? 1.5 : 1}
                 strokeDasharray={isHovered ? '3 2' : '3 3'}
@@ -252,7 +252,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                   key={m.ym}
                   x={getX(i)}
                   y={viewH - padB + 15}
-                  fill={isHovered ? '#ffffff' : tc('ink-body')}
+                  fill={isHovered ? tc('ink-display') : tc('ink-body')}
                   fontSize="11"
                   fontFamily={FONT_MONO}
                   fontWeight={isHovered ? 'bold' : 'normal'}
@@ -272,7 +272,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                 y1={padT}
                 x2={getX(hoveredIdx as number)}
                 y2={padT + plotH}
-                stroke="#ffffff"
+                stroke={tc('ink-display')}
                 strokeWidth="1.5"
                 strokeDasharray="3 2"
                 opacity="0.75"
@@ -293,7 +293,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                   fill={tc('surface-hover')} stroke={tc('line-strong')} strokeWidth="1.2" rx="3"
                   filter="url(#evolutionTooltipShadow)"
                 />
-                <text x="10" y="17" fill="#ffffff" fontSize="11.5" fontFamily={FONT_MONO} fontWeight="bold">
+                <text x="10" y="17" fill={tc('ink-display')} fontSize="11.5" fontFamily={FONT_MONO} fontWeight="bold">
                   {monthFull(hovered.ym)}
                 </text>
                 {hovered.total === 0 ? (

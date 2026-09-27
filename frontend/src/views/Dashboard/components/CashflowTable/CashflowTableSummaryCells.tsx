@@ -21,14 +21,14 @@ function SummaryTrendCell({
   } else if (isTrendHovered) {
     bgCls = 'text-expense bg-surface-hover';
   } else if (isRowHovered) {
-    bgCls = 'text-accent bg-surface-hover/80';
+    bgCls = 'text-accent-ink bg-surface-hover/80';
   }
 
   return (
     <td
       onMouseEnter={() => onHover('trend')}
       onMouseLeave={() => onHover(null)}
-      className={`px-3 py-2 font-bold border-l-2 !border-l-line-strong border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.35)] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
+      className={`px-3 py-2 font-bold border-l-2 !border-l-line-strong border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
     >
       <div className="flex items-center justify-between gap-1">
         <div className="shrink-0">{expMoMJSX}</div>
@@ -54,7 +54,7 @@ function SummaryNetCell({ isExcluded, isNetHovered, isRowHovered, thinBorder, ne
       onMouseEnter={() => onHover('net')}
       onMouseLeave={() => onHover(null)}
       className={`px-3 py-2 font-black border-l border-b ${thinBorder} sticky right-[140px] z-10 transition-colors w-[110px] min-w-[110px] max-w-[110px] ${bgCls} ${netColor} ${
-        isDeficit ? 'shadow-[inset_0_0_0_1px_rgba(244,63,94,0.2)]' : ''
+        isDeficit ? 'shadow-[inset_0_0_0_1px_rgb(var(--danger)/0.2)]' : ''
       }`}
     >
       {formatMoney(netAmount)}

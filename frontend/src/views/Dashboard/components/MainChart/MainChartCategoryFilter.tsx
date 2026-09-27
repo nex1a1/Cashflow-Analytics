@@ -82,7 +82,7 @@ export const MainChartCategorySelector = memo(({
         <button
           onClick={() => setDashboardCategory(['ALL'])}
           className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors ${
-            isAllActive ? 'bg-surface-elevated text-accent' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+            isAllActive ? 'bg-surface-elevated text-accent-ink' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
           }`}
         >
           <LayoutGrid className="w-3.5 h-3.5" /> ทั้งหมด (รวม)
@@ -90,7 +90,7 @@ export const MainChartCategorySelector = memo(({
         <button
           onClick={selectAllVariable}
           className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors ${
-            isVariableActive ? 'bg-surface-elevated text-accent' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+            isVariableActive ? 'bg-surface-elevated text-accent-ink' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
           }`}
         >
           <Shuffle className="w-3.5 h-3.5" /> เฉพาะผันแปร
@@ -165,7 +165,7 @@ export const MainChartCategorySelector = memo(({
         {!isAllActive && (
           <button
             onClick={() => setDashboardCategory(['ALL'])}
-            className="text-[11px] font-bold uppercase tracking-wide text-accent hover:text-white"
+            className="text-[11px] font-bold uppercase tracking-wide text-accent-ink hover:text-white"
           >
             ล้างตัวกรอง
           </button>
@@ -203,7 +203,7 @@ export const MainChartFilterMenu = memo(({
         style={hasActiveModifiers ? { boxShadow: `inset 0 0 0 1px ${tc('accent', 0.5)}` } : undefined}
         className={`px-3 py-1.5 border border-line rounded-none text-[11px] font-bold outline-none flex items-center gap-1.5 transition-colors ${
           hasActiveModifiers
-            ? 'bg-canvas text-accent'
+            ? 'bg-canvas text-accent-ink'
             : showCatMenu
               ? 'bg-surface-elevated text-slate-100'
               : 'bg-canvas text-slate-200 hover:bg-surface-elevated/50'
@@ -212,7 +212,7 @@ export const MainChartFilterMenu = memo(({
         <Filter className="w-3.5 h-3.5" />
         ตัวเลือกแสดงผล
         {isCatFiltered && (
-          <span className="px-1.5 rounded-full text-[11px] font-black bg-accent/20 text-accent border border-accent/40">
+          <span className="px-1.5 rounded-full text-[11px] font-black bg-accent/20 text-accent-ink border border-accent/40">
             {dashboardCategory.length}
           </span>
         )}
@@ -224,7 +224,7 @@ export const MainChartFilterMenu = memo(({
           {/* Header */}
           <div className="px-3.5 py-2.5 border-b flex items-center justify-between border-line text-slate-200">
             <div className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-accent" />
+              <Layers className="w-3.5 h-3.5 text-accent-ink" />
               <span className="text-[11px] font-extrabold uppercase tracking-wider">ตัวเลือกกราฟ</span>
             </div>
             <button

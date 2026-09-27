@@ -112,11 +112,11 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
       {showSkeleton && (
         <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-50 bg-surface/80 backdrop-blur-[1px]">
           <div className="relative w-14 h-14 mb-4 flex items-center justify-center border border-line bg-canvas">
-            <div className="w-8 h-8 border-2 border-transparent border-t-accent border-r-accent/30 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-transparent border-t-accent-ink border-r-accent/30 rounded-full animate-spin" />
           </div>
           <p className="text-[11px] font-black uppercase tracking-widest text-ink-body font-sans flex items-center gap-1.5">
             <span>กำลังดาวน์โหลดบัญชีแยกประเภท</span>
-            <span className="text-accent animate-pulse">...</span>
+            <span className="text-accent-ink animate-pulse">...</span>
           </p>
         </div>
       )}

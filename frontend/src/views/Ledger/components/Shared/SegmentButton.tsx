@@ -27,7 +27,7 @@ const SegmentButton: React.FC<SegmentButtonProps> = ({ label, active, onClick, c
       case 'sky':
         return 'bg-sky-950/20 border-sky-500/40 text-sky-400 font-black';
       case 'red':
-        return 'bg-accent/20 border-accent/50 text-accent font-black';
+        return 'bg-accent/20 border-accent/50 text-accent-ink font-black';
       case 'blue':
       default:
         return 'bg-surface-elevated border-line-strong text-white font-black';

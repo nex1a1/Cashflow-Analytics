@@ -28,7 +28,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
     if (rate >= 20) return { grade: 'A',  label: 'ดีมาก',    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
     if (rate >= 15) return { grade: 'B',  label: 'ดี',       cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
     if (rate >= 10) return { grade: 'C',  label: 'พอใช้',    cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-    if (rate >= 5)  return { grade: 'D',  label: 'อ่อน',     cls: 'bg-accent/10 text-accent border-accent/20' };
+    if (rate >= 5)  return { grade: 'D',  label: 'อ่อน',     cls: 'bg-accent/10 text-accent-ink border-accent/20' };
     return           { grade: 'F',  label: 'วิกฤต',    cls: 'bg-danger/10 text-danger border-danger/20' };
   };
 
@@ -88,7 +88,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
         </div>
 
         {/* EXPENSE CELL */}
-        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-accent bg-canvas hover:bg-surface-hover transition-none flex-1">
+        <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-accent-ink bg-canvas hover:bg-surface-hover transition-none flex-1">
           <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
             <Wallet size={72} />
           </div>

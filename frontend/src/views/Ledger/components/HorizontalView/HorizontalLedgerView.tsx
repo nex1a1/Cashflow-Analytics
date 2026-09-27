@@ -89,8 +89,8 @@ export default function HorizontalLedgerView({
   }, []);
 
   // ─── 3. Styles ───
-  const border  = 'rgba(255,255,255,0.06)';
-  const border2 = 'rgba(255,255,255,0.12)';
+  const border  = 'rgb(var(--overlay) / 0.06)';
+  const border2 = 'rgb(var(--overlay) / 0.12)';
   const bgBase  = tc('canvas');
   const bgHead  = tc('surface-hover');
   const bgFoot  = tc('surface');
@@ -171,9 +171,9 @@ export default function HorizontalLedgerView({
                           zIndex: 20,
                           background: isNewYear 
                             ? `linear-gradient(90deg, ${tc('accent', 0.2)} 0%, ${tc('canvas', 0.95)} 100%)` 
-                            : 'linear-gradient(90deg, rgba(48, 48, 48, 0.4) 0%, rgba(24, 24, 24, 0.95) 100%)',
-                          borderTop: isNewYear ? `1.5px solid ${tc('accent')}` : '1px solid rgba(255, 255, 255, 0.08)',
-                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                            : `linear-gradient(90deg, ${tc('gray-800', 0.4)} 0%, ${tc('surface', 0.95)} 100%)`,
+                          borderTop: isNewYear ? `1.5px solid ${tc('accent-ink')}` : '1px solid rgb(var(--overlay) / 0.08)',
+                          borderBottom: '1px solid rgb(var(--overlay) / 0.08)',
                           padding: '6px 10px',
                           textAlign: 'left',
                           height: '32px',
@@ -181,9 +181,9 @@ export default function HorizontalLedgerView({
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{
-                            background: isNewYear ? tc('accent', 0.2) : 'rgba(100, 116, 139, 0.15)',
-                            border: isNewYear ? `1px solid ${tc('accent', 0.4)}` : '1px solid rgba(100, 116, 139, 0.25)',
-                            color: isNewYear ? tc('accent') : tc('ink-body'),
+                            background: isNewYear ? tc('accent', 0.2) : tc('gray-500', 0.15),
+                            border: isNewYear ? `1px solid ${tc('accent', 0.4)}` : `1px solid ${tc('gray-500', 0.25)}`,
+                            color: isNewYear ? tc('accent-ink') : tc('ink-body'),
                             fontSize: '11px',
                             fontWeight: 900,
                             padding: '1px 5px',
@@ -195,7 +195,7 @@ export default function HorizontalLedgerView({
                           <span style={{
                             fontSize: '12px',
                             fontWeight: 900,
-                            color: isNewYear ? tc('accent') : tc('gray-300'),
+                            color: isNewYear ? tc('accent-ink') : tc('gray-300'),
                             letterSpacing: '0.02em',
                             fontFamily: FONT_MONO,
                           }}>
@@ -228,7 +228,7 @@ export default function HorizontalLedgerView({
                 background: bgFoot,
                 borderTop: `1.5px solid ${border2}`,
                 borderRight: `1px solid ${border}`,
-                boxShadow: '2px 0 5px rgba(0,0,0,0.3)',
+                boxShadow: '2px 0 5px rgb(0 0 0 / calc(0.3 * var(--shadow-k)))',
                 padding: '8px 4px',
                 textAlign: 'center',
                 fontSize: 12,
@@ -275,7 +275,7 @@ export default function HorizontalLedgerView({
                 background: bgFoot,
                 borderTop: `1.5px solid ${border2}`,
                 borderLeft: `1px solid ${border}`,
-                boxShadow: '-2px 0 5px rgba(0,0,0,0.3)',
+                boxShadow: '-2px 0 5px rgb(0 0 0 / calc(0.3 * var(--shadow-k)))',
                 padding: '8px 6px',
               }}>
                 <div style={{

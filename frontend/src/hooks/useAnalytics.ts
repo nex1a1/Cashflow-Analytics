@@ -228,18 +228,18 @@ function calculateForecastingDetails({
   if (projectedSurplus < 0) {
     paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
-    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า', color: '#f59e0b', bg: 'bg-amber-950/30' };
+    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า', color: tc('warn'), bg: 'bg-amber-950/30' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
-    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์', color: '#3b82f6', bg: 'bg-blue-950/30' };
+    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์', color: tc('info'), bg: 'bg-blue-950/30' };
   }
 
   let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
   if (projectedSurplus < 0) {
     eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
   } else if (projectedSurplusPct < 5) {
-    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว', color: '#f59e0b', bg: 'bg-amber-950/40', border: 'border-amber-500' };
+    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว', color: tc('warn'), bg: 'bg-amber-950/40', border: 'border-amber-500' };
   } else if (projectedSurplusPct < 20) {
-    eomStatus = { code: 'STABLE', label: 'โซนสมดุล', color: '#3b82f6', bg: 'bg-blue-950/40', border: 'border-blue-500' };
+    eomStatus = { code: 'STABLE', label: 'โซนสมดุล', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
   const maxAllowedExpense = totals.income;
@@ -567,12 +567,12 @@ function calculateWorkdayAndHolidayStats(datesInPeriod: string[], totals: any) {
 function calculateTopWantCategories(wantCatMapData: any, catMapLookup: any, variableTotal: number) {
   return Object.entries(wantCatMapData)
     .map(([catId, amount]: [string, any]) => {
-      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'shopping-bag', color: '#f59e0b' };
+      const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'shopping-bag', color: tc('warn') };
       return {
         id: catId,
         name: catObj.name,
         icon: catObj.icon || 'shopping-bag',
-        color: catObj.color || '#f59e0b',
+        color: catObj.color || tc('warn'),
         amount: Number(amount),
         allocation_type: 'want',
         pctOfWant: variableTotal > 0 ? ((Number(amount) / variableTotal) * 100).toFixed(0) : '0'
