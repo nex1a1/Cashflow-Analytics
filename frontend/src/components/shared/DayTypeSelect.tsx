@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
 import { DayType } from '@/types';
 import { hexToRgb, getThaiDayInfo, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { readable, tc, IS_LIGHT } from '@/constants/theme';
+import { readable } from '@/constants/theme';
 
 export interface DayTypeSelectProps {
   value?: string;
@@ -220,16 +220,14 @@ export default function DayTypeSelect({
   const isXs = size === 'xs';
 
   const badgeBg = isXs && isWorkDay
-    ? `rgba(${currentRgb}, ${IS_LIGHT ? '0.04' : '0.06'})`
-    : `rgba(${currentRgb}, ${IS_LIGHT ? '0.10' : '0.12'})`;
+    ? `rgba(${currentRgb}, 0.06)`
+    : `rgba(${currentRgb}, 0.12)`;
 
   const badgeBorder = isXs && isWorkDay
-    ? `rgba(${currentRgb}, ${IS_LIGHT ? '0.14' : '0.20'})`
-    : `rgba(${currentRgb}, ${IS_LIGHT ? '0.28' : '0.35'})`;
+    ? `rgba(${currentRgb}, 0.20)`
+    : `rgba(${currentRgb}, 0.35)`;
 
-  const badgeColor = isXs && isWorkDay && IS_LIGHT
-    ? tc('ink-muted')
-    : readable(currentColor);
+  const badgeColor = readable(currentColor);
 
   return (
     <>

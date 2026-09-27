@@ -3,9 +3,8 @@ import { useMenu } from '@/hooks/useMenu';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, Database, ChevronDown, Sun, Moon
+  Calendar as CalendarIcon, HelpCircle, Database, ChevronDown
 } from 'lucide-react';
-import { THEME_NAME, setTheme, regionVars } from '@/constants/theme';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
@@ -101,7 +100,6 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }: AppHeaderProps) {
-  const dm = THEME_NAME === 'ferrari';
   const showPeriodPicker = ['insights', 'calendar', 'ledger'].includes(activeTab);
 
   // ── Logic: Snappy Processing Indicator ───────────────────
@@ -109,8 +107,7 @@ export default function AppHeader({
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
   return (
-    // Freedom chest plate: the header is always a dark region (midnight in the light theme)
-    <div className="flex flex-col relative z-[60]" style={regionVars('midnight')}>
+    <div className="flex flex-col relative z-[60]">
       {/* ── Top Header (Logo & Global Actions - Tactical HUD) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-4 border-b border-line bg-canvas text-slate-300">
         
@@ -166,17 +163,6 @@ export default function AppHeader({
 
         {/* Right: Action Toolbar (Cockpit Controls) */}
         <div className="flex items-center justify-end gap-2.5 flex-wrap">
-          
-          <button
-            type="button"
-            onClick={() => setTheme(dm ? 'freedom' : 'ferrari')}
-            className="p-2.5 border border-line-strong bg-surface hover:bg-surface-elevated text-ink-body hover:text-ink-display transition-colors shrink-0 cursor-pointer"
-            title={dm ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีม Ferrari ดำแดง'}
-            aria-label={dm ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีม Ferrari ดำแดง'}
-          >
-            {dm ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
           <DataMenu
             isProcessing={showProcessing}
             onExport={onClickExport}
@@ -212,7 +198,6 @@ export default function AppHeader({
               <React.Fragment key={id}>
                 <button
                   onClick={() => setActiveTab(id)}
-                  style={isActive ? regionVars('page') : undefined} // active tab is cut from the page below it
                   className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                     isActive
                       ? 'bg-canvas text-white border-t-accent-ink border-r-line font-black'

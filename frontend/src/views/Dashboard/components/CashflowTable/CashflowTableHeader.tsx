@@ -14,7 +14,6 @@ export const CashflowTableHeader = React.memo(({
   expandedGroups,
   toggleGroup,
   getActiveCatsForGroup,
-  dm,
   thinBorder,
   boundaryBorder,
   boxBorder,
@@ -30,9 +29,9 @@ export const CashflowTableHeader = React.memo(({
 }: HeaderProps) => {
   // Fix #5: use module-level highlight helpers (isRowHovered = false in header)
   const getHeaderGroupBg = (group: CashflowGroup, isColHovered: boolean) =>
-    getHighlightBgColor(group, isColHovered, false, dm);
+    getHighlightBgColor(group, isColHovered, false);
   const getHeaderCatBg = (group: CashflowGroup, subColor: string | null | undefined, isColHovered: boolean) =>
-    getSubHighlightBgColor(group, subColor, isColHovered, false, dm);
+    getSubHighlightBgColor(group, subColor, isColHovered, false);
 
   return (
     <thead className="sticky top-0 z-30 bg-surface">

@@ -280,7 +280,6 @@ interface MainChartDataParams {
   dailyAllMap: Record<string, number>;
   hideFixedExpenses: boolean;
   hideWantExpenses: boolean;
-  isDarkMode?: boolean;
   dashboardCategory: string | string[];
   monthlyAllMap: Record<string, number>;
   monthlyCatMap: Record<string, Record<string, number>>;
@@ -499,7 +498,7 @@ const buildDailyComboChartData = (
  */
 export const generateMainChartData = ({
   chartGroupBy, filterPeriod, sortedMonthsKeys, cashflowMap, 
-  datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
+  datesInPeriod, dailyAllMap, hideFixedExpenses, hideWantExpenses,
   dashboardCategory, monthlyAllMap, monthlyCatMap, dailyCatMap, catMap
 }: MainChartDataParams) => {
   const isSingleMonthView = isSingleUnitPeriod(filterPeriod);

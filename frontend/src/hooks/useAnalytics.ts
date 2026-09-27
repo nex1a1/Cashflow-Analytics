@@ -940,7 +940,6 @@ export interface UseAnalyticsProps {
   topXLimit?: number;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
-  isDarkMode?: boolean;
   summaryData?: any;
 }
 
@@ -956,7 +955,6 @@ export default function useAnalytics({
   topXLimit = 7,
   dayTypes,
   dayTypeConfig,
-  isDarkMode = true,
   summaryData
 }: UseAnalyticsProps) {
   // ── Phase 1: Core Transaction Aggregation ──────────────────────────
@@ -1081,7 +1079,7 @@ export default function useAnalytics({
   }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, dayTypes, dayTypeConfig, summaryData]);
 
   // ── Phase 2: Chart & Sparkline Generation ─────────────────────────
-  // Re-runs only when chart display settings change (chartGroupBy, topXLimit, isDarkMode)
+  // Re-runs only when chart display settings change (chartGroupBy, topXLimit)
   const chartAndPresentation = useMemo(() => {
     const {
       catMapLookup, windowMeta, datesInPeriod, state, sortedCats,
@@ -1099,7 +1097,7 @@ export default function useAnalytics({
 
     const { chartData: mainChartData, chartType: mainChartType } = generateMainChartData({
       chartGroupBy: chartGroupBy as any, filterPeriod, sortedMonthsKeys, cashflowMap,
-      datesInPeriod, dailyAllMap: state.dailyAllMap, hideFixedExpenses, hideWantExpenses, isDarkMode,
+      datesInPeriod, dailyAllMap: state.dailyAllMap, hideFixedExpenses, hideWantExpenses,
       dashboardCategory, monthlyAllMap: state.monthlyAllMap, monthlyCatMap: state.monthlyCatMap, dailyCatMap: state.dailyCatMap, catMap: catMapLookup
     });
 
@@ -1117,7 +1115,7 @@ export default function useAnalytics({
     const topTransactions = [...state.chartTx].sort((a: any, b: any) => b.amount - a.amount).slice(0, topXLimit);
 
     return { catChartData, mainChartData, mainChartType, sparklineIncome, sparklineExpense, sparklineNet, topTransactions };
-  }, [coreAggregation, chartGroupBy, topXLimit, isDarkMode, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory, summaryData]);
+  }, [coreAggregation, chartGroupBy, topXLimit, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory, summaryData]);
 
   // ── Phase 3: Final Analytics Assembly ─────────────────────────────
   const analytics = useMemo(() => {

@@ -73,29 +73,27 @@ interface ResolveBaseChartOptionsParams {
   isBreakdown: boolean;
   chartViewType: string;
   mainChartType?: string;
-  dm?: boolean;
   yType: 'logarithmic' | 'linear';
   autoSkip: boolean;
 }
 
-function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, dm, yType, autoSkip }: ResolveBaseChartOptionsParams): any {
-  const isDark = Boolean(dm);
+function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, yType, autoSkip }: ResolveBaseChartOptionsParams): any {
   if (isBreakdown) {
     return chartViewType === 'line'
-      ? getLineChartOptions(isDark, yType, autoSkip)
-      : getBarChartOptions(isDark, yType, autoSkip);
+      ? getLineChartOptions(yType, autoSkip)
+      : getBarChartOptions(yType, autoSkip);
   }
   if (chartViewType === 'line') {
-    return getLineChartOptions(isDark, yType, autoSkip);
+    return getLineChartOptions(yType, autoSkip);
   }
   if (mainChartType === 'combo') {
-    return getComboChartOptions(isDark, yType, autoSkip, tc('ink-display'));
+    return getComboChartOptions(yType, autoSkip, tc('ink-display'));
   }
-  return getBarChartOptions(isDark, yType, autoSkip);
+  return getBarChartOptions(yType, autoSkip);
 }
 
 export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: ChartOptionsProps) {
-  const { analytics, dm, filterPeriod } = useDashboardContext();
+  const { analytics, filterPeriod } = useDashboardContext();
 
   return useMemo(() => {
     if (!analytics) return {};
@@ -153,7 +151,6 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
       isBreakdown,
       chartViewType,
       mainChartType: analytics.mainChartType,
-      dm,
       yType,
       autoSkip
     });
@@ -186,5 +183,5 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
         },
       },
     };
-  }, [isBreakdown, chartViewType, dm, analytics?.mainChartType, analytics, isLogScale, filterPeriod]);
+  }, [isBreakdown, chartViewType, analytics?.mainChartType, analytics, isLogScale, filterPeriod]);
 }

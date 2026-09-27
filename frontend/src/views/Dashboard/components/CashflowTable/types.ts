@@ -71,7 +71,6 @@ export interface CommonTableProps extends BorderClasses {
   toggleGroup: (groupId: string) => void;
   getActiveCatsForGroup: (groupId: string) => Category[];
   analytics: Analytics;
-  dm: boolean | undefined;
   handleMouseEnter: (e: React.MouseEvent<HTMLElement>, group: CashflowGroup) => void;
   handleCategoryMouseEnter?: (e: React.MouseEvent<HTMLElement>, group: CashflowGroup, category: Category) => void;
   handleMouseLeave: () => void;
@@ -110,7 +109,6 @@ export interface GroupCellsProps extends BorderClasses {
   hoveredCol: string | null;
   setHoveredCol: (col: string | null) => void;
   isRowHovered: boolean;
-  dm: boolean | undefined;
   isExcluded: boolean;
 }
 

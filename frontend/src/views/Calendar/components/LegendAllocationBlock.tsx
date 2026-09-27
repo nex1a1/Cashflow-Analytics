@@ -1,11 +1,10 @@
 import React from 'react';
 import { List, Rows, Folders, Coins } from 'lucide-react';
 import sharkWhite from '../../../assets/images/shark-white.svg';
-import sharkBlack from '../../../assets/images/shark-black.svg';
 import { formatAmount as formatValue } from '../../../utils/formatters';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
-import { tc, readable, ALLOCATION_COLORS, IS_LIGHT } from '@/constants/theme';
+import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
 export interface LegendCategoryItem {
   id: string;
   name: string;
@@ -371,7 +370,7 @@ function AllocationOverviewSection({
 
       {/* Subtle watermark logo in background */}
       <img 
-        src={IS_LIGHT ? sharkBlack : sharkWhite} 
+        src={sharkWhite} 
         alt="" 
         className="absolute -bottom-8 -right-8 w-36 h-36 opacity-[0.03] pointer-events-none select-none z-0" 
       />

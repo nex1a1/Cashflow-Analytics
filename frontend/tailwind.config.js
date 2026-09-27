@@ -39,7 +39,7 @@ export default {
         purple: PURPLE, violet: PURPLE, indigo: PURPLE,
         red: RED,
         rose: NEED, pink: NEED,
-        // `white` follows the strongest ink so dark-era `text-white` flips in the light theme;
+        // `white` follows the strongest ink (pure editorial white);
         // text that must stay white on a solid fill uses `text-on-accent`.
         white: v('ink-display'),
         canvas: v('canvas'),

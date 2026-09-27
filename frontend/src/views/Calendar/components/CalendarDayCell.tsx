@@ -6,7 +6,7 @@ import { formatMoney, formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
 
-import { tc, IS_LIGHT } from '@/constants/theme';
+import { tc } from '@/constants/theme';
 export interface CalendarDayCellProps {
   day: number | string;
   data?: {
@@ -43,9 +43,9 @@ export interface CalendarDayCellProps {
 export const CALENDAR_HEAT_COLORS: Record<number, string> = {
   0: 'transparent',
   1: 'transparent',
-  2: IS_LIGHT ? tc('warn', 0.08) : tc('warn', 0.14),
-  3: IS_LIGHT ? tc('expense', 0.10) : tc('expense', 0.22),
-  4: IS_LIGHT ? tc('expense', 0.16) : tc('expense', 0.4),
+  2: tc('warn', 0.14),
+  3: tc('expense', 0.22),
+  4: tc('expense', 0.4),
 };
 
 /**
@@ -99,15 +99,15 @@ const CalendarDayCell = memo(function CalendarDayCell({
   const burnIntensity = maxDailyExpense > 0 && cellData.exp > 0 ? cellData.exp / maxDailyExpense : 0;
 
   // Flat solid background without gradients (classic Ferrari dark mode)
-  let cellBg = IS_LIGHT ? 'bg-surface-elevated' : 'bg-canvas';
+  let cellBg = 'bg-canvas';
   let borderTopCls = '';
   if (isToday) {
-    cellBg = IS_LIGHT ? 'bg-surface-elevated ring-1 ring-inset ring-accent/60 z-20' : 'bg-canvas ring-1 ring-inset ring-accent/50 z-20';
+    cellBg = 'bg-canvas ring-1 ring-inset ring-accent/50 z-20';
   } else if (burnIntensity >= 0.75) {
-    cellBg = IS_LIGHT ? 'bg-red-50/70' : 'bg-[#221313]';
+    cellBg = 'bg-[#221313]';
     borderTopCls = 'border-t-2 !border-t-accent';
   } else if (burnIntensity >= 0.40) {
-    cellBg = IS_LIGHT ? 'bg-amber-50/70' : 'bg-[#1e1915]';
+    cellBg = 'bg-[#1e1915]';
     borderTopCls = 'border-t !border-t-warn/40';
   } else if (isWeekend && !(cellData.inc > 0 || cellData.exp > 0)) {
     cellBg = 'bg-surface';

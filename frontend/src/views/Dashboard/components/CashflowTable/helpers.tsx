@@ -12,29 +12,28 @@ import {
 import { tc } from '@/constants/theme';
 // ─── Shared highlight helpers (single source of truth) ────────────────────────
 
-export function resolveTableHighlightOpacity(dm: boolean, isColHovered: boolean, isRowHovered: boolean): number {
-  if (isColHovered && isRowHovered) return dm ? 0.22 : 0.44;
-  if (isColHovered) return dm ? 0.14 : 0.34;
-  if (isRowHovered) return dm ? 0.12 : 0.32;
-  return dm ? 0 : 0.28; // at rest the column is neutral; group color lives in the header's top bar
+export function resolveTableHighlightOpacity(isColHovered: boolean, isRowHovered: boolean): number {
+  if (isColHovered && isRowHovered) return 0.22;
+  if (isColHovered) return 0.14;
+  if (isRowHovered) return 0.12;
+  return 0; // at rest the column is neutral; group color lives in the header's top bar
 }
 
-export function resolveTableSubHighlightOpacity(dm: boolean, isColHovered: boolean, isRowHovered: boolean): number {
-  if (isColHovered && isRowHovered) return dm ? 0.18 : 0.36;
-  if (isColHovered) return dm ? 0.12 : 0.26;
-  if (isRowHovered) return dm ? 0.10 : 0.24;
-  return dm ? 0 : 0.20;
+export function resolveTableSubHighlightOpacity(isColHovered: boolean, isRowHovered: boolean): number {
+  if (isColHovered && isRowHovered) return 0.18;
+  if (isColHovered) return 0.12;
+  if (isRowHovered) return 0.10;
+  return 0;
 }
 
 export function getHighlightBgColor(
   group: CashflowGroup,
   isColHovered: boolean,
   isRowHovered: boolean,
-  dm: boolean | undefined,
 ): string {
   const hexColor = group.color || (group.type === 'income' ? tc('income') : tc('ink-muted'));
   const rgb = hexToRgb(hexColor);
-  const opacity = resolveTableHighlightOpacity(dm ?? false, isColHovered, isRowHovered);
+  const opacity = resolveTableHighlightOpacity(isColHovered, isRowHovered);
   return `rgba(${rgb}, ${opacity})`;
 }
 
@@ -43,11 +42,10 @@ export function getSubHighlightBgColor(
   subColor: string | null | undefined,
   isColHovered: boolean,
   isRowHovered: boolean,
-  dm: boolean | undefined,
 ): string {
   const hexColor = subColor || group.color || tc('ink-muted');
   const rgb = hexToRgb(hexColor);
-  const opacity = resolveTableSubHighlightOpacity(dm ?? false, isColHovered, isRowHovered);
+  const opacity = resolveTableSubHighlightOpacity(isColHovered, isRowHovered);
   return `rgba(${rgb}, ${opacity})`;
 }
 

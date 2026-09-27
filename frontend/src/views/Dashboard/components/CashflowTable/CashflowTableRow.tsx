@@ -12,7 +12,7 @@ import { RowProps } from './types';
 
 export const CashflowTableRow = React.memo(({
   row, activeIncomeGroups, activeExpenseGroups, expandedGroups,
-  getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
+  getActiveCatsForGroup, analytics, thinBorder, boundaryBorder, boxBorder,
   handleMouseEnter, handleMouseLeave,
   hoveredCol, setHoveredCol,
   isRowHovered, setHoveredRow,
@@ -106,7 +106,6 @@ export const CashflowTableRow = React.memo(({
           hoveredCol={hoveredCol}
           setHoveredCol={setHoveredCol}
           isRowHovered={isRowHovered}
-          dm={dm}
           thinBorder={thinBorder}
           boundaryBorder={boundaryBorder}
           boxBorder={boxBorder}
@@ -134,7 +133,6 @@ export const CashflowTableRow = React.memo(({
           hoveredCol={hoveredCol}
           setHoveredCol={setHoveredCol}
           isRowHovered={isRowHovered}
-          dm={dm}
           thinBorder={thinBorder}
           boundaryBorder={boundaryBorder}
           boxBorder={boxBorder}

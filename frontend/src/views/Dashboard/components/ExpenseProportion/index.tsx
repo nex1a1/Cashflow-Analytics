@@ -74,7 +74,7 @@ function ExpenseProportionSkeleton() {
  * ExpenseProportion - Financial expenditure proportions dashboard component.
  */
 export function ExpenseProportion() {
-  const { analytics, dm, showSkeleton, filterPeriod } = useDashboardContext();
+  const { analytics, showSkeleton, filterPeriod } = useDashboardContext();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('category');
   const [sortMode, setSortMode] = useState<SortMode>('amount-desc');
   const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
@@ -170,7 +170,7 @@ export function ExpenseProportion() {
   }, []);
 
   const options = useMemo(() => {
-    const baseOptions = getDoughnutChartOptions(Boolean(dm));
+    const baseOptions = getDoughnutChartOptions();
     return {
       ...baseOptions,
       cutout: '72%', 
@@ -209,7 +209,7 @@ export function ExpenseProportion() {
         }
       }
     };
-  }, [dm, activeItems]);
+  }, [activeItems]);
   
   const cardClass = "rounded-none border flex flex-col w-full bg-canvas border-line relative overflow-visible z-10";
   const isEmpty = !isEvolutionMode && itemCount === 0 && !showSkeleton;

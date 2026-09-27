@@ -1,8 +1,8 @@
 // src/utils/chartOptions.ts
 import { formatMoney } from './formatters';
-
 import { tc } from '@/constants/theme';
-const getTooltipOptions = (isDarkMode: boolean) => ({
+
+const getTooltipOptions = () => ({
   backgroundColor: tc('surface'),
   titleColor:      tc('ink-display'),
   bodyColor:       tc('gray-300'),
@@ -19,7 +19,7 @@ const formatTickValue = (v: number): string => {
   return v.toLocaleString();
 };
 
-const getScaleOptions = (isDarkMode: boolean, beginAtZero = false, yType = 'linear', autoSkip = true) => ({
+const getScaleOptions = (beginAtZero = false, yType = 'linear', autoSkip = true) => ({
   x: {
     ticks: {
       color: tc('ink-body'),
@@ -60,8 +60,8 @@ const getScaleOptions = (isDarkMode: boolean, beginAtZero = false, yType = 'line
   },
 });
 
-export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true, secondaryAxisColor?: string) => {
-  const scales: any = getScaleOptions(isDarkMode, false, yType, autoSkip);
+export const getComboChartOptions = (yType = 'linear', autoSkip = true, secondaryAxisColor?: string) => {
+  const scales: any = getScaleOptions(false, yType, autoSkip);
 
   // A derived metric (e.g. net Cashflow) plotted alongside its raw components (Income/Expense)
   // needs its own scale — sharing one axis flattens the derived line against the larger bars.
@@ -88,7 +88,7 @@ export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', auto
     plugins: {
       legend: { display: false },
       tooltip: {
-        ...getTooltipOptions(isDarkMode),
+        ...getTooltipOptions(),
         callbacks: {
           label: (ctx: any) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
         },
@@ -102,32 +102,32 @@ export const getComboChartOptions = (isDarkMode: boolean, yType = 'linear', auto
   };
 };
 
-export const getBarChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) =>
-  getComboChartOptions(isDarkMode, yType, autoSkip);
+export const getBarChartOptions = (yType = 'linear', autoSkip = true) =>
+  getComboChartOptions(yType, autoSkip);
 
-export const getLineChartOptions = (isDarkMode: boolean, yType = 'linear', autoSkip = true) => ({
+export const getLineChartOptions = (yType = 'linear', autoSkip = true) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index' as const, intersect: false },
   plugins: {
     legend: { display: false },
     tooltip: {
-      ...getTooltipOptions(isDarkMode),
+      ...getTooltipOptions(),
       callbacks: {
         label: (ctx: any) => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)} ฿`,
       },
     },
   },
   animation: false as const,
-  scales: getScaleOptions(isDarkMode, true, yType, autoSkip),
+  scales: getScaleOptions(true, yType, autoSkip),
 });
 
-export const getDoughnutChartOptions = (isDarkMode: boolean) => ({
+export const getDoughnutChartOptions = () => ({
   maintainAspectRatio: false,
   cutout: '70%',
   plugins: {
     legend: { display: false },
     tooltip: {
-      ...getTooltipOptions(isDarkMode),
+      ...getTooltipOptions(),
       cornerRadius: 0,
       callbacks: {
         label: (ctx: any) => ` ${ctx.label}: ${formatMoney(ctx.raw)} ฿`,

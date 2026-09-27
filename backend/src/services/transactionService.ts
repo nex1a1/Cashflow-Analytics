@@ -204,22 +204,8 @@ class TransactionService {
   }
 
   delete(id: string) {
-    const target = db.prepare(`
-      SELECT t.id, t.date, t.description, t.amount, c.name as category 
-      FROM transactions t 
-      LEFT JOIN categories c ON t.category_id = c.id 
-      WHERE t.id = ?
-    `).get(id) as { id: string, date: string, description: string, amount: number, category: string | null } | undefined;
-
-    const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
-
-    if (target) {
-      const baht = (target.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      console.log(`🗑️ [Service: Delete] ลบธุรกรรมสำเร็จ | ID: ${target.id} | วันที่: ${target.date} | "${target.description}" | ฿${baht} | หมวดหมู่: "${target.category || 'ไม่ระบุ'}" | (ผลลัพธ์: ${result.changes} แถว)`);
-    } else {
-      console.log(`🗑️ [Service: Delete] ลบธุรกรรม ID: ${id} | (ผลลัพธ์: ${result.changes} แถว)`);
-    }
-    return result;
+    // Row detail is logged by db.ts's verbose mutation hook.
+    return db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
   }
 
   deleteByMonth(isoMonth: string) {

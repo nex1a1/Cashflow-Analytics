@@ -15,7 +15,7 @@ import { isCyclePeriod, toCycleKey, cycleRange, localTodayIso } from '@/utils/pa
 const EMPTY_SET: Set<string> = new Set();
 
 export default function CashflowTable() {
-  const { analytics, transactions = [], cashflowGroups = [], categories = [], dm, showSkeleton, filterPeriod } =
+  const { analytics, transactions = [], cashflowGroups = [], categories = [], showSkeleton, filterPeriod } =
     useDashboardContext();
   const isCycleMode = isCyclePeriod(filterPeriod);
 
@@ -224,7 +224,7 @@ export default function CashflowTable() {
 
   const segmentProps: CommonTableProps = {
     activeIncomeGroups, activeExpenseGroups, expandedGroups, toggleGroup,
-    getActiveCatsForGroup, analytics, dm, thinBorder, boundaryBorder, boxBorder,
+    getActiveCatsForGroup, analytics, thinBorder, boundaryBorder, boxBorder,
     handleMouseEnter, handleCategoryMouseEnter, handleMouseLeave,
     hoveredCol, setHoveredCol,
     excludedMonths: effectiveExcludedMonths, toggleMonth,

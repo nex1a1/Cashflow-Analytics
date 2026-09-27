@@ -10,7 +10,7 @@ export function CashflowTableGroupCells({
   g, isLastGroup, isIncome, expandedGroups, getActiveCatsForGroup,
   row, excludedGroups, excludedCategories, categories,
   filteredGroupMap, filteredCatMap, analytics,
-  hoveredCol, setHoveredCol, isRowHovered, dm,
+  hoveredCol, setHoveredCol, isRowHovered,
   thinBorder, boundaryBorder, boxBorder, isExcluded,
 }: GroupCellsProps) {
   const isExpanded = expandedGroups.has(g.id);
@@ -25,7 +25,7 @@ export function CashflowTableGroupCells({
   });
 
   const defaultColor = isIncome ? tc('income') : tc('gray-300');
-  const groupBg = isCellFaded ? tc('canvas') : getHighlightBgColor(g, isColHovered, isRowHovered, dm);
+  const groupBg = isCellFaded ? tc('canvas') : getHighlightBgColor(g, isColHovered, isRowHovered);
   const groupTextColor = isCellFaded ? undefined : readable(g.color || defaultColor);
   const boundaryCls = isLastGroup && !isExpanded ? boundaryBorder : '';
 
@@ -48,7 +48,7 @@ export function CashflowTableGroupCells({
         const isCatExcluded = excludedCategories?.has(c.id);
         const isCatFaded = isCellFaded || isCatExcluded;
         const catBoundaryCls = cIdx === cats.length - 1 && isLastGroup ? boundaryBorder : thinBorder;
-        const catBg = isCatFaded ? tc('canvas') : getSubHighlightBgColor(g, c.color, isCatColHovered, isRowHovered, dm);
+        const catBg = isCatFaded ? tc('canvas') : getSubHighlightBgColor(g, c.color, isCatColHovered, isRowHovered);
 
         return (
           <td

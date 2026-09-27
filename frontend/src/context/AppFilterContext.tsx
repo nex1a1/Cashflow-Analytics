@@ -105,7 +105,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     topXLimit,
     dayTypes,
     dayTypeConfig,
-    isDarkMode: true,
     summaryData,
   });
 

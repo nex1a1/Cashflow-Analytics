@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '@/types';
 
 export interface DashboardAnalyticsResult {
@@ -35,27 +35,18 @@ export interface DashboardContextValue {
   dayTypeConfig: DayType[];
   dayTypes: Record<string, any>;
   showSkeleton?: boolean;
-  dm?: boolean;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export interface DashboardProviderProps {
   children: ReactNode;
-  value: Omit<DashboardContextValue, 'dm'>;
+  value: DashboardContextValue;
 }
 
 export const DashboardProvider = ({ children, value }: DashboardProviderProps) => {
-  const isDarkMode = true;
-  
-  // Memoize the context value to avoid unnecessary re-renders
-  const contextValue = useMemo(() => ({
-    ...value,
-    dm: isDarkMode // Convenience alias used throughout dashboard components
-  }), [value, isDarkMode]);
-
   return (
-    <DashboardContext.Provider value={contextValue}>
+    <DashboardContext.Provider value={value}>
       {children}
     </DashboardContext.Provider>
   );
