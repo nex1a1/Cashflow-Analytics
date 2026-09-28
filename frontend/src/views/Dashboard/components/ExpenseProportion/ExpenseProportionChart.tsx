@@ -27,7 +27,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
   // When hovering on grid, show the hovered item in the center
   const displayLabel = hoveredItem
     ? (hoveredItem.name || 'หมวดหมู่')
-    : (isAllocationMode ? 'รายได้' : 'รวม');
+    : (isAllocationMode ? 'รายรับ' : 'รวม');
 
   const displayValue = hoveredItem 
     ? formatMoney(hoveredItem.amount)

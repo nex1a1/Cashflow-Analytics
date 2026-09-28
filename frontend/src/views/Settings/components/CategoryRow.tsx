@@ -90,7 +90,7 @@ const CategoryRow = memo(({
           onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
           className={selectCls}
           title={!currentGroupValid ? 'กลุ่มนี้ไม่ตรงกับประเภทของหมวดหมู่' : undefined}
-          aria-label="กลุ่ม Cashflow ของหมวดหมู่"
+          aria-label="กลุ่มของหมวดหมู่"
         >
           <option value="" disabled>-- กลุ่ม --</option>
           {filteredGroups.map(g => (

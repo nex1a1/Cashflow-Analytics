@@ -117,15 +117,15 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: NEED_COLOR }} />
-          <span className="text-neutral-300 font-bold">จำเป็น (Needs) เป้า 50%</span>
+          <span className="text-neutral-300 font-bold">จำเป็น เป้า 50%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: WANT_COLOR }} />
-          <span className="text-neutral-300 font-bold">ต้องการ (Wants) เพดาน 30%</span>
+          <span className="text-neutral-300 font-bold">ตามใจ เพดาน 30%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: SAVINGS_COLOR }} />
-          <span className="text-neutral-300 font-bold">เงินออม (Savings) เป้า 20%</span>
+          <span className="text-neutral-300 font-bold">เงินออม เป้า 20%</span>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
               </text>
               {pct === 80 && (
                 <text x={padL + plotW} y={getY(pct) - 5} fill={tc('ink-soft')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-                  80% = จำเป็น+ต้องการ
+                  80% = จำเป็น+ตามใจ
                 </text>
               )}
             </g>
@@ -309,7 +309,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                     </text>
                     <text x="10" y="58" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={WANT_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill={tc('ink-display')} dx="4">ต้องการ ฿{formatMoney(hovered.wantAmt)}</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">ตามใจ ฿{formatMoney(hovered.wantAmt)}</tspan>
                       <tspan fill={hovered.wantPct > 30 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.wantPct.toFixed(0)}%)</tspan>
                     </text>
                     <text x="10" y="78" fontSize="11" fontFamily={FONT_MONO}>
@@ -334,7 +334,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         if (!latest || latest.total === 0) return null;
         const breaches: string[] = [];
         if (latest.needPct > 50) breaches.push('รายจ่ายจำเป็นเกินเป้า');
-        if (latest.wantPct > 30) breaches.push('รายจ่ายฟุ่มเฟือยเกินเพดาน');
+        if (latest.wantPct > 30) breaches.push('รายจ่ายตามใจเกินเพดาน');
         if (latest.savingsPct < 20) breaches.push('เงินออมต่ำกว่าเป้า');
         if (breaches.length === 0) return null;
         return (

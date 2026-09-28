@@ -112,7 +112,7 @@ export default function TransactionList({
         <div className={`h-full flex flex-col items-center justify-center ${tokens.textMuted} opacity-80`}>
           <Inbox className="w-12 h-12 mb-3 opacity-50" />
           <p className="text-sm font-bold">ยังไม่มีรายการ</p>
-          <p className="text-xs mt-1">เพิ่มข้อมูลใหม่ที่ฟอร์มด้านล่างเลยครับ!</p>
+          <p className="text-xs mt-1">เพิ่มรายการได้ที่ฟอร์มด้านล่าง!</p>
         </div>
       )}
       {income.length > 0 && (

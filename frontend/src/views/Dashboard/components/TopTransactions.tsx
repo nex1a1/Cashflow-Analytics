@@ -243,7 +243,7 @@ export default function TopTransactions() {
           <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
           <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-            TOP
+            รายจ่ายสูงสุด
           </span>
           <div className="relative group shrink-0">
             <select
@@ -306,7 +306,7 @@ export default function TopTransactions() {
                 <p className="text-sm font-bold text-neutral-400">
                   ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข
                 </p>
-                <p className="text-[11px] mt-1 text-neutral-400">ลองปรับการตั้งค่า Filter หรือเลือกช่วงเวลาอื่น</p>
+                <p className="text-[11px] mt-1 text-neutral-400">ลองปรับตัวกรองหรือเลือกช่วงเวลาอื่น</p>
               </div>
             )
           )}

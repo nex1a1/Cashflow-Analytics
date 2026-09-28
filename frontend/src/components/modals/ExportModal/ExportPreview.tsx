@@ -136,7 +136,7 @@ export default function ExportPreview({
       <div className="mt-3 flex items-start gap-2 text-[11px] text-neutral-400 shrink-0">
         <Info className="w-3.5 h-3.5 text-accent-ink shrink-0 mt-0.5" />
         <p className="leading-snug">
-          ระบบฝังรหัส <strong className="text-neutral-300">UTF-8 BOM</strong> ในไฟล์ CSV อัตโนมัติ เพื่อให้เปิดใน Microsoft Excel และ Google Sheets ได้โดยภาษาไทยไม่เพี้ยน
+          ไฟล์ CSV ใส่ <strong className="text-neutral-300">UTF-8 BOM</strong> ไว้ให้แล้ว เปิดใน Microsoft Excel และ Google Sheets ได้โดยภาษาไทยไม่เพี้ยน
         </p>
       </div>
     </div>

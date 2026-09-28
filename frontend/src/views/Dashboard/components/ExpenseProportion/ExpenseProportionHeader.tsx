@@ -150,10 +150,10 @@ function NoIncomeWarning() {
   return (
     <span
       className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-none text-[11px] font-black text-accent-ink uppercase tracking-wider"
-      title="ไม่มีรายได้บันทึกในเดือนนี้ — สัดส่วนคำนวณจากยอดรายจ่ายแทน"
+      title="เดือนนี้ไม่มีรายรับ สัดส่วนจึงคิดจากยอดรายจ่ายแทน"
     >
       <AlertTriangle className="w-3 h-3 shrink-0" />
-      <span>ไม่มีรายได้บันทึก</span>
+      <span>ไม่มีรายรับ</span>
     </span>
   );
 }
@@ -182,7 +182,7 @@ export function ExpenseProportionHeader({
         <div className="w-[3px] h-3 bg-accent shrink-0" />
         <PieChart className="w-3.5 h-3.5 text-neutral-400" />
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-          สัดส่วนรายจ่าย (Proportions)
+          สัดส่วนรายจ่าย
         </span>
 
         <ModeSwitcher

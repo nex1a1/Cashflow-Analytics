@@ -130,7 +130,7 @@ export default function FilterBar({
                 ? 'bg-accent/10 border-accent-ink text-accent-ink'
                 : 'bg-surface border-line text-slate-400 hover:text-slate-100 hover:border-line-strong'
             } ${advancedActiveCount > 0 ? '!border-amber-500/80 !text-amber-400 !bg-amber-950/20' : ''}`}
-            title="เปิด/ปิด แผงตัวกรองขั้นสูง (วันที่, กลุ่ม, หมวดหมู่, ช่วงเงิน, Allocation)"
+            title="เปิด/ปิด แผงตัวกรองขั้นสูง (วันที่, กลุ่ม, หมวดหมู่, ช่วงเงิน, การจัดสรร)"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>ตัวกรองขั้นสูง</span>
@@ -172,7 +172,7 @@ export default function FilterBar({
               {/* Amount Limits */}
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  ช่วงจำนวนเงิน (฿ Baht Range)
+                  ช่วงจำนวนเงิน
                 </span>
                 <div className="flex items-center gap-1.5">
                   <div className="relative flex-1">
@@ -202,7 +202,7 @@ export default function FilterBar({
               {/* Allocation Toggle */}
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  การจัดสรรเงิน (Allocation)
+                  การจัดสรรเงิน
                 </span>
                 <div className="flex rounded-none p-0.5 border bg-surface border-line">
                   <SegmentButton label="ทั้งหมด" active={allocationFilter === 'ALL'} onClick={() => setAllocationFilter('ALL')} />
@@ -263,7 +263,7 @@ export default function FilterBar({
 
               <div className="flex flex-col gap-1 relative z-50">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  เลือกหมวดหมู่ (2-Tier Matrix)
+                  เลือกหมวดหมู่
                 </span>
                 <CategoryMatrixFilter
                   categories={categories}

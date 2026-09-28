@@ -567,7 +567,7 @@ export const CATEGORY_ICONS: CategoryIconDef[] = [
   { key: 'video', label: 'ถ่ายวิดีโอ / โปรดักชัน', category: 'tech', keywords: 'video camera vlog อัดคลิป ถ่ายวิดีโอ ยูทูบเบอร์', Icon: Video },
   { key: 'camera', label: 'กล้องดิจิทัล / อุปกรณ์ถ่ายภาพ', category: 'tech', keywords: 'camera photo lens กล้อง เลนส์ ช่างภาพ', Icon: Camera },
   { key: 'headphones', label: 'หูฟัง / ลำโพงส่วนตัว', category: 'tech', keywords: 'headphones earphone audio หูฟัง เสียงเพลง ดนตรี', Icon: Headphones },
-  { key: 'speaker', label: 'ลำโพง / เครื่องเสียง', category: 'tech', keywords: 'speaker sound ลําโพง เครื่องเสียง บลูทูธ', Icon: Speaker },
+  { key: 'speaker', label: 'ลำโพง / เครื่องเสียง', category: 'tech', keywords: 'speaker sound ลำโพง เครื่องเสียง บลูทูธ', Icon: Speaker },
   { key: 'mic', label: 'ไมโครโฟน / ร้องเพลง / พอดแคสต์', category: 'tech', keywords: 'mic podcast record ร้องเพลง คาราโอเกะ จัดรายการ', Icon: Mic },
   { key: 'gamepad', label: 'เครื่องเกมคอนโซล / PlayStation / Switch', category: 'tech', keywords: 'console playstation switch xbox เครื่องเล่นเกม', Icon: Gamepad },
   { key: 'gamepad-2', label: 'เกม / Steam / เติมเกม', category: 'tech', keywords: 'game steam topup เติมเกม ซื้อเกม อีสปอร์ต', Icon: Gamepad2 },

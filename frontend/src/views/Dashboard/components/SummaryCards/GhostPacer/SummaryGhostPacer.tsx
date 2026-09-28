@@ -93,7 +93,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
 
         <div className="flex items-center gap-2 text-[11px] font-mono">
           <span className="text-neutral-400">
-            วันในงวด: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
+            ผ่านไปแล้ว: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
             <span className="text-neutral-500"> ({monthProgressPct}%)</span>
           </span>
           <div className="w-16 h-1.5 bg-neutral-800 overflow-hidden relative border border-neutral-700/60">
@@ -181,7 +181,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex items-center justify-between text-[11px] font-mono text-neutral-400">
             <span>จังหวะการใช้จ่าย:</span>
             <span className={`${ghost.text} font-bold text-right`}>
-              {{ LEAD: 'ควบคุมงบได้นิ่งกว่า', TIED: 'ใกล้เคียงรอบก่อน', TRAIL: 'ใช้จ่ายเร็วกว่ารอบก่อน' }[ghostTone]}
+              {{ LEAD: 'ควบคุมงบได้นิ่งกว่า', TIED: 'ใกล้เคียงเดือนก่อน', TRAIL: 'ใช้เร็วกว่าเดือนก่อน' }[ghostTone]}
             </span>
           </div>
         </div>

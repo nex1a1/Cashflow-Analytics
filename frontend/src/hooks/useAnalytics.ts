@@ -228,18 +228,18 @@ function calculateForecastingDetails({
   if (projectedSurplus < 0) {
     paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
-    paceStatus = { code: 'OVER_PACING', label: 'เร่งตัวเกินเป้า', color: tc('warn'), bg: 'bg-amber-950/30' };
+    paceStatus = { code: 'OVER_PACING', label: 'ใช้เร็วเกินแผน', color: tc('warn'), bg: 'bg-amber-950/30' };
   } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
-    paceStatus = { code: 'MODERATE', label: 'ทรงตัวใกล้เกณฑ์', color: tc('info'), bg: 'bg-blue-950/30' };
+    paceStatus = { code: 'MODERATE', label: 'ใกล้เพดาน', color: tc('info'), bg: 'bg-blue-950/30' };
   }
 
-  let eomStatus = { code: 'EXCELLENT', label: 'โซนปลอดภัยสูง', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
+  let eomStatus = { code: 'EXCELLENT', label: 'เหลือเงินมาก', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
   if (projectedSurplus < 0) {
-    eomStatus = { code: 'DEFICIT', label: 'ความเสี่ยงขาดดุล', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
+    eomStatus = { code: 'DEFICIT', label: 'เสี่ยงติดลบ', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
   } else if (projectedSurplusPct < 5) {
-    eomStatus = { code: 'TIGHT', label: 'โซนตึงตัว', color: tc('warn'), bg: 'bg-amber-950/40', border: 'border-amber-500' };
+    eomStatus = { code: 'TIGHT', label: 'เหลือน้อย', color: tc('warn'), bg: 'bg-amber-950/40', border: 'border-amber-500' };
   } else if (projectedSurplusPct < 20) {
-    eomStatus = { code: 'STABLE', label: 'โซนสมดุล', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
+    eomStatus = { code: 'STABLE', label: 'พอดีตัว', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
   const maxAllowedExpense = totals.income;

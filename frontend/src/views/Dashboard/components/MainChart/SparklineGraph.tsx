@@ -33,10 +33,10 @@ function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean })
     if (comparisonType === 'avg') {
       title = `เทียบกับค่าเฉลี่ยรวมทั้งช่วง (${baht(periodAvg)} ฿/${cycle ? 'รอบ' : 'เดือน'})`;
     } else if (priorKey) {
-      title = `เทียบกับงวดก่อนหน้า (${periodTick(priorKey, cycle)}: ${baht(priorAmount ?? 0)} ฿)`;
+      title = `เทียบกับช่วงก่อนหน้า (${periodTick(priorKey, cycle)}: ${baht(priorAmount ?? 0)} ฿)`;
     }
   } else {
-    title = comparisonType === 'mom' ? 'งวดก่อนหน้าไม่มียอดใช้จ่าย' : 'หมวดใหม่';
+    title = comparisonType === 'mom' ? 'ช่วงก่อนหน้าไม่มียอดใช้จ่าย' : 'หมวดใหม่';
   }
 
   return (
@@ -242,13 +242,13 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
           <>
             <span
               className="text-neutral-100 font-bold group-hover:text-white"
-              title={`เฉลี่ยต่องวดตลอดช่วงที่เลือก (${baht(trend.periodAvg)} ฿)`}
+              title={`เฉลี่ยต่อ${cycle ? 'รอบ' : 'เดือน'}ตลอดช่วงที่เลือก (${baht(trend.periodAvg)} ฿)`}
             >
               {baht(trend.periodAvg)} ฿<span className="text-slate-500 font-normal">/{cycle ? 'รอบ' : 'เดือน'}</span>
             </span>
             <span
               className="text-slate-500 group-hover:text-slate-400 cursor-help"
-              title={trend.latestKey ? `ยอดงวดล่าสุด (${periodTick(trend.latestKey, cycle)}): ${baht(trend.latestAmount)} ฿` : undefined}
+              title={trend.latestKey ? `ยอด${cycle ? 'รอบ' : 'เดือน'}ล่าสุด (${periodTick(trend.latestKey, cycle)}): ${baht(trend.latestAmount)} ฿` : undefined}
             >
               ล่าสุด {baht(trend.latestAmount)}
             </span>

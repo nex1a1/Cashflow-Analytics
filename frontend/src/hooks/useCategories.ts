@@ -126,7 +126,7 @@ export default function useCategories(
       if (!catToDelete) return;
 
       if (transactions.some(t => t.category_id === id || t.category === catToDelete.name)) {
-        showToast('ไม่สามารถลบได้: มีรายการบัญชีที่กำลังใช้งานหมวดหมู่นี้อยู่ กรุณาลบรายการเหล่านั้นก่อน', 'error');
+        showToast('ลบไม่ได้: ยังมีรายการที่ใช้หมวดหมู่นี้อยู่ ลบหรือเปลี่ยนหมวดของรายการเหล่านั้นก่อน', 'error');
         return;
       }
 

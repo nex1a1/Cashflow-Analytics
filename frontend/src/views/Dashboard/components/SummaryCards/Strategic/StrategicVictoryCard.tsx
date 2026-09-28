@@ -37,7 +37,7 @@ export const StrategicVictoryCard = memo(({
         <div className="flex items-center gap-2">
           <Award size={15} className={isPositive ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
           <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-400">
-            เงินเหลือรายวัน — สรุปผล
+            เงินเหลือเฉลี่ยต่อวัน
           </span>
         </div>
 
@@ -53,7 +53,7 @@ export const StrategicVictoryCard = memo(({
 
         {!showSkeleton && (
           <div className="text-[11px] font-mono text-neutral-400 leading-none">
-            {isPositive ? 'กำไรสะสมสุทธิ/วัน' : 'ขาดทุนสะสมสุทธิ/วัน'} · เฉลี่ย {periodDays} วันในงวด
+            {isPositive ? 'เหลือสุทธิ/วัน' : 'ติดลบสุทธิ/วัน'} · เฉลี่ยจาก {periodDays} วัน
           </div>
         )}
       </div>

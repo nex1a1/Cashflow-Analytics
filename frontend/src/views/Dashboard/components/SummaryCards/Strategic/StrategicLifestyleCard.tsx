@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Zap } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, renderTopItemsOverlay } from '../helpers';
+import { Shimmer, renderTopItemsOverlay, BUDGET_RULES } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { WantCategory, BreakdownEntry } from '../types';
 
@@ -13,7 +13,7 @@ interface LifestyleCardProps {
 }
 
 export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCategories, showSkeleton }: LifestyleCardProps) => {
-  const isOver = lifestyleRatio > 35;
+  const isOver = lifestyleRatio > BUDGET_RULES.lifestyle.max;
   const categories = (topWantCategories ?? []).slice(0, 4);
   const categoryEntries: BreakdownEntry[] = categories.map(cat => ({
     key: cat.id,
@@ -28,19 +28,19 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
     <StrategicCardShell
       icon={Zap}
       borderColorClass={isOver ? 'border-l-danger' : 'border-l-amber-500'}
-      label="ดัชนีฟุ่มเฟือย"
+      label="รายจ่ายตามใจ"
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
-          <span className="text-white font-bold">&lt; 30% ของรายรับ</span>
+          <span className="text-white font-bold">&lt; {BUDGET_RULES.lifestyle.max}% ของรายรับ</span>
         </div>
       )}
       showOverlay={!showSkeleton}
-      overlayTitle="หมวดฟุ่มเฟือย Top 4"
-      overlayBadge={<span className="text-amber-400 font-extrabold text-[11px] border border-amber-500/30 bg-amber-950/40 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">Top 4</span>}
+      overlayTitle="4 หมวดตามใจที่จ่ายมากสุด"
+      overlayBadge={<span className="text-amber-400 font-extrabold text-[11px] border border-amber-500/30 bg-amber-950/40 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 อันดับแรก</span>}
       overlayBody={(
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
-          {renderTopItemsOverlay(categoryEntries, 'ไม่มีข้อมูลฟุ่มเฟือย', Zap, 'text-amber-400', 'รวมฟุ่มเฟือยทั้งหมด', variableTotal)}
+          {renderTopItemsOverlay(categoryEntries, 'ไม่มีรายจ่ายตามใจ', Zap, 'text-amber-400', 'รวมรายจ่ายตามใจ', variableTotal)}
         </div>
       )}
     >

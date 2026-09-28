@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { UtensilsCrossed, TrendingDown, Briefcase, Trophy } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, getFoodIncomeStatus } from '../helpers';
+import { Shimmer, getFoodStatus, BUDGET_RULES } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
 interface FoodCardProps {
@@ -27,10 +27,10 @@ export const StrategicFoodCard = memo(({
 }: FoodCardProps) => {
   const pctOfExpense = Number.parseFloat(String(foodPercentage)) || 0;
   const pctOfIncome  = Number.parseFloat(String(foodPctOfIncome)) || 0;
-  const foodStatus   = getFoodIncomeStatus(pctOfIncome);
-  const isOver       = pctOfExpense > 25;
+  const foodStatus   = getFoodStatus(pctOfExpense);
+  const isOver       = pctOfExpense > BUDGET_RULES.food.max;
 
-  const barWidth = Math.min(100, (pctOfExpense / 25) * 100);
+  const barWidth = Math.min(100, (pctOfExpense / BUDGET_RULES.food.max) * 100);
 
   return (
     <StrategicCardShell
@@ -41,7 +41,7 @@ export const StrategicFoodCard = memo(({
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์สัดส่วน</span>
-          <span className="text-white font-bold">&lt; 25% ของรายจ่าย</span>
+          <span className="text-white font-bold">&lt; {BUDGET_RULES.food.max}% ของรายจ่าย</span>
         </div>
       )}
       showOverlay={!showSkeleton}
@@ -55,7 +55,7 @@ export const StrategicFoodCard = memo(({
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {foodTotal === 0 ? (
             <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
-              ไม่มีข้อมูลค่าอาหารในงวดนี้
+              ไม่มีข้อมูลค่าอาหารในช่วงนี้
             </div>
           ) : (
           <>

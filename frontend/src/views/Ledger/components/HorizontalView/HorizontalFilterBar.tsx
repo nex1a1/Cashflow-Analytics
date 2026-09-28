@@ -182,7 +182,7 @@ export default function HorizontalFilterBar({
           <div className="w-1.5 h-3.5 bg-accent rounded-none shrink-0" />
           <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
             <SlidersHorizontal className="w-3.5 h-3.5 text-accent-ink" />
-            <span>ตัวกรองตารางวิเคราะห์ความถี่</span>
+            <span>ตัวกรองตารางรายวัน</span>
           </div>
         </div>
 
@@ -303,7 +303,7 @@ export default function HorizontalFilterBar({
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-ink-muted" />
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
-              ตัวกรองประเภทวัน (Day Type)
+              ตัวกรองประเภทวัน
             </span>
           </div>
 
@@ -348,7 +348,7 @@ export default function HorizontalFilterBar({
 
           <div className="flex flex-col gap-1 relative z-50">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
-              เลือกหมวดหมู่คอลัมน์ (2-Tier Matrix)
+              เลือกหมวดหมู่ที่แสดงเป็นคอลัมน์
             </span>
             <CategoryMatrixFilter
               categories={categories}

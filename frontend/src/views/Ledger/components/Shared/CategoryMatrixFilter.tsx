@@ -472,7 +472,7 @@ export default function CategoryMatrixFilter({
             ? 'border-accent-ink text-white bg-surface' 
             : 'border-line text-ink-body hover:border-accent/40 hover:bg-surface-elevated/20'
         }`}
-        title="คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย (2-Tier Matrix)"
+        title="คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย"
       >
         <div className={`pl-2 pr-1.5 py-1 border-r flex items-center justify-center shrink-0 ${
           isActive ? 'border-accent/30 text-accent-ink' : 'border-line text-ink-muted'
@@ -611,7 +611,7 @@ export default function CategoryMatrixFilter({
               {/* Tier 1: Cashflow Groups Chips */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
-                  <span>ชั้นที่ 1: กลุ่มกระแสเงินสด (คลิกเพื่อเลือก/ปลดยกกลุ่ม)</span>
+                  <span>ชั้นที่ 1: กลุ่ม (คลิกเพื่อเลือกหรือเอาออกทั้งกลุ่ม)</span>
                   <span className="text-slate-500 font-normal">
                     {activeGroupCount} / {groupedCategories.length} กลุ่ม
                   </span>

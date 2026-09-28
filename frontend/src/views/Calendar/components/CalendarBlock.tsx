@@ -198,7 +198,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           );
         })}
         {maxDailyExpense > 0 && (
-          <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับความเข้มข้นของการใช้จ่าย">
+          <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับการใช้จ่าย">
             <span>ใช้จ่าย:</span>
             <div className="flex items-center gap-1 font-mono">
               <span className="flex items-center px-1.5 py-0.5 rounded-none border border-line bg-surface-elevated text-ink-muted text-[11px]">

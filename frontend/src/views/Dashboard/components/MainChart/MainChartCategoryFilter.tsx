@@ -93,7 +93,7 @@ export const MainChartCategorySelector = memo(({
             isVariableActive ? 'bg-surface-elevated text-accent-ink' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
           }`}
         >
-          <Shuffle className="w-3.5 h-3.5" /> เฉพาะผันแปร
+          <Shuffle className="w-3.5 h-3.5" /> เฉพาะตามใจ
         </button>
       </div>
 
@@ -239,11 +239,11 @@ export const MainChartFilterMenu = memo(({
           <div className="p-3.5 flex flex-col gap-3">
             {/* Y-axis scale */}
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">สเกลแกน Y (Logarithmic)</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">แกน Y แบบลอการิทึม</span>
               <button
                 disabled={showSkeleton}
                 onClick={() => setIsLogScale(prev => !prev)}
-                title="ปรับสเกลแกน Y แบบ Logarithmic เพื่อเปรียบเทียบหมวดหมู่อย่างชัดเจน"
+                title="ใช้สเกลลอการิทึม หมวดยอดน้อยจะไม่จมหายเมื่ออยู่คู่หมวดยอดสูง"
                 className={`flex items-center gap-2 px-2.5 py-1 rounded-none text-[11px] font-bold disabled:opacity-40 ${
                   isLogScale ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
                 }`}

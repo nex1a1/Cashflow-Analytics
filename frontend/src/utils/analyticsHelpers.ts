@@ -290,7 +290,7 @@ interface MainChartDataParams {
 function getAllDatasetStyle(hideFixedExpenses: boolean, hideWantExpenses: boolean) {
   if (hideFixedExpenses) {
     return {
-      label: 'รายจ่ายไลฟ์สไตล์ (บาท)',
+      label: 'รายจ่ายตามใจ (บาท)',
       borderColor: tc('expense'),
       backgroundColor: tc('expense', 0.1),
     };
@@ -467,7 +467,7 @@ const buildDailyComboChartData = (
   let barBg = tc('accent');
   let barBorder = tc('accent');
   if (hideFixedExpenses) {
-    barLabel = 'รายจ่ายไลฟ์สไตล์';
+    barLabel = 'รายจ่ายตามใจ';
     barBg = tc('warn');
     barBorder = tc('warn');
   } else if (hideWantExpenses) {

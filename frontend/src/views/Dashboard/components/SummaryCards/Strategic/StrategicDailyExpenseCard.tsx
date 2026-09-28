@@ -30,7 +30,7 @@ export const StrategicDailyExpenseCard = memo(({
     label="รายจ่ายเฉลี่ย/วัน"
     thresholdRow={!showSkeleton && (
       <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-        <span>ยอดจ่ายรวมงวด</span>
+        <span>ยอดจ่ายรวมทั้งช่วง</span>
         <span className="text-white font-bold tabular-nums">฿{formatMoney(totalExpense)}</span>
       </div>
     )}

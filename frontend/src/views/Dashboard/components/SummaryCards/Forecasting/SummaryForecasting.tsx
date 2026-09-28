@@ -72,7 +72,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
 
         <div className="flex items-center gap-2 text-[11px] font-mono">
           <span className="text-neutral-400">
-            วันในงวด: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
+            ผ่านไปแล้ว: <span className="text-white font-bold">{currentDay}/{lastDayOfMonth}</span>
             <span className="text-neutral-500"> ({monthProgressPct.toFixed(0)}%)</span>
           </span>
           <div className="w-20 h-1.5 bg-neutral-800 overflow-hidden relative border border-neutral-700/60">
@@ -211,7 +211,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 <ShieldCheck size={12} className={headroom >= 0 ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
-                ส่วนต่างปลอดภัย (Headroom):
+                เหลือก่อนชนเพดาน:
               </span>
               {headroom >= 0 ? (
                 <span className="text-emerald-400 font-black tabular-nums">+฿{formatMoney(headroom)}/วัน</span>
@@ -257,9 +257,9 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 />
               </div>
               <div className="flex justify-between text-[11px] font-mono text-neutral-400">
-                <span>กันชนเงินสด: {projectedSurplusPct}% ของรายรับ</span>
+                <span>เงินเหลือ: {projectedSurplusPct}% ของรายรับ</span>
                 <span className={projectedSurplus >= 0 ? 'text-emerald-400' : 'text-danger'}>
-                  {projectedSurplus >= 0 ? 'ความปลอดภัยสูง' : 'เฝ้าระวัง'}
+                  {projectedSurplus >= 0 ? 'ปลอดภัย' : 'เฝ้าระวัง'}
                 </span>
               </div>
             </div>
@@ -273,12 +273,12 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 ) : (
                   <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
                 )}
-                สถานะวินัยงบประมาณ:
+                สถานะงบ:
               </span>
               {requiredReduction > 0 ? (
-                <span className="text-danger font-bold">ต้องคุมลด ฿{formatMoney(requiredReduction)}</span>
+                <span className="text-danger font-bold">ต้องลดอีก ฿{formatMoney(requiredReduction)}</span>
               ) : (
-                <span className="text-emerald-400 font-bold">คุมงบได้ตามเป้าหมาย (No Deficit)</span>
+                <span className="text-emerald-400 font-bold">คุมงบได้ตามเป้า</span>
               )}
             </div>
           </div>

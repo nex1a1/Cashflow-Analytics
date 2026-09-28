@@ -20,7 +20,7 @@ export default function ExportHeader({ onClose, isExporting }: ExportHeaderProps
             </span>
           </div>
           <p className="text-xs text-neutral-400 mt-1">
-            เลือกรูปแบบเอกสาร ขอบเขตช่วงเวลา และดาวน์โหลดไฟล์นำไปใช้งานต่อใน Excel หรือ Google Sheets
+            เลือกรูปแบบและช่วงเวลา แล้วดาวน์โหลดไปเปิดใน Excel หรือ Google Sheets
           </p>
         </div>
       </div>

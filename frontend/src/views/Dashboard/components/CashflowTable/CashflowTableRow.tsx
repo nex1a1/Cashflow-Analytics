@@ -59,7 +59,7 @@ export const CashflowTableRow = React.memo(({
       onMouseEnter={() => setHoveredRow(row.monthStr)}
       onMouseLeave={() => setHoveredRow(null)}
       className={`group hover:bg-surface-elevated/10 transition-colors ${isPartial ? 'opacity-40' : ''}`}
-      title={isPartial ? 'รอบไม่เต็ม — ไม่นำไปรวมในยอดรวมและ MoM' : undefined}
+      title={isPartial ? 'รอบไม่เต็ม — ไม่นำไปรวมในยอดรวมและการเทียบช่วงก่อนหน้า' : undefined}
     >
       {/* Fix #9: เพิ่ม EyeOff icon บอก state ที่ถูก exclude + cursor hint */}
       <td

@@ -23,7 +23,7 @@ const OrphanWarningBanner = memo(({ categories, cashflowGroups }: OrphanWarningB
     <div className="flex items-start gap-2.5 px-4 py-3 border mb-4 rounded-sm bg-amber-950/10 border-amber-500/20 text-amber-400">
       <AlertTriangle className="w-4.5 h-4.5 shrink-0 mt-0.5 text-amber-400" />
       <div className="text-xs leading-relaxed font-semibold">
-        <strong>พบหมวดหมู่ที่กลุ่ม Cashflow ถูกลบไปแล้ว</strong> (<span className="font-mono font-black tabular-nums">{orphans.length}</span> รายการ):{' '}
+        <strong>มีหมวดหมู่ที่กลุ่มถูกลบไปแล้ว</strong> (<span className="font-mono font-black tabular-nums">{orphans.length}</span> รายการ):{' '}
         {orphans.map((c, idx) => (
           <span key={c.id} className="inline-flex items-center gap-1.5">
             <CategoryGlyph icon={c.icon} color={c.color} size={15} />

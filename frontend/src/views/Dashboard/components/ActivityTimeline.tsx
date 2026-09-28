@@ -156,10 +156,10 @@ const TimelineHeatmapLegend: React.FC<TimelineHeatmapLegendProps> = ({ globalMax
         <Info className="w-3.5 h-3.5 text-slate-400" />
         <div className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible">
           <div className="text-left rounded-none py-2 px-3 text-[11px] font-medium shadow-2xl w-[260px] leading-relaxed bg-surface text-white border border-line-strong">
-            <p className="font-bold mb-1 text-orange-400">ระดับสีคำนวณแบบมาตรฐาน (Global Max)</p>
+            <p className="font-bold mb-1 text-orange-400">สีเทียบกับวันที่จ่ายมากที่สุด</p>
             <p className="text-slate-300">
-              ระดับสีอ้างอิงจากเพดานการจ่ายเงินสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿) 
-              เพื่อให้สเกลความร้อนคงที่เมื่อเปรียบเทียบข้ามช่วงเวลา
+              สีเข้มสุดคือยอดจ่ายต่อวันสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿) 
+              สีจึงเทียบกันได้ทุกช่วงเวลา
             </p>
           </div>
           <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-surface md:ml-2 mr-2 md:mr-0" />
@@ -511,7 +511,7 @@ export default function ActivityTimeline() {
     if (datesInPeriod.length === 0) {
       return (
         <div className="text-center text-slate-400 py-10 text-sm italic">
-          ไม่มีข้อมูลการทำกิจกรรมในวันที่เลือก
+          ไม่มีรายการในวันที่เลือก
         </div>
       );
     }
@@ -676,7 +676,7 @@ export default function ActivityTimeline() {
           <div className="w-[3px] h-3 bg-accent shrink-0" />
           <CalendarClock className="w-3.5 h-3.5 text-neutral-400" />
           <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-            ไทม์ไลน์กิจกรรม
+            ปฏิทินการใช้จ่าย
           </span>
           <div className="ml-2">
             <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} />

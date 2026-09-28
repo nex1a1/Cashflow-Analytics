@@ -35,7 +35,7 @@ const CashflowGroupsCard = memo(({
     <SectionCard
       accentColor="purple"
       icon={GROUPS_ICON}
-      title="คอลัมน์ Cashflow"
+      title="กลุ่มรายรับ-รายจ่าย"
       badge={cashflowGroups.length}
       action={addAction}
     >
@@ -73,10 +73,10 @@ const CashflowGroupsCard = memo(({
                     'bg-canvas border-line text-ink-display'
                   } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-accent-ink focus:shadow-none'}`}
                   title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}
-                  aria-label="ประเภทคอลัมน์">
-                  <option value="income">รายรับ (IN)</option>
-                  <option value="expense">รายจ่าย (EXP)</option>
-                  <option value="savings">ออม/ลงทุน (SAV)</option>
+                  aria-label="ประเภทกลุ่ม">
+                  <option value="income">รายรับ</option>
+                  <option value="expense">รายจ่าย</option>
+                  <option value="savings">ออม/ลงทุน</option>
                 </select>
 
                 {group.type === 'expense' ? (
@@ -97,7 +97,7 @@ const CashflowGroupsCard = memo(({
                   className={`flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm ${
                     'bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted'
                   }`}
-                  placeholder="ชื่อคอลัมน์"
+                  placeholder="ชื่อกลุ่ม"
                 />
 
                 <div className="flex items-center justify-end min-w-[32px] shrink-0">
@@ -112,7 +112,7 @@ const CashflowGroupsCard = memo(({
 
                 <div className="flex items-center justify-center w-[28px] shrink-0">
                   {group.isDefault ? (
-                    <span title="กลุ่ม Default ลบไม่ได้">
+                    <span title="กลุ่มเริ่มต้นลบไม่ได้">
                       <Lock className="w-4 h-4 text-ink-muted" />
                     </span>
                   ) : (
@@ -137,7 +137,7 @@ const CashflowGroupsCard = memo(({
           );
         })}
         {cashflowGroups.length === 0 && (
-          <p className={`text-center py-4 text-xs ${'text-ink-muted'}`}>ยังไม่มีคอลัมน์</p>
+          <p className={`text-center py-4 text-xs ${'text-ink-muted'}`}>ยังไม่มีกลุ่ม</p>
         )}
       </div>
     </SectionCard>

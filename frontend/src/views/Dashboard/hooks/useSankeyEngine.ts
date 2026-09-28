@@ -134,7 +134,7 @@ function buildAllocationSankeyFlows({
   if (totalAllocSav === 0 && totalSav > 0) totalAllocSav = totalSav;
 
   const labelNeed = `Need - จำเป็น (${formatMoney(totalNeed)})`;
-  const labelWant = `Want - อยากได้ (${formatMoney(totalWant)})`;
+  const labelWant = `Want - ตามใจ (${formatMoney(totalWant)})`;
   const labelSav = `Savings - เงินออม (${formatMoney(totalAllocSav)})`;
 
   if (totalNeed > 0) {

@@ -7,10 +7,11 @@ import { StrategicDailyExpenseCard } from './StrategicDailyExpenseCard';
 import { StrategicVictoryCard } from './StrategicVictoryCard';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
 import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
+import { gradeBudget } from '../helpers';
 import type { SummaryAnalytics } from '../types';
 
 export const ANALYSIS_TABS = [
-  { id: 'strategic', label: 'ภาพรวมกลยุทธ์' },
+  { id: 'strategic', label: 'ภาพรวมการใช้จ่าย' },
   { id: 'forecast', label: 'พยากรณ์สิ้นเดือน' },
   { id: 'ghost', label: 'เทียบเดือนที่แล้ว' },
 ] as const;
@@ -85,7 +86,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const [activeTab, setActiveTab] = useState<AnalysisTabId>('strategic');
 
   const {
-    totalIncome, totalSavings, netCashflow, showForecasting,
+    totalIncome, totalSavings, netCashflow, savingsRate, showForecasting,
     dailyAvg, foodPercentage, foodTotal, foodDailyAvg, foodPctOfIncome,
     foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
     variableTotal, fixedTotal, topWantCategories,
@@ -105,22 +106,16 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const rentPercentageNum = Number.parseFloat(String(rentPercentage)) || 0;
   const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
 
-  // One grade instead of six per-card pills: count the cards that break their own threshold
-  // (same limits the cards colour themselves by). Deficit weighs double — it's the bottom line.
-  const subPct = Number.parseFloat(String(totalIncome > 0 ? subscriptionPctOfIncome : subscriptionPercentage)) || 0;
-  const breaches = [
-    rentPercentageNum > 30 && 'ที่พัก',
-    subPct > (totalIncome > 0 ? 10 : 15) && 'สมาชิกรายเดือน',
-    lifestyleRatio > 35 && 'ฟุ่มเฟือย',
-    (Number.parseFloat(String(foodPercentage)) || 0) > 25 && 'ค่าอาหาร',
-    netCashflow < 0 && 'ขาดดุล',
-  ].filter(Boolean) as string[];
-  const score = breaches.length + (netCashflow < 0 ? 1 : 0);
-  const grade =
-    score === 0 ? { g: 'A', label: 'ดีเยี่ยม', cls: 'text-income border-income/30 bg-income/10' } :
-    score === 1 ? { g: 'B', label: 'ดี',      cls: 'text-income border-income/30 bg-income/10' } :
-    score === 2 ? { g: 'C', label: 'พอใช้',   cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' } :
-                  { g: 'D', label: 'ต้องปรับ', cls: 'text-danger border-danger/40 bg-danger/10' };
+  // The dashboard's only grade — thresholds come from BUDGET_RULES, the same ones the cards colour by.
+  const { breaches, grade } = gradeBudget({
+    rentPct: rentPercentageNum,
+    subscriptionPct: Number.parseFloat(String(totalIncome > 0 ? subscriptionPctOfIncome : subscriptionPercentage)) || 0,
+    hasIncome: totalIncome > 0,
+    lifestylePct: lifestyleRatio,
+    foodPctOfExpense: Number.parseFloat(String(foodPercentage)) || 0,
+    surplusPct: savingsRate,
+    netCashflow,
+  });
   const gradePill = !showSkeleton && (
     <span className="flex items-center gap-2 pr-2 text-[11px] text-ink-muted">
       {breaches.length > 0 && <span className="hidden md:inline">เกินเกณฑ์: {breaches.join(' · ')}</span>}
@@ -137,7 +132,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   const tabItems: AnalysisTabItem[] = [
     {
       id: 'strategic',
-      label: 'ภาพรวมกลยุทธ์',
+      label: 'ภาพรวมการใช้จ่าย',
       disabled: false,
     },
     {
@@ -150,7 +145,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
       id: 'ghost',
       label: 'เทียบเดือนที่แล้ว',
       disabled: !isSingleMonthView,
-      title: !isSingleMonthView ? 'ต้องเลือกมุมมองรายเดือนเท่านั้น (เพื่อแข่งกับเดือนก่อนหน้าแบบวันต่อวัน)' : undefined,
+      title: !isSingleMonthView ? 'ต้องเลือกมุมมองรายเดือนเท่านั้น (เพื่อเทียบกับเดือนก่อนแบบวันต่อวัน)' : undefined,
     },
   ];
   const isTabAvailable = tabItems.some(t => t.id === activeTab && !t.disabled);

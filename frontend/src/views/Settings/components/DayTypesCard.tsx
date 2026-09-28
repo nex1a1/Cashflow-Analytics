@@ -31,7 +31,7 @@ const DayTypesCard = memo(({
     <SectionCard
       accentColor="orange"
       icon={DAY_TYPES_ICON}
-      title="ชนิดวันบนปฏิทิน"
+      title="ประเภทวันบนปฏิทิน"
       badge={dayTypeConfig.length}
       action={addAction}
     >
@@ -63,11 +63,11 @@ const DayTypesCard = memo(({
               </div>
 
               <DebouncedInput
-                requiredMessage="ต้องมีชื่อชนิดวัน"
+                requiredMessage="ต้องมีชื่อประเภทวัน"
                 value={dt.label}
                 onDebouncedChange={val => handleDayTypeConfigChange(dt.id, 'label', val)}
                 className="flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted"
-                placeholder="ชื่อชนิดวัน"
+                placeholder="ชื่อประเภทวัน"
               />
 
               <ColorPicker color={dt.color || '#64748B'} onChange={c => handleDayTypeConfigChange(dt.id, 'color', c)} />

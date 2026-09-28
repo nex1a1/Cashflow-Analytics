@@ -32,7 +32,7 @@ export default function ExportBackupView({
 
   const cards = [
     {
-      title: 'ประวัติธุรกรรม',
+      title: 'ประวัติรายการ',
       subtitle: 'ตารางรายการทั้งหมด',
       count: localTransactions.length,
       unit: 'รายการ',
@@ -48,7 +48,7 @@ export default function ExportBackupView({
       accent: 'border-emerald-500/30 text-emerald-400',
     },
     {
-      title: 'กลุ่มกระแสเงินสด',
+      title: 'กลุ่มรายรับ-รายจ่าย',
       subtitle: 'GROUP CLASSIFICATIONS',
       count: cashflowGroups.length,
       unit: 'กลุ่ม',
@@ -70,10 +70,10 @@ export default function ExportBackupView({
       <div>
         <h4 className="text-xs font-black uppercase tracking-widest text-neutral-200 flex items-center gap-2">
           <FileJson className="w-4 h-4 text-accent-ink" />
-          โครงสร้างชุดข้อมูลสำรองระบบ (System Backup Schema)
+          โครงสร้างไฟล์สำรองข้อมูล
         </h4>
         <p className="text-[11px] text-neutral-400 mt-1 leading-normal">
-          ไฟล์ JSON นี้จะรวบรวมข้อมูลสถานะระบบทั้งหมดไว้อย่างครบถ้วน 100% สำหรับการกู้คืน (Restore) หรือย้ายฐานข้อมูล
+          ไฟล์ JSON นี้เก็บข้อมูลทั้งหมดในระบบ ใช้กู้คืนหรือย้ายไปเครื่องอื่นได้
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export default function ExportBackupView({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">
-            ตัวอย่างโครงสร้าง JSON (JSON Payload Preview)
+            ตัวอย่างโครงสร้าง JSON
           </span>
           <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Schema V2.0 Validated

@@ -92,7 +92,7 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
     return (
       <div className="bg-surface rounded-none border border-line p-4 text-center select-none">
         <p className="text-xs font-bold text-ink-muted font-mono tracking-wider uppercase">
-          ไม่มีรายการธุรกรรมในเดือนนี้ (NO TRANSACTIONS IN THIS MONTH)
+          เดือนนี้ยังไม่มีรายการ
         </p>
       </div>
     );
@@ -146,7 +146,7 @@ function CategoryLegendSection({
     <div className="flex-grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-ink-soft tracking-wider uppercase flex items-center gap-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent" /> หมวดหมู่ธุรกรรม (Categories)
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" /> หมวดหมู่
         </span>
         
         {/* Layout Switcher */}
@@ -317,7 +317,7 @@ function AllocationOverviewSection({
   return (
     <div className="w-full lg:w-[320px] shrink-0 pl-0 lg:pl-5 border-t lg:border-t-0 lg:border-l border-line/50 flex flex-col gap-2.5 pt-1 justify-start relative overflow-hidden select-none">
       <span className="text-[11px] font-black text-ink-muted tracking-wider uppercase flex items-center gap-1.5 z-10">
-        สัดส่วนการใช้จ่าย (Allocation)
+        สัดส่วนการใช้จ่าย
       </span>
 
       <div className="flex flex-col gap-1.5 text-[11px] font-bold text-ink-soft z-10">

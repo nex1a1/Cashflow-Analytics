@@ -111,7 +111,7 @@ export default function ExportSidebar({
             icon={ClipboardList}
             title="รายงานแยกรายการ"
             subtitle="Long Ledger CSV"
-            description="เรียงตามวัน เหมาะสำหรับตรวจรายการ ย้อนหลัง และ Import ซ้ำ"
+            description="เรียงตามวัน เหมาะสำหรับตรวจรายการ ย้อนหลัง และนำเข้าซ้ำ"
             badge="แนะนำ"
           />
 
@@ -122,7 +122,7 @@ export default function ExportSidebar({
             icon={FileSpreadsheet}
             title="สเปรดชีตวิเคราะห์"
             subtitle="Wide Matrix CSV"
-            description="ตารางเปรียบเทียบหมวดหมู่รายวัน สำหรับรัน Pivot Excel"
+            description="ตารางหมวดหมู่รายวัน สำหรับทำ Pivot ใน Excel"
           />
 
           <ExportFormatCard
@@ -130,9 +130,9 @@ export default function ExportSidebar({
             activeFormat={exportFormat}
             onClick={setExportFormat}
             icon={Layers}
-            title="รายงานข้อมูลละเอียดครบ"
+            title="รายงานละเอียด"
             subtitle="Full Detail Extended CSV"
-            description="มีครบทุกฟิลด์การเงิน รหัส กลุ่ม และประเภทการจัดสรร"
+            description="มีทุกคอลัมน์ รวมถึงรหัสรายการ กลุ่ม และประเภทการจัดสรร"
           />
 
           <ExportFormatCard
@@ -140,9 +140,9 @@ export default function ExportSidebar({
             activeFormat={exportFormat}
             onClick={setExportFormat}
             icon={Database}
-            title="สำเนาฐานข้อมูลระบบ"
+            title="สำรองข้อมูลทั้งระบบ"
             subtitle="Full Database JSON Backup"
-            description="สำเนา JSON สำหรับแบ็กอัปประวัติ หมวดหมู่ และปฏิทิน 100%"
+            description="ไฟล์ JSON สำรองรายการ หมวดหมู่ และปฏิทินทั้งหมด"
             badge="JSON"
           />
         </div>
@@ -158,7 +158,7 @@ export default function ExportSidebar({
           {/* Delimiter */}
           <div className="space-y-1.5">
             <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-              เครื่องหมายคั่น (CSV Delimiter)
+              เครื่องหมายคั่น
             </span>
             <div className="grid grid-cols-2 gap-1 bg-canvas p-1 border border-line-strong">
               <button
@@ -189,7 +189,7 @@ export default function ExportSidebar({
           {/* Header Language */}
           <div className="space-y-1.5">
             <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-              ภาษาของหัวตาราง (Header Language)
+              ภาษาของหัวตาราง
             </span>
             <div className="grid grid-cols-2 gap-1 bg-canvas p-1 border border-line-strong">
               <button
@@ -201,7 +201,7 @@ export default function ExportSidebar({
                     : 'text-neutral-400 hover:text-white hover:bg-surface-elevated'
                 }`}
               >
-                ภาษาไทย (TH)
+                ภาษาไทย
               </button>
               <button
                 type="button"
@@ -220,7 +220,7 @@ export default function ExportSidebar({
           {/* Type Filter */}
           <div className="space-y-1.5">
             <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-              ประเภทรายการ (Transaction Type)
+              ประเภทรายการ
             </span>
             <div className="grid grid-cols-2 gap-1">
               {(

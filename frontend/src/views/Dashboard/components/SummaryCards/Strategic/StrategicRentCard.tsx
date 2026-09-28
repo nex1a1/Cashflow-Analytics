@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Home, Building2, Zap, Globe, Droplets } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer } from '../helpers';
+import { Shimmer, BUDGET_RULES } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { RentSub } from '../types';
 
@@ -13,7 +13,7 @@ interface RentCardProps {
 }
 
 export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }: RentCardProps) => {
-  const isOver = rentPercentageNum > 30;
+  const isOver = rentPercentageNum > BUDGET_RULES.rent.max;
   let rentBarBg = 'bg-sky-400';
   if (showSkeleton)   rentBarBg = 'bg-slate-700 animate-pulse';
   else if (isOver)    rentBarBg = 'bg-danger';
@@ -27,7 +27,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
-          <span className="text-white font-bold">&lt; 30% ของรายรับ</span>
+          <span className="text-white font-bold">&lt; {BUDGET_RULES.rent.max}% ของรายรับ</span>
         </div>
       )}
       showOverlay={!showSkeleton}
@@ -37,7 +37,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {rentSub.rent === 0 && rentSub.electricity === 0 && rentSub.internet === 0 && rentSub.water === 0 ? (
             <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
-              ไม่มีข้อมูลที่พักอาศัยในงวดนี้
+              ไม่มีข้อมูลที่พักอาศัยในช่วงนี้
             </div>
           ) : (
           <>

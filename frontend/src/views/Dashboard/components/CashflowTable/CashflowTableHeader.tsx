@@ -79,7 +79,7 @@ export const CashflowTableHeader = React.memo(({
             hoveredCol === 'trend' ? 'bg-surface-elevated text-accent-ink' : 'text-accent-ink bg-surface'
           }`}
         >
-          รวมรายจ่าย (Trend)
+          รวมรายจ่าย
         </th>
         <th
           rowSpan={2}

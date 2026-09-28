@@ -18,7 +18,7 @@ interface ChartOptionsProps {
 function formatAllocLine(label: string, amount: number, total: number, isCurrentFlow?: boolean): string {
   if (amount <= 0) return '';
   const pct = total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0';
-  const marker = isCurrentFlow ? ' ◄ (สายธารนี้)' : '';
+  const marker = isCurrentFlow ? ' ◄ (เส้นทางนี้)' : '';
   return `  ${label}: ฿${formatMoney(amount)} (${pct}%)${marker}`;
 }
 

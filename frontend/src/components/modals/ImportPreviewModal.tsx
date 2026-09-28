@@ -59,7 +59,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         <div className="px-5 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
           <div>
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
-              📋 ตรวจสอบก่อน Import <span className="text-ink-muted font-normal">/ Data Import Preview</span>
+              📋 ตรวจสอบก่อนนำเข้า <span className="text-ink-muted font-normal">/ Data Import Preview</span>
             </h3>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-slate-300">
@@ -70,7 +70,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                   จะสร้างหมวดหมู่ใหม่
                 </span>
               )}
-              <span className="text-[11px] text-slate-500 font-mono">แก้ไขได้ก่อน import</span>
+              <span className="text-[11px] text-slate-500 font-mono">แก้ไขได้ก่อนนำเข้า</span>
             </div>
           </div>
           <button onClick={() => setImportPreview(null)} className="p-1.5 text-slate-400 hover:text-white transition-colors">
@@ -180,7 +180,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
               className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-on-accent bg-accent hover:bg-accent-active border border-accent-ink transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
             >
               {isProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse" /> : <CheckCircle className="w-3.5 h-3.5" />}
-              {isProcessing ? 'กำลัง Import...' : `Import ${allItems.length} รายการ`}
+              {isProcessing ? 'กำลังนำเข้า...' : `Import ${allItems.length} รายการ`}
             </button>
           </div>
         </div>

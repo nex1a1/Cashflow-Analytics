@@ -346,7 +346,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
           className="flex items-center gap-1 text-[11px] font-mono uppercase text-neutral-400 hover:text-neutral-200 cursor-pointer shrink-0"
         >
           <Layers className="w-3.5 h-3.5 text-accent-ink" />
-          <span>{showSpecs ? 'ซ่อนสเปกการถอดรหัส' : 'ดูกฎเกณฑ์การถอดรหัส (4 ข้อ)'}</span>
+          <span>{showSpecs ? 'ซ่อนกติกา' : 'ดูกติกาการอ่านไฟล์ (4 ข้อ)'}</span>
           {showSpecs ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
       </div>
@@ -359,12 +359,12 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
               <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
               <div>
                 <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'ซิงค์ปฏิทินตามชนิดวัน (Calendar Sync)' : 'จับคู่หัวคอลัมน์แนวนอนอัตโนมัติ'}
+                  {isLong ? 'อัปเดตปฏิทินตามชนิดวัน' : 'จับคู่หัวคอลัมน์แนวนอนอัตโนมัติ'}
                 </span>
                 <p className="text-[11px] text-neutral-400 leading-snug">
                   {isLong
-                    ? 'คอลัมน์ "ชนิดวัน" จะถูกเชื่อมโยงและบันทึกสถิติประเภทวันลงในหน้าปฏิทินระบบโดยอัตโนมัติ'
-                    : 'ระบบจะสแกนชื่อคอลัมน์ภาษาไทยเข้ากับหมวดหมู่ที่คุณตั้งค่าไว้ในระบบโดยตรง'}
+                    ? 'ค่าในคอลัมน์ "ชนิดวัน" จะถูกบันทึกเป็นประเภทวันในหน้าปฏิทินให้เลย'
+                    : 'ชื่อคอลัมน์จะถูกจับคู่กับชื่อหมวดหมู่ที่คุณตั้งไว้'}
                 </p>
               </div>
             </div>
@@ -373,12 +373,12 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
               <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
               <div>
                 <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'รองรับธุรกรรมครบ 3 ขา (รายรับ/จ่าย/ออม)' : 'ตัดคอลัมน์ผลรวมออกเพื่อความปลอดภัย'}
+                  {isLong ? 'รองรับรายรับ รายจ่าย และเงินออม' : 'ข้ามคอลัมน์ผลรวม'}
                 </span>
                 <p className="text-[11px] text-neutral-400 leading-snug">
                   {isLong
-                    ? 'คอลัมน์ "ประเภท" รองรับ รายรับ รายจ่าย และเงินออม เพื่อประมวลผลกระแสเงินสดทุกรูปแบบพร้อมกัน'
-                    : 'คอลัมน์ "รวม (Total)", "Date", "Notes" จะถูกเพิกเฉยอัตโนมัติในการสร้างยอดเงิน เพื่อป้องกันยอดเบิ้ล'}
+                    ? 'คอลัมน์ "ประเภท" ใส่ได้ทั้ง รายรับ รายจ่าย และเงินออม ในไฟล์เดียว'
+                    : 'คอลัมน์ "รวม (Total)", "Date", "Notes" จะไม่ถูกนำไปคิดเป็นยอดเงิน ยอดจึงไม่นับซ้ำ'}
                 </p>
               </div>
             </div>
@@ -387,10 +387,10 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
               <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
               <div>
                 <span className="font-bold text-neutral-200 text-[11px]">
-                  ระบบสร้างหมวดหมู่อัตโนมัติ (Auto-Provision)
+                  สร้างหมวดหมู่ใหม่ให้
                 </span>
                 <p className="text-[11px] text-neutral-400 leading-snug">
-                  หากพบชื่อหมวดหมู่ที่ยังไม่มีในระบบ เอ็นจิ้นจะทำการสร้างหมวดหมู่ใหม่ขึ้นให้อัตโนมัติโดยโครงสร้างไม่พัง
+                  ถ้าเจอชื่อหมวดหมู่ที่ยังไม่มีในระบบ จะสร้างหมวดหมู่ใหม่ให้เอง
                 </p>
               </div>
             </div>
@@ -399,12 +399,12 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
               <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
               <div>
                 <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'สเปกตัวเลข Satang-First Precision' : 'ทนทานต่อช่องว่าง (Null Tolerance)'}
+                  {isLong ? 'เก็บยอดเป็นสตางค์' : 'ช่องว่างนับเป็น 0'}
                 </span>
                 <p className="text-[11px] text-neutral-400 leading-snug">
                   {isLong
-                    ? 'แปลงตัวเลขเป็นหน่วยสตางค์ (x100 Satang Integer) เพื่อความแม่นยำทางคณิตศาสตร์การเงินระดับบัญชี'
-                    : 'ช่องว่าง หรือสัญลักษณ์ "฿ -" จะถูกประเมินเป็น 0 และข้ามไปอย่างปลอดภัย ไม่เกิด Error หยุดทำงาน'}
+                    ? 'ยอดเงินถูกคูณ 100 เก็บเป็นสตางค์แบบจำนวนเต็ม ทศนิยมจึงไม่คลาดเคลื่อน'
+                    : 'ช่องว่าง หรือสัญลักษณ์ "฿ -" จะนับเป็น 0 และนำเข้าต่อได้ตามปกติ'}
                 </p>
               </div>
             </div>

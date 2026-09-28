@@ -103,7 +103,7 @@ export default function HorizontalLedgerView({
           <Inbox className="w-16 h-16 text-ink-muted" />
         </div>
         <p className="text-lg font-black text-slate-300">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
-        <p className="text-sm mt-2 mb-4 text-ink-body">เพิ่มรายการรายจ่ายเพื่อวิเคราะห์แบบตารางความถี่ (Heatmap)</p>
+        <p className="text-sm mt-2 mb-4 text-ink-body">เพิ่มรายจ่ายเพื่อดูในตารางรายวัน</p>
         {isFilterActive && clearFilters && (
           <button
             type="button"

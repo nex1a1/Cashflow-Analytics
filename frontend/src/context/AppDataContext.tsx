@@ -129,14 +129,14 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     try {
       await dayTypeService.save(updatedDt);
     } catch (err: any) {
-      triggerToast('อัปเดตชนิดวันไม่สำเร็จ: ' + err.message, 'error');
+      triggerToast('อัปเดตประเภทวันไม่สำเร็จ: ' + err.message, 'error');
     }
   }, [dayTypeConfig, triggerToast]);
 
   const handleAddDayType = useCallback(async () => {
     const newDt: DayType = {
       id: crypto.randomUUID(),
-      label: 'ชนิดวันใหม่',
+      label: 'ประเภทวันใหม่',
       color: '#64748B',
       name: '',
       order_index: dayTypeConfig.length + 1
@@ -144,9 +144,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     try {
       await dayTypeService.save(newDt);
       setDayTypeConfig(prev => [...prev, newDt]);
-      triggerToast('เพิ่มชนิดวันสำเร็จ', 'success');
+      triggerToast('เพิ่มประเภทวันสำเร็จ', 'success');
     } catch (err: any) {
-      triggerToast('ไม่สามารถเพิ่มชนิดวันได้: ' + err.message, 'error');
+      triggerToast('ไม่สามารถเพิ่มประเภทวันได้: ' + err.message, 'error');
     }
   }, [dayTypeConfig.length, triggerToast]);
 
@@ -154,9 +154,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     try {
       await dayTypeService.deleteById(id);
       setDayTypeConfig(prev => prev.filter(d => d.id !== id));
-      triggerToast('ลบชนิดวันสำเร็จ', 'success');
+      triggerToast('ลบประเภทวันสำเร็จ', 'success');
     } catch (err: any) {
-      triggerToast('ไม่สามารถลบชนิดวันได้: ' + err.message, 'error');
+      triggerToast('ไม่สามารถลบประเภทวันได้: ' + err.message, 'error');
     }
   }, [triggerToast]);
 
@@ -195,7 +195,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
   const handleAddCashflowGroup = useCallback(async () => {
     const g = {
       id: crypto.randomUUID(),
-      name: 'คอลัมน์ใหม่',
+      name: 'กลุ่มใหม่',
       type: 'expense' as const,
       order_index: cashflowGroups.length + 1,
       color: '#6366F1',

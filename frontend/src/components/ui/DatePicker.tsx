@@ -173,7 +173,7 @@ function DatePickerDayCell({
       onMouseDown={(e) => onMouseDown(d, e)}
       onMouseEnter={() => onMouseEnter(d)}
       className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
-      title={dayTypeObj ? `ชนิดวัน: ${dayTypeObj.label || dayTypeObj.name}` : undefined}
+      title={dayTypeObj ? `ประเภทวัน: ${dayTypeObj.label || dayTypeObj.name}` : undefined}
     >
       {dayTypeObj && (
         <span
@@ -681,13 +681,13 @@ export default function DatePicker({
 
           {/* ================= HEADER CONTROLS (CLEAN FLAT TITLE + « < > ») ================= */}
           <div className="flex items-center justify-between mb-2.5 bg-surface px-2 py-1.5 border border-line">
-            {/* Prev Year ( -1 ปี ) & Prev Month ( -1 เดือน ) */}
+            {/* Prev Year (-1 ปี) & Prev Month (-1 เดือน) */}
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={prevYear}
                 disabled={isAtMinYear}
-                title={isAtMinYear ? `จำกัดปีขั้นต่ำ ${MIN_YEAR}` : 'ปีก่อนหน้า ( -1 ปี )'}
+                title={isAtMinYear ? `จำกัดปีขั้นต่ำ ${MIN_YEAR}` : 'ปีก่อนหน้า (-1 ปี)'}
                 className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
                 <ChevronsLeft className="w-3.5 h-3.5" />
@@ -695,7 +695,7 @@ export default function DatePicker({
               <button
                 type="button"
                 onClick={prevMonth}
-                title="เดือนก่อนหน้า ( -1 เดือน )"
+                title="เดือนก่อนหน้า (-1 เดือน)"
                 className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -709,12 +709,12 @@ export default function DatePicker({
               </span>
             </div>
 
-            {/* Next Month ( +1 เดือน ) & Next Year ( +1 ปี ) */}
+            {/* Next Month (+1 เดือน) & Next Year (+1 ปี) */}
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={nextMonth}
-                title="เดือนถัดไป ( +1 เดือน )"
+                title="เดือนถัดไป (+1 เดือน)"
                 className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -723,7 +723,7 @@ export default function DatePicker({
                 type="button"
                 onClick={nextYear}
                 disabled={isAtMaxYear}
-                title={isAtMaxYear ? `จำกัดปีสูงสุด ${MAX_YEAR}` : 'ปีถัดไป ( +1 ปี )'}
+                title={isAtMaxYear ? `จำกัดปีสูงสุด ${MAX_YEAR}` : 'ปีถัดไป (+1 ปี)'}
                 className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
               >
                 <ChevronsRight className="w-3.5 h-3.5" />

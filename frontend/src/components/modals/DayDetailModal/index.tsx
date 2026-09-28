@@ -237,7 +237,7 @@ export default function DayDetailModal({
                   type="button"
                   onClick={() => handleStepDay(-1)}
                   className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent-ink text-slate-300 hover:text-white transition-all cursor-pointer"
-                  title="วันก่อนหน้า ( -1 วัน )"
+                  title="วันก่อนหน้า (-1 วัน)"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -289,7 +289,7 @@ export default function DayDetailModal({
                   type="button"
                   onClick={() => handleStepDay(1)}
                   className="p-1 rounded-none border border-line-strong bg-surface hover:bg-surface-elevated hover:border-accent-ink text-slate-300 hover:text-white transition-all cursor-pointer"
-                  title="วันถัดไป ( +1 วัน )"
+                  title="วันถัดไป (+1 วัน)"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

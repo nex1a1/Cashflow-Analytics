@@ -703,7 +703,7 @@ function QuickSuggest({
               {/* Allocation Type (Only Expense) */}
               {formType === 'expense' && (
                 <div>
-                  <span className={tokens.label}>ประเภทการจัดสรร (ALLOCATION)</span>
+                  <span className={tokens.label}>ประเภทการจัดสรร</span>
                   <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
                     {[
                       { val: 'ALL', label: 'ทั้งหมด', color: 'border-slate-500 text-slate-200 bg-slate-800/30' },

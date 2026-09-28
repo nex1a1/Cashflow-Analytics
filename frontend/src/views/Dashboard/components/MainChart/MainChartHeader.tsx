@@ -93,7 +93,7 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
         className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
           sankeyMode === 'allocation' ? 'bg-accent text-on-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
-        title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (อยากได้) / Save (เงินออม)"
+        title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (ตามใจ) / Save (เงินออม)"
       >
         <Layers className="w-3 h-3" />
         {sankeyMode === 'allocation' ? 'ตามการจัดสรร' : 'แสดง Need/Want/Save'}
@@ -117,7 +117,7 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
           sankeySortMode === 'index' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
-        เรียงตามลำดับ (Settings)
+        เรียงตามลำดับในหน้าตั้งค่า
       </button>
     </div>
   </div>

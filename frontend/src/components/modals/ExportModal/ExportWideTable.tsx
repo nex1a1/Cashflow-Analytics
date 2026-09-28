@@ -32,7 +32,7 @@ export default function ExportWideTable({
         <thead className="sticky top-0 bg-surface-hover text-neutral-300 z-10 select-none border-b border-line">
           <tr>
             <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 sticky left-0 bg-surface-hover z-20">
-              วันที่ (Date)
+              วันที่
             </th>
             <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
               ประเภทวัน
@@ -47,7 +47,7 @@ export default function ExportWideTable({
               </th>
             ))}
             <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent-ink sticky right-0 bg-surface-hover z-20">
-              รวมสุทธิ (Total)
+              รวมสุทธิ
             </th>
           </tr>
         </thead>

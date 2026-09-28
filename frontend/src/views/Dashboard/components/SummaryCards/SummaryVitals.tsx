@@ -4,7 +4,7 @@ import { Activity, Wallet, Navigation, TrendingDown } from 'lucide-react';
 import { formatMoney, calculatePeriodDelta } from '@/utils/formatters';
 import sharkLogo from '@/assets/images/shark-white.svg';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
-import { Shimmer, SectionHeader } from './helpers';
+import { Shimmer, SectionHeader, BUDGET_RULES } from './helpers';
 import { SummaryAnalytics } from './types';
 
 interface SummaryVitalsProps {
@@ -23,16 +23,11 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
   const avgExpensePerDay = totalExpense / periodDays;
   const expensePercent = totalIncome > 0 ? Math.round((totalExpense / totalIncome) * 100) : 0;
 
-  const getSavingsGradeInfo = (rate: number) => {
-    if (rate >= 30) return { grade: 'A+', label: 'ดีเยี่ยม',   cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-    if (rate >= 20) return { grade: 'A',  label: 'ดีมาก',    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
-    if (rate >= 15) return { grade: 'B',  label: 'ดี',       cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-    if (rate >= 10) return { grade: 'C',  label: 'พอใช้',    cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-    if (rate >= 5)  return { grade: 'D',  label: 'อ่อน',     cls: 'bg-accent/10 text-accent-ink border-accent/20' };
-    return           { grade: 'F',  label: 'วิกฤต',    cls: 'bg-danger/10 text-danger border-danger/20' };
-  };
-
-  const gradeInfo = getSavingsGradeInfo(savingsRate);
+  // No grade here — the strategic panel owns the single grade; this pill only reports the surplus share.
+  const surplusCls =
+    netCashflow < 0                           ? 'bg-danger/10 text-danger border-danger/20' :
+    savingsRate < BUDGET_RULES.surplus.min    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
   const hasPriorData = Boolean(prevTotals && prevTotals.txCount > 0);
   const curPeriodLabel = periodLabel || 'PoP';
@@ -98,7 +93,12 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               รายจ่ายรวม
             </span>
             {!showSkeleton && (
-              <div className="px-1.5 py-0.5 border border-expense/20 bg-expense/10 text-expense rounded-none text-[11px] font-black uppercase tracking-widest shrink-0">
+              <div
+                className={`px-1.5 py-0.5 border rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${
+                  expensePercent > 100 ? 'border-danger/30 bg-danger/10 text-danger' : 'border-line bg-surface-elevated/40 text-ink-body'
+                }`}
+                title="รายจ่าย % ของรายรับ · เป็นสีแดงเมื่อจ่ายเกินรายรับ"
+              >
                 ใช้ไป {expensePercent}%
               </div>
             )}
@@ -146,10 +146,11 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               กระแสเงินสดสุทธิ
             </span>
             {!showSkeleton && (
-              <div className={`px-1.5 py-0.5 border flex items-center gap-1.5 rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${gradeInfo.cls}`}>
-                <span>ออม {savingsRate}%</span>
-                <span className="opacity-30">|</span>
-                <span className="font-extrabold">{gradeInfo.grade} {gradeInfo.label}</span>
+              <div
+                className={`px-1.5 py-0.5 border rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${surplusCls}`}
+                title={`เงินเหลือ % ของรายรับ · เกณฑ์ ≥ ${BUDGET_RULES.surplus.min}%`}
+              >
+                เหลือ {savingsRate}%
               </div>
             )}
           </div>
@@ -173,7 +174,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <span className={`text-[11px] font-black tracking-[0.12em] uppercase truncate ${
                 netCashflow >= 0 ? 'text-emerald-400' : 'text-danger'
               }`}>
-                {netCashflow >= 0 ? 'Surplus (ส่วนเกิน)' : 'Deficit (ติดลบ)'}
+                {netCashflow >= 0 ? 'เหลือ' : 'ขาดดุล'}
               </span>
             )}
             {!showSkeleton && (

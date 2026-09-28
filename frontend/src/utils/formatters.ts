@@ -193,6 +193,15 @@ export interface CalculatePeriodDeltaParams {
   type?: 'income' | 'expense' | 'net';
 }
 
+/** Period codes from useAnalytics stay English internally; this is what the user reads. */
+const PERIOD_COMPARE_TH: Record<string, string> = {
+  MoM: 'เทียบเดือนก่อน',
+  QoQ: 'เทียบไตรมาสก่อน',
+  HoH: 'เทียบครึ่งปีก่อน',
+  YoY: 'เทียบปีก่อน',
+  PoP: 'เทียบช่วงก่อน',
+};
+
 export const calculatePeriodDelta = ({
   current,
   prev,
@@ -201,6 +210,7 @@ export const calculatePeriodDelta = ({
   type = 'income',
 }: CalculatePeriodDeltaParams): PeriodDeltaResult => {
   const isAll = periodLabel === 'ALL';
+  const compareLabel = PERIOD_COMPARE_TH[periodLabel] ?? periodLabel;
 
   if (!hasPriorData || isAll) {
     return {
@@ -211,10 +221,10 @@ export const calculatePeriodDelta = ({
       prev: 0,
       isGood: false,
       isFlat: true,
-      text: isAll ? 'ทั้งหมด' : 'งวดแรก',
+      text: isAll ? 'ทั้งหมด' : 'ช่วงแรก',
       tooltipText: isAll
-        ? 'แสดงข้อมูลทั้งหมด (ไม่มีงวดก่อนหน้าสำหรับเปรียบเทียบ)'
-        : 'ไม่มีข้อมูลในงวดก่อนหน้าสำหรับเปรียบเทียบ',
+        ? 'แสดงข้อมูลทั้งหมด (ไม่มีช่วงก่อนหน้าให้เทียบ)'
+        : 'ไม่มีข้อมูลช่วงก่อนหน้าให้เทียบ',
       cls: 'border-neutral-800/80 bg-neutral-900/60 text-neutral-500',
     };
   }
@@ -230,8 +240,8 @@ export const calculatePeriodDelta = ({
         prev: 0,
         isGood: false,
         isFlat: true,
-        text: `0.0% ${periodLabel}`,
-        tooltipText: 'ยอดเท่ากับงวดก่อนหน้า (฿0.00)',
+        text: `0.0% ${compareLabel}`,
+        tooltipText: 'ยอดเท่ากับช่วงก่อนหน้า (฿0.00)',
         cls: 'border-neutral-800 bg-neutral-900/60 text-neutral-400',
       };
     }
@@ -246,8 +256,8 @@ export const calculatePeriodDelta = ({
       prev: 0,
       isGood,
       isFlat: false,
-      text: `ใหม่ (${periodLabel})`,
-      tooltipText: `งวดก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}฿${formatMoney(current)})`,
+      text: `ใหม่ (${compareLabel})`,
+      tooltipText: `ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}฿${formatMoney(current)})`,
       cls: isGood
         ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
         : (type === 'expense'
@@ -282,9 +292,9 @@ export const calculatePeriodDelta = ({
 
   const arrow = isUp ? '↑' : (isDown ? '↓' : '–');
   const formattedPct = Math.abs(percent) >= 1000 ? '>999%' : `${Math.abs(percent).toFixed(1)}%`;
-  const text = isFlat ? `0.0% ${periodLabel}` : `${arrow} ${formattedPct} ${periodLabel}`;
+  const text = isFlat ? `0.0% ${compareLabel}` : `${arrow} ${formattedPct} ${compareLabel}`;
   const diffSign = diff >= 0 ? '+' : '';
-  const tooltipText = `งวดก่อน: ฿${formatMoney(prev)} (${diffSign}฿${formatMoney(diff)})`;
+  const tooltipText = `ช่วงก่อนหน้า: ฿${formatMoney(prev)} (${diffSign}฿${formatMoney(diff)})`;
 
   return {
     hasDelta: true,

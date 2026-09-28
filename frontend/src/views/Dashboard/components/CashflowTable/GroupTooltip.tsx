@@ -77,7 +77,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
       ? 'จำเป็น'
       : group.allocation_type === 'savings'
         ? 'เงินออม'
-        : 'กิเลส';
+        : 'ตามใจ';
 
   const allocationColorCls =
     group.allocation_type === 'need'
@@ -158,7 +158,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
             </div>
           ) : (
             <div className="text-[11px] text-neutral-400 italic py-0.5">
-              ไม่มีหมวดหมู่ย่อยที่บันทึกข้อมูลในรอบนี้
+              ไม่มีหมวดหมู่ย่อยที่มีรายการในช่วงนี้
             </div>
           )}
 

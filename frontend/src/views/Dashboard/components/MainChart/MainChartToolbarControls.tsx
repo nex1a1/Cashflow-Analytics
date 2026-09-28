@@ -76,7 +76,7 @@ export const ToolbarAllocationSelector = memo(({
         className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
           isWantOnly ? 'bg-amber-950/40 text-amber-400 shadow-sm border tint-border' : 'bg-canvas text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
-        title="ดูเฉพาะค่าใช้จ่ายผันแปร / ไลฟ์สไตล์"
+        title="ดูเฉพาะรายจ่ายตามใจ (WANT)"
       >
         เฉพาะ WANT
       </button>
@@ -87,7 +87,7 @@ export const ToolbarAllocationSelector = memo(({
         className={`px-3 py-1.5 text-[11px] font-bold transition-all ${
           isNeedOnly ? 'bg-rose-950/40 text-rose-400 shadow-sm border tint-border' : 'bg-canvas text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
-        title="ดูเฉพาะค่าใช้จ่ายคงที่ / จำเป็น"
+        title="ดูเฉพาะรายจ่ายจำเป็น (NEED)"
       >
         เฉพาะ NEED
       </button>

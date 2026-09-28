@@ -102,7 +102,7 @@ const GuideSidebar = memo(function GuideSidebar({
             icon={ClipboardList}
             title="รายงานแยกรายการ"
             subtitle="Long Ledger CSV"
-            description="เรียงตามวัน เหมาะสำหรับตรวจรายการ ย้อนหลัง และ Import ประวัติ"
+            description="เรียงตามวัน เหมาะสำหรับตรวจรายการ ย้อนหลัง และนำเข้าข้อมูลย้อนหลัง"
             badge="แนะนำ"
           />
 
@@ -127,7 +127,7 @@ const GuideSidebar = memo(function GuideSidebar({
         {isLong ? (
           <div className="bg-surface p-2.5 rounded-none border border-line space-y-2">
             <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-              โครงสร้างคอลัมน์ (Column Structure)
+              โครงสร้างคอลัมน์
             </span>
             <div className="grid grid-cols-3 gap-1 bg-canvas p-1 border border-line-strong">
               {(['full', 'standard', 'minimal'] as LongVariation[]).map((v) => {
@@ -150,15 +150,15 @@ const GuideSidebar = memo(function GuideSidebar({
               })}
             </div>
             <p className="text-[11px] text-neutral-500 font-sans leading-tight">
-              {longVariation === 'full' && 'ครบวงจร: มีชนิดวัน (ซิงค์ปฏิทิน) และประเภท รายรับ/รายจ่าย/เงินออม'}
-              {longVariation === 'standard' && 'มาตรฐาน: มีประเภท รายรับ/รายจ่าย (ชนิดวันอิงตามปฏิทินปกติ)'}
+              {longVariation === 'full' && 'แบบเต็ม: มีคอลัมน์ชนิดวัน (อัปเดตปฏิทินให้) และประเภท รายรับ/รายจ่าย/เงินออม'}
+              {longVariation === 'standard' && 'มาตรฐาน: มีประเภท รายรับ/รายจ่าย (ประเภทวันใช้ตามปฏิทินปกติ)'}
               {longVariation === 'minimal' && 'แบบย่อ: บันทึกเป็นรายจ่ายทั้งหมดอัตโนมัติ เหมาะกับสลิปค่าใช้จ่าย'}
             </p>
           </div>
         ) : (
           <div className="bg-surface p-2.5 rounded-none border border-line space-y-2">
             <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-              หมวดหมู่หัวตาราง (Categories Source)
+              หมวดหมู่หัวตาราง
             </span>
             <div className="grid grid-cols-2 gap-1 bg-canvas p-1 border border-line-strong">
               <button
@@ -202,7 +202,7 @@ const GuideSidebar = memo(function GuideSidebar({
         {/* Delimiter */}
         <div className="space-y-1.5">
           <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-            เครื่องหมายคั่น (CSV Delimiter)
+            เครื่องหมายคั่น
           </span>
           <div className="grid grid-cols-2 gap-1 bg-canvas p-1 border border-line-strong">
             <button
@@ -233,7 +233,7 @@ const GuideSidebar = memo(function GuideSidebar({
         {/* Header Language */}
         <div className="space-y-1.5">
           <span className="text-[11px] text-neutral-400 font-bold uppercase block tracking-wider">
-            ภาษาของหัวตาราง (Header Language)
+            ภาษาของหัวตาราง
           </span>
           <div className="grid grid-cols-2 gap-1 bg-canvas p-1 border border-line-strong">
             <button
@@ -245,7 +245,7 @@ const GuideSidebar = memo(function GuideSidebar({
                   : 'text-neutral-400 hover:text-white hover:bg-surface-elevated'
               }`}
             >
-              ภาษาไทย (TH)
+              ภาษาไทย
             </button>
             <button
               type="button"

@@ -30,7 +30,7 @@ const ALLOCATION_CONFIGS: AllocationConfig[] = [
     label: 'NEED',
     nameThai: 'จำเป็น',
     quota: 'เป้า 50%',
-    desc: 'ค่าใช้จ่ายคงที่ · ปัจจัย 4 ดำรงชีพ',
+    desc: 'รายจ่ายจำเป็น · ปัจจัย 4 ดำรงชีพ',
     color: ALLOCATION_COLORS.need,
     icon: Home,
   },
@@ -39,7 +39,7 @@ const ALLOCATION_CONFIGS: AllocationConfig[] = [
     label: 'WANT',
     nameThai: 'ทั่วไป',
     quota: 'เป้า 30%',
-    desc: 'ค่าใช้จ่ายผันแปร · ไลฟ์สไตล์ ความสุข',
+    desc: 'รายจ่ายตามใจ · ไลฟ์สไตล์ ความสุข',
     color: ALLOCATION_COLORS.want,
     icon: ShoppingBag,
   },
@@ -48,7 +48,7 @@ const ALLOCATION_CONFIGS: AllocationConfig[] = [
     label: 'SAVE',
     nameThai: 'เงินออม',
     quota: 'เป้า 20%',
-    desc: 'เงินออมสำรองฉุกเฉิน · ลงทุนสุทธิ',
+    desc: 'เงินออม · เงินสำรองฉุกเฉิน · ลงทุน',
     color: ALLOCATION_COLORS.savings,
     icon: Landmark,
   },
@@ -299,7 +299,7 @@ export const AllocationSelect = memo(function AllocationSelect({
             <div className="px-2.5 py-1.5 border-b border-line bg-canvas flex items-center justify-between shrink-0 gap-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono flex items-center gap-1.5 min-w-0 truncate">
                 <span className="w-1.5 h-1.5 rounded-none bg-accent shrink-0" />
-                การจัดสรรเงิน (ALLOCATION)
+                การจัดสรรเงิน
               </span>
               <span className="text-[10px] font-mono text-ink-muted whitespace-nowrap shrink-0">
                 50 / 30 / 20

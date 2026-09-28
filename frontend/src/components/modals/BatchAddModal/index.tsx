@@ -249,7 +249,7 @@ export default function BatchAddModal({
         {/* Modal Header */}
         <div className={`px-5 py-4 border-b flex justify-between items-center shrink-0 ${tokens.headerFooter}`}>
           <h3 className="text-base font-bold flex items-center gap-2 text-slate-100">
-            <CalendarPlus className="w-5 h-5 text-accent-ink" /> สรุปค่าใช้จ่ายประจำวัน (Batch Add)
+            <CalendarPlus className="w-5 h-5 text-accent-ink" /> สรุปค่าใช้จ่ายประจำวัน
           </h3>
           <button 
             type="button" 
@@ -370,7 +370,7 @@ export default function BatchAddModal({
               className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-canvas rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-income hover:bg-income/90 border border-income"
             >
               {isProcessing ? <Zap className="w-4 h-4 animate-pulse" /> : <CheckCircle className="w-4 h-4" />}
-              {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมดลง DB'}
+              {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมด'}
             </button>
           </div>
           <FieldError id="batch-submit-err" message={saveError} />

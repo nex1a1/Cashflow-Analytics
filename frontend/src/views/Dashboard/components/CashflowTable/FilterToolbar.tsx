@@ -33,7 +33,7 @@ export function FilterToolbar({
             title={
               totalExcludedCount > 0
                 ? `เปิด/ปิด ตัวกรอง (กำลังซ่อนอยู่ ${totalExcludedCount} รายการ)`
-                : 'เปิด/ปิด ตัวกรอง Allocation'
+                : 'เปิด/ปิด ตัวกรองการจัดสรร'
             }
           >
             <Filter
@@ -59,7 +59,7 @@ export function FilterToolbar({
       {isFilterBarOpen && (
         <div className="flex flex-wrap items-center justify-end gap-2 pt-1.5 border-t border-line/80 text-[11px]">
           <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mr-auto">
-            โหมดปิดรายการตาม Allocation (Transaction-Level):
+            ซ่อนรายการตามการจัดสรร:
           </span>
 
           {/* Fix #11: ลบ line-through ออกจาก text ใน button — ใช้ icon + opacity แทน */}
@@ -76,7 +76,7 @@ export function FilterToolbar({
             ) : (
               <Eye className="w-3 h-3 text-amber-400" />
             )}
-            <span>ปิด WANT (กิเลส)</span>
+            <span>ปิด WANT (ตามใจ)</span>
           </button>
 
           <button

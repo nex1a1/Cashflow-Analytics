@@ -20,7 +20,7 @@ const GuideHeader = memo(function GuideHeader({ onClose }: GuideHeaderProps) {
             </span>
           </div>
           <p className="text-xs text-neutral-400 mt-1">
-            ศึกษาข้อกำหนดโครงสร้างตาราง กฎเกณฑ์การถอดรหัส และดาวน์โหลดไฟล์เทมเพลตนำเข้า
+            ดูรูปแบบไฟล์ที่นำเข้าได้ กติกาการอ่านไฟล์ และดาวน์โหลดเทมเพลต
           </p>
         </div>
       </div>

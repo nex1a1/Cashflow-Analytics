@@ -30,11 +30,60 @@ export const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon; title:
   </div>
 );
 
-export function getFoodIncomeStatus(pct: number) {
-  const num = Number.parseFloat(String(pct)) || 0;
-  if (num <= 20) return { label: 'สมดุลดี',      cls: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' };
-  if (num <= 30) return { label: 'ปานกลาง',      cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' };
-  return            { label: 'สัดส่วนสูง',     cls: 'text-danger border-danger/30 bg-danger/10' };
+/**
+ * The only place the dashboard's budget thresholds live. Card labels ("เกณฑ์แนะนำ < X%"),
+ * card colours and the strategic grade all read these, so a red card is always a counted breach.
+ * Percentages; `min` rules breach below, `max` rules breach above.
+ */
+export const BUDGET_RULES = {
+  rent:            { max: 30 }, // % of income
+  subscription:    { max: 5 },  // % of income
+  subscriptionExp: { max: 8 },  // % of expense — fallback when the period has no income
+  lifestyle:       { max: 30 }, // % of income
+  food:            { max: 25 }, // % of expense
+  surplus:         { min: 10 }, // (income − expense) % of income
+} as const;
+
+/** Past this share of a `max` the card warns (amber) before it breaches (red). */
+export const WARN_AT = 0.8;
+
+export interface BudgetInputs {
+  rentPct: number;
+  /** % of income, or % of expense when there is no income (see `subscriptionExp`). */
+  subscriptionPct: number;
+  hasIncome: boolean;
+  lifestylePct: number;
+  foodPctOfExpense: number;
+  surplusPct: number;
+  netCashflow: number;
+}
+
+const GRADES = [
+  { g: 'A', label: 'ดีเยี่ยม', cls: 'text-income border-income/30 bg-income/10' },
+  { g: 'B', label: 'ดี',      cls: 'text-income border-income/30 bg-income/10' },
+  { g: 'C', label: 'พอใช้',   cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' },
+  { g: 'D', label: 'ต้องปรับ', cls: 'text-danger border-danger/40 bg-danger/10' },
+] as const;
+
+/** One grade for the whole period: each breached rule costs a step, a deficit costs two. */
+export function gradeBudget(x: BudgetInputs) {
+  const subMax = x.hasIncome ? BUDGET_RULES.subscription.max : BUDGET_RULES.subscriptionExp.max;
+  const breaches = [
+    x.rentPct > BUDGET_RULES.rent.max && 'ที่พัก',
+    x.subscriptionPct > subMax && 'บริการรายเดือน',
+    x.lifestylePct > BUDGET_RULES.lifestyle.max && 'ตามใจ',
+    x.foodPctOfExpense > BUDGET_RULES.food.max && 'ค่าอาหาร',
+    x.netCashflow < 0 ? 'ขาดดุล' : x.hasIncome && x.surplusPct < BUDGET_RULES.surplus.min && 'เงินเหลือน้อย',
+  ].filter(Boolean) as string[];
+  const score = breaches.length + (x.netCashflow < 0 ? 1 : 0);
+  return { breaches, grade: GRADES[Math.min(score, GRADES.length - 1)] };
+}
+
+export function getFoodStatus(pctOfExpense: number) {
+  const { max } = BUDGET_RULES.food;
+  if (pctOfExpense > max)           return { label: 'สัดส่วนสูง', cls: 'text-danger border-danger/30 bg-danger/10' };
+  if (pctOfExpense > max * WARN_AT) return { label: 'ปานกลาง',   cls: 'text-amber-400 border-amber-500/30 bg-amber-950/40' };
+  return                                   { label: 'สมดุลดี',   cls: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' };
 }
 
 export function renderTopItemsOverlay(

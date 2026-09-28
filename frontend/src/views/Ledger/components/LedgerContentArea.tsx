@@ -115,7 +115,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
             <div className="w-8 h-8 border-2 border-transparent border-t-accent-ink border-r-accent/30 rounded-full animate-spin" />
           </div>
           <p className="text-[11px] font-black uppercase tracking-widest text-ink-body font-sans flex items-center gap-1.5">
-            <span>กำลังดาวน์โหลดบัญชีแยกประเภท</span>
+            <span>กำลังโหลดรายการ...</span>
             <span className="text-accent-ink animate-pulse">...</span>
           </p>
         </div>
@@ -124,7 +124,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
       {viewMode === 'list' && displayTransactions.length === 0 && !showSkeleton ? (
         <div className="flex flex-col items-center justify-center py-24 px-4">
           <Inbox className="w-14 h-14 mb-4 text-ink-muted" />
-          <p className="text-base font-bold text-ink-body">ไม่พบรายการบัญชี</p>
+          <p className="text-base font-bold text-ink-body">ไม่พบรายการ</p>
           <p className="text-xs mt-1 mb-4 text-ink-muted">ลองเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</p>
           {isFilterActive && (
             <button onClick={clearFilters} className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-slate-300 hover:bg-surface-elevated">

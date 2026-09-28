@@ -48,7 +48,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-accent-ink" />
           <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 font-sans">
-            แผงวิเคราะห์รายรับ-รายจ่าย
+            สรุปรายรับ-รายจ่าย
           </span>
         </div>
       </div>
@@ -119,7 +119,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
                 </div>
               )}
               <span className={`px-1.5 py-0.5 rounded-none text-[11px] font-black uppercase tracking-widest border ${isNetPositive ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
-                {isNetPositive ? 'SURPLUS' : 'DEFICIT'}
+                {isNetPositive ? 'เหลือ' : 'ขาดดุล'}
               </span>
             </div>
           </div>
@@ -181,7 +181,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
             <div className="flex flex-col gap-1.5 items-center">
               <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-emerald-500 font-sans justify-center">
                 <TrendingUp className="w-3.5 h-3.5" />
-                <span>รายรับ (Income)</span>
+                <span>รายรับ</span>
               </div>
               <div className="flex flex-wrap items-stretch justify-center gap-3">
                 {activeIncomeCards}
@@ -199,7 +199,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
             <div className="flex flex-col gap-1.5 items-center">
               <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-500 font-sans justify-center">
                 <Wallet className="w-3.5 h-3.5" />
-                <span>การออมและลงทุน (Savings & Investments)</span>
+                <span>การออมและลงทุน</span>
               </div>
               <div className="flex flex-wrap items-stretch justify-center gap-3">
                 {activeSavingsCards}
@@ -213,7 +213,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-center gap-2 px-1 text-[11px] font-black uppercase tracking-wider text-expense font-sans">
             <TrendingDown className="w-3.5 h-3.5" />
-            <span>รายจ่าย (Expenses)</span>
+            <span>รายจ่าย</span>
           </div>
           <div className="flex flex-wrap items-stretch justify-center gap-3 pb-1 px-1">
             {activeExpenseCards}

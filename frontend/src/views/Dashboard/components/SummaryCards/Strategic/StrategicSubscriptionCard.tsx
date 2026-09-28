@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Repeat } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, renderTopItemsOverlay } from '../helpers';
+import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { SubscriptionService, BreakdownEntry } from '../types';
 
@@ -29,8 +29,9 @@ export const StrategicSubscriptionCard = memo(({
   const isIncomeBased = totalIncome > 0;
   const displayPct    = isIncomeBased ? subPctNum : subExpPctNum;
 
-  const isLeak     = isIncomeBased ? displayPct > 10 : displayPct > 15;
-  const isModerate = isIncomeBased ? displayPct > 5  : displayPct > 8;
+  const maxPct     = isIncomeBased ? BUDGET_RULES.subscription.max : BUDGET_RULES.subscriptionExp.max;
+  const isLeak     = displayPct > maxPct;
+  const isModerate = displayPct > maxPct * WARN_AT;
 
   let statusBadge = {
     label: 'ปลอดภัย',    cls: 'text-purple-400 border-purple-500/30 bg-purple-950/40',
@@ -38,7 +39,7 @@ export const StrategicSubscriptionCard = memo(({
   };
   if (isLeak) {
     statusBadge = {
-      label: 'รั่วไหล', cls: 'text-danger border-danger/30 bg-danger/10',
+      label: 'สูงไป', cls: 'text-danger border-danger/30 bg-danger/10',
       borderLeft: 'border-l-accent-ink', barBg: 'bg-accent', colorText: 'text-accent-ink'
     };
   } else if (isModerate) {
@@ -48,9 +49,7 @@ export const StrategicSubscriptionCard = memo(({
     };
   }
 
-  const barWidth = isIncomeBased
-    ? Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / 10) * 100))
-    : Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / 15) * 100));
+  const barWidth = Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / maxPct) * 100));
 
   const services = [...(topSubscriptionServices ?? [])].slice(0, 4);
   const serviceEntries: BreakdownEntry[] = services.map((s, idx) => ({
@@ -71,7 +70,7 @@ export const StrategicSubscriptionCard = memo(({
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
           <span className="text-white font-bold">
-            {isIncomeBased ? '< 5% ของรายรับ' : '< 8% ของรายจ่าย'}
+            &lt; {maxPct}% {isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย'}
           </span>
         </div>
       )}
