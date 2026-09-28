@@ -1,4 +1,4 @@
-# 🦈 Cashflow Shark: Elite Financial Intelligence
+# Cashflow Shark
 
 [![Vibe Coding](https://img.shields.io/badge/Vibe_Coding-100%25_AI_Built-ff69b4?style=for-the-badge&logo=probot)](https://github.com/)
 [![Platform](https://img.shields.io/badge/Platform-PC--First_/_Desktop-blue?style=for-the-badge&logo=windows)](https://github.com/)
@@ -6,100 +6,92 @@
 [![Tests](https://img.shields.io/badge/Tests-Vitest-6E9F18?style=for-the-badge&logo=vitest)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**Cashflow Shark** คือระบบบริหารจัดการการเงินส่วนบุคคลและบันทึกชั่วโมงการทำงานประสิทธิภาพสูง (High-Performance Personal/Small Business Financial Tracker & Work-Day Logger) ที่ถูกออกแบบด้วยปรัชญา **PC-First (Desktop-Only)** เพื่อรีดประสิทธิภาพการใช้งานหน้าจอระดับสูงสุด มอบหน้าต่างข้อมูลที่หนาแน่น เจาะลึก และแม่นยำตามมาตรฐานบัญชีระดับมืออาชีพ พร้อมดีไซน์พรีเมียมสไตล์ **Scuderia Ferrari Luxury Editorial** ที่เฉียบคมและดุดัน
+Cashflow Shark เป็นแอปจดรายรับรายจ่ายส่วนตัว (ใช้กับธุรกิจเล็กๆ ได้ด้วย) ที่บันทึกวันทำงานควบคู่ไปด้วย ออกแบบมาให้ใช้บนคอมพิวเตอร์เท่านั้น หน้าจอจึงอัดข้อมูลได้แน่นกว่าแอปมือถือ ส่วนหน้าตาใช้ธีมมืดโทน Ferrari (พื้นเกือบดำกับแดง Rosso Corsa)
 
-> 🦈 **Spirit of the Shark:** *"Keep swimming or drown."* หนทางสู่ความอิสระทางการเงินที่แท้จริงต้องการความแน่วแน่และไม่มีวันหยุดนิ่ง เหมือนดั่งฉลามที่ต้องว่ายน้ำตลอดเวลาเพื่อมีชีวิตรอด!
+> *"Keep swimming or drown."* ฉลามต้องว่ายน้ำตลอดเวลาถึงจะมีชีวิตรอด เรื่องเงินก็เหมือนกัน ถ้าอยากเป็นอิสระทางการเงินก็ต้องไม่หยุด
 
----
+## สร้างด้วย AI ทั้งหมด
 
-## 🌊 100% Vibe Coding: The AI-Powered Genesis
+โค้ดทั้งโปรเจกต์เขียนโดย AI ไม่มีส่วนไหนที่คนพิมพ์เอง เครื่องมือที่ใช้มีสามตัว:
 
-โปรเจกต์นี้สร้างขึ้นจากพลังแห่ง **Vibe Coding 100%** อย่างแท้จริง โดยไม่มีการเขียนโค้ดด้วยมือมนุษย์เลย (Zero Human-Written Boilerplate) แต่เป็นการประสานงานร่วมมือกันของสุดยอดเทคโนโลยี AI ปัญญาประดิษฐ์ระดับแนวหน้าที่คอยช่วยคิด ออกแบบ แก้ไข และประกอบร่างขึ้นมา:
+- Antigravity (Google DeepMind) วางโครงสร้างโปรเจกต์ จัดไฟล์ รันคำสั่ง และคุมภาพรวม
+- Gemini (Flash / Pro) ทำฝั่งตรรกะ: สูตรการเงิน ฐานข้อมูล และคำสั่ง SQL / analytical views
+- Claude ขัดเกลา UI/UX: ปรับ component ให้ละเอียด ทำธีม Ferrari มุมเหลี่ยม 0px และระบบ UI แบบไม่มี animation
 
-*   **🌌 Antigravity:** สุดยอด AI Agent คู่หูนักพัฒนาผู้ทรงพลังจากทีม **Google DeepMind** ทำหน้าที่เป็นเสนาธิการคุมงานโครงสร้างสถาปัตยกรรม (Lead Architect & Workspace Orchestrator) วางแผน จัดการโครงสร้างไฟล์ รันคำสั่ง และประสานงานระบบอย่างแม่นยำ
-*   **🦈 Gemini (Flash / Pro):** ขุมพลังการประมวลผลตรรกะเบื้องหลัง คิดคำนวณคณิตศาสตร์ทางการเงินอันซับซ้อน จัดการฐานข้อมูลความเร็วสูง และสร้างคำสั่ง SQL/Analytical Views ที่แม่นยำอย่างไร้ที่ติ
-*   **🎭 Claude:** นักรังสรรค์และขัดเกลาประสบการณ์ผู้ใช้งาน (UX/UI Catalyst) ผู้คอยเติมเต็มความประณีตของ Component, ดีไซน์หรูหราระดับพรีเมียมแบบ Ferrari Luxury Cinematic Editorial, โครงสร้างขอบเหลี่ยมคม 0px และระบบ Static Performance Engine ไร้การกระตุกกระตื้น
+ทั้ง SQLite schema, Express API และหน้า React สร้างผ่าน prompt และ agentic workflow
 
-การ Vibe Coding ในโปรเจกต์นี้ก้าวข้ามขีดจำกัดของการพัฒนาโปรแกรมทั่วไป ด้วยการใช้เทคนิค **Direct Prompt Engineering** และ **Agentic Workflows** ในการสร้างฐานข้อมูล SQLite Schema, Express API และหน้าจอ React UI ให้สอดประสานกันเป็นหนึ่งเดียวในพริบตา!
+## ฟีเจอร์
 
----
+### 1. การ์ดสรุปสามคอลัมน์
+- การ์ดแบ่งเป็นสามกลุ่มตามหน้าที่: `VitalsDomainCard`, `StrategicDomainCard`, `ForecastingDomainCard`
+- การ์ดใบเดียวแสดงทั้งกระแสเงินสดสุทธิและอัตราการออม (สูตรแบบ CPA) พร้อมเกรด A-F
+- พยากรณ์ยอดถึงสิ้นเดือนจากพฤติกรรมการจ่ายจริง และบอกว่าวันละใช้ได้อีกเท่าไร (Safe-to-Spend Per Day)
+- การ์ดสัดส่วนรายจ่ายมีสองโหมด (ตามหมวดหมู่ / ตามการจัดสรร) วางซ้อนกันในช่อง grid เดียว (`[grid-area:1/1]`) การ์ดจึงสูงเท่าเดิมไม่ว่าจะสลับโหมดไหน โดยไม่ต้องมี scrollbar หรือกำหนดความสูงตายตัว ถ้าเดือนนั้นไม่มีรายรับจะขึ้นป้ายเตือน
 
-## ✨ Elite Features (ฟีเจอร์เด่นระดับพรีเมียม)
+### 2. แผนภาพ Sankey และกราฟหลัก
+- Sankey 5 คอลัมน์ แสดงเงินไหลจาก `Income Groups` → `Total Cash` → `Expenses & Savings Groups` → `Categories` → `Detailed Segments`
+- ตำแหน่ง node ถูกล็อกด้วย priority และ column ตอนกรองข้อมูลแผนภาพจึงไม่สลับตำแหน่ง
+- กราฟหลักแยกเป็น component ย่อย (`MainChartHeader`, `MainChartToolbar`, `MainChartLegend`, `MainChartCategoryFilter`) ส่วน logic อยู่ใน hook (`useSankeyEngine`, `useChartDataEngine`, `useChartOptions`) ไฟล์หลักเล็กลงกว่า 85%
 
-### 📊 1. 3-Column HUD Cards & Command Center (Modular Domain Architecture)
-*   **Domain Modularization:** จัดหมวดหมู่การ์ดข้อมูลออกเป็น 3 โดเมนหลักตามบทบาทการวิเคราะห์อย่างเด็ดขาด (`VitalsDomainCard`, `StrategicDomainCard`, `ForecastingDomainCard`)
-*   **Hybrid Hero Insights:** ผสานรวมข้อมูลกระแสเงินสดสุทธิ (Net Cashflow) และอัตราการออมตามมาตรฐาน CPA (CPA-Standard Savings Rate) ออกมาเป็นเกรดชี้วัดวินัยทางการเงิน (**Discipline Grade A-F Pill**) ภายในการ์ดความหนาแน่นสูงใบเดียว
-*   **Run-Rate Projection:** พยากรณ์กระแสเงินสดล่วงหน้าอิงตามพฤติกรรมการจ่ายเงินจริง พร้อมคำนวณยอดเงินที่จ่ายได้จริงต่อวัน (**Safe-to-Spend Per Day**)
-*   **Zero-Shift Expense Proportion:** วิเคราะห์โครงสร้างสัดส่วนค่าใช้จ่ายด้วยเทคนิค Pure CSS Grid Stacking (`[grid-area:1/1]`) ล็อกความสูงของการ์ดให้เท่ากัน 100% ระหว่างโหมดแยกตามหมวดหมู่ (Categories) และโหมดจัดสรร (Allocation) โดยไม่ต้องใช้ scrollbar หรือเดาความสูง พร้อมระบบแจ้งเตือนอัจฉริยะเมื่อไม่มีข้อมูลรายได้บันทึก (**No-Income Warning**)
+### 3. ตารางกระแสเงินสดรายเดือน
+- ตารางแยกเป็น component ย่อย (`CashflowTableHeader`, `CashflowTableRow`, `CashflowTableGroupCells`, `CashflowTableSummaryCells`, `CashflowTableFooter`, `FilterToolbar`, `GroupTooltip`) และคำนวณผ่าน hook `useFilteredMaps`
+- หมวดหมู่ที่มีข้อมูลจริง (`activeCatsByGroup`) คำนวณครั้งเดียวต่อการเปลี่ยนข้อมูล แต่ละเซลล์ไม่ต้องสแกนซ้ำ
+- หัวกลุ่มแตกเป็นคอลัมน์ย่อยของแต่ละหมวดให้อัตโนมัติ และซ่อนคอลัมน์ที่ยอดเป็น 0 ตอนกรอง
 
-### 🌊 2. Elite Sankey Flow Engine & Modular Multi-Chart System
-*   **5-Column Visualizer:** ระบบแสดงทิศทางการไหลเวียนของเงินระดับ Elite เชื่อมโยงมิติข้อมูลแบบ 5 คอลัมน์ตั้งแต่ `Income Groups` ➔ `Total Cash` ➔ `Expenses & Savings Groups` ➔ `Categories` ➔ `Detailed Segments`
-*   **Strict Layout Stability:** ล็อกตำแหน่ง Nodes ด้วย Node Priority และ Column Anchoring เพื่อป้องกันแผนภาพกระตุกหรือสลับตำแหน่งขณะฟิลเตอร์ข้อมูล
-*   **Modular Multi-Engine Architecture:** ตัวกราฟหลักแยกย่อยสถาปัตยกรรมออกเป็น Sub-components อิสระ (`MainChartHeader`, `MainChartToolbar`, `MainChartLegend`, `MainChartCategoryFilter`) พร้อม Custom Hooks ควบคุม Logic โดยเฉพาะ (`useSankeyEngine`, `useChartDataEngine`, `useChartOptions`) ลดความซับซ้อนของไฟล์หลักลงมากกว่า 85%
+### 4. ตารางบัญชีแนวนอน (heatmap)
+- ชี้เมาส์แล้วแถวกับคอลัมน์จะไฮไลต์เป็นกากบาทด้วย CSS ล้วน (`.heatmap-cell:hover::after`) ได้ 60fps เพราะ React ไม่ต้อง re-render
+- คอลัมน์แรก (วันที่) และคอลัมน์สุดท้าย (ยอดรวมรายวัน) ตรึงไว้ด้วย `position: sticky` เลื่อนแนวนอนได้เหมือน spreadsheet
+- ในมุมมองรายการ คลิกแก้ยอดเงินและคำอธิบายได้ทันที
 
-### 📑 3. Modular Cashflow Matrix & Dynamic Group Cells
-*   **Decomposed Architecture:** ตารางกระแสเงินสดสรุปรายเดือนความหนาแน่นสูงถูกแยกเป็นสถาปัตยกรรมระดับโมดูลาร์ (`CashflowTableHeader`, `CashflowTableRow`, `CashflowTableGroupCells`, `CashflowTableSummaryCells`, `CashflowTableFooter`, `FilterToolbar`, `GroupTooltip`) ควบคุมการประมวลผลด้วย Custom Hook `useFilteredMaps`
-*   **High-Performance Active Mapping:** ปรับปรุงประสิทธิภาพการวนลูปข้อมูลด้วยการ Precompute แมปหมวดหมู่ที่ใช้งานจริง (`activeCatsByGroup`) เพียงครั้งเดียวต่อการเปลี่ยนข้อมูล แทนการสแกนซ้ำซ้อนในทุกเซลล์
-*   **Monolithic UI Density:** Group headers ทำหน้าที่เป็น cell splitters แทรกคอลัมน์ย่อยของแต่ละหมวดหมู่อัตโนมัติ ซ่อนคอลัมน์ที่ยอดเป็น 0 เมื่อฟิลเตอร์เพื่อความกระชับสูงสุด
+### 5. ปฏิทินและบันทึกวันทำงาน
+- บันทึกสถานะวัน (ทำงาน, วันหยุด, ลาป่วย, ลากิจ, ลาพักร้อน, OT ฯลฯ) คู่กับรายการเงิน เพื่อดูว่าวันหยุดใช้เงินมากกว่าปกติแค่ไหน
+- ไทม์ไลน์ 12 เดือนสลับได้สองแบบ คือแถบแนวนอนกับ grid จัดกึ่งกลาง เซลล์ล็อกไว้ที่ 118px เพื่อกันปัญหา subpixel ของเบราว์เซอร์
+- ในมุมมอง GitHub ใช้ clone ที่อยู่นอกจอ (`hiddenLegendCloneRef`) วัดความสูงของ legend rail ไว้ก่อน สลับระหว่างโหมดประเภทวันกับ heatmap แล้วความสูงจึงไม่กระโดด และตารางอยู่กึ่งกลาง (`justify-[safe_center]`)
 
-### ⚡ 4. Pure CSS Heatmap Matrix Ledger (Horizontal Spreadsheet)
-*   **Zero-JS Crosshair Hover:** ระบบไฮไลต์แกนตั้ง (Column) และแกนนอน (Row) ด้วยเทคนิค Pure CSS Pseudo-elements (`.heatmap-cell:hover::after`) มอบความเร็ว 60fps ลื่นไหลไร้การ re-render ของ React
-*   **Sticky Excel Columns:** ล็อกคอลัมน์แรก (วันที่) และคอลัมน์สุดท้าย (ยอดรวมรายวัน) แบบ `position: sticky` พร้อมเลเยอร์ z-index ช่วยให้การสแกนข้อมูลตารางแนวนอนทำได้ง่ายดายเหมือนโปรแกรม Spreadsheet ระดับโปร
-*   **Inline Quick Editing:** รองรับการคลิกแก้ไขยอดเงินและคำอธิบายธุรกรรมได้ทันทีในมุมมองรายการ
+### 6. ไอคอน Lucide 327 ตัว
+- ห้ามใช้อิโมจิที่พิมพ์เอง ไอคอนทุกตัวในระบบเป็น Lucide สีเดียว
+- ตัวเลือกไอคอนแบ่งหมวด (ไลฟ์สไตล์ เทคโนโลยี การเงิน ฯลฯ) ค้นหาได้ทันที และมีไอคอนสำรองมาตรฐาน (`coins`, `piggy-bank`, `tag`)
 
-### 📅 5. Modular Calendar & Work-Day Logger
-*   **Work-Life Integration:** บันทึกสถานะวันทำงาน (ทำงาน, วันหยุด, ลาป่วย, ลากิจ, ลาพักร้อน, ทำ OT ฯลฯ) ควบคู่ไปกับการทำธุรกรรมเพื่อตรวจจับพฤติกรรมการจ่ายเงินช่วงวันหยุด (Weekend Spending Traps)
-*   **Wrapped 12-Month Timeline:** ปฏิทินแสดงผล Timeline 12 เดือนแบบสลับโหมด Strip แนวนอน หรือ Centered Grid พร้อมล็อกมิติเซลล์ที่ 118px เพื่อตัดปัญหา browser subpixel shift
-*   **Stabilized Legend Rail Height:** ใช้เทคนิค Off-screen Cloned Measuring (`hiddenLegendCloneRef`) ในมุมมอง GitHub Layout เพื่อล็อกความสูงของ Legend Rail และ Grid ให้สมดุลเสมอเมื่อสลับระหว่างโหมด Day-Type และ Heatmap พร้อมจัดกึ่งกลางตารางอย่างสมบูรณ์แบบ (`justify-[safe_center]`)
+### 7. ค้นหาและเพิ่มรายการ
+- ค้นหารายการย้อนหลังหลายปีได้ในระดับมิลลิวินาทีด้วย SQLite FTS5
+- หน้าต่างเดียวเพิ่มได้หลายรายการ และแนะนำรายการจากประวัติที่เคยจด
+- ส่งออก CSV/JSON โดยดึงจากฐานข้อมูลตรง ตัวกรองบนหน้าจอจึงไม่ทำให้ข้อมูลหาย
 
-### 🎨 6. Curated Lucide Icon System (327 Icons - Pure Monochrome Mandate)
-*   **Zero Free-Typed Emojis:** ห้ามใช้อิโมจิยูนิโค้ดทั่วไปโดยเด็ดขาด ควบคุมไอคอนและสัญลักษณ์ทั่วทั้งระบบด้วย Lucide Icons Monochrome คุณภาพสูงระดับพิกเซลเพอร์เฟกต์
-*   **Categorized Icon Picker:** ระบบเลือกไอคอนมากกว่า 327 ตัว แบ่งตามหมวดหมู่ไลฟ์สไตล์ เทคโนโลยี การเงิน และการใช้ชีวิต พร้อมระบบค้นหาแบบ Real-time และ Lucide Fallbacks มาตรฐาน (`coins`, `piggy-bank`, `tag`)
+### 8. ตัวกรองและการวิเคราะห์
+- ปุ่มซ่อน WANT ตัดรายจ่ายตามใจออกจากการคำนวณ เหลือแค่ส่วนจำเป็น (Needs) กับเงินออม (Savings)
+- บริการรายเดือนถูกจัดเข้ากลุ่ม 'ซอฟต์แวร์ & AI', 'สมาชิกช้อปปิ้ง' และ 'ความบันเทิง & สตรีมมิ่ง' ให้อัตโนมัติ
 
-### 🔍 7. Shark Full-Text Search (FTS5) & Fast Modals
-*   **Instant Real-Time Search:** ค้นหาประวัติธุรกรรมข้ามปีได้ทันทีในระดับมิลลิวินาทีด้วย **SQLite FTS5 Virtual Table**
-*   **Batch Add & Quick Suggest:** เพิ่มธุรกรรมหลายรายการพร้อมกันในหน้าต่างเดียว พร้อมระบบดึงประวัติการจดบันทึกเก่ามาแนะนำอัจฉริยะ (Smart Auto-suggestions)
-*   **Direct Database Export Stream:** ส่งออกข้อมูล CSV/JSON โดยดึงข้อมูลโดยตรงจากฐานข้อมูล ป้องกันข้อมูลตกหล่นจาก UI Filter
+### 9. สำรองข้อมูลและ log
+- สำรองฐานข้อมูลลง `/backups/` ทุกครั้งที่เปิดเซิร์ฟเวอร์
+- กด `[B]` ใน terminal หรือเรียก `/api/backup` เพื่อสำรองเมื่อไรก็ได้
+- ทุกการเพิ่ม/แก้ไข/ลบ พิมพ์ log ภาษาไทยลง terminal ทันที
 
-### 🎛️ 8. Advanced Analytics & Filtering
-*   **Hide WANT Toggle:** ฟิลเตอร์แยกกลุ่มค่าใช้จ่ายฟุ่มเฟือยออกจากระบบคำนวณ ช่วยให้สามารถวิเคราะห์ความจำเป็น (Needs) และการออม (Savings) ได้อย่างแม่นยำ
-*   **Recurring Services Classification:** จัดหมวดหมู่บริการรายเดือนอัตโนมัติเป็น 'ซอฟต์แวร์ & AI', 'สมาชิกช้อปปิ้ง', และ 'ความบันเทิง & สตรีมมิ่ง'
+### 10. ความปลอดภัย
+- `helmet v8.3.0` ใส่ HTTP security headers ให้ (กัน XSS, clickjacking, MIME sniffing)
+- CORS อนุญาตเฉพาะ `localhost:5173`, `127.0.0.1:5173`, `localhost:3000` และเปลี่ยนได้ผ่าน env `ALLOWED_ORIGINS`
+- ตอนปิดเซิร์ฟเวอร์จะปิด HTTP server รอ request ค้างให้เสร็จ แล้วปิด SQLite ก่อนออก ถ้าเกิน 5 วินาทีจะบังคับปิด
+- ทุกตารางใช้ SQLite `STRICT` ตารางเก่าที่ยังไม่เป็น STRICT จะถูก migrate ให้อัตโนมัติ
+- ทั้ง payload ที่แก้ข้อมูลและ query parameter ผ่าน Zod ก่อนถึง service
 
-### 📦 9. Automated Database Backup Engine & Mutation Tracking
-*   **Startup Auto-Backup:** สำรองฐานข้อมูลอัตโนมัติทุกครั้งที่เริ่มรันเซิร์ฟเวอร์ลงในโฟลเดอร์ `/backups/`
-*   **On-Demand Terminal Hotkey & API:** กดปุ่ม `[B]` บนหน้าต่าง Terminal เพื่อสั่งสร้างไฟล์ Backup ด่วนได้ทันที หรือเรียกสั่งการผ่าน REST API Endpoint `/api/backup`
-*   **Real-time DB Mutation Logger:** ระบบดักจับคำสั่ง SQL และแสดง Log การเปลี่ยนแปลงข้อมูล (เพิ่ม/แก้ไข/ลบ) ในรูปแบบไอคอนภาษาไทยที่อ่านเข้าใจง่ายทันทีบน Terminal
+## Tech stack
 
-### 🛡️ 10. Security & Resilience
-*   **Helmet Security Headers:** เพิ่ม HTTP Security Headers อัตโนมัติผ่าน `helmet v8.3.0` ป้องกันการโจมตีพื้นฐาน (XSS, Clickjacking, MIME sniffing)
-*   **CORS Origin Whitelist:** จำกัดการเข้าถึง API เฉพาะ Origins ที่อนุญาต (`localhost:5173`, `127.0.0.1:5173`, `localhost:3000`) พร้อม override ผ่าน `ALLOWED_ORIGINS` env
-*   **Graceful Shutdown:** ระบบปิดตัวอย่างปลอดภัย — ปิด HTTP Server, ระบาย Requests, ปิดการเชื่อมต่อ SQLite ก่อน Exit พร้อม 5 วินาที Force-exit timeout
-*   **SQLite STRICT Mode:** ทุกตารางใช้ `STRICT` keyword บังคับ type enforcement ระดับ storage engine พร้อม auto-migration สำหรับตารางเดิม
-*   **Zod End-to-End Validation:** ทั้ง Mutation payloads และ Query parameters ผ่านการตรวจสอบด้วย Zod schemas ก่อนถึง service layer
-
----
-
-## 🛠️ Tech Stack & Constraints
-
-| Layer | Technologies & Versions | Key Highlights |
+| ชั้น | เทคโนโลยีและเวอร์ชัน | หมายเหตุ |
 | :--- | :--- | :--- |
-| **Frontend Framework** | `React v18.2.0`, `TypeScript v5.3.3`, `Vite v5.0.8` | High-performance SPA, strict types, instant HMR |
-| **Styling & Theme** | `Tailwind CSS v3.4.1`, `@fontsource/inter`, `@fontsource/bai-jamjuree` | Ferrari Cinematic Editorial Palette (`#181818`, `#da291c`), `.tabular-nums` |
-| **Data Visualization** | `Chart.js v4.4.1`, `react-chartjs-2 v5.2.0`, `chartjs-chart-sankey v0.14.0` | Custom 5-column Sankey, multi-axis burn charts |
-| **Form & Validation** | `react-hook-form v7.75.0`, `zod v4.4.3`, `@hookform/resolvers v5.2.2` | Client-side strict validation with Satang conversion |
-| **Backend Runtime** | `Node.js v20 (LTS)` | Fast asynchronous runtime |
-| **API Framework** | `Express.js v4.18.2`, `TypeScript v5.3.3`, `tsx v4.7.1` | RESTful API, typed controllers and services |
-| **Database Engine** | `better-sqlite3 ^9.4.3` (SQLite C++ bindings) | Ultra-fast synchronous SQLite, FTS5 search, STRICT mode |
-| **Security** | `helmet v8.3.0`, `cors v2.8.5` | HTTP security headers, origin-restricted CORS whitelist |
-| **Testing** | `Vitest v4.1.11` (Backend), `Vitest v2.1.9` (Frontend) | 102+ unit tests covering financial math, formatters, CRUD, FTS, and UI components |
+| Frontend | `React v18.2.0`, `TypeScript v5.3.3`, `Vite v5.0.8` | SPA, strict types, HMR |
+| Styling | `Tailwind CSS v3.4.1`, `@fontsource/inter`, `@fontsource/bai-jamjuree` | ธีม Ferrari (`#181818`, `#da291c`), `.tabular-nums` |
+| กราฟ | `Chart.js v4.4.1`, `react-chartjs-2 v5.2.0`, `chartjs-chart-sankey v0.14.0` | Sankey 5 คอลัมน์, กราฟหลายแกน |
+| ฟอร์ม | `react-hook-form v7.75.0`, `zod v4.4.3`, `@hookform/resolvers v5.2.2` | ตรวจค่าฝั่ง client และแปลงเป็นสตางค์ |
+| Backend runtime | `Node.js v20 (LTS)` | |
+| API | `Express.js v4.18.2`, `TypeScript v5.3.3`, `tsx v4.7.1` | REST API, controller และ service มี type |
+| ฐานข้อมูล | `better-sqlite3 ^9.4.3` | SQLite แบบ synchronous, FTS5, STRICT mode |
+| ความปลอดภัย | `helmet v8.3.0`, `cors v2.8.5` | security headers, CORS whitelist |
+| เทสต์ | `Vitest v4.1.11` (backend), `Vitest v2.1.9` (frontend) | 100+ unit tests ครอบคลุมสูตรการเงิน, formatter, CRUD, FTS และ UI component |
 
----
+## ฐานข้อมูล
 
-## 🗄️ Database Architecture (สถาปัตยกรรมฐานข้อมูล)
+เงินทุกจำนวนเก็บและคำนวณเป็นสตางค์ (จำนวนเต็ม) เพื่อไม่ให้ทศนิยมแบบ floating-point คลาดเคลื่อน แปลงเป็นบาทตอนแสดงบนหน้าจอเท่านั้น
 
-สถาปัตยกรรมข้อมูลถูกออกแบบโดยยึดหลัก **Satang-First Mandate** คือการคำนวณและบันทึกหน่วยเงินทั้งหมดในฐานข้อมูลเป็นจำนวนเต็ม **สตางค์ (Satang - Integer)** เพื่อหลีกเลี่ยงปัญหาความคลาดเคลื่อนทางคณิตศาสตร์จากจุดทศนิยมลอยตัว (Floating-point errors) และจะถูกแปลงเป็นหน่วย **บาท (Baht)** เฉพาะตอนแสดงผลบน UI เท่านั้น
-
-ทุกตารางใช้ SQLite **STRICT** mode เพื่อบังคับชนิดข้อมูลระดับ storage engine ตารางเดิมที่ยังไม่เป็น STRICT จะถูก migrate อัตโนมัติเมื่อเริ่มรันเซิร์ฟเวอร์ (Transactional, Idempotent, Zero-data-loss)
+ทุกตารางใช้ SQLite `STRICT` ตารางเก่าที่ยังไม่เป็น STRICT จะถูก migrate ตอนเปิดเซิร์ฟเวอร์ ทำใน transaction เดียว รันซ้ำได้ และไม่ทำข้อมูลหาย
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -124,37 +116,30 @@
 └──────────────┘       └──────────────┘         └─────────────────┘
 ```
 
-### 📊 Tables Structure
-*   `cashflow_groups`: จัดการกลุ่มการเงินระดับสูง (`income`, `expense`, `savings`) พร้อมกำหนดประเภทการจัดสรร (`need`, `want`, `savings`), สี และไอคอน
-*   `categories`: หมวดหมู่ย่อยที่เชื่อมโยงกับกลุ่มการเงินหลัก (`order_index`, `icon`, `color`)
-*   `transactions`: บันทึกธุรกรรมจริง จัดเก็บยอดเงินเป็นหน่วยสตางค์ (Satang Integer) พร้อมคอลัมน์ `allocation_type` และรองรับ Soft-delete (`is_deleted`) เพื่อรักษาร่องรอยการตรวจสอบทางบัญชี (Audit Trails)
-*   `day_types`: นิยามประเภทวัน (ทำงาน, วันหยุด, ลาป่วย, OT ฯลฯ) พร้อมรหัสสีและไอคอน
-*   `calendar_days`: บันทึกประเภทวันและโน้ตประจำวันรายวัน (`date` PK `YYYY-MM-DD`)
-*   `settings`: ตาราง Key-Value สำหรับการตั้งค่าระบบ
-*   `transactions_fts`: ตารางเสมือน **FTS5 Virtual Table** ทำหน้าที่ดัชนีคำค้นหา (Full-Text Search) สำหรับคำอธิบายรายการธุรกรรมแบบ Real-time
+### ตาราง
+- `cashflow_groups`: กลุ่มใหญ่ (`income`, `expense`, `savings`) พร้อมประเภทการจัดสรร (`need`, `want`, `savings`) สี และไอคอน
+- `categories`: หมวดหมู่ย่อยที่ผูกกับกลุ่ม (`order_index`, `icon`, `color`)
+- `transactions`: รายการจริง ยอดเงินเป็นสตางค์ มีคอลัมน์ `allocation_type` และลบแบบ soft delete (`is_deleted`) ประวัติจึงยังตรวจย้อนหลังได้
+- `day_types`: ประเภทวัน (ทำงาน, วันหยุด, ลาป่วย, OT ฯลฯ) พร้อมสีและไอคอน
+- `calendar_days`: ประเภทวันและโน้ตของแต่ละวัน (`date` เป็น PK รูปแบบ `YYYY-MM-DD`)
+- `settings`: ค่าตั้งค่าแบบ key-value
+- `transactions_fts`: FTS5 virtual table สำหรับค้นหาคำอธิบายรายการ
 
-### 🧠 Analytical Views & Triggers
-*   `v_monthly_summary`: สรุปยอด รายรับ (`income_satang`), รายจ่าย (`expense_satang`), เงินออม (`savings_satang`) รายเดือน
-*   `v_daily_burn`: รายงานอัตราเผาผลาญเงินรายวัน (`daily_expense_satang`) เชื่อมโยงกับประเภทวันทำงานเพื่อตรวจจับพฤติกรรมการจ่ายเงิน
-*   `v_category_monthly`: แจกแจงยอดรวมของแต่ละหมวดหมู่ในแต่ละเดือน
-*   **Triggers:** `trg_transactions_updated_at` (อัปเดต timestamp อัตโนมัติ) และ `trg_transactions_ai/au/ad` (ซิงค์ดัชนี FTS5 ทันทีเมื่อมีการเพิ่ม/แก้ไข/ลบธุรกรรม)
-*   **Database Pragmas:** ใช้ `PRAGMA journal_mode = DELETE` เพื่อความเสถียร 100% บน Docker bind mounts และ Windows host filesystem
+### Views และ triggers
+- `v_monthly_summary`: ยอดรายรับ (`income_satang`) รายจ่าย (`expense_satang`) และเงินออม (`savings_satang`) รายเดือน
+- `v_daily_burn`: รายจ่ายรายวัน (`daily_expense_satang`) คู่กับประเภทวัน ใช้ดูพฤติกรรมการจ่าย
+- `v_category_monthly`: ยอดของแต่ละหมวดในแต่ละเดือน
+- triggers: `trg_transactions_updated_at` อัปเดต timestamp ให้เอง และ `trg_transactions_ai/au/ad` ซิงค์ดัชนี FTS5 ทุกครั้งที่เพิ่ม/แก้/ลบรายการ
+- ใช้ `PRAGMA journal_mode = DELETE` เพราะเสถียรกว่าบน Docker bind mount และ filesystem ของ Windows
 
----
+## เริ่มใช้งาน
 
-## 🚀 Getting Started & Usage (คู่มือการเริ่มใช้งาน)
+รันได้สามแบบ
 
-คุณสามารถเลือกใช้งาน Cashflow Shark ได้ตามรูปแบบที่เหมาะสม:
+### แบบที่ 1: Local development
 
----
+ต้องมี [Node.js v20 (LTS)](https://nodejs.org/) ขึ้นไป และ `npm` หรือ `yarn`
 
-### รูปแบบที่ 1: ⚡ Local TypeScript Development (สำหรับการพัฒนาและปรับแต่งโค้ด)
-
-#### ความต้องการขั้นต่ำ:
-*   [Node.js v20 (LTS)](https://nodejs.org/) ขึ้นไป
-*   `npm` หรือ `yarn`
-
-#### ขั้นตอนการรันในโหมด Development:
 ```bash
 # 1. ติดตั้ง Dependencies และสตาร์ท Backend API (Port 3000)
 cd backend
@@ -167,14 +152,12 @@ npm install
 npm run dev
 ```
 
-*   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173) (รองรับ Vite HMR)
-*   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
+- Frontend: [http://localhost:5173](http://localhost:5173) (มี Vite HMR)
+- Backend API: [http://localhost:3000](http://localhost:3000)
 
----
+### แบบที่ 2: รันแบบ production พอร์ตเดียว
 
-### รูปแบบที่ 2: 🏗️ Full-Stack Production Run (Single Port - รวม Web UI & API ในพอร์ตเดียว)
-
-เหมาะสำหรับการใช้งานจริงบนเครื่องส่วนตัว โดยไม่ต้องเปิด 2 หน้าต่าง Terminal:
+ใช้จริงบนเครื่องตัวเองได้โดยไม่ต้องเปิด terminal สองหน้าต่าง
 
 ```bash
 # 1. บิลด์ Frontend เป็น Static Assets
@@ -189,13 +172,11 @@ npm run build
 npm start
 ```
 
-*   **🌐 All-in-One Service:** [http://localhost:3000](http://localhost:3000) (เสิร์ฟทั้งหน้าเว็บและ API เบ็ดเสร็จ)
+- ทั้งหน้าเว็บและ API: [http://localhost:3000](http://localhost:3000)
 
----
+### แบบที่ 3: Docker Compose
 
-### รูปแบบที่ 3: 🐳 Docker Compose (สำหรับรันผ่าน Container แบบเบ็ดเสร็จ)
-
-เหมาะสำหรับการรันแบบ Isolated Environment โดยไม่ต้องลง Node.js บนเครื่องโฮสต์:
+ไม่ต้องลง Node.js บนเครื่อง
 
 ```bash
 # สตาร์ท Container ในโหมด Background
@@ -208,14 +189,12 @@ docker-compose logs -f
 docker-compose down
 ```
 
-*   **🖥️ Frontend Web App:** [http://localhost:5173](http://localhost:5173)
-*   **🔌 Backend API:** [http://localhost:3000](http://localhost:3000)
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Backend API: [http://localhost:3000](http://localhost:3000)
 
----
+## เทสต์
 
-## 🧪 Testing (การทดสอบ)
-
-ระบบทดสอบใช้ **Vitest** ครอบคลุม Core Domain Logic ทั้ง Frontend และ Backend:
+ใช้ Vitest ทั้ง frontend และ backend
 
 ```bash
 # รันเทสต์ Backend (CRUD, FTS Search, Satang Math, STRICT Mode)
@@ -227,40 +206,34 @@ cd frontend
 npm test
 ```
 
-### Test Coverage (100+ Tests):
-| ไฟล์ | ขอบเขตการทดสอบ |
+### ไฟล์เทสต์ (100+ tests)
+| ไฟล์ | ทดสอบอะไร |
 | :--- | :--- |
 | `transactionService.test.ts` (Backend) | Upsert, Delete, DeleteByMonth (index-friendly range), FTS5 Search, STRICT schema verification |
 | `formatters.test.ts` (Frontend) | Satang↔Baht conversion, `formatMoney`, Thai months/days, `hexToRgb`, Period-over-Period delta |
 | `analyticsHelpers.test.ts` (Frontend) | `createCategoryMap`, `extractYearMonth`, `generateCashflowMap` (income/expense/savings aggregation), `calculateDayTypeCounts` |
-| `ExpenseProportion.test.ts` (Frontend) | ตรรกะการคำนวณสัดส่วนค่าใช้จ่าย, การซิมูเลชันลดหมวดหมู่ (Simulation exclusions), Sort order และการจัดสรรงบประมาณ |
-| `ActivityTimeline.test.ts` (Frontend) | การคำนวณและแจกแจงประเภทวัน, Heatmap intensity thresholds, โหมด GitHub layout และ Calendar layout |
-| `exportUtils.test.ts` (Frontend) | การแปลงข้อมูลธุรกรรมเป็น CSV/JSON ที่สะอาด ปลอดข้อผิดพลาดจาก UI filters |
-| `datePickerHelpers.test.ts` (Frontend) | การคำนวณขอบเขตวันที่, การแปลงปี พ.ศ. / ค.ศ., Date bounds และ Thai date parsing |
-| `ledgerHelpers.test.ts` (Frontend) | การสร้าง Pivot Matrix สำหรับตารางบัญชีแนวนอน และผลรวมรายวัน/หมวดหมู่ |
-| `categoryIcons.test.ts` (Frontend) | ตรวจสอบความถูกต้องของผังแมปไอคอน Lucide กว่า 327 ไอคอน และความสมบูรณ์ของ Glyph mapping |
-| `categorySelectHelpers.test.ts` (Frontend) | ตรรกะการจัดกลุ่มหมวดหมู่ย่อยและการค้นหาหมวดหมู่แบบหลายมิติ |
-| `guideUtils.test.ts` (Frontend) | ตัวช่วยแนะนำการนำเข้าข้อมูล (Import Guide) และการประเมินโครงสร้างไฟล์ข้อมูลนำเข้า |
+| `ExpenseProportion.test.ts` (Frontend) | การคำนวณสัดส่วนรายจ่าย, การจำลองปิดหมวดหมู่, ลำดับการเรียง และการจัดสรรงบ |
+| `ActivityTimeline.test.ts` (Frontend) | การนับประเภทวัน, เกณฑ์ความเข้มของ heatmap, โหมด GitHub และโหมดปฏิทิน |
+| `exportUtils.test.ts` (Frontend) | การแปลงรายการเป็น CSV/JSON โดยไม่ติดตัวกรองบนหน้าจอ |
+| `datePickerHelpers.test.ts` (Frontend) | ขอบเขตวันที่, การแปลงปี พ.ศ./ค.ศ. และการอ่านวันที่ภาษาไทย |
+| `ledgerHelpers.test.ts` (Frontend) | การสร้าง pivot matrix ของตารางบัญชีแนวนอน และผลรวมรายวัน/รายหมวด |
+| `categoryIcons.test.ts` (Frontend) | ความถูกต้องของการแมปไอคอน Lucide 327 ตัว |
+| `categorySelectHelpers.test.ts` (Frontend) | การจัดกลุ่มหมวดหมู่ย่อยและการค้นหาหมวดหมู่ |
+| `guideUtils.test.ts` (Frontend) | ตัวช่วยของคู่มือนำเข้า และการตรวจโครงสร้างไฟล์ที่นำเข้า |
 
----
+## ความปลอดภัย
 
-## 🔒 Security (ความปลอดภัย)
-
-| Layer | Protection | Detail |
+| ชั้น | ใช้อะไร | รายละเอียด |
 | :--- | :--- | :--- |
-| **HTTP Headers** | `helmet v8.3.0` | ป้องกัน XSS, Clickjacking, MIME sniffing (CSP disabled สำหรับ inline charts) |
-| **CORS** | Origin Whitelist | จำกัดเฉพาะ `localhost:5173`, `127.0.0.1:5173`, `localhost:3000` + `ALLOWED_ORIGINS` env override |
-| **Input Validation** | Zod End-to-End | ทั้ง mutation payloads และ query parameters ผ่าน strict schema validation |
-| **SQL Injection** | Parameterized Queries | ทุก query ใช้ `db.prepare()` parameterized statements ไม่มี string concatenation |
-| **Data Integrity** | SQLite STRICT | บังคับ type enforcement ระดับ storage engine ป้องกัน silent type coercion |
-| **Shutdown** | Graceful | ปิด HTTP → ระบาย Requests → ปิด SQLite → Exit พร้อม 5s timeout |
+| HTTP headers | `helmet v8.3.0` | กัน XSS, clickjacking, MIME sniffing (ปิด CSP ไว้เพราะกราฟใช้ inline) |
+| CORS | Origin whitelist | เฉพาะ `localhost:5173`, `127.0.0.1:5173`, `localhost:3000` และ override ได้ด้วย env `ALLOWED_ORIGINS` |
+| ตรวจ input | Zod | ทั้ง mutation payload และ query parameter ผ่าน schema |
+| SQL injection | Parameterized queries | ทุก query ใช้ `db.prepare()` ไม่ต่อ string |
+| ความถูกต้องของข้อมูล | SQLite STRICT | บังคับชนิดข้อมูลที่ระดับ storage กัน type ถูกแปลงเงียบๆ |
+| การปิดเซิร์ฟเวอร์ | Graceful shutdown | ปิด HTTP → รอ request ค้าง → ปิด SQLite → ออก (timeout 5 วินาที) |
 
----
+## License
 
-## 📝 License
+MIT License ดูรายละเอียดที่ [LICENSE](LICENSE)
 
-โปรเจกต์นี้เผยแพร่ภายใต้สัญญาอนุญาต **MIT License** สามารถดูรายละเอียดเพิ่มเติมได้ที่ไฟล์ [LICENSE](LICENSE)
-
----
-
-> 💻 สร้างสรรค์ด้วยจินตนาการ คีย์บอร์ด และพลังของ AI ปัญญาประดิษฐ์ 100% โดย **Cashflow Shark & The AI Dream Team (Antigravity, Gemini & Claude)**
+> สร้างโดย Cashflow Shark ร่วมกับ Antigravity, Gemini และ Claude
