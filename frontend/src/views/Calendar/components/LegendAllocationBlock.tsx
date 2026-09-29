@@ -1,7 +1,7 @@
 import React from 'react';
 import { List, Rows, Folders, Coins } from 'lucide-react';
 import sharkWhite from '../../../assets/images/shark-white.svg';
-import { formatAmount as formatValue } from '../../../utils/formatters';
+import { formatMoney as formatValue } from '../../../utils/formatters';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
@@ -235,7 +235,7 @@ function CategoryLegendSection({
               >
                 <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                 <span>{cat.name}</span>
-                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
+                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">฿{formatValue(amt)}</span>
               </button>
             );
           })}
@@ -263,7 +263,7 @@ function CategoryLegendSection({
                     <span className="truncate">{groupObj.name}</span>
                   </span>
                   <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>
-                    {amtPrefix}{formatValue(groupTotal)} ฿
+                    {amtPrefix}฿{formatValue(groupTotal)}
                   </span>
                 </div>
 
@@ -289,7 +289,7 @@ function CategoryLegendSection({
                       >
                         <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                         <span>{cat.name}</span>
-                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatValue(amt)} ฿</span>
+                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">฿{formatValue(amt)}</span>
                       </button>
                     );
                   })}
@@ -310,8 +310,8 @@ function AllocationOverviewSection({
 }: { allocationTotals: any; legendLayoutMode: 'compact' | 'grouped'; hexToRgb: (hex: string | null | undefined) => string; }) {
   const rows = [
     { label: 'จำเป็น', dot: ALLOCATION_COLORS.need, pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
-    { label: 'ทั่วไป', dot: ALLOCATION_COLORS.want, pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
-    { label: 'เงินออม', dot: ALLOCATION_COLORS.savings, pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
+    { label: 'ตามใจ', dot: ALLOCATION_COLORS.want, pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
+    { label: 'เงินเหลือ', dot: ALLOCATION_COLORS.savings, pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
   ];
 
   return (
@@ -328,7 +328,7 @@ function AllocationOverviewSection({
                 <span className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: row.dot }} /> {row.label}
               </span>
               <span className="font-bold tabular-nums tracking-tight text-ink-display">
-                {formatValue(row.total)} ฿ ({row.pct}%)
+                ฿{formatValue(row.total)} ({row.pct}%)
               </span>
             </div>
             {legendLayoutMode === 'grouped' && row.cats.length > 0 && (
@@ -341,7 +341,7 @@ function AllocationOverviewSection({
                         {cat.name} <span className="text-ink-body text-[11px] font-normal font-sans">({cat.groupName})</span>
                       </span>
                     </span>
-                    <span className="font-bold tabular-nums tracking-tight text-ink-display ml-2 shrink-0">{formatValue(cat.amount)} ฿</span>
+                    <span className="font-bold tabular-nums tracking-tight text-ink-display ml-2 shrink-0">฿{formatValue(cat.amount)}</span>
                   </div>
                 ))}
               </div>

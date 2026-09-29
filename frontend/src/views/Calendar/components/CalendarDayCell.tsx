@@ -198,14 +198,14 @@ const CalendarDayCell = memo(function CalendarDayCell({
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-line/20 pb-0.5">
              {cellData.exp > 0 ? (
               <span className="text-expense tabular-nums tracking-tight flex items-center gap-1">
-                {formatAmount(cellData.exp)} ฿
+                ฿{formatAmount(cellData.exp)}
                 {hiddenExpCount > 0 && <MoreButton count={hiddenExpCount} tone="expense" onOpen={() => list.setOpen(o => !o)} open={list.open} triggerRef={list.triggerRef} />}
               </span>
              ) : <span />}
              {cellData.inc > 0 && (
               <span className="text-income tabular-nums tracking-tight flex items-center gap-1">
                 {hiddenIncCount > 0 && <MoreButton count={hiddenIncCount} tone="income" onOpen={() => list.setOpen(o => !o)} open={list.open} triggerRef={hiddenExpCount > 0 ? undefined : list.triggerRef} />}
-                +{formatAmount(cellData.inc)} ฿
+                +฿{formatAmount(cellData.inc)}
               </span>
             )}
           </div>
@@ -218,7 +218,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             <div 
               key={`inc_${tx.id}`} 
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
-              title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
+              title={`${tx.description} — ฿${formatMoney(tx.amount)}`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
@@ -238,7 +238,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             <div 
               key={`exp_${tx.id}`} 
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx" 
-              title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
+              title={`${tx.description} — ฿${formatMoney(tx.amount)}`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">

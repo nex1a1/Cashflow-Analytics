@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import transactionService from '../services/transactionService';
 import categoryService from '../services/categoryService';
+import backupService from '../services/backupService';
 import { upsertTransactionSchema } from '../validations/transactionValidation';
 import { dateRangeQuerySchema, searchQuerySchema, monthParamSchema } from '../validations/queryValidation';
 
@@ -59,13 +60,23 @@ export const deleteMonth = (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const resetAllData = (req: Request, res: Response, next: NextFunction) => {
+export const resetAllData = async (req: Request, res: Response, next: NextFunction) => {
   if (req.headers['x-confirm-reset'] !== 'true') {
     return res.status(400).json({ error: 'Confirmation required. Send X-Confirm-Reset: true header.' });
   }
   try {
+    // If the backup fails, next(err) aborts — never wipe without a safety copy.
+    const backup = await backupService.createPreResetBackup();
     transactionService.deleteAll();
-    res.json({ success: true, message: 'All data cleared successfully' });
+    res.json({ success: true, message: 'All data cleared successfully', backup });
+  } catch (err: unknown) {
+    next(err);
+  }
+};
+
+export const getTransactionCount = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json({ count: transactionService.count() });
   } catch (err: unknown) {
     next(err);
   }

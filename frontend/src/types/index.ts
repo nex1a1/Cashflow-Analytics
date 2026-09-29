@@ -45,7 +45,7 @@ export interface CashflowGroup {
   id: string;
   name: string;
   type: GroupType;
-  allocation_type: AllocationType;
+  allocation_type: AllocationType | null;
   order_index: number;
   color?: string | null;
   icon?: string | null;
@@ -184,6 +184,7 @@ export interface AppUIContextValue {
 
 export interface AppDataContextValue {
   transactions: TransactionDisplay[];
+  totalCount: number;
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   cashflowGroups: CashflowGroup[];

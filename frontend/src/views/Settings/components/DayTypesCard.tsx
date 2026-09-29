@@ -47,6 +47,7 @@ const DayTypesCard = memo(({
                 <button
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'UP')}
+                  aria-label={`เลื่อน ${dt.label} ขึ้น`}
                   disabled={idx === 0}
                   className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent-ink hover:bg-surface-elevated"
                 >
@@ -55,6 +56,7 @@ const DayTypesCard = memo(({
                 <button
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'DOWN')}
+                  aria-label={`เลื่อน ${dt.label} ลง`}
                   disabled={idx === dayTypeConfig.length - 1}
                   className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-accent-ink hover:bg-surface-elevated"
                 >

@@ -13,6 +13,7 @@ import * as analyticsController from '../controllers/analyticsController';
 // Transactions
 router.get('/transactions', transactionController.getAllTransactions);
 router.get('/transactions/search', transactionController.searchTransactions);
+router.get('/transactions/count', transactionController.getTransactionCount);
 router.get('/transactions/periods', transactionController.getAvailablePeriods);
 router.get('/transactions/frequent', transactionController.getFrequentItems);
 router.post('/transactions/predict', transactionController.predictCategories);

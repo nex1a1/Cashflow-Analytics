@@ -248,6 +248,7 @@ export default function TopTransactions() {
           <div className="relative group shrink-0">
             <select
               value={topXLimit} 
+              aria-label="จำนวนรายการสูงสุดที่แสดง"
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
               className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent-ink focus:border-accent-ink"

@@ -2,7 +2,7 @@ export interface CashflowGroup {
   id: string;
   name: string;
   type: 'income' | 'expense' | 'savings';
-  allocation_type: 'need' | 'want' | 'savings';
+  allocation_type: 'need' | 'want' | 'savings' | null; // null สำหรับกลุ่มรายรับ
   order_index: number;
   color?: string | null;
   icon?: string | null;

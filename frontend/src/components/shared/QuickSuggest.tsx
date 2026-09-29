@@ -323,7 +323,7 @@ function QuickSuggest({
       {/* Header */}
       <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-2 text-slate-300">
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
-        Quick Suggestions {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
+        รายการแนะนำ {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
       </h4>
       
       {/* Filtering Inputs Section */}

@@ -45,6 +45,7 @@ export default function useTransactionData({
 }: UseTransactionDataProps) {
   const [transactions, setTransactions] = useState<TransactionDisplay[]>([]);
   const [summaryData, setSummaryData] = useState<any>(null); // Aggregated analytics from backend
+  const [totalCount, setTotalCount] = useState(0); // every active transaction in the DB, not just the loaded window
   const [masterPeriods, setMasterPeriods] = useState<string[]>([]); // List of all months with data
   const [frequentItems, setFrequentItems] = useState<FrequentItem[]>([]); // All-time frequent transactions
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -104,7 +105,8 @@ export default function useTransactionData({
         loadData(dataRange.start, dataRange.end),
         loadAnalytics(analyticsRange.start, analyticsRange.end),
         transactionService.getFrequentItems().then(setFrequentItems),
-        transactionService.getPeriods().then(setMasterPeriods)
+        transactionService.getPeriods().then(setMasterPeriods),
+        transactionService.getCount().then(r => setTotalCount(r.count))
       ]);
     } catch (err) {
       console.error('Refresh failed', err);
@@ -119,11 +121,13 @@ export default function useTransactionData({
     try {
       // 1. Periods & Frequent Items (Master Lists)
       try {
-        const [periods, frequent] = await Promise.all([
+        const [periods, frequent, total] = await Promise.all([
           transactionService.getPeriods(),
-          transactionService.getFrequentItems()
+          transactionService.getFrequentItems(),
+          transactionService.getCount()
         ]);
         setMasterPeriods(periods);
+        setTotalCount(total.count);
         setFrequentItems(frequent);
       } catch (err) {
         console.error('Master lists load failed:', err);
@@ -328,6 +332,7 @@ export default function useTransactionData({
     transactions,
     summaryData,
     masterPeriods,
+    totalCount,
     frequentItems,
     isProcessing,
     isBootstrapping,

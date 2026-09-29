@@ -32,7 +32,7 @@ class GroupService {
       group.id,
       group.name,
       group.type,
-      group.allocation_type || 'want',
+      group.type === 'income' ? null : (group.allocation_type || 'want'), // รายรับไม่มี NEED/WANT
       group.order_index || 0,
       group.color || null,
       group.icon || null,

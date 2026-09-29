@@ -87,6 +87,19 @@ class BackupService {
     };
   }
 
+  /** Snapshot taken right before a wipe. Own file name so later backups (startup/manual) can't overwrite it, and pruning ignores it. */
+  async createPreResetBackup(): Promise<string> {
+    const backupDir = this.getBackupDir();
+    fs.mkdirSync(backupDir, { recursive: true });
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const filename = `pre-reset-${this.getLocalDateStr(now)}-${time}.db`;
+    await db.backup(path.join(backupDir, filename));
+    console.log(`📡 Pre-reset backup: ${filename}`);
+    return filename;
+  }
+
   listBackups(): BackupFileInfo[] {
     const backupDir = this.getBackupDir();
 

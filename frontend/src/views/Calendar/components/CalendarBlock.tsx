@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import CalendarDayCell, { burnAlpha, CALENDAR_HEAT_COLORS } from './CalendarDayCell';
 import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
-import { formatAmount, THAI_MONTHS_SHORT } from '../../../utils/formatters';
+import { formatMoney, THAI_MONTHS_SHORT } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
 import { localTodayIso } from '../../../utils/payCycle';
 import { DayType, TransactionDisplay } from '../../../types';
@@ -75,17 +75,17 @@ const CalendarBlock = React.memo(function CalendarBlock({
           <div className="flex items-center gap-2 flex-wrap">
             {monthInc > 0 && (
               <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-income/10 text-income border-income/30">
-                ▲ {formatAmount(monthInc)} ฿
+                ▲ ฿{formatMoney(monthInc)}
               </span>
             )}
             {monthExp > 0 && (
               <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-expense/10 text-expense border-expense/30">
-                ▼ {formatAmount(monthExp)} ฿
+                ▼ ฿{formatMoney(monthExp)}
               </span>
             )}
             {(monthInc > 0 || monthExp > 0) && (
               <span className={`text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-income/10 text-income border-income/30' : 'bg-danger/10 text-danger border-danger/30'}`}>
-                คงเหลือ {formatAmount(monthNet)} ฿
+                คงเหลือ ฿{formatMoney(monthNet)}
               </span>
             )}
             {excludedCategoryIds?.size > 0 && (
@@ -214,7 +214,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 พีค
               </span>
             </div>
-            <span className="tabular-nums text-ink-body font-mono">(สูงสุด ฿{formatAmount(maxDailyExpense)})</span>
+            <span className="tabular-nums text-ink-body font-mono">(สูงสุด ฿{formatMoney(maxDailyExpense)})</span>
           </div>
         )}
         <div className={`${maxDailyExpense > 0 ? '' : 'ml-auto '}text-[12px] font-black px-3 py-0.5 rounded-pill border bg-surface-elevated border-line text-ink-display tabular-nums tracking-tight`}>

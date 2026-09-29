@@ -4,7 +4,7 @@ import { Category } from '../types';
 
 interface CategoryWithDetails extends Category {
   group_type: 'income' | 'expense' | 'savings';
-  allocation_type: 'need' | 'want' | 'savings';
+  allocation_type: 'need' | 'want' | 'savings' | null;
 }
 
 class CategoryService {

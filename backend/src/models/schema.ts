@@ -264,6 +264,16 @@ const migrateTablesToStrict = (): void => {
   console.log('🛡️ ทุกตารางถูกยกระดับเป็น SQLite STRICT Mode สำเร็จ 100% (ไร้การสูญหายของข้อมูล)');
 };
 
+/** รายรับไม่ใช้ NEED/WANT — ล้างค่า default 'want' ที่ค้างอยู่ในกลุ่มรายรับ (idempotent) */
+const clearIncomeAllocation = (): void => {
+  try {
+    const r = db.prepare("UPDATE cashflow_groups SET allocation_type = NULL WHERE type = 'income' AND allocation_type IS NOT NULL").run();
+    if (r.changes > 0) console.log(`🧹 ล้าง allocation_type ของกลุ่มรายรับ ${r.changes} กลุ่ม`);
+  } catch {
+    // ครั้งแรกที่ยังไม่มีตาราง — จะถูกเรียกอีกครั้งหลัง seed
+  }
+};
+
 export const initSchema = (): void => {
   // เปิด Foreign Key Support
   db.pragma('foreign_keys = ON');
@@ -278,6 +288,7 @@ export const initSchema = (): void => {
 
   // ตรวจสอบและยกระดับโครงสร้างตารางเดิมให้เป็น STRICT Mode หากยังไม่ได้เป็น
   migrateTablesToStrict();
+  clearIncomeAllocation();
 
   // ล้างตารางที่เลิกใช้งานแล้วจากฟีเจอร์เก่าที่ถูกถอดออก (Purge deprecated tables)
   db.exec(`
@@ -447,6 +458,7 @@ export const initSchema = (): void => {
 
   // 4. บันทึกข้อมูลตั้งต้นที่จำเป็น
   seedInitialData();
+  clearIncomeAllocation();
 
   // 5. รัน Migration สำหรับกลุ่มซอฟต์แวร์/บริการรายเดือน
   runSubscriptionMigration();

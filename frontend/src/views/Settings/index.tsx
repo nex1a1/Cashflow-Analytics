@@ -234,7 +234,7 @@ const SettingsView = memo(function SettingsView({
         </div>
       </div>
 
-      <DangerZone transactions={transactions} handleDeleteAllData={handleDeleteAllData} />
+      <DangerZone handleDeleteAllData={handleDeleteAllData} />
     </div>
   );
 });

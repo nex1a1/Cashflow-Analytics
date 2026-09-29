@@ -255,6 +255,10 @@ class TransactionService {
   /**
    * Returns a distinct list of YYYY-MM where transactions exist
    */
+  count(): number {
+    return (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE is_deleted = 0').get() as { c: number }).c;
+  }
+
   getAvailablePeriods(): string[] {
     const rows = db.prepare(`
       SELECT DISTINCT strftime('%Y-%m', date) as period 

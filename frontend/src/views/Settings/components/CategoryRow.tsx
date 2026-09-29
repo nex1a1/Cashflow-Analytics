@@ -1,4 +1,5 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
+import Dropdown from '@/components/shared/Dropdown';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
 import ColorPicker from './ColorPicker';
@@ -47,7 +48,11 @@ const CategoryRow = memo(({
   const selectTheme = !currentGroupValid
     ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
     : `bg-canvas border-line text-ink-display ${focusBorder}`;
-  const selectCls = `border text-[11px] font-bold py-1.5 px-2 outline-none cursor-pointer w-40 rounded-sm ${selectTheme}`;
+  const selectCls = `w-40 ${selectTheme}`;
+  const groupOptions = useMemo(
+    () => filteredGroups.map(g => ({ value: g.id, label: g.name, color: g.color })),
+    [filteredGroups],
+  );
 
   return (
     <div
@@ -58,6 +63,7 @@ const CategoryRow = memo(({
         <button
           type="button"
           onClick={() => onMove(cat.id, 'UP')}
+          aria-label={`เลื่อน ${cat.name} ขึ้น`}
           disabled={isFirst}
           className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-surface-elevated"
         >
@@ -66,6 +72,7 @@ const CategoryRow = memo(({
         <button
           type="button"
           onClick={() => onMove(cat.id, 'DOWN')}
+          aria-label={`เลื่อน ${cat.name} ลง`}
           disabled={isLast}
           className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-surface-elevated"
         >
@@ -85,20 +92,15 @@ const CategoryRow = memo(({
       />
 
       <div className="relative shrink-0">
-        <select
+        <Dropdown
           value={cat.cashflowGroup || ''}
-          onChange={e => onChange(cat.id, 'cashflowGroup', e.target.value)}
+          options={groupOptions}
+          onChange={v => onChange(cat.id, 'cashflowGroup', v)}
+          placeholder="-- กลุ่ม --"
           className={selectCls}
           title={!currentGroupValid ? 'กลุ่มนี้ไม่ตรงกับประเภทของหมวดหมู่' : undefined}
           aria-label="กลุ่มของหมวดหมู่"
-        >
-          <option value="" disabled>-- กลุ่ม --</option>
-          {filteredGroups.map(g => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
-          ))}
-        </select>
+        />
         {!currentGroupValid && (
           <AlertTriangle className="w-4 h-4 text-amber-400 absolute -top-1 -right-1 pointer-events-none" />
         )}

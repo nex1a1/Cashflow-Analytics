@@ -6,8 +6,14 @@ import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
 import IconPicker from '@/components/shared/IconPicker';
 import AllocationSelect from '@/components/shared/AllocationSelect';
+import Dropdown from '@/components/shared/Dropdown';
 
 const GROUPS_ICON = <Grid className="w-4 h-4" />;
+const GROUP_TYPE_OPTIONS = [
+  { value: 'income', label: 'รายรับ' },
+  { value: 'expense', label: 'รายจ่าย' },
+  { value: 'savings', label: 'ออม/ลงทุน' },
+];
 
 import { Category, CashflowGroup } from '../../../types';
 
@@ -52,11 +58,11 @@ const CashflowGroupsCard = memo(({
                   : 'bg-surface border-line hover:bg-surface-hover/50 hover:border-line-strong'
               }`}>
                 <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-ink-muted'}`}>
-                  <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} disabled={idx === 0}
+                  <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} aria-label={`เลื่อน ${group.name} ขึ้น`} disabled={idx === 0}
                     className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent-ink hover:bg-surface-elevated'}`}>
                     <ChevronUp className="w-4 h-4" />
                   </button>
-                  <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} disabled={idx === arr.length - 1}
+                  <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'DOWN')} aria-label={`เลื่อน ${group.name} ลง`} disabled={idx === arr.length - 1}
                     className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent-ink hover:bg-surface-elevated'}`}>
                     <ChevronDown className="w-4 h-4" />
                   </button>
@@ -67,27 +73,25 @@ const CashflowGroupsCard = memo(({
                 <IconPicker icon={group.icon} color={group.color} onChange={v => handleChangeCashflowGroup(group.id, 'icon', v)} />
 
 
-                <select value={group.type} onChange={e => handleChangeCashflowGroup(group.id, 'type', e.target.value)}
+                <Dropdown
+                  value={group.type}
+                  options={GROUP_TYPE_OPTIONS}
+                  onChange={v => handleChangeCashflowGroup(group.id, 'type', v)}
                   disabled={group.isDefault || inUse}
-                  className={`p-1.5 text-[11px] font-bold outline-none border w-[110px] shrink-0 rounded-sm ${
-                    'bg-canvas border-line text-ink-display'
-                  } ${(group.isDefault || inUse) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer focus:border-accent-ink focus:shadow-none'}`}
+                  className="w-[110px] shrink-0 bg-canvas border-line text-ink-display"
                   title={inUse ? 'มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้' : undefined}
-                  aria-label="ประเภทกลุ่ม">
-                  <option value="income">รายรับ</option>
-                  <option value="expense">รายจ่าย</option>
-                  <option value="savings">ออม/ลงทุน</option>
-                </select>
+                  aria-label="ประเภทกลุ่ม"
+                />
 
                 {group.type === 'expense' ? (
-                  <div className="w-[84px] shrink-0">
+                  <div className="w-[100px] shrink-0">
                     <AllocationSelect
                       value={group.allocation_type || 'want'}
                       onChange={val => handleChangeCashflowGroup(group.id, 'allocation_type', val)}
                     />
                   </div>
                 ) : (
-                  <div className="w-[84px] shrink-0" />
+                  <div className="w-[100px] shrink-0" />
                 )}
 
                 <DebouncedInput

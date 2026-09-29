@@ -38,7 +38,7 @@ export default function MainLayout() {
   } = useAppUI();
 
   const {
-    transactions, categories, cashflowGroups, setCashflowGroups,
+    transactions, totalCount, categories, cashflowGroups, setCashflowGroups,
     dayTypes, dayTypeConfig, frequentItems,
     dbStatus, isProcessing, isCsvProcessing,
     importPreview, setImportPreview, fileInputRef,
@@ -84,7 +84,7 @@ export default function MainLayout() {
       >
         <AppHeader
           dbStatus={dbStatus}
-          transactionCount={transactions.length}
+          transactionCount={totalCount}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           filterPeriod={filterPeriod}

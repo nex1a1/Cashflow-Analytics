@@ -76,7 +76,7 @@ export const AllocationSelect = memo(function AllocationSelect({
     openUpwards: boolean;
   }>({
     left: 0,
-    width: 260,
+    width: 210,
     openUpwards: false,
   });
 
@@ -94,8 +94,8 @@ export const AllocationSelect = memo(function AllocationSelect({
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 260;
-    const estimatedHeight = 220;
+    const popoverWidth = 210;
+    const estimatedHeight = 120;
 
     // Center popover relative to trigger, but constrain to viewport
     let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
@@ -292,22 +292,7 @@ export const AllocationSelect = memo(function AllocationSelect({
               width: `${coords.width}px`,
             }}
           >
-            {/* Top Laser Hairline Accent */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-90" />
-
-            {/* Header / HUD Context */}
-            <div className="px-2.5 py-1.5 border-b border-line bg-canvas flex items-center justify-between shrink-0 gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono flex items-center gap-1.5 min-w-0 truncate">
-                <span className="w-1.5 h-1.5 rounded-none bg-accent shrink-0" />
-                การจัดสรรเงิน
-              </span>
-              <span className="text-[10px] font-mono text-ink-muted whitespace-nowrap shrink-0">
-                50 / 30 / 20
-              </span>
-            </div>
-
-            {/* Option Cards */}
-            <div className="p-1 flex flex-col gap-1 bg-surface">
+            <div className="p-1 flex flex-col gap-0.5 bg-surface">
               {ALLOCATION_CONFIGS.map((cfg, idx) => {
                 const isSelected = cfg.id === currentKey;
                 const isFocused = idx === activeIndex;
@@ -323,21 +308,12 @@ export const AllocationSelect = memo(function AllocationSelect({
                     type="button"
                     role="option"
                     aria-selected={isSelected}
+                    title={cfg.desc}
                     onClick={(e) => handleSelect(cfg.id, e)}
                     onMouseEnter={() => setActiveIndex(idx)}
-                    className={`flex items-center justify-between w-full px-2.5 py-2 text-left rounded-none border transition-colors cursor-pointer group ${
-                      isSelected
-                        ? 'bg-canvas text-white'
-                        : isFocused
-                        ? 'bg-surface-hover text-white'
-                        : 'bg-transparent text-slate-300 hover:bg-surface-hover'
-                    }`}
+                    className="flex items-center gap-2 w-full h-7 px-2 text-left rounded-none border cursor-pointer text-white"
                     style={{
-                      borderColor: isSelected
-                        ? `rgba(${cfgRgb}, 0.55)`
-                        : isFocused
-                        ? `rgba(${cfgRgb}, 0.25)`
-                        : 'transparent',
+                      borderColor: isSelected ? `rgba(${cfgRgb}, 0.55)` : 'transparent',
                       backgroundColor: isSelected
                         ? `rgba(${cfgRgb}, 0.14)`
                         : isFocused
@@ -345,64 +321,18 @@ export const AllocationSelect = memo(function AllocationSelect({
                         : undefined,
                     }}
                   >
-                    {/* Left: Mini glyph + Title + Subtitle */}
-                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <div
-                        className="w-6 h-6 rounded-none flex items-center justify-center shrink-0 border mt-0.5"
-                        style={{
-                          backgroundColor: `rgba(${cfgRgb}, 0.18)`,
-                          borderColor: `rgba(${cfgRgb}, 0.45)`,
-                          color: readable(cfg.color),
-                        }}
-                      >
-                        <OptionIcon className="w-3.5 h-3.5" />
-                      </div>
-
-                      <div className="flex flex-col min-w-0 flex-1 leading-tight">
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className="font-mono font-black text-xs tracking-wider"
-                            style={{ color: readable(cfg.color) }}
-                          >
-                            {cfg.label}
-                          </span>
-                          <span className="text-[11px] font-bold text-slate-300">
-                            ({cfg.nameThai})
-                          </span>
-                          <span
-                            className="px-1.5 py-0.5 text-[9px] font-mono font-black rounded-pill border leading-none ml-auto whitespace-nowrap shrink-0"
-                            style={{
-                              backgroundColor: `rgba(${cfgRgb}, 0.15)`,
-                              borderColor: `rgba(${cfgRgb}, 0.35)`,
-                              color: readable(cfg.color),
-                            }}
-                          >
-                            {cfg.quota}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-ink-body mt-0.5 truncate">
-                          {cfg.desc}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right: Selected Checkmark */}
-                    {isSelected && (
-                      <Check
-                        className="w-3.5 h-3.5 shrink-0 ml-2"
-                        style={{ color: readable(cfg.color) }}
-                      />
-                    )}
+                    <OptionIcon className="w-3.5 h-3.5 shrink-0" style={{ color: readable(cfg.color) }} />
+                    <span className="font-mono font-black text-[11px] tracking-wider" style={{ color: readable(cfg.color) }}>
+                      {cfg.label}
+                    </span>
+                    <span className="text-[11px] font-bold text-ink-body truncate">{cfg.nameThai}</span>
+                    <span className="ml-auto font-mono text-[10px] text-ink-muted whitespace-nowrap">
+                      {cfg.quota.replace('เป้า ', '')}
+                    </span>
+                    {isSelected && <Check className="w-3 h-3 shrink-0" style={{ color: readable(cfg.color) }} />}
                   </button>
                 );
               })}
-            </div>
-
-            {/* Footer Keyboard Hints */}
-            <div className="px-2 py-1 bg-canvas border-t border-line flex items-center justify-between text-[10px] text-slate-500 font-mono shrink-0 select-none">
-              <span>↑↓ นำทาง</span>
-              <span>Enter เลือก</span>
-              <span>Esc ปิด</span>
             </div>
           </div>,
           document.body

@@ -59,8 +59,8 @@ export default function CategorySelect({
     openUpwards: boolean;
   }>({
     left: 0,
-    width: 480,
-    maxHeight: 480,
+    width: 320,
+    maxHeight: 360,
     openUpwards: false
   });
 
@@ -137,10 +137,10 @@ export default function CategorySelect({
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const rawWidth = variant === 'default'
-      ? Math.max(460, Math.min(rect.width, 540))
-      : 480;
+      ? Math.max(300, Math.min(rect.width, 340))
+      : 320;
     const popoverWidth = Math.min(rawWidth, window.innerWidth - 32);
-    const estimatedHeight = 480;
+    const estimatedHeight = 360;
 
     let left = rect.left;
     if (left + popoverWidth > window.innerWidth - 16) {
@@ -159,10 +159,10 @@ export default function CategorySelect({
     let bottom: number | undefined;
 
     if (openUpwards) {
-      maxHeight = Math.min(estimatedHeight, Math.max(240, spaceAbove));
+      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceAbove));
       bottom = window.innerHeight - rect.top + 4;
     } else {
-      maxHeight = Math.min(estimatedHeight, Math.max(240, spaceBelow));
+      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceBelow));
       top = rect.bottom + 4;
     }
 
@@ -415,7 +415,7 @@ export default function CategorySelect({
             <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
             {/* ZONE 1: SEAMLESS COMMAND SEARCH */}
-            <div className="px-3 py-2.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
+            <div className="px-2.5 py-1.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-neutral-400 shrink-0 pointer-events-none" />
               <input
                 ref={searchInputRef}
@@ -445,12 +445,12 @@ export default function CategorySelect({
 
             {/* ZONE 2: QUICK PICKS (FREQUENT ITEMS) */}
             {quickPicks.length > 0 && !searchQuery && (
-              <div className="px-3 py-2 border-b border-neutral-800/70 bg-surface shrink-0">
-                <div className="flex items-center gap-1 text-[11px] font-bold uppercase text-amber-500/90 mb-1.5 tracking-wider">
+              <div className="px-2.5 py-1.5 border-b border-neutral-800/70 bg-surface shrink-0">
+                <div className="flex items-center gap-1 text-[11px] font-bold uppercase text-amber-500/90 mb-1 tracking-wider">
                   <Zap className="w-2.5 h-2.5" />
                   <span>ใช้บ่อย</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {quickPicks.map(cat => {
                     const isSelected = value === cat.id;
                     return (
@@ -458,7 +458,7 @@ export default function CategorySelect({
                         key={cat.id}
                         type="button"
                         onClick={() => handleSelect(cat.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-pill border transition-all cursor-pointer ${
+                        className={`flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-pill border transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-accent/15 border-accent/70 text-white font-bold'
                             : 'bg-neutral-900/80 border-neutral-800 text-neutral-300 hover:border-neutral-700 hover:text-white hover:bg-neutral-800/60'
@@ -474,7 +474,7 @@ export default function CategorySelect({
             )}
 
             {/* ZONE 3: CATEGORY LIST WITH GROUP HEADERS */}
-            <div className="flex-1 overflow-y-auto tactical-scrollbar min-h-0 py-1 divide-y divide-neutral-800/40">
+            <div className="flex-1 overflow-y-auto tactical-scrollbar min-h-0 divide-y divide-neutral-800/40">
               {groupedCategories.length === 0 ? (
                 <div className="py-8 text-center text-xs text-neutral-500 font-medium">
                   ไม่พบหมวดหมู่ที่ตรงกับคำค้นหา
@@ -483,9 +483,9 @@ export default function CategorySelect({
                 (() => {
                   let flatCounter = -1;
                   return groupedCategories.map(group => (
-                    <div key={group.id} className="py-1">
+                    <div key={group.id} className="pb-1">
                       {/* Group Header */}
-                      <div className="px-3 py-1.5 flex items-center gap-2 sticky top-0 bg-surface z-10 select-none">
+                      <div className="px-2.5 py-1 flex items-center gap-1.5 sticky top-0 bg-surface z-10 select-none">
                         <span
                           className="w-1 h-3 rounded-full shrink-0"
                           style={{ backgroundColor: group.color || tc('expense') }}
@@ -500,7 +500,7 @@ export default function CategorySelect({
                       </div>
 
                       {/* Group Category Items */}
-                      <div className="mt-0.5 space-y-0.5 px-1.5">
+                      <div className="px-1">
                         {group.categories.map(cat => {
                           flatCounter += 1;
                           const currentFlatIndex = flatCounter;
@@ -516,7 +516,7 @@ export default function CategorySelect({
                               type="button"
                               onClick={() => handleSelect(cat.id)}
                               onMouseEnter={() => setActiveIndex(currentFlatIndex)}
-                              className={`w-full flex items-center justify-between px-2.5 py-1.5 text-left rounded-md transition-colors cursor-pointer group ${
+                              className={`w-full flex items-center justify-between px-2 py-1 text-left rounded-sm transition-colors cursor-pointer group ${
                                 isActive
                                   ? 'bg-neutral-800 text-white ring-1 ring-neutral-700/80 shadow-sm'
                                   : isSelected
@@ -524,14 +524,14 @@ export default function CategorySelect({
                                   : 'hover:bg-neutral-800/40 text-neutral-200'
                               }`}
                             >
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
                                 <span
-                                  className="w-7 h-7 flex items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-105"
+                                  className="w-5 h-5 flex items-center justify-center rounded-sm shrink-0"
                                   style={{
                                     backgroundColor: `rgba(${hexToRgb(cat.color || tc('ink-body'))}, 0.14)`,
                                   }}
                                 >
-                                  <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
+                                  <CategoryGlyph icon={cat.icon} color={cat.color} size={14} />
                                 </span>
                                 <div className="min-w-0 truncate">
                                   <span className="text-xs font-semibold block truncate text-neutral-200 group-hover:text-white">
@@ -558,26 +558,6 @@ export default function CategorySelect({
                   ));
                 })()
               )}
-            </div>
-
-            {/* ZONE 5: FOOTER KEYBOARD HINTS */}
-            <div className="px-3 py-2 bg-canvas border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400 select-none shrink-0 font-medium">
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">↑↓</kbd>
-                  <span>เลือก</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Enter</kbd>
-                  <span>ยืนยัน</span>
-                </span>
-              </div>
-              <div>
-                <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Esc</kbd>
-                  <span>ปิด</span>
-                </span>
-              </div>
             </div>
           </div>,
           document.body

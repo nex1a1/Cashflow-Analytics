@@ -12,6 +12,12 @@ export const THAI_MONTHS_SHORT: readonly string[] = [
   'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
 ];
 
+/** "2026-09-25" -> "25 ก.ย. 26" */
+export const formatThaiDateShort = (iso: string): string => {
+  const [y, m, d] = iso.split('-');
+  return `${Number(d)} ${THAI_MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;
+};
+
 export const formatMoney = (amount: number | string): string =>
   (Number(amount) || 0).toLocaleString('th-TH', {
     minimumFractionDigits: 2,

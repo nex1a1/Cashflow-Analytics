@@ -3,7 +3,7 @@ import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronFirst, ChevronLas
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
-import { hexToRgb, getThaiDayInfo } from '../../../../utils/formatters';
+import { hexToRgb, getThaiDayInfo, formatThaiDateShort } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
 import CategorySelect from '../../../../components/shared/CategorySelect';
 import AllocationSelect from '@/components/shared/AllocationSelect';
@@ -147,8 +147,8 @@ export default function LedgerTable({
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-black tabular-nums text-slate-200 font-mono tracking-tight">
-                            {item.date}
+                          <span className="text-xs font-black tabular-nums text-slate-200 font-mono tracking-tight" title={item.date}>
+                            {formatThaiDateShort(item.date)}
                           </span>
                         </div>
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -332,6 +332,7 @@ export default function LedgerTable({
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
+              aria-label="เลขหน้า"
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
               onClick={(e: React.MouseEvent<HTMLInputElement>) => (e.target as HTMLInputElement).select()}

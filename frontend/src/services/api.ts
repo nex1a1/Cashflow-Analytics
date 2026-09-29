@@ -37,6 +37,7 @@ export const transactionService = {
         }
         return fetch(url).then(handleResponse<TransactionDisplay[]>);
     },
+    getCount: (): Promise<{ count: number }> => fetch(`${API_URL}/count`).then(handleResponse<{ count: number }>),
     getPeriods: (): Promise<string[]> => fetch(`${API_URL}/periods`).then(handleResponse<string[]>),
     getFrequentItems: (): Promise<FrequentItem[]> => fetch(`${API_URL}/frequent`).then(handleResponse<FrequentItem[]>),
     save: (items: TransactionPayload | TransactionPayload[]): Promise<{ success: boolean; count: number }> => fetch(API_URL, {

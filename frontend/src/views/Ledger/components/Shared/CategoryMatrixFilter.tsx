@@ -661,8 +661,8 @@ export default function CategoryMatrixFilter({
                           className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-2 group/row"
                         >
                           {/* Group Title Tag on Left */}
-                          <div className="w-auto sm:w-28 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-emerald-400 font-mono select-none">
-                            <div className="flex items-center gap-1 truncate">
+                          <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-emerald-400 font-mono select-none">
+                            <div className="flex items-center gap-1 min-w-0">
                               <CategoryGlyph
                                 icon={group.icon}
                                 color={group.color || tc('income')}
@@ -682,7 +682,6 @@ export default function CategoryMatrixFilter({
                               >
                                 [เฉพาะ]
                               </button>
-                              <span className="text-emerald-600/60 hidden sm:inline">›</span>
                             </div>
                           </div>
 
@@ -701,8 +700,8 @@ export default function CategoryMatrixFilter({
                       className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-1.5 bg-surface border border-line rounded-none group/row hover:border-line-strong transition-colors"
                     >
                       {/* Group Title Tag on Left */}
-                      <div className="w-auto sm:w-28 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-slate-400 font-mono select-none">
-                        <div className="flex items-center gap-1 truncate">
+                      <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-slate-400 font-mono select-none">
+                        <div className="flex items-center gap-1 min-w-0">
                           <CategoryGlyph icon={group.icon} color={group.color} size={15} className="shrink-0" fallbackEmoji="📁" />
                           <span className="truncate">{group.name}</span>
                         </div>
@@ -716,7 +715,6 @@ export default function CategoryMatrixFilter({
                           >
                             [เฉพาะ]
                           </button>
-                          <span className="text-slate-600 hidden sm:inline">›</span>
                         </div>
                       </div>
 
