@@ -17,7 +17,7 @@ describe('gradeBudget', () => {
     expect(gradeBudget({ ...healthy, rentPct: r.rent.max + 0.1 }).breaches).toEqual(['ที่พัก']);
     expect(gradeBudget({ ...healthy, subscriptionPct: r.subscription.max + 0.1 }).breaches).toEqual(['บริการรายเดือน']);
     expect(gradeBudget({ ...healthy, hasIncome: false, subscriptionPct: r.subscription.max + 0.1 }).breaches).not.toContain('บริการรายเดือน');
-    expect(gradeBudget({ ...healthy, lifestylePct: r.lifestyle.max + 0.1 }).breaches).toEqual(['ตามใจ']);
+    expect(gradeBudget({ ...healthy, lifestylePct: r.lifestyle.max + 0.1 }).breaches).toEqual(['WANT']);
     expect(gradeBudget({ ...healthy, foodPctOfExpense: r.food.max + 0.1 }).breaches).toEqual(['ค่าอาหาร']);
     expect(gradeBudget({ ...healthy, surplusPct: r.surplus.min - 0.1 }).breaches).toEqual(['เงินเหลือน้อย']);
   });
@@ -27,7 +27,7 @@ describe('gradeBudget', () => {
       rentPct: 27.7, subscriptionPct: 6.1, hasIncome: true,
       lifestylePct: 42.5, foodPctOfExpense: 5.8, surplusPct: 13.6, netCashflow: 3411.28,
     });
-    expect(r.breaches).toEqual(['บริการรายเดือน', 'ตามใจ']);
+    expect(r.breaches).toEqual(['บริการรายเดือน', 'WANT']);
     expect(r.grade.g).toBe('C');
   });
 

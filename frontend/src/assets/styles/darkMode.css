@@ -34,12 +34,17 @@
   border-radius: 4px;
 }
 
-/* Badges, pills, and avatar plates use rounded-full (9999px) */
-.dark-mode .rounded-full,
+/* Dots, bars and avatar plates use rounded-full (9999px) */
+.dark-mode .rounded-full {
+  border-radius: 9999px;
+}
+
+/* Text badges and pills: rounded rectangle (4px) */
+.dark-mode .rounded-pill,
 .dark-mode .badge-pill,
 .dark-mode [class*="badge-pill"],
 .dark-mode [class*="day-type-badge"] {
-  border-radius: 9999px;
+  border-radius: 4px;
 }
 
 /* Category Pill Trigger, Day Badge Pill, & Amount Box: subtle 4px corner matching adjacent inputs */

@@ -118,9 +118,9 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
   });
   const gradePill = !showSkeleton && (
     <span className="flex items-center gap-2 pr-2 text-[11px] text-ink-muted">
-      {breaches.length > 0 && <span className="hidden md:inline">เกินเกณฑ์: {breaches.join(' · ')}</span>}
+      {breaches.length > 0 && <span className="hidden md:inline">เกินเกณฑ์ [ {breaches.join(' · ')} ]</span>}
       <span
-        className={`px-2 py-0.5 border font-black ${grade.cls}`}
+        className={`px-2 py-0.5 rounded-pill border font-black ${grade.cls}`}
         title={breaches.length ? `เกินเกณฑ์ ${breaches.length} ด้าน` : 'ทุกด้านอยู่ในเกณฑ์'}
       >
         เกรด {grade.g} · {grade.label}

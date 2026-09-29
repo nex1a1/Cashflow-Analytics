@@ -206,7 +206,7 @@ function CategoryLegendSection({
         {hasExclusions && (
           <button
             onClick={() => toggleCategory('CLEAR_ALL')}
-            className="px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-full border border-accent-ink bg-accent/10 text-accent-ink hover:bg-accent/20 transition-colors cursor-pointer shrink-0"
+            className="px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-pill border border-accent-ink bg-accent/10 text-accent-ink hover:bg-accent/20 transition-colors cursor-pointer shrink-0"
           >
             แสดงทั้งหมด
           </button>
@@ -278,7 +278,7 @@ function CategoryLegendSection({
                         key={cat.id} 
                         type="button" 
                         onClick={() => toggleCategory(cat.id)}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
+                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-pill border cursor-pointer select-none transition-none bg-transparent ${
                           isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
                         }`}
                         style={{

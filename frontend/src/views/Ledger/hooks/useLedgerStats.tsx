@@ -199,7 +199,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
               <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} animate-pulse shrink-0`} />
             )}
             <span 
-              className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border shrink-0 leading-none"
+              className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-pill border shrink-0 leading-none"
               style={{ 
                 backgroundColor: `${g.color || theme.defaultColor}15`, 
                 color: readable(g.color || theme.defaultColor), 

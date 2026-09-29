@@ -73,7 +73,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${incomeDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-pill cursor-default shrink-0 transition-none ${incomeDelta.cls}`}
                 title={incomeDelta.tooltipText}
               >
                 {incomeDelta.text}
@@ -94,7 +94,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             </span>
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${
+                className={`px-1.5 py-0.5 border rounded-pill text-[11px] font-black uppercase tracking-widest shrink-0 ${
                   expensePercent > 100 ? 'border-danger/30 bg-danger/10 text-danger' : 'border-line bg-surface-elevated/40 text-ink-body'
                 }`}
                 title="รายจ่าย % ของรายรับ · เป็นสีแดงเมื่อจ่ายเกินรายรับ"
@@ -124,7 +124,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${expenseDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-pill cursor-default shrink-0 transition-none ${expenseDelta.cls}`}
                 title={expenseDelta.tooltipText}
               >
                 {expenseDelta.text}
@@ -147,10 +147,10 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             </span>
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border rounded-none text-[11px] font-black uppercase tracking-widest shrink-0 ${surplusCls}`}
+                className={`px-1.5 py-0.5 border rounded-pill text-[11px] font-black uppercase tracking-widest shrink-0 ${surplusCls}`}
                 title={`เงินเหลือ % ของรายรับ · เกณฑ์ ≥ ${BUDGET_RULES.surplus.min}%`}
               >
-                เหลือ {savingsRate}%
+                เหลือ {savingsRate}%{netCashflow >= 0 && savingsRate < BUDGET_RULES.surplus.min && " · ต่ำกว่าเกณฑ์"}
               </div>
             )}
           </div>
@@ -179,7 +179,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
             )}
             {!showSkeleton && (
               <div
-                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-none cursor-default shrink-0 transition-none ${netDelta.cls}`}
+                className={`px-1.5 py-0.5 border text-[11px] font-black uppercase tracking-wider rounded-pill cursor-default shrink-0 transition-none ${netDelta.cls}`}
                 title={netDelta.tooltipText}
               >
                 {netDelta.text}

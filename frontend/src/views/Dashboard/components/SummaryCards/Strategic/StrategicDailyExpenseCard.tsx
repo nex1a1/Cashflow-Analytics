@@ -36,7 +36,7 @@ export const StrategicDailyExpenseCard = memo(({
     )}
     showOverlay={!showSkeleton}
     overlayTitle="อัตราจ่ายรายวัน"
-    overlayBadge={<span className="text-expense font-extrabold text-[11px] border border-expense/30 bg-expense/10 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>}
+    overlayBadge={<span className="text-expense font-extrabold text-[11px] border border-expense/30 bg-expense/10 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>}
     overlayBody={(
       <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
         <div className="bg-canvas p-2 flex flex-col justify-center text-left">

@@ -370,7 +370,7 @@ export const AllocationSelect = memo(function AllocationSelect({
                             ({cfg.nameThai})
                           </span>
                           <span
-                            className="px-1.5 py-0.5 text-[9px] font-mono font-black rounded-none border leading-none ml-auto whitespace-nowrap shrink-0"
+                            className="px-1.5 py-0.5 text-[9px] font-mono font-black rounded-pill border leading-none ml-auto whitespace-nowrap shrink-0"
                             style={{
                               backgroundColor: `rgba(${cfgRgb}, 0.15)`,
                               borderColor: `rgba(${cfgRgb}, 0.35)`,

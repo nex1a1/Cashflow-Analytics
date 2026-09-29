@@ -174,7 +174,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1 text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border shrink-0 rounded-full cursor-pointer ${
+                    className={`px-3 py-1 text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border shrink-0 rounded-pill cursor-pointer ${
                       isSelected
                         ? 'bg-neutral-100 text-neutral-950 font-bold border-white shadow-sm'
                         : 'bg-neutral-900/80 text-neutral-400 hover:text-white hover:bg-neutral-800 border-neutral-800/80'

@@ -93,7 +93,7 @@ export default function ExportPreview({
             ตัวอย่างเอกสาร <span className="text-neutral-500 font-mono font-normal">/ PREVIEW</span>
           </span>
           {!isBackupJson && dataToExport.length > 0 && (
-            <span className="text-[11px] font-mono px-2 py-0.5 bg-surface-hover border border-line text-neutral-400">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-pill bg-surface-hover border border-line text-neutral-400">
               {dataToExport.length > PREVIEW_LIMIT
                 ? `แสดงตัวอย่าง ${PREVIEW_LIMIT} จาก ${dataToExport.length.toLocaleString()} รายการ`
                 : `แสดงทั้งหมด ${dataToExport.length.toLocaleString()} รายการ`}

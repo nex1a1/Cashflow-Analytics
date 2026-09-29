@@ -105,7 +105,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
           
           {/* Date Tag */}
           {tx.date && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-none border shrink-0 bg-canvas border-line text-slate-400 group-hover:border-line-strong">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-pill border shrink-0 bg-canvas border-line text-slate-400 group-hover:border-line-strong">
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
           )}
@@ -242,7 +242,7 @@ export default function TopTransactions() {
         <div className="flex items-center gap-2">
           <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200 whitespace-nowrap">
             รายจ่ายสูงสุด
           </span>
           <div className="relative group shrink-0">
@@ -256,13 +256,12 @@ export default function TopTransactions() {
             </select>
             <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-white" />
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">รายจ่าย</span>
         </div>
 
         {/* Real-time sum & Pareto indicator pill */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
-            className="px-2 py-0.5 rounded-none border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
+            className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (฿${formatMoney(allFilteredExpenseSum)})`}
           >
             <span className="text-neutral-400">ยอดรวม:</span>

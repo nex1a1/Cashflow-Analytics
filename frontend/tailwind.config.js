@@ -21,6 +21,7 @@ export default {
       DEFAULT: '0px',
       none: '0px',
       sm: '0px',
+      pill: '4px',
       full: '9999px',
     },
     extend: {

@@ -17,6 +17,14 @@ body {
   scrollbar-gutter: stable;
 }
 
+/* Tailwind's truncate uses overflow:hidden, which clips Thai vowels/tone marks that sit outside a
+   tight line box (leading-none + Bai Jamjuree size-adjust). Clip only horizontally so the ellipsis
+   still works but marks above/below can overflow vertically. */
+.truncate {
+  overflow: visible;
+  overflow-x: clip;
+}
+
 /* ทำให้ตัวเลขในตารางหรือ Summary Card ตรงกัน */
 .tabular-nums {
   font-variant-numeric: tabular-nums;

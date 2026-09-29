@@ -66,7 +66,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                 พบ <strong className="text-accent-ink">{allItems.length} รายการ</strong>
               </span>
               {importPreview.isCategoryChanged && (
-                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-none bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-pill bg-amber-500/20 text-amber-500 border border-amber-500/30">
                   จะสร้างหมวดหมู่ใหม่
                 </span>
               )}

@@ -80,7 +80,7 @@ export default function StatCard({
               {value}
             </div>
             {trend && (
-              <div className={`flex items-center gap-0.5 text-[11px] font-black px-1.5 py-0.5 rounded-full mt-0.5 shrink-0 ${
+              <div className={`flex items-center gap-0.5 text-[11px] font-black px-1.5 py-0.5 rounded-pill mt-0.5 shrink-0 ${
                 trend.isGood 
                   ? ('bg-emerald-500/10 text-emerald-400')
                   : ('bg-danger/10 text-danger')

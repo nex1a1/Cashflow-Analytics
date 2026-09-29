@@ -76,7 +76,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">จังหวะ:</span>
             <span
-              className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${paceStatus.bg} ${paceStatus.border}`}
+              className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 rounded-pill border ${paceStatus.bg} ${paceStatus.border}`}
               style={{ color: paceStatus.color }}
             >
               {paceStatus.label}
@@ -129,7 +129,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               <History size={13} className={`${ghost.text} shrink-0`} />
               เทียบเดือนก่อน (วันที่ {currentDay})
             </span>
-            <span className={`shrink-0 whitespace-nowrap text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border ${ghost.bg} ${ghost.text} ${ghost.border}`}>
+            <span className={`shrink-0 whitespace-nowrap text-[11px] font-mono font-black uppercase px-1.5 py-0.5 rounded-pill border ${ghost.bg} ${ghost.text} ${ghost.border}`}>
               {{ LEAD: 'ใช้น้อยกว่า', TIED: 'ใกล้เคียง', TRAIL: 'ใช้มากกว่า' }[ghostTone]}
             </span>
           </div>

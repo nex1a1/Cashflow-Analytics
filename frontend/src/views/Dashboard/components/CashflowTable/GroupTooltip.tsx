@@ -43,7 +43,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
               <span>กลุ่มหลัก:</span>
               <span
-                className="px-1.5 py-0.5 border font-bold"
+                className="px-1.5 py-0.5 rounded-pill border font-bold"
                 style={{
                   color: groupColor,
                   backgroundColor: `rgba(${hexToRgb(groupColor)}, 0.1)`,
@@ -119,7 +119,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`px-1.5 py-0.5 text-[11px] font-black border uppercase leading-none ${
+              <span className={`px-1.5 py-0.5 rounded-pill text-[11px] font-black border uppercase leading-none ${
                 isIncome
                   ? 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30'
                   : allocationColorCls

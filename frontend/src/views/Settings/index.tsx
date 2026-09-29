@@ -154,7 +154,7 @@ const SettingsView = memo(function SettingsView({
           <Settings2 className="w-5 h-5 text-accent-ink" /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
-        <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-full bg-surface border-line text-ink-soft">
+        <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-pill bg-surface border-line text-ink-soft">
           <Info className="w-4 h-4 shrink-0 text-accent-ink" />
           <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
         </div>

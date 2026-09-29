@@ -55,7 +55,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
           <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">จังหวะใช้จ่าย:</span>
           <span
-            className="text-[11px] font-mono font-black uppercase px-1.5 py-0.5 border"
+            className="text-[11px] font-mono font-black uppercase px-1.5 py-0.5 rounded-pill border"
             style={{ backgroundColor: `${paceStatus.color}15`, color: paceStatus.color, borderColor: `${paceStatus.color}40` }}
           >
             {paceStatus.label}
@@ -63,7 +63,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
         </div>
 
         <div
-          className={`px-1.5 py-0.5 border text-[11px] font-mono font-black tracking-wider uppercase flex items-center gap-1 ${eomStatus.bg} ${eomStatus.border}`}
+          className={`px-1.5 py-0.5 rounded-pill border text-[11px] font-mono font-black tracking-wider uppercase flex items-center gap-1 ${eomStatus.bg} ${eomStatus.border}`}
           style={{ color: eomStatus.color }}
         >
           <ShieldCheck className="w-3 h-3 shrink-0" />

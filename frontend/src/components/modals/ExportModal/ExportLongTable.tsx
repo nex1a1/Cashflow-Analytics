@@ -92,7 +92,7 @@ export default function ExportLongTable({
                 {/* Day Type Badge with sharp border */}
                 <td className="py-2 px-3 whitespace-nowrap">
                   <span
-                    className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
                     style={{
                       color: readable(dt.color),
                       borderColor: `${dt.color}40`,
@@ -105,7 +105,7 @@ export default function ExportLongTable({
 
                 {/* Type */}
                 <td className="py-2 px-3 whitespace-nowrap">
-                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${typeBadgeClass}`}>
+                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-pill border ${typeBadgeClass}`}>
                     {type.toUpperCase()}
                   </span>
                 </td>
@@ -120,7 +120,7 @@ export default function ExportLongTable({
                 {/* Category with sharp border */}
                 <td className="py-2 px-3 whitespace-nowrap">
                   <span
-                    className="text-[11px] font-medium px-2 py-0.5 rounded-none border inline-flex items-center gap-1.5"
+                    className="text-[11px] font-medium px-2 py-0.5 rounded-pill border inline-flex items-center gap-1.5"
                     style={{
                       color: catColor,
                       borderColor: `${catColor}35`,

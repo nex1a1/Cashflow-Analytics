@@ -66,7 +66,7 @@ export default function ExportWideTable({
                 {/* Day Type Badge */}
                 <td className="py-2 px-3 whitespace-nowrap">
                   <span
-                    className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
                     style={{
                       color: readable(dt.color),
                       borderColor: `${dt.color}40`,

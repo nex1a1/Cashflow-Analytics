@@ -4,6 +4,8 @@
 import { THAI_MONTHS_SHORT } from './formatters';
 
 export const PAY_DAY = 25;
+/** วันแรกที่เริ่มใช้ระบบ — ก่อนหน้านี้ไม่มีวันเงินเดือน */
+export const PAY_DAY_START = '2025-06-25';
 export const CYCLE_PREFIX = 'cycle:';
 
 export const isCyclePeriod = (period?: string | null): boolean => !!period?.startsWith(CYCLE_PREFIX);
@@ -15,22 +17,6 @@ export const isSingleUnitPeriod = (period?: string | null): boolean => /^\d{4}-\
 export const shiftMonth = (ym: string, delta: number): string => {
   const total = Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7)) - 1 + delta;
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
-};
-
-/** Every YYYY-MM from a to b inclusive (order-insensitive). */
-export const monthsBetween = (a: string, b: string): string[] => {
-  const [s, e] = a <= b ? [a, b] : [b, a];
-  const out: string[] = [];
-  for (let m = s; m <= e; m = shiftMonth(m, 1)) out.push(m);
-  return out;
-};
-
-/** A picked set of months → period string: one month, a contiguous A_B range, or an A,B,C list. */
-export const monthsToPeriod = (months: string[]): string => {
-  const sorted = [...new Set(months)].sort();
-  if (sorted.length <= 1) return sorted[0] ?? '';
-  const contiguous = sorted.every((m, i) => i === 0 || shiftMonth(sorted[i - 1], 1) === m);
-  return contiguous ? `${sorted[0]}_${sorted[sorted.length - 1]}` : sorted.join(',');
 };
 
 /** ISO YYYY-MM-DD → cycle key. ใช้แค่ส่วนวันที่ ไม่แตะเวลา/timezone */

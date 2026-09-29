@@ -20,7 +20,7 @@ export const BreakdownLegendItem = memo(({ category, isActive, onToggle }: Break
   return (
     <button
       onClick={() => onToggle(category.name)}
-      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
+      className={`flex items-center gap-1.5 border border-transparent rounded-pill px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
         isHidden ? 'opacity-35 line-through' : 'opacity-100'
       }`}
       title="คลิกเพื่อเปิด/ซ่อนหมวดหมู่นี้"
@@ -75,7 +75,7 @@ export const StandardLegendItem = memo(({ dataset, isHidden, onToggle }: Standar
   return (
     <button
       onClick={() => onToggle(label)}
-      className={`flex items-center gap-1.5 border border-transparent rounded-none px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
+      className={`flex items-center gap-1.5 border border-transparent rounded-pill px-1.5 py-0.5 transition-opacity duration-100 hover:opacity-80 select-none cursor-pointer ${
         isHidden ? 'opacity-35 line-through' : 'opacity-100'
       }`}
       title="คลิกเพื่อเปิด/ซ่อนชุดข้อมูลนี้"

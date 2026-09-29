@@ -76,7 +76,7 @@ const SectionCard = memo(function SectionCard({
           {icon}
           {title}
           {badge != null && (
-            <span className="text-[11px] font-bold px-2 py-0.5 ml-1.5 rounded-full tabular-nums bg-canvas text-ink-body border border-line">
+            <span className="text-[11px] font-bold px-2 py-0.5 ml-1.5 rounded-pill tabular-nums bg-canvas text-ink-body border border-line">
               {badge}
             </span>
           )}
@@ -86,7 +86,7 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={subAction.onClick}
-              className="text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-sm border-line text-slate-300 hover:bg-surface-hover hover:text-white bg-canvas cursor-pointer transition-colors"
+              className="text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-pill border-line text-slate-300 hover:bg-surface-hover hover:text-white bg-canvas cursor-pointer transition-colors"
             >
               {subAction.icon} {subAction.label}
             </button>

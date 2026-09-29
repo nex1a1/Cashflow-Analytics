@@ -71,13 +71,20 @@ export function gradeBudget(x: BudgetInputs) {
   const breaches = [
     x.rentPct > BUDGET_RULES.rent.max && 'ที่พัก',
     x.subscriptionPct > subMax && 'บริการรายเดือน',
-    x.lifestylePct > BUDGET_RULES.lifestyle.max && 'ตามใจ',
+    x.lifestylePct > BUDGET_RULES.lifestyle.max && 'WANT',
     x.foodPctOfExpense > BUDGET_RULES.food.max && 'ค่าอาหาร',
     x.netCashflow < 0 ? 'ขาดดุล' : x.hasIncome && x.surplusPct < BUDGET_RULES.surplus.min && 'เงินเหลือน้อย',
   ].filter(Boolean) as string[];
   const score = breaches.length + (x.netCashflow < 0 ? 1 : 0);
   return { breaches, grade: GRADES[Math.min(score, GRADES.length - 1)] };
 }
+
+/** Says in words what a red card means — red alone also means "expense" in this theme. */
+export const OverBadge = () => (
+  <span className="px-1.5 py-0.5 rounded-pill border border-danger/30 bg-danger/10 text-danger text-[11px] font-black leading-none whitespace-nowrap shrink-0">
+    เกินเกณฑ์
+  </span>
+);
 
 export function getFoodStatus(pctOfExpense: number) {
   const { max } = BUDGET_RULES.food;

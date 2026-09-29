@@ -1,9 +1,8 @@
 import React from 'react';
-import { useMenu } from '@/hooks/useMenu';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, Database, ChevronDown
+  Calendar as CalendarIcon, HelpCircle
 } from 'lucide-react';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
@@ -35,55 +34,30 @@ const TABS = [
   { id: 'settings', label: 'ตั้งค่าระบบ',       icon: Settings },
 ];
 
-const MENU_ITEM = 'w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-bold text-ink-soft hover:bg-surface-hover hover:text-ink-display focus-visible:bg-surface-hover';
+const DATA_BTN = 'flex items-center gap-2 px-3 py-2.5 text-xs font-bold bg-surface text-ink-soft hover:text-ink-display hover:bg-surface-hover disabled:opacity-50 disabled:pointer-events-none';
 
-/** Export / Import / Help collapsed into one "ข้อมูล" menu. Closes on outside click, Esc, or pick. */
-function DataMenu({ isProcessing, onExport, onImport, onGuide }: {
+/** Export / Import / Help as one flat hairline-split button group — three actions don't need a menu. */
+function DataActions({ isProcessing, onExport, onImport, onGuide }: {
   isProcessing: boolean;
   onExport: () => void;
   onImport: () => void;
   onGuide: () => void;
 }) {
-  const { open, setOpen, rootRef, triggerRef } = useMenu();
-
-  const pick = (fn: () => void) => () => { setOpen(false); fn(); };
-
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-2 px-3 py-2.5 text-xs font-bold border ${
-          open ? 'bg-surface-elevated text-ink-display border-line-strong' : 'bg-surface text-ink-soft border-line hover:text-ink-display hover:bg-surface-hover'
-        }`}
-      >
+    <div role="group" aria-label="ข้อมูล" className="flex gap-[1px] bg-line border border-line">
+      <button type="button" className={DATA_BTN} onClick={onExport} title="ส่งออก CSV / สำรองข้อมูล">
+        <Download className="w-3.5 h-3.5 text-ink-muted" />
+        <span>ส่งออก</span>
+      </button>
+      <button type="button" className={DATA_BTN} onClick={onImport} disabled={isProcessing} title="นำเข้าจากไฟล์ CSV">
         {isProcessing
           ? <Zap className="w-3.5 h-3.5 text-amber-400" />
-          : <Database className="w-3.5 h-3.5 text-ink-muted" />}
-        <span>{isProcessing ? 'กำลังนำเข้า...' : 'ข้อมูล'}</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-ink-muted ${open ? 'rotate-180' : ''}`} />
+          : <FileSpreadsheet className="w-3.5 h-3.5 text-ink-muted" />}
+        <span>{isProcessing ? 'กำลังนำเข้า...' : 'นำเข้า'}</span>
       </button>
-
-      {open && (
-        <div role="menu" aria-label="ข้อมูล" className="absolute right-0 top-full mt-1 z-[70] w-60 py-1 bg-surface-elevated border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))]">
-          <button role="menuitem" type="button" className={MENU_ITEM} onClick={pick(onExport)}>
-            <Download className="w-4 h-4 text-ink-muted shrink-0" />
-            <span className="flex-1">ส่งออก CSV / สำรองข้อมูล</span>
-          </button>
-          <button role="menuitem" type="button" disabled={isProcessing} className={`${MENU_ITEM} disabled:opacity-50`} onClick={pick(onImport)}>
-            <FileSpreadsheet className="w-4 h-4 text-ink-muted shrink-0" />
-            <span className="flex-1">นำเข้าจากไฟล์ CSV</span>
-          </button>
-          <div className="my-1 h-px bg-line" />
-          <button role="menuitem" type="button" className={MENU_ITEM} onClick={pick(onGuide)}>
-            <HelpCircle className="w-4 h-4 text-ink-muted shrink-0" />
-            <span className="flex-1">คู่มือรูปแบบไฟล์นำเข้า</span>
-          </button>
-        </div>
-      )}
+      <button type="button" className={`${DATA_BTN} px-2.5`} onClick={onGuide} title="คู่มือรูปแบบไฟล์นำเข้า" aria-label="คู่มือรูปแบบไฟล์นำเข้า">
+        <HelpCircle className="w-3.5 h-3.5 text-ink-muted" />
+      </button>
     </div>
   );
 }
@@ -128,7 +102,7 @@ export default function AppHeader({
                 Cashflow Shark
               </h1>
               {isDemoMode && (
-                <span className="text-[11px] font-black tracking-widest px-2 py-0.5 rounded-none border border-amber-500/50 uppercase leading-none shrink-0 bg-amber-950/60 text-amber-400">
+                <span className="text-[11px] font-black tracking-widest px-2 py-0.5 rounded-pill border border-amber-500/50 uppercase leading-none shrink-0 bg-amber-950/60 text-amber-400">
                   DEMO MODE
                 </span>
               )}
@@ -136,7 +110,7 @@ export default function AppHeader({
             
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               {/* DB Status Badge (HUD Cockpit readout style) */}
-              <div className={`flex items-center gap-2 text-[11px] font-mono font-bold px-2.5 py-1 rounded-none border transition-all ${
+              <div className={`flex items-center gap-2 text-[11px] font-mono font-bold px-2.5 py-1 rounded-pill border transition-all ${
                 dbStatus.toLowerCase().includes('online') 
                   ? 'bg-emerald-950/20 text-emerald-400 border-emerald-500/30' 
                   : 'bg-amber-950/20 text-amber-400 border-amber-500/30'
@@ -150,7 +124,7 @@ export default function AppHeader({
               </div>
               
               {/* Records readout - Fixed with integer={true} to avoid displaying decimals */}
-              <div className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-none border bg-surface text-neutral-300 border-line hover:border-accent/30 transition-colors">
+              <div className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-pill border bg-surface text-neutral-300 border-line hover:border-accent/30 transition-colors">
                 <span className="text-neutral-500 mr-1 select-none">ทั้งหมด</span>
                 <span className="text-ink-display font-black tracking-wider">
                   <AnimatedNumber value={transactionCount} integer={true} />
@@ -163,7 +137,7 @@ export default function AppHeader({
 
         {/* Right: Action Toolbar (Cockpit Controls) */}
         <div className="flex items-center justify-end gap-2.5 flex-wrap">
-          <DataMenu
+          <DataActions
             isProcessing={showProcessing}
             onExport={onClickExport}
             onImport={() => fileInputRef.current?.click()}

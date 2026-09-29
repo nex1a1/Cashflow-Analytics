@@ -74,24 +74,24 @@ const CalendarBlock = React.memo(function CalendarBlock({
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
             {monthInc > 0 && (
-              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-income/10 text-income border-income/30">
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-income/10 text-income border-income/30">
                 ▲ {formatAmount(monthInc)} ฿
               </span>
             )}
             {monthExp > 0 && (
-              <span className="text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight bg-expense/10 text-expense border-expense/30">
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-expense/10 text-expense border-expense/30">
                 ▼ {formatAmount(monthExp)} ฿
               </span>
             )}
             {(monthInc > 0 || monthExp > 0) && (
-              <span className={`text-[12px] font-bold px-3 py-0.5 rounded-full border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-income/10 text-income border-income/30' : 'bg-danger/10 text-danger border-danger/30'}`}>
+              <span className={`text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-income/10 text-income border-income/30' : 'bg-danger/10 text-danger border-danger/30'}`}>
                 คงเหลือ {formatAmount(monthNet)} ฿
               </span>
             )}
             {excludedCategoryIds?.size > 0 && (
               <button
                 onClick={() => toggleCategory?.('CLEAR_ALL')}
-                className="flex items-center gap-1.5 px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-full border border-warn/40 bg-warn/10 text-warn hover:bg-warn/20 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-pill border border-warn/40 bg-warn/10 text-warn hover:bg-warn/20 transition-colors cursor-pointer"
                 title="คลิกเพื่อแสดงทุกหมวดหมู่"
               >
                 <AlertTriangle className="w-3 h-3" />
@@ -185,7 +185,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-[11px] font-black tracking-wider uppercase"
+              className="flex items-center gap-1.5 px-3 py-0.5 rounded-pill border text-[11px] font-black tracking-wider uppercase"
               style={{
                 backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
                 borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
@@ -201,23 +201,23 @@ const CalendarBlock = React.memo(function CalendarBlock({
           <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับการใช้จ่าย">
             <span>ใช้จ่าย:</span>
             <div className="flex items-center gap-1 font-mono">
-              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-line bg-surface-elevated text-ink-muted text-[11px]">
+              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-line bg-surface-elevated text-ink-muted text-[11px]">
                 ปกติ
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-warn/40 text-warn text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[2] }}>
+              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-warn/40 text-warn text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[2] }}>
                 กลาง
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-expense/40 text-expense text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[3] }}>
+              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-expense/40 text-expense text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[3] }}>
                 สูง
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-none border border-expense/60 text-expense font-black text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[4] }}>
+              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-expense/60 text-expense font-black text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[4] }}>
                 พีค
               </span>
             </div>
             <span className="tabular-nums text-ink-body font-mono">(สูงสุด ฿{formatAmount(maxDailyExpense)})</span>
           </div>
         )}
-        <div className={`${maxDailyExpense > 0 ? '' : 'ml-auto '}text-[12px] font-black px-3 py-0.5 rounded-full border bg-surface-elevated border-line text-ink-display tabular-nums tracking-tight`}>
+        <div className={`${maxDailyExpense > 0 ? '' : 'ml-auto '}text-[12px] font-black px-3 py-0.5 rounded-pill border bg-surface-elevated border-line text-ink-display tabular-nums tracking-tight`}>
           {dates.length} วัน
         </div>
       </div>

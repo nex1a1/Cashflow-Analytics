@@ -268,7 +268,7 @@ export default function DayDetailModal({
                       <button
                         type="button"
                         onClick={() => setOpen(!open)}
-                        className="group flex items-center gap-1.5 px-2 py-0.5 rounded-none border border-transparent hover:border-line-strong hover:bg-surface transition-all cursor-pointer text-left"
+                        className="group flex items-center gap-1.5 px-2 py-0.5 rounded-pill border border-transparent hover:border-line-strong hover:bg-surface transition-all cursor-pointer text-left"
                         title="คลิกเพื่อเลือกวัน/เดือน/ปี"
                       >
                         <h2 className={`text-base font-black tracking-tight ${tokens.textPri} group-hover:text-accent-ink transition-colors`}>
@@ -305,7 +305,7 @@ export default function DayDetailModal({
                   />
                 ) : currentDayType && (
                   <span
-                    className="px-2 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-none border shrink-0"
+                    className="px-2 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-pill border shrink-0"
                     style={{
                       backgroundColor: `rgba(${hexToRgb(currentDayType.color || tc('ink-body'))}, 0.12)`,
                       borderColor: `rgba(${hexToRgb(currentDayType.color || tc('ink-body'))}, 0.35)`,
@@ -320,17 +320,17 @@ export default function DayDetailModal({
               {/* Day Financial HUD Summary */}
               <div className="flex items-center gap-2 mt-2 flex-wrap tabular-nums tracking-tight">
                 {totalInc > 0 && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
                     <span className="text-[11px] font-medium opacity-80">รับ</span> +฿{formatMoney(totalInc)}
                   </span>
                 )}
                 {totalExp > 0 && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-expense/10 text-expense border border-expense/40 flex items-center gap-1">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-expense/10 text-expense border border-expense/40 flex items-center gap-1">
                     <span className="text-[11px] font-medium opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
                   </span>
                 )}
                 {dayTx.length > 0 && (
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-none border flex items-center gap-1 ${
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-pill border flex items-center gap-1 ${
                     net >= 0 
                       ? 'bg-amber-950/30 text-amber-300 border-amber-800/40' 
                       : 'bg-danger/10 text-danger border-danger/30'
@@ -352,7 +352,7 @@ export default function DayDetailModal({
                   title="เรียงตามหมวดหมู่"
                   aria-label="เรียงตามหมวดหมู่"
                   aria-pressed={sortBy === 'category'}
-                  className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[11px] font-medium transition-colors cursor-pointer ${
+                  className={`flex items-center gap-1 px-1.5 py-1 rounded-pill border text-[11px] font-medium transition-colors cursor-pointer ${
                     sortBy === 'category'
                       ? 'bg-accent/15 border-accent/40 text-expense'
                       : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'
@@ -367,7 +367,7 @@ export default function DayDetailModal({
                   title="เรียงตามจำนวนเงิน"
                   aria-label="เรียงตามจำนวนเงิน"
                   aria-pressed={sortBy === 'amount'}
-                  className={`flex items-center gap-1 px-1.5 py-1 rounded-none border text-[11px] font-medium transition-colors cursor-pointer ${
+                  className={`flex items-center gap-1 px-1.5 py-1 rounded-pill border text-[11px] font-medium transition-colors cursor-pointer ${
                     sortBy === 'amount'
                       ? 'bg-accent/15 border-accent/40 text-expense'
                       : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'

@@ -102,7 +102,7 @@ const CashflowGroupsCard = memo(({
 
                 <div className="flex items-center justify-end min-w-[32px] shrink-0">
                   {txCount > 0 && (
-                    <span className={`text-[11px] font-bold px-2 py-0.5 leading-none rounded-full tabular-nums ${
+                    <span className={`text-[11px] font-bold px-2 py-0.5 leading-none rounded-pill tabular-nums ${
                       'bg-surface-elevated text-ink-body border border-line'
                     }`} title={`มี ${txCount} รายการในกลุ่มนี้ (ในมุมมองปัจจุบัน)`}>
                       {txCount}
@@ -126,7 +126,7 @@ const CashflowGroupsCard = memo(({
               </div>
 
               {hasError && (
-                <p className={`text-[11px] font-semibold px-2 py-1 border rounded-sm flex items-center gap-1 ${
+                <p className={`text-[11px] font-semibold px-2 py-1 border rounded-pill flex items-center gap-1 ${
                   'bg-danger/10 border-danger/50 text-danger'
                 }`}>
                   <AlertTriangle className="w-4 h-4 shrink-0" />

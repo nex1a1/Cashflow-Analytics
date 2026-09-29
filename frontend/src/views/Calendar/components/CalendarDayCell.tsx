@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { PlusCircle, Banknote, X } from 'lucide-react';
 import { useMenu } from '@/hooks/useMenu';
-import { PAY_DAY } from '@/utils/payCycle';
+import { PAY_DAY, PAY_DAY_START } from '@/utils/payCycle';
 import { formatMoney, formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
@@ -93,7 +93,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
   popUp = false
 }: CalendarDayCellProps): React.ReactElement {
   const list = useMenu();
-  const isPayDay = Number(dateStr.slice(8, 10)) === PAY_DAY;
+  const isPayDay = Number(dateStr.slice(8, 10)) === PAY_DAY && dateStr >= PAY_DAY_START;
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
 
   const burnIntensity = maxDailyExpense > 0 && cellData.exp > 0 ? cellData.exp / maxDailyExpense : 0;
@@ -131,7 +131,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
     <div 
       ref={list.rootRef}
       onClick={() => onSelectDate(dateStr)}
-      className={`min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-line/30 ${cellBg} ${borderTopCls} ${list.open ? 'z-50' : ''} hover:bg-surface-hover cursor-pointer transition-none`}
+      className={`min-w-0 min-h-[120px] 2xl:min-h-[145px] flex flex-col relative group select-none border-b border-line/30 ${cellBg} ${borderTopCls} ${list.open ? 'z-50' : ''} hover:bg-surface-hover cursor-pointer transition-none`}
     >
       <div className="absolute inset-0 pointer-events-none bg-surface-hover opacity-0 group-hover:opacity-60" />
       {isToday && (
@@ -192,7 +192,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
 
       {/* ส่วนแสดงรายการธุรกรรม */}
       <div 
-        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full font-normal select-none"
+        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none"
       >
         {(cellData.exp > 0 || cellData.inc > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-line/20 pb-0.5">
@@ -221,7 +221,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="truncate font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
+              <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 pr-0.5 text-income tabular-nums tracking-tight">
@@ -241,7 +241,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`${tx.description} — ${formatMoney(tx.amount)} ฿`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="truncate font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
+              <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
                 {tx.description || tx.category}
               </span>
               <span className="font-bold shrink-0 ml-1 pr-0.5 text-expense tabular-nums tracking-tight">
@@ -307,7 +307,7 @@ function MoreButton({ count, tone, open, onOpen, triggerRef }: {
       aria-label={`ดูอีก ${count} ${tone === 'expense' ? 'รายการจ่าย' : 'รายรับ'}`}
       title="ดูรายการทั้งหมด"
       onClick={e => { e.stopPropagation(); onOpen(); }}
-      className={`relative z-10 px-1.5 rounded-full border text-[11px] font-black tabular-nums shrink-0 ${
+      className={`relative z-10 px-1.5 rounded-pill border text-[11px] font-black tabular-nums shrink-0 ${
         tone === 'expense'
           ? 'text-expense bg-expense/10 border-expense/30 hover:bg-expense hover:text-canvas'
           : 'text-income bg-income/10 border-income/30 hover:bg-income hover:text-canvas'

@@ -803,7 +803,7 @@ export default function DatePicker({
                     return (
                       <span
                         key={`${range[0]}_${lastDate}`}
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent-ink rounded-none"
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent-ink rounded-pill"
                       >
                         {label}
                         <button
@@ -827,28 +827,28 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => handleApplyPreset(todayStr)}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               วันนี้
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(yesterdayStr)}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               เมื่อวาน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.startOfMonth)}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               ต้นเดือน
             </button>
             <button
               type="button"
               onClick={() => handleApplyPreset(presets.endOfMonth)}
-              className="text-[11px] font-bold px-2 py-0.5 rounded-none bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
+              className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               สิ้นเดือน
             </button>

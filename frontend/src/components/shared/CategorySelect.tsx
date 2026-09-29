@@ -458,7 +458,7 @@ export default function CategorySelect({
                         key={cat.id}
                         type="button"
                         onClick={() => handleSelect(cat.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-full border transition-all cursor-pointer ${
+                        className={`flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-pill border transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-accent/15 border-accent/70 text-white font-bold'
                             : 'bg-neutral-900/80 border-neutral-800 text-neutral-300 hover:border-neutral-700 hover:text-white hover:bg-neutral-800/60'
@@ -494,7 +494,7 @@ export default function CategorySelect({
                         <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 truncate">
                           {group.name}
                         </span>
-                        <span className="text-[11px] font-semibold text-neutral-500 ml-auto bg-neutral-800/60 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[11px] font-semibold text-neutral-500 ml-auto bg-neutral-800/60 px-1.5 py-0.5 rounded-pill">
                           {group.categories.length}
                         </span>
                       </div>
@@ -564,17 +564,17 @@ export default function CategorySelect({
             <div className="px-3 py-2 bg-canvas border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400 select-none shrink-0 font-medium">
               <div className="flex items-center gap-2.5">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">↑↓</kbd>
                   <span>เลือก</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Enter</kbd>
                   <span>ยืนยัน</span>
                 </span>
               </div>
               <div>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded-none bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Esc</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded-pill bg-neutral-800/90 border border-neutral-700/60 text-neutral-300 font-mono text-[11px] shadow-[inset_0_-1px_0_rgb(0_0_0/calc(0.5*var(--shadow-k)))]">Esc</kbd>
                   <span>ปิด</span>
                 </span>
               </div>

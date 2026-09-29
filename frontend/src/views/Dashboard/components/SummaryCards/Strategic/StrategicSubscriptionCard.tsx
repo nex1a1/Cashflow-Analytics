@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Repeat } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT } from '../helpers';
+import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { SubscriptionService, BreakdownEntry } from '../types';
 
@@ -66,6 +66,7 @@ export const StrategicSubscriptionCard = memo(({
       borderColorClass={statusBadge.borderLeft}
       hoverBgClass="hover:bg-surface-hover"
       label="บริการรายเดือน"
+      badge={!showSkeleton && isLeak && <OverBadge />}
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
@@ -76,7 +77,7 @@ export const StrategicSubscriptionCard = memo(({
       )}
       showOverlay={!showSkeleton}
       overlayTitle="เจาะลึกรายเดือน"
-      overlayBadge={<span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{subscriptionCount} รายการ</span>}
+      overlayBadge={<span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{subscriptionCount} รายการ</span>}
       overlayBody={(
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {renderTopItemsOverlay(serviceEntries, 'ไม่มีข้อมูลรายเดือน', Repeat, 'text-purple-400', 'ยอดรวมทั้งหมด', subscriptionTotal)}

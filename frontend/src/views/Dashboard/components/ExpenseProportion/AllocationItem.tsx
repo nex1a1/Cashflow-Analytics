@@ -139,7 +139,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
 
       {/* ─── QUOTA VARIANCE BADGE ─── */}
       <div className="mb-2">
-        <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${varianceBadgeCls}`}>
+        <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-pill uppercase tracking-wider ${varianceBadgeCls}`}>
           {varianceText}
         </span>
       </div>

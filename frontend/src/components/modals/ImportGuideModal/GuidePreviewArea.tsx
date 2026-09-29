@@ -92,7 +92,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
           <span className="text-xs font-black uppercase tracking-widest text-neutral-300">
             ตัวอย่างเอกสาร <span className="text-neutral-500 font-mono font-normal">/ PREVIEW</span>
           </span>
-          <span className="text-[11px] font-mono px-2 py-0.5 bg-surface-hover border border-line text-neutral-400">
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded-pill bg-surface-hover border border-line text-neutral-400">
             {isLong
               ? `แสดงตัวอย่าง ${filteredLongRows.length} จาก ${allLongRows.length} รายการ (${longHeaders.length} คอลัมน์)`
               : `แสดงตัวอย่าง ${filteredWideRows.length} วัน (${effectiveCategories.length} หมวดหมู่)`}
@@ -189,7 +189,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                         {longVariation === 'full' && (
                           <td className="py-2 px-3 whitespace-nowrap">
                             <span
-                              className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                              className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
                               style={{
                                 color: readable(dt.color),
                                 borderColor: `${dt.color}40`,
@@ -204,7 +204,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                         {/* Type */}
                         {(longVariation === 'full' || longVariation === 'standard') && (
                           <td className="py-2 px-3 whitespace-nowrap">
-                            <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 border ${typeBadgeClass}`}>
+                            <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-pill border ${typeBadgeClass}`}>
                               {typeDisplay}
                             </span>
                           </td>
@@ -213,7 +213,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                         {/* Category */}
                         <td className="py-2 px-3 whitespace-nowrap">
                           <span
-                            className="text-[11px] font-medium px-2 py-0.5 rounded-none border inline-flex items-center gap-1.5"
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-pill border inline-flex items-center gap-1.5"
                             style={{
                               color: readable(catVis.color),
                               borderColor: `${catVis.color}35`,
@@ -285,7 +285,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
                         {/* Day Type Badge */}
                         <td className="py-2 px-3 whitespace-nowrap">
                           <span
-                            className="text-[11px] font-bold px-2 py-0.5 rounded-none border inline-block select-none font-mono"
+                            className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
                             style={{
                               color: readable(dt.color),
                               borderColor: `${dt.color}40`,

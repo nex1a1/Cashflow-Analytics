@@ -145,7 +145,7 @@ export default function FilterBar({
           {isFilterActive && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1.5 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono shrink-0 whitespace-nowrap"
+              className="flex items-center gap-1 text-[11px] font-black uppercase px-2.5 py-1.5 rounded-pill border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono shrink-0 whitespace-nowrap"
               title="ล้างการคัดกรองทั้งหมด"
             >
               <RefreshCw className="w-3 h-3" />
@@ -294,7 +294,7 @@ export default function FilterBar({
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
                     ตัวกรองที่ทำงานอยู่:
                   </span>
-                  <span className="px-2 py-0.5 rounded-none text-[11px] font-black bg-surface border border-accent/30 text-slate-300 font-mono">
+                  <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-slate-300 font-mono">
                     {activeCount} active
                   </span>
                 </div>
@@ -302,7 +302,7 @@ export default function FilterBar({
 
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-none border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono"
+                className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-pill border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono"
               >
                 <RefreshCw className="w-3 h-3" />
                 ล้างการคัดกรองทั้งหมด

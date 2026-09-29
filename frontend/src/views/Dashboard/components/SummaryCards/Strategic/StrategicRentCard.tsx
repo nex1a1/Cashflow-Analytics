@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Home, Building2, Zap, Globe, Droplets } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, BUDGET_RULES } from '../helpers';
+import { Shimmer, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { RentSub } from '../types';
 
@@ -24,6 +24,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
       borderColorClass={isOver ? 'border-l-danger' : 'border-l-sky-500'}
       hoverBgClass="hover:bg-surface-hover"
       label="ภาระที่พักอาศัย"
+      badge={!showSkeleton && isOver && <OverBadge />}
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์แนะนำ</span>
@@ -32,7 +33,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
       )}
       showOverlay={!showSkeleton}
       overlayTitle="รายละเอียดที่พัก"
-      overlayBadge={<span className="text-sky-400 font-extrabold text-[11px] border border-sky-500/30 bg-sky-950/40 px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0">4 หมวด</span>}
+      overlayBadge={<span className="text-sky-400 font-extrabold text-[11px] border border-sky-500/30 bg-sky-950/40 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">4 หมวด</span>}
       overlayBody={rentSub && (
         <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
           {rentSub.rent === 0 && rentSub.electricity === 0 && rentSub.internet === 0 && rentSub.water === 0 ? (

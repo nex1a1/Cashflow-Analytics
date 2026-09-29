@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { formatMoney } from '../../utils/formatters';
 import { isDateInFilter } from '../../utils/dateHelpers';
-import { useConfirmTimeout } from '../../hooks/useConfirmTimeout';
 
 // Shared Components
 import FilterBar from './components/Shared/FilterBar';
@@ -30,7 +29,6 @@ export interface LedgerViewProps {
   handleOpenAddModal: (date: string, type: string) => void;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
-  handleDeleteMonth: (period: string) => void;
   categories: Category[];
   advancedFilterCategory: string | string[];
   setAdvancedFilterCategory: (cats: string | string[]) => void;
@@ -66,7 +64,7 @@ export interface LedgerViewProps {
 function LedgerView({
   displayTransactions, isReadOnlyView, getFilterLabel, filterPeriod,
   searchQuery, setSearchQuery, handleOpenAddModal,
-  handleUpdateTransaction, handleDeleteTransaction, handleDeleteMonth,
+  handleUpdateTransaction, handleDeleteTransaction,
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
@@ -91,7 +89,6 @@ function LedgerView({
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'horizontal'>('list');
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
-  const { confirming: confirmDeleteMonth, trigger: triggerDeleteMonth } = useConfirmTimeout();
 
   // ── Logic: Dedicated Horizontal Ledger Filters (Approach A) ──
   const [horizontalFilterOpen, setHorizontalFilterOpen] = useState(false);
@@ -145,8 +142,6 @@ function LedgerView({
   const monthTransactions = useMemo(() => {
     return (transactions || []).filter(t => isDateInFilter(t.date, filterPeriod));
   }, [transactions, filterPeriod]);
-
-  const handleDeleteMonthClick = () => triggerDeleteMonth(() => handleDeleteMonth(filterPeriod));
 
   // ── Logic: Smooth Loading Transition (Only on initial cold start without data) ──
   const showSkeleton = isLoading && (!displayTransactions || displayTransactions.length === 0) && (!transactions || transactions.length === 0);
@@ -235,10 +230,6 @@ function LedgerView({
             setHorizontalFilterOpen={setHorizontalFilterOpen}
             isHorizontalFilterActive={isHorizontalFilterActive}
             handleOpenAddModal={handleOpenAddModal}
-            // "ลบเดือนนี้" ลบตามเดือนปฏิทินฝั่ง backend — ซ่อนเมื่อ period ไม่ใช่เดือนปฏิทินเดี่ยว (เช่น รอบเงินเดือน)
-            hasTransactions={/^\d{4}-\d{2}$/.test(filterPeriod) && (displayTransactions.length > 0 || monthTransactions.length > 0)}
-            confirmDeleteMonth={confirmDeleteMonth}
-            handleDeleteMonthClick={handleDeleteMonthClick}
           />
         </div>
 

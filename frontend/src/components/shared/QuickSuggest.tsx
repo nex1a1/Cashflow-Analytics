@@ -367,7 +367,7 @@ function QuickSuggest({
             <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent-ink' : 'text-slate-400'}`} />
             <span>ตัวกรอง</span>
             {activeFiltersCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[11px] font-black bg-accent text-on-accent">
+              <span className="px-1.5 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent">
                 {activeFiltersCount}
               </span>
             )}
@@ -382,7 +382,7 @@ function QuickSuggest({
             {selectedCatObjs.map(cat => (
               <span 
                 key={cat.id} 
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border text-[11px] font-bold"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border text-[11px] font-bold"
                 style={{ 
                   borderColor: `rgba(${hexToRgb(cat.color || tc('ink-muted'))}, 0.5)`, 
                   color: readable(cat.color || tc('gray-200')) 
@@ -403,7 +403,7 @@ function QuickSuggest({
 
             {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
             {selectedCatObjs.length === 0 && activeGroupObj && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} fallbackEmoji="📁" />
                 <span>กลุ่ม: {activeGroupObj.name}</span>
                 <button 
@@ -418,7 +418,7 @@ function QuickSuggest({
             )}
 
             {formType === 'expense' && allocationFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
                 <span>{allocationFilter}</span>
                 <button 
                   type="button" 
@@ -430,7 +430,7 @@ function QuickSuggest({
               </span>
             )}
             {amountFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>ช่วงราคา</span>
                 <button 
                   type="button" 
@@ -442,7 +442,7 @@ function QuickSuggest({
               </span>
             )}
             {limitCount !== String(defaultLimit) && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>{limitCount === 'ALL' ? 'แสดงทั้งหมด' : `แสดง ${limitCount}`}</span>
                 <button 
                   type="button" 
@@ -612,7 +612,7 @@ function QuickSuggest({
                             setSelectedGroup(g.id);
                           }
                         }}
-                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-none cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-pill cursor-pointer ${
                           isGrpActive
                             ? 'border-accent-ink bg-accent/20 text-white font-black'
                             : selectedCountInGroup > 0
@@ -623,7 +623,7 @@ function QuickSuggest({
                         {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={16} />}
                         <span>{g.name}</span>
                         {selectedCountInGroup > 0 && (
-                          <span className="ml-0.5 px-1 py-0.2 rounded-full text-[11px] font-black bg-accent text-on-accent leading-none">
+                          <span className="ml-0.5 px-1 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent leading-none">
                             {selectedCountInGroup}
                           </span>
                         )}
@@ -685,7 +685,7 @@ function QuickSuggest({
                             } : ({
                               ['--chip-rgb' as any]: rgb,
                             } as React.CSSProperties)}
-                            className={`px-2 py-0.5 text-[11px] font-bold border transition-none flex items-center gap-1 rounded-none cursor-pointer ${
+                            className={`px-2 py-0.5 text-[11px] font-bold border transition-none flex items-center gap-1 rounded-pill cursor-pointer ${
                               isCatActive ? 'font-black shadow-sm ring-1 ring-white/10' : 'cat-chip-btn'
                             }`}
                           >

@@ -212,7 +212,7 @@ export const MainChartFilterMenu = memo(({
         <Filter className="w-3.5 h-3.5" />
         ตัวเลือกแสดงผล
         {isCatFiltered && (
-          <span className="px-1.5 rounded-full text-[11px] font-black bg-accent/20 text-accent-ink border border-accent/40">
+          <span className="px-1.5 rounded-pill text-[11px] font-black bg-accent/20 text-accent-ink border border-accent/40">
             {dashboardCategory.length}
           </span>
         )}

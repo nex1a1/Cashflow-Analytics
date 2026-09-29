@@ -129,7 +129,7 @@ interface SimulationBadgeProps {
 function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBadgeProps) {
   if (excludedCount === 0) return null;
   return (
-    <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-none text-[11px]">
+    <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-pill text-[11px]">
       <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
       <span className="font-black text-amber-300 uppercase tracking-wider">
         จำลองลด {excludedCount} หมวด (-฿{formatMoney(totalReduced)})
@@ -149,7 +149,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
 function NoIncomeWarning() {
   return (
     <span
-      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-none text-[11px] font-black text-accent-ink uppercase tracking-wider"
+      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-pill text-[11px] font-black text-accent-ink uppercase tracking-wider"
       title="เดือนนี้ไม่มีรายรับ สัดส่วนจึงคิดจากยอดรายจ่ายแทน"
     >
       <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -206,7 +206,7 @@ export function ExpenseProportionHeader({
           />
         )}
       </div>
-      <span className="text-[11px] font-black px-1.5 rounded-full bg-accent/10 text-accent-ink">
+      <span className="text-[11px] font-black px-1.5 rounded-pill bg-accent/10 text-accent-ink">
         {countText}
       </span>
     </div>

@@ -22,14 +22,14 @@ const GuideFooter = memo(function GuideFooter({
       <div className="flex items-center gap-4 text-xs font-mono select-none flex-wrap">
         <div className="flex items-center gap-1.5">
           <span className="text-neutral-500 font-bold uppercase text-[11px]">รูปแบบ:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-surface-hover border border-line">
+          <span className="text-neutral-200 font-bold px-1.5 py-0.5 rounded-pill bg-surface-hover border border-line">
             {isLong ? 'Long Ledger CSV' : 'Wide Matrix CSV'}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
           <span className="text-neutral-500 font-bold uppercase text-[11px]">โครงสร้าง:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 bg-surface-hover border border-line">
+          <span className="text-neutral-200 font-bold px-1.5 py-0.5 rounded-pill bg-surface-hover border border-line">
             {isLong ? `${LONG_VARIATION_INFO[longVariation].cols} คอลัมน์` : 'ตารางแนวนอน'}
           </span>
         </div>

@@ -50,7 +50,7 @@ const TxRow = memo(({ tx, catObj, onDeleteClick }: TxRowProps) => {
 
           {/* Allocation Type Badge */}
           {tx.allocation_type && !isInc && (
-            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-none border shrink-0 ${allocBadgeStyle}`}>
+            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${allocBadgeStyle}`}>
               {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
             </span>
           )}

@@ -363,7 +363,7 @@ export default function CategoryMatrixFilter({
           ['--tint-border-color' as any]: isCatActive ? activeColor : tc('line'),
           backgroundColor: isCatActive ? `rgba(${rgb}, 0.2)` : tc('surface')
         }}
-        className={`px-1.5 py-0.5 text-[11px] font-mono border tint-border rounded-none transition-all flex items-center gap-1 select-none cursor-pointer ${
+        className={`px-1.5 py-0.5 text-[11px] font-mono border tint-border rounded-pill transition-all flex items-center gap-1 select-none cursor-pointer ${
           isCatActive
             ? 'text-white font-black shadow-sm'
             : isIncome
@@ -438,7 +438,7 @@ export default function CategoryMatrixFilter({
         key={group.id}
         type="button"
         onClick={() => handleToggleGroup(groupCats)}
-        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center ${
+        className={`px-2 py-0.5 rounded-pill text-[11px] font-bold border transition-all flex items-center ${
           fullWidth ? 'w-full justify-between' : ''
         } gap-1 rounded-none cursor-pointer font-mono select-none ${buttonStyle}`}
         title={`คลิกเพื่อสลับเลือกหมวดหมู่ทั้งหมดในกลุ่ม ${group.name}`}

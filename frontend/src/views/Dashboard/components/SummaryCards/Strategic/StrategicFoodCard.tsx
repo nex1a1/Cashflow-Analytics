@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { UtensilsCrossed, TrendingDown, Briefcase, Trophy } from 'lucide-react';
 import { formatMoney } from '@/utils/formatters';
-import { Shimmer, getFoodStatus, BUDGET_RULES } from '../helpers';
+import { Shimmer, getFoodStatus, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
 interface FoodCardProps {
@@ -38,6 +38,7 @@ export const StrategicFoodCard = memo(({
       borderColorClass={isOver ? 'border-l-danger' : 'border-l-orange-500'}
       hoverBgClass="hover:bg-surface-hover"
       label="ค่าอาหาร & สัดส่วน"
+      badge={!showSkeleton && isOver && <OverBadge />}
       thresholdRow={!showSkeleton && (
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
           <span>เกณฑ์สัดส่วน</span>
@@ -47,7 +48,7 @@ export const StrategicFoodCard = memo(({
       showOverlay={!showSkeleton}
       overlayTitle="เจาะลึกพฤติกรรมอาหาร"
       overlayBadge={
-        <span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-none leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
+        <span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
           {foodStatus.label}
         </span>
       }

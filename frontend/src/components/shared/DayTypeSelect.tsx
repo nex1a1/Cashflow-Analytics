@@ -238,7 +238,7 @@ export default function DayTypeSelect({
         disabled={disabled}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className={`day-type-badge ${pillDimensions} font-black rounded-full cursor-pointer outline-none border inline-flex items-center justify-center text-center leading-none select-none transition-all hover:brightness-125 hover:border-opacity-60 active:scale-95 ${className}`}
+        className={`day-type-badge ${pillDimensions} font-black rounded-pill cursor-pointer outline-none border inline-flex items-center justify-center text-center leading-none select-none transition-all hover:brightness-125 hover:border-opacity-60 active:scale-95 ${className}`}
         style={{
           backgroundColor: badgeBg,
           borderColor: badgeBorder,

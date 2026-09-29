@@ -62,7 +62,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-sans">
               รายรับรวม
             </span>
-            <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               + INFLOW
             </span>
           </div>
@@ -86,7 +86,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-sans">
               รายจ่ายรวม
             </span>
-            <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black uppercase tracking-widest bg-expense/10 text-expense border border-expense/20">
+            <span className="px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest bg-expense/10 text-expense border border-expense/20">
               - OUTFLOW
             </span>
           </div>
@@ -112,13 +112,13 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             </span>
             <div className="flex items-center gap-1">
               {sumInc > 0 && (
-                <div className={`px-1.5 py-0.5 rounded-none text-[11px] font-black uppercase tracking-widest flex items-center gap-1 border ${getSavingsRateStyle(savingsRate)}`}>
+                <div className={`px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest flex items-center gap-1 border ${getSavingsRateStyle(savingsRate)}`}>
                   <span>ออม {savingsRate}%</span>
                   <span className="opacity-45">|</span>
                   <span className="font-extrabold">{getSavingsGrade(savingsRate)}</span>
                 </div>
               )}
-              <span className={`px-1.5 py-0.5 rounded-none text-[11px] font-black uppercase tracking-widest border ${isNetPositive ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
+              <span className={`px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest border ${isNetPositive ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
                 {isNetPositive ? 'เหลือ' : 'ขาดดุล'}
               </span>
             </div>
