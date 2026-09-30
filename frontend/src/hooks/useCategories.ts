@@ -87,10 +87,14 @@ export default function useCategories(
     async (type?: string) => {
       try {
         const groups = await groupService.getAll();
-        const defaultGroup = groups.find((g: any) => g.type === type) || groups[0];
+        const typedGroup = groups.find((g: any) => g.type === type);
+        // หมวดออม/ลงทุนต้องอยู่ในกลุ่มชนิด savings เท่านั้น ไม่ตกไปกลุ่มรายจ่าย
+        const defaultGroup = typedGroup || (type === 'savings' ? undefined : groups[0]);
 
         if (!defaultGroup) {
-          showToast('กรุณาสร้างกลุ่มก่อนเพิ่มหมวดหมู่', 'error');
+          showToast(type === 'savings'
+            ? 'กรุณาสร้างกลุ่มชนิด "ลงทุน/ออม" ก่อนเพิ่มหมวดหมู่'
+            : 'กรุณาสร้างกลุ่มก่อนเพิ่มหมวดหมู่', 'error');
           return;
         }
 
@@ -103,9 +107,9 @@ export default function useCategories(
         const newId = crypto.randomUUID();
         const newCatBackend = {
           id: newId,
-          name: type === 'income' ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
-          icon: type === 'income' ? 'coins' : 'tag',
-          color: type === 'income' ? '#10B981' : '#64748B',
+          name: type === 'income' ? 'รายรับใหม่' : type === 'savings' ? 'สินทรัพย์ลงทุนใหม่' : 'หมวดหมู่ใหม่',
+          icon: type === 'income' ? 'coins' : type === 'savings' ? 'piggy-bank' : 'tag',
+          color: type === 'income' || type === 'savings' ? '#10B981' : '#64748B',
           cashflow_group_id: defaultGroup.id,
           order_index: maxOrder + 1
         };

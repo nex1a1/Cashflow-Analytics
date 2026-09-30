@@ -5,6 +5,10 @@ import backupService from '../services/backupService';
 import { upsertTransactionSchema } from '../validations/transactionValidation';
 import { dateRangeQuerySchema, searchQuerySchema, monthParamSchema } from '../validations/queryValidation';
 
+/** แถว "ขาย" ของหมวดลงทุน/ออมคืนค่าเป็นลบ ทำให้ผลรวมทุกที่ = ออมสุทธิ */
+const signedBaht = (row: { amount: number; trade_side?: string | null }) =>
+  (row.trade_side === 'sell' ? -row.amount : row.amount) / 100;
+
 export const getAllTransactions = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { startDate, endDate } = dateRangeQuerySchema.parse(req.query);
@@ -15,9 +19,11 @@ export const getAllTransactions = (req: Request, res: Response, next: NextFuncti
       category:    row.category,
       category_id: row.category_id,
       description: row.description,
-      amount:      row.amount / 100, // Convert Satang to Baht
+      amount:      signedBaht(row), // Convert Satang to Baht (ขาย = ลบ)
       group_type:  row.group_type,
-      allocation_type: row.allocation_type
+      allocation_type: row.allocation_type,
+      asset_id:    row.asset_id ?? null,
+      units:       row.units ?? null
     })));
   } catch (err: unknown) {
     next(err);
@@ -101,9 +107,11 @@ export const searchTransactions = (req: Request, res: Response, next: NextFuncti
       category:    row.category,
       category_id: row.category_id,
       description: row.description,
-      amount:      row.amount / 100, // Convert Satang to Baht
+      amount:      signedBaht(row), // Convert Satang to Baht (ขาย = ลบ)
       group_type:  row.group_type,
-      allocation_type: row.allocation_type
+      allocation_type: row.allocation_type,
+      asset_id:    row.asset_id ?? null,
+      units:       row.units ?? null
     })));
   } catch (err: unknown) {
     next(err);

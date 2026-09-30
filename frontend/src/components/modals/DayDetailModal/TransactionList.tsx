@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { Wallet, Coins, Inbox } from 'lucide-react';
+import { Wallet, Coins, Inbox, PiggyBank } from 'lucide-react';
 import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton';
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import CategoryGlyph from '../../shared/CategoryGlyph';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 import { tc, readable } from '@/constants/theme';
 const ALLOCATION_BADGE_STYLES: Record<string, string> = {
@@ -14,6 +15,7 @@ const ALLOCATION_BADGE_STYLES: Record<string, string> = {
 export interface TxRowProps {
   tx: any;
   catObj?: any;
+  assetName?: string;
   onDeleteClick: (id: string) => void;
 }
 
@@ -25,8 +27,11 @@ export interface TransactionListProps {
   setSortBy?: (sortBy: 'category' | 'amount') => void;
 }
 
-const TxRow = memo(({ tx, catObj, onDeleteClick }: TxRowProps) => {
+const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
   const isInc = catObj?.type === 'income';
+  const isSav = catObj?.type === 'savings';
+  const isSell = isSav && Number(tx.amount) < 0;
+  const absAmount = Math.abs(Number(tx.amount) || 0);
   const color = catObj?.color || tc('ink-body');
   const groupObj = catObj?._group;
   
@@ -49,7 +54,12 @@ const TxRow = memo(({ tx, catObj, onDeleteClick }: TxRowProps) => {
           </p>
 
           {/* Allocation Type Badge */}
-          {tx.allocation_type && !isInc && (
+          {isSav && (
+            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${isSell ? 'bg-info/10 text-info border-info/30' : ALLOCATION_BADGE_STYLES.savings}`}>
+              {isSell ? 'ขาย' : 'ซื้อ'}{assetName ? ` · ${assetName}` : ''}{tx.units ? ` · ${tx.units}` : ''}
+            </span>
+          )}
+          {tx.allocation_type && !isInc && !isSav && (
             <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${allocBadgeStyle}`}>
               {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
             </span>
@@ -72,14 +82,14 @@ const TxRow = memo(({ tx, catObj, onDeleteClick }: TxRowProps) => {
       </div>
 
       {/* Amount (Ledger Inter Font) */}
-      <span className={`text-xs font-bold shrink-0 tabular-nums tracking-tight ${isInc ? 'text-emerald-400' : 'text-expense'}`}>
-        {isInc ? '+฿' : '-฿'}{formatMoney(tx.amount)}
+      <span className={`text-xs font-bold shrink-0 tabular-nums tracking-tight ${isInc ? 'text-emerald-400' : isSav ? (isSell ? 'text-info' : 'text-savings') : 'text-expense'}`}>
+        {isSav ? '฿' : isInc ? '+฿' : '-฿'}{formatMoney(absAmount)}
       </span>
 
       <ConfirmDeleteButton
         onConfirm={() => onDeleteClick(tx.id)}
         tooltip="ลบรายการ"
-        itemLabel={`${tx.description || tx.category} ${isInc ? '+' : '-'}฿${formatMoney(tx.amount)}`}
+        itemLabel={`${tx.description || tx.category} ${isInc ? '+' : isSav ? '' : '-'}฿${formatMoney(absAmount)}`}
       />
     </div>
   );
@@ -99,6 +109,12 @@ export default function TransactionList({
     ? [...dayTx].sort((a, b) => (Number.parseFloat(String(b.amount)) || 0) - (Number.parseFloat(String(a.amount)) || 0))
     : dayTx;
 
+  const { portfolio } = usePortfolio();
+  const assetNames = React.useMemo(
+    () => Object.fromEntries((portfolio?.assets ?? []).map(a => [a.id, a.name])) as Record<string, string>,
+    [portfolio],
+  );
+  const savings  = sortedTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'savings');
   const expenses = sortedTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'expense');
   const income   = sortedTx.filter(t => (catMap[t.category_id] || catMap[t.category])?.type === 'income');
 
@@ -127,6 +143,24 @@ export default function TransactionList({
                 tx={tx} 
                 catObj={catMap[tx.category_id] || catMap[tx.category]} 
                 onDeleteClick={handleDelete} 
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {savings.length > 0 && (
+        <div>
+          <p className="text-xs font-black mb-2 flex items-center gap-1.5 text-savings uppercase tracking-wider font-sans">
+            <PiggyBank className="w-4.5 h-4.5" /> ลงทุน/ออม ({savings.length})
+          </p>
+          <div className="space-y-1.5">
+            {savings.map(tx => (
+              <TxRow
+                key={tx.id}
+                tx={tx}
+                catObj={catMap[tx.category_id] || catMap[tx.category]}
+                assetName={tx.asset_id ? assetNames[tx.asset_id] : undefined}
+                onDeleteClick={handleDelete}
               />
             ))}
           </div>

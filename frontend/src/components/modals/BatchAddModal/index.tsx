@@ -9,6 +9,7 @@ import CartList from './CartList';
 import { Category, CashflowGroup, DayType, FrequentItem, AllocationType, TransactionPayload } from '../../../types';
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { signedTradeAmount } from '@/views/Portfolio/portfolioHelpers';
 
 export interface PendingBatchItem {
   id: string;
@@ -21,6 +22,11 @@ export interface PendingBatchItem {
   dayNote?: string;
   _catObj?: Category & { _group?: CashflowGroup };
   _isInc?: boolean;
+  /** หมวดลงทุน/ออม — amount เก็บเป็นค่าบวกในตะกร้า ติดลบตอนบันทึกถ้า side = 'sell' */
+  _isSavings?: boolean;
+  side?: 'buy' | 'sell';
+  asset_id?: string | null;
+  units?: number | null;
 }
 
 export interface BatchAddModalProps {
@@ -65,7 +71,7 @@ export default function BatchAddModal({
       
       if (formMethodsRef.current) {
         const { setValue, setFocus } = formMethodsRef.current;
-        setValue('type', (defaultType as 'income' | 'expense') || 'expense');
+        setValue('type', (defaultType as 'income' | 'expense' | 'savings') || 'expense');
         
         let catId = defaultCategory || '';
         if (defaultCategory && !categories.some(c => c.id === defaultCategory)) {
@@ -126,6 +132,16 @@ export default function BatchAddModal({
     }, {});
   }, [categories, groupMap]);
 
+  const savingsFields = (data: BatchFormValues): Partial<PendingBatchItem> => {
+    if (data.type !== 'savings') return { _isSavings: false, side: undefined, asset_id: null, units: null };
+    return {
+      _isSavings: true,
+      side: data.side ?? 'buy',
+      asset_id: data.assetId || null,
+      units: data.assetId ? Number(data.units) : null,
+    };
+  };
+
   const handleAddSubmit = useCallback((data: BatchFormValues) => {
     const catObj = catMap[data.categoryId];
     const targetCatName = catObj?.name || 'อื่นๆ';
@@ -143,7 +159,8 @@ export default function BatchAddModal({
             amount: Number(data.amount),
             allocation_type: data.allocation_type,
             _catObj: catObj,
-            _isInc: data.type === 'income'
+            _isInc: data.type === 'income',
+            ...savingsFields(data)
           };
         }
         return item;
@@ -160,8 +177,9 @@ export default function BatchAddModal({
         amount: Number(data.amount), 
         allocation_type: data.allocation_type,
         dayNote: '',
-        _catObj: catObj, 
-        _isInc: data.type === 'income'
+        _catObj: catObj,
+        _isInc: data.type === 'income',
+        ...savingsFields(data)
       };
       setPendingItems(prev => [...prev, newItem]);
     }
@@ -205,7 +223,9 @@ export default function BatchAddModal({
         category: item.category,
         category_id: item._catObj?.id || item.category_id, 
         description: item.description, 
-        amount: item.amount, 
+        amount: item._isSavings ? signedTradeAmount(item.side ?? 'buy', item.amount) : item.amount,
+        asset_id: item._isSavings ? item.asset_id : null,
+        units: item._isSavings ? item.units : null,
         allocation_type: item.allocation_type || 'want',
         dayNote: item.dayNote || ''
       }));
@@ -222,15 +242,19 @@ export default function BatchAddModal({
   };
 
   // Cart financial summary breakdowns
-  const totalExpense = useMemo(() => 
-    pendingItems.filter(i => !i._isInc).reduce((sum, i) => sum + i.amount, 0),
+  const totalExpense = useMemo(() =>
+    pendingItems.filter(i => !i._isInc && !i._isSavings).reduce((sum, i) => sum + i.amount, 0),
+    [pendingItems]
+  );
+  const netSavings = useMemo(() =>
+    pendingItems.filter(i => i._isSavings).reduce((sum, i) => sum + (i.side === 'sell' ? -i.amount : i.amount), 0),
     [pendingItems]
   );
   const totalIncome = useMemo(() => 
     pendingItems.filter(i => i._isInc).reduce((sum, i) => sum + i.amount, 0),
     [pendingItems]
   );
-  const netAmount = totalIncome - totalExpense;
+  const netAmount = totalIncome - totalExpense - netSavings;
 
   if (!isOpen) return null;
 
@@ -334,6 +358,14 @@ export default function BatchAddModal({
                     </span>
                   </div>
                 )}
+                {netSavings !== 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-medium text-slate-400">ลงทุน/ออม:</span>
+                    <span className="text-base font-black text-savings tabular-nums">
+                      {netSavings < 0 ? '-' : ''}<AnimatedNumber value={Math.abs(netSavings)} /> ฿
+                    </span>
+                  </div>
+                )}
                 {totalIncome > 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">รายรับ:</span>
@@ -342,7 +374,7 @@ export default function BatchAddModal({
                     </span>
                   </div>
                 )}
-                {totalExpense > 0 && totalIncome > 0 && (
+                {(totalExpense > 0 || netSavings !== 0) && totalIncome > 0 && (
                   <div className="flex items-center gap-1 pl-2 border-l border-line-strong">
                     <span className="text-[11px] font-medium text-slate-400">สุทธิ:</span>
                     <span className={`text-base font-black tabular-nums ${netAmount >= 0 ? 'text-emerald-400' : 'text-danger'}`}>

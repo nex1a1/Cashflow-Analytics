@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
-import { Settings2, Info, Coins, Wallet } from 'lucide-react';
+import { Settings2, Info, Coins, Wallet, PiggyBank } from 'lucide-react';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../types';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
@@ -12,6 +12,7 @@ import { countTxByGroup } from './settingsHelpers';
 
 const EXPENSE_ICON = <Wallet className="w-4 h-4" />;
 const INCOME_ICON = <Coins className="w-4 h-4" />;
+const SAVINGS_ICON = <PiggyBank className="w-4 h-4" />;
 
 export interface SettingsViewProps {
   categories: Category[];
@@ -63,6 +64,10 @@ const SettingsView = memo(function SettingsView({
 
   const addIncomeAction = useMemo(() => ({
     label: 'เพิ่มรายรับ', onClick: () => onAddCategory('income')
+  }), [onAddCategory]);
+
+  const addSavingsAction = useMemo(() => ({
+    label: 'เพิ่มหมวดหมู่', onClick: () => onAddCategory('savings')
   }), [onAddCategory]);
 
   const handleChangeCashflowGroup = useCallback(async (id: string, field: string, value: any) => {
@@ -117,7 +122,16 @@ const SettingsView = memo(function SettingsView({
     [...categories].filter(c => c.type === 'expense').sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)), 
   [categories]);
 
-  const incomeGroups = useMemo(() => 
+  const savingsCategories = useMemo(() =>
+    [...categories].filter(c => c.type === 'savings').sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
+  [categories]);
+
+  const savingsGroups = useMemo(() =>
+    cashflowGroups.filter(g => g.type === 'savings').sort((a, b) => a.order_index - b.order_index),
+    [cashflowGroups]
+  );
+
+  const incomeGroups = useMemo(() =>
     cashflowGroups.filter(g => g.type === 'income').sort((a, b) => a.order_index - b.order_index),
     [cashflowGroups]
   );
@@ -164,6 +178,32 @@ const SettingsView = memo(function SettingsView({
               ))}
               {expenseCategories.length === 0 && (
                 <p className="text-center py-6 text-xs text-ink-muted">ยังไม่มีหมวดหมู่รายจ่าย</p>
+              )}
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            accentColor="purple"
+            icon={SAVINGS_ICON}
+            title="หมวดหมู่การลงทุนและการออมเงิน"
+            badge={savingsCategories.length}
+            action={addSavingsAction}
+          >
+            <div>
+              {savingsCategories.map((cat, idx) => (
+                <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId}
+                  placeholder="ชื่อสินทรัพย์/บัญชีออม"
+                  onMove={handleMoveCategory} onChange={handleCategoryChange}
+                  onDelete={handleDeleteCategory} cashflowGroups={cashflowGroups}
+                  filteredGroups={savingsGroups}
+                  isFirst={idx === 0} isLast={idx === savingsCategories.length - 1} />
+              ))}
+              {savingsCategories.length === 0 && (
+                <p className="text-center py-6 text-xs text-ink-muted">
+                  {savingsGroups.length === 0
+                    ? 'ยังไม่มีกลุ่มชนิด "ลงทุน/ออม" — เพิ่มกลุ่มแล้วเปลี่ยนประเภทเป็น ลงทุน/ออม ที่การ์ดกลุ่ม'
+                    : 'ยังไม่มีหมวดหมู่การลงทุนและการออมเงิน'}
+                </p>
               )}
             </div>
           </SectionCard>

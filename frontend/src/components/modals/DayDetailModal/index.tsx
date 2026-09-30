@@ -9,6 +9,7 @@ import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } fr
 import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
 import { stepDate } from '@/utils/datePickerHelpers';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
+import { signedTradeAmount } from '@/views/Portfolio/portfolioHelpers';
 
 import { tc, readable } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
@@ -152,9 +153,14 @@ export default function DayDetailModal({
     const cat = (t.category_id && catMap[t.category_id]) || (t.category && catMap[t.category]);
     return cat?.type === 'income';
   });
+  const savings    = dayTx.filter(t => {
+    const cat = (t.category_id && catMap[t.category_id]) || (t.category && catMap[t.category]);
+    return cat?.type === 'savings';
+  });
   const totalExp   = expenses.reduce((s, t) => s + (Number.parseFloat(String(t.amount)) || 0), 0);
   const totalInc   = income.reduce((s, t) => s + (Number.parseFloat(String(t.amount)) || 0), 0);
-  const net        = totalInc - totalExp;
+  const netSavings = savings.reduce((s, t) => s + (Number.parseFloat(String(t.amount)) || 0), 0); // ขาย = ลบ
+  const net        = totalInc - totalExp - netSavings;
 
   const applySuggestion = (s: any) => {
     if (formMethodsRef.current) {
@@ -174,13 +180,17 @@ export default function DayDetailModal({
 
     const catObj = catMap[data.categoryId];
     const targetCatName = catObj?.name || 'อื่นๆ';
+    const isSav = data.type === 'savings';
     const newItem = {
       id: crypto.randomUUID(),
       date: activeDateStr, 
       category: targetCatName,
       category_id: data.categoryId, 
       description: data.description || targetCatName, 
-      amount: data.amount, 
+      // หมวดลงทุน/ออม: ขาย = ยอดติดลบ (เงินกลับเข้ามา)
+      amount: isSav ? signedTradeAmount(data.side ?? 'buy', data.amount) : data.amount,
+      asset_id: isSav && data.assetId ? data.assetId : null,
+      units: isSav && data.assetId ? Number(data.units) : null,
       allocation_type: data.allocation_type,
       dayNote: '',
       created_at: new Date().toISOString()
@@ -327,6 +337,11 @@ export default function DayDetailModal({
                 {totalExp > 0 && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-expense/10 text-expense border border-expense/40 flex items-center gap-1">
                     <span className="text-[11px] font-medium opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
+                  </span>
+                )}
+                {netSavings !== 0 && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-savings/10 text-savings border border-savings/30 flex items-center gap-1">
+                    <span className="text-[11px] font-medium opacity-80">ลงทุน/ออม</span> {netSavings > 0 ? '' : '-'}฿{formatMoney(Math.abs(netSavings))}
                   </span>
                 )}
                 {dayTx.length > 0 && (

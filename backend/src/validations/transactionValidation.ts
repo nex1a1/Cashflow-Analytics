@@ -6,7 +6,9 @@ const transactionSchema = z.object({
   category: z.string().nullable().optional(),
   category_id: z.union([z.string(), z.number().transform(v => String(v))]).nullable().optional(),
   description: z.string().nullable().optional().default(''),
-  amount: z.coerce.number(),
+  amount: z.coerce.number(), // ติดลบได้เฉพาะหมวดลงทุน/ออม (= ขาย) — service ตรวจซ้ำ
+  asset_id: z.string().nullable().optional(),
+  units: z.coerce.number().nullable().optional(),
   allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional().default('want'),
   dayNote: z.string().nullable().optional().default(''),
   group_type: z.string().nullable().optional(), 

@@ -269,9 +269,9 @@ export function useLedgerStats({
 }: LedgerStatsProps) {
   const catTypeMap = useMemo(() => buildCatTypeMap(categories), [categories]);
 
-  const { sumInc, sumExp } = useMemo(() => {
-    const { inc, exp } = sumIncomeExpense(displayTransactions, catTypeMap);
-    return { sumInc: inc, sumExp: exp };
+  const { sumInc, sumExp, sumSav } = useMemo(() => {
+    const { inc, exp, sav } = sumIncomeExpense(displayTransactions, catTypeMap);
+    return { sumInc: inc, sumExp: exp, sumSav: sav };
   }, [displayTransactions, catTypeMap]);
 
   const net = sumInc - sumExp;
@@ -383,6 +383,7 @@ export function useLedgerStats({
   return {
     sumInc,
     sumExp,
+    sumSav,
     net,
     savingsRate,
     activeIncomeCards,

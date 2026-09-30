@@ -88,6 +88,14 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
       </button>
       <button
         type="button"
+        onClick={() => handleOpenAddModal('', 'savings')}
+        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-line bg-surface text-ink-soft hover:bg-surface-hover hover:text-ink-display"
+      >
+        <PlusCircle className="w-3.5 h-3.5 text-savings" />
+        <span>เพิ่มลงทุน/ออม</span>
+      </button>
+      <button
+        type="button"
         onClick={() => handleOpenAddModal('', 'expense')}
         className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-accent text-on-accent hover:bg-accent-active"
       >

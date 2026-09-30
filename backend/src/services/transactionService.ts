@@ -1,6 +1,7 @@
 import db from '../config/db';
 import crypto from 'node:crypto';
 import { Transaction } from '../types';
+import { ApiError } from '../middleware/ApiError';
 
 interface TransactionWithDetails extends Transaction {
   category: string;
@@ -30,6 +31,9 @@ class TransactionService {
         t.category_id,
         t.allocation_type,
         t.created_at,
+        t.asset_id,
+        t.units,
+        t.trade_side,
         c.name as category,
         c.icon as category_icon,
         cg.name as group_name,
@@ -167,16 +171,48 @@ class TransactionService {
     return groupDefault?.allocation_type || 'want';
   }
 
+  private getGroupType(categoryId?: string): string | undefined {
+    if (!categoryId) return undefined;
+    return (db.prepare(`
+      SELECT cg.type FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `).get(categoryId) as { type: string } | undefined)?.type;
+  }
+
+  /**
+   * แถวลงทุน/ออม: จำนวนเงินติดลบ = ขาย (เงินกลับเข้ามา) เก็บค่าสัมบูรณ์ + trade_side='sell'
+   * ถ้าผูกสินทรัพย์ (asset_id) ต้องมีจำนวนหน่วย > 0
+   */
+  private resolveTrade(tx: any, categoryId?: string): { amountSatang: number; assetId: string | null; units: number | null; side: 'buy' | 'sell' | null } {
+    const amount = Number(tx.amount);
+    const isSavings = this.getGroupType(categoryId) === 'savings';
+    if (amount < 0 && !isSavings) throw new ApiError(400, 'จำนวนเงินติดลบได้เฉพาะหมวดลงทุน/ออม');
+
+    const assetId: string | null = isSavings && tx.asset_id ? String(tx.asset_id) : null;
+    let units: number | null = null;
+    if (assetId) {
+      if (!db.prepare('SELECT 1 FROM assets WHERE id = ?').get(assetId)) throw new ApiError(400, 'ไม่พบสินทรัพย์ที่เลือก');
+      units = Number(tx.units);
+      if (!Number.isFinite(units) || units <= 0) throw new ApiError(400, 'ต้องระบุจำนวนหน่วยที่มากกว่า 0 เมื่อเลือกสินทรัพย์');
+    }
+    const side = amount < 0 ? 'sell' : (assetId ? 'buy' : null);
+    return { amountSatang: Math.round(Math.abs(amount) * 100), assetId, units, side };
+  }
+
   upsertMany(transactions: any[]): void {
     const stmt = db.prepare(`
-      INSERT INTO transactions (id, date, description, amount, category_id, allocation_type, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO transactions (id, date, description, amount, category_id, allocation_type, asset_id, units, trade_side, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
         date = excluded.date,
         description = excluded.description,
         amount = excluded.amount,
         category_id = excluded.category_id,
         allocation_type = excluded.allocation_type,
+        asset_id = excluded.asset_id,
+        units = excluded.units,
+        trade_side = excluded.trade_side,
         updated_at = CURRENT_TIMESTAMP,
         is_deleted = 0
     `);
@@ -184,17 +220,20 @@ class TransactionService {
     const transactionAction = db.transaction((txs: any[]) => {
       for (const tx of txs) {
         const date = this.normalizeDate(tx.date);
-        const amountSatang = Math.round(tx.amount * 100);
         const categoryId = this.resolveCategoryId(tx);
         const allocationType = this.resolveAllocationType(categoryId, tx.allocation_type);
+        const trade = this.resolveTrade(tx, categoryId);
 
         stmt.run(
           tx.id || crypto.randomUUID(),
           date,
           tx.description || '',
-          amountSatang,
+          trade.amountSatang,
           categoryId,
-          allocationType
+          allocationType,
+          trade.assetId,
+          trade.units,
+          trade.side
         );
       }
     });
@@ -296,7 +335,7 @@ class TransactionService {
       // If only symbols were entered, fallback directly to LIKE
       return db.prepare(`
         SELECT 
-          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
           c.name as category, cg.type as group_type
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
@@ -312,7 +351,7 @@ class TransactionService {
     try {
       const rows = db.prepare(`
         SELECT 
-          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
           c.name as category, cg.type as group_type
         FROM transactions_fts f
         JOIN transactions t ON f.rowid = t.rowid
@@ -327,7 +366,7 @@ class TransactionService {
       console.warn('⚠️ FTS5 search query error, falling back to LIKE:', ftsErr.message);
       return db.prepare(`
         SELECT 
-          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type,
+          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
           c.name as category, cg.type as group_type
         FROM transactions t
         JOIN categories c ON t.category_id = c.id
@@ -354,7 +393,7 @@ class TransactionService {
         MAX(t.date) as last_date
       FROM transactions t
       JOIN categories c ON t.category_id = c.id
-      WHERE t.is_deleted = 0
+      WHERE t.is_deleted = 0 AND (t.trade_side IS NULL OR t.trade_side = 'buy')
       GROUP BY t.category_id, t.description, t.amount, t.allocation_type
       ORDER BY count DESC, last_date DESC
     `).all() as Array<{

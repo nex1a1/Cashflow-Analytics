@@ -9,6 +9,7 @@ import { Category, CashflowGroup, DayType, AllocationType } from '../../../types
 import { PendingBatchItem } from './index';
 import CategorySelect from '@/components/shared/CategorySelect';
 import FieldError from '../../shared/FieldError';
+import InvestFields from '@/components/shared/InvestFields';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -18,21 +19,32 @@ const getLocalDateString = (dateObj = new Date()) => {
 };
 
 const batchAddSchema = z.object({
-  type: z.enum(['income', 'expense']),
+  type: z.enum(['income', 'expense', 'savings']),
   date: z.string().min(1, "กรุณาเลือกวันที่"),
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   description: z.string().optional(),
   amount: z.number({ message: "กรุณาระบุจำนวนเงิน" }).positive("จำนวนเงินต้องมากกว่า 0"),
   allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
+  assetId: z.string().optional(),
+  side: z.enum(['buy', 'sell']).optional(),
+  units: z.string().optional(),
+}).superRefine((v, ctx) => {
+  if (v.type === 'savings' && v.assetId && !(Number(v.units) > 0)) {
+    ctx.addIssue({ code: 'custom', path: ['units'], message: 'ระบุจำนวนหน่วยที่มากกว่า 0' });
+  }
 });
 
 export interface BatchFormValues {
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'savings';
   date: string;
   categoryId: string;
   description?: string;
   amount: number;
   allocation_type?: AllocationType | null;
+  /** หมวดลงทุน/ออม: สินทรัพย์ ('' = ออมทั่วไป), ซื้อ/ขาย, จำนวนหน่วย */
+  assetId?: string;
+  side?: 'buy' | 'sell';
+  units?: string;
 }
 
 export interface ExternalFormControls {
@@ -75,23 +87,33 @@ function BatchForm({
   const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm<BatchFormValues>({
     resolver: zodResolver(batchAddSchema),
     defaultValues: {
-      type: (defaultType as 'income' | 'expense') || 'expense',
+      type: (defaultType as BatchFormValues['type']) || 'expense',
       date: defaultDate || getLocalDateString(),
       categoryId: defaultCategoryId || '',
       description: '',
       amount: '' as unknown as number,
-      allocation_type: 'want'
+      allocation_type: 'want',
+      assetId: '',
+      side: 'buy',
+      units: ''
     }
   });
 
   const formType = watch('type');
   const formDate = watch('date');
   const allocationType = watch('allocation_type');
+  const assetId = watch('assetId') || '';
+  const side = watch('side') || 'buy';
+  const units = watch('units') || '';
+  const amountValue = watch('amount');
 
   // Load editing item data into form
   useEffect(() => {
     if (editingItem) {
-      setValue('type', editingItem._isInc ? 'income' : 'expense');
+      setValue('type', editingItem._isInc ? 'income' : editingItem._isSavings ? 'savings' : 'expense');
+      setValue('assetId', editingItem.asset_id || '');
+      setValue('side', editingItem.side || 'buy');
+      setValue('units', editingItem.units ? String(editingItem.units) : '');
       setValue('date', editingItem.date);
       setValue('categoryId', editingItem.category_id || editingItem._catObj?.id || '');
       setValue('description', editingItem.description || '');
@@ -114,6 +136,10 @@ function BatchForm({
   useEffect(() => {
     if (formType === 'income') {
       setValue('allocation_type', null);
+      return;
+    }
+    if (formType === 'savings') {
+      setValue('allocation_type', 'savings');
       return;
     }
     if (isApplyingSuggestionRef.current) {
@@ -140,6 +166,7 @@ function BatchForm({
   const onSubmit = (data: BatchFormValues) => {
     onSubmitItem(data);
     setValue('description', '');
+    setValue('units', '');
     setValue('amount', '' as unknown as number, { shouldValidate: false });
     setTimeout(() => setFocus('amount'), 10);
   };
@@ -151,8 +178,10 @@ function BatchForm({
     } 
   };
 
-  const handleTypeChange = (newType: 'income' | 'expense') => {
+  const handleTypeChange = (newType: BatchFormValues['type']) => {
     setValue('type', newType);
+    setValue('assetId', '');
+    setValue('units', '');
     const firstCat = categories.find(c => c.type === newType);
     setValue('categoryId', firstCat?.id || '');
   };
@@ -166,8 +195,8 @@ function BatchForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-surface-hover border-line">
       
-      {/* Type Toggle: Expense / Income */}
-      <div className="grid grid-cols-2 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
+      {/* Type Toggle: Expense / Savings & Investment / Income */}
+      <div className="grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
         <button 
           type="button" 
           onClick={() => handleTypeChange('expense')}
@@ -179,8 +208,19 @@ function BatchForm({
         >
           รายจ่าย
         </button>
-        <button 
-          type="button" 
+        <button
+          type="button"
+          onClick={() => handleTypeChange('savings')}
+          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+            formType === 'savings'
+              ? 'bg-surface-elevated text-savings shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          ลงทุน/ออม
+        </button>
+        <button
+          type="button"
           onClick={() => handleTypeChange('income')}
           className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
             formType === 'income' 
@@ -301,6 +341,23 @@ function BatchForm({
         <FieldError id="batch-categoryId-err" message={errors.categoryId?.message} />
       </div>
 
+      {formType === 'savings' && (
+        <div className="mb-4">
+          <InvestFields
+            idPrefix="batch"
+            assetId={assetId}
+            side={side}
+            units={units}
+            amount={Number.isFinite(amountValue) ? amountValue : undefined}
+            onAssetChange={v => { setValue('assetId', v); if (!v) setValue('units', ''); }}
+            onSideChange={v => setValue('side', v)}
+            onUnitsChange={v => setValue('units', v, { shouldValidate: !!errors.units })}
+            onEnter={() => handleSubmit(onSubmit)()}
+            unitsError={errors.units?.message}
+          />
+        </div>
+      )}
+
       {/* Description Input */}
       <div className="mb-4">
         <label htmlFor="batch-description" className={tokens.label}>รายละเอียด</label>
@@ -340,10 +397,11 @@ function BatchForm({
             <button 
               type="button" 
               onClick={() => { 
-                setValue('description', ''); 
-                setValue('amount', '' as unknown as number, { shouldValidate: false }); 
-                setTimeout(() => setFocus('amount'), 10); 
-              }} 
+                setValue('description', '');
+                setValue('units', '');
+                setValue('amount', '' as unknown as number, { shouldValidate: false });
+                setTimeout(() => setFocus('amount'), 10);
+              }}  
               disabled={isProcessing}
               className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-surface-elevated/60 hover:bg-surface-elevated text-slate-300 border-line"
               title="ล้างข้อมูลที่กำลังพิมพ์"

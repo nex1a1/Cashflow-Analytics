@@ -40,7 +40,7 @@ async function fetchSharkBrainPredictions(uniqueDescriptions: Set<string>): Prom
 }
 
 function parseLongCsvRow(row: string[], headers: string[], context: any) {
-  const { dateStr, predictions, getOrCreateDayType, getOrCreateCategory, newDayTypes } = context;
+  const { dateStr, predictions, getOrCreateDayType, getOrCreateCategory, newDayTypes, updatedCategories } = context;
   let catName = '';
   let desc = '';
   let amtStr = '';
@@ -76,12 +76,15 @@ function parseLongCsvRow(row: string[], headers: string[], context: any) {
   const amount = cleanNumber(amtStr);
   if (amount === 0) return null;
 
+  // หมวดลงทุน/ออม: ยอดติดลบ = ขาย (ส่งออกแล้วนำเข้ากลับต้องคงเครื่องหมาย) หมวดอื่นใช้ค่าสัมบูรณ์เหมือนเดิม
+  const isSavingsCat = updatedCategories?.find((c: Category) => c.name === finalCatName)?.type === 'savings';
+
   return {
     id: crypto.randomUUID(),
     date: dateStr,
     category: finalCatName,
     description: desc || finalCatName,
-    amount: Math.abs(amount),
+    amount: isSavingsCat ? amount : Math.abs(amount),
     dayNote: '',
   };
 }

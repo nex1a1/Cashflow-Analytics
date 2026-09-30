@@ -7,54 +7,59 @@ interface DayTypeInput {
   color: string;
 }
 
+// ยอดเงินแบบมีเครื่องหมาย: แถว "ขาย" (เงินกลับจากการลงทุน) เป็นลบ — ทำให้ออมสุทธิ = ซื้อ − ขาย
+const SIGNED_AMOUNT = "CASE WHEN t.trade_side = 'sell' THEN -t.amount ELSE t.amount END";
+
+const VIEWS_SQL = `
+  CREATE VIEW IF NOT EXISTS v_monthly_summary AS
+  SELECT 
+    strftime('%Y-%m', t.date) as month,
+    SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income_satang,
+    SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense_satang,
+    SUM(CASE WHEN cg.type = 'savings' THEN ${SIGNED_AMOUNT} ELSE 0 END) as savings_satang
+  FROM transactions t
+  JOIN categories c ON t.category_id = c.id
+  JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+  WHERE t.is_deleted = 0
+  GROUP BY month;
+
+  CREATE VIEW IF NOT EXISTS v_daily_burn AS
+  SELECT 
+    t.date,
+    strftime('%Y-%m', t.date) as month,
+    SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as daily_expense_satang,
+    cd.day_type_id,
+    dt.name as day_type_name,
+    dt.label as day_type_label
+  FROM transactions t
+  JOIN categories c ON t.category_id = c.id
+  JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+  LEFT JOIN calendar_days cd ON t.date = cd.date
+  LEFT JOIN day_types dt ON cd.day_type_id = dt.id
+  WHERE t.is_deleted = 0
+  GROUP BY t.date;
+
+  CREATE VIEW IF NOT EXISTS v_category_monthly AS
+  SELECT 
+    strftime('%Y-%m', t.date) as month,
+    c.id as category_id,
+    c.name as category_name,
+    c.icon as category_icon,
+    c.color as category_color,
+    cg.id as group_id,
+    cg.type as group_type,
+    SUM(CASE WHEN cg.type = 'savings' THEN ${SIGNED_AMOUNT} ELSE t.amount END) as amount_satang
+  FROM transactions t
+  JOIN categories c ON t.category_id = c.id
+  JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+  WHERE t.is_deleted = 0
+  GROUP BY month, c.id;
+`;
+
 // Recreates views after schema migrations
 const recreateViews = (): void => {
   try {
-    db.exec(`
-      CREATE VIEW IF NOT EXISTS v_monthly_summary AS
-      SELECT 
-        strftime('%Y-%m', t.date) as month,
-        SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income_satang,
-        SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense_satang,
-        SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings_satang
-      FROM transactions t
-      JOIN categories c ON t.category_id = c.id
-      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-      WHERE t.is_deleted = 0
-      GROUP BY month;
-
-      CREATE VIEW IF NOT EXISTS v_daily_burn AS
-      SELECT 
-        t.date,
-        strftime('%Y-%m', t.date) as month,
-        SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as daily_expense_satang,
-        cd.day_type_id,
-        dt.name as day_type_name,
-        dt.label as day_type_label
-      FROM transactions t
-      JOIN categories c ON t.category_id = c.id
-      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-      LEFT JOIN calendar_days cd ON t.date = cd.date
-      LEFT JOIN day_types dt ON cd.day_type_id = dt.id
-      WHERE t.is_deleted = 0
-      GROUP BY t.date;
-
-      CREATE VIEW IF NOT EXISTS v_category_monthly AS
-      SELECT 
-        strftime('%Y-%m', t.date) as month,
-        c.id as category_id,
-        c.name as category_name,
-        c.icon as category_icon,
-        c.color as category_color,
-        cg.id as group_id,
-        cg.type as group_type,
-        SUM(t.amount) as amount_satang
-      FROM transactions t
-      JOIN categories c ON t.category_id = c.id
-      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-      WHERE t.is_deleted = 0
-      GROUP BY month, c.id;
-    `);
+    db.exec(VIEWS_SQL);
   } catch (e: any) {
     console.warn('⚠️ Error creating views:', e.message);
   }
@@ -274,6 +279,71 @@ const clearIncomeAllocation = (): void => {
   }
 };
 
+/**
+ * กลุ่มรายจ่ายที่จัดสรรเป็น SAVE (เช่น "ลงทุน/ออม") ย้ายไปเป็นชนิด 'savings' แยกจากรายจ่าย
+ * รันครั้งเดียว (ผู้ใช้ยังตั้งกลุ่มรายจ่ายเป็น SAVE เองได้ภายหลังโดยไม่ถูกย้ายซ้ำ)
+ */
+const promoteSavingsGroups = (): void => {
+  try {
+    const done = db.prepare("SELECT value FROM settings WHERE key = 'savings_groups_promoted'").get();
+    if (done) return;
+    const r = db.prepare("UPDATE cashflow_groups SET type = 'savings' WHERE type = 'expense' AND allocation_type = 'savings'").run();
+    db.prepare("INSERT INTO settings (key, value) VALUES ('savings_groups_promoted', 'true')").run();
+    if (r.changes > 0) console.log(`🐷 ย้ายกลุ่มลงทุน/ออม ${r.changes} กลุ่ม ออกจากรายจ่ายเป็นชนิด savings`);
+  } catch {
+    // ตาราง cashflow_groups ยังไม่มี (DB ใหม่) — ไม่มีอะไรต้องย้าย
+  }
+};
+
+/**
+ * ระบบลงทุน: ตาราง assets / price_cache + คอลัมน์ซื้อขายใน transactions (idempotent, รันทุกครั้งที่เปิดระบบ)
+ * แถวขาย = amount เก็บค่าสัมบูรณ์ + trade_side='sell' (ฝั่ง API แปลงเป็นค่าลบ)
+ */
+const ensureInvestmentSchema = (): void => {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS assets (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('gold_bar', 'gold_ornament', 'us_stock', 'th_stock', 'crypto', 'fund', 'other')),
+        symbol TEXT,
+        unit_label TEXT,
+        manual_price REAL,
+        manual_price_at TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      ) STRICT;
+
+      CREATE TABLE IF NOT EXISTS price_cache (
+        asset_id TEXT PRIMARY KEY,
+        price REAL NOT NULL,
+        fetched_at TEXT NOT NULL,
+        source TEXT NOT NULL,
+        FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+      ) STRICT;
+    `);
+
+    const cols = new Set((db.prepare('PRAGMA table_info(transactions)').all() as { name: string }[]).map(c => c.name));
+    if (cols.size === 0) return; // DB ใหม่ — ตาราง transactions จะถูกสร้างพร้อมคอลัมน์ครบใน initSchema
+
+    let changed = false;
+    if (!cols.has('asset_id')) { db.exec('ALTER TABLE transactions ADD COLUMN asset_id TEXT REFERENCES assets(id)'); changed = true; }
+    if (!cols.has('trade_side')) { db.exec("ALTER TABLE transactions ADD COLUMN trade_side TEXT CHECK(trade_side IS NULL OR trade_side IN ('buy', 'sell'))"); changed = true; }
+    if (!cols.has('units')) { db.exec('ALTER TABLE transactions ADD COLUMN units REAL'); changed = true; }
+    db.exec('CREATE INDEX IF NOT EXISTS idx_transactions_asset ON transactions(asset_id)');
+
+    // view เดิมยังรวมแถวขายเป็นบวก — สร้างใหม่ให้ใช้ยอดมีเครื่องหมาย (ครั้งเดียว)
+    const viewsDone = db.prepare("SELECT value FROM settings WHERE key = 'signed_savings_views'").get();
+    if (changed || !viewsDone) {
+      db.exec('DROP VIEW IF EXISTS v_monthly_summary; DROP VIEW IF EXISTS v_daily_burn; DROP VIEW IF EXISTS v_category_monthly;');
+      recreateViews();
+      db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('signed_savings_views', 'true')").run();
+      console.log('📈 เพิ่มโครงสร้างระบบลงทุน (assets, price_cache, คอลัมน์ซื้อขาย) และสร้าง view ใหม่');
+    }
+  } catch (e: any) {
+    console.warn('⚠️ ไม่สามารถเตรียมโครงสร้างระบบลงทุนได้:', e.message);
+  }
+};
+
 export const initSchema = (): void => {
   // เปิด Foreign Key Support
   db.pragma('foreign_keys = ON');
@@ -289,6 +359,8 @@ export const initSchema = (): void => {
   // ตรวจสอบและยกระดับโครงสร้างตารางเดิมให้เป็น STRICT Mode หากยังไม่ได้เป็น
   migrateTablesToStrict();
   clearIncomeAllocation();
+  promoteSavingsGroups();
+  ensureInvestmentSchema();
 
   // ล้างตารางที่เลิกใช้งานแล้วจากฟีเจอร์เก่าที่ถูกถอดออก (Purge deprecated tables)
   db.exec(`
@@ -361,6 +433,9 @@ export const initSchema = (): void => {
       is_deleted INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      asset_id TEXT REFERENCES assets(id),
+      trade_side TEXT CHECK(trade_side IS NULL OR trade_side IN ('buy', 'sell')),
+      units REAL,
       FOREIGN KEY (category_id) REFERENCES categories(id)
     ) STRICT;
 
@@ -391,54 +466,8 @@ export const initSchema = (): void => {
       INSERT INTO transactions_fts(rowid, id, description) VALUES (new.rowid, new.id, new.description);
     END;
 
-    -- 2. วิวประมวลผลทางสถิติ (The Brain)
-    
-    -- 2.1 วิวสรุปรายเดือน
-    CREATE VIEW IF NOT EXISTS v_monthly_summary AS
-    SELECT 
-      strftime('%Y-%m', t.date) as month,
-      SUM(CASE WHEN cg.type = 'income' THEN t.amount ELSE 0 END) as income_satang,
-      SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as expense_satang,
-      SUM(CASE WHEN cg.type = 'savings' THEN t.amount ELSE 0 END) as savings_satang
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-    WHERE t.is_deleted = 0
-    GROUP BY month;
-
-    -- 2.2 วิวอัตราการเผาผลาญรายวันและความสัมพันธ์กับประเภทวันทำงาน/วันหยุด
-    CREATE VIEW IF NOT EXISTS v_daily_burn AS
-    SELECT 
-      t.date,
-      strftime('%Y-%m', t.date) as month,
-      SUM(CASE WHEN cg.type = 'expense' THEN t.amount ELSE 0 END) as daily_expense_satang,
-      cd.day_type_id,
-      dt.name as day_type_name,
-      dt.label as day_type_label
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-    LEFT JOIN calendar_days cd ON t.date = cd.date
-    LEFT JOIN day_types dt ON cd.day_type_id = dt.id
-    WHERE t.is_deleted = 0
-    GROUP BY t.date;
-
-    -- 2.3 วิวแจกแจงค่าใช้จ่ายตามหมวดหมู่รายเดือน
-    CREATE VIEW IF NOT EXISTS v_category_monthly AS
-    SELECT 
-      strftime('%Y-%m', t.date) as month,
-      c.id as category_id,
-      c.name as category_name,
-      c.icon as category_icon,
-      c.color as category_color,
-      cg.id as group_id,
-      cg.type as group_type,
-      SUM(t.amount) as amount_satang
-    FROM transactions t
-    JOIN categories c ON t.category_id = c.id
-    JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-    WHERE t.is_deleted = 0
-    GROUP BY month, c.id;
+    -- 2. วิวประมวลผลทางสถิติ (The Brain): v_monthly_summary / v_daily_burn / v_category_monthly
+    ${VIEWS_SQL}
   `);
 
   // 2. ตรวจสอบคอลัมน์และปรับโครงสร้างตารางเดิมให้รองรับเวอร์ชันปัจจุบัน

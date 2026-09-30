@@ -38,7 +38,19 @@ describe('resolveTxType / sumIncomeExpense', () => {
 
   it('page sums use the same rule as the total (id beats a conflicting name)', () => {
     const rows = [tx({ category_id: 'c1', category: 'ค่ากิน', amount: 30 })];
-    expect(sumIncomeExpense(rows, map)).toEqual({ inc: 30, exp: 0 });
+    expect(sumIncomeExpense(rows, map)).toEqual({ inc: 30, exp: 0, sav: 0 });
+  });
+
+  it('keeps savings/investment apart from expense; a sell (negative) reduces net savings', () => {
+    const withSav = buildCatTypeMap([
+      { id: 'c2', name: 'ค่ากิน', type: 'expense' },
+      { id: 'c3', name: 'ลงทุน', type: 'savings' },
+    ]);
+    expect(sumIncomeExpense([
+      tx({ category_id: 'c2', amount: 100 }),
+      tx({ category_id: 'c3', amount: 500 }),
+      tx({ category_id: 'c3', amount: -480 }),
+    ], withSav)).toEqual({ inc: 0, exp: 100, sav: 20 });
   });
 });
 

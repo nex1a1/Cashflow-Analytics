@@ -4,6 +4,7 @@ import { ToastProvider } from './context/ToastContext';
 import { AppUIProvider } from './context/AppUIContext';
 import { AppDataProvider } from './context/AppDataContext';
 import { AppFilterProvider } from './context/AppFilterContext';
+import { PortfolioProvider } from './context/PortfolioContext';
 import './assets/styles/darkMode.css';
 
 export default function App() {
@@ -11,9 +12,11 @@ export default function App() {
     <ToastProvider>
       <AppUIProvider>
         <AppDataProvider>
-          <AppFilterProvider>
-            <MainLayout />
-          </AppFilterProvider>
+          <PortfolioProvider>
+            <AppFilterProvider>
+              <MainLayout />
+            </AppFilterProvider>
+          </PortfolioProvider>
         </AppDataProvider>
       </AppUIProvider>
     </ToastProvider>

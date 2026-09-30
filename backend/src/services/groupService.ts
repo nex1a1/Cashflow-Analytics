@@ -32,7 +32,7 @@ class GroupService {
       group.id,
       group.name,
       group.type,
-      group.type === 'income' ? null : (group.allocation_type || 'want'), // รายรับไม่มี NEED/WANT
+      group.type === 'income' ? null : group.type === 'savings' ? 'savings' : (group.allocation_type || 'want'), // รายรับไม่มี NEED/WANT, ออม/ลงทุน = SAVE เสมอ
       group.order_index || 0,
       group.color || null,
       group.icon || null,

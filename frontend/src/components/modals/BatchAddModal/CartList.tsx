@@ -3,6 +3,7 @@ import { ClipboardList, Inbox, Trash2, CalendarDays, Pencil } from 'lucide-react
 import { formatMoney, hexToRgb } from '../../../utils/formatters';
 import { PendingBatchItem } from './index';
 import CategoryGlyph from '../../shared/CategoryGlyph';
+import { usePortfolio } from '@/context/PortfolioContext';
 
 import { tc } from '@/constants/theme';
 export interface CartListProps {
@@ -20,6 +21,7 @@ function CartList({
   editingItemId,
   isProcessing
 }: CartListProps) {
+  const { portfolio } = usePortfolio();
   const listBottomRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(pendingItems.length);
 
@@ -77,11 +79,13 @@ function CartList({
                       </div>
                       <div className="flex flex-wrap items-center gap-1 mt-1 overflow-hidden w-full">
                         <span className={`h-[22px] px-2 flex items-center text-[11px] font-black rounded-none shrink-0 ${
-                          item._isInc 
-                            ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
-                            : 'bg-expense/10 text-expense border border-expense/15'
+                          item._isInc
+                            ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30'
+                            : item._isSavings
+                              ? 'bg-savings/10 text-savings border border-savings/30'
+                              : 'bg-expense/10 text-expense border border-expense/15'
                         }`}>
-                          {item._isInc ? 'รายรับ' : 'รายจ่าย'}
+                          {item._isInc ? 'รายรับ' : item._isSavings ? `${item.side === 'sell' ? 'ขาย' : 'ซื้อ'}${item.asset_id ? ` · ${portfolio?.assets.find(a => a.id === item.asset_id)?.name ?? ''}` : ' · ออมทั่วไป'}${item.units ? ` · ${item.units}` : ''}` : 'รายจ่าย'}
                         </span>
                         <span 
                           className="h-[22px] px-2 flex items-center gap-1.5 text-[11px] font-bold rounded-none border shrink min-w-0 text-slate-100"
@@ -108,8 +112,8 @@ function CartList({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 pl-2 shrink-0">
-                    <span className={`text-xs font-bold tabular-nums tracking-tight shrink-0 mr-1 ${item._isInc ? 'text-emerald-400' : 'text-expense'}`}>
-                      {item._isInc ? '+฿' : '-฿'}{formatMoney(item.amount)}
+                    <span className={`text-xs font-bold tabular-nums tracking-tight shrink-0 mr-1 ${item._isInc ? 'text-emerald-400' : item._isSavings ? (item.side === 'sell' ? 'text-info' : 'text-savings') : 'text-expense'}`}>
+                      {item._isSavings ? '฿' : item._isInc ? '+฿' : '-฿'}{formatMoney(item.amount)}
                     </span>
                     <button 
                       type="button" 

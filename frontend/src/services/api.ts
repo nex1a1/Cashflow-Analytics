@@ -8,7 +8,12 @@ import {
     DayType,
     CalendarDay,
     DashboardAnalytics,
-    BackupFileInfo
+    BackupFileInfo,
+    Portfolio,
+    AssetInput,
+    PriceRefreshResult,
+    PricePreview,
+    AssetKind
 } from '../types';
 
 const CATEGORIES_API_URL = API_URL.replace('/transactions', '/categories');
@@ -17,6 +22,10 @@ const DAY_TYPES_API_URL = API_URL.replace('/transactions', '/day-types');
 const ANALYTICS_API_URL = API_URL.replace('/transactions', '/analytics');
 const BACKUP_API_URL = API_URL.replace('/transactions', '/backup');
 const BACKUPS_API_URL = API_URL.replace('/transactions', '/backups');
+const PORTFOLIO_API_URL = API_URL.replace('/transactions', '/portfolio');
+const ASSETS_API_URL = API_URL.replace('/transactions', '/assets');
+const PRICES_REFRESH_API_URL = API_URL.replace('/transactions', '/prices/refresh');
+const PRICES_PREVIEW_API_URL = API_URL.replace('/transactions', '/prices/preview');
 
 const handleResponse = async <T = any>(response: Response): Promise<T> => {
     if (!response.ok) {
@@ -124,4 +133,23 @@ export const backupService = {
     }).then(handleResponse<{ success: boolean; message: string; filename: string }>)
 };
 
-
+export const portfolioService = {
+    get: (): Promise<Portfolio> => fetch(PORTFOLIO_API_URL).then(handleResponse<Portfolio>),
+    saveAsset: (asset: AssetInput): Promise<{ success: boolean; id: string }> => fetch(ASSETS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(asset)
+    }).then(handleResponse<{ success: boolean; id: string }>),
+    deleteAsset: (id: string): Promise<{ success: boolean }> => fetch(`${ASSETS_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>),
+    setManualPrice: (id: string, price: number): Promise<{ success: boolean }> => fetch(`${ASSETS_API_URL}/${id}/price`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price })
+    }).then(handleResponse<{ success: boolean }>),
+    refreshPrices: (): Promise<{ results: PriceRefreshResult[] }> => fetch(PRICES_REFRESH_API_URL, { method: 'POST' }).then(handleResponse<{ results: PriceRefreshResult[] }>),
+    previewPrice: (kind: AssetKind, symbol: string | null): Promise<PricePreview> => fetch(PRICES_PREVIEW_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, symbol })
+    }).then(handleResponse<PricePreview>)
+};

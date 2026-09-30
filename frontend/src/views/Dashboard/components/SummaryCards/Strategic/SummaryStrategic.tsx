@@ -19,22 +19,23 @@ export const ANALYSIS_TABS = [
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
 export type AnalysisTab = typeof ANALYSIS_TABS[number];
 
-export interface AnalysisTabItem {
-  id: AnalysisTabId;
+export interface AnalysisTabItem<T extends string = AnalysisTabId> {
+  id: T;
   label: string;
   disabled?: boolean;
   title?: string;
 }
 
-const AnalysisTabHeader = ({
+/** แถบสลับโหมดแบบเดียวกับ SummaryCards — ใช้ซ้ำได้กับ id อื่น (เช่นหน้าพอร์ต) */
+export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
   activeTab,
   tabs,
   onChange,
   aside
 }: {
-  activeTab: AnalysisTabId;
-  tabs: readonly AnalysisTabItem[];
-  onChange: (id: AnalysisTabId) => void;
+  activeTab: T;
+  tabs: readonly AnalysisTabItem<T>[];
+  onChange: (id: T) => void;
   aside?: React.ReactNode;
 }) => (
   <div className="flex items-center justify-between px-2 border-b border-line bg-surface/80">

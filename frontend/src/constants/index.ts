@@ -30,7 +30,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'c5', name: "การเดินทาง", icon: "car", color: '#64748B', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
   { id: 'c6', name: "ที่อยู่อาศัยและของใช้", icon: "home", color: '#F59E0B', type: 'expense', cashflowGroup: null, allocation_type: 'need' },
   { id: 'c7', name: "อุปกรณ์ไอที/คอมพิวเตอร์", icon: "laptop", color: '#da291c', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
-  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "trending-up", color: '#10B981', type: 'expense', cashflowGroup: null, allocation_type: 'savings' },
+  { id: 'c8', name: "การลงทุนและออมเงิน", icon: "trending-up", color: '#10B981', type: 'savings', cashflowGroup: null, allocation_type: 'savings' },
   { id: 'c9', name: "บันเทิงและสันทนาการ", icon: "film", color: '#EC4899', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
   { id: 'c10', name: "สุขภาพและความงาม", icon: "pill", color: '#F43F5E', type: 'expense', cashflowGroup: null, allocation_type: 'want' },
   { id: 'c11', name: "ครอบครัวและสัตว์เลี้ยง", icon: "dog", color: '#F4B800', type: 'expense', cashflowGroup: null, allocation_type: 'want' },

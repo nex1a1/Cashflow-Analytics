@@ -13,6 +13,7 @@ import DashboardView from '../../views/Dashboard/index';
 import CalendarView from '../../views/Calendar';
 import LedgerView from '../../views/Ledger/index';
 import SettingsView from '../../views/Settings';
+import PortfolioView from '../../views/Portfolio';
 
 // Modals
 import BatchAddModal from '../modals/BatchAddModal/index';
@@ -199,6 +200,12 @@ export default function MainLayout() {
                 isLoading={isProcessing}
                 transactions={transactions}
               />
+            </div>
+          )}
+
+          {activeTab === 'portfolio' && (
+            <div key="portfolio">
+              <PortfolioView />
             </div>
           )}
 

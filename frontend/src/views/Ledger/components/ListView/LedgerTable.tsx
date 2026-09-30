@@ -7,6 +7,7 @@ import { getThaiDayInfo, formatThaiDateShort } from '../../../../utils/formatter
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
 import CategorySelect from '../../../../components/shared/CategorySelect';
 import AllocationSelect from '@/components/shared/AllocationSelect';
+import { usePortfolio } from '@/context/PortfolioContext';
 import { readable } from '@/constants/theme';
 
 interface SortConfig {
@@ -71,6 +72,11 @@ export default function LedgerTable({
   currentPage, totalPages, setCurrentPage
 }: LedgerTableProps) {
   const [pageInput, setPageInput] = useState(String(currentPage));
+  const { portfolio } = usePortfolio();
+  const assetNames = useMemo(
+    () => Object.fromEntries((portfolio?.assets ?? []).map(a => [a.id, a.name])) as Record<string, string>,
+    [portfolio],
+  );
 
 
 
@@ -111,6 +117,8 @@ export default function LedgerTable({
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category);
               const isInc      = catObj?.type === 'income' || item.group_type === 'income';
+              const isSav      = !isInc && (catObj?.type === 'savings' || item.group_type === 'savings');
+              const isSell     = isSav && item.amount < 0; // ขาย = เงินกลับเข้ามา (ยอดติดลบ)
               const isDateBoundary = isDateSorted && isNewDate && index > 0;
               const dayInfo = isNewDate ? getThaiDayInfo(item.date) : null;
               
@@ -165,6 +173,14 @@ export default function LedgerTable({
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'savings')}
+                            className="p-0.5 rounded-none text-savings hover:bg-savings/10 transition-colors"
+                            title={`เพิ่มลงทุน/ออม (${item.date})`}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -193,6 +209,14 @@ export default function LedgerTable({
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAddModal(item.date, 'savings')}
+                            className="p-0.5 rounded-none text-savings hover:bg-savings/10 transition-colors"
+                            title={`เพิ่มลงทุน/ออม (${item.date})`}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     )}
@@ -205,15 +229,26 @@ export default function LedgerTable({
                       onChange={(catId) => handleUpdateTransaction(item.id, 'category_id', catId)}
                       categories={categories}
                       cashflowGroups={cashflowGroups}
-                      type={isInc ? 'income' : 'expense'}
+                      type={isInc ? 'income' : isSav ? 'savings' : 'expense'}
                       variant="pill"
                       size="sm"
                     />
                   </td>
                   
                   <td className="px-2 py-1 align-middle text-center w-[95px] min-w-[95px] max-w-[95px]">
-                    {!isInc ? (
-                      <AllocationSelect 
+                    {isSav ? (
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateTransaction(item.id, 'amount', -item.amount)}
+                        title={`${isSell ? 'ขาย' : 'ซื้อ'}${item.asset_id && assetNames[item.asset_id] ? ` · ${assetNames[item.asset_id]}` : ' · ออมทั่วไป'}${item.units ? ` · ${item.units} หน่วย` : ''} — คลิกเพื่อสลับซื้อ/ขาย`}
+                        className={`inline-flex items-center justify-center px-2 py-1 text-[11px] font-black border rounded-pill ${
+                          isSell ? 'bg-info/10 text-info border-info/30' : 'bg-savings/10 text-savings border-savings/30'
+                        }`}
+                      >
+                        {isSell ? 'ขาย' : 'ซื้อ'}
+                      </button>
+                    ) : !isInc ? (
+                      <AllocationSelect  
                         value={aType} 
                         onChange={val => handleUpdateTransaction(item.id, 'allocation_type', val)}
                       />
@@ -230,11 +265,12 @@ export default function LedgerTable({
                   </td>
                   
                   <td className="px-3 py-1 relative align-middle">
-                    <AmountEditableInput 
-                      initialValue={item.amount === 0 ? '' : item.amount} 
-                      isInc={isInc} 
-                      onSave={val => handleUpdateTransaction(item.id, 'amount', val)} 
-                      placeholder="0.00" 
+                    <AmountEditableInput
+                      initialValue={item.amount === 0 ? '' : Math.abs(item.amount)}
+                      isInc={isInc}
+                      tone={isSav ? (isSell ? 'info' : 'savings') : undefined}
+                      onSave={val => handleUpdateTransaction(item.id, 'amount', isSell ? -val : val)}
+                      placeholder="0.00"
                     />
                   </td>
                   

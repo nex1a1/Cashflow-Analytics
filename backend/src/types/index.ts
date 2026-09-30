@@ -40,6 +40,9 @@ export interface Transaction {
   category_id: string;
   allocation_type?: 'need' | 'want' | 'savings' | null;
   is_deleted: number; // 0 or 1
+  asset_id?: string | null;
+  units?: number | null;
+  trade_side?: 'buy' | 'sell' | null;
   created_at?: string;
   updated_at?: string;
 }

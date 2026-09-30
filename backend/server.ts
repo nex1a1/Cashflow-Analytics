@@ -9,6 +9,7 @@ import apiRoutes from './src/routes/api';
 import backupService from './src/services/backupService';
 import db from './src/config/db';
 import { auditLogger } from './src/middleware/auditLogger';
+import { ApiError } from './src/middleware/ApiError';
 
 const app = express();
 
@@ -66,6 +67,9 @@ if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err && typeof err === 'object' && 'name' in err && (err as any).name === 'ZodError') {
     return res.status(400).json({ error: 'Validation Error', details: (err as any).errors });
+  }
+  if (err instanceof ApiError) {
+    return res.status(err.status).json({ error: err.message });
   }
   const message = err instanceof Error ? err.message : 'Internal Server Error';
   console.error('[API Error]', err);

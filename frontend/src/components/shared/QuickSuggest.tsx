@@ -530,7 +530,7 @@ function QuickSuggest({
 
                     <div className="flex items-center justify-end gap-1.5 pl-2 shrink-0 border-l border-line/60">
                       <span className={`text-xs font-bold tabular-nums tracking-tight ${formType === 'expense' ? 'text-expense group-hover:text-red-300' : 'text-emerald-400 group-hover:text-emerald-300'} transition-colors`}>
-                        {formType === 'expense' ? '-฿' : '+฿'}{formatMoney(s.amount)}
+                        {formType === 'savings' ? '฿' : formType === 'expense' ? '-฿' : '+฿'}{formatMoney(s.amount)}
                       </span>
                       <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
                         {s.count}x

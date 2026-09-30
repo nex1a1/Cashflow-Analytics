@@ -10,6 +10,8 @@ export function getSavingsRateStyle(savingsRate: number): string {
 export interface LedgerCommandPanelProps {
   sumInc: number;
   sumExp: number;
+  /** ลงทุน/ออมสุทธิ (ซื้อ − ขาย) — อยู่นอก "รายจ่าย" และรวมอยู่ใน "คงเหลือสุทธิ" */
+  sumSav?: number;
   net: number;
   savingsRate: number;
   formatMoney: (val: number | string) => string;
@@ -22,6 +24,7 @@ export interface LedgerCommandPanelProps {
 export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
   sumInc,
   sumExp,
+  sumSav = 0,
   net,
   savingsRate,
   formatMoney,
@@ -108,6 +111,11 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             <span className="text-[11px] font-bold tabular-nums text-ink-muted font-sans">
               {getSubValue(net)}
             </span>
+            {sumSav !== 0 && (
+              <span className="text-[11px] font-bold tabular-nums text-savings font-sans" title="เงินลงทุน/ออมสุทธิในช่วงนี้ (ซื้อ − ขาย) ไม่นับเป็นรายจ่าย">
+                ในนี้ลงทุน/ออม {sumSav < 0 ? '−' : ''}{formatMoney(Math.abs(sumSav))}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -157,6 +157,7 @@ function LedgerView({
   const {
     sumInc,
     sumExp,
+    sumSav,
     net,
     savingsRate,
     activeIncomeCards,
@@ -221,6 +222,7 @@ function LedgerView({
         <LedgerCommandPanel
           sumInc={sumInc}
           sumExp={sumExp}
+          sumSav={sumSav}
           net={net}
           savingsRate={savingsRate}
           formatMoney={formatMoney}

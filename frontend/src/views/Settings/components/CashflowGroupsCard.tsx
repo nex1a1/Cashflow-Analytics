@@ -12,7 +12,7 @@ const GROUPS_ICON = <Grid className="w-4 h-4" />;
 const GROUP_TYPE_OPTIONS = [
   { value: 'income', label: 'รายรับ' },
   { value: 'expense', label: 'รายจ่าย' },
-  { value: 'savings', label: 'ออม/ลงทุน' },
+  { value: 'savings', label: 'ลงทุน/ออม' },
 ];
 
 import { Category, CashflowGroup } from '../../../types';
@@ -90,6 +90,8 @@ const CashflowGroupsCard = memo(({
                       onChange={val => handleChangeCashflowGroup(group.id, 'allocation_type', val)}
                     />
                   </div>
+                ) : group.type === 'savings' ? (
+                  <div className="w-[100px] shrink-0 text-center text-[11px] font-bold text-savings" title="กลุ่มลงทุน/ออมเป็น SAVE เสมอ">SAVE</div>
                 ) : (
                   <div className="w-[100px] shrink-0" />
                 )}

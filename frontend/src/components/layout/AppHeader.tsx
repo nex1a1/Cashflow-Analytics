@@ -2,7 +2,7 @@ import React from 'react';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle
+  Calendar as CalendarIcon, HelpCircle, PiggyBank
 } from 'lucide-react';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import AnimatedNumber from '../ui/AnimatedNumber';
@@ -31,6 +31,7 @@ const TABS = [
   { id: 'insights', label: 'ภาพรวม',          icon: BarChart3 },
   { id: 'calendar', label: 'ปฏิทิน',           icon: CalendarIcon },
   { id: 'ledger',   label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
+  { id: 'portfolio', label: 'พอร์ตลงทุน',       icon: PiggyBank },
   { id: 'settings', label: 'ตั้งค่าระบบ',       icon: Settings },
 ];
 

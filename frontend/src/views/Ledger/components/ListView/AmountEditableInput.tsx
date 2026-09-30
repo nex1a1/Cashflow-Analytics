@@ -6,12 +6,14 @@ import { tc } from '@/constants/theme';
 interface AmountEditableInputProps {
   initialValue: number | string;
   isInc?: boolean;
+  /** หมวดลงทุน/ออม: ไม่ใช้เครื่องหมาย +/- (ทิศทางดูจากป้ายซื้อ/ขาย) */
+  tone?: 'info' | 'savings';
   /** return false when the save failed so the cell can say so */
   onSave: (val: number) => Promise<boolean> | boolean | void;
   placeholder?: string;
 }
 
-export default function AmountEditableInput({ initialValue, isInc = false, onSave, placeholder }: AmountEditableInputProps) {
+export default function AmountEditableInput({ initialValue, isInc = false, tone, onSave, placeholder }: AmountEditableInputProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState<string | number>('');
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +59,8 @@ export default function AmountEditableInput({ initialValue, isInc = false, onSav
 
   const hasValue = value !== '' && value !== undefined && value !== null;
   const displayVal = hasValue ? formatMoney(value) : (placeholder || '0.00');
-  const activeColor = isInc ? tc('income') : tc('expense'); // Emerald for income, Vivid Rose Red for expense
-  const prefix = isInc ? '+฿' : '-฿';
+  const activeColor = tone ? tc(tone) : isInc ? tc('income') : tc('expense'); // Emerald for income, Vivid Rose Red for expense
+  const prefix = tone ? '฿' : isInc ? '+฿' : '-฿';
   const fontStyle: React.CSSProperties = { color: activeColor, fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" };
 
   return (

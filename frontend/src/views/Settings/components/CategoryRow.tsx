@@ -11,6 +11,7 @@ export interface CategoryRowProps {
   cat: Category;
   isNew?: boolean;
   isIncome?: boolean;
+  placeholder?: string;
   onMove: (id: string, dir: string) => void;
   onChange: (id: string, field: string, value: any) => unknown;
   onDelete: (id: string) => void;
@@ -24,6 +25,7 @@ const CategoryRow = memo(({
   cat,
   isNew,
   isIncome,
+  placeholder,
   onMove,
   onChange,
   onDelete,
@@ -88,7 +90,7 @@ const CategoryRow = memo(({
         value={cat.name || ''}
         onDebouncedChange={val => onChange(cat.id, 'name', val)}
         className={inputCls}
-        placeholder={isIncome ? 'ชื่อรายรับ' : 'ชื่อรายจ่าย'}
+        placeholder={placeholder ?? (isIncome ? 'ชื่อรายรับ' : 'ชื่อรายจ่าย')}
       />
 
       <div className="relative shrink-0">

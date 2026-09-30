@@ -9,7 +9,7 @@ export interface AppUIProviderProps {
 }
 
 export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
-  // Navigation — tabs: insights | calendar | ledger | settings.
+  // Navigation — tabs: insights | calendar | ledger | portfolio | settings.
   // Calendar was briefly a mode inside 'insights' (INSIGHTS_MODE); fold that legacy
   // value back into a real tab id so returning users land where they left off.
   const [activeTab, setActiveTab] = useState<string>(() => {

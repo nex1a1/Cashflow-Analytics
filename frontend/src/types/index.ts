@@ -16,6 +16,8 @@ export interface TransactionDisplay {
   amount: number; // Baht (decimal)
   group_type?: GroupType;
   allocation_type?: AllocationType | null;
+  asset_id?: string | null; // หมวดลงทุน/ออม: สินทรัพย์ที่ซื้อ/ขาย
+  units?: number | null;
   _catObj?: Category;
 }
 
@@ -28,6 +30,8 @@ export interface TransactionPayload {
   category?: string;
   category_id?: string;
   allocation_type?: AllocationType | null;
+  asset_id?: string | null;
+  units?: number | null;
   dayNote?: string;
 }
 
@@ -265,3 +269,69 @@ export interface AppFilterContextValue {
   getFilterLabel: (period?: string) => string;
 }
 
+
+// ─── Investment portfolio ───
+
+export type AssetKind = 'gold_bar' | 'gold_ornament' | 'us_stock' | 'th_stock' | 'crypto' | 'fund' | 'other';
+
+export interface PortfolioTrade {
+  id: string;
+  date: string;
+  side: 'buy' | 'sell';
+  units: number;
+  amount: number; // Baht (absolute)
+  pricePerUnit: number;
+  description: string;
+}
+
+export interface PortfolioAsset {
+  id: string;
+  name: string;
+  kind: AssetKind;
+  symbol: string | null;
+  unitLabel: string | null;
+  autoPrice: boolean;
+  units: number;
+  cost: number;
+  avgCostPerUnit: number | null;
+  price: number | null;
+  priceAt: string | null; // ISO
+  priceSource: string | null;
+  marketValue: number | null;
+  unrealized: number | null;
+  unrealizedPct: number | null;
+  realized: number;
+  oversold: boolean;
+  trades: PortfolioTrade[];
+}
+
+export interface Portfolio {
+  assets: PortfolioAsset[];
+  totals: {
+    cost: number;
+    marketValue: number;
+    unrealized: number;
+    realized: number;
+    unpricedCount: number;
+    oldestPriceAt: string | null;
+  };
+  generalSavings: number;
+}
+
+export interface AssetInput {
+  id?: string;
+  name: string;
+  kind: AssetKind;
+  symbol?: string | null;
+  unit_label?: string | null;
+}
+
+export type PricePreview =
+  | { ok: true; price: number; source: string }
+  | { ok: false; manual?: boolean; error: string };
+
+export interface PriceRefreshResult {
+  assetId: string;
+  ok: boolean;
+  message?: string;
+}

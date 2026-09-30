@@ -6,21 +6,33 @@ import { z } from 'zod';
 import { Category, CashflowGroup, AllocationType } from '../../../types';
 import CategorySelect from '@/components/shared/CategorySelect';
 import FieldError from '../../shared/FieldError';
+import InvestFields from '@/components/shared/InvestFields';
 
 const dailyAddSchema = z.object({
-  type: z.enum(['income', 'expense']),
+  type: z.enum(['income', 'expense', 'savings']),
   categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
   description: z.string().optional(),
   amount: z.number({ message: "ระบุจำนวนเงิน" }).positive("ต้องมากกว่า 0"),
   allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
+  assetId: z.string().optional(),
+  side: z.enum(['buy', 'sell']).optional(),
+  units: z.string().optional(),
+}).superRefine((v, ctx) => {
+  if (v.type === 'savings' && v.assetId && !(Number(v.units) > 0)) {
+    ctx.addIssue({ code: 'custom', path: ['units'], message: 'ระบุจำนวนหน่วยที่มากกว่า 0' });
+  }
 });
 
 export interface DailyFormValues {
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'savings';
   categoryId: string;
   description?: string;
   amount: number;
   allocation_type?: AllocationType | null;
+  /** หมวดลงทุน/ออม: สินทรัพย์ที่ซื้อ/ขาย ('' = ออมทั่วไป), ทิศทาง, จำนวนหน่วย */
+  assetId?: string;
+  side?: 'buy' | 'sell';
+  units?: string;
 }
 
 export interface DailyFormProps {
@@ -48,16 +60,23 @@ export default function DailyForm({
   const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm<DailyFormValues>({
     resolver: zodResolver(dailyAddSchema) as any,
     defaultValues: {
-      type: (defaultType as 'income' | 'expense') || 'expense',
+      type: (defaultType as DailyFormValues['type']) || 'expense',
       categoryId: defaultCategoryId || '',
       description: '',
       amount: '' as unknown as number,
-      allocation_type: 'want'
+      allocation_type: 'want',
+      assetId: '',
+      side: 'buy',
+      units: ''
     }
   });
 
   const formType = watch('type');
   const allocationType = watch('allocation_type');
+  const assetId = watch('assetId') || '';
+  const side = watch('side') || 'buy';
+  const units = watch('units') || '';
+  const amountValue = watch('amount');
 
   const isApplyingSuggestionRef = useRef(false);
 
@@ -87,6 +106,10 @@ export default function DailyForm({
       setValue('allocation_type', null);
       return;
     }
+    if (formType === 'savings') {
+      setValue('allocation_type', 'savings');
+      return;
+    }
     if (isApplyingSuggestionRef.current) {
       isApplyingSuggestionRef.current = false;
       return;
@@ -106,12 +129,15 @@ export default function DailyForm({
       return;
     }
     setValue('description', '');
+    setValue('units', '');
     setValue('amount', '' as unknown as number, { shouldValidate: false });
     setTimeout(() => setFocus('amount'), 10);
   };
 
-  const handleTypeChange = (newType: 'income' | 'expense') => {
+  const handleTypeChange = (newType: DailyFormValues['type']) => {
     setValue('type', newType);
+    setValue('assetId', '');
+    setValue('units', '');
     const firstCat = categories.find(c => c.type === newType);
     setValue('categoryId', firstCat?.id || '');
   };
@@ -137,6 +163,10 @@ export default function DailyForm({
         <button type="button" onClick={() => handleTypeChange('expense')} 
           className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'bg-surface-elevated text-expense shadow-sm' : tokens.textMuted}`}>
           รายจ่าย
+        </button>
+        <button type="button" onClick={() => handleTypeChange('savings')}
+          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'savings' ? 'bg-surface-elevated text-savings shadow-sm' : tokens.textMuted}`}>
+          ลงทุน/ออม
         </button>
         <button type="button" onClick={() => handleTypeChange('income')} 
           className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? 'bg-surface-elevated text-emerald-400 shadow-sm' : tokens.textMuted}`}>
@@ -178,6 +208,21 @@ export default function DailyForm({
         )}
       </div>
 
+      {formType === 'savings' && (
+        <InvestFields
+          idPrefix="daily"
+          assetId={assetId}
+          side={side}
+          units={units}
+          amount={Number.isFinite(amountValue) ? amountValue : undefined}
+          onAssetChange={v => { setValue('assetId', v); if (!v) setValue('units', ''); }}
+          onSideChange={v => setValue('side', v)}
+          onUnitsChange={v => setValue('units', v, { shouldValidate: !!errors.units })}
+          onEnter={() => handleSubmit(onSubmit)()}
+          unitsError={errors.units?.message}
+        />
+      )}
+
       <div className="flex gap-2 items-start">
         <div className="flex-[2]">
           <input type="text" {...register('description')} onKeyDown={handleKeyDown} placeholder="รายละเอียด..." className={tokens.input} />
@@ -204,7 +249,7 @@ export default function DailyForm({
       </div>
 
       <div className="flex gap-2">
-        <button type="button" onClick={() => { setValue('description', ''); setValue('amount', '' as unknown as number, { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
+        <button type="button" onClick={() => { setValue('description', ''); setValue('units', ''); setValue('amount', '' as unknown as number, { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
           className="px-3 py-2.5 rounded-none font-bold text-xs flex items-center justify-center transition-colors disabled:opacity-50 border bg-surface-elevated/60 hover:bg-gray-750 text-slate-300 border-line-strong"
           title="ล้างข้อมูลที่กำลังพิมพ์"
         >

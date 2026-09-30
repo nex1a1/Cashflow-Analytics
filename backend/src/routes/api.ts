@@ -9,9 +9,18 @@ import * as categoryController from '../controllers/categoryController';
 import * as groupController from '../controllers/groupController';
 import * as dayTypeController from '../controllers/dayTypeController';
 import * as analyticsController from '../controllers/analyticsController';
+import * as assetController from '../controllers/assetController';
+
+// Investment portfolio (assets, valuation, price cache)
+router.get('/portfolio', assetController.getPortfolio);
+router.post('/assets', assetController.upsertAsset);
+router.delete('/assets/:id', assetController.deleteAsset);
+router.post('/assets/:id/price', assetController.setManualPrice);
+router.post('/prices/refresh', assetController.refreshPrices);
+router.post('/prices/preview', assetController.previewPrice);
 
 // Transactions
-router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions',transactionController.getAllTransactions);
 router.get('/transactions/search', transactionController.searchTransactions);
 router.get('/transactions/count', transactionController.getTransactionCount);
 router.get('/transactions/periods', transactionController.getAvailablePeriods);
