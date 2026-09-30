@@ -12,7 +12,7 @@ export interface CategoryRowProps {
   isNew?: boolean;
   isIncome?: boolean;
   onMove: (id: string, dir: string) => void;
-  onChange: (id: string, field: string, value: any) => void;
+  onChange: (id: string, field: string, value: any) => unknown;
   onDelete: (id: string) => void;
   filteredGroups?: CashflowGroup[];
   cashflowGroups?: CashflowGroup[];
@@ -46,7 +46,7 @@ const CategoryRow = memo(({
   const inputCls = `px-2 py-1.5 border outline-none font-semibold text-[13px] flex-1 min-w-0 rounded-sm bg-canvas border-line ${accentFocus} text-ink-display placeholder-ink-muted`;
 
   const selectTheme = !currentGroupValid
-    ? 'border-amber-600/50 bg-amber-950/20 text-amber-400 focus:border-amber-500'
+    ? 'border-warn/50 bg-warn/10 text-warn focus:border-warn'
     : `bg-canvas border-line text-ink-display ${focusBorder}`;
   const selectCls = `w-40 ${selectTheme}`;
   const groupOptions = useMemo(
@@ -59,13 +59,13 @@ const CategoryRow = memo(({
       style={{ borderLeftColor: groupColor, borderLeftWidth: '1px' }}
       className="flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 group/cat border-line hover:bg-surface-hover/30"
     >
-      <div className="flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 text-ink-muted">
+      <div className="flex flex-col items-center shrink-0 opacity-0 group-hover/cat:opacity-100 focus-within:opacity-100 text-ink-muted">
         <button
           type="button"
           onClick={() => onMove(cat.id, 'UP')}
           aria-label={`เลื่อน ${cat.name} ขึ้น`}
           disabled={isFirst}
-          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-surface-elevated"
+          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-ink-display hover:bg-surface-elevated"
         >
           <ChevronUp className="w-4 h-4" />
         </button>
@@ -74,7 +74,7 @@ const CategoryRow = memo(({
           onClick={() => onMove(cat.id, 'DOWN')}
           aria-label={`เลื่อน ${cat.name} ลง`}
           disabled={isLast}
-          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-white hover:bg-surface-elevated"
+          className="p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default hover:text-ink-display hover:bg-surface-elevated"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
@@ -102,7 +102,7 @@ const CategoryRow = memo(({
           aria-label="กลุ่มของหมวดหมู่"
         />
         {!currentGroupValid && (
-          <AlertTriangle className="w-4 h-4 text-amber-400 absolute -top-1 -right-1 pointer-events-none" />
+          <AlertTriangle className="w-4 h-4 text-warn absolute -top-1 -right-1 pointer-events-none" />
         )}
       </div>
 

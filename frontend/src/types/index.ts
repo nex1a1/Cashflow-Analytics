@@ -72,6 +72,7 @@ export interface DayType {
   label: string;
   color?: string | null;
   order_index?: number;
+  isDefault?: boolean;
 }
 
 export interface CalendarDay {
@@ -213,12 +214,12 @@ export interface AppDataContextValue {
   handleSaveBatch: (items: any[]) => Promise<void>;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   confirmImport: (opts?: any) => Promise<void>;
-  handleCategoryChange: (catId: string, field: string, value: any) => Promise<void>;
+  handleCategoryChange: (catId: string, field: string, value: any) => Promise<boolean | void>;
   handleDeleteCategory: (id: string) => Promise<void>;
   handleAddCategory: (type?: string) => Promise<any>;
   handleMoveCategory: (id: string, direction: string) => Promise<void>;
   handleDayTypeChange: (dateStr: string, type: string) => Promise<void>;
-  handleDayTypeConfigChange: (id: string, field: string, value: any) => Promise<void>;
+  handleDayTypeConfigChange: (id: string, field: string, value: any) => Promise<boolean | void>;
   handleAddDayType: () => Promise<void>;
   handleDeleteDayType: (id: string) => Promise<void>;
   handleMoveDayType: (id: string, direction: 'UP' | 'DOWN') => Promise<void>;

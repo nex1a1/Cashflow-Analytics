@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { hexToRgb, formatMoney } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
-import { tc, readable } from '@/constants/theme';
+import { tc, readable, TOKENS } from '@/constants/theme';
 interface HeatmapCellProps {
   idx: number;
   date: string;
@@ -58,7 +58,7 @@ const HeatmapCell = memo(function HeatmapCell({
         overflow: 'hidden',
         position: 'relative',
         '--cat-color': cat.color,
-        '--cat-color-rgb': hexToRgb(cat.color || '#000000'),
+        '--cat-color-rgb': hexToRgb(cat.color || TOKENS['ink-muted']),
       } as React.CSSProperties}
       onMouseEnter={(e) => handleCellHover(e, date, cat.id, cat, items)}
       tabIndex={hasData ? 0 : undefined}
@@ -76,7 +76,7 @@ const HeatmapCell = memo(function HeatmapCell({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `rgba(${hexToRgb(cat.color || '#000000')}, ${intensity * 0.45})`,
+          background: `rgba(${hexToRgb(cat.color || TOKENS['ink-muted'])}, ${intensity * 0.45})`,
           padding: '2px 4px',
         }}>
           {items.length > 1 && (
@@ -91,7 +91,7 @@ const HeatmapCell = memo(function HeatmapCell({
               color: cat.color || undefined,
               filter: 'brightness(1.5)',
               opacity: 0.9,
-              background: `rgba(${hexToRgb(cat.color || '#000000')}, 0.2)`,
+              background: `rgba(${hexToRgb(cat.color || TOKENS['ink-muted'])}, 0.2)`,
               borderRadius: 0,
               padding: '1px 3px',
               zIndex: 10,
@@ -137,7 +137,7 @@ const HeatmapCell = memo(function HeatmapCell({
             width: `${barW}%`,
             height: 2,
             borderRadius: 0,
-            background: `rgba(${hexToRgb(cat.color || '#000000')}, 0.85)`,
+            background: `rgba(${hexToRgb(cat.color || TOKENS['ink-muted'])}, 0.85)`,
           }} />
         </div>
       ) : (

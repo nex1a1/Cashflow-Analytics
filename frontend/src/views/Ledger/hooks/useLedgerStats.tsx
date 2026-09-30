@@ -3,6 +3,7 @@ import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 import { toISODate } from '../../../utils/dateHelpers';
 import { monthKeyOf } from '../../../utils/payCycle';
+import { buildCatTypeMap, sumIncomeExpense } from '../ledgerMath';
 
 import { tc, readable } from '@/constants/theme';
 interface GroupBreakdownCategory {
@@ -40,15 +41,15 @@ function resolveGroupPct(isIncome: boolean, isSavings: boolean, total: number, s
 function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolean) {
   if (isIncome) {
     return {
-      activeBorderColor: 'border-emerald-500',
+      activeBorderColor: 'border-income',
       activeBgColor: 'bg-income/5',
       defaultColor: tc('income'),
-      amtColor: 'text-emerald-400',
+      amtColor: 'text-income',
       amtSign: '+',
       badgeText: 'IN',
-      pulseClass: 'bg-emerald-500',
+      pulseClass: 'bg-income',
       borderColorActive: tc('income', 0.4),
-      iconFallback: '💰'
+      iconFallback: 'coins'
     };
   }
   if (isSavings) {
@@ -61,7 +62,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
       badgeText: 'SAVE',
       pulseClass: 'bg-savings',
       borderColorActive: tc('savings', 0.4),
-      iconFallback: '💼'
+      iconFallback: 'piggy-bank'
     };
   }
   return {
@@ -73,7 +74,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
     badgeText: 'OUT',
     pulseClass: 'bg-expense',
     borderColorActive: tc('expense', 0.4),
-    iconFallback: '📉'
+    iconFallback: 'trending-down'
   };
 }
 
@@ -98,7 +99,7 @@ const LedgerStatCategoryRow: React.FC<LedgerStatCategoryRowProps> = ({ cat, tota
             borderColor: `${catColor}30` 
           }}
         >
-          <CategoryGlyph icon={cat.icon} color={cat.color || defaultColor} size={11} fallbackEmoji="✨" />
+          <CategoryGlyph icon={cat.icon} color={cat.color || defaultColor} size={11} fallbackEmoji="sparkles" />
         </span>
         <span 
           className="truncate uppercase tracking-tight text-[11px] font-black"
@@ -159,7 +160,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
       <button 
         type="button"
         onClick={onCardClick}
-        className={`text-left group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden shadow-sm cursor-pointer select-none transition-all duration-150 ${
+        className={`text-left group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden cursor-pointer select-none transition-all duration-150 ${
           isActive 
             ? `${theme.activeBgColor} ${theme.activeBorderColor} z-10` 
             : 'bg-surface hover:bg-canvas border-line hover:border-line-strong'
@@ -186,7 +187,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
             </div>
             <span 
               className={`text-[12.5px] font-black uppercase tracking-wider truncate leading-none ${
-                isActive ? 'text-white' : 'text-slate-300'
+                isActive ? 'text-ink-display' : 'text-ink-soft'
               }`}
               title={g.name}
             >
@@ -196,7 +197,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
           
           <div className="flex items-center gap-1.5 shrink-0">
             {isActive && (
-              <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} animate-pulse shrink-0`} />
+              <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} shrink-0`} />
             )}
             <span 
               className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-pill border shrink-0 leading-none"
@@ -220,7 +221,7 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
             >
               {theme.amtSign}฿{formatMoney(total)}
             </span>
-            <span className="text-[11.5px] font-black text-neutral-400 tabular-nums">
+            <span className="text-[11.5px] font-black text-ink-body tabular-nums">
               {pctOfTotal}%
             </span>
           </div>
@@ -266,23 +267,10 @@ export function useLedgerStats({
   allDatesInPeriod = [],
   filterPeriod = ''
 }: LedgerStatsProps) {
-  const catTypeMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    categories.forEach(c => {
-      map[c.id] = (c as any).type;
-      map[c.name] = (c as any).type;
-    });
-    return map;
-  }, [categories]);
+  const catTypeMap = useMemo(() => buildCatTypeMap(categories), [categories]);
 
   const { sumInc, sumExp } = useMemo(() => {
-    let inc = 0, exp = 0;
-    displayTransactions.forEach(t => {
-      const type = (t.category_id ? catTypeMap[t.category_id] : undefined) || catTypeMap[t.category];
-      const amt = Number.parseFloat(t.amount as any) || 0;
-      if (type === 'income') inc += amt;
-      else exp += amt;
-    });
+    const { inc, exp } = sumIncomeExpense(displayTransactions, catTypeMap);
     return { sumInc: inc, sumExp: exp };
   }, [displayTransactions, catTypeMap]);
 

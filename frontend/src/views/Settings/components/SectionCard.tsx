@@ -32,12 +32,6 @@ const ACCENT: Record<string, AccentStyle> = {
     title: 'text-expense',
     glow: 'border-t-2 border-t-expense',
     btn: 'bg-expense/15 hover:bg-expense/25 text-expense border border-expense/35'
-  },
-  sky: {
-    header: 'bg-surface border-line',
-    title: 'text-sky-400',
-    glow: 'border-t-2 border-t-sky-500/90',
-    btn: 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-500/35'
   }
 };
 
@@ -86,7 +80,7 @@ const SectionCard = memo(function SectionCard({
             <button
               type="button"
               onClick={subAction.onClick}
-              className="text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-pill border-line text-slate-300 hover:bg-surface-hover hover:text-white bg-canvas cursor-pointer transition-colors"
+              className="text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 border rounded-pill border-line text-ink-body hover:bg-surface-hover hover:text-ink-display bg-canvas cursor-pointer transition-colors"
             >
               {subAction.icon} {subAction.label}
             </button>
@@ -102,7 +96,7 @@ const SectionCard = memo(function SectionCard({
           )}
         </div>
       </div>
-      <div className="w-full text-slate-300">
+      <div className="w-full text-ink-body">
         {children}
       </div>
     </div>

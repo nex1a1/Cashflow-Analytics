@@ -21,7 +21,7 @@ export interface CashflowGroupsCardProps {
   cashflowGroups: CashflowGroup[];
   handleAddCashflowGroup: () => void;
   handleMoveCashflowGroup: (id: string, dir: 'UP' | 'DOWN') => void;
-  handleChangeCashflowGroup: (id: string, field: string, value: any) => void;
+  handleChangeCashflowGroup: (id: string, field: string, value: any) => unknown;
   handleDeleteGroup: (id: string) => void;
   cashflowDeleteError: { id: string; msg: string } | null;
   txCountByGroup: Record<string, number>;
@@ -54,10 +54,10 @@ const CashflowGroupsCard = memo(({
             <div key={group.id} className="flex flex-col gap-1">
               <div className={`flex items-center gap-1.5 p-1.5 border rounded-sm group/cg transition-colors ${
                 hasError
-                  ? ('border-red-850 bg-danger/5')
+                  ? 'tint-danger bg-danger/5'
                   : 'bg-surface border-line hover:bg-surface-hover/50 hover:border-line-strong'
               }`}>
-                <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 ${'text-ink-muted'}`}>
+                <div className={`flex flex-col items-center shrink-0 opacity-0 group-hover/cg:opacity-100 focus-within:opacity-100 ${'text-ink-muted'}`}>
                   <button type="button" onClick={() => handleMoveCashflowGroup(group.id, 'UP')} aria-label={`เลื่อน ${group.name} ขึ้น`} disabled={idx === 0}
                     className={`p-0.5 rounded-sm disabled:opacity-20 disabled:cursor-default ${'hover:text-accent-ink hover:bg-surface-elevated'}`}>
                     <ChevronUp className="w-4 h-4" />

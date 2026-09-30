@@ -42,13 +42,13 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
         className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
           isCurrentFilterOpen
             ? 'bg-accent/10 border-accent-ink text-accent-ink'
-            : 'bg-surface border-line text-slate-400 hover:bg-surface-elevated/40 hover:border-line-strong hover:text-white'
-        } ${isCurrentFilterActive ? '!border-amber-500 !text-amber-400 !bg-amber-950/20' : ''}`}
+            : 'bg-surface border-line text-ink-body hover:bg-surface-elevated/40 hover:border-line-strong hover:text-ink-display'
+        } ${isCurrentFilterActive ? '!border-warn !text-warn !bg-warn/10' : ''}`}
         title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" />
         <span>ตัวกรอง{viewMode === 'horizontal' ? 'ตาราง' : ''}</span>
-        {isCurrentFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-amber-400" />}
+        {isCurrentFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-warn" />}
       </button>
 
       <div className="flex items-center rounded-none border border-line overflow-hidden bg-surface">
@@ -57,8 +57,8 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
           title="มุมมองรายการ"
           className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none font-mono ${
             viewMode === 'list'
-              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold shadow-inner'
-              : 'bg-surface text-slate-400 hover:text-slate-200'
+              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold'
+              : 'bg-surface text-ink-body hover:text-ink-display'
           }`}
         >
           <LayoutList className="w-3.5 h-3.5" />
@@ -69,8 +69,8 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
           title="มุมมองตารางแนวนอน"
           className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-black uppercase tracking-wider rounded-none border-l border-line font-mono ${
             viewMode === 'horizontal'
-              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold shadow-inner'
-              : 'bg-surface text-slate-400 hover:text-slate-200'
+              ? 'bg-surface-elevated/50 text-accent-ink font-extrabold'
+              : 'bg-surface text-ink-body hover:text-ink-display'
           }`}
         >
           <TableProperties className="w-3.5 h-3.5" />

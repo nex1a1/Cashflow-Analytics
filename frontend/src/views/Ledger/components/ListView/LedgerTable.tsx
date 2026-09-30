@@ -3,7 +3,7 @@ import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronFirst, ChevronLas
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
-import { hexToRgb, getThaiDayInfo, formatThaiDateShort } from '../../../../utils/formatters';
+import { getThaiDayInfo, formatThaiDateShort } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
 import CategorySelect from '../../../../components/shared/CategorySelect';
 import AllocationSelect from '@/components/shared/AllocationSelect';
@@ -28,7 +28,7 @@ const SortHeader: React.FC<SortHeaderProps> = ({ label, sortKey, className = '',
   return (
     <th
       className={`px-4 py-3 font-bold cursor-pointer select-none group text-${align} ${className} ${
-        `text-slate-400 hover:text-slate-200 ${isActive ? 'text-accent-ink bg-surface/60' : 'hover:bg-surface-elevated/30'}`
+        `text-ink-body hover:text-ink-display ${isActive ? 'text-accent-ink bg-surface/60' : 'hover:bg-surface-elevated/30'}`
       }`}
       onClick={() => handleSort(sortKey)}
       title={`เรียงตาม${label}`}
@@ -52,7 +52,6 @@ interface LedgerTableProps {
   sortConfig: SortConfig;
   handleSort: (key: string) => void;
   isDateSorted: boolean;
-  dateBands: Record<string, number>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
   handleOpenAddModal: (date: string, type: string) => void;
@@ -66,7 +65,7 @@ interface LedgerTableProps {
 
 export default function LedgerTable({
   currentData, sortedTransactions, categories, cashflowGroups = [],
-  sortConfig, handleSort, isDateSorted, dateBands,
+  sortConfig, handleSort, isDateSorted,
   handleUpdateTransaction, handleDeleteTransaction, handleOpenAddModal,
   pageInc, pageExp, formatMoney,
   currentPage, totalPages, setCurrentPage
@@ -101,8 +100,8 @@ export default function LedgerTable({
                 handleSort={handleSort}
               />
               <SortHeader label="หมวดหมู่" sortKey="category" className="w-[230px]" sortConfig={sortConfig} handleSort={handleSort} />
-              <th className="px-3 py-3 font-bold w-[107px] text-center text-[11px] font-black uppercase tracking-widest text-slate-400">ALLOCATION</th>
-              <th className="px-4 py-3 font-bold text-[11px] font-black uppercase tracking-widest text-slate-400">รายละเอียด</th>
+              <th className="px-3 py-3 font-bold w-[107px] text-center text-[11px] font-black uppercase tracking-widest text-ink-body">ALLOCATION</th>
+              <th className="px-4 py-3 font-bold text-[11px] font-black uppercase tracking-widest text-ink-body">รายละเอียด</th>
               <SortHeader label="จำนวนเงิน" sortKey="amount" className="w-[140px]" align="right" sortConfig={sortConfig} handleSort={handleSort} />
               <th className="sticky right-0 z-30 bg-surface border-l border-line/60 w-12 text-center" />
             </tr>
@@ -110,10 +109,8 @@ export default function LedgerTable({
           <tbody>
             {currentData.map((item, index, arr) => {
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
-              const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category) || categories[categories.length - 1];
-              const isInc      = (catObj as any)?.type === 'income' || item.group_type === 'income';
-              const isAlt      = isDateSorted ? dateBands[item.id] === 1 : index % 2 === 1;
-              const stickyBg   = isAlt ? 'bg-canvas' : 'bg-canvas';
+              const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category);
+              const isInc      = catObj?.type === 'income' || item.group_type === 'income';
               const isDateBoundary = isDateSorted && isNewDate && index > 0;
               const dayInfo = isNewDate ? getThaiDayInfo(item.date) : null;
               
@@ -127,7 +124,7 @@ export default function LedgerTable({
                   }`}
                 >
                   {/* Sticky Date Column */}
-                  <td className={`sticky left-0 z-10 border-r border-line/40 align-middle shadow-[2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-3 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
+                  <td className={`sticky left-0 z-10 border-r border-line/40 align-middle shadow-[2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-3 py-1 group-hover:bg-surface-hover bg-canvas`}>
                     {isNewDate ? (
                       <div className="flex items-center justify-between gap-1.5 w-full">
                         <div className="flex items-center gap-2 min-w-0">
@@ -147,7 +144,7 @@ export default function LedgerTable({
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-black tabular-nums text-slate-200 font-mono tracking-tight" title={item.date}>
+                          <span className="text-xs font-black tabular-nums text-ink-display font-mono tracking-tight" title={item.date}>
                             {formatThaiDateShort(item.date)}
                           </span>
                         </div>
@@ -155,7 +152,7 @@ export default function LedgerTable({
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'income')} 
-                            className="p-0.5 rounded-none text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/60 transition-colors" 
+                            className="p-0.5 rounded-none text-income hover:text-income hover:bg-income/10 transition-colors" 
                             title={`เพิ่มรายรับ (${item.date})`}
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
@@ -174,7 +171,7 @@ export default function LedgerTable({
                       <div className="flex items-center justify-between gap-1.5 w-full">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-7 h-5 flex items-center justify-center shrink-0">
-                            <span className="text-slate-600 text-xs font-mono select-none font-bold" title={item.date}>
+                            <span className="text-ink-muted text-xs font-mono select-none font-bold" title={item.date}>
                               ↳
                             </span>
                           </div>
@@ -183,7 +180,7 @@ export default function LedgerTable({
                           <button 
                             type="button"
                             onClick={() => handleOpenAddModal(item.date, 'income')} 
-                            className="p-0.5 rounded-none text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/60 transition-colors" 
+                            className="p-0.5 rounded-none text-income hover:text-income hover:bg-income/10 transition-colors" 
                             title={`เพิ่มรายรับ (${item.date})`}
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
@@ -221,15 +218,15 @@ export default function LedgerTable({
                         onChange={val => handleUpdateTransaction(item.id, 'allocation_type', val)}
                       />
                     ) : (
-                      <span className="inline-flex items-center justify-center px-2 py-1 text-[11px] font-black opacity-20 text-slate-500">
+                      <span className="inline-flex items-center justify-center px-2 py-1 text-[11px] font-black opacity-20 text-ink-muted">
                         —
                       </span>
                     )}
                   </td>
                   
                   <td className="px-3 py-1 group/input relative align-middle">
-                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-slate-500" />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-slate-200 hover:bg-surface hover:border-line-strong focus:border-accent-ink focus:bg-surface" placeholder="รายละเอียด..." />
+                    <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-ink-muted" />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-ink-display hover:bg-surface hover:border-line-strong focus:border-accent-ink focus:bg-surface" placeholder="รายละเอียด..." />
                   </td>
                   
                   <td className="px-3 py-1 relative align-middle">
@@ -242,7 +239,7 @@ export default function LedgerTable({
                   </td>
                   
                   {/* Sticky Actions Column */}
-                  <td className={`sticky right-0 z-10 border-l border-line/40 align-middle text-center shadow-[-2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-2 py-1 group-hover:bg-surface-hover ${stickyBg}`}>
+                  <td className={`sticky right-0 z-10 border-l border-line/40 align-middle text-center shadow-[-2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-2 py-1 group-hover:bg-surface-hover bg-canvas`}>
                     <ConfirmDeleteButton onConfirm={() => handleDeleteTransaction(item.id)} revealOnHover tooltip="ลบรายการ" itemLabel={item.description || item.category} />
                   </td>
                 </tr>
@@ -260,15 +257,15 @@ export default function LedgerTable({
         </div>
 
         {/* Center: Symmetric Speed Cockpit Pagination */}
-        <div className="inline-flex items-center border border-line bg-surface divide-x divide-line shadow-sm select-none">
+        <div className="inline-flex items-center border border-line bg-surface divide-x divide-line select-none">
           {/* Jump to First Page (|<) */}
           <button
             onClick={() => setCurrentPage(1)}
             disabled={currentPage <= 1}
             className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
               currentPage <= 1
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
             }`}
             title="หน้าแรกสุด (หน้า 1)"
           >
@@ -282,8 +279,8 @@ export default function LedgerTable({
               disabled={currentPage <= 1}
               className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
                 currentPage <= 1
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                  : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
               }`}
               title={`ถอยหลัง 10 หน้า (ไปหน้า ${Math.max(currentPage - 10, 1)})`}
             >
@@ -298,8 +295,8 @@ export default function LedgerTable({
               disabled={currentPage <= 1}
               className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
                 currentPage <= 1
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                  : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
               }`}
               title={`ถอยหลัง 5 หน้า (ไปหน้า ${Math.max(currentPage - 5, 1)})`}
             >
@@ -313,8 +310,8 @@ export default function LedgerTable({
             disabled={currentPage <= 1}
             className={`flex items-center gap-1 h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
               currentPage <= 1
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
             }`}
             title={`หน้าก่อนหน้า (ไปหน้า ${Math.max(currentPage - 1, 1)})`}
           >
@@ -324,10 +321,10 @@ export default function LedgerTable({
           
           {/* Direct Page Input Box */}
           <div 
-            className="flex items-center h-7 gap-1.5 px-2.5 bg-canvas text-[11px] font-black font-mono tabular-nums text-slate-300"
+            className="flex items-center h-7 gap-1.5 px-2.5 bg-canvas text-[11px] font-black font-mono tabular-nums text-ink-soft"
             title="คลิกเพื่อพิมพ์เลขหน้า แล้วกด Enter (หรือใช้ลูกศรขึ้น/ลง)"
           >
-            <span className="text-slate-500 font-normal uppercase tracking-wider text-[11px] select-none">หน้า</span>
+            <span className="text-ink-muted font-normal uppercase tracking-wider text-[11px] select-none">หน้า</span>
             <input
               type="text"
               inputMode="numeric"
@@ -349,10 +346,10 @@ export default function LedgerTable({
                 }
               }}
               onBlur={handlePageSubmit}
-              className="w-7 text-center bg-surface-hover text-white font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
+              className="w-7 text-center bg-surface-hover text-ink-display font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
             />
-            <span className="text-slate-600 font-normal select-none">/</span>
-            <span className="text-slate-400 font-extrabold select-none">{totalPages}</span>
+            <span className="text-ink-muted font-normal select-none">/</span>
+            <span className="text-ink-body font-extrabold select-none">{totalPages}</span>
           </div>
 
           {/* Next Page (ถัดไป >) */}
@@ -361,8 +358,8 @@ export default function LedgerTable({
             disabled={currentPage >= totalPages}
             className={`flex items-center gap-1 h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
               currentPage >= totalPages
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
             }`}
             title={`หน้าถัดไป (ไปหน้า ${Math.min(currentPage + 1, totalPages)})`}
           >
@@ -377,8 +374,8 @@ export default function LedgerTable({
               disabled={currentPage >= totalPages}
               className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
                 currentPage >= totalPages
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                  : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
               }`}
               title={`ข้ามไปข้างหน้า 5 หน้า (ไปหน้า ${Math.min(currentPage + 5, totalPages)})`}
             >
@@ -393,8 +390,8 @@ export default function LedgerTable({
               disabled={currentPage >= totalPages}
               className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
                 currentPage >= totalPages
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                  : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
               }`}
               title={`ข้ามไปข้างหน้า 10 หน้า (ไปหน้า ${Math.min(currentPage + 10, totalPages)})`}
             >
@@ -408,8 +405,8 @@ export default function LedgerTable({
             disabled={currentPage >= totalPages}
             className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
               currentPage >= totalPages
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-slate-600'
-                : 'text-slate-300 hover:bg-surface-elevated hover:text-white active:bg-surface-elevated cursor-pointer'
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
             }`}
             title={`หน้าสุดท้าย (หน้า ${totalPages})`}
           >
@@ -421,7 +418,7 @@ export default function LedgerTable({
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">รายรับหน้านี้</span>
-            <span className="text-xs font-black tabular-nums text-emerald-400 font-mono">฿{formatMoney(pageInc)}</span>
+            <span className="text-xs font-black tabular-nums text-income font-mono">฿{formatMoney(pageInc)}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">รายจ่ายหน้านี้</span>

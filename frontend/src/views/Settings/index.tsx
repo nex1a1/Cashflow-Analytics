@@ -8,6 +8,7 @@ import CategoryRow from './components/CategoryRow';
 import CashflowGroupsCard from './components/CashflowGroupsCard';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
+import { countTxByGroup } from './settingsHelpers';
 
 const EXPENSE_ICON = <Wallet className="w-4 h-4" />;
 const INCOME_ICON = <Coins className="w-4 h-4" />;
@@ -79,8 +80,10 @@ const SettingsView = memo(function SettingsView({
       } catch {
         // Rollback state if persistent save failed
         setCashflowGroups(previousGroups);
+        return false;
       }
     }
+    return true;
   }, [cashflowGroups, setCashflowGroups, handleUpdateCashflowGroup]);
 
   const [cashflowDeleteError, setCashflowDeleteError] = useState<{ id: string; msg: string } | null>(null);
@@ -104,29 +107,7 @@ const SettingsView = memo(function SettingsView({
   }, [categories, handleDeleteCashflowGroup]);
 
 
-  const txCountByGroup = useMemo(() => {
-    // 1. Build a fast lookup map for Category ID/Name to CashflowGroup ID
-    const catToGroupMap: Record<string, string> = {};
-    categories.forEach(c => {
-      const gId = c.cashflowGroup;
-      if (gId) {
-        catToGroupMap[c.id] = gId;
-        if (c.name) {
-          catToGroupMap[c.name] = gId;
-        }
-      }
-    });
-
-    // 2. Count transactions by CashflowGroup ID in a single pass O(T)
-    const map: Record<string, number> = {};
-    transactions.forEach(t => {
-      const groupId = (t.category_id && catToGroupMap[t.category_id]) || (t.category && catToGroupMap[t.category]);
-      if (groupId) {
-        map[groupId] = (map[groupId] || 0) + 1;
-      }
-    });
-    return map;
-  }, [transactions, categories]);
+  const txCountByGroup = useMemo(() => countTxByGroup(categories, transactions), [transactions, categories]);
 
   const incomeCategories = useMemo(() => 
     [...categories].filter(c => c.type === 'income').sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)), 
@@ -150,7 +131,7 @@ const SettingsView = memo(function SettingsView({
     <div className="w-full px-1 pt-1 pb-10">
 
       <div className="flex items-center justify-between mb-4 gap-4">
-        <h1 className="text-lg font-black tracking-wide flex items-center gap-2.5 text-slate-100">
+        <h1 className="text-lg font-black tracking-wide flex items-center gap-2.5 text-ink-display">
           <Settings2 className="w-5 h-5 text-accent-ink" /> 
           <span>การตั้งค่าระบบ</span>
         </h1>
@@ -182,7 +163,7 @@ const SettingsView = memo(function SettingsView({
                   isFirst={idx === 0} isLast={idx === expenseCategories.length - 1} />
               ))}
               {expenseCategories.length === 0 && (
-                <p className="text-center py-6 text-xs text-slate-600">ยังไม่มีหมวดหมู่รายจ่าย</p>
+                <p className="text-center py-6 text-xs text-ink-muted">ยังไม่มีหมวดหมู่รายจ่าย</p>
               )}
             </div>
           </SectionCard>
@@ -203,7 +184,7 @@ const SettingsView = memo(function SettingsView({
                   isFirst={idx === 0} isLast={idx === incomeCategories.length - 1} />
               ))}
               {incomeCategories.length === 0 && (
-                <p className="text-center py-6 text-xs text-slate-600">ยังไม่มีหมวดหมู่รายรับ</p>
+                <p className="text-center py-6 text-xs text-ink-muted">ยังไม่มีหมวดหมู่รายรับ</p>
               )}
             </div>
           </SectionCard>

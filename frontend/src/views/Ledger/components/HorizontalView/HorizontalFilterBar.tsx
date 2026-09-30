@@ -174,13 +174,13 @@ export default function HorizontalFilterBar({
   }, [setFilters]);
 
   return (
-    <div className="relative rounded-none border border-line/60 bg-surface mb-4 z-40 shadow-md">
+    <div className="relative rounded-none border border-line/60 bg-surface mb-4 z-40">
       
       {/* Header bar */}
       <div className="px-3.5 py-2 bg-canvas border-b border-line/60 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-3.5 bg-accent rounded-none shrink-0" />
-          <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+          <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
             <SlidersHorizontal className="w-3.5 h-3.5 text-accent-ink" />
             <span>ตัวกรองตารางรายวัน</span>
           </div>
@@ -189,7 +189,7 @@ export default function HorizontalFilterBar({
         {/* Clear and Status */}
         <div className="flex items-center gap-2">
           {isFilterActive && (
-            <span className="px-2 py-0.5 rounded-pill text-[11px] font-black font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <span className="px-2 py-0.5 rounded-pill text-[11px] font-black font-mono bg-warn/10 text-warn border border-warn/30">
               {effectiveActiveCount} ตัวกรองทำงานอยู่
             </span>
           )}
@@ -215,14 +215,14 @@ export default function HorizontalFilterBar({
         <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
           <div className="flex items-center gap-1.5">
             <MousePointer2 className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
               การจัดสรรและตัวเลือกแสดงผล
             </span>
           </div>
 
           {/* Allocation */}
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
               การจัดสรรเงิน (Need / Want)
             </span>
             <div className="flex rounded-none p-0.5 border bg-surface border-line">
@@ -254,8 +254,8 @@ export default function HorizontalFilterBar({
                 onClick={toggleFixedCosts}
                 className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   includeFixedCosts
-                    ? 'bg-amber-950/30 border-amber-500/60 text-amber-300'
-                    : 'bg-surface border-line text-slate-400 hover:text-slate-200 hover:border-line-strong'
+                    ? 'bg-warn/10 border-warn/60 text-warn'
+                    : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
                 }`}
                 title="สลับการรวม ค่าเช่า/ค่าหอพัก ค่าน้ำ ค่าไฟ ค่าเน็ต"
               >
@@ -264,7 +264,7 @@ export default function HorizontalFilterBar({
                   <span>รวมค่าหอ/น้ำ/ไฟ/เน็ต</span>
                 </div>
                 <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
-                  includeFixedCosts ? 'bg-amber-500 border-amber-500 text-canvas' : 'border-line-strong bg-canvas'
+                  includeFixedCosts ? 'bg-warn border-warn text-canvas' : 'border-line-strong bg-canvas'
                 }`}>
                   {includeFixedCosts && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                 </div>
@@ -276,7 +276,7 @@ export default function HorizontalFilterBar({
                 className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   hideZeroDays
                     ? 'bg-accent/20 border-accent/60 text-accent-ink'
-                    : 'bg-surface border-line text-slate-400 hover:text-slate-200 hover:border-line-strong'
+                    : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
                 }`}
                 title="ซ่อนแถววันที่ไม่มียอดใช้จ่ายในเดือนนี้"
               >
@@ -293,7 +293,7 @@ export default function HorizontalFilterBar({
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
+          <div className="text-[11px] text-ink-muted font-mono">
             * ควบคุมการรวมค่าคงที่และการซ่อนแถววันว่างในตารางความถี่
           </div>
         </div>
@@ -302,13 +302,13 @@ export default function HorizontalFilterBar({
         <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
               ตัวกรองประเภทวัน
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
               กรองตามวันทำงาน / วันหยุด
             </span>
             <div className="flex rounded-none p-0.5 border bg-surface border-line">
@@ -332,7 +332,7 @@ export default function HorizontalFilterBar({
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
+          <div className="text-[11px] text-ink-muted font-mono">
             * กรองแถววันที่ในตารางความถี่ตามประเภทวันทำงานหรือวันหยุด
           </div>
         </div>
@@ -341,13 +341,13 @@ export default function HorizontalFilterBar({
         <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
           <div className="flex items-center gap-1.5">
             <Folder className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
               จำแนกตามกลุ่ม / หมวดหมู่ในตาราง
             </span>
           </div>
 
           <div className="flex flex-col gap-1 relative z-50">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
               เลือกหมวดหมู่ที่แสดงเป็นคอลัมน์
             </span>
             <CategoryMatrixFilter
@@ -360,7 +360,7 @@ export default function HorizontalFilterBar({
             />
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
+          <div className="text-[11px] text-ink-muted font-mono">
             * หมวดหมู่ที่ไม่มีข้อมูลและค่าหอพักจะถูกติ๊กออกตามค่าเริ่มต้น และสามารถติ๊กเลือกเพิ่มได้อิสระ
           </div>
         </div>
@@ -376,10 +376,10 @@ export default function HorizontalFilterBar({
             </span>
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+              <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                 ตัวกรองตารางที่ทำงานอยู่:
               </span>
-              <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-slate-300 font-mono">
+              <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-ink-soft font-mono">
                 {effectiveActiveCount} active
               </span>
             </div>

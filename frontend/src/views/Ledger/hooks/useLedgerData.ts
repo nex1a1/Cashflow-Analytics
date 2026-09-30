@@ -34,7 +34,7 @@ function compareByCategory(a: TransactionDisplay, b: TransactionDisplay, directi
   return direction === 'asc' ? res : -res;
 }
 
-function normalizeDateForSort(d: string): string {
+export function normalizeDateForSort(d: string): string {
   if (!d) return '';
   if (d.includes('-')) return d.replace(/-/g, '');
   const parts = d.split('/');
@@ -56,21 +56,9 @@ interface CategoryGroupMeta {
   orderIndex: number;
 }
 
-function compareByGroup(a: TransactionDisplay, b: TransactionDisplay, direction: 'asc' | 'desc', catGroupLookup: Record<string, CategoryGroupMeta>) {
-  const infoA = (a.category_id && catGroupLookup[a.category_id]) || (a.category && catGroupLookup[a.category]) || { groupName: (a as any).group_name || '', orderIndex: 999 };
-  const infoB = (b.category_id && catGroupLookup[b.category_id]) || (b.category && catGroupLookup[b.category]) || { groupName: (b as any).group_name || '', orderIndex: 999 };
-
-  if (infoA.orderIndex !== infoB.orderIndex) {
-    return direction === 'asc' ? infoA.orderIndex - infoB.orderIndex : infoB.orderIndex - infoA.orderIndex;
-  }
-  const res = infoA.groupName.localeCompare(infoB.groupName);
-  return direction === 'asc' ? res : -res;
-}
-
 function comparePrimary(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, catGroupLookup: Record<string, CategoryGroupMeta>) {
   if (sortConfig.key === 'amount') return compareByAmount(a, b, sortConfig.direction);
   if (sortConfig.key === 'category') return compareByCategory(a, b, sortConfig.direction);
-  if (sortConfig.key === 'group') return compareByGroup(a, b, sortConfig.direction, catGroupLookup);
   return compareByDate(a, b, sortConfig);
 }
 
@@ -88,10 +76,38 @@ function compareHierarchyOrder(a: TransactionDisplay, b: TransactionDisplay, gro
   return amtB - amtA;
 }
 
-function compareTransactions(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>, catGroupLookup: Record<string, CategoryGroupMeta>) {
+export function compareTransactions(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig, groupOrderMap: Record<string, number>, catOrderMap: Record<string, number>, catGroupLookup: Record<string, CategoryGroupMeta>) {
   const primaryDiff = comparePrimary(a, b, sortConfig, catGroupLookup);
   if (primaryDiff !== 0) return primaryDiff;
   return compareHierarchyOrder(a, b, groupOrderMap, catOrderMap, catGroupLookup);
+}
+
+const PAGE_SIZE = 50;
+
+/**
+ * Splits sorted rows into pages of ~PAGE_SIZE. When sorted by date a day's rows are never split
+ * across pages (a page may run over PAGE_SIZE for a busy day); other sorts cut at exactly PAGE_SIZE.
+ */
+export function paginateTransactions(sorted: TransactionDisplay[], sortKey: string, pageSize = PAGE_SIZE): TransactionDisplay[][] {
+  const pages: TransactionDisplay[][] = [];
+  if (sortKey && sortKey !== 'date') {
+    for (let i = 0; i < sorted.length; i += pageSize) pages.push(sorted.slice(i, i + pageSize));
+    return pages;
+  }
+
+  const days: TransactionDisplay[][] = [];
+  sorted.forEach((t, i) => {
+    if (i > 0 && t.date === sorted[i - 1].date) days[days.length - 1].push(t);
+    else days.push([t]);
+  });
+
+  let page: TransactionDisplay[] = [];
+  days.forEach(day => {
+    if (page.length > 0 && page.length + day.length > pageSize) { pages.push(page); page = []; }
+    page.push(...day);
+  });
+  if (page.length > 0) pages.push(page);
+  return pages;
 }
 
 export function useLedgerData(displayTransactions: TransactionDisplay[], filterPeriod: string, searchQuery: string, filters: FilterOptions = {}) {
@@ -141,46 +157,10 @@ export function useLedgerData(displayTransactions: TransactionDisplay[], filterP
     );
   }, [displayTransactions, sortConfig, catOrderMap, groupOrderMap, catGroupLookup]);
 
-  const pages = useMemo(() => {
-    const result: TransactionDisplay[][] = [];
-    let curPage: TransactionDisplay[] = [];
-    const TARGET = 50;
-    const groups: TransactionDisplay[][] = [];
-    let curGroup: TransactionDisplay[] = [];
-    let curDate: string | null = null;
-
-    if (sortConfig.key && sortConfig.key !== 'date') {
-      for (let i = 0; i < sortedTransactions.length; i += TARGET) {
-        result.push(sortedTransactions.slice(i, i + TARGET));
-      }
-      return result;
-    }
-
-    sortedTransactions.forEach(t => {
-      if (t.date !== curDate) {
-        if (curGroup.length > 0) groups.push(curGroup);
-        curGroup = [t]; curDate = t.date;
-      } else curGroup.push(t);
-    });
-    if (curGroup.length > 0) groups.push(curGroup);
-    groups.forEach(grp => {
-      if (curPage.length + grp.length > TARGET && curPage.length > 0) { result.push(curPage); curPage = [...grp]; }
-      else curPage.push(...grp);
-    });
-    if (curPage.length > 0) result.push(curPage);
-    return result;
-  }, [sortedTransactions, sortConfig]);
-
-  const dateBands = useMemo(() => {
-    const bands: Record<string, number> = {};
-    let currentBand = 0;
-    let lastDate: string | null = null;
-    sortedTransactions.forEach(t => {
-      if (t.date !== lastDate) { currentBand = 1 - currentBand; lastDate = t.date; }
-      bands[t.id] = currentBand;
-    });
-    return bands;
-  }, [sortedTransactions]);
+  const pages = useMemo(
+    () => paginateTransactions(sortedTransactions, sortConfig.key),
+    [sortedTransactions, sortConfig.key]
+  );
 
   useEffect(() => { 
     setCurrentPage(1); 
@@ -202,7 +182,6 @@ export function useLedgerData(displayTransactions: TransactionDisplay[], filterP
     setCurrentPage,
     sortConfig,
     handleSort,
-    dateBands,
     isDateSorted: !sortConfig.key || sortConfig.key === 'date'
   };
 }

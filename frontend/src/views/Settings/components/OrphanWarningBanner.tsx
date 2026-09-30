@@ -1,6 +1,7 @@
 import React, { useMemo, memo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Category, CashflowGroup } from '../../../types';
+import { findOrphanCategories } from '../settingsHelpers';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 export interface OrphanWarningBannerProps {
@@ -9,19 +10,13 @@ export interface OrphanWarningBannerProps {
 }
 
 const OrphanWarningBanner = memo(({ categories, cashflowGroups }: OrphanWarningBannerProps) => {
-  const orphans = useMemo(() => {
-    const validIds = new Set(cashflowGroups.map(g => g.id));
-    return categories.filter(c => {
-      const gId = c.cashflowGroup;
-      return gId && !validIds.has(gId);
-    });
-  }, [categories, cashflowGroups]);
+  const orphans = useMemo(() => findOrphanCategories(categories, cashflowGroups), [categories, cashflowGroups]);
 
   if (orphans.length === 0) return null;
 
   return (
-    <div className="flex items-start gap-2.5 px-4 py-3 border mb-4 rounded-sm bg-amber-950/10 border-amber-500/20 text-amber-400">
-      <AlertTriangle className="w-4.5 h-4.5 shrink-0 mt-0.5 text-amber-400" />
+    <div className="flex items-start gap-2.5 px-4 py-3 border mb-4 rounded-sm bg-warn/10 border-warn/25 text-warn">
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warn" />
       <div className="text-xs leading-relaxed font-semibold">
         <strong>มีหมวดหมู่ที่กลุ่มถูกลบไปแล้ว</strong> (<span className="font-mono font-black tabular-nums">{orphans.length}</span> รายการ):{' '}
         {orphans.map((c, idx) => (
@@ -31,7 +26,7 @@ const OrphanWarningBanner = memo(({ categories, cashflowGroups }: OrphanWarningB
           </span>
         ))}
         <br />
-        <span className="text-amber-400/80 font-bold">กรุณากำหนดกลุ่มใหม่ให้หมวดหมู่เหล่านี้</span>
+        <span className="text-warn/80 font-bold">กรุณากำหนดกลุ่มใหม่ให้หมวดหมู่เหล่านี้</span>
       </div>
     </div>
   );

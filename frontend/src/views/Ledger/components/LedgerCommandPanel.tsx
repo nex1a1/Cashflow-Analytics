@@ -3,7 +3,7 @@ import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers'
 import { Activity, TrendingUp, TrendingDown, Wallet, ChevronUp, ChevronDown } from 'lucide-react';
 
 export function getSavingsRateStyle(savingsRate: number): string {
-  if (savingsRate >= BUDGET_RULES.surplus.min) return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+  if (savingsRate >= BUDGET_RULES.surplus.min) return 'bg-income/10 text-income border-income/20';
   return 'bg-danger/10 text-danger border-danger/20';
 }
 
@@ -32,48 +32,42 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
 }) => {
   const isNetPositive = net >= 0;
   const netBorderClass = isNetPositive 
-    ? 'border-l-yellow-500 hover:bg-gradient-to-br hover:from-yellow-500/[0.02]' 
-    : 'border-l-expense hover:bg-gradient-to-br hover:from-expense/[0.02]';
+    ? 'border-l-income' 
+    : 'border-l-expense';
 
   return (
-    <div className="w-full flex flex-col rounded-none overflow-hidden border shadow-lg bg-canvas border-line">
+    <div className="w-full flex flex-col rounded-none overflow-hidden border bg-canvas border-line">
       <div className="px-3.5 py-2 flex items-center justify-between border-b bg-surface/50 border-line/60">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-accent-ink" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 font-sans">
+          <span className="text-[11px] font-black uppercase tracking-widest text-ink-body font-sans">
             สรุปรายรับ-รายจ่าย
           </span>
         </div>
       </div>
       
       <div className="grid grid-cols-3 gap-px bg-surface-elevated/60">
-        <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-emerald-500 bg-canvas hover:bg-surface-hover hover:bg-gradient-to-br hover:from-emerald-500/[0.02]">
-          <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-emerald-400">
-            <TrendingUp size={64} />
-          </div>
+        <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-income bg-canvas hover:bg-surface-hover">
           <div className="relative z-10 flex justify-between items-center mb-0.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-sans">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-sans">
               รายรับรวม
             </span>
           </div>
           <div className="relative z-10 mt-0.5">
-            <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-emerald-400 font-mono">
+            <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-income font-mono">
               {formatMoney(sumInc)}
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
-            <span className="text-[11px] font-bold tabular-nums text-slate-500 font-sans">
+            <span className="text-[11px] font-bold tabular-nums text-ink-muted font-sans">
               {getSubValue(sumInc)}
             </span>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-expense bg-canvas hover:bg-surface-hover hover:bg-gradient-to-br hover:from-expense/[0.02]">
-          <div className="absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none text-expense">
-            <TrendingDown size={64} />
-          </div>
+        <div className="group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] border-l-expense bg-canvas hover:bg-surface-hover">
           <div className="relative z-10 flex justify-between items-center mb-0.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-sans">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-sans">
               รายจ่ายรวม
             </span>
           </div>
@@ -83,18 +77,15 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
-            <span className="text-[11px] font-bold tabular-nums text-slate-500 font-sans">
+            <span className="text-[11px] font-bold tabular-nums text-ink-muted font-sans">
               {getSubValue(sumExp)}
             </span>
           </div>
         </div>
 
         <div className={`group relative overflow-hidden p-3 px-3.5 flex flex-col justify-between min-h-[76px] border-l-[3px] bg-canvas hover:bg-surface-hover ${netBorderClass}`}>
-          <div className={`absolute -right-2 -bottom-2 opacity-[0.02] pointer-events-none ${isNetPositive ? 'text-yellow-400' : 'text-danger'}`}>
-            <Wallet size={64} />
-          </div>
           <div className="relative z-10 flex justify-between items-center mb-0.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-sans">
+            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-sans">
               คงเหลือสุทธิ
             </span>
             <div className="flex items-center gap-1">
@@ -103,18 +94,18 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
                   <span>{savingsRate}% ของรายรับ</span>
                 </div>
               )}
-              <span className={`px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest border ${isNetPositive ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
+              <span className={`px-1.5 py-0.5 rounded-pill text-[11px] font-black uppercase tracking-widest border ${isNetPositive ? 'bg-income/10 text-income border-income/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
                 {isNetPositive ? 'เหลือ' : 'ขาดดุล'}
               </span>
             </div>
           </div>
           <div className="relative z-10 mt-0.5">
-            <div className={`text-2xl font-black tabular-nums tracking-tight leading-none font-mono ${isNetPositive ? 'text-yellow-400' : 'text-danger'}`}>
+            <div className={`text-2xl font-black tabular-nums tracking-tight leading-none font-mono ${isNetPositive ? 'text-income' : 'text-danger'}`}>
               {formatMoney(net)}
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
-            <span className="text-[11px] font-bold tabular-nums text-slate-500 font-sans">
+            <span className="text-[11px] font-bold tabular-nums text-ink-muted font-sans">
               {getSubValue(net)}
             </span>
           </div>
@@ -124,7 +115,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
       {totalActiveGroupCards > 0 && (
         <button
           onClick={() => setShowGroupBreakdown(v => !v)}
-          className="w-full py-1.5 px-4 bg-surface hover:bg-surface-hover border-t border-line/80 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest font-mono text-slate-400 hover:text-slate-100 transition-colors group cursor-pointer"
+          className="w-full py-1.5 px-4 bg-surface hover:bg-surface-hover border-t border-line/80 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest font-mono text-ink-body hover:text-ink-display transition-colors group cursor-pointer"
           title="ขยาย/หุบ แผงจำแนกหมวดหมู่ย่อย"
         >
           {showGroupBreakdown ? (
@@ -134,7 +125,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             </>
           ) : (
             <>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-accent-ink group-hover:translate-y-0.5 transition-transform" />
+              <ChevronDown className="w-3.5 h-3.5 text-ink-muted group-hover:text-accent-ink group-hover:translate-y-0.5 transition-transform" />
               <span>ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย ({totalActiveGroupCards} กลุ่ม)</span>
             </>
           )}
@@ -164,7 +155,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
         <div className="flex flex-wrap justify-center items-stretch gap-6 pb-2">
           {activeIncomeCards.length > 0 && (
             <div className="flex flex-col gap-1.5 items-center">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-emerald-500 font-sans justify-center">
+              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-income font-sans justify-center">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>รายรับ</span>
               </div>
@@ -176,13 +167,13 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
 
           {hasBothIncomeAndSavings && (
             <div className="flex items-center justify-center px-2 self-stretch shrink-0">
-              <div className="w-[1px] h-full min-h-[48px] bg-neutral-800" />
+              <div className="w-[1px] h-full min-h-[48px] bg-line" />
             </div>
           )}
 
           {activeSavingsCards.length > 0 && (
             <div className="flex flex-col gap-1.5 items-center">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-500 font-sans justify-center">
+              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-warn font-sans justify-center">
                 <Wallet className="w-3.5 h-3.5" />
                 <span>การออมและลงทุน</span>
               </div>

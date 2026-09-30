@@ -3,7 +3,7 @@ import { hexToRgb } from '../../../../utils/formatters';
 import HeatmapCell from './HeatmapCell';
 import { Category, TransactionDisplay, DayType } from '../../../../types';
 
-import { tc, readable } from '@/constants/theme';
+import { tc, readable, TOKENS } from '@/constants/theme';
 const EMPTY_ARRAY: TransactionDisplay[] = [];
 
 interface HeatmapRowProps {
@@ -42,7 +42,7 @@ const HeatmapRow = memo(function HeatmapRow({
   const curTypeId = dayTypes[date] || defTypeId;
   const typeConf  = dayTypeConfig.find(dt => dt.id === curTypeId);
   const typeColor = typeConf?.color || tc('ink-muted');
-  const typeRgb   = typeConf?.color ? hexToRgb(typeConf.color) : '100,116,139';
+  const typeRgb   = typeConf?.color ? hexToRgb(typeConf.color) : hexToRgb(TOKENS['ink-muted']);
   const sparkPct  = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
 
   return (

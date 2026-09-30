@@ -157,7 +157,7 @@ export default function CategoryMatrixFilter({
     if (unassignedCats.length > 0) {
       unassignedCats.sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999));
       result.push({
-        group: { id: 'other', name: 'หมวดหมู่อื่นๆ', icon: '📦', color: tc('ink-muted') },
+        group: { id: 'other', name: 'หมวดหมู่อื่นๆ', icon: 'package', color: tc('ink-muted') },
         categories: unassignedCats
       });
     }
@@ -335,7 +335,7 @@ export default function CategoryMatrixFilter({
             const cat = availableCategories.find(c => c.name === n);
             return (
               <span key={n} className="inline-flex items-center gap-1 shrink-0">
-                <CategoryGlyph icon={cat?.icon} color={cat?.color} size={15} fallbackEmoji="🏷️" />
+                <CategoryGlyph icon={cat?.icon} color={cat?.color} size={15} fallbackEmoji="tag" />
                 <span>{n}{idx < names.length - 1 ? ',' : ''}</span>
               </span>
             );
@@ -365,17 +365,17 @@ export default function CategoryMatrixFilter({
         }}
         className={`px-1.5 py-0.5 text-[11px] font-mono border tint-border rounded-pill transition-all flex items-center gap-1 select-none cursor-pointer ${
           isCatActive
-            ? 'text-white font-black shadow-sm'
+            ? 'text-ink-display font-black'
             : isIncome
-              ? 'text-emerald-500/70 hover:text-emerald-300 hover:border-emerald-600/50'
-              : 'text-slate-500 hover:text-slate-300 hover:border-slate-600'
+              ? 'text-income/70 hover:text-income hover:border-income/50'
+              : 'text-ink-muted hover:text-ink-display hover:border-line-strong'
         }`}
         title={`คลิก: เปิด/ปิดหมวดหมู่ "${cat.name}" • ดับเบิลคลิก: เลือกเฉพาะหมวดนี้`}
       >
         {/* Checkbox indicator */}
         <div
           className={`w-3 h-3 border tint-border flex items-center justify-center rounded-none shrink-0 transition-colors ${
-            isCatActive ? 'text-white' : 'border-line-strong bg-canvas'
+            isCatActive ? 'text-ink-display' : 'border-line-strong bg-canvas'
           }`}
           style={{
             borderColor: isCatActive ? activeColor : tc('line-strong'),
@@ -391,7 +391,7 @@ export default function CategoryMatrixFilter({
           color={cat.color || (isIncome ? tc('income') : undefined)}
           size={15}
           className="shrink-0 leading-none"
-          fallbackEmoji="🏷️"
+          fallbackEmoji="tag"
         />
         <span className="truncate">{cat.name}</span>
       </button>
@@ -409,27 +409,27 @@ export default function CategoryMatrixFilter({
     const isGroupFullySelected = selectedCount === groupCats.length && groupCats.length > 0;
     const isGroupPartiallySelected = selectedCount > 0 && !isGroupFullySelected;
 
-    let buttonStyle = 'border-line bg-surface text-slate-400 hover:text-slate-200 hover:border-line-strong';
-    let badgeStyle = 'bg-surface-hover text-slate-500';
+    let buttonStyle = 'border-line bg-surface text-ink-body hover:text-ink-display hover:border-line-strong';
+    let badgeStyle = 'bg-surface-hover text-ink-muted';
 
     if (isIncome) {
       if (isGroupFullySelected) {
-        buttonStyle = 'border-emerald-500 bg-emerald-500/25 text-white font-black';
-        badgeStyle = 'bg-emerald-500 text-canvas';
+        buttonStyle = 'border-income bg-income/25 text-ink-display font-black';
+        badgeStyle = 'bg-income text-canvas';
       } else if (isGroupPartiallySelected) {
-        buttonStyle = 'border-emerald-500/70 bg-emerald-950/40 text-emerald-300 font-bold';
-        badgeStyle = 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40';
+        buttonStyle = 'border-income/70 bg-income/10 text-income font-bold';
+        badgeStyle = 'bg-income/30 text-income border border-income/40';
       } else {
-        buttonStyle = 'border-emerald-900/60 bg-emerald-950/60 text-emerald-400/80 hover:text-emerald-200 hover:border-emerald-500/50';
-        badgeStyle = 'bg-emerald-900/40 text-emerald-500';
+        buttonStyle = 'border-income/60 bg-income/10 text-income/80 hover:text-income hover:border-income/50';
+        badgeStyle = 'bg-income/15 text-income';
       }
     } else {
       if (isGroupFullySelected) {
-        buttonStyle = 'border-accent-ink bg-accent/20 text-white font-black';
+        buttonStyle = 'border-accent-ink bg-accent/20 text-ink-display font-black';
         badgeStyle = 'bg-accent text-on-accent';
       } else if (isGroupPartiallySelected) {
-        buttonStyle = 'border-amber-500/70 bg-amber-950/25 text-amber-300 font-bold';
-        badgeStyle = 'bg-amber-500/30 text-amber-300 border border-amber-500/40';
+        buttonStyle = 'border-warn/70 bg-warn/10 text-warn font-bold';
+        badgeStyle = 'bg-warn/30 text-warn border border-warn/40';
       }
     }
 
@@ -449,7 +449,7 @@ export default function CategoryMatrixFilter({
             color={group.color || (isIncome ? tc('income') : undefined)}
             size={15}
             className="shrink-0"
-            fallbackEmoji="📁"
+            fallbackEmoji="folder"
           />
           <span className="truncate max-w-[110px]">{group.name}</span>
         </div>
@@ -469,7 +469,7 @@ export default function CategoryMatrixFilter({
         onClick={() => setIsOpen(v => !v)}
         className={`relative w-full text-left flex items-center border rounded-none bg-surface cursor-pointer select-none transition-colors ${
           isActive 
-            ? 'border-accent-ink text-white bg-surface' 
+            ? 'border-accent-ink text-ink-display bg-surface' 
             : 'border-line text-ink-body hover:border-accent/40 hover:bg-surface-elevated/20'
         }`}
         title="คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย"
@@ -480,14 +480,14 @@ export default function CategoryMatrixFilter({
           <Tag className="w-3 h-3" />
         </div>
         
-        <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-14 truncate text-slate-300 font-mono">
+        <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-14 truncate text-ink-soft font-mono">
           {triggerLabel}
         </div>
         
         <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 shrink-0">
           {isActive && (
             <>
-              <span className="px-1.5 py-0.2 rounded-none text-[11px] font-black font-mono bg-accent/20 text-accent-ink border border-accent/40 leading-none">
+              <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black font-mono bg-accent/20 text-accent-ink border border-accent/40 leading-none">
                 {selectedCatNames.size}
               </span>
               <button
@@ -496,7 +496,7 @@ export default function CategoryMatrixFilter({
                   e.stopPropagation();
                   onChange('ALL');
                 }}
-                className="p-0.5 rounded-none text-slate-500 hover:text-white hover:bg-accent/40 transition-colors cursor-pointer"
+                className="p-0.5 rounded-none text-ink-muted hover:text-ink-display hover:bg-accent/40 transition-colors cursor-pointer"
                 title="รีเซ็ตกลับเป็นเลือกทุกหมวดหมู่"
               >
                 <X className="w-2.5 h-2.5" />
@@ -517,14 +517,13 @@ export default function CategoryMatrixFilter({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-line-strong shadow-2xl p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
-          style={{ backdropFilter: 'blur(12px)' }}
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.7*var(--shadow-k)))] p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
         >
           {/* Section Header Bar */}
           <div className="flex items-center justify-between flex-wrap gap-1.5 pb-2 border-b border-line">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-3.5 bg-accent rounded-none shrink-0" />
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
                 <Layers className="w-3.5 h-3.5 text-accent-ink" />
                 <span>หมวดหมู่ 2 ระดับ</span>
               </div>
@@ -539,13 +538,13 @@ export default function CategoryMatrixFilter({
                 placeholder="ค้นหา..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-24 sm:w-28 pl-6 pr-5 py-0.5 border rounded-none outline-none text-[11px] font-semibold bg-surface border-line text-slate-300 focus:border-accent-ink placeholder-ink-muted"
+                className="w-24 sm:w-28 pl-6 pr-5 py-0.5 border rounded-none outline-none text-[11px] font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted"
               />
               {searchTerm && (
                 <button 
                   type="button"
                   onClick={() => setSearchTerm('')} 
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-muted hover:text-white"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-display"
                 >
                   <X className="w-2.5 h-2.5" />
                 </button>
@@ -559,34 +558,34 @@ export default function CategoryMatrixFilter({
                   type="button"
                   onClick={handleSelectAll}
                   className={`hover:text-accent-ink transition-colors cursor-pointer ${
-                    isAllSelected ? 'text-accent-ink font-black' : 'text-slate-400'
+                    isAllSelected ? 'text-accent-ink font-black' : 'text-ink-body'
                   }`}
                   title="เลือกทุกหมวดหมู่ (ติ๊กทั้งหมด)"
                 >
                   [เลือกทั้งหมด]
                 </button>
-                <span className="text-slate-700">•</span>
+                <span className="text-ink-muted">•</span>
                 {activeCategoryNames && activeCategoryNames.size > 0 && (
                   <>
                     <button
                       type="button"
                       onClick={handleSelectActiveOnly}
                       className={`hover:text-accent-ink transition-colors cursor-pointer flex items-center gap-1 ${
-                        isOnlyActiveSelected ? 'text-accent-ink font-black' : 'text-slate-400'
+                        isOnlyActiveSelected ? 'text-accent-ink font-black' : 'text-ink-body'
                       }`}
                       title="ติ๊กเฉพาะหมวดที่มีรายการบันทึกในเดือนนี้ (ตัดหมวดที่ไม่มีรายการออก)"
                     >
                       <Sparkles className="w-2.5 h-2.5 text-accent-ink" />
                       <span>[เฉพาะที่มีรายการ ({activeCategoryNames.size})]</span>
                     </button>
-                    <span className="text-slate-700">•</span>
+                    <span className="text-ink-muted">•</span>
                   </>
                 )}
                 <button
                   type="button"
                   onClick={handleClearAll}
                   className={`hover:text-danger transition-colors cursor-pointer ${
-                    selectedCatNames.size === 0 ? 'text-danger font-black' : 'text-slate-400'
+                    selectedCatNames.size === 0 ? 'text-danger font-black' : 'text-ink-body'
                   }`}
                   title="ล้างการเลือกทั้งหมด"
                 >
@@ -594,7 +593,7 @@ export default function CategoryMatrixFilter({
                 </button>
               </div>
 
-              <span className="text-slate-500 font-normal">
+              <span className="text-ink-muted font-normal">
                 เลือก {selectedCatNames.size}/{allAvailableNames.length}
               </span>
             </div>
@@ -602,7 +601,7 @@ export default function CategoryMatrixFilter({
 
           {groupedCategories.length === 0 ? (
             <div className="py-6 px-4 text-center border border-dashed border-line bg-surface">
-              <p className="text-xs font-mono font-bold text-slate-400">
+              <p className="text-xs font-mono font-bold text-ink-body">
                 ไม่พบหมวดหมู่ที่ค้นหา
               </p>
             </div>
@@ -610,9 +609,9 @@ export default function CategoryMatrixFilter({
             <>
               {/* Tier 1: Cashflow Groups Chips */}
               <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   <span>ชั้นที่ 1: กลุ่ม (คลิกเพื่อเลือกหรือเอาออกทั้งกลุ่ม)</span>
-                  <span className="text-slate-500 font-normal">
+                  <span className="text-ink-muted font-normal">
                     {activeGroupCount} / {groupedCategories.length} กลุ่ม
                   </span>
                 </div>
@@ -620,7 +619,7 @@ export default function CategoryMatrixFilter({
                 <div className="flex flex-wrap items-stretch gap-1.5">
                   {/* Income Groups (Green Box - Stacked 2 lines) */}
                   {incomeGroupRows.length > 0 && (
-                    <div className="flex flex-col justify-center gap-1 p-1 bg-emerald-950/20 border border-emerald-500/40 rounded-none shrink-0 min-w-[125px]">
+                    <div className="flex flex-col justify-center gap-1 p-1 bg-income/10 border border-income/40 rounded-none shrink-0 min-w-[125px]">
                       {incomeGroupRows.map(({ group, categories: groupCats }) =>
                         renderGroupChip(group, groupCats, true, true)
                       )}
@@ -640,7 +639,7 @@ export default function CategoryMatrixFilter({
 
               {/* Tier 2: Sub-categories Matrix */}
               <div className="flex flex-col gap-1 pt-1 border-t border-line">
-                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   <span>ชั้นที่ 2: หมวดหมู่ย่อย (คลิก: เปิด/ปิด • ดับเบิลคลิก: เฉพาะหมวดนั้น)</span>
                   <span className="text-accent-ink font-bold">
                     เลือก {selectedCatNames.size} / {allAvailableNames.length} หมวด
@@ -653,22 +652,22 @@ export default function CategoryMatrixFilter({
                     <div className={`grid ${
                       incomeGroupRows.length === 1
                         ? 'grid-cols-1'
-                        : 'grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/30'
-                    } bg-emerald-950/20 border border-emerald-500/40 rounded-none hover:border-emerald-500/60 transition-colors`}>
+                        : 'grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-income/30'
+                    } bg-income/10 border border-income/40 rounded-none hover:border-income/60 transition-colors`}>
                       {incomeGroupRows.map(({ group, categories: groupCats }) => (
                         <div
                           key={group.id}
                           className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-2 group/row"
                         >
                           {/* Group Title Tag on Left */}
-                          <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-emerald-400 font-mono select-none">
+                          <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-income font-mono select-none">
                             <div className="flex items-center gap-1 min-w-0">
                               <CategoryGlyph
                                 icon={group.icon}
                                 color={group.color || tc('income')}
                                 size={15}
                                 className="shrink-0"
-                                fallbackEmoji="📁"
+                                fallbackEmoji="folder"
                               />
                               <span className="truncate">{group.name}</span>
                             </div>
@@ -677,7 +676,7 @@ export default function CategoryMatrixFilter({
                               <button
                                 type="button"
                                 onClick={(e) => handleIsolateGroup(groupCats, e)}
-                                className="opacity-0 group-hover/row:opacity-100 text-[11px] font-black uppercase tracking-wider text-emerald-500/70 hover:text-emerald-300 transition-opacity cursor-pointer font-mono mr-0.5"
+                                className="opacity-0 group-hover/row:opacity-100 text-[11px] font-black uppercase tracking-wider text-income/70 hover:text-income transition-opacity cursor-pointer font-mono mr-0.5"
                                 title={`เลือกเฉพาะกลุ่ม ${group.name}`}
                               >
                                 [เฉพาะ]
@@ -700,9 +699,9 @@ export default function CategoryMatrixFilter({
                       className="flex flex-col sm:flex-row sm:items-center gap-1.5 p-1 px-1.5 bg-surface border border-line rounded-none group/row hover:border-line-strong transition-colors"
                     >
                       {/* Group Title Tag on Left */}
-                      <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-slate-400 font-mono select-none">
+                      <div className="w-auto sm:w-44 shrink-0 flex items-center justify-between gap-1 text-[11px] font-black text-ink-body font-mono select-none">
                         <div className="flex items-center gap-1 min-w-0">
-                          <CategoryGlyph icon={group.icon} color={group.color} size={15} className="shrink-0" fallbackEmoji="📁" />
+                          <CategoryGlyph icon={group.icon} color={group.color} size={15} className="shrink-0" fallbackEmoji="folder" />
                           <span className="truncate">{group.name}</span>
                         </div>
 
@@ -710,7 +709,7 @@ export default function CategoryMatrixFilter({
                           <button
                             type="button"
                             onClick={(e) => handleIsolateGroup(groupCats, e)}
-                            className="opacity-0 group-hover/row:opacity-100 text-[11px] font-black uppercase tracking-wider text-slate-500 hover:text-accent-ink transition-opacity cursor-pointer font-mono mr-0.5"
+                            className="opacity-0 group-hover/row:opacity-100 text-[11px] font-black uppercase tracking-wider text-ink-muted hover:text-accent-ink transition-opacity cursor-pointer font-mono mr-0.5"
                             title={`เลือกเฉพาะกลุ่ม ${group.name}`}
                           >
                             [เฉพาะ]
@@ -731,14 +730,14 @@ export default function CategoryMatrixFilter({
 
           {/* Action & Confirmation Footer */}
           <div className="flex items-center justify-between pt-2 border-t border-line">
-            <span className="text-[11px] font-mono text-slate-400">
-              เลือก <span className="text-white font-bold">{selectedCatNames.size}</span> จาก {allAvailableNames.length} หมวดหมู่
+            <span className="text-[11px] font-mono text-ink-body">
+              เลือก <span className="text-ink-display font-bold">{selectedCatNames.size}</span> จาก {allAvailableNames.length} หมวดหมู่
             </span>
 
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent-ink bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-sm font-mono cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent-ink bg-accent text-on-accent hover:bg-accent-active transition-colors font-mono cursor-pointer"
             >
               <Check className="w-3 h-3" />
               <span>เสร็จสิ้น</span>

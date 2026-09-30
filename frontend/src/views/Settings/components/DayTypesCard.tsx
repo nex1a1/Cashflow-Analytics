@@ -12,7 +12,7 @@ export interface DayTypesCardProps {
   dayTypeConfig: DayType[];
   handleAddDayType: () => void;
   handleMoveDayType: (id: string, direction: 'UP' | 'DOWN') => void;
-  handleDayTypeConfigChange: (id: string, field: string, value: any) => void;
+  handleDayTypeConfigChange: (id: string, field: string, value: any) => unknown;
   handleDeleteDayType: (id: string) => void;
 }
 
@@ -37,13 +37,13 @@ const DayTypesCard = memo(({
     >
       <div className="p-3 space-y-2 bg-canvas/30">
         {dayTypeConfig.map((dt, idx) => {
-          const isProtected = (dt as any).isDefault || dayTypeConfig.length <= 2;
+          const isProtected = dt.isDefault || dayTypeConfig.length <= 2;
           return (
             <div
               key={dt.id}
               className="flex items-center gap-2 px-2 py-1.5 border rounded-sm group/dt bg-surface border-line hover:bg-surface-hover/50 hover:border-line-strong transition-colors"
             >
-              <div className="flex flex-col items-center shrink-0 opacity-0 group-hover/dt:opacity-100 text-ink-muted">
+              <div className="flex flex-col items-center shrink-0 opacity-0 group-hover/dt:opacity-100 focus-within:opacity-100 text-ink-muted">
                 <button
                   type="button"
                   onClick={() => handleMoveDayType(dt.id, 'UP')}

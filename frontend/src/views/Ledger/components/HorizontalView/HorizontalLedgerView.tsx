@@ -102,13 +102,13 @@ export default function HorizontalLedgerView({
         <div className="p-6 rounded-none border-2 border-line-strong mb-6 bg-canvas">
           <Inbox className="w-16 h-16 text-ink-muted" />
         </div>
-        <p className="text-lg font-black text-slate-300">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
+        <p className="text-lg font-black text-ink-soft">ยังไม่มีรายการจ่ายในมุมมองนี้</p>
         <p className="text-sm mt-2 mb-4 text-ink-body">เพิ่มรายจ่ายเพื่อดูในตารางรายวัน</p>
         {isFilterActive && clearFilters && (
           <button
             type="button"
             onClick={clearFilters}
-            className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white cursor-pointer transition-colors font-mono"
+            className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-ink-soft hover:bg-surface-elevated hover:text-ink-display cursor-pointer transition-colors font-mono"
           >
             ล้างตัวกรองตาราง
           </button>
@@ -169,9 +169,7 @@ export default function HorizontalLedgerView({
                           position: 'sticky',
                           left: 0,
                           zIndex: 20,
-                          background: isNewYear 
-                            ? `linear-gradient(90deg, ${tc('accent', 0.2)} 0%, ${tc('canvas', 0.95)} 100%)` 
-                            : `linear-gradient(90deg, ${tc('gray-800', 0.4)} 0%, ${tc('surface', 0.95)} 100%)`,
+                          background: isNewYear ? tc('accent', 0.14) : tc('surface'),
                           borderTop: isNewYear ? `1.5px solid ${tc('accent-ink')}` : '1px solid rgb(var(--overlay) / 0.08)',
                           borderBottom: '1px solid rgb(var(--overlay) / 0.08)',
                           padding: '6px 10px',

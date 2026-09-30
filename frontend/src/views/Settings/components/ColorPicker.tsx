@@ -151,7 +151,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
         ref={btnRef} 
         onClick={handleOpen} 
         type="button"
-        className="w-5 h-5 border rounded-sm border-line-strong cursor-pointer hover:border-accent/50 transition-colors shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+        className="w-5 h-5 border rounded-sm border-line-strong cursor-pointer hover:border-accent/50 transition-colors shadow-sm"
         style={{ backgroundColor: color }}
         title="เลือกสี"
         aria-label="เลือกสี"
@@ -206,11 +206,12 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                       key={c}
                       type="button"
                       onClick={() => { onChange(c); setOpen(false); }}
-                      className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none transition-transform hover:scale-105 ${
+                      className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white transition-transform hover:scale-105 ${
                         isSelected ? 'ring-1 ring-white z-10 scale-105' : ''
                       }`}
                       style={{ backgroundColor: c }}
                       title={c}
+                      aria-label={`สี ${c}`}
                     />
                   );
                 })}
@@ -233,11 +234,12 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                             key={c}
                             type="button"
                             onClick={() => { onChange(c); setOpen(false); }}
-                            className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white focus:outline-none transition-transform hover:scale-105 ${
+                            className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white transition-transform hover:scale-105 ${
                               isSelected ? 'ring-1 ring-white z-10 scale-105' : ''
                             }`}
                             style={{ backgroundColor: c }}
                             title={c}
+                            aria-label={`สี ${c}`}
                           />
                         );
                       })}
@@ -256,13 +258,13 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
               />
               
               <div className="relative w-8 h-8 rounded-sm border border-line-strong bg-surface flex items-center justify-center hover:bg-surface-elevated hover:border-accent-ink shrink-0 cursor-pointer transition-colors">
-                <Pipette className="w-4 h-4 text-slate-300 pointer-events-none" />
+                <Pipette className="w-4 h-4 text-ink-body pointer-events-none" />
                 <input 
                   type="color" 
                   value={color} 
                   onChange={e => onChange(e.target.value)}
                   className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
-                  title="สีกำหนดเอง" 
+                  title="สีกำหนดเอง" aria-label="สีกำหนดเอง" 
                 />
               </div>
 
@@ -273,7 +275,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                   value={hexInput}
                   onChange={e => handleHexInputChange(e.target.value)}
                   maxLength={7}
-                  className="w-full bg-transparent text-xs font-mono font-bold text-slate-300 outline-none text-right uppercase"
+                  className="w-full bg-transparent text-xs font-mono font-bold text-ink-body outline-none text-right uppercase"
                   placeholder="#000000"
                   aria-label="รหัสสี HEX"
                 />

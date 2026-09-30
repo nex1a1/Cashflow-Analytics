@@ -42,14 +42,13 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
       }}
     >
       <div style={{
-        background: tc('canvas', 0.96),
+        background: tc('canvas'),
         border: '1px solid rgb(var(--overlay) / 0.1)',
         borderRadius: 0,
         boxShadow: '0 16px 40px rgb(0 0 0 / calc(0.7 * var(--shadow-k)))',
         minWidth: 240,
         maxWidth: 320,
         overflow: 'hidden',
-        backdropFilter: 'blur(16px)',
       }}>
         <div style={{
           padding: '10px 14px',

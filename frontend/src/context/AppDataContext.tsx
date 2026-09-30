@@ -125,12 +125,14 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     const dt = dayTypeConfig.find(d => d.id === id);
     if (!dt) return;
     const updatedDt = { ...dt, [field]: value };
-    const newConfig = dayTypeConfig.map(d => (d.id === id ? updatedDt : d));
-    setDayTypeConfig(newConfig);
+    setDayTypeConfig(prev => prev.map(d => (d.id === id ? updatedDt : d)));
     try {
       await dayTypeService.save(updatedDt);
+      return true;
     } catch (err: any) {
+      setDayTypeConfig(prev => prev.map(d => (d.id === id ? dt : d)));
       triggerToast('อัปเดตประเภทวันไม่สำเร็จ: ' + err.message, 'error');
+      return false;
     }
   }, [dayTypeConfig, triggerToast]);
 
@@ -175,6 +177,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
           await dayTypeService.save(dt);
         }
       } catch (err: any) {
+        setDayTypeConfig(dayTypeConfig);
         triggerToast('ไม่สามารถบันทึกลำดับได้: ' + err.message, 'error');
       }
     }
@@ -200,7 +203,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       type: 'expense' as const,
       order_index: cashflowGroups.length + 1,
       color: '#6366F1',
-      icon: '✨',
+      icon: 'sparkles',
       highlight_bg: 0,
       highlightBg: false,
       allocation_type: 'want' as const

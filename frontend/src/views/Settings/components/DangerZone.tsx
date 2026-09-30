@@ -20,7 +20,7 @@ const DangerZone = memo(({ handleDeleteAllData }: DangerZoneProps) => {
         <div className="px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-canvas/50 rounded-none border-t border-danger/25">
           <div className="flex-1">
             <h3 className="text-[13px] font-black uppercase tracking-wider mb-1 text-danger">
-              ล้างข้อมูลทั้งหมด
+              รีเซ็ตระบบเป็นค่าเริ่มต้น
             </h3>
             <p className="text-xs leading-relaxed font-semibold text-ink-body">
               จะลบ <strong className="text-danger mx-1">รายการทั้งหมดในระบบ</strong> (ทุกเดือนย้อนหลัง),{' '}
@@ -31,7 +31,7 @@ const DangerZone = memo(({ handleDeleteAllData }: DangerZoneProps) => {
             </p>
           </div>
           <div className="shrink-0">
-            <ConfirmDeleteButton onConfirm={() => handleDeleteAllData()} variant="label" label="ล้างข้อมูลทั้งหมด" tooltip="ล้างข้อมูลทั้งหมด" />
+            <ConfirmDeleteButton onConfirm={() => handleDeleteAllData()} variant="label" label="ล้างข้อมูลทั้งหมด" />
           </div>
         </div>
       </SectionCard>

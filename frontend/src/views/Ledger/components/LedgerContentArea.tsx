@@ -26,7 +26,6 @@ export interface LedgerContentAreaProps {
   sortConfig: { key: string; direction: 'asc' | 'desc' };
   handleSort: (key: string) => void;
   isDateSorted: boolean;
-  dateBands: Record<string, number>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
   handleOpenAddModal: (date: string, type: string) => void;
@@ -58,7 +57,6 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
   sortConfig,
   handleSort,
   isDateSorted,
-  dateBands,
   handleUpdateTransaction,
   handleDeleteTransaction,
   handleOpenAddModal,
@@ -93,7 +91,6 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
         sortConfig={sortConfig}
         handleSort={handleSort}
         isDateSorted={isDateSorted}
-        dateBands={dateBands}
         handleUpdateTransaction={handleUpdateTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
         handleOpenAddModal={handleOpenAddModal}
@@ -108,15 +105,14 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
   };
 
   return (
-    <div className="flex flex-col border rounded-none overflow-hidden shadow-lg min-h-[400px] relative z-0 bg-canvas border-line">
+    <div className="flex flex-col border rounded-none overflow-hidden min-h-[400px] relative z-0 bg-canvas border-line">
       {showSkeleton && (
-        <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-50 bg-surface/80 backdrop-blur-[1px]">
+        <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full absolute inset-0 z-50 bg-surface/80">
           <div className="relative w-14 h-14 mb-4 flex items-center justify-center border border-line bg-canvas">
             <div className="w-8 h-8 border-2 border-transparent border-t-accent-ink border-r-accent/30 rounded-full animate-spin" />
           </div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-ink-body font-sans flex items-center gap-1.5">
-            <span>กำลังโหลดรายการ...</span>
-            <span className="text-accent-ink animate-pulse">...</span>
+          <p className="text-[11px] font-black uppercase tracking-widest text-ink-body font-sans">
+            กำลังโหลดรายการ...
           </p>
         </div>
       )}
@@ -127,7 +123,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
           <p className="text-base font-bold text-ink-body">ไม่พบรายการ</p>
           <p className="text-xs mt-1 mb-4 text-ink-muted">ลองเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</p>
           {isFilterActive && (
-            <button onClick={clearFilters} className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-slate-300 hover:bg-surface-elevated">
+            <button onClick={clearFilters} className="px-4 py-1.5 rounded-none text-xs font-bold border bg-surface-elevated/60 border-line-strong text-ink-soft hover:bg-surface-elevated">
               ล้างตัวกรอง
             </button>
           )}

@@ -5,7 +5,6 @@ import { isDateInFilter } from '../../utils/dateHelpers';
 // Shared Components
 import FilterBar from './components/Shared/FilterBar';
 import HorizontalFilterBar from './components/HorizontalView/HorizontalFilterBar';
-import { EXCLUDED_HEATMAP_CATEGORIES } from './hooks/useHeatmapEngine';
 
 // Extracted Sub-Components
 import LedgerHeaderActions from './components/LedgerHeaderActions';
@@ -17,6 +16,7 @@ import { useLedgerData } from './hooks/useLedgerData';
 import { useLedgerStats } from './hooks/useLedgerStats';
 import { Category, CashflowGroup, TransactionDisplay, DayType } from '../../types';
 import { HeatmapEngineOptions } from './hooks/useHeatmapEngine';
+import { sumIncomeExpense } from './ledgerMath';
 
 
 export interface LedgerViewProps {
@@ -110,14 +110,6 @@ function LedgerView({
     });
   }, []);
 
-  const totalExpenseCats = useMemo(() => {
-    return (categories || []).filter(c => (c as any).type === 'expense').length;
-  }, [categories]);
-
-  const defaultNonFixedCount = useMemo(() => {
-    return (categories || []).filter(c => (c as any).type === 'expense' && !EXCLUDED_HEATMAP_CATEGORIES.includes(c.name)).length;
-  }, [categories]);
-
   const isHorizontalFilterActive = useMemo<boolean>(() => {
     return Boolean(
       horizontalFilters.selectedCategories !== 'ALL' ||
@@ -154,7 +146,6 @@ function LedgerView({
     setCurrentPage,
     sortConfig,
     handleSort,
-    dateBands,
     isDateSorted
   } = useLedgerData(displayTransactions, filterPeriod, searchQuery, {
     advancedFilterCategory, advancedFilterGroup, advancedFilterDate,
@@ -189,13 +180,7 @@ function LedgerView({
 
   // Page-specific summaries
   const { pageInc, pageExp } = useMemo(() => {
-    let inc = 0, exp = 0;
-    currentData.forEach(t => {
-      const type = catTypeMap[t.category];
-      const amt = typeof t.amount === 'string' ? Number.parseFloat(t.amount) : t.amount;
-      if (type === 'income') inc += (amt || 0);
-      else exp += (amt || 0);
-    });
+    const { inc, exp } = sumIncomeExpense(currentData, catTypeMap);
     return { pageInc: inc, pageExp: exp };
   }, [currentData, catTypeMap]);
 
@@ -207,11 +192,11 @@ function LedgerView({
           <div>
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-6 bg-accent rounded-none shrink-0" />
-              <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-slate-100 font-sans">
+              <h2 className="text-2xl font-black uppercase tracking-wider leading-none text-ink-display font-sans">
                 บัญชีแยกประเภท
               </h2>
             </div>
-            <p className="text-[11px] font-black tracking-widest mt-1.5 font-sans text-slate-400 uppercase flex items-center gap-2">
+            <p className="text-[11px] font-black tracking-widest mt-1.5 font-sans text-ink-body uppercase flex items-center gap-2">
               <span>{getFilterLabel(filterPeriod)}</span>
               <span className="text-ink-muted font-bold" aria-hidden="true">•</span>
               <span className="text-accent-ink font-extrabold">
@@ -309,7 +294,6 @@ function LedgerView({
         sortConfig={sortConfig as { key: string; direction: 'asc' | 'desc' }}
         handleSort={handleSort}
         isDateSorted={isDateSorted}
-        dateBands={dateBands}
         handleUpdateTransaction={handleUpdateTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
         handleOpenAddModal={handleOpenAddModal}

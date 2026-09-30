@@ -77,8 +77,10 @@ export default function useCategories(
         // Rollback optimistic update
         setCategories(prev => prev.map(c => c.id === catId ? cat : c));
         showToast('ไม่สามารถบันทึกหมวดหมู่ได้: ' + (err?.message || 'ข้อผิดพลาด'), 'error');
+        return false;
       }
     }
+    return true;
   }, []);
 
   const handleAddCategory = useCallback(
@@ -102,7 +104,7 @@ export default function useCategories(
         const newCatBackend = {
           id: newId,
           name: type === 'income' ? 'รายรับใหม่' : 'หมวดหมู่ใหม่',
-          icon: type === 'income' ? '💰' : '📌',
+          icon: type === 'income' ? 'coins' : 'tag',
           color: type === 'income' ? '#10B981' : '#64748B',
           cashflow_group_id: defaultGroup.id,
           order_index: maxOrder + 1

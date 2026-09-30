@@ -87,7 +87,7 @@ export default function FilterBar({
   ].filter(Boolean).length;
 
   return (
-    <div className="relative rounded-none border border-line/60 bg-surface mb-4 z-40 shadow-md">
+    <div className="relative rounded-none border border-line/60 bg-surface mb-4 z-40">
       {/* ================= COMPACT SEARCH STRIP (ROW 1: ALWAYS VISIBLE IN LIST VIEW) ================= */}
       <div className="p-2 bg-canvas flex items-center justify-between gap-2.5 flex-wrap">
         {/* Left: Quick Search Box */}
@@ -98,12 +98,12 @@ export default function FilterBar({
             placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-surface border-line focus:border-accent-ink text-slate-300 placeholder-ink-muted"
+            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-surface border-line focus:border-accent-ink text-ink-soft placeholder-ink-muted"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')} 
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none hover:bg-surface-elevated text-ink-muted hover:text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-none hover:bg-surface-elevated text-ink-muted hover:text-ink-display"
               title="ล้างคำค้นหา"
             >
               <X className="w-3.5 h-3.5" />
@@ -128,18 +128,18 @@ export default function FilterBar({
             className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 px-3 py-1.5 rounded-none border font-mono transition-all select-none whitespace-nowrap ${
               isExpanded
                 ? 'bg-accent/10 border-accent-ink text-accent-ink'
-                : 'bg-surface border-line text-slate-400 hover:text-slate-100 hover:border-line-strong'
-            } ${advancedActiveCount > 0 ? '!border-amber-500/80 !text-amber-400 !bg-amber-950/20' : ''}`}
+                : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
+            } ${advancedActiveCount > 0 ? '!border-warn/80 !text-warn !bg-warn/10' : ''}`}
             title="เปิด/ปิด แผงตัวกรองขั้นสูง (วันที่, กลุ่ม, หมวดหมู่, ช่วงเงิน, การจัดสรร)"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>ตัวกรองขั้นสูง</span>
             {advancedActiveCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-none text-[11px] font-black font-mono bg-amber-500/20 text-amber-400 border border-amber-500/40 leading-none">
+              <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black font-mono bg-warn/20 text-warn border border-warn/40 leading-none">
                 {advancedActiveCount}
               </span>
             )}
-            {isExpanded ? <ChevronUp className="w-3 h-3 text-accent-ink" /> : <ChevronDown className="w-3 h-3 text-slate-500" />}
+            {isExpanded ? <ChevronUp className="w-3 h-3 text-accent-ink" /> : <ChevronDown className="w-3 h-3 text-ink-muted" />}
           </button>
 
           {isFilterActive && (
@@ -164,14 +164,14 @@ export default function FilterBar({
             <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
               <div className="flex items-center gap-1.5">
                 <MousePointer2 className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
                   ช่วงจำนวนเงินและการจัดสรร
                 </span>
               </div>
 
               {/* Amount Limits */}
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   ช่วงจำนวนเงิน
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -182,7 +182,7 @@ export default function FilterBar({
                       placeholder="Min" 
                       value={minAmount}
                       onChange={e => setMinAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                   <span className="text-xs font-black text-ink-muted font-mono">—</span>
@@ -193,7 +193,7 @@ export default function FilterBar({
                       placeholder="Max" 
                       value={maxAmount}
                       onChange={e => setMaxAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-slate-300 focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export default function FilterBar({
 
               {/* Allocation Toggle */}
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   การจัดสรรเงิน
                 </span>
                 <div className="flex rounded-none p-0.5 border bg-surface border-line">
@@ -217,13 +217,13 @@ export default function FilterBar({
             <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
               <div className="flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
                   ตัวกรองวันที่
                 </span>
               </div>
 
               <div className="flex flex-col gap-1 relative z-50">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   เลือกวันเฉพาะ หรือช่วงวันที่
                 </span>
                 <DatePicker
@@ -247,7 +247,7 @@ export default function FilterBar({
                 />
               </div>
 
-              <div className="text-[11px] text-slate-500 font-mono">
+              <div className="text-[11px] text-ink-muted font-mono">
                 * เลือกวันเพื่อดูรายการ
               </div>
             </div>
@@ -256,13 +256,13 @@ export default function FilterBar({
             <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
               <div className="flex items-center gap-1.5">
                 <Folder className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
                   จำแนกตามกลุ่ม / หมวดหมู่
                 </span>
               </div>
 
               <div className="flex flex-col gap-1 relative z-50">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   เลือกหมวดหมู่
                 </span>
                 <CategoryMatrixFilter
@@ -275,7 +275,7 @@ export default function FilterBar({
                 />
               </div>
 
-              <div className="text-[11px] text-slate-500 font-mono">
+              <div className="text-[11px] text-ink-muted font-mono">
                 * คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย
               </div>
             </div>
@@ -291,10 +291,10 @@ export default function FilterBar({
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                     ตัวกรองที่ทำงานอยู่:
                   </span>
-                  <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-slate-300 font-mono">
+                  <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-ink-soft font-mono">
                     {activeCount} active
                   </span>
                 </div>
