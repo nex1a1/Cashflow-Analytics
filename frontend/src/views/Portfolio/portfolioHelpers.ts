@@ -1,4 +1,4 @@
-import { AssetKind, PortfolioTrade } from '@/types';
+import { AssetKind, PortfolioAsset, PortfolioTrade } from '@/types';
 
 export const ASSET_KIND_LABELS: Record<AssetKind, string> = {
   gold_bar: 'ทองคำแท่ง',
@@ -134,4 +134,93 @@ export function summarizeTrades(trades: PortfolioTrade[]): TradeSummary {
     s.rows.push({ ...t, balance: units, realized });
   }
   return s;
+}
+
+/** วันนี้ตามเวลาเครื่อง รูปแบบ YYYY-MM-DD */
+export const todayIso = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** กำไร = เขียว · ขาดทุน = เทาอ่อนไม่ใช่แดง: ราคาตลาดขึ้นลงเป็นเรื่องปกติ ไม่ใช่ปัญหาที่ต้องรีบทำอะไร (แดงสงวนไว้ให้ปัญหาจริง) */
+export const plColor = (n: number | null | undefined): string =>
+  (n == null || n === 0 ? 'text-ink-display' : n > 0 ? 'text-income' : 'text-ink-soft');
+
+const daysBetween = (fromIso: string, toIso: string): number => {
+  const [fy, fm, fd] = fromIso.split('-').map(Number);
+  const [ty, tm, td] = toIso.split('-').map(Number);
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000);
+};
+
+export interface CashFlow { date: string; amount: number } // ลบ = เงินออกจากกระเป๋า (ซื้อ) · บวก = เงินกลับเข้า (ขาย/มูลค่าปัจจุบัน)
+
+/**
+ * XIRR: อัตราต่อปี r ที่ทำให้ Σ amount / (1 + r)^(วัน/365) = 0 — แบ่งครึ่งหาคำตอบ (เสถียรกว่า Newton)
+ * ไม่มีทั้งเงินออกและเงินเข้า หรือไม่เจอคำตอบ → null
+ */
+export function xirr(flows: CashFlow[]): number | null {
+  if (!flows.some(f => f.amount < 0) || !flows.some(f => f.amount > 0)) return null;
+  const t0 = flows.reduce((m, f) => (f.date < m ? f.date : m), flows[0].date);
+  const npv = (r: number) => flows.reduce((sum, f) => sum + f.amount / (1 + r) ** (daysBetween(t0, f.date) / 365), 0);
+  let lo = -0.9999;
+  let hi = 1000;
+  if (npv(lo) * npv(hi) > 0) return null;
+  const loSign = Math.sign(npv(lo));
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    if (Math.sign(npv(mid)) === loSign) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+export interface AnnualReturn {
+  /** อัตราต่อปี (0.12 = 12%) · null = ไม่พอจะคำนวณ */
+  rate: number | null;
+  /** วันที่ผ่านไปตั้งแต่ซื้อครั้งแรก */
+  days: number;
+}
+
+/** น้อยกว่านี้ การแปลงเป็น "ต่อปี" ขยายความผันผวนระยะสั้นจนตัวเลขไม่มีความหมาย */
+export const MIN_ANNUAL_DAYS = 365;
+
+/**
+ * ผลตอบแทนต่อปีของทั้งพอร์ต (ถ่วงน้ำหนักตามเงินและเวลาที่ลง): ซื้อ = เงินออก, ขาย = เงินเข้า, ที่ยังถืออยู่ = ขายที่มูลค่าตลาดวันนี้
+ * นับเฉพาะสินทรัพย์ที่ขายหมดแล้วหรือมีราคา (ตัวที่ถืออยู่แต่ไม่มีราคาไม่รู้มูลค่า) — แสดงเมื่อถือมาครบ MIN_ANNUAL_DAYS
+ */
+export function portfolioAnnualReturn(assets: PortfolioAsset[], today: string): AnnualReturn {
+  const flows: CashFlow[] = [];
+  for (const a of assets) {
+    const held = a.units > 0;
+    if (held && a.marketValue == null) continue;
+    for (const t of a.trades) flows.push({ date: t.date, amount: t.side === 'buy' ? -t.amount : t.amount });
+    if (held) flows.push({ date: today, amount: a.marketValue as number });
+  }
+  if (flows.length === 0) return { rate: null, days: 0 };
+  const first = flows.reduce((m, f) => (f.date < m ? f.date : m), flows[0].date);
+  const days = Math.max(0, daysBetween(first, today));
+  return { rate: days >= MIN_ANNUAL_DAYS ? xirr(flows) : null, days };
+}
+
+export type AssetSortKey = 'name' | 'weight' | 'value' | 'unrealized' | 'realized';
+export interface AssetSort { key: AssetSortKey; dir: 'asc' | 'desc' }
+
+/** เรียงตารางสินทรัพย์ — ค่าว่าง (ไม่มีราคา/ไม่ได้ถืออยู่) อยู่ท้ายเสมอไม่ว่าเรียงทางไหน เสมอกันเรียงตามชื่อ */
+export function sortAssets(assets: PortfolioAsset[], { key, dir }: AssetSort, weights: Record<string, number>): PortfolioAsset[] {
+  const pick = (a: PortfolioAsset): number | string | null => {
+    switch (key) {
+      case 'name': return a.name;
+      case 'weight': return weights[a.id] ?? null;
+      case 'value': return a.marketValue;
+      case 'unrealized': return a.unrealized;
+      case 'realized': return a.realized;
+    }
+  };
+  const sign = dir === 'asc' ? 1 : -1;
+  return [...assets].sort((a, b) => {
+    const x = pick(a);
+    const y = pick(b);
+    if (x == null || y == null) return x == null && y == null ? a.name.localeCompare(b.name, 'th') : x == null ? 1 : -1;
+    const c = typeof x === 'string' ? x.localeCompare(y as string, 'th') : x - (y as number);
+    return c !== 0 ? c * sign : a.name.localeCompare(b.name, 'th');
+  });
 }

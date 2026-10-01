@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { signedTradeAmount, tradeSideOf, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades } from '../portfolioHelpers';
+import { signedTradeAmount, tradeSideOf, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades, xirr, portfolioAnnualReturn, sortAssets, plColor } from '../portfolioHelpers';
+import type { PortfolioAsset } from '@/types';
 
 describe('portfolioHelpers', () => {
   it('ขาย = ยอดติดลบ ซื้อ = บวก และย้อนกลับได้', () => {
@@ -55,5 +56,43 @@ describe('portfolioHelpers', () => {
     expect(r.rows[2].balance).toBe(15);
     expect(r.rows[2].realized).toBe(700 - 2400 * (5 / 20)); // ต้นทุนเฉลี่ย 120 → ขาย 5 หน่วยต้นทุน 600
     expect([r.buyCount, r.sellCount, r.boughtAmount, r.soldAmount]).toEqual([2, 1, 2400, 700]);
+  });
+
+  it('xirr: ลง 100 ครบ 1 ปีได้ 110 = 10% · ขาดทุน 90 = −10% · ไม่มีเงินเข้า = null', () => {
+    expect(xirr([{ date: '2025-01-01', amount: -100 }, { date: '2026-01-01', amount: 110 }])!).toBeCloseTo(0.10, 4);
+    expect(xirr([{ date: '2025-01-01', amount: -100 }, { date: '2026-01-01', amount: 90 }])!).toBeCloseTo(-0.10, 4);
+    expect(xirr([{ date: '2025-01-01', amount: -100 }])).toBeNull();
+  });
+
+  const tr = (date: string, side: 'buy' | 'sell', amount: number) => ({ id: date + side, date, side, units: 1, amount, pricePerUnit: amount, description: '' });
+  const mk = (id: string, over: Partial<PortfolioAsset>): PortfolioAsset => ({
+    id, name: id, kind: 'us_stock', symbol: null, unitLabel: null, autoPrice: true, units: 1, cost: 100, avgCostPerUnit: 100,
+    price: null, priceAt: null, priceSource: null, marketValue: null, unrealized: null, unrealizedPct: null, realized: 0, oversold: false, trades: [], ...over,
+  });
+
+  it('portfolioAnnualReturn: ถือครบปีใช้มูลค่าตลาดวันนี้เป็นเงินเข้า · ไม่ถึงปี/ไม่มีราคา ไม่คำนวณ', () => {
+    const held = mk('a', { marketValue: 110, trades: [tr('2025-01-01', 'buy', 100)] });
+    const r = portfolioAnnualReturn([held], '2026-01-01');
+    expect(r.days).toBe(365);
+    expect(r.rate!).toBeCloseTo(0.10, 3);
+    expect(portfolioAnnualReturn([held], '2025-06-01').rate).toBeNull(); // ไม่ถึง 1 ปี
+    const unpriced = mk('b', { marketValue: null, trades: [tr('2024-01-01', 'buy', 100)] });
+    expect(portfolioAnnualReturn([unpriced], '2026-01-01')).toEqual({ rate: null, days: 0 });
+    const soldOut = mk('c', { units: 0, trades: [tr('2025-01-01', 'buy', 100), tr('2026-01-01', 'sell', 120)] });
+    expect(portfolioAnnualReturn([soldOut], '2026-01-01').rate!).toBeCloseTo(0.20, 3);
+  });
+
+  it('sortAssets: เรียงตามคีย์ ค่าว่างอยู่ท้ายเสมอทั้งสองทิศ เสมอกันเรียงตามชื่อ', () => {
+    const list = [mk('b', { marketValue: 50 }), mk('none', { marketValue: null }), mk('a', { marketValue: 50 }), mk('c', { marketValue: 200 })];
+    expect(sortAssets(list, { key: 'value', dir: 'desc' }, {}).map(x => x.id)).toEqual(['c', 'a', 'b', 'none']);
+    expect(sortAssets(list, { key: 'value', dir: 'asc' }, {}).map(x => x.id)).toEqual(['a', 'b', 'c', 'none']);
+    expect(sortAssets(list, { key: 'weight', dir: 'desc' }, { a: 10, b: 30 }).map(x => x.id)).toEqual(['b', 'a', 'c', 'none']);
+    expect(sortAssets(list, { key: 'name', dir: 'asc' }, {}).map(x => x.id)).toEqual(['a', 'b', 'c', 'none']);
+  });
+
+  it('plColor: กำไรเขียว ขาดทุนเทา ไม่ใช้แดง', () => {
+    expect(plColor(1)).toBe('text-income');
+    expect(plColor(-1)).toBe('text-ink-soft');
+    expect(plColor(null)).toBe('text-ink-display');
   });
 });

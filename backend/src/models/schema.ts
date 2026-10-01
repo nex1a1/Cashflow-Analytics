@@ -320,6 +320,14 @@ const ensureInvestmentSchema = (): void => {
         source TEXT NOT NULL,
         FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
       ) STRICT;
+
+      -- มูลค่าพอร์ตวันละ 1 จุด (จดตอนดึงราคา/กรอกราคาเอง) ใช้วาดกราฟมูลค่าตามเวลา; สตางค์, เฉพาะสินทรัพย์ที่มีราคา
+      CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+        date TEXT PRIMARY KEY,
+        market_value INTEGER NOT NULL,
+        cost INTEGER NOT NULL,
+        recorded_at TEXT NOT NULL
+      ) STRICT;
     `);
 
     const cols = new Set((db.prepare('PRAGMA table_info(transactions)').all() as { name: string }[]).map(c => c.name));

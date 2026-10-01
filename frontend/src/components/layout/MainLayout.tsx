@@ -96,8 +96,11 @@ export default function MainLayout() {
           onClickAddQuick={() => {
             setAddForm(prev => ({
               ...prev,
+              type: 'expense',
               date: new Date().toISOString().split('T')[0],
               category: categories.find(c => c.type === 'expense')?.name || '',
+              assetId: undefined,
+              side: undefined,
             }));
             setShowAddModal(true);
           }}
@@ -246,6 +249,8 @@ export default function MainLayout() {
         defaultDate={addForm.date}
         defaultType={addForm.type}
         defaultCategory={addForm.category}
+        defaultAssetId={addForm.assetId}
+        defaultSide={addForm.side}
         dayTypes={dayTypes}
         dayTypeConfig={dayTypeConfig}
         cashflowGroups={cashflowGroups}

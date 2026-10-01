@@ -1,12 +1,12 @@
 // frontend/src/views/Calendar/index.tsx
 import React, { useMemo, useState, useCallback } from 'react';
 import DayDetailModal from '../../components/modals/DayDetailModal/index';
-import { hexToRgb } from '../../utils/formatters';
 import CalendarSkeleton from './components/CalendarSkeleton';
 import CalendarBlock from './components/CalendarBlock';
 import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem } from './components/LegendAllocationBlock';
 import MonthOnlyNotice from './components/MonthOnlyNotice';
 import { resolveDefaultDayTypeId, THAI_MONTHS } from './utils/calendarPeriodHelpers';
+import { processCalendarTransaction, CalendarDayData, CalendarTotals, CategoryAllocationAmount } from './utils/calendarAggregates';
 import { periodUnitDates, parseDateStrToObj, toISODate } from '../../utils/dateHelpers';
 import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, localTodayIso, CYCLE_PREFIX, cycleLabel, cycleRangeLabel } from '../../utils/payCycle';
 import {
@@ -14,84 +14,12 @@ import {
   Category,
   DayType,
   TransactionDisplay,
-  AllocationType,
   FrequentItem,
   TransactionPayload
 } from '../../types';
 import { STORAGE_KEYS } from '../../constants';
 
 import { tc, readable } from '@/constants/theme';
-export interface CalendarDayData {
-  inc: number;
-  exp: number;
-  items: TransactionDisplay[];
-  incItems: TransactionDisplay[];
-}
-
-export interface CategoryAllocationAmount {
-  need: number;
-  want: number;
-  savings: number;
-}
-
-function resolveAllocationType(
-  t: TransactionDisplay,
-  catObj: Category | undefined,
-  cashflowGroups: CashflowGroup[]
-): AllocationType {
-  if (t.allocation_type) return t.allocation_type;
-  const groupId = catObj?.cashflowGroup || catObj?.cashflow_group_id;
-  if (!groupId) return 'want';
-  const groupObj = cashflowGroups.find(g => g.id === groupId);
-  if (groupObj?.type === 'savings') return 'savings';
-  return groupObj?.allocation_type || 'want';
-}
-
-function processCalendarTransaction(
-  t: TransactionDisplay,
-  findCategory: (t: TransactionDisplay) => Category | undefined,
-  cashflowGroups: CashflowGroup[],
-  excludedCategoryIds: Set<string>,
-  dayData: Record<number, CalendarDayData>,
-  catAllocAmounts: Record<string, CategoryAllocationAmount>,
-  totals: { tInc: number; tExp: number; tNeed: number; tWant: number }
-) {
-  if (!t.date) return;
-  const dateParts = t.date.split('-');
-  if (dateParts.length < 3) return;
-  const txD = Number.parseInt(dateParts[2], 10);
-  if (!dayData[txD]) return;
-
-  const catObj = findCategory(t);
-  const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');
-  if (excludedCategoryIds.has(catId)) return;
-
-  const amt = typeof t.amount === 'number' ? t.amount : (Number.parseFloat(String(t.amount)) || 0);
-
-  if (catObj?.type === 'income') {
-    dayData[txD].inc += amt;
-    dayData[txD].incItems.push({ ...t, _catObj: catObj });
-    totals.tInc += amt;
-    return;
-  }
-
-  dayData[txD].exp += amt;
-  dayData[txD].items.push({ ...t, _catObj: catObj });
-  totals.tExp += amt;
-
-  const aType = resolveAllocationType(t, catObj, cashflowGroups);
-
-  if (!catAllocAmounts[catId]) {
-    catAllocAmounts[catId] = { need: 0, want: 0, savings: 0 };
-  }
-  catAllocAmounts[catId][aType] += amt;
-
-  if (aType === 'need') {
-    totals.tNeed += amt;
-  } else if (aType === 'want') {
-    totals.tWant += amt;
-  }
-}
 
 export interface CalendarViewProps {
   transactions: TransactionDisplay[];
@@ -107,7 +35,6 @@ export interface CalendarViewProps {
   isReadOnlyView?: boolean;
   handleDeleteTransaction?: (id: string) => void;
   onSaveTransaction?: (tx: TransactionPayload) => void | Promise<void>;
-  paymentMethods?: any[];
   isLoading: boolean;
   frequentItems?: FrequentItem[];
   onSwitchToAnalysisMode?: () => void;
@@ -118,7 +45,7 @@ function CalendarView({
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
-  paymentMethods, isLoading, frequentItems = [], onSwitchToAnalysisMode
+  isLoading, frequentItems = [], onSwitchToAnalysisMode
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
@@ -198,9 +125,9 @@ function CalendarView({
   }, [categories]);
 
   // Derive calendar grid data and base aggregates
-  const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, catAllocAmounts, maxDailyExpense } = useMemo(() => {
+  const { dayData: calendarData, monthInc, monthExp, monthNeed, monthWant, monthSav, catAllocAmounts, maxDailyExpense } = useMemo(() => {
     const dayData: Record<number, CalendarDayData> = {};
-    const totals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0 };
+    const totals: CalendarTotals = { tInc: 0, tExp: 0, tNeed: 0, tWant: 0, tSav: 0 };
     const catAllocAmounts: Record<string, CategoryAllocationAmount> = {};
 
     for (const iso of periodDates) {
@@ -220,7 +147,7 @@ function CalendarView({
       }
     }
 
-    return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, catAllocAmounts, maxDailyExpense };
+    return { dayData, monthInc: totals.tInc, monthExp: totals.tExp, monthNeed: totals.tNeed, monthWant: totals.tWant, monthSav: totals.tSav, catAllocAmounts, maxDailyExpense };
   }, [currentMonthTransactions, periodDates, findCategory, cashflowGroups, excludedCategoryIds]);
 
   const dayTypeCounts = useMemo(() => {
@@ -322,7 +249,7 @@ function CalendarView({
       });
     });
 
-    const sortedGroups = Object.values(groupsMap).sort((a: any, b: any) => {
+    const sortedGroups = Object.values(groupsMap).sort((a, b) => {
       const typeOrder: Record<string, number> = { income: 0, savings: 1, expense: 2 };
       const typeA = typeOrder[a.groupObj.type] ?? 9;
       const typeB = typeOrder[b.groupObj.type] ?? 9;
@@ -371,7 +298,7 @@ function CalendarView({
           name: cat.name,
           groupName,
           amount: allocs.want,
-          color: readable(cat.color || groupObj?.color || '#F59E0B'),
+          color: readable(cat.color || groupObj?.color || tc('warn')),
           groupOrder,
           catOrder
         });
@@ -389,15 +316,20 @@ function CalendarView({
       }
     });
 
+    // เงินเหลือ = รายรับ − รายจ่าย (เหมือน Dashboard) — เงินลงทุน/ออมอยู่ในนี้ จึงแสดงเป็นรายการย่อยของเงินเหลือ
+    // รายการย่อยต้องบวกกันได้เท่ายอดเงินเหลือ: ลงทุนเกินเงินเหลือ (เช่น เอาเงินเก่ามาลงทุน) ก็ไม่แตกรายการ
     const netCashflow = monthInc - monthExp;
     const netSavingsActual = Math.max(0, netCashflow);
     const totalAllocation = monthNeed + monthWant + netSavingsActual;
 
-    if (netSavingsActual > 0) {
+    const investedListed = savingsCats.reduce((sum, c) => sum + c.amount, 0);
+    if (investedListed > netSavingsActual) {
+      savingsCats.length = 0;
+    } else if (netSavingsActual > investedListed) {
       savingsCats.push({
-        name: 'เงินเหลือสะสม',
+        name: 'ยังไม่ได้ใช้',
         groupName: 'กระแสเงินสด',
-        amount: netSavingsActual,
+        amount: netSavingsActual - investedListed,
         color: tc('income'),
         groupOrder: -1,
         catOrder: -1
@@ -465,6 +397,7 @@ function CalendarView({
           monthInc={monthInc}
           monthExp={monthExp}
           monthNet={monthNet}
+          monthSav={monthSav}
           calendarData={calendarData}
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}
@@ -472,7 +405,6 @@ function CalendarView({
           handleDayTypeChange={handleDayTypeChange}
           onSelectDate={setSelectedDate}
           handleOpenAddModal={handleOpenAddModal}
-          hexToRgb={hexToRgb}
           excludedCategoryIds={excludedCategoryIds}
           toggleCategory={toggleCategory}
           maxDailyExpense={maxDailyExpense}
@@ -489,7 +421,6 @@ function CalendarView({
           handleSetLayoutMode={handleSetLayoutMode}
           handleSetSortMode={handleSetSortMode}
           allocationTotals={allocationTotals}
-          hexToRgb={hexToRgb}
         />
       </div>
     );

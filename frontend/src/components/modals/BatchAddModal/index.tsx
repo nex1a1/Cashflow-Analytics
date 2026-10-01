@@ -37,6 +37,9 @@ export interface BatchAddModalProps {
   defaultDate?: string;
   defaultType?: string;
   defaultCategory?: string;
+  /** หมวดลงทุน/ออม: เลือกสินทรัพย์และซื้อ/ขายไว้ให้ตอนเปิด (มาจากปุ่มซื้อ/ขายในหน้าพอร์ต) */
+  defaultAssetId?: string;
+  defaultSide?: 'buy' | 'sell';
   frequentItems?: FrequentItem[];
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
@@ -46,7 +49,7 @@ export interface BatchAddModalProps {
 export default function BatchAddModal({
   isOpen, onClose, onSaveBatch,
   categories = [],
-  defaultDate, defaultType, defaultCategory,
+  defaultDate, defaultType, defaultCategory, defaultAssetId, defaultSide,
   frequentItems = [],
   dayTypes = {},
   dayTypeConfig = [],
@@ -80,11 +83,13 @@ export default function BatchAddModal({
         if (!catId) catId = categories.find(c => c.type === (defaultType || 'expense'))?.id || '';
         
         setValue('categoryId', catId);
+        setValue('assetId', defaultAssetId || '');
+        setValue('side', defaultSide || 'buy');
         setTimeout(() => setFocus('amount'), 100);
       }
     }
     prevIsOpen.current = isOpen;
-  }, [isOpen, defaultType, defaultCategory, categories]);
+  }, [isOpen, defaultType, defaultCategory, defaultAssetId, defaultSide, categories]);
 
   // Safe Close Guard: with items in the cart, the first close (X / Esc) arms an inline warning;
   // closing again within 6s discards. Same two-step pattern as every delete in the app.

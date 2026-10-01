@@ -161,6 +161,9 @@ export interface QuickAddFormData {
   category: string;
   description: string;
   amount: string;
+  /** เปิดฟอร์มจากหน้าพอร์ต: เลือกสินทรัพย์ + ซื้อ/ขาย ไว้ให้ */
+  assetId?: string;
+  side?: 'buy' | 'sell';
 }
 
 export interface AppUIContextValue {
@@ -185,6 +188,8 @@ export interface AppUIContextValue {
   addForm: QuickAddFormData;
   setAddForm: React.Dispatch<React.SetStateAction<QuickAddFormData>>;
   handleOpenAddModal: (dateStr?: string, type?: string) => void;
+  /** เปิดฟอร์มบันทึกในหมวดลงทุน/ออม โดยเลือกสินทรัพย์และซื้อ/ขายไว้ให้ */
+  handleOpenTradeModal: (assetId: string, side: 'buy' | 'sell') => void;
 }
 
 export interface AppDataContextValue {
@@ -305,17 +310,30 @@ export interface PortfolioAsset {
   trades: PortfolioTrade[];
 }
 
+export interface PortfolioSnapshot {
+  date: string; // YYYY-MM-DD
+  marketValue: number;
+  cost: number;
+}
+
 export interface Portfolio {
   assets: PortfolioAsset[];
   totals: {
+    /** ต้นทุนที่ถืออยู่ของสินทรัพย์ที่มีราคา (เทียบกับ marketValue ได้ตรงๆ) */
     cost: number;
     marketValue: number;
     unrealized: number;
     realized: number;
+    /** เงินที่ซื้อสะสมทั้งหมด (ก่อนหักที่ขาย) — ฐานของ % ผลตอบแทนรวม */
+    bought: number;
     unpricedCount: number;
+    /** ต้นทุนของสินทรัพย์ที่ยังไม่มีราคา (ไม่รวมใน cost/marketValue) */
+    unpricedCost: number;
     oldestPriceAt: string | null;
   };
   generalSavings: number;
+  /** มูลค่าพอร์ตรายวันที่ระบบจดไว้ (เก่า → ใหม่) */
+  history: PortfolioSnapshot[];
 }
 
 export interface AssetInput {

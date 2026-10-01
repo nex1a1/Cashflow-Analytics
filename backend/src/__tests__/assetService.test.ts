@@ -8,13 +8,14 @@ import analyticsService from '../services/analyticsService';
 const G = 'test-g-invest';
 const C = 'test-c-invest';
 const A = 'test-asset-dime';
+const B = 'test-asset-nopriced';
 const EXPENSE_C = 'test-c-expense';
 const EXPENSE_G = 'test-g-expense';
 
 const cleanup = () => {
   db.prepare("DELETE FROM transactions WHERE id LIKE 'test-inv-%'").run();
-  db.prepare('DELETE FROM price_cache WHERE asset_id = ?').run(A);
-  db.prepare('DELETE FROM assets WHERE id = ?').run(A);
+  db.prepare('DELETE FROM price_cache WHERE asset_id IN (?, ?)').run(A, B);
+  db.prepare('DELETE FROM assets WHERE id IN (?, ?)').run(A, B);
   db.prepare('DELETE FROM categories WHERE id IN (?, ?)').run(C, EXPENSE_C);
   db.prepare('DELETE FROM cashflow_groups WHERE id IN (?, ?)').run(G, EXPENSE_G);
 };
@@ -70,5 +71,33 @@ describe('investment ledger (savings group + assets)', () => {
     const before = assetService.getPortfolio().generalSavings;
     transactionService.upsertMany([{ id: 'test-inv-gen', date: '2099-04-01', amount: 250, category_id: C }]);
     expect(assetService.getPortfolio().generalSavings).toBeCloseTo(before + 250, 2);
+  });
+
+  it('totals.bought = ยอดซื้อสะสม (ส่วนที่ขายไปแล้วไม่หาย) · สินทรัพย์ไม่มีราคาแยกเป็น unpricedCost ไม่ปนใน cost', () => {
+    const before = assetService.getPortfolio().totals;
+    assetService.upsert({ id: B, name: 'กองทุนไม่มีราคา', kind: 'other', unit_label: 'หน่วย' });
+    transactionService.upsertMany([
+      { id: 'test-inv-b1', date: '2099-05-01', amount: 200, category_id: C, asset_id: B, units: 2 },
+      { id: 'test-inv-b2', date: '2099-05-02', amount: 150, category_id: C, asset_id: B, units: 1 },
+    ]);
+    const after = assetService.getPortfolio().totals;
+    expect(after.unpricedCount).toBe(before.unpricedCount + 1);
+    expect(after.unpricedCost).toBeCloseTo(before.unpricedCost + 350, 2);
+    expect(after.cost).toBeCloseTo(before.cost, 2);
+    // ถือของที่ยังไม่มีราคา: ฐาน % นับเฉพาะส่วนที่ขายแล้ว (ซื้อ 350 − ต้นทุนที่ถือ 350 = 0)
+    expect(after.bought).toBeCloseTo(before.bought, 2);
+    // A: ซื้อ 500 + 1000 = 1500 ทั้งที่ 500 แรกขายไปแล้ว
+    expect(after.bought).toBeGreaterThanOrEqual(1500);
+  });
+
+  it('จดมูลค่าพอร์ตวันละ 1 แถวเมื่อกรอกราคา (ครั้งหลังสุดชนะ) และคืนใน history', () => {
+    assetService.setManualPrice(A, 310); // 4 × 310 = 1,240
+    assetService.setManualPrice(A, 320); // 4 × 320 = 1,280 ทับของวันเดียวกัน
+    const { history, totals } = assetService.getPortfolio();
+    const last = history[history.length - 1];
+    expect(history.filter(h => h.date === last.date)).toHaveLength(1);
+    expect(last.marketValue).toBeCloseTo(totals.marketValue, 2);
+    expect(last.cost).toBeCloseTo(totals.cost, 2);
+    expect(totals.marketValue).toBeGreaterThanOrEqual(1280);
   });
 });

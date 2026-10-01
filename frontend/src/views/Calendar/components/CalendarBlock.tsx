@@ -1,12 +1,13 @@
 import React from 'react';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
-import CalendarDayCell, { burnAlpha, CALENDAR_HEAT_COLORS } from './CalendarDayCell';
+import CalendarDayCell from './CalendarDayCell';
+import { CALENDAR_HEAT_CHIP, CALENDAR_HEAT_STEPS } from '../utils/calendarHeat';
 import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
-import { formatMoney, THAI_MONTHS_SHORT } from '../../../utils/formatters';
+import { formatMoney, hexToRgb, THAI_MONTHS_SHORT } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
 import { localTodayIso } from '../../../utils/payCycle';
 import { DayType, TransactionDisplay } from '../../../types';
-import { readable, tc } from '@/constants/theme';
+import { readable } from '@/constants/theme';
 
 export interface CalendarBlockProps {
   /** ISO dates shown in order — a calendar month or a 25 → 24 pay cycle */
@@ -17,6 +18,8 @@ export interface CalendarBlockProps {
   monthInc: number;
   monthExp: number;
   monthNet: number;
+  /** ลงทุน/ออมสุทธิ (ซื้อ − ขาย) — อยู่ในคงเหลือ ไม่อยู่ในรายจ่าย */
+  monthSav: number;
   calendarData: Record<number, {
     exp: number;
     inc: number;
@@ -29,11 +32,12 @@ export interface CalendarBlockProps {
   handleDayTypeChange: (dateStr: string, value: string) => void;
   onSelectDate: (dateStr: string) => void;
   handleOpenAddModal?: (dateStr?: string, type?: string) => void;
-  hexToRgb: (hex: string | null | undefined) => string;
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
   maxDailyExpense: number;
 }
+
+const BLANK_CELL = 'min-h-[120px] 2xl:min-h-[145px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40';
 
 const CalendarBlock = React.memo(function CalendarBlock({
   dates,
@@ -43,6 +47,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
   monthInc,
   monthExp,
   monthNet,
+  monthSav,
   calendarData,
   dayTypes,
   dayTypeConfig,
@@ -50,12 +55,12 @@ const CalendarBlock = React.memo(function CalendarBlock({
   handleDayTypeChange,
   onSelectDate,
   handleOpenAddModal,
-  hexToRgb,
   excludedCategoryIds,
   toggleCategory,
   maxDailyExpense
 }: CalendarBlockProps): React.ReactElement {
   const today = localTodayIso();
+  const [stepMid, stepHigh, stepPeak] = CALENDAR_HEAT_STEPS.map(s => `฿${s.toLocaleString('en-US')}`);
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
   const suffixBlankKeys = [
@@ -88,10 +93,15 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 คงเหลือ ฿{formatMoney(monthNet)}
               </span>
             )}
+            {monthSav !== 0 && (
+              <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-surface-elevated text-ink-soft border-line">
+                ในนี้ลงทุน/ออม {monthSav < 0 ? '−' : ''}฿{formatMoney(Math.abs(monthSav))}
+              </span>
+            )}
             {excludedCategoryIds?.size > 0 && (
               <button
                 onClick={() => toggleCategory?.('CLEAR_ALL')}
-                className="flex items-center gap-1.5 px-3 py-0.5 text-[11px] font-black tracking-wider uppercase rounded-pill border border-warn/40 bg-warn/10 text-warn hover:bg-warn/20 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-0.5 text-[11px] font-black rounded-pill border border-warn/40 bg-warn/10 text-warn hover:bg-warn/20 transition-colors cursor-pointer"
                 title="คลิกเพื่อแสดงทุกหมวดหมู่"
               >
                 <AlertTriangle className="w-3 h-3" />
@@ -120,10 +130,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
 
         <div className="grid grid-cols-7 gap-[1px] bg-line flex-1">
           {prefixBlankKeys.map(blankKey => (
-            <div 
-              key={blankKey} 
-              className="min-h-[120px] 2xl:min-h-[140px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
-            />
+            <div key={blankKey} className={BLANK_CELL} />
           ))}
 
           {dates.map((dateStr, idx) => {
@@ -145,6 +152,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
               && dates[idx - 1].slice(0, 7) !== month;
             const totalRows = Math.ceil((firstDayOfMonth + dates.length + suffixDaysCount) / 7);
             const popUp = Math.floor((firstDayOfMonth + idx) / 7) >= totalRows - 2;
+            // popover กว้าง 260px แต่ช่องแคบกว่า: ศุกร์/เสาร์ชิดขวา ไม่ให้ล้นขอบตาราง
+            const alignRight = (firstDayOfMonth + idx) % 7 >= 5;
 
             return (
               <CalendarDayCell
@@ -159,19 +168,16 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 handleDayTypeChange={handleDayTypeChange}
                 onSelectDate={onSelectDate}
                 handleOpenAddModal={handleOpenAddModal}
-                maxDailyExpense={maxDailyExpense}
                 monthEdgeTop={monthEdgeTop}
                 monthEdgeLeft={monthEdgeLeft}
                 popUp={popUp}
+                alignRight={alignRight}
               />
             );
           })}
 
           {suffixBlankKeys.map(suffixKey => (
-            <div 
-              key={suffixKey} 
-              className="min-h-[120px] 2xl:min-h-[140px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" 
-            />
+            <div key={suffixKey} className={BLANK_CELL} />
           ))}
         </div>
       </div>
@@ -185,7 +191,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           return (
             <div
               key={dt.id}
-              className="flex items-center gap-1.5 px-3 py-0.5 rounded-pill border text-[11px] font-black tracking-wider uppercase"
+              className="flex items-center gap-1.5 px-3 py-0.5 rounded-pill border text-[11px] font-black"
               style={{
                 backgroundColor: `rgba(${hexToRgb(dt.color)}, 0.08)`,
                 borderColor: `rgba(${hexToRgb(dt.color)}, 0.25)`,
@@ -198,19 +204,20 @@ const CalendarBlock = React.memo(function CalendarBlock({
           );
         })}
         {maxDailyExpense > 0 && (
-          <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับการใช้จ่าย">
+          <div className="ml-auto flex items-center gap-2 text-[11px] text-ink-muted" aria-label="ระดับการใช้จ่ายต่อวัน">
             <span>ใช้จ่าย:</span>
+            {/* ป้ายเดียวกับยอดรวมของวันใน cell */}
             <div className="flex items-center gap-1 font-mono">
-              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-line bg-surface-elevated text-ink-muted text-[11px]">
+              <span title={`ต่ำกว่า ${stepMid}`} className="flex items-center px-1.5 py-0.5 rounded-pill border border-line bg-surface-elevated text-ink-muted text-[11px]">
                 ปกติ
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-warn/40 text-warn text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[2] }}>
+              <span title={`${stepMid} ขึ้นไป`} className={`flex items-center px-1.5 py-0.5 rounded-pill text-[11px] ${CALENDAR_HEAT_CHIP[2]}`}>
                 กลาง
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-expense/40 text-expense text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[3] }}>
+              <span title={`${stepHigh} ขึ้นไป`} className={`flex items-center px-1.5 py-0.5 rounded-pill text-[11px] ${CALENDAR_HEAT_CHIP[3]}`}>
                 สูง
               </span>
-              <span className="flex items-center px-1.5 py-0.5 rounded-pill border border-expense/60 text-expense font-black text-[11px]" style={{ backgroundColor: CALENDAR_HEAT_COLORS[4] }}>
+              <span title={`${stepPeak} ขึ้นไป`} className={`flex items-center px-1.5 py-0.5 rounded-pill font-black text-[11px] ${CALENDAR_HEAT_CHIP[4]}`}>
                 พีค
               </span>
             </div>

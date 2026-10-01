@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildInvestedSeries, buildAllocation } from '../portfolioCharts';
+import { buildInvestedSeries, buildAllocation, buildAllocationByKind, withLivePoint } from '../portfolioCharts';
 import type { Portfolio, PortfolioAsset } from '@/types';
 
 const trade = (date: string, side: 'buy' | 'sell', amount: number) => ({ id: date + side + amount, date, side, units: 1, amount, pricePerUnit: amount, description: '' });
@@ -31,5 +31,27 @@ describe('portfolioCharts', () => {
     expect(a.map(i => i.id)).toEqual(['x', 'y']);
     expect(a[0].pct).toBeCloseTo(75);
     expect(a[1].priced).toBe(false);
+  });
+
+  it('สัดส่วนตามประเภท: รวมสินทรัพย์ชนิดเดียวกัน ป้ายเป็นชื่อประเภท priced = ทุกตัวมีราคา', () => {
+    const p = { assets: [
+      asset('g1', { kind: 'gold_bar', marketValue: 300 }),
+      asset('g2', { kind: 'gold_bar', marketValue: null, cost: 100 }),
+      asset('s', { kind: 'us_stock', marketValue: 600 }),
+      asset('gone', { kind: 'crypto', units: 0, marketValue: 999 }),
+    ] } as Portfolio;
+    const k = buildAllocationByKind(p);
+    expect(k.map(i => [i.id, i.name, i.value])).toEqual([['us_stock', 'หุ้นสหรัฐ', 600], ['gold_bar', 'ทองคำแท่ง', 400]]);
+    expect(k[0].pct).toBeCloseTo(60);
+    expect([k[0].priced, k[1].priced]).toEqual([true, false]);
+  });
+
+  it('ประวัติมูลค่า: จุดของวันนี้มาจากตัวเลขสด แทนที่ของที่จดไว้วันเดียวกัน · ว่างทั้งหมด = []', () => {
+    const h = [{ date: '2026-09-29', marketValue: 100, cost: 90 }, { date: '2026-09-30', marketValue: 110, cost: 90 }];
+    expect(withLivePoint(h, { marketValue: 120, cost: 95 }, '2026-09-30')).toEqual([
+      { date: '2026-09-29', marketValue: 100, cost: 90 },
+      { date: '2026-09-30', marketValue: 120, cost: 95 },
+    ]);
+    expect(withLivePoint([], { marketValue: 0, cost: 0 }, '2026-09-30')).toEqual([]);
   });
 });

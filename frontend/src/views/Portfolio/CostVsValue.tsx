@@ -5,7 +5,8 @@ import { Portfolio } from '@/types';
 import { tc } from '@/constants/theme';
 import { formatMoney, formatThaiDateShort } from '@/utils/formatters';
 import { AnalysisTabHeader } from '@/views/Dashboard/components/SummaryCards/Strategic/SummaryStrategic';
-import { buildInvestedSeries } from './portfolioCharts';
+import { buildInvestedSeries, withLivePoint } from './portfolioCharts';
+import { todayIso } from './portfolioHelpers';
 
 const baht = (n: number) => `฿${formatMoney(n)}`;
 const signedBaht = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}฿${formatMoney(Math.abs(n))}`;
@@ -32,6 +33,7 @@ const TABS = [
   { id: 'bars', label: 'ต้นทุนเทียบมูลค่า' },
   { id: 'gain', label: 'กำไร/ขาดทุน' },
   { id: 'invested', label: 'เงินลงทุนสะสม' },
+  { id: 'history', label: 'มูลค่าตามเวลา' },
 ] as const;
 type TabId = typeof TABS[number]['id'];
 
@@ -94,15 +96,65 @@ function InvestedChart({ assets }: { assets: Portfolio['assets'] }) {
   );
 }
 
+const dayNum = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86_400_000;
+const dayIso = (n: number) => new Date(Math.round(n) * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * มูลค่าพอร์ตเทียบต้นทุนตามเวลา จากที่ระบบจดไว้วันละครั้ง (ตอนเปิดแอป/ดึงราคา/กรอกราคา) + จุดของวันนี้จากตัวเลขสด
+ * แกน X เป็นจำนวนวันจริง (ไม่ใช่ลำดับจุด) วันที่ไม่ได้เปิดแอปจะเป็นช่วงห่างบนแกน ไม่ถูกบีบให้ชิดกัน
+ */
+function HistoryChart({ portfolio }: { portfolio: Portfolio }) {
+  const series = useMemo(() => withLivePoint(portfolio.history, portfolio.totals, todayIso()), [portfolio.history, portfolio.totals]);
+  if (series.length < 2) {
+    return (
+      <p className="m-auto max-w-sm text-center text-xs text-ink-muted">
+        ระบบจดมูลค่าพอร์ตวันละครั้งเมื่อเปิดแอปหรือดึงราคา กราฟจะขึ้นเมื่อมีข้อมูลอย่างน้อย 2 วัน (ตอนนี้มี {series.length} วัน)
+      </p>
+    );
+  }
+  const data = {
+    datasets: [
+      { label: 'มูลค่า', data: series.map(p => ({ x: dayNum(p.date), y: p.marketValue })), borderColor: tc('accent-ink'), backgroundColor: tc('accent', 0.12), borderWidth: 2, pointRadius: series.length > 24 ? 0 : 3, fill: true },
+      { label: 'ต้นทุน', data: series.map(p => ({ x: dayNum(p.date), y: p.cost })), borderColor: tc('ink-muted'), borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, stepped: true as const },
+    ],
+  };
+  const options: ChartOptions<'line'> = {
+    ...BASE,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: tc('surface'), borderColor: tc('line'), borderWidth: 1, cornerRadius: 0, padding: 8,
+        titleColor: tc('ink-display'), bodyColor: tc('gray-300'),
+        callbacks: {
+          title: items => formatThaiDateShort(dayIso(items[0].parsed.x as number)),
+          label: c => ` ${c.dataset.label}: ${baht(c.parsed.y as number)}`,
+        },
+      },
+    },
+    scales: {
+      x: { type: 'linear', ticks: { ...axisTick, maxTicksLimit: 8, precision: 0, callback: v => formatThaiDateShort(dayIso(Number(v))) }, grid: { display: false } },
+      y: { ticks: { ...axisTick, callback: moneyTick }, grid: { color: tc('line') } },
+    },
+  };
+  const last = series[series.length - 1];
+  return (
+    <div className="relative flex-1 min-h-[200px]" role="img" aria-label={`มูลค่าพอร์ตตามเวลา ล่าสุด ${baht(last.marketValue)} ต้นทุน ${baht(last.cost)}`}>
+      <Line data={data} options={options} />
+    </div>
+  );
+}
+
 const SUBTITLE: Record<TabId, string> = {
   bars: 'แท่งเทา = เงินที่ลงไป · แท่งสี = มูลค่าตอนนี้ (เขียว = กำไร, เหลือง = ขาดทุน)',
   gain: 'กำไรหรือขาดทุนของแต่ละสินทรัพย์ที่ยังถืออยู่ เทียบกับเงินที่ลงไป',
-  invested: 'เงินลงทุนสุทธิ (ซื้อ − ขาย) สะสมตามวันที่ซื้อขาย — ระบบไม่เก็บราคาย้อนหลัง จึงไม่มีเส้นมูลค่า',
+  invested: 'เงินลงทุนสุทธิ (ซื้อ − ขาย) สะสมตามวันที่ซื้อขาย — ดูเส้นมูลค่าได้ที่แท็บ "มูลค่าตามเวลา"',
+  history: 'เส้นแดง = มูลค่าพอร์ต · เส้นประเทา = ต้นทุน (สินทรัพย์ที่มีราคา) — เริ่มสะสมวันละจุดตั้งแต่เปิดใช้ฟีเจอร์นี้ ย้อนหลังก่อนหน้านั้นไม่มีข้อมูล',
 };
 
 /**
  * ลงเงินไปเท่าไร เทียบกับตอนนี้มีค่าเท่าไร — สลับดูเป็นแท่งเทียบ / กำไรขาดทุน / เงินลงทุนสะสม
- * ไม่มีกราฟมูลค่าตามเวลา: ระบบไม่เก็บราคาย้อนหลัง
+ * "มูลค่าตามเวลา" มีเฉพาะช่วงที่ระบบจดไว้เอง (ไม่มีราคาย้อนหลังก่อนหน้านั้น)
  */
 const CostVsValue = memo(function CostVsValue({ portfolio }: { portfolio: Portfolio }) {
   const [tab, setTab] = useState<TabId>('bars');
@@ -127,6 +179,7 @@ const CostVsValue = memo(function CostVsValue({ portfolio }: { portfolio: Portfo
         </div>
         {tab === 'gain' && <GainChart rows={rows} />}
         {tab === 'invested' && <InvestedChart assets={portfolio.assets} />}
+        {tab === 'history' && <HistoryChart portfolio={portfolio} />}
         {tab === 'bars' && (
           <div className="flex flex-col gap-4 overflow-y-auto">
             {rows.map(r => {

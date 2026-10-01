@@ -3,8 +3,7 @@ import { PiggyBank, ChevronRight, WifiOff } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAppUI } from '@/context/AppUIContext';
 import { formatMoney } from '@/utils/formatters';
-import { describePriceAge } from '@/views/Portfolio/portfolioHelpers';
-import { plColor } from '@/views/Portfolio/PortfolioSummary';
+import { describePriceAge, plColor } from '@/views/Portfolio/portfolioHelpers';
 
 const Stat = ({ label, value, valueClass = 'text-ink-display' }: { label: string; value: string; valueClass?: string }) => (
   <div className="flex flex-col gap-0.5 min-w-0">

@@ -11,6 +11,8 @@ export interface PortfolioContextValue {
   portfolio: Portfolio | null;
   isRefreshing: boolean;
   priceStatus: PriceStatus;
+  /** สินทรัพย์ที่ดึงราคารอบล่าสุดไม่สำเร็จ → ข้อความผิดพลาด (ตัวที่สำเร็จหรือไม่ได้ลองดึงจะไม่อยู่ในนี้) */
+  failedPrices: Record<string, string>;
   reload: () => Promise<void>;
   refreshPrices: () => Promise<void>;
   saveAsset: (asset: AssetInput) => Promise<string | undefined>;
@@ -26,6 +28,7 @@ export const PortfolioProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [priceStatus, setPriceStatus] = useState<PriceStatus>('idle');
+  const [failedPrices, setFailedPrices] = useState<Record<string, string>>({});
   const portfolioRef = useRef<Portfolio | null>(null);
   portfolioRef.current = portfolio;
 
@@ -46,11 +49,13 @@ export const PortfolioProvider: React.FC<{ children: ReactNode }> = ({ children 
     setIsRefreshing(true);
     try {
       const { results } = await portfolioService.refreshPrices();
+      setFailedPrices(Object.fromEntries(results.filter(r => !r.ok).map(r => [r.assetId, r.message || 'ดึงราคาไม่สำเร็จ'])));
       if (results.length === 0) setPriceStatus('idle');
       else if (results.every(r => r.ok)) setPriceStatus('ok');
       else if (results.some(r => r.ok)) setPriceStatus('partial');
       else setPriceStatus('offline');
     } catch {
+      setFailedPrices({});
       setPriceStatus('offline');
     } finally {
       await reload();
@@ -112,7 +117,7 @@ export const PortfolioProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [reload, showToast]);
 
   const value: PortfolioContextValue = {
-    portfolio, isRefreshing, priceStatus, reload, refreshPrices, saveAsset, deleteAsset, setManualPrice,
+    portfolio, isRefreshing, priceStatus, failedPrices, reload, refreshPrices, saveAsset, deleteAsset, setManualPrice,
   };
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 };

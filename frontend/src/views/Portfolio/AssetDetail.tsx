@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { PortfolioAsset } from '@/types';
+import FieldError from '@/components/shared/FieldError';
 import { formatMoney, formatThaiDateShort } from '@/utils/formatters';
-import { describeHolding, describePriceAge, formatUnits, summarizeTrades } from './portfolioHelpers';
-import { plColor, todayIso } from './PortfolioSummary';
+import { describeHolding, describePriceAge, formatUnits, plColor, summarizeTrades, todayIso } from './portfolioHelpers';
 
 interface AssetDetailProps {
   asset: PortfolioAsset;
@@ -26,6 +26,7 @@ function Tile({ label, value, sub, valueClass = 'text-ink-display' }: { label: s
 
 export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProps) {
   const [priceInput, setPriceInput] = useState('');
+  const [priceError, setPriceError] = useState<string | null>(null);
   const sum = useMemo(() => summarizeTrades(asset.trades), [asset.trades]);
   const history = useMemo(() => [...sum.rows].reverse(), [sum.rows]);
   const age = describePriceAge(asset.priceAt);
@@ -34,8 +35,16 @@ export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProp
 
   const submitPrice = useCallback(async () => {
     const n = Number(priceInput.replace(/,/g, ''));
-    if (!Number.isFinite(n) || n <= 0) return;
-    if (await onSetPrice(asset.id, n)) setPriceInput('');
+    if (!Number.isFinite(n) || n <= 0) {
+      setPriceError('กรอกราคาเป็นตัวเลขที่มากกว่า 0 เช่น 1,250.50');
+      return;
+    }
+    if (await onSetPrice(asset.id, n)) {
+      setPriceInput('');
+      setPriceError(null);
+    } else {
+      setPriceError('บันทึกราคาไม่สำเร็จ ลองอีกครั้ง (ตัวเลขที่กรอกยังอยู่)'); // สาเหตุละเอียดอยู่ใน toast
+    }
   }, [priceInput, onSetPrice, asset.id]);
 
   return (
@@ -133,15 +142,18 @@ export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProp
               id={`price-${asset.id}`}
               inputMode="decimal"
               value={priceInput}
-              onChange={e => setPriceInput(e.target.value)}
+              onChange={e => { setPriceInput(e.target.value); setPriceError(null); }}
               onKeyDown={e => { if (e.key === 'Enter') submitPrice(); }}
               placeholder={asset.price == null ? 'เช่น 1,250.50' : formatMoney(asset.price)}
-              className="flex-1 min-w-0 px-2 py-1.5 border bg-surface border-line text-ink-display text-[13px] font-mono tabular-nums"
+              aria-invalid={priceError ? true : undefined}
+              aria-describedby={priceError ? `price-err-${asset.id}` : undefined}
+              className={`flex-1 min-w-0 px-2 py-1.5 border bg-surface border-line text-ink-display text-[13px] font-mono tabular-nums ${priceError ? 'tint-danger' : ''}`}
             />
             <button type="button" onClick={submitPrice} className="px-3 py-1.5 text-[11px] font-bold border border-accent/50 bg-accent/10 hover:bg-accent hover:text-on-accent text-accent-ink">
               บันทึกราคา
             </button>
           </div>
+          <FieldError id={`price-err-${asset.id}`} message={priceError} />
           <p className="text-[11px] text-ink-muted">
             {asset.autoPrice
               ? `ดึงอัตโนมัติจาก ${asset.priceSource ?? 'แหล่งข้อมูลออนไลน์'} — ราคาที่ใหม่กว่า (ดึงมา/กรอกเอง) จะถูกใช้`

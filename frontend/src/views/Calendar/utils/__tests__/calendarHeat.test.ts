@@ -1,69 +1,56 @@
 import { describe, it, expect } from 'vitest';
-import {
-  getCalendarHeatLevel,
-  getCalendarHeatStyle,
-  CALENDAR_HEAT_COLORS,
-  CALENDAR_HEAT_GRADIENTS,
-  burnAlpha
-} from '../../components/CalendarDayCell';
+import { CALENDAR_HEAT_STEPS, CALENDAR_HEAT_COLORS, CALENDAR_HEAT_TINT, getCalendarHeatLevel } from '../calendarHeat';
+import { tc, contrast } from '@/constants/theme';
 
-describe('Calendar Tactical Heat Steps Engine', () => {
-  describe('getCalendarHeatLevel', () => {
-    it('returns level 0 for zero, negative or missing expense', () => {
-      expect(getCalendarHeatLevel(0, 5000)).toBe(0);
-      expect(getCalendarHeatLevel(-100, 5000)).toBe(0);
-    });
+const rgb = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+/** สีพื้นจริงของ cell = canvas ผสมสีย้อม (alpha) — เอาไปวัดคอนทราสต์กับข้อความใน cell */
+const tintedCell = (token: 'warn' | 'expense', alpha: number) => {
+  const c = rgb(tc('canvas')), t = rgb(tc(token));
+  return '#' + c.map((v, i) => Math.round(v * (1 - alpha) + t[i] * alpha).toString(16).padStart(2, '0')).join('');
+};
 
-    it('returns level 1 for daily normal baseline spend', () => {
-      // 39 THB out of 6,950 max (0.5%)
-      expect(getCalendarHeatLevel(39, 6950)).toBe(1);
-      // 80 THB out of 6,950 max
-      expect(getCalendarHeatLevel(80, 6950)).toBe(1);
-      // 200 THB out of 6,950 max
-      expect(getCalendarHeatLevel(200, 6950)).toBe(1);
-    });
+describe('Calendar heat tint stays readable', () => {
+  // regression: expense-red amounts on a 0.22–0.40 red wash measured ~4.1 and ~3.0 (< 4.5)
+  it.each([2, 3, 4] as const)('level %i keeps text >= 4.5:1 on the tinted cell', level => {
+    const { token, alpha } = CALENDAR_HEAT_TINT[level];
+    const bg = tintedCell(token, alpha);
+    for (const text of ['expense', 'income', 'ink-body'] as const) {
+      expect(contrast(tc(text), bg)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
 
-    it('returns level 2 for moderate spend (Amber)', () => {
-      // 473 THB out of 6,950 max (>= 300)
-      expect(getCalendarHeatLevel(473, 6950)).toBe(2);
-      // 814 THB out of 6,950 max (~11.7%)
-      expect(getCalendarHeatLevel(814, 6950)).toBe(2);
-    });
-
-    it('returns level 3 for high spend (Coral)', () => {
-      // 2,771 THB out of 6,950 max (~39.8%)
-      expect(getCalendarHeatLevel(2771, 6950)).toBe(3);
-      // 1,200 THB out of 4,000 max (30%)
-      expect(getCalendarHeatLevel(1200, 4000)).toBe(3);
-    });
-
-    it('returns level 4 for peak heavy spend (Rosso Corsa)', () => {
-      // 5,839 THB out of 6,950 max (~84%)
-      expect(getCalendarHeatLevel(5839, 6950)).toBe(4);
-      // 6,950 THB out of 6,950 max (100%)
-      expect(getCalendarHeatLevel(6950, 6950)).toBe(4);
-      // Absolute high spend >= 3000 THB
-      expect(getCalendarHeatLevel(3500, 8000)).toBe(4);
-    });
+describe('Calendar heat steps (fixed ฿ thresholds)', () => {
+  it('returns level 0 for zero, negative or missing spend', () => {
+    expect(getCalendarHeatLevel(0)).toBe(0);
+    expect(getCalendarHeatLevel(-100)).toBe(0);
   });
 
-  describe('getCalendarHeatStyle', () => {
-    it('returns undefined across all levels (gradient-free flat solid cells)', () => {
-      expect(getCalendarHeatStyle(0)).toBeUndefined();
-      expect(getCalendarHeatStyle(1)).toBeUndefined();
-      expect(getCalendarHeatStyle(2)).toBeUndefined();
-      expect(getCalendarHeatStyle(3)).toBeUndefined();
-      expect(getCalendarHeatStyle(4)).toBeUndefined();
-    });
+  it('returns level 1 below the first step', () => {
+    expect(getCalendarHeatLevel(39)).toBe(1);
+    expect(getCalendarHeatLevel(299)).toBe(1);
   });
 
-  describe('burnAlpha backward compatibility', () => {
-    it('returns 0 for levels 0 and 1, and positive alphas for levels 2-4', () => {
-      expect(burnAlpha(0, 5000)).toBe(0);
-      expect(burnAlpha(39, 6950)).toBe(0);
-      expect(burnAlpha(500, 6950)).toBe(0.10);
-      expect(burnAlpha(2771, 6950)).toBe(0.20);
-      expect(burnAlpha(6950, 6950)).toBe(0.32);
-    });
+  it('steps up exactly at 300 / 1,000 / 3,000', () => {
+    expect(CALENDAR_HEAT_STEPS).toEqual([300, 1000, 3000]);
+    expect(getCalendarHeatLevel(300)).toBe(2);
+    expect(getCalendarHeatLevel(999)).toBe(2);
+    expect(getCalendarHeatLevel(1000)).toBe(3);
+    expect(getCalendarHeatLevel(2999)).toBe(3);
+    expect(getCalendarHeatLevel(3000)).toBe(4);
+  });
+
+  it('does not depend on the busiest day of the month', () => {
+    // regression: a future-dated ฿6,950 rent day used to flatten every other day
+    expect(getCalendarHeatLevel(1290)).toBe(3);
+    expect(getCalendarHeatLevel(3760.89)).toBe(4);
+  });
+
+  it('tints only levels 2-4', () => {
+    expect(CALENDAR_HEAT_COLORS[0]).toBe('transparent');
+    expect(CALENDAR_HEAT_COLORS[1]).toBe('transparent');
+    expect(CALENDAR_HEAT_COLORS[2]).not.toBe('transparent');
+    expect(CALENDAR_HEAT_COLORS[3]).not.toBe('transparent');
+    expect(CALENDAR_HEAT_COLORS[4]).not.toBe('transparent');
   });
 });

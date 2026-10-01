@@ -56,18 +56,29 @@ export interface PortfolioAsset {
   trades: PortfolioTrade[];
 }
 
+export interface PortfolioSnapshot {
+  date: string; // YYYY-MM-DD
+  marketValue: number; // บาท
+  cost: number; // บาท (ต้นทุนของสินทรัพย์ที่มีราคา ณ วันนั้น)
+}
+
 export interface Portfolio {
   assets: PortfolioAsset[];
   totals: {
-    cost: number; // ต้นทุนรวมของสินทรัพย์ที่มีราคา
+    cost: number; // ต้นทุนที่ถืออยู่ของสินทรัพย์ที่มีราคา (เทียบกับ marketValue ได้ตรงๆ)
     marketValue: number;
     unrealized: number;
     realized: number;
+    /** เงินที่ซื้อสะสมทั้งหมด (ก่อนหักที่ขาย) ของสินทรัพย์ที่นับในกำไร/ขาดทุน — ฐานของ % ผลตอบแทนรวม */
+    bought: number;
     unpricedCount: number; // ถือของอยู่แต่ยังไม่มีราคา → ไม่นับใน marketValue
+    unpricedCost: number; // ต้นทุนของสินทรัพย์กลุ่มนั้น (ไม่นับใน cost / marketValue)
     oldestPriceAt: string | null; // ราคาเก่าที่สุดที่ใช้คำนวณ — ให้ UI เขียนกำกับ "ข้อมูล ณ ..."
   };
   /** เงินออมทั่วไป (แถวหมวดลงทุน/ออมที่ไม่ผูกสินทรัพย์) — นับเป็นต้นทุน ไม่มีมูลค่าตลาด */
   generalSavings: number;
+  /** มูลค่าพอร์ตรายวันที่จดไว้ (เก่า → ใหม่) */
+  history: PortfolioSnapshot[];
 }
 
 export interface RefreshResult {
@@ -77,6 +88,9 @@ export interface RefreshResult {
 }
 
 const baht = (satang: number) => satang / 100;
+
+const localIsoDate = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 class AssetService {
   getAll(): AssetRow[] {
@@ -109,6 +123,21 @@ class AssetService {
   setManualPrice(id: string, price: number): void {
     const r = db.prepare('UPDATE assets SET manual_price = ?, manual_price_at = ? WHERE id = ?').run(price, new Date().toISOString(), id);
     if (r.changes === 0) throw new ApiError(404, 'ไม่พบสินทรัพย์');
+    this.recordSnapshot();
+  }
+
+  /**
+   * จดมูลค่าพอร์ตของวันนี้ (วันละ 1 แถว ครั้งหลังสุดชนะ) — ยังไม่เคยมีของและพอร์ตว่างอยู่ก็ไม่ต้องจด
+   * ขายหมดแล้วยังจดต่อ เพื่อให้กราฟลงไปที่ 0 แทนที่จะค้างค่าเก่า
+   */
+  recordSnapshot(): void {
+    const { totals } = this.getPortfolio();
+    const hasHistory = db.prepare('SELECT 1 FROM portfolio_snapshots LIMIT 1').get() !== undefined;
+    if (!hasHistory && totals.marketValue === 0 && totals.cost === 0) return;
+    db.prepare(`
+      INSERT INTO portfolio_snapshots (date, market_value, cost, recorded_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(date) DO UPDATE SET market_value = excluded.market_value, cost = excluded.cost, recorded_at = excluded.recorded_at
+    `).run(localIsoDate(), Math.round(totals.marketValue * 100), Math.round(totals.cost * 100), new Date().toISOString());
   }
 
   /** ดึงราคาทุกสินทรัพย์ที่มีแหล่งอัตโนมัติ; ตัวที่ล้มเหลวคงราคาเดิมในแคชไว้ */
@@ -119,7 +148,7 @@ class AssetService {
       INSERT INTO price_cache (asset_id, price, fetched_at, source) VALUES (?, ?, ?, ?)
       ON CONFLICT(asset_id) DO UPDATE SET price = excluded.price, fetched_at = excluded.fetched_at, source = excluded.source
     `);
-    return Promise.all(targets.map(async (a): Promise<RefreshResult> => {
+    const results = await Promise.all(targets.map(async (a): Promise<RefreshResult> => {
       try {
         const p = await fetchPrice(a.kind, a.symbol);
         save.run(a.id, p.price, new Date().toISOString(), p.source);
@@ -128,6 +157,8 @@ class AssetService {
         return { assetId: a.id, ok: false, message: e instanceof Error ? e.message : String(e) };
       }
     }));
+    this.recordSnapshot();
+    return results;
   }
 
   getPortfolio(): Portfolio {
@@ -143,7 +174,7 @@ class AssetService {
         .map(r => [r.asset_id, { price: r.price, at: r.fetched_at, source: r.source } as PriceQuote]),
     );
 
-    const totals = { cost: 0, marketValue: 0, unrealized: 0, realized: 0, unpricedCount: 0, oldestPriceAt: null as string | null };
+    const totals = { cost: 0, marketValue: 0, unrealized: 0, realized: 0, bought: 0, unpricedCount: 0, unpricedCost: 0, oldestPriceAt: null as string | null };
 
     const result = assets.map((a): PortfolioAsset => {
       const rows = tradeRows.filter(t => t.asset_id === a.id);
@@ -157,15 +188,19 @@ class AssetService {
       const held = pos.units > 0;
 
       totals.realized += pos.realizedSatang;
-      if (held) {
-        if (mvSatang == null) {
-          totals.unpricedCount += 1;
-        } else {
-          totals.cost += pos.costSatang;
-          totals.marketValue += mvSatang;
-          totals.unrealized += mvSatang - pos.costSatang;
-          if (quote && (totals.oldestPriceAt == null || quote.at < totals.oldestPriceAt)) totals.oldestPriceAt = quote.at;
-        }
+      const boughtSatang = trades.reduce((sum, t) => sum + (t.side === 'buy' ? t.amountSatang : 0), 0);
+      if (held && mvSatang == null) {
+        totals.unpricedCount += 1;
+        totals.unpricedCost += pos.costSatang;
+        totals.bought += boughtSatang - pos.costSatang; // ไม่มีราคา = ยังไม่รู้กำไรของที่ถือ ฐาน % จึงนับเฉพาะส่วนที่ขายไปแล้ว (คู่กับ realized)
+      } else {
+        totals.bought += boughtSatang;
+      }
+      if (held && mvSatang != null) {
+        totals.cost += pos.costSatang;
+        totals.marketValue += mvSatang;
+        totals.unrealized += mvSatang - pos.costSatang;
+        if (quote && (totals.oldestPriceAt == null || quote.at < totals.oldestPriceAt)) totals.oldestPriceAt = quote.at;
       }
 
       const unrealizedSatang = held && mvSatang != null ? mvSatang - pos.costSatang : null;
@@ -203,9 +238,12 @@ class AssetService {
       assets: result,
       totals: {
         cost: baht(totals.cost), marketValue: baht(totals.marketValue), unrealized: baht(totals.unrealized),
-        realized: baht(totals.realized), unpricedCount: totals.unpricedCount, oldestPriceAt: totals.oldestPriceAt,
+        realized: baht(totals.realized), bought: baht(totals.bought),
+        unpricedCount: totals.unpricedCount, unpricedCost: baht(totals.unpricedCost), oldestPriceAt: totals.oldestPriceAt,
       },
       generalSavings: baht(general.v),
+      history: (db.prepare('SELECT date, market_value, cost FROM portfolio_snapshots ORDER BY date ASC').all() as Array<{ date: string; market_value: number; cost: number }>)
+        .map(r => ({ date: r.date, marketValue: baht(r.market_value), cost: baht(r.cost) })),
     };
   }
 }

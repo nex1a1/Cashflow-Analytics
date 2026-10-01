@@ -53,8 +53,15 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
       type,
       category: '',
       description: '',
-      amount: ''
+      amount: '',
+      assetId: undefined,
+      side: undefined,
     }));
+    setShowAddModal(true);
+  }, []);
+
+  const handleOpenTradeModal = useCallback((assetId: string, side: 'buy' | 'sell') => {
+    setAddForm({ type: 'savings', date: new Date().toISOString().split('T')[0], category: '', description: '', amount: '', assetId, side });
     setShowAddModal(true);
   }, []);
 
@@ -80,6 +87,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
     addForm,
     setAddForm,
     handleOpenAddModal,
+    handleOpenTradeModal,
   };
 
   return (
