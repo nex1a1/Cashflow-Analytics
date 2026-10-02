@@ -10,8 +10,8 @@ export interface PeriodPickerProps {
   groupedOptions: GroupedOptions;
   /** show the ปฏิทิน / รอบเงินเดือน switch (off for Export, which is always calendar) */
   allowCycle?: boolean;
-  /** which edge the 620px dropdown anchors to (left when the trigger sits near the left edge, e.g. Export sidebar) */
-  align?: 'left' | 'right';
+  /** for a trigger inside a clipping panel (overflow auto/hidden, e.g. Export sidebar): the 380px dropdown goes `fixed` at its in-flow spot (under the trigger's left edge) so the panel can't cut it off */
+  floating?: boolean;
 }
 
 type CalMode = 'standard' | 'range' | 'multi';
@@ -22,7 +22,7 @@ const CAL_MODES: { id: CalMode; icon: React.ElementType; label: string; title: s
   { id: 'multi',    icon: ListChecks,    label: 'หลายเดือน', title: 'เลือกหลายเดือนแบบอิสระ ไม่ต้องต่อเนื่อง' },
 ];
 
-export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod: setRawPeriod, groupedOptions: calendarOptions, allowCycle = false, align = 'right' }: PeriodPickerProps) {
+export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod: setRawPeriod, groupedOptions: calendarOptions, allowCycle = false, floating = false }: PeriodPickerProps) {
   // โหมดรอบ: ข้างในทำงานกับ period แบบไม่มี "cycle:" เหมือนเดิมทั้งหมด แล้วเติม prefix ตอนส่งออก
   const isCycle = isCyclePeriod(rawPeriod);
   const filterPeriod = stripCycle(rawPeriod);
@@ -74,10 +74,13 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    // fixed dropdown doesn't follow its scrolling parent → close on any scroll outside the picker
+    const onScroll = (e: Event) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
-  }, [open]);
+    if (floating) window.addEventListener('scroll', onScroll, true);
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll, true); };
+  }, [open, floating]);
 
   // On open: a range reopens in ช่วงเวลา, a list in หลายเดือน (cycle year/H/Q presets stay in เดี่ยว)
   useEffect(() => {
@@ -440,7 +443,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
         <div
           role="dialog"
           aria-label="เลือกช่วงเวลา"
-          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] z-50 overflow-hidden`}
+          className={`${floating ? 'fixed' : 'absolute right-0 top-full'} mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] z-50 overflow-hidden`}
         >
           {/* ── Calendar / Pay-cycle switch ── */}
           {allowCycle && (

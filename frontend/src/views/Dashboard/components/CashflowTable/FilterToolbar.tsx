@@ -17,9 +17,9 @@ export function FilterToolbar({
         <div className="flex items-center gap-2">
           <div className="w-[3px] h-3 bg-accent shrink-0" />
           <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
             ตารางสรุปกระแสเงินสด
-          </span>
+          </h2>
         </div>
 
         <div className="flex items-center gap-2">

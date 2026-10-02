@@ -242,9 +242,9 @@ export default function TopTransactions() {
         <div className="flex items-center gap-2">
           <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200 whitespace-nowrap">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200 whitespace-nowrap">
             รายจ่ายสูงสุด
-          </span>
+          </h2>
           <div className="relative group shrink-0">
             <select
               value={topXLimit} 

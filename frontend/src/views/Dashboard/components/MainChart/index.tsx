@@ -10,11 +10,13 @@ import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { MainChartHeader } from './MainChartHeader';
 import { MainChartToolbar } from './MainChartToolbar';
 import { MainChartLegend } from './MainChartLegend';
+import { MainChartTextAlternative } from './MainChartTextAlternative';
+import { getMainChartTitle } from './helpers';
 import { SparklineGraph } from './SparklineGraph';
 
 export default function MainChart() {
   const {
-    analytics, categories, filterPeriod,
+    analytics, categories, filterPeriod, getFilterLabel,
     hideFixedExpenses, setHideFixedExpenses,
     hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
@@ -72,6 +74,7 @@ export default function MainChart() {
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
 
   const card = 'rounded-none border shadow-sm transition-colors h-full flex flex-col bg-canvas border-line';
+  const chartLabel = `${getMainChartTitle(chartViewType, analytics.mainChartType, isBreakdown)} ${getFilterLabel(filterPeriod)}`;
 
   return (
     <div className={`${card} min-h-0`}>
@@ -121,7 +124,13 @@ export default function MainChart() {
             <SparklineGraph />
           ) : (
             <div className="absolute inset-0">
-              <Chart type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any} data={displayChartData as any} options={options} />
+              <Chart
+                type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any}
+                data={displayChartData as any}
+                options={options}
+                aria-label={chartLabel}
+              />
+              <MainChartTextAlternative caption={chartLabel} isSankey={chartViewType === 'sankey'} data={displayChartData} />
             </div>
           )}
         </div>

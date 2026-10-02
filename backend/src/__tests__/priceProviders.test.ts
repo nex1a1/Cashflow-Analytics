@@ -33,6 +33,25 @@ describe('fetchPrice เมื่อออฟไลน์', () => {
     await expect(fetchPrice('gold_bar', null)).rejects.toThrow('เชื่อมต่ออินเทอร์เน็ตไม่ได้');
   });
 
+  it('chnwt ล่ม (500) → ใช้ฮั่วเซงเฮงสำรอง; ล่มทั้งคู่ → throw error ของแหล่งหลัก', async () => {
+    const hsh = [
+      { GoldType: 'HSH', GoldCode: '96.50', Buy: '66,140' },
+      { GoldType: 'REF', GoldCode: '96.50', Buy: '66,200' },
+      { GoldType: 'JEWEL', GoldCode: '96.50', Buy: '64,869.64' },
+    ];
+    const respond = (hshOk: boolean) =>
+      vi.fn(async (url: string) =>
+        url.includes('huasengheng') && hshOk
+          ? ({ ok: true, json: async () => hsh } as Response)
+          : ({ ok: false, status: 500 } as Response),
+      );
+    vi.stubGlobal('fetch', respond(true));
+    expect(await fetchPrice('gold_bar', null)).toMatchObject({ price: 66200 });
+    expect(await fetchPrice('gold_ornament', null)).toMatchObject({ price: 64869.64 });
+    vi.stubGlobal('fetch', respond(false));
+    await expect(fetchPrice('gold_bar', null)).rejects.toThrow('HTTP 500');
+  });
+
   it('แหล่งราคาตอบช้าจน timeout → บอกว่าตอบช้า', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(Object.assign(new Error('timeout'), { name: 'TimeoutError' })));
     await expect(fetchPrice('us_stock', 'AAPL')).rejects.toThrow('แหล่งราคาตอบช้าเกินไป');

@@ -120,6 +120,17 @@ class TransactionService {
     return fuzzy ? fuzzy.category_id : null;
   }
 
+  /**
+   * แถวซื้อขาย (ผูกสินทรัพย์ หรือขายออก) ที่ยังไม่ถูกลบ — ใช้กันการย้าย/ลบหมวดและกลุ่มจนพอร์ตกับยอดออมเพี้ยน
+   */
+  countLiveTrades(by: { categoryId: string } | { groupId: string }): number {
+    const [col, value] = 'categoryId' in by ? ['t.category_id', by.categoryId] : ['c.cashflow_group_id', by.groupId];
+    return (db.prepare(`
+      SELECT COUNT(*) AS n FROM transactions t JOIN categories c ON c.id = t.category_id
+      WHERE t.is_deleted = 0 AND (t.asset_id IS NOT NULL OR t.trade_side IS NOT NULL) AND ${col} = ?
+    `).get(value) as { n: number }).n;
+  }
+
   private normalizeDate(dateStr?: string): string {
     if (dateStr?.includes('/')) {
       const [d, m, y] = dateStr.split('/');
@@ -287,6 +298,8 @@ class TransactionService {
       const calCount = (db.prepare('SELECT COUNT(*) as c FROM calendar_days').get() as { c: number }).c;
       const txResult = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE is_deleted = 0').run();
       const calResult = db.prepare('DELETE FROM calendar_days').run();
+      // ประวัติมูลค่าพอร์ตคำนวณจาก ledger ที่เพิ่งถูกล้าง — เก็บไว้กราฟจะโชว์เส้นของข้อมูลที่ไม่มีแล้ว (นิยามสินทรัพย์ยังอยู่)
+      db.prepare('DELETE FROM portfolio_snapshots').run();
       console.log(`🚨 [Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
     })();
   }

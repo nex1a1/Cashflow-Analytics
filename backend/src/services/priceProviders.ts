@@ -13,7 +13,8 @@ export interface FetchedPrice {
 }
 
 const GOLD_URL = 'https://api.chnwt.dev/thai-gold-api/latest';
-const yahooUrl = (symbol: string) => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+const GOLD_BACKUP_URL = 'https://apicheckprice.huasengheng.com/api/values/getprice/';
+const yahooUrl =(symbol: string) => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
 const coinGeckoUrl = (id: string) => `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=thb`;
 
 const toNumber = (v: unknown): number => {
@@ -26,6 +27,16 @@ const toNumber = (v: unknown): number => {
 export function parseThaiGold(json: any, kind: 'gold_bar' | 'gold_ornament'): number {
   const node = kind === 'gold_bar' ? json?.response?.price?.gold_bar : json?.response?.price?.gold;
   return toNumber(node?.buy);
+}
+
+/**
+ * แหล่งสำรองทอง: API ของฮั่วเซงเฮง — REF = ราคาสมาคมฯ (ทองแท่ง), JEWEL = ราคารับซื้อทองรูปพรรณของร้านเอง
+ * ponytail: ทองรูปพรรณสำรองเป็นราคาร้านเดียว ไม่ใช่ราคาสมาคมฯ — ป้ายแหล่งที่มาใน price_cache บอกไว้
+ */
+export function parseHuaSengHeng(json: any, kind: 'gold_bar' | 'gold_ornament'): number {
+  const type = kind === 'gold_bar' ? 'REF' : 'JEWEL';
+  const row = Array.isArray(json) ? json.find((r) => r?.GoldType === type && r?.GoldCode === '96.50') : null;
+  return toNumber(row?.Buy);
 }
 
 export function parseYahoo(json: any): { price: number; currency: string } {
@@ -66,7 +77,17 @@ export async function fetchPrice(kind: AssetKind, symbol: string | null): Promis
   switch (kind) {
     case 'gold_bar':
     case 'gold_ornament':
-      return { price: parseThaiGold(await getJson(GOLD_URL), kind), source: 'สมาคมค้าทองคำ (chnwt)' };
+      try {
+        return { price: parseThaiGold(await getJson(GOLD_URL), kind), source: 'สมาคมค้าทองคำ (chnwt)' };
+      } catch (primaryError) {
+        // chnwt ดึงต่อจากเว็บสมาคมฯ — เว็บสมาคมล่มเมื่อไหร่ chnwt ก็ตอบ 500 ตาม → ลองแหล่งสำรอง
+        try {
+          const price = parseHuaSengHeng(await getJson(GOLD_BACKUP_URL), kind);
+          return { price, source: kind === 'gold_bar' ? 'สมาคมค้าทองคำ (ผ่านฮั่วเซงเฮง)' : 'ฮั่วเซงเฮง (รับซื้อทองรูปพรรณ)' };
+        } catch {
+          throw primaryError;
+        }
+      }
     case 'us_stock':
       if (!sym) throw new Error('ยังไม่ได้ระบุสัญลักษณ์หุ้น');
       return { price: await yahooThb(sym.toUpperCase()), source: 'Yahoo Finance (USD→THB)' };

@@ -147,6 +147,8 @@ const migrateTablesToStrict = (): void => {
 
     // 2. transactions
     if (tablesToMigrate.includes('transactions')) {
+      // ตารางที่ผ่านระบบลงทุนมาแล้วมีคอลัมน์ซื้อขาย — rebuild ต้องพกไปด้วย ไม่งั้น asset_id/trade_side/units หายเงียบๆ
+      const hasTrade = (db.prepare('PRAGMA table_info(transactions)').all() as { name: string }[]).some(c => c.name === 'asset_id');
       db.exec(`
         CREATE TABLE transactions_strict (
           id TEXT PRIMARY KEY,
@@ -157,20 +159,23 @@ const migrateTablesToStrict = (): void => {
           allocation_type TEXT CHECK(allocation_type IS NULL OR allocation_type IN ('need', 'want', 'savings')),
           is_deleted INTEGER DEFAULT 0,
           created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,${hasTrade ? `
+          asset_id TEXT REFERENCES assets(id),
+          trade_side TEXT CHECK(trade_side IS NULL OR trade_side IN ('buy', 'sell')),
+          units REAL,` : ''}
           FOREIGN KEY (category_id) REFERENCES categories(id)
         ) STRICT;
-        INSERT INTO transactions_strict (id, date, description, amount, category_id, allocation_type, is_deleted, created_at, updated_at)
-        SELECT 
-          id, 
-          date, 
-          description, 
-          CAST(amount AS INTEGER), 
-          category_id, 
-          allocation_type, 
-          COALESCE(is_deleted, 0), 
-          COALESCE(created_at, CURRENT_TIMESTAMP), 
-          COALESCE(updated_at, CURRENT_TIMESTAMP)
+        INSERT INTO transactions_strict (id, date, description, amount, category_id, allocation_type, is_deleted, created_at, updated_at${hasTrade ? ', asset_id, trade_side, units' : ''})
+        SELECT
+          id,
+          date,
+          description,
+          CAST(amount AS INTEGER),
+          category_id,
+          allocation_type,
+          COALESCE(is_deleted, 0),
+          COALESCE(created_at, CURRENT_TIMESTAMP),
+          COALESCE(updated_at, CURRENT_TIMESTAMP)${hasTrade ? ', asset_id, trade_side, units' : ''}
         FROM transactions;
         DROP TABLE transactions;
         ALTER TABLE transactions_strict RENAME TO transactions;
@@ -339,6 +344,23 @@ const ensureInvestmentSchema = (): void => {
     if (!cols.has('units')) { db.exec('ALTER TABLE transactions ADD COLUMN units REAL'); changed = true; }
     db.exec('CREATE INDEX IF NOT EXISTS idx_transactions_asset ON transactions(asset_id)');
 
+    // ด่านสุดท้ายระดับ DB (service ตรวจก่อนแล้ว): ผูกสินทรัพย์ต้องมีหน่วย > 0 + ทิศทาง, ไม่ผูกก็ห้ามมีหน่วย,
+    // และทิศทาง/สินทรัพย์มีได้เฉพาะหมวดในกลุ่ม savings. ใช้ trigger แทน CHECK เพราะ CHECK ข้ามตารางไม่ได้และต้อง rebuild ตาราง
+    const tradeBad = `
+      (NEW.asset_id IS NULL AND NEW.units IS NOT NULL)
+      OR (NEW.asset_id IS NOT NULL AND (NEW.units IS NULL OR NEW.units <= 0 OR NEW.trade_side IS NULL))
+      OR (NEW.trade_side IS NOT NULL AND (
+        SELECT cg.type FROM categories c JOIN cashflow_groups cg ON cg.id = c.cashflow_group_id WHERE c.id = NEW.category_id
+      ) IS NOT 'savings')`;
+    for (const op of ['INSERT', 'UPDATE']) {
+      const name = `trg_transactions_trade_${op.toLowerCase()}`;
+      if (db.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'trigger' AND name = ?").get(name)) continue;
+      db.exec(`
+        CREATE TRIGGER ${name} BEFORE ${op} ON transactions WHEN ${tradeBad}
+        BEGIN SELECT RAISE(ABORT, 'ข้อมูลซื้อขายไม่สอดคล้อง: ต้องมีสินทรัพย์ + หน่วย > 0 + ทิศทางครบ และอยู่ในกลุ่มลงทุน/ออมเท่านั้น'); END;
+      `);
+    }
+
     // view เดิมยังรวมแถวขายเป็นบวก — สร้างใหม่ให้ใช้ยอดมีเครื่องหมาย (ครั้งเดียว)
     const viewsDone = db.prepare("SELECT value FROM settings WHERE key = 'signed_savings_views'").get();
     if (changed || !viewsDone) {
@@ -492,6 +514,9 @@ export const initSchema = (): void => {
   } catch (e: any) {
     console.warn('⚠️ ไม่สามารถสร้างดัชนีการค้นหาได้:', e.message);
   }
+
+  // 3.1 ฐานข้อมูลใหม่: ensureInvestmentSchema ด้านบนข้ามไปเพราะยังไม่มีตาราง transactions — ทำซ้ำตอนนี้ (trigger/index ของระบบลงทุน)
+  ensureInvestmentSchema();
 
   // 4. บันทึกข้อมูลตั้งต้นที่จำเป็น
   seedInitialData();

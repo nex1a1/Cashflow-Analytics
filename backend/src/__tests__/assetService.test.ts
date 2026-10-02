@@ -4,6 +4,8 @@ import { initSchema } from '../models/schema';
 import transactionService from '../services/transactionService';
 import assetService from '../services/assetService';
 import analyticsService from '../services/analyticsService';
+import groupService from '../services/groupService';
+import categoryService from '../services/categoryService';
 
 const G = 'test-g-invest';
 const C = 'test-c-invest';
@@ -99,5 +101,37 @@ describe('investment ledger (savings group + assets)', () => {
     expect(last.marketValue).toBeCloseTo(totals.marketValue, 2);
     expect(last.cost).toBeCloseTo(totals.cost, 2);
     expect(totals.marketValue).toBeGreaterThanOrEqual(1280);
+  });
+
+  it('DB ปฏิเสธแถวซื้อขายที่ไม่สอดคล้องแม้ข้าม service (หน่วยลอย, หน่วยติดลบ, ขายนอกกลุ่มลงทุน/ออม)', () => {
+    const ins = db.prepare('INSERT INTO transactions (id, date, amount, category_id, asset_id, units, trade_side) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    expect(() => ins.run('test-inv-t1', '2099-06-01', 100, C, null, 5, null)).toThrow(/ไม่สอดคล้อง/); // หน่วยโดยไม่มีสินทรัพย์
+    expect(() => ins.run('test-inv-t2', '2099-06-01', 100, C, A, -3, 'buy')).toThrow(/ไม่สอดคล้อง/);
+    expect(() => ins.run('test-inv-t3', '2099-06-01', 100, C, A, 3, null)).toThrow(/ไม่สอดคล้อง/); // ไม่มีทิศทาง
+    expect(() => ins.run('test-inv-t4', '2099-06-01', 100, EXPENSE_C, null, null, 'sell')).toThrow(/ไม่สอดคล้อง/);
+    // UPDATE ก็ถูกกัน: แถวซื้อขายเดิมย้ายไปหมวดรายจ่ายตรงๆ ไม่ได้
+    expect(() => db.prepare("UPDATE transactions SET category_id = ? WHERE id = 'test-inv-buy'").run(EXPENSE_C)).toThrow(/ไม่สอดคล้อง/);
+    expect(() => ins.run('test-inv-ok', '2099-06-01', 100, C, A, 3, 'buy')).not.toThrow();
+  });
+
+  it('กันย้ายกลุ่ม/หมวดที่มีรายการซื้อขายออกจากลงทุน/ออม และกันลบหมวด — แต่ผ่านเมื่อรายการถูกลบแล้ว', () => {
+    expect(() => groupService.upsert({ id: G, name: 'test ลงทุน', type: 'expense' })).toThrow(/เปลี่ยนชนิดไม่ได้/);
+    expect(() => categoryService.upsert({ id: C, name: 'test-invest', cashflow_group_id: EXPENSE_G })).toThrow(/ย้ายไม่ได้/);
+    expect(() => categoryService.delete(C)).toThrow(/ลบไม่ได้/);
+    expect(db.prepare('SELECT type FROM cashflow_groups WHERE id = ?').get(G)).toEqual({ type: 'savings' });
+    // แก้ชื่อ/คงชนิดเดิมได้ตามปกติ
+    expect(() => groupService.upsert({ id: G, name: 'test ลงทุน 2', type: 'savings' })).not.toThrow();
+
+    const live = db.prepare("SELECT id FROM transactions WHERE id LIKE 'test-inv-%' AND is_deleted = 0 AND (asset_id IS NOT NULL OR trade_side IS NOT NULL)").all() as { id: string }[];
+    live.forEach(r => transactionService.delete(r.id));
+    expect(() => groupService.upsert({ id: G, name: 'test ลงทุน', type: 'expense' })).not.toThrow();
+    groupService.upsert({ id: G, name: 'test ลงทุน', type: 'savings' });
+  });
+
+  it('ลบสินทรัพย์ได้เมื่อเหลือแต่แถวที่ซอฟต์ลบแล้ว (ลบแถวเหล่านั้นไปด้วย ไม่ค้าง FK)', () => {
+    // ต่อจากเทสต์ก่อนหน้า: แถวซื้อขายของ A ถูกซอฟต์ลบหมดแล้ว
+    expect(() => assetService.delete(A)).not.toThrow();
+    expect(db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE asset_id = ?').get(A)).toEqual({ c: 0 });
+    expect(assetService.getPortfolio().assets.some(a => a.id === A)).toBe(false);
   });
 });

@@ -93,7 +93,7 @@ export default function ExportSidebar({
             filterPeriod={exportPeriod}
             setFilterPeriod={setExportPeriod}
             groupedOptions={groupedOptions || { yearsMap: {}, sortedYears: [] }}
-            align="left"
+            floating
           />
         </div>
       </section>

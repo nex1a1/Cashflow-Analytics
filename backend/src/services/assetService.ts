@@ -115,9 +115,13 @@ class AssetService {
   }
 
   delete(id: string): void {
-    const used = (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE asset_id = ?').get(id) as { c: number }).c;
+    // นับเฉพาะรายการที่ผู้ใช้ยังเห็น; แถวที่ซอฟต์ลบไปแล้วไม่มีทางลบทิ้งอื่น จึงลบไปพร้อมสินทรัพย์ (FK จะได้ไม่ค้าง)
+    const used = (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE asset_id = ? AND is_deleted = 0').get(id) as { c: number }).c;
     if (used > 0) throw new ApiError(409, `ลบไม่ได้: มี ${used} รายการซื้อขายอ้างอิงสินทรัพย์นี้อยู่`);
-    db.prepare('DELETE FROM assets WHERE id = ?').run(id);
+    db.transaction(() => {
+      db.prepare('DELETE FROM transactions WHERE asset_id = ?').run(id);
+      db.prepare('DELETE FROM assets WHERE id = ?').run(id);
+    })();
   }
 
   setManualPrice(id: string, price: number): void {

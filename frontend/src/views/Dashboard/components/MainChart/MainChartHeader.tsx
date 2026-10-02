@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart/MainChartHeader.tsx
-import React, { memo } from 'react';
+import React, { memo, useId } from 'react';
 import { Layers, TrendingUp, BarChart, Network, LayoutGrid } from 'lucide-react';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { getMainChartTitle, getAvailableChartViews } from './helpers';
@@ -41,23 +41,27 @@ ChartGroupBySwitcher.displayName = 'ChartGroupBySwitcher';
 
 export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBreakdown, isSingleMonth }: ViewTypeSwitcherProps) => {
   const views = getAvailableChartViews(Boolean(isSingleMonth));
+  const reasonIdBase = useId();
 
   return (
-    <div className="flex items-center p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+    <div role="group" aria-label="ชนิดกราฟ" className="flex items-center p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
       {views.map(v => {
         const Icon = VIEW_ICONS[v.id] || BarChart;
         const isDisabled = Boolean(v.disabled);
         const isActive = chartViewType === v.id && !isDisabled;
+        const reasonId = isDisabled && v.title ? `${reasonIdBase}-${v.id}` : undefined;
         return (
           <div key={v.id} className="relative group/viewbtn flex items-center">
             <button
-              disabled={isDisabled}
+              type="button"
               onClick={() => {
                 if (isDisabled) return;
                 setChartViewType(v.id);
                 if (v.id === 'sankey' || v.id === 'multiples') setIsBreakdown(false);
               }}
+              aria-pressed={isActive}
               aria-disabled={isDisabled}
+              aria-describedby={reasonId}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
@@ -69,7 +73,7 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
               <Icon className="w-3.5 h-3.5" /> {v.label}
             </button>
             {isDisabled && v.title && (
-              <div className="absolute top-full right-0 mt-1.5 opacity-0 group-hover/viewbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/viewbtn:visible whitespace-nowrap">
+              <div id={reasonId} role="tooltip" className="absolute top-full right-0 mt-1.5 opacity-0 group-hover/viewbtn:opacity-100 group-focus-within/viewbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/viewbtn:visible group-focus-within/viewbtn:visible whitespace-nowrap">
                 <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                   <span>{v.title}</span>
@@ -145,9 +149,9 @@ export const MainChartHeader = memo(({
         ) : (
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400" />
         )}
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
+        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
           {title}
-        </span>
+        </h2>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

@@ -181,9 +181,9 @@ export function ExpenseProportionHeader({
       <div className="flex items-center gap-2 flex-wrap">
         <div className="w-[3px] h-3 bg-accent shrink-0" />
         <PieChart className="w-3.5 h-3.5 text-neutral-400" />
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
+        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
           สัดส่วนรายจ่าย
-        </span>
+        </h2>
 
         <ModeSwitcher
           displayMode={displayMode}

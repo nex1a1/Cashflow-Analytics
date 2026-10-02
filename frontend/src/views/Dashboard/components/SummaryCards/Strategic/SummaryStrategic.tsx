@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useId, useRef, useState } from 'react';
 import { StrategicRentCard } from './StrategicRentCard';
 import { StrategicSubscriptionCard } from './StrategicSubscriptionCard';
 import { StrategicLifestyleCard } from './StrategicLifestyleCard';
@@ -31,52 +31,84 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
   activeTab,
   tabs,
   onChange,
-  aside
+  aside,
+  label = 'สลับมุมมอง',
+  idBase
 }: {
   activeTab: T;
   tabs: readonly AnalysisTabItem<T>[];
   onChange: (id: T) => void;
   aside?: React.ReactNode;
-}) => (
-  <div className="flex items-center justify-between px-2 border-b border-line bg-surface/80">
-    <div className="flex items-center gap-0.5">
-      <div className="w-[3px] h-3 bg-accent shrink-0 mr-1.5" />
-      {tabs.map(tab => {
-        const isDisabled = Boolean(tab.disabled);
-        const isActive = activeTab === tab.id && !isDisabled;
-        return (
-          <div key={tab.id} className="relative group/tabbtn flex items-center">
-            <button
-              type="button"
-              disabled={isDisabled}
-              onClick={() => !isDisabled && onChange(tab.id)}
-              aria-disabled={isDisabled}
-              aria-pressed={isActive}
-              className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
-                isDisabled
-                  ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
-                  : isActive
-                  ? 'text-neutral-100 border-b-accent-ink'
-                  : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-            {isDisabled && tab.title && (
-              <div className="absolute top-full left-0 mt-1.5 opacity-0 group-hover/tabbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/tabbtn:visible whitespace-nowrap">
-                <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                  <span>{tab.title}</span>
+  label?: string;
+  /** ส่งมาเมื่อผู้เรียกมี tabpanel เอง: panel ใช้ `${idBase}-panel-${id}` และ aria-labelledby `${idBase}-tab-${id}` */
+  idBase?: string;
+}) => {
+  const uid = useId();
+  const base = idBase ?? uid;
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Roving tabindex: Tab เข้าแท็บที่เลือกอยู่ แล้วใช้ ← → Home End เลื่อนโฟกัส (รวมแท็บที่ใช้ไม่ได้ เพื่ออ่านเหตุผลได้) Enter/Space เพื่อเลือก
+  const tabStopId = tabs.some(t => t.id === activeTab && !t.disabled)
+    ? activeTab
+    : (tabs.find(t => !t.disabled) ?? tabs[0])?.id;
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+    const els = Array.from(listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? []);
+    const i = els.indexOf(document.activeElement as HTMLButtonElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? els.length - 1 : (i + dir + els.length) % els.length;
+    els[next].focus();
+  };
+
+  return (
+    <div className="flex items-center justify-between px-2 border-b border-line bg-surface/80">
+      <div ref={listRef} role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex items-center gap-0.5">
+        <div className="w-[3px] h-3 bg-accent shrink-0 mr-1.5" aria-hidden="true" />
+        {tabs.map(tab => {
+          const isDisabled = Boolean(tab.disabled);
+          const isActive = activeTab === tab.id && !isDisabled;
+          const reasonId = isDisabled && tab.title ? `${base}-reason-${tab.id}` : undefined;
+          return (
+            <div key={tab.id} className="relative group/tabbtn flex items-center">
+              <button
+                type="button"
+                role="tab"
+                id={`${base}-tab-${tab.id}`}
+                aria-selected={isActive}
+                aria-controls={idBase && !isDisabled ? `${idBase}-panel-${tab.id}` : undefined}
+                aria-disabled={isDisabled}
+                aria-describedby={reasonId}
+                tabIndex={tab.id === tabStopId ? 0 : -1}
+                onClick={() => !isDisabled && onChange(tab.id)}
+                className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+                  isDisabled
+                    ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
+                    : isActive
+                    ? 'text-neutral-100 border-b-accent-ink'
+                    : 'text-neutral-500 border-b-transparent hover:text-neutral-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+              {reasonId && (
+                <div id={reasonId} role="tooltip" className="absolute top-full left-0 mt-1.5 opacity-0 group-hover/tabbtn:opacity-100 group-focus-within/tabbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/tabbtn:visible group-focus-within/tabbtn:visible whitespace-nowrap">
+                  <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                    <span>{tab.title}</span>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {aside}
     </div>
-    {aside}
-  </div>
-);
+  );
+};
 
 interface SummaryStrategicProps {
   analytics: SummaryAnalytics;
@@ -85,6 +117,13 @@ interface SummaryStrategicProps {
 
 export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrategicProps) => {
   const [activeTab, setActiveTab] = useState<AnalysisTabId>('strategic');
+  const tabsId = useId();
+  const panelProps = (id: AnalysisTabId) => ({
+    role: 'tabpanel' as const,
+    id: `${tabsId}-panel-${id}`,
+    'aria-labelledby': `${tabsId}-tab-${id}`,
+    'aria-hidden': effectiveTab !== id,
+  });
 
   const {
     totalIncome, totalSavings, netCashflow, savingsRate, showForecasting,
@@ -154,7 +193,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
 
   return (
     <div className="flex flex-col h-full">
-      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} aside={effectiveTab === 'strategic' && gradePill} />
+      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} aside={effectiveTab === 'strategic' && gradePill} idBase={tabsId} label="มุมมองสรุปรายจ่าย" />
 
       {/* All tabs' bodies mount concurrently, stacked in the same CSS grid cell
           ([grid-area:1/1]) like ExpenseProportionGrid, so the container maintains
@@ -162,7 +201,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
       <div className="flex-1 grid">
         <div
           className={`[grid-area:1/1] flex flex-col ${effectiveTab === 'strategic' ? '' : 'invisible pointer-events-none'}`}
-          aria-hidden={effectiveTab !== 'strategic'}
+          {...panelProps('strategic')}
         >
           {/* Row 1: Fixed Burdens & Wants (3 cards) */}
           <div className="px-3 py-1 bg-surface border-b border-line flex items-center gap-1.5 shrink-0">
@@ -241,7 +280,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
         {showForecasting && (
           <div
             className={`[grid-area:1/1] ${effectiveTab === 'forecast' ? '' : 'invisible pointer-events-none'}`}
-            aria-hidden={effectiveTab !== 'forecast'}
+            {...panelProps('forecast')}
           >
             <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
           </div>
@@ -249,7 +288,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
         {isSingleMonthView && (
           <div
             className={`[grid-area:1/1] ${effectiveTab === 'ghost' ? '' : 'invisible pointer-events-none'}`}
-            aria-hidden={effectiveTab !== 'ghost'}
+            {...panelProps('ghost')}
           >
             <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
           </div>

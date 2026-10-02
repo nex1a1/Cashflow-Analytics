@@ -12,13 +12,22 @@ describe('transactionService', () => {
   const testTxId2 = 'test-tx-uuid-2';
   const testTxId3 = 'test-tx-uuid-3';
 
+  // หมวดของเทสต์เอง — ไม่พึ่งหมวดในข้อมูลจริง (DB ว่างจะไม่มีหมวด 'อาหาร' อยู่ในกลุ่มรายจ่าย)
+  const INC_G = 'test-tx-g-inc', EXP_G = 'test-tx-g-exp', INC_C = 'test-tx-c-inc', EXP_C = 'test-tx-c-exp';
+
   const cleanup = () => {
     db.prepare("DELETE FROM transactions WHERE id LIKE 'test-tx-%' OR date >= '2099-01-01'").run();
+    db.prepare('DELETE FROM categories WHERE id IN (?, ?)').run(INC_C, EXP_C);
+    db.prepare('DELETE FROM cashflow_groups WHERE id IN (?, ?)').run(INC_G, EXP_G);
   };
 
   beforeAll(() => {
     initSchema();
     cleanup();
+    db.prepare("INSERT INTO cashflow_groups (id, name, type, allocation_type, order_index) VALUES (?, 'test รายรับ', 'income', NULL, 97)").run(INC_G);
+    db.prepare("INSERT INTO cashflow_groups (id, name, type, allocation_type, order_index) VALUES (?, 'test รายจ่าย', 'expense', 'want', 96)").run(EXP_G);
+    db.prepare("INSERT INTO categories (id, name, cashflow_group_id) VALUES (?, 'test-income', ?)").run(INC_C, INC_G);
+    db.prepare("INSERT INTO categories (id, name, cashflow_group_id) VALUES (?, 'test-expense', ?)").run(EXP_C, EXP_G);
   });
 
   afterAll(() => {
@@ -32,7 +41,7 @@ describe('transactionService', () => {
         date: '2099-09-01',
         description: 'Shark Test Income Salary',
         amount: 50000.50, // 50,000.50 Baht = 5,000,050 Satang
-        category: 'เงินเดือน',
+        category_id: INC_C,
         allocation_type: null,
       },
       {
@@ -40,7 +49,7 @@ describe('transactionService', () => {
         date: '2099-09-15',
         description: 'Shark Test Food Expense',
         amount: 350.25, // 350.25 Baht = 35,025 Satang
-        category: 'อาหาร',
+        category_id: EXP_C,
         allocation_type: 'want',
       },
       {
@@ -48,7 +57,7 @@ describe('transactionService', () => {
         date: '2099-10-05',
         description: 'Shark Test Oct Expense',
         amount: 1000,
-        category: 'อาหาร',
+        category_id: EXP_C,
         allocation_type: 'need',
       }
     ]);
