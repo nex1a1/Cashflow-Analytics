@@ -80,10 +80,11 @@ export const analyticsService = {
 
 export const calendarService = {
     getAll: (): Promise<CalendarDay[]> => fetch(CALENDAR_API_URL).then(handleResponse<CalendarDay[]>),
-    save: (date: string, type_id: string, note = ''): Promise<{ success: boolean }> => fetch(CALENDAR_API_URL, {
+    /** note / note_icon: undefined = ไม่ส่งไป (backend คงของเดิม — เปลี่ยนแค่ประเภทวันต้องไม่ลบโน้ต), '' = ลบ */
+    save: (date: string, type_id: string, note?: string, note_icon?: string): Promise<{ success: boolean }> => fetch(CALENDAR_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, type_id, note })
+        body: JSON.stringify({ date, type_id, note, note_icon })
     }).then(handleResponse<{ success: boolean }>)
 };
 

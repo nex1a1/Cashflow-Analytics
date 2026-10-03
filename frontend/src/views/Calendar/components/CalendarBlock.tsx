@@ -6,7 +6,7 @@ import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPe
 import { formatMoney, hexToRgb, THAI_MONTHS_SHORT } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
 import { localTodayIso } from '../../../utils/payCycle';
-import { DayType, TransactionDisplay } from '../../../types';
+import { DayNote, DayType, TransactionDisplay } from '../../../types';
 import { readable } from '@/constants/theme';
 
 export interface CalendarBlockProps {
@@ -27,6 +27,7 @@ export interface CalendarBlockProps {
     incItems: TransactionDisplay[];
   }>;
   dayTypes: Record<string, string>;
+  dayNotes?: Record<string, DayNote>;
   dayTypeConfig: DayType[];
   dayTypeCounts: Record<string, number>;
   handleDayTypeChange: (dateStr: string, value: string) => void;
@@ -50,6 +51,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
   monthSav,
   calendarData,
   dayTypes,
+  dayNotes,
   dayTypeConfig,
   dayTypeCounts,
   handleDayTypeChange,
@@ -165,6 +167,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 isWeekend={isWeekend}
                 dayTypeConfig={dayTypeConfig}
                 dayType={dayType}
+                note={dayNotes?.[dateStr]?.text}
+                noteIcon={dayNotes?.[dateStr]?.icon}
                 handleDayTypeChange={handleDayTypeChange}
                 onSelectDate={onSelectDate}
                 handleOpenAddModal={handleOpenAddModal}

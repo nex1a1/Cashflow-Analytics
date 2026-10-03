@@ -83,6 +83,13 @@ export interface CalendarDay {
   date: string; // YYYY-MM-DD
   day_type_id: string;
   note?: string | null;
+  note_icon?: string | null;
+}
+
+/** โน้ตประจำวัน: icon = key ใน CATEGORY_ICON_MAP, '' = ใช้ไอคอนตั้งต้น (DEFAULT_NOTE_ICON) */
+export interface DayNote {
+  text: string;
+  icon: string;
 }
 
 export interface AnalyticsSummary {
@@ -228,6 +235,9 @@ export interface AppDataContextValue {
   handleAddCategory: (type?: string) => Promise<any>;
   handleMoveCategory: (id: string, direction: string) => Promise<void>;
   handleDayTypeChange: (dateStr: string, type: string) => Promise<void>;
+  /** โน้ตประจำวัน (วันละ 1 อัน) — มีเฉพาะวันที่เคยจด; text '' = ลบโน้ต (ไอคอนหายตาม), คืน false เมื่อบันทึกไม่สำเร็จ (rollback แล้ว) */
+  dayNotes: Record<string, DayNote>;
+  handleDayNoteChange: (dateStr: string, text: string, icon: string) => Promise<boolean>;
   handleDayTypeConfigChange: (id: string, field: string, value: any) => Promise<boolean | void>;
   handleAddDayType: () => Promise<void>;
   handleDeleteDayType: (id: string) => Promise<void>;

@@ -5,6 +5,8 @@ import { PAY_DAY, PAY_DAY_START } from '@/utils/payCycle';
 import { formatMoney, formatAmount } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
+import CategoryGlyph from '@/components/shared/CategoryGlyph';
+import { DEFAULT_NOTE_ICON } from '@/constants/categoryIcons';
 import { CALENDAR_HEAT_CHIP, CALENDAR_HEAT_COLORS, getCalendarHeatLevel } from '../utils/calendarHeat';
 
 import { tc } from '@/constants/theme';
@@ -21,6 +23,9 @@ export interface CalendarDayCellProps {
   isWeekend: boolean;
   dayTypeConfig: DayType[];
   dayType: string;
+  /** โน้ตประจำวัน (อยู่ข้างเลขวัน) — ไม่มี = ไม่วาดอะไรเลย; noteIcon ว่าง = ไอคอนตั้งต้น */
+  note?: string;
+  noteIcon?: string;
   handleDayTypeChange: (dateStr: string, value: string) => void;
   onSelectDate: (dateStr: string) => void;
   handleOpenAddModal?: (dateStr?: string, type?: string) => void;
@@ -35,7 +40,7 @@ export interface CalendarDayCellProps {
 
 const CalendarDayCell = memo(function CalendarDayCell({
   day, data, dateStr, isToday, isWeekend,
-  dayTypeConfig, dayType, handleDayTypeChange, onSelectDate,
+  dayTypeConfig, dayType, note, noteIcon, handleDayTypeChange, onSelectDate,
   handleOpenAddModal,
   monthEdgeTop = false,
   monthEdgeLeft = false,
@@ -98,8 +103,8 @@ const CalendarDayCell = memo(function CalendarDayCell({
       )}
 
       {/* Header ของแต่ละวัน (วันที่ + ตัวเลือกประเภทวัน) */}
-      <div className="flex items-center justify-between px-2 py-1.5 shrink-0 border-b z-30 relative border-line/30 bg-surface/50">
-        <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center justify-between gap-1.5 px-2 py-1.5 shrink-0 border-b z-30 relative border-line/30 bg-surface/50">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           {/* ตัวเลขวันเป็นปุ่ม: ทางเข้ารายละเอียดวันสำหรับคีย์บอร์ด (ทั้งช่องยังคลิกได้ด้วยเมาส์) */}
           <button
             type="button"
@@ -133,6 +138,13 @@ const CalendarDayCell = memo(function CalendarDayCell({
               <PlusCircle className="w-4 h-4" />
             </button>
           )}
+          {/* โน้ตประจำวัน: ไอคอน + ข้อความกินที่ว่างที่เหลือข้างเลขวัน ยาวเกินตัดด้วย … (ข้อความเต็มดูได้ที่ title) */}
+          {note && (
+            <span className="flex items-center gap-1 min-w-0 overflow-hidden text-[11px] leading-none text-ink-body" title={note}>
+              <CategoryGlyph icon={noteIcon || DEFAULT_NOTE_ICON} size={12} className="shrink-0 text-ink-soft" />
+              <span className="truncate">{note}</span>
+            </span>
+          )}
         </div>
 
         <DayTypeSelect
@@ -141,6 +153,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           dayTypeConfig={dayTypeConfig}
           dateStr={dateStr}
           size="xs"
+          className="shrink-0"
         />
       </div>
 

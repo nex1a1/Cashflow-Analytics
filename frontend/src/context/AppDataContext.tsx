@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { AppDataContextValue, Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../types';
+import { AppDataContextValue, Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
-import { getPeriodDateRange } from '../utils/dateHelpers';
+import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';
+import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 import useCategories from '../hooks/useCategories';
 import useTransactionData from '../hooks/useTransactionData';
 import useImportCSV from '../hooks/useImportCSV';
@@ -19,6 +20,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
   const [dbStatus, setDbStatus] = useState<string>('กำลังตรวจสอบ...');
   const [dayTypes, setDayTypes] = useState<Record<string, string>>({});
+  const [dayNotes, setDayNotes] = useState<Record<string, DayNote>>({});
   const [dayTypeConfig, setDayTypeConfig] = useState<DayType[]>(DEFAULT_DAY_TYPES);
   const [cashflowGroups, setCashflowGroups] = useState<CashflowGroup[]>([]);
 
@@ -62,6 +64,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     categories,
     setCategories,
     setDayTypes,
+    setDayNotes,
     setDayTypeConfig,
     setDbStatus,
     setCashflowGroups,
@@ -120,6 +123,34 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       console.error('Failed to save day type to DB:', err);
     }
   }, []);
+
+  // โน้ตต้องผูกกับแถว calendar_days (day_type_id NOT NULL) จึงส่งประเภทวันที่หน้าจอแสดงอยู่ไปด้วยเสมอ
+  const handleDayNoteChange = useCallback(async (dateStr: string, text: string, icon: string): Promise<boolean> => {
+    const next: DayNote = { text: text.trim(), icon: text.trim() ? icon : '' }; // ไอคอนอยู่ได้เฉพาะโน้ตที่มีข้อความ
+    const before: DayNote = dayNotes[dateStr] ?? { text: '', icon: '' };
+    if (next.text === before.text && next.icon === before.icon) return true;
+
+    const dow = parseDateStrToObj(dateStr).getDay();
+    const typeId = dayTypes[dateStr] || resolveDefaultDayTypeId(dayTypeConfig, dow === 0 || dow === 6);
+    if (!typeId) return false;
+
+    const apply = (value: DayNote) => setDayNotes(prev => {
+      const map = { ...prev };
+      if (value.text) map[dateStr] = value;
+      else delete map[dateStr];
+      return map;
+    });
+
+    apply(next);
+    try {
+      await calendarService.save(dateStr, typeId, next.text, next.icon);
+      return true;
+    } catch (err) {
+      console.error('Failed to save day note to DB:', err);
+      apply(before);
+      return false;
+    }
+  }, [dayNotes, dayTypes, dayTypeConfig]);
 
   const handleDayTypeConfigChange = useCallback(async (id: string, field: string, value: any) => {
     const dt = dayTypeConfig.find(d => d.id === id);
@@ -320,6 +351,8 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     handleAddCategory,
     handleMoveCategory,
     handleDayTypeChange,
+    dayNotes,
+    handleDayNoteChange,
     handleDayTypeConfigChange,
     handleAddDayType,
     handleDeleteDayType,

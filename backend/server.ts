@@ -44,9 +44,9 @@ app.use(auditLogger);
 initSchema();
 
 // Auto-backup on startup
-console.log('📦 Initializing auto-backup...');
+console.log('Initializing auto-backup...');
 backupService.createBackup().catch(err => {
-  console.warn('⚠️ Startup auto-backup failed:', err.message);
+  console.warn('[WARN] Startup auto-backup failed:', err.message);
 });
 
 // Routes
@@ -55,7 +55,7 @@ app.use('/api', apiRoutes);
 // Static Frontend Asset Serving (Production Build)
 const frontendDist = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'))) {
-  console.log(`🌐 Serving Web Client from: ${frontendDist}`);
+  console.log(`Serving Web Client from: ${frontendDist}`);
   app.use(express.static(frontendDist));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
@@ -82,9 +82,9 @@ const serverUrl = `http://localhost:${PORT}`;
 
 const server = app.listen(PORT, () => {
   console.log('\n====================================================================');
-  console.log('🦈 CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
+  console.log('CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
   console.log('====================================================================');
-  console.log(`[STATUS] 🟢 Server Active  : ${serverUrl}`);
+  console.log(`[STATUS] Server Active  : ${serverUrl}`);
   console.log('--------------------------------------------------------------------');
   console.log('  Shortcuts: [B] Manual Backup  |  [Q] Exit');
   console.log('====================================================================\n');
@@ -95,30 +95,30 @@ let isShuttingDown = false;
 const gracefulShutdown = (signal: string) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`\n🛑 [${signal}] Initiating graceful shutdown...`);
+  console.log(`\n[${signal}] Initiating graceful shutdown...`);
 
   // Force exit fallback timeout (5s)
   const forceExitTimeout = setTimeout(() => {
-    console.error('⚠️ Forcing process exit after shutdown timeout.');
+    console.error('[WARN] Forcing process exit after shutdown timeout.');
     process.exit(1);
   }, 5000);
   forceExitTimeout.unref();
 
   server.close((err) => {
     if (err) {
-      console.error('❌ Error closing HTTP server:', err);
+      console.error('[ERROR] Error closing HTTP server:', err);
     } else {
-      console.log('✅ HTTP server closed.');
+      console.log('HTTP server closed.');
     }
 
     try {
       db.close();
-      console.log('✅ SQLite database connection closed.');
+      console.log('SQLite database connection closed.');
     } catch (dbErr: any) {
-      console.error('❌ Error closing SQLite database:', dbErr?.message || dbErr);
+      console.error('[ERROR] Error closing SQLite database:', dbErr?.message || dbErr);
     }
 
-    console.log('👋 Cashflow Shark shutdown complete. Goodbye!\n');
+    console.log('Cashflow Shark shutdown complete. Goodbye!\n');
     process.exit(0);
   });
 };
@@ -135,10 +135,10 @@ if (process.stdin.isTTY) {
     process.stdin.on('data', (key: string) => {
       const k = key.toLowerCase();
       if (k === 'b') {
-        console.log('\n📦 Triggering manual database backup...');
+        console.log('\nTriggering manual database backup...');
         backupService.createBackup()
-          .then(data => console.log('✅ Backup result:', data))
-          .catch(err => console.error('❌ Backup failed:', err.message));
+          .then(data => console.log('Backup result:', data))
+          .catch(err => console.error('[ERROR] Backup failed:', err.message));
       } else if (k === 'q' || key === '\u0003') { // q or Ctrl+C
         gracefulShutdown('KEYBOARD_QUIT');
       }

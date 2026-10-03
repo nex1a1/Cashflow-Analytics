@@ -220,6 +220,7 @@ import {
   SprayCan,
   Star,
   Stethoscope,
+  StickyNote,
   Store,
   Sun,
   SunMedium,
@@ -617,6 +618,7 @@ export const CATEGORY_ICONS: CategoryIconDef[] = [
   { key: 'library', label: 'ห้องสมุด / สื่อค้นคว้า', category: 'work', keywords: 'library research ห้องสมุด หอจดหมายเหตุ ค้นคว้า', Icon: Library },
   { key: 'presentation', label: 'สัมมนา / พรีเซนเทชัน / บรรยาย', category: 'work', keywords: 'presentation seminar training สัมมนา บรรยาย อบรม เวิร์กช็อป', Icon: Presentation },
   { key: 'file-text', label: 'เอกสาร / สัญญา / ใบแจ้งหนี้', category: 'work', keywords: 'document contract invoice เอกสาร สัญญา ใบเสนอราคา', Icon: FileText },
+  { key: 'sticky-note', label: 'โน้ต / บันทึกช่วยจำ / วันสำคัญ', category: 'work', keywords: 'note sticky memo reminder โน้ต บันทึก ช่วยจำ กระดาษโน้ต วันสำคัญ', Icon: StickyNote },
   { key: 'file-spreadsheet', label: 'สเปรดชีต / บัญชี / Excel', category: 'work', keywords: 'spreadsheet excel table บัญชี งบการเงิน เอ็กเซล ตาราง', Icon: FileSpreadsheet },
   { key: 'folder', label: 'แฟ้มงาน / จัดเก็บงาน', category: 'work', keywords: 'folder archive directory โฟลเดอร์ แฟ้มงาน เก็บงาน', Icon: Folder },
   { key: 'archive', label: 'คลังเอกสาร / เอกสารประวัติ', category: 'work', keywords: 'archive box records เอกสารเก่า บันทึกย้อนหลัง', Icon: Archive },
@@ -711,3 +713,6 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
 
 /** Fallback glyph when nothing else applies — matches the old default-emoji convention. */
 export const DEFAULT_CATEGORY_ICON: LucideIcon = Package;
+
+/** Icon of a day note (วันเกิด, วันแรกทำงาน ...) when the user has not picked one. */
+export const DEFAULT_NOTE_ICON = 'sticky-note';

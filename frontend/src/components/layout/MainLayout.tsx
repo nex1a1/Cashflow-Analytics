@@ -47,7 +47,7 @@ export default function MainLayout() {
     handleDeleteTransaction, handleDeleteAllData,
     handleSaveBatch, handleFileUpload, confirmImport,
     handleCategoryChange, handleDeleteCategory, handleAddCategory, handleMoveCategory,
-    handleDayTypeChange, handleDayTypeConfigChange, handleAddDayType,
+    handleDayTypeChange, dayNotes, handleDayNoteChange, handleDayTypeConfigChange, handleAddDayType,
     handleDeleteDayType, handleMoveDayType,
     handleUpdateCashflowGroup, handleAddCashflowGroup,
     handleDeleteCashflowGroup, handleMoveCashflowGroup
@@ -148,6 +148,8 @@ export default function MainLayout() {
                 cashflowGroups={cashflowGroups}
                 dayTypes={dayTypes}
                 handleDayTypeChange={handleDayTypeChange}
+                dayNotes={dayNotes}
+                handleDayNoteChange={handleDayNoteChange}
                 dayTypeConfig={dayTypeConfig}
                 getFilterLabel={getFilterLabel}
                 isReadOnlyView={isReadOnlyView}

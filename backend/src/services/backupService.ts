@@ -40,7 +40,7 @@ class BackupService {
       const match = /^backup-(\d{4}-\d{2}-\d{2})\.db$/.exec(file);
       if (match && match[1] < cutoffStr) {
         fs.unlinkSync(path.join(backupDir, file));
-        console.log(`🗑️ Pruned old backup (>${RETENTION_DAYS}d): ${file}`);
+        console.log(`Pruned old backup (>${RETENTION_DAYS}d): ${file}`);
       }
     }
   }
@@ -70,7 +70,7 @@ class BackupService {
     if (!fs.existsSync(monthlyPath)) {
       await db.backup(monthlyPath);
       masterCreated = true;
-      console.log(`📦 Monthly backup created for ${monthStr}`);
+      console.log(`Monthly backup created for ${monthStr}`);
     }
 
     // Master snapshot: no date, always overwritten with the latest state
@@ -78,7 +78,7 @@ class BackupService {
 
     this.pruneOldBackups(backupDir, now);
 
-    console.log(`📡 Backup successful: ${backupFileName}`);
+    console.log(`Backup successful: ${backupFileName}`);
 
     return {
       success: true,
@@ -96,7 +96,7 @@ class BackupService {
     const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
     const filename = `pre-reset-${this.getLocalDateStr(now)}-${time}.db`;
     await db.backup(path.join(backupDir, filename));
-    console.log(`📡 Pre-reset backup: ${filename}`);
+    console.log(`Pre-reset backup: ${filename}`);
     return filename;
   }
 

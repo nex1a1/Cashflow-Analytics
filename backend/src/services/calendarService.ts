@@ -4,6 +4,7 @@ interface CalendarDayWithDetails {
   date: string;
   day_type_id: string;
   note: string | null;
+  note_icon: string | null;
   type_name: string | null;
   type_label: string | null;
   type_color: string | null;
@@ -17,6 +18,7 @@ class CalendarService {
           cd.date, 
           cd.day_type_id, 
           cd.note,
+          cd.note_icon,
           dt.name as type_name,
           dt.label as type_label,
           dt.color as type_color
@@ -29,7 +31,11 @@ class CalendarService {
     }
   }
 
-  upsert(date: string, day_type_id: string, note: string = '') {
+  /**
+   * note / note_icon: undefined/null = keep what is stored (changing the day type must not wipe them), '' = clear.
+   * The icon belongs to the note text, so clearing the note clears the icon too.
+   */
+  upsert(date: string, day_type_id: string, note?: string | null, note_icon?: string | null) {
     // Convert date to YYYY-MM-DD if in DD/MM/YYYY
     let formattedDate = date;
     if (formattedDate?.includes('/')) {
@@ -38,13 +44,14 @@ class CalendarService {
     }
 
     const stmt = db.prepare(`
-      INSERT INTO calendar_days (date, day_type_id, note)
-      VALUES (?, ?, ?)
-      ON CONFLICT(date) DO UPDATE SET 
+      INSERT INTO calendar_days (date, day_type_id, note, note_icon)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(date) DO UPDATE SET
         day_type_id = excluded.day_type_id,
-        note = excluded.note
+        note = COALESCE(excluded.note, calendar_days.note),
+        note_icon = CASE WHEN excluded.note = '' THEN '' ELSE COALESCE(excluded.note_icon, calendar_days.note_icon) END
     `);
-    return stmt.run(formattedDate, day_type_id, note);
+    return stmt.run(formattedDate, day_type_id, note?.trim() ?? null, note_icon?.trim() ?? null);
   }
 }
 

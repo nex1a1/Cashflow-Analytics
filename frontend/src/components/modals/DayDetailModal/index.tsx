@@ -2,10 +2,11 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown, Tag, ArrowDownWideNarrow } from 'lucide-react';
 import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../utils/formatters';
 import DailyForm from './DailyForm';
+import DayNoteField from './DayNoteField';
 import QuickSuggest from './QuickSuggest';
 import TransactionList from './TransactionList';
 import DatePicker from '../../ui/DatePicker';
-import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../../../types';
+import { Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../../../types';
 import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
 import { stepDate } from '@/utils/datePickerHelpers';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
@@ -26,7 +27,12 @@ export interface DayDetailModalProps {
   frequentItems?: FrequentItem[];
   onDateChange?: (newDateStr: string) => void;
   handleDayTypeChange?: (dateStr: string, val: string) => void;
+  dayNotes?: Record<string, DayNote>;
+  /** ไม่ส่งมา = ดูโน้ตได้อย่างเดียว */
+  handleDayNoteChange?: (dateStr: string, text: string, icon: string) => Promise<boolean>;
 }
+
+const NO_NOTE: DayNote = { text: '', icon: '' };
 
 export default function DayDetailModal({ 
   dateStr, 
@@ -40,7 +46,9 @@ export default function DayDetailModal({
   dayTypeConfig = [], 
   frequentItems = [],
   onDateChange,
-  handleDayTypeChange
+  handleDayTypeChange,
+  dayNotes = {},
+  handleDayNoteChange
 }: DayDetailModalProps) {
   const trapRef = useFocusTrap<HTMLDivElement>();
   
@@ -350,10 +358,11 @@ export default function DayDetailModal({
                       ? 'bg-amber-950/30 text-amber-300 border-amber-800/40' 
                       : 'bg-danger/10 text-danger border-danger/30'
                   }`}>
-                    <span className="text-[11px] font-medium opacity-80">สุทธิ</span> 
+                    <span className="text-[11px] font-medium opacity-80">สุทธิ</span>
                     {net >= 0 ? `+฿${formatMoney(net)}` : `-฿${formatMoney(Math.abs(net))}`}
                   </span>
                 )}
+                <DayNoteField key={activeDateStr} dateStr={activeDateStr} note={dayNotes[activeDateStr] ?? NO_NOTE} onSave={handleDayNoteChange} />
               </div>
             </div>
 

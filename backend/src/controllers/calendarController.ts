@@ -9,6 +9,7 @@ export const getAllCalendarDays = (req: Request, res: Response, next: NextFuncti
             date: row.date,
             type_id: row.day_type_id,
             note: row.note,
+            note_icon: row.note_icon,
             type_label: row.type_label,
             type_color: row.type_color
         }));
@@ -21,7 +22,7 @@ export const getAllCalendarDays = (req: Request, res: Response, next: NextFuncti
 export const upsertCalendarDay = (req: Request, res: Response, next: NextFunction) => {
     try {
         const validatedData = calendarDaySchema.parse(req.body);
-        calendarService.upsert(validatedData.date, validatedData.type_id, validatedData.note || '');
+        calendarService.upsert(validatedData.date, validatedData.type_id, validatedData.note, validatedData.note_icon);
         res.json({ success: true });
     } catch (err: unknown) {
         next(err);

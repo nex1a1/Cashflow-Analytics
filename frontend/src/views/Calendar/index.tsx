@@ -12,6 +12,7 @@ import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, localTodayIs
 import {
   CashflowGroup,
   Category,
+  DayNote,
   DayType,
   TransactionDisplay,
   FrequentItem,
@@ -30,6 +31,9 @@ export interface CalendarViewProps {
   cashflowGroups: CashflowGroup[];
   dayTypes: Record<string, string>;
   handleDayTypeChange: (dateStr: string, val: string) => void;
+  /** โน้ตประจำวัน: ไม่ส่งมา = ดูอย่างเดียว (ไม่มีปุ่มเพิ่มโน้ต) */
+  dayNotes?: Record<string, DayNote>;
+  handleDayNoteChange?: (dateStr: string, text: string, icon: string) => Promise<boolean>;
   dayTypeConfig: DayType[];
   getFilterLabel: (period?: string) => string;
   isReadOnlyView?: boolean;
@@ -43,7 +47,7 @@ export interface CalendarViewProps {
 function CalendarView({
   transactions, filterPeriod, setFilterPeriod,
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
-  handleDayTypeChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
+  handleDayTypeChange, dayNotes, handleDayNoteChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
   isLoading, frequentItems = [], onSwitchToAnalysisMode
 }: CalendarViewProps) {
@@ -400,6 +404,7 @@ function CalendarView({
           monthSav={monthSav}
           calendarData={calendarData}
           dayTypes={dayTypes}
+          dayNotes={dayNotes}
           dayTypeConfig={dayTypeConfig}
           dayTypeCounts={dayTypeCounts}
           handleDayTypeChange={handleDayTypeChange}
@@ -444,6 +449,8 @@ function CalendarView({
           frequentItems={frequentItems}
           onDateChange={setSelectedDate}
           handleDayTypeChange={handleDayTypeChange}
+          dayNotes={dayNotes}
+          handleDayNoteChange={handleDayNoteChange}
         />
       )}
     </div>

@@ -5,7 +5,7 @@ import db from '../config/db';
 import { initSchema } from '../models/schema';
 import crypto from 'node:crypto';
 
-console.log('🚀 Starting Mockup Database Generation...');
+console.log('Starting Mockup Database Generation...');
 
 // Ensure schema is fully initialized on the demo database
 initSchema();
@@ -144,7 +144,7 @@ const generateMockupData = () => {
     db.exec("DELETE FROM transactions");
     db.exec("DELETE FROM calendar_days");
     db.exec("DELETE FROM transactions_fts");
-    console.log('🧹 Cleared existing demo data.');
+    console.log('Cleared existing demo data.');
 
     // 2. Fetch required reference data
     const categories = db.prepare("SELECT c.id as cat_id, c.name as cat_name, cg.name as group_name, cg.type as group_type FROM categories c JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id").all() as Array<{
@@ -233,20 +233,20 @@ const generateMockupData = () => {
         currentDate.setDate(currentDate.getDate() + 1); // Next day
     }
 
-    console.log(`📦 Prepared ${transactionsToInsert.length} transactions and ${calendarDaysToInsert.length} calendar days.`);
+    console.log(`Prepared ${transactionsToInsert.length} transactions and ${calendarDaysToInsert.length} calendar days.`);
     
     // Execute Bulk Insert
     console.time('BulkInsert');
     performBulkInsert(transactionsToInsert, calendarDaysToInsert);
     console.timeEnd('BulkInsert');
     
-    console.log('✅ Mockup Data Seeded Successfully!');
+    console.log('Mockup Data Seeded Successfully!');
 };
 
 try {
     generateMockupData();
 } catch (e) {
-    console.error('❌ Error generating mockup data:', e);
+    console.error('[ERROR] Error generating mockup data:', e);
 } finally {
     db.close();
 }

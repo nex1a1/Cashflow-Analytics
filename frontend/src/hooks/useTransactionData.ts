@@ -12,7 +12,7 @@ import {
   analyticsService
 } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Category, CashflowGroup, DayType, FrequentItem, TransactionDisplay } from '../types';
+import { Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../types';
 
 const sortTransactions = (dataArr: TransactionDisplay[]): TransactionDisplay[] =>
   [...dataArr].sort((a, b) => {
@@ -30,6 +30,7 @@ export interface UseTransactionDataProps {
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   setDayTypes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setDayNotes: React.Dispatch<React.SetStateAction<Record<string, DayNote>>>;
   setDayTypeConfig: React.Dispatch<React.SetStateAction<DayType[]>>;
   setDbStatus: React.Dispatch<React.SetStateAction<string>>;
   setCashflowGroups: React.Dispatch<React.SetStateAction<CashflowGroup[]>>;
@@ -39,6 +40,7 @@ export default function useTransactionData({
   categories,
   setCategories,
   setDayTypes,
+  setDayNotes,
   setDayTypeConfig,
   setDbStatus,
   setCashflowGroups
@@ -174,10 +176,13 @@ export default function useTransactionData({
       try {
         const calData = await calendarService.getAll();
         const usage: Record<string, string> = {};
+        const notes: Record<string, DayNote> = {};
         calData.forEach((row: any) => {
           usage[row.date] = row.type_id;
+          if (row.note) notes[row.date] = { text: row.note, icon: row.note_icon || '' };
         });
         setDayTypes(usage);
+        setDayNotes(notes);
       } catch (err) {
         console.error('Calendar load failed:', err);
       }
@@ -186,7 +191,7 @@ export default function useTransactionData({
     } finally {
       setIsBootstrapping(false);
     }
-  }, [setCategories, setDayTypes, setDayTypeConfig, setCashflowGroups]);
+  }, [setCategories, setDayTypes, setDayNotes, setDayTypeConfig, setCashflowGroups]);
 
   const saveToDb = useCallback(
     async (items: any) => {

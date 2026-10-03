@@ -9,9 +9,9 @@ let DB_PATH = process.env.DB_PATH || path.join(baseDir, 'data/cashflow.db');
 if (process.env.USE_DEMO_DB === 'true') {
     const dbDir = path.dirname(DB_PATH);
     DB_PATH = path.join(dbDir, 'cashflow_demo.db');
-    console.warn('⚠️ ===================================================');
-    console.warn('⚠️ WARNING: RUNNING IN DEMO MODE (cashflow_demo.db)');
-    console.warn('⚠️ ===================================================');
+    console.warn('[WARN] ===================================================');
+    console.warn('[WARN] WARNING: RUNNING IN DEMO MODE (cashflow_demo.db)');
+    console.warn('[WARN] ===================================================');
 }
 
 // สร้าง directory ถ้ายังไม่มี
@@ -72,21 +72,21 @@ function formatTransactionMutation(clean: string): string | null {
             const allocRaw = args[5];
             const alloc = allocRaw && allocRaw !== 'NULL' && allocRaw !== '' ? ` (${allocRaw})` : '';
 
-            return `💳 [ธุรกรรม] บันทึกข้อมูล: ${date} | "${desc}" | ฿${baht}${alloc}`;
+            return `[ธุรกรรม] บันทึกข้อมูล: ${date} | "${desc}" | ฿${baht}${alloc}`;
         }
     }
 
     if (/UPDATE transactions SET is_deleted = 1/i.test(clean)) {
         if (/WHERE date >=/i.test(clean)) {
-            return `🗑️ [ธุรกรรม] ลบข้อมูลรายเดือน (ลบทั้งช่วงเดือน)`;
+            return `[ธุรกรรม] ลบข้อมูลรายเดือน (ลบทั้งช่วงเดือน)`;
         }
         const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
         const fullId = idMatch ? idMatch[1] : '';
-        return fullId ? `🗑️ [ธุรกรรม] ลบธุรกรรม (ID: ${fullId})` : `🗑️ [ธุรกรรม] ลบธุรกรรม (กลุ่ม/ทั้งหมด)`;
+        return fullId ? `[ธุรกรรม] ลบธุรกรรม (ID: ${fullId})` : `[ธุรกรรม] ลบธุรกรรม (กลุ่ม/ทั้งหมด)`;
     }
 
     if (/UPDATE transactions SET is_deleted = 0/i.test(clean)) {
-        return `♻️ [ธุรกรรม] กู้คืนข้อมูลธุรกรรม (Restore)`;
+        return `[ธุรกรรม] กู้คืนข้อมูลธุรกรรม (Restore)`;
     }
     return null;
 }
@@ -98,7 +98,7 @@ function formatSettingsMutation(clean: string): string | null {
             const key = args[0];
             const val = args[1];
             if (key === 'schema_verified') return ''; // Mute internal flag
-            return `⚙️ [การตั้งค่า] อัปเดตค่า: ${key} = "${val}"`;
+            return `[การตั้งค่า] อัปเดตค่า: ${key} = "${val}"`;
         }
     }
     return null;
@@ -110,7 +110,7 @@ function formatCalendarMutation(clean: string): string | null {
         if (args.length >= 2) {
             const date = args[0];
             const dayTypeId = args[1];
-            return `📅 [ปฏิทิน] บันทึกประเภทวัน: ${date} (ประเภท: ${dayTypeId})`;
+            return `[ปฏิทิน] บันทึกประเภทวัน: ${date} (ประเภท: ${dayTypeId})`;
         }
     }
     return null;
@@ -123,12 +123,12 @@ function formatDayTypeMutation(clean: string): string | null {
             const name = args[1];
             const label = args[2];
             const color = args[3] && args[3] !== 'NULL' ? ` (สี: ${args[3]})` : '';
-            return `📆 [ประเภทวัน] เพิ่ม/อัปเดตประเภทวัน: "${label}" [${name}]${color}`;
+            return `[ประเภทวัน] เพิ่ม/อัปเดตประเภทวัน: "${label}" [${name}]${color}`;
         }
     }
     if (/DELETE FROM day_types/i.test(clean)) {
         const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
-        return `🗑️ [ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
+        return `[ประเภทวัน] ลบประเภทวัน (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
 }
@@ -140,12 +140,12 @@ function formatCategoryMutation(clean: string): string | null {
             const name = args[1];
             const icon = args[2] && args[2] !== 'NULL' ? `${args[2]} ` : '';
             const color = args[3] && args[3] !== 'NULL' ? ` (${args[3]})` : '';
-            return `🏷️ [หมวดหมู่] บันทึกหมวดหมู่: ${icon}"${name}"${color}`;
+            return `[หมวดหมู่] บันทึกหมวดหมู่: ${icon}"${name}"${color}`;
         }
     }
     if (/DELETE FROM categories/i.test(clean)) {
         const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
-        return `🗑️ [หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
+        return `[หมวดหมู่] ลบหมวดหมู่ (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
 }
@@ -158,12 +158,12 @@ function formatCashflowGroupMutation(clean: string): string | null {
             const type = args[2];
             const alloc = args[3] && args[3] !== 'NULL' ? `, สัดส่วน: ${args[3]}` : '';
             const icon = args[6] && args[6] !== 'NULL' ? `${args[6]} ` : '';
-            return `📁 [กลุ่มกระแสเงินสด] บันทึกกลุ่ม: ${icon}"${name}" (ประเภท: ${type}${alloc})`;
+            return `[กลุ่มกระแสเงินสด] บันทึกกลุ่ม: ${icon}"${name}" (ประเภท: ${type}${alloc})`;
         }
     }
     if (/DELETE FROM cashflow_groups/i.test(clean)) {
         const idMatch = /WHERE id = '([^']+)'/i.exec(clean);
-        return `🗑️ [กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
+        return `[กลุ่มกระแสเงินสด] ลบกลุ่ม (ID: ${idMatch ? idMatch[1] : ''})`;
     }
     return null;
 }
@@ -188,7 +188,7 @@ function formatDbMutationLog(msgStr: string): string | null {
     }
 
     // Fallback: Full query without truncation
-    return `⚡ [DB SQL] ${clean}`;
+    return `[DB SQL] ${clean}`;
 }
 
 function openDatabase(dbPath: string): Database.Database {
@@ -214,7 +214,7 @@ function openDatabase(dbPath: string): Database.Database {
         d.pragma('busy_timeout = 5000');
         d.pragma('foreign_keys = ON');
     } catch (e: unknown) {
-        console.warn('⚠️ Could not set DB pragmas:', e instanceof Error ? e.message : 'Unknown error');
+        console.warn('[WARN] Could not set DB pragmas:', e instanceof Error ? e.message : 'Unknown error');
     }
     
     return d;
@@ -222,7 +222,7 @@ function openDatabase(dbPath: string): Database.Database {
 
 const db = openDatabase(DB_PATH);
 
-console.log('✅ SQLite database connected at', DB_PATH);
-console.log('🛡️ Persistence Mode: DELETE (Safe for Docker)');
+console.log('SQLite database connected at', DB_PATH);
+console.log('Persistence Mode: DELETE (Safe for Docker)');
 
 export default db;

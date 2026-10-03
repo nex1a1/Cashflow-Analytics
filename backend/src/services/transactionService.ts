@@ -281,9 +281,9 @@ class TransactionService {
     const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ? AND is_deleted = 0')
       .run(startDate, endDate);
 
-    console.log(`🗑️ [Service: Delete Month] ลบข้อมูลทั้งเดือน: ${isoMonth} (ช่วงวันที่: ${startDate} ถึง ${endDate}) | จำนวนที่ได้รับผลกระทบ: ${result.changes} รายการ | ยอดเงินรวม: ฿${totalBaht}`);
+    console.log(`[Service: Delete Month] ลบข้อมูลทั้งเดือน: ${isoMonth} (ช่วงวันที่: ${startDate} ถึง ${endDate}) | จำนวนที่ได้รับผลกระทบ: ${result.changes} รายการ | ยอดเงินรวม: ฿${totalBaht}`);
     if (targetRows.length > 0) {
-      console.log(`📋 [Service: Delete Month Details] รายการที่ถูกลบในเดือน ${isoMonth} (${targetRows.length} รายการ):`);
+      console.log(`[Service: Delete Month Details] รายการที่ถูกลบในเดือน ${isoMonth} (${targetRows.length} รายการ):`);
       targetRows.forEach((r, idx) => {
         const itemBaht = (r.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         console.log(`   ${idx + 1}. [${r.date}] ID: ${r.id} | "${r.description}" | ฿${itemBaht} | หมวดหมู่: "${r.category || 'ไม่ระบุ'}"`);
@@ -300,7 +300,7 @@ class TransactionService {
       const calResult = db.prepare('DELETE FROM calendar_days').run();
       // ประวัติมูลค่าพอร์ตคำนวณจาก ledger ที่เพิ่งถูกล้าง — เก็บไว้กราฟจะโชว์เส้นของข้อมูลที่ไม่มีแล้ว (นิยามสินทรัพย์ยังอยู่)
       db.prepare('DELETE FROM portfolio_snapshots').run();
-      console.log(`🚨 [Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
+      console.log(`[Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
     })();
   }
 
@@ -333,7 +333,7 @@ class TransactionService {
     const txCount = (db.prepare("SELECT COUNT(*) as count FROM transactions WHERE is_deleted = 0").get() as { count: number }).count;
     
     if (ftsCount === 0 && txCount > 0) {
-      console.log('🔄 Rebuilding Search Index (FTS5)...');
+      console.log('Rebuilding Search Index (FTS5)...');
       db.exec("INSERT INTO transactions_fts(rowid, id, description) SELECT rowid, id, description FROM transactions WHERE is_deleted = 0");
     }
 
@@ -376,7 +376,7 @@ class TransactionService {
 
       return rows;
     } catch (ftsErr: any) {
-      console.warn('⚠️ FTS5 search query error, falling back to LIKE:', ftsErr.message);
+      console.warn('[WARN] FTS5 search query error, falling back to LIKE:', ftsErr.message);
       return db.prepare(`
         SELECT 
           t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,

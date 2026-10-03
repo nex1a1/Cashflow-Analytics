@@ -86,9 +86,9 @@ export function auditLogger(req: Request, res: Response, next: NextFunction): vo
     const isMutation = method !== 'GET';
 
     if (isMutation || isError) {
-      const icon = isError ? '❌' : '⚡';
+      const tag = isError ? '[AUDIT ERROR]' : '[AUDIT]';
       const what = actionDetail ? ` | ${actionDetail}` : '';
-      console.log(`${icon} [AUDIT] [${timestamp}] ${method} ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]${what}`);
+      console.log(`${tag} [${timestamp}] ${method} ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]${what}`);
     } else if (process.env.LOG_READS === '1') {
       // Successful reads are noise (~10 per page load); opt in with LOG_READS=1
       console.log(`[API ${method}] [${timestamp}] ${path} - HTTP ${status} (${duration}ms) [IP: ${ip}]`);

@@ -77,6 +77,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
         const currentLeft = window.scrollX || document.documentElement.scrollLeft;
         if (Math.abs(currentTop - initialScroll.current.top) < 5 && Math.abs(currentLeft - initialScroll.current.left) < 5) return;
       }
+      if (e.type === 'keydown') e.stopPropagation(); // Esc ปิดแค่ตัวเลือกไอคอน ไม่ปิดโมดัลที่ครอบอยู่ (DayDetailModal ฟัง Esc ที่ window)
       setOpen(false);
     };
 
