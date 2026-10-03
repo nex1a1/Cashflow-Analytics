@@ -27,13 +27,11 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
     return () => window.removeEventListener('keydown', handleEsc);
   }, [importPreview, setImportPreview]);
 
-  if (!importPreview) return null;
-
   const updateItem  = (id: string, field: string, value: any) => setImportPreview((prev: any) => ({ ...prev, items: prev.items.map((i: any) => i.id === id ? { ...i, [field]: value } : i) }));
   const deleteItem  = (id: string) => setImportPreview((prev: any) => ({ ...prev, items: prev.items.filter((i: any) => i.id !== id) }));
 
-  const allItems = importPreview.items;
-  const allCats  = importPreview.updatedCategories || categories;
+  const allItems = importPreview?.items ?? [];
+  const allCats  = importPreview?.updatedCategories || categories;
 
   // ใช้ useMemo และ Slice แบ่งหน้าแบบตรงไปตรงมา
   const { pageItems, totalPages } = useMemo(() => {
@@ -47,6 +45,9 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
       totalPages: total
     };
   }, [allItems, previewPage]);
+
+  // hook ทุกตัวต้องอยู่เหนือบรรทัดนี้ (modal ถูก mount ตลอดโดย importPreview เป็น null ก่อน ลำดับ hook ต้องคงที่)
+  if (!importPreview) return null;
 
   const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
 

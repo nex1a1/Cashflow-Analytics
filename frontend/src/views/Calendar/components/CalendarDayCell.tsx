@@ -138,9 +138,10 @@ const CalendarDayCell = memo(function CalendarDayCell({
               <PlusCircle className="w-4 h-4" />
             </button>
           )}
-          {/* โน้ตประจำวัน: ไอคอน + ข้อความกินที่ว่างที่เหลือข้างเลขวัน ยาวเกินตัดด้วย … (ข้อความเต็มดูได้ที่ title) */}
+          {/* โน้ตประจำวัน: ไอคอน + ข้อความกินที่ว่างที่เหลือข้างเลขวัน ยาวเกินตัดด้วย … (ข้อความเต็มดูได้ที่ title)
+              ตัดเฉพาะแนวนอน (overflow-x-clip) เหมือน .truncate ใน index.css — overflow-hidden จะตัดสระ/วรรณยุกต์ไทยที่ล้นบรรทัด leading-none */}
           {note && (
-            <span className="flex items-center gap-1 min-w-0 overflow-hidden text-[11px] leading-none text-ink-body" title={note}>
+            <span className="flex items-center gap-1 min-w-0 overflow-x-clip text-[11px] leading-none text-ink-body" title={note}>
               <CategoryGlyph icon={noteIcon || DEFAULT_NOTE_ICON} size={12} className="shrink-0 text-ink-soft" />
               <span className="truncate">{note}</span>
             </span>

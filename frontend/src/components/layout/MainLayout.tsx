@@ -110,7 +110,8 @@ export default function MainLayout() {
           fileInputRef={fileInputRef}
         />
 
-        <div className="p-6 relative z-0 flex-grow bg-canvas">
+        {/* No z-index here: it would make this wrapper a stacking context and trap the fixed modals rendered inside views (DayDetailModal, AssetsModal) beneath the z-60 header */}
+        <div className="p-6 relative flex-grow bg-canvas">
           {activeTab === 'insights' && (
             <div key="insights">
               <DashboardView
