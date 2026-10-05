@@ -1,5 +1,4 @@
 import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
@@ -10,6 +9,7 @@ import backupService from './src/services/backupService';
 import db from './src/config/db';
 import { auditLogger } from './src/middleware/auditLogger';
 import { ApiError } from './src/middleware/ApiError';
+import { errorHandler } from './src/middleware/errorHandler';
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
+      callback(new ApiError(403, `Origin ${origin} not allowed by CORS`));
     }
   },
   credentials: true,
@@ -64,17 +64,7 @@ if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.
 }
 
 // Global Error Handler
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err && typeof err === 'object' && 'name' in err && (err as any).name === 'ZodError') {
-    return res.status(400).json({ error: 'Validation Error', details: (err as any).errors });
-  }
-  if (err instanceof ApiError) {
-    return res.status(err.status).json({ error: err.message });
-  }
-  const message = err instanceof Error ? err.message : 'Internal Server Error';
-  console.error('[API Error]', err);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use(errorHandler);
 
 // Port setup
 const PORT = process.env.PORT || 3000;

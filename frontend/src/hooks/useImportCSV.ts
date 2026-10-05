@@ -1,9 +1,12 @@
 // src/hooks/useImportCSV.ts
 import { useState, useRef, useCallback } from 'react';
-import { CALENDAR_API_URL, PREDICT_API_URL } from '../constants';
+import { PREDICT_API_URL } from '../constants';
 import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
+import { parseLooseDate } from '../utils/dateHelpers';
+import { splitImportDuplicates } from '../utils/importDedupe';
+import { calendarService, categoryService, dayTypeService, transactionService } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Category, DayType } from '../types';
+import { CashflowGroup, Category, DayType, GroupType } from '../types';
 
 function extractUniqueDescriptions(parsedRows: string[][], isCsvLong: boolean, headers: string[]): Set<string> {
   const uniqueDescriptions = new Set<string>();
@@ -129,46 +132,62 @@ function parseWideCsvRow(row: string[], headers: string[], context: any) {
   return rowItems;
 }
 
+const importType = (typeStr: string): GroupType =>
+  typeStr === 'รายรับ' || typeStr === 'income' ? 'income'
+    : typeStr === 'เงินออม' || typeStr === 'savings' ? 'savings'
+      : 'expense';
+
+/** The group a category created by the import lives in: one of its type, preferring a catch-all named "อื่น…". */
+function pickGroup(groups: CashflowGroup[], type: GroupType): CashflowGroup | undefined {
+  const ofType = groups.filter(g => g.type === type).sort((a, b) => a.order_index - b.order_index);
+  return ofType.find(g => g.name.includes('อื่น')) ?? ofType[0];
+}
+
+interface ImportCreations {
+  newCategories: Category[];
+  newDayTypeConfigs: DayType[];
+  missingGroupTypes: Set<GroupType>;
+}
+
 function createConfigAndCategoryResolvers(
   updatedDayTypeConfig: DayType[],
   updatedCategories: Category[],
-  flags: { isConfigChanged: boolean; isCategoryChanged: boolean }
+  groups: CashflowGroup[],
+  created: ImportCreations
 ) {
   const getOrCreateDayType = (label: string): string | null => {
     if (!label || label.trim() === '') return null;
     const trimmed = label.trim();
     let found = updatedDayTypeConfig.find(dt => dt.label === trimmed);
     if (!found) {
-      found = {
-        id: crypto.randomUUID(),
-        label: trimmed,
-        color: '#64748B',
-      };
+      found = { id: crypto.randomUUID(), name: '', label: trimmed, color: '#64748B', order_index: updatedDayTypeConfig.length + 1 };
       updatedDayTypeConfig.push(found);
-      flags.isConfigChanged = true;
+      created.newDayTypeConfigs.push(found);
     }
     return found.id;
   };
 
   const getOrCreateCategory = (name: string, typeStr: string = 'รายจ่าย'): string => {
-    if (!name || name.trim() === '') {
-      return updatedCategories.find(c => c.type === 'expense')?.name || 'อื่นๆ';
-    }
-    const trimmed = name.trim();
+    const trimmed = name?.trim() || updatedCategories.find(c => c.type === 'expense')?.name || 'อื่นๆ';
     let found = updatedCategories.find(c => c.name === trimmed);
     if (!found) {
-      const isIncome = typeStr === 'รายรับ' || typeStr === 'income';
+      const type = importType(typeStr);
+      const group = pickGroup(groups, type);
+      if (!group) created.missingGroupTypes.add(type);
+      const lastOrder = Math.max(0, ...updatedCategories.filter(c => c.type === type).map(c => c.order_index || 0));
       found = {
         id: crypto.randomUUID(),
         name: trimmed,
-        icon: '📌',
-        color: isIncome ? '#10B981' : '#64748B',
-        type: isIncome ? 'income' : 'expense',
-        cashflowGroup: isIncome ? 'bonus' : 'variable',
-        allocation_type: isIncome ? 'savings' : 'want',
+        icon: type === 'income' ? 'coins' : type === 'savings' ? 'piggy-bank' : 'tag',
+        color: type === 'expense' ? '#64748B' : '#10B981',
+        type,
+        cashflowGroup: group?.id,
+        cashflow_group_id: group?.id,
+        allocation_type: type === 'income' ? null : type === 'savings' ? 'savings' : (group?.allocation_type ?? 'want'),
+        order_index: lastOrder + 1,
       };
       updatedCategories.push(found);
-      flags.isCategoryChanged = true;
+      created.newCategories.push(found);
     }
     return found.name;
   };
@@ -177,30 +196,35 @@ function createConfigAndCategoryResolvers(
 }
 
 function parseImportRows(parsedRows: string[][], headers: string[], isCsvLong: boolean, baseContext: any) {
-  const newList: any[] = [];
+  const items: any[] = [];
+  let invalidDates = 0;
   for (let i = 1; i < parsedRows.length; i++) {
     const row = parsedRows[i];
     if (row.length < 2) continue;
-    const dateStr = row[0]?.trim();
-    if (!dateStr) continue;
-    const isValidDate = dateStr.includes('/') || /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
-    if (!isValidDate) continue;
+    const rawDate = row[0]?.trim();
+    if (!rawDate) continue;
+    const dateStr = parseLooseDate(rawDate);
+    if (!dateStr) {
+      // "รวม" / "Total" lines are not dates and stay silent; something that tried to be a date is reported
+      if (/\d/.test(rawDate) && /[/-]/.test(rawDate)) invalidDates++;
+      continue;
+    }
 
     const rowContext = { ...baseContext, dateStr };
 
     if (isCsvLong) {
       const item = parseLongCsvRow(row, headers, rowContext);
-      if (item) newList.push(item);
+      if (item) items.push(item);
     } else {
-      const items = parseWideCsvRow(row, headers, rowContext);
-      if (items.length > 0) newList.push(...items);
+      items.push(...parseWideCsvRow(row, headers, rowContext));
     }
   }
-  return newList;
+  return { items, invalidDates };
 }
 
 export interface UseImportCSVProps {
   categories: Category[];
+  cashflowGroups: CashflowGroup[];
   dayTypes: Record<string, string>;
   setDayTypes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   dayTypeConfig: DayType[];
@@ -211,6 +235,7 @@ export interface UseImportCSVProps {
 
 export default function useImportCSV({
   categories,
+  cashflowGroups,
   dayTypes,
   setDayTypes,
   dayTypeConfig,
@@ -249,18 +274,19 @@ export default function useImportCSV({
         const uniqueDescriptions = extractUniqueDescriptions(parsedRows, isCsvLong, headers);
         const predictions = await fetchSharkBrainPredictions(uniqueDescriptions);
 
-        let newDayTypes = { ...dayTypes };
-        let updatedDayTypeConfig = [...dayTypeConfig];
-        let updatedCategories = [...categories];
-        const flags = { isConfigChanged: false, isCategoryChanged: false };
+        const newDayTypes = { ...dayTypes };
+        const updatedDayTypeConfig = [...dayTypeConfig];
+        const updatedCategories = [...categories];
+        const created: ImportCreations = { newCategories: [], newDayTypeConfigs: [], missingGroupTypes: new Set() };
 
         const { getOrCreateDayType, getOrCreateCategory } = createConfigAndCategoryResolvers(
           updatedDayTypeConfig,
           updatedCategories,
-          flags
+          cashflowGroups,
+          created
         );
 
-        const newList = parseImportRows(parsedRows, headers, isCsvLong, {
+        const { items, invalidDates } = parseImportRows(parsedRows, headers, isCsvLong, {
           predictions,
           getOrCreateDayType,
           getOrCreateCategory,
@@ -268,15 +294,41 @@ export default function useImportCSV({
           updatedCategories,
         });
 
-        if (newList.length > 0) {
+        if (created.missingGroupTypes.size > 0) {
+          const labels = { income: 'รายรับ', expense: 'รายจ่าย', savings: 'ลงทุน/ออม' } as const;
+          const missing = [...created.missingGroupTypes].map(t => labels[t]).join(', ');
+          showToast(`ไฟล์มีหมวดหมู่ใหม่ แต่ยังไม่มีกลุ่ม${missing} ให้ใส่ สร้างกลุ่มในหน้าตั้งค่าก่อน`, 'error');
+          return;
+        }
+
+        // Rows that are already stored (importing a file you exported, or the same file twice) are left out
+        let fresh = items;
+        let skippedDuplicates = 0;
+        if (items.length > 0) {
+          const dates = items.map(i => i.date).sort((a, b) => a.localeCompare(b));
+          try {
+            const existing = await transactionService.getAll(dates[0], dates[dates.length - 1]);
+            ({ fresh, skipped: skippedDuplicates } = splitImportDuplicates(items, existing));
+          } catch (e) {
+            console.warn('Duplicate check skipped:', e);
+          }
+        }
+
+        if (fresh.length > 0) {
           setImportPreview({
-            items: newList,
+            items: fresh,
             updatedDayTypeConfig,
             updatedCategories,
-            isConfigChanged: flags.isConfigChanged,
-            isCategoryChanged: flags.isCategoryChanged,
+            newCategories: created.newCategories,
+            newDayTypeConfigs: created.newDayTypeConfigs,
+            isConfigChanged: created.newDayTypeConfigs.length > 0,
+            isCategoryChanged: created.newCategories.length > 0,
             newDayTypes,
+            skippedDuplicates,
+            skippedInvalid: invalidDates,
           });
+        } else if (skippedDuplicates > 0) {
+          showToast(`ทุกรายการในไฟล์ (${skippedDuplicates} รายการ) มีอยู่แล้ว ไม่มีข้อมูลใหม่ให้นำเข้า`, 'info');
         } else {
           showToast('ไม่พบข้อมูลที่จะบันทึก ตรวจสอบรูปแบบข้อมูลอีกครั้ง', 'error');
         }
@@ -287,41 +339,55 @@ export default function useImportCSV({
         setIsProcessing(false);
       }
     },
-    [categories, dayTypes, dayTypeConfig, showToast]
+    [categories, cashflowGroups, dayTypes, dayTypeConfig, showToast]
   );
 
   const confirmImport = useCallback(
-    async ({ onSuccess }: { onSuccess?: () => void }) => {
+    async ({ onSuccess }: { onSuccess?: () => void } = {}) => {
       if (!importPreview) return;
       setIsProcessing(true);
-      const { items, updatedDayTypeConfig, updatedCategories, isConfigChanged, isCategoryChanged, newDayTypes } =
-        importPreview;
+      const { items, updatedCategories, newCategories, newDayTypeConfigs, newDayTypes } = importPreview;
 
       try {
-        await saveToDb(items);
+        // Persist what the file introduces BEFORE the rows that point at it. Only what the (possibly trimmed)
+        // preview still uses; the server refuses a row whose category does not exist.
+        const usedCategories = new Set<string>(items.map((i: any) => i.category));
+        const categoriesToCreate: Category[] = newCategories.filter((c: Category) => usedCategories.has(c.name));
+        for (const c of categoriesToCreate) {
+          await categoryService.save({
+            id: c.id, name: c.name, icon: c.icon, color: c.color, cashflow_group_id: c.cashflowGroup, order_index: c.order_index,
+          });
+        }
+        const usedDayTypes = new Set<string>(Object.values(newDayTypes));
+        const dayTypesToCreate: DayType[] = newDayTypeConfigs.filter((d: DayType) => usedDayTypes.has(d.id));
+        for (const d of dayTypesToCreate) await dayTypeService.save(d);
 
-        setDayTypes(prev => ({ ...prev, ...newDayTypes }));
-        try {
-          for (const [date, type_id] of Object.entries(newDayTypes)) {
-            await fetch(CALENDAR_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ date, type_id }),
-            });
+        const idByName = new Map<string, string>(updatedCategories.map((c: Category) => [c.name, c.id]));
+        await saveToDb(items.map((i: any) => ({ ...i, category_id: idByName.get(i.category) })));
+
+        // Only the days whose type actually changes (the map also holds every day that was already set)
+        const savedDays: Record<string, string> = {};
+        let failedDays = 0;
+        for (const [date, typeId] of Object.entries<string>(newDayTypes)) {
+          if (dayTypes[date] === typeId) continue;
+          try {
+            await calendarService.save(date, typeId);
+            savedDays[date] = typeId;
+          } catch (e) {
+            console.error('Calendar sync failed:', e);
+            failedDays++;
           }
-        } catch (e) {
-          console.error('Calendar sync failed:', e);
         }
-
-        if (isConfigChanged) {
-          setDayTypeConfig(updatedDayTypeConfig);
-        }
-        if (isCategoryChanged) {
-          setCategories(updatedCategories);
-        }
+        setDayTypes(prev => ({ ...prev, ...savedDays }));
+        if (dayTypesToCreate.length > 0) setDayTypeConfig([...dayTypeConfig, ...dayTypesToCreate]);
+        if (categoriesToCreate.length > 0) setCategories([...categories, ...categoriesToCreate]);
 
         setImportPreview(null);
-        showToast(`นำเข้าข้อมูล ${items.length} รายการสำเร็จ`, 'success');
+        if (failedDays > 0) {
+          showToast(`นำเข้า ${items.length} รายการแล้ว แต่บันทึกประเภทวันไม่สำเร็จ ${failedDays} วัน`, 'error');
+        } else {
+          showToast(`นำเข้าข้อมูล ${items.length} รายการสำเร็จ`, 'success');
+        }
         onSuccess?.();
       } catch (err: any) {
         showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
@@ -329,7 +395,7 @@ export default function useImportCSV({
         setIsProcessing(false);
       }
     },
-    [importPreview, saveToDb, setDayTypes, setDayTypeConfig, setCategories, showToast]
+    [importPreview, saveToDb, dayTypes, dayTypeConfig, categories, setDayTypes, setDayTypeConfig, setCategories, showToast]
   );
 
   const handleFileUpload = useCallback(

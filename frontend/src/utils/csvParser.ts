@@ -8,14 +8,15 @@ interface CategoryRule {
 const CATEGORY_RULES: CategoryRule[] = [
   { pattern: /เงินเดือน|salary/, name: "เงินเดือน" },
   { pattern: /โบนัส|รายรับพิเศษ|ขายของ/, name: "รายรับพิเศษ/โบนัส" },
-  { pattern: /หุ้น|nvda|xom|ko|qqq|webull|ออมทอง|กองทุน|ลงทุน/, name: "การลงทุนและออมเงิน" },
+  // Short Latin tokens use \b: a bare "ko" / "ot" / "ups" matched inside tokyo, hotel, groups...
+  { pattern: /หุ้น|nvda|xom|\bko\b|qqq|webull|ออมทอง|กองทุน|ลงทุน/, name: "การลงทุนและออมเงิน" },
   { pattern: /ค่าเช่า|ค่าหอ|หอพัก|อพาร์ทเม้นท์|คอนโด|ห้องพัก/, name: "ค่าเช่า/ค่าหอพัก" },
   { pattern: /ไอแพด|ipad|iphone|ไอโฟน|มือถือ|samsung|xiaomi|tablet|แท็บเล็ต|apple watch|smartwatch/, name: "สมาร์ทโฟน & ไอทีพกพา" },
-  { pattern: /mainboard|psu|ram|ryzen|cpu|case|ssd|การ์ดจอ|vga|cooler|heatsink|fan|ups|สำรองไฟ/, name: "ประกอบคอม & ฮาร์ดแวร์" },
-  { pattern: /keyboard|คีย์บอร์ด|mouse|เมาส์|ไมค์|microphone|mic|maono|dac|soundcard|sound blaster/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
-  { pattern: /headphone|หูฟัง|earbud|in-ear|joystick|จอย|flydigi|xbox|connection|สายเชื่อมต่อ|enclosure|usb/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
+  { pattern: /mainboard|\bpsu\b|\bram\b|ryzen|\bcpu\b|\bcase\b|\bssd\b|การ์ดจอ|\bvga\b|cooler|heatsink|\bfan\b|\bups\b|สำรองไฟ/, name: "ประกอบคอม & ฮาร์ดแวร์" },
+  { pattern: /keyboard|คีย์บอร์ด|mouse|เมาส์|ไมค์|microphone|\bmic\b|maono|\bdac\b|soundcard|sound blaster/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
+  { pattern: /headphone|หูฟัง|earbud|in-ear|joystick|จอย|flydigi|xbox|connection|สายเชื่อมต่อ|enclosure|\busb\b/, name: "เกมมิ่งเกียร์ & อุปกรณ์ต่อพ่วง" },
   { pattern: /โต๊ะ|table|desk|chair|เก้าอี้|bewell|pegboard|mousepad|แผ่นรองเมาส์|monitor arm|ขาตั้งจอ/, name: "เฟอร์นิเจอร์ & จัดโต๊ะคอม" },
-  { pattern: /คอม|computer|ผ่อน|จอ/, name: "อุปกรณ์ไอที/คอมพิวเตอร์" },
+  { pattern: /คอม|computer|ผ่อน|จอ(?!ด)/, name: "อุปกรณ์ไอที/คอมพิวเตอร์" }, // (?!ด): "จอดรถ" is parking, not a monitor
   { pattern: /gemini|vip|subscription|netflix|youtube|spotify|yt premium|รายเดือน|สมาชิก/, name: "บริการรายเดือน" },
   { pattern: /max value|maxvalue|lotus|big c|tops|makro|ซุปเปอร์|ห้าง|เซเว่น|7-11|ดองกิ/, name: "ซุปเปอร์มาร์เก็ต/ห้าง" },
   { pattern: /shopee|lazada|ออนไลน์|สั่งของ|tiktok shop/, name: "ช้อปปิ้งออนไลน์" },
@@ -23,7 +24,7 @@ const CATEGORY_RULES: CategoryRule[] = [
   { pattern: /น้ำมัน|ทางด่วน|รถ|bts|mrt|เดินทาง|taxi|grab|วิน|จอดรถ|สะพานใหม่|มีนบุรี|รังสิต|ทองหล่อ|commart/, name: "การเดินทาง" },
   { pattern: /หนัง|gundam|เกม|ของเล่น|บันเทิง|ดูหนัง|คอนเสิร์ต|imax|เบสบอล|pool|discord/, name: "บันเทิงและสันทนาการ" },
   { pattern: /ซักผ้า|ผงซักฟอก|ของใช้/, name: "ที่อยู่อาศัยและของใช้" },
-  { pattern: /ข้าว|อาหาร|เที่ยง|เย็น|หุง|ผลไม้|ขนม|lunch|dinner|cook|เครื่องดื่ม|ชา|กาแฟ|ot/, name: "อาหารและเครื่องดื่ม" },
+  { pattern: /ข้าว|อาหาร|เที่ยง|เย็น|หุง|ผลไม้|ขนม|lunch|dinner|cook|เครื่องดื่ม|ชา|กาแฟ|\bot\b/, name: "อาหารและเครื่องดื่ม" },
   { pattern: /พ่อ|แม่|ลูก|ครอบครัว|ให้เงิน|หมา|แมว|สัตว์เลี้ยง/, name: "ครอบครัวและสัตว์เลี้ยง" },
 ];
 

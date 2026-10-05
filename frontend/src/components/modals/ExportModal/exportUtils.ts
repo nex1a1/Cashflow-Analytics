@@ -1,6 +1,7 @@
 // frontend/src/components/modals/ExportModal/exportUtils.ts
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../../types';
-import { isDateInFilter } from '../../../utils/dateHelpers';
+import { isDateInFilter, parseDateStrToObj } from '../../../utils/dateHelpers';
+import { resolveDefaultDayTypeId } from '../../../views/Calendar/utils/calendarPeriodHelpers';
 import { DayTypeInfo, DelimiterChar, ExportFormatKey, ExportStats, ExportTypeFilter, HeaderLanguage } from './types';
 
 /**
@@ -22,10 +23,11 @@ export function resolveDayTypeInfo(
     }
   }
 
-  // Weekend fallback calculation
-  const dayIdx = new Date(date).getDay();
+  // Default for an unmarked day — same rule as the calendar (local date, name codes before position)
+  const dayIdx = parseDateStrToObj(date).getDay();
   const isWeekend = dayIdx === 0 || dayIdx === 6;
-  const config = isWeekend ? dayTypeConfig[1] : dayTypeConfig[0];
+  const defaultId = resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
+  const config = dayTypeConfig.find((d) => d.id === defaultId);
 
   return {
     label: config?.label || (isWeekend ? 'วันหยุด' : 'ทำงาน'),
@@ -174,7 +176,7 @@ export function buildWideCsv(params: {
     activeCats.forEach((cat) => {
       const amount = calculateCategoryTotal(data, date, cat.name);
       dailySum += amount;
-      row.push(amount > 0 ? amount.toFixed(2) : '0.00');
+      row.push(amount.toFixed(2)); // signed: a savings sell is negative and must not be written as 0.00
     });
 
     row.push((Math.round(dailySum * 100) / 100).toFixed(2));

@@ -9,7 +9,8 @@ const transactionSchema = z.object({
   amount: z.coerce.number(), // ติดลบได้เฉพาะหมวดลงทุน/ออม (= ขาย) — service ตรวจซ้ำ
   asset_id: z.string().nullable().optional(),
   units: z.coerce.number().nullable().optional(),
-  allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional().default('want'),
+  // no default here: a missing value must reach resolveAllocationType so the group's own default applies
+  allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
   dayNote: z.string().nullable().optional().default(''),
   group_type: z.string().nullable().optional(), 
 }).loose();

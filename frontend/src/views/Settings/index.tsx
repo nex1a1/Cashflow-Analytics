@@ -6,6 +6,7 @@ import OrphanWarningBanner from './components/OrphanWarningBanner';
 import SectionCard from './components/SectionCard';
 import CategoryRow from './components/CategoryRow';
 import CashflowGroupsCard from './components/CashflowGroupsCard';
+import BudgetsCard from './components/BudgetsCard';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
 import { countTxByGroup } from './settingsHelpers';
@@ -245,7 +246,9 @@ const SettingsView = memo(function SettingsView({
             categories={categories}
           />
 
-          <DayTypesCard 
+          <BudgetsCard cashflowGroups={cashflowGroups} />
+
+          <DayTypesCard
             dayTypeConfig={dayTypeConfig}
             handleAddDayType={handleAddDayType}
             handleMoveDayType={handleMoveDayType}

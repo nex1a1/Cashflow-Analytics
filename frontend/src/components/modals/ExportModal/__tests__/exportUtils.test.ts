@@ -145,6 +145,15 @@ describe('exportUtils', () => {
       const dt = resolveDayTypeInfo('2026-03-07', {}, mockDayTypeConfig);
       expect(dt.label).toBe('วันหยุด');
     });
+
+    it('fallback follows the name codes, not the position, once day types are re-ordered', () => {
+      const reordered: DayType[] = [
+        { id: 'h', name: 'holiday', label: 'วันหยุด' },
+        { id: 'w', name: 'workday', label: 'ทำงาน' },
+      ];
+      expect(resolveDayTypeInfo('2026-03-02' /* Mon */, {}, reordered).label).toBe('ทำงาน');
+      expect(resolveDayTypeInfo('2026-03-07' /* Sat */, {}, reordered).label).toBe('วันหยุด');
+    });
   });
 
   describe('filterExportTransactions', () => {
@@ -235,6 +244,16 @@ describe('exportUtils', () => {
       expect(lines[0]).toContain('วันที่,ชนิดวัน');
       expect(lines[0]).toContain('รวมสุทธิ');
       expect(lines.length).toBe(3); // Header + 2 unique dates (2026-03-01, 2026-03-02)
+    });
+
+    it('keeps a savings sell (negative amount) instead of printing it as 0.00, and the total matches the cells', () => {
+      const sell: TransactionDisplay = {
+        id: 'tx-sell', date: '2026-03-05', category: 'กองทุน ETF', category_id: 'cat-3',
+        description: 'ขายกองทุน', amount: -2000, group_type: 'savings', allocation_type: 'savings',
+      };
+      const csv = buildWideCsv({ data: [sell], categories: mockCategories, getDayTypeInfo, delimiter: ',', headerLang: 'th' });
+      const row = csv.trim().split('\n')[1].split(',');
+      expect(row.slice(2)).toEqual(['-2000.00', '-2000.00']); // category column, then รวมสุทธิ
     });
   });
 

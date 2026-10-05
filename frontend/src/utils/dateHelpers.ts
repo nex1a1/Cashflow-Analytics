@@ -19,6 +19,20 @@ export const fromISODate = (isoStr: string): string => {
   return `${d}/${m}/${y}`;
 };
 
+/** D/M/YYYY or YYYY-MM-DD, Gregorian or Buddhist year → "YYYY-MM-DD"; null when it is not a real date (CSV import). */
+export const parseLooseDate = (input: string): string | null => {
+  const s = (input ?? '').trim();
+  const dmy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  const iso = dmy ? null : /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!dmy && !iso) return null;
+  const [d, m] = dmy ? [Number(dmy[1]), Number(dmy[2])] : [Number(iso![3]), Number(iso![2])];
+  let y = Number(dmy ? dmy[3] : iso![1]);
+  if (y > 2400) y -= 543; // พ.ศ. → ค.ศ.
+  const probe = new Date(Date.UTC(y, m - 1, d));
+  if (y < 1900 || y > 2400 || probe.getUTCFullYear() !== y || probe.getUTCMonth() !== m - 1 || probe.getUTCDate() !== d) return null;
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+};
+
 export const parseDateStrToObj = (dateStr: string): Date => {
   if (!dateStr || typeof dateStr !== 'string') return new Date();
   

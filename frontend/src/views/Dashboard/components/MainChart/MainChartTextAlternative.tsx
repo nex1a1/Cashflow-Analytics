@@ -20,25 +20,27 @@ export const MainChartTextAlternative = memo(({ caption, isSankey, data }: Props
   if (isSankey) {
     const flows = (datasets[0].data ?? []) as SankeyFlow[];
     return (
-      <table className="sr-only">
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">จาก</th>
-            <th scope="col">ไปยัง</th>
-            <th scope="col">จำนวนเงิน</th>
-          </tr>
-        </thead>
-        <tbody>
-          {flows.map((f, i) => (
-            <tr key={`${f.from}>${f.to}>${i}`}>
-              <td>{f.from}</td>
-              <td>{f.to}</td>
-              <td>฿{formatMoney(f.flow)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">จาก</th>
+              <th scope="col">ไปยัง</th>
+              <th scope="col">จำนวนเงิน</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {flows.map((f, i) => (
+              <tr key={`${f.from}>${f.to}>${i}`}>
+                <td>{f.from}</td>
+                <td>{f.to}</td>
+                <td>฿{formatMoney(f.flow)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
@@ -48,25 +50,27 @@ export const MainChartTextAlternative = memo(({ caption, isSankey, data }: Props
   if (!series.length) return null;
 
   return (
-    <table className="sr-only">
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">ช่วงเวลา</th>
-          {series.map((ds, i) => <th key={`${ds.label}-${i}`} scope="col">{ds.label}</th>)}
-        </tr>
-      </thead>
-      <tbody>
-        {labels.map((label, row) => (
-          <tr key={`${label}-${row}`}>
-            <th scope="row">{label}</th>
-            {series.map((ds, i) => (
-              <td key={`${ds.label}-${i}`}>฿{formatMoney(Number((ds.data as number[])[row]) || 0)}</td>
-            ))}
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">ช่วงเวลา</th>
+            {series.map((ds, i) => <th key={`${ds.label}-${i}`} scope="col">{ds.label}</th>)}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {labels.map((label, row) => (
+            <tr key={`${label}-${row}`}>
+              <th scope="row">{label}</th>
+              {series.map((ds, i) => (
+                <td key={`${ds.label}-${i}`}>฿{formatMoney(Number((ds.data as number[])[row]) || 0)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 });
 

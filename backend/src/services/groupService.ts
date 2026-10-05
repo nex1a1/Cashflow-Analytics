@@ -48,6 +48,8 @@ class GroupService {
   }
 
   delete(id: string) {
+    const n = (db.prepare('SELECT COUNT(*) AS c FROM categories WHERE cashflow_group_id = ?').get(id) as { c: number }).c;
+    if (n > 0) throw new ApiError(409, `ลบกลุ่มไม่ได้: ยังมี ${n} หมวดหมู่ในกลุ่มนี้ ย้ายหรือลบหมวดหมู่ก่อน`);
     return db.prepare('DELETE FROM cashflow_groups WHERE id = ?').run(id);
   }
 }

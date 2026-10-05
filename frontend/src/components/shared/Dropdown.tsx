@@ -90,7 +90,12 @@ const Dropdown = memo(function Dropdown({
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openList(); }
       return;
     }
-    if (e.key === 'Escape' || e.key === 'Tab') { if (e.key === 'Escape') e.preventDefault(); close(); return; }
+    if (e.key === 'Escape' || e.key === 'Tab') {
+      // Esc only closes this list: the modal around it (DayDetailModal, BatchAddModal) listens for Esc on window
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); }
+      close();
+      return;
+    }
     if (e.key === 'ArrowDown') { e.preventDefault(); setActive(i => (i + 1) % options.length); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(i => (i - 1 + options.length) % options.length); }
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(active); }

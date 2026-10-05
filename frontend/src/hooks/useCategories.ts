@@ -141,11 +141,8 @@ export default function useCategories(
         await loadCategories();
         showToast('ลบหมวดหมู่สำเร็จ', 'success');
       } catch (err: any) {
-        if (err.message.includes('FOREIGN KEY')) {
-          showToast('ลบไม่สำเร็จ: ยังมีข้อมูลเก่าอ้างอิงหมวดหมู่นี้อยู่', 'error');
-        } else {
-          showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
-        }
+        // the server answers 409 with the reason (e.g. rows outside the loaded period still use this category)
+        showToast('ไม่สามารถลบหมวดหมู่ได้: ' + err.message, 'error');
       }
     },
     [loadCategories, showToast]

@@ -71,6 +71,12 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                   จะสร้างหมวดหมู่ใหม่
                 </span>
               )}
+              {importPreview.skippedDuplicates > 0 && (
+                <span className="text-[11px] font-bold text-ink-body">ข้าม {importPreview.skippedDuplicates} รายการที่มีอยู่แล้ว</span>
+              )}
+              {importPreview.skippedInvalid > 0 && (
+                <span className="text-[11px] font-bold text-warn">ข้าม {importPreview.skippedInvalid} แถวที่วันที่ไม่ถูกต้อง</span>
+              )}
               <span className="text-[11px] text-slate-500 font-mono">แก้ไขได้ก่อนนำเข้า</span>
             </div>
           </div>

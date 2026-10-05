@@ -1,6 +1,7 @@
 // src/hooks/useTransactionData.ts
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { parseDateStrToObj } from '../utils/dateHelpers';
+import { latestOnly } from '../utils/latestOnly';
 import { shiftMonth } from '../utils/payCycle';
 import { getThaiMonth } from '../utils/formatters';
 import {
@@ -14,17 +15,11 @@ import {
 import { useToast } from '../context/ToastContext';
 import { Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../types';
 
-const sortTransactions = (dataArr: TransactionDisplay[]): TransactionDisplay[] =>
-  [...dataArr].sort((a, b) => {
-    const dateDiff = (parseDateStrToObj(a.date)?.getTime() || 0) - (parseDateStrToObj(b.date)?.getTime() || 0);
-    if (dateDiff !== 0) return dateDiff;
-
-    if ((a as any).created_at && (b as any).created_at) {
-      return new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime();
-    }
-
-    return String(a.id).localeCompare(String(b.id));
-  });
+// Same-date rows keep the order they arrived in: the API already sends (date, created_at, rowid) order, the
+// response has no created_at to re-sort by, and the id is a random UUID — so it must not be used as a tie-break.
+// Array.prototype.sort is stable, which is what keeps the entry order.
+export const sortTransactions = (dataArr: TransactionDisplay[]): TransactionDisplay[] =>
+  [...dataArr].sort((a, b) => (parseDateStrToObj(a.date)?.getTime() || 0) - (parseDateStrToObj(b.date)?.getTime() || 0));
 
 export interface UseTransactionDataProps {
   categories: Category[];
@@ -52,14 +47,13 @@ export default function useTransactionData({
   const [frequentItems, setFrequentItems] = useState<FrequentItem[]>([]); // All-time frequent transactions
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isBootstrapping, setIsBootstrapping] = useState<boolean>(true);
-  const [dataRange, setDataRange] = useState<{ start: string | null; end: string | null }>({
-    start: null,
-    end: null
-  });
-  const [analyticsRange, setAnalyticsRange] = useState<{ start: string | null; end: string | null }>({
-    start: null,
-    end: null
-  });
+  // The window being shown, kept in refs: refreshData is captured by toast buttons ("เลิกทำ") and awaited
+  // callbacks, so reading state there reloaded whatever window was current when they were created.
+  const dataRange = useRef<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const analyticsRange = useRef<{ start: string | null; end: string | null }>({ start: null, end: null });
+  // A slow earlier response (e.g. "ALL") must not overwrite the window the user picked afterwards
+  const beginDataLoad = useMemo(() => latestOnly(), []);
+  const beginAnalyticsLoad = useMemo(() => latestOnly(), []);
   const { showToast } = useToast();
 
   /**
@@ -67,19 +61,22 @@ export default function useTransactionData({
    */
   const loadData = useCallback(
     async (startDate: string | null, endDate: string | null) => {
+      dataRange.current = { start: startDate, end: endDate };
+      const isCurrent = beginDataLoad();
       try {
-        setDataRange({ start: startDate, end: endDate });
         setDbStatus('กำลังโหลด...');
         const txData = await transactionService.getAll(startDate || undefined, endDate || undefined);
+        if (!isCurrent()) return;
         setTransactions(sortTransactions(txData));
         setDbStatus('Online (SQLite3)');
       } catch (err) {
+        if (!isCurrent()) return;
         console.error(err);
         setTransactions([]);
         setDbStatus('Offline (Database Error)');
       }
     },
-    [setDbStatus]
+    [setDbStatus, beginDataLoad]
   );
 
   /**
@@ -87,25 +84,26 @@ export default function useTransactionData({
    */
   const loadAnalytics = useCallback(
     async (startDate: string | null, endDate: string | null) => {
+      analyticsRange.current = { start: startDate, end: endDate };
+      const isCurrent = beginAnalyticsLoad();
       try {
-        setAnalyticsRange({ start: startDate, end: endDate });
         const data = await analyticsService.getDashboardData(
           startDate || undefined,
           endDate || undefined
         );
-        setSummaryData(data);
+        if (isCurrent()) setSummaryData(data);
       } catch (err) {
         console.error('Failed to load analytics:', err);
       }
     },
-    []
+    [beginAnalyticsLoad]
   );
 
   const refreshData = useCallback(async () => {
     try {
       await Promise.all([
-        loadData(dataRange.start, dataRange.end),
-        loadAnalytics(analyticsRange.start, analyticsRange.end),
+        loadData(dataRange.current.start, dataRange.current.end),
+        loadAnalytics(analyticsRange.current.start, analyticsRange.current.end),
         transactionService.getFrequentItems().then(setFrequentItems),
         transactionService.getPeriods().then(setMasterPeriods),
         transactionService.getCount().then(r => setTotalCount(r.count))
@@ -113,7 +111,7 @@ export default function useTransactionData({
     } catch (err) {
       console.error('Refresh failed', err);
     }
-  }, [loadData, loadAnalytics, dataRange, analyticsRange]);
+  }, [loadData, loadAnalytics]);
 
   /**
    * Initial bootstrap of master data

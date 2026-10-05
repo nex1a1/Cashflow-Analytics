@@ -185,15 +185,18 @@ const migrateTablesToStrict = (): void => {
 
     // 3. calendar_days
     if (tablesToMigrate.includes('calendar_days')) {
+      // เหมือน transactions: ตารางที่เคยเพิ่ม note_icon แล้ว rebuild ต้องพกคอลัมน์ไปด้วย ไม่งั้นไอคอนโน้ตหายเงียบๆ
+      const hasIcon = (db.prepare('PRAGMA table_info(calendar_days)').all() as { name: string }[]).some(c => c.name === 'note_icon');
       db.exec(`
         CREATE TABLE calendar_days_strict (
           date TEXT PRIMARY KEY,
           day_type_id TEXT NOT NULL,
-          note TEXT,
+          note TEXT,${hasIcon ? `
+          note_icon TEXT,` : ''}
           FOREIGN KEY (day_type_id) REFERENCES day_types(id)
         ) STRICT;
-        INSERT INTO calendar_days_strict (date, day_type_id, note) 
-        SELECT date, day_type_id, note FROM calendar_days;
+        INSERT INTO calendar_days_strict (date, day_type_id, note${hasIcon ? ', note_icon' : ''})
+        SELECT date, day_type_id, note${hasIcon ? ', note_icon' : ''} FROM calendar_days;
         DROP TABLE calendar_days;
         ALTER TABLE calendar_days_strict RENAME TO calendar_days;
       `);

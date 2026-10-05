@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { AppDataContextValue, Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
 import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';
+import { latestOnly } from '../utils/latestOnly';
 import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 import useCategories from '../hooks/useCategories';
 import useTransactionData from '../hooks/useTransactionData';
@@ -80,6 +81,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     confirmImport,
   } = useImportCSV({
     categories,
+    cashflowGroups,
     dayTypes,
     setDayTypes,
     dayTypeConfig,
@@ -90,7 +92,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
   // 4. Data Loading for Period
   const [isFetchingPeriod, setIsFetchingPeriod] = useState<boolean>(false);
+  const beginPeriodLoad = useMemo(() => latestOnly(), []);
   const loadPeriodData = useCallback(async (period: string) => {
+    const isCurrent = beginPeriodLoad();
     setIsFetchingPeriod(true);
     const { startDate, endDate, fetchStartDate } = getPeriodDateRange(period);
     try {
@@ -101,9 +105,10 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     } catch (err) {
       console.error('Failed loading period data:', err);
     } finally {
-      setIsFetchingPeriod(false);
+      // an older request finishing must not switch the spinner off while the newer one is still loading
+      if (isCurrent()) setIsFetchingPeriod(false);
     }
-  }, [loadAnalytics, loadData]);
+  }, [loadAnalytics, loadData, beginPeriodLoad]);
 
   // Bootstrap once on mount
   const hasBootstrapped = useRef(false);
@@ -115,14 +120,27 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
   }, [bootstrap]);
 
   // Handlers
+  const dayTypesRef = useRef(dayTypes);
+  useEffect(() => {
+    dayTypesRef.current = dayTypes;
+  }, [dayTypes]);
+
   const handleDayTypeChange = useCallback(async (dateStr: string, type: string) => {
+    const before = dayTypesRef.current[dateStr]; // undefined = the day had no explicit type
     setDayTypes(prev => ({ ...prev, [dateStr]: type }));
     try {
       await calendarService.save(dateStr, type);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save day type to DB:', err);
+      setDayTypes(prev => {
+        const next = { ...prev };
+        if (before === undefined) delete next[dateStr];
+        else next[dateStr] = before;
+        return next;
+      });
+      triggerToast('บันทึกประเภทวันไม่สำเร็จ: ' + err.message, 'error');
     }
-  }, []);
+  }, [triggerToast]);
 
   // โน้ตต้องผูกกับแถว calendar_days (day_type_id NOT NULL) จึงส่งประเภทวันที่หน้าจอแสดงอยู่ไปด้วยเสมอ
   const handleDayNoteChange = useCallback(async (dateStr: string, text: string, icon: string): Promise<boolean> => {

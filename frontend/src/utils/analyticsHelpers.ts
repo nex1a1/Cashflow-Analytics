@@ -3,6 +3,7 @@ import { isDateInFilter, parseDateStrToObj } from './dateHelpers';
 import { getThaiMonth, hexToRgb } from './formatters';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
 import { isSingleUnitPeriod } from './payCycle';
+import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 
 import { tc } from '@/constants/theme';
 /**
@@ -566,9 +567,8 @@ export const calculateDayTypeCounts = (
       [d, m, y] = dateStr.split('/');
     }
     const dayOfWeek = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
-    const defaultType = (dayOfWeek === 0 || dayOfWeek === 6)
-      ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id)
-      : dayTypeConfig[0]?.id;
+    // same rule as the calendar / day modal (by name code, so re-ordering day types in Settings can't flip it)
+    const defaultType = resolveDefaultDayTypeId(dayTypeConfig, dayOfWeek === 0 || dayOfWeek === 6);
     const currentType = dayTypes[dateStr] || defaultType;
     if (currentType && dayTypeCounts[currentType] !== undefined) dayTypeCounts[currentType]++;
     else if (currentType) dayTypeCounts[currentType] = 1;

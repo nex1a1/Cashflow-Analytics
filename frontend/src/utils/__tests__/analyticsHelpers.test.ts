@@ -139,5 +139,16 @@ describe('analyticsHelpers utility', () => {
       expect(counts['WORK']).toBe(2);
       expect(counts['HOLIDAY']).toBe(1);
     });
+
+    it('unmarked days follow resolveDefaultDayTypeId (by name code) even after day types are re-ordered', () => {
+      // Settings lets the user move "วันหยุด" above "ทำงาน"; the calendar still treats Monday as ทำงาน
+      const reordered: DayType[] = [
+        { id: 'HOLIDAY', name: 'holiday', label: 'วันหยุด' },
+        { id: 'WORK', name: 'workday', label: 'ทำงาน' },
+      ];
+      const counts = calculateDayTypeCounts(['2026-10-05' /* Mon */, '2026-10-10' /* Sat */], {}, reordered);
+      expect(counts['WORK']).toBe(1);
+      expect(counts['HOLIDAY']).toBe(1);
+    });
   });
 });

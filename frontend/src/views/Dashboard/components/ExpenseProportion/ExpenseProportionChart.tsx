@@ -77,25 +77,27 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
       </div>
 
       {/* Screen-reader equivalent: the doughnut canvas exposes none of this data to assistive tech */}
-      <table className="sr-only">
-        <caption>สัดส่วนรายจ่าย {isAllocationMode ? 'ตามสัดส่วน 50/30/20' : 'ตามหมวดหมู่'} รวม ฿{formattedAmt}</caption>
-        <thead>
-          <tr>
-            <th scope="col">รายการ</th>
-            <th scope="col">จำนวนเงิน</th>
-            <th scope="col">สัดส่วน</th>
-          </tr>
-        </thead>
-        <tbody>
-          {activeItems.map((item) => (
-            <tr key={item.id || item.name}>
-              <td>{item.name}</td>
-              <td>฿{formatMoney(item.amount)}</td>
-              <td>{item.percentage}%</td>
+      <div className="sr-only">
+        <table>
+          <caption>สัดส่วนรายจ่าย {isAllocationMode ? 'ตามสัดส่วน 50/30/20' : 'ตามหมวดหมู่'} รวม ฿{formattedAmt}</caption>
+          <thead>
+            <tr>
+              <th scope="col">รายการ</th>
+              <th scope="col">จำนวนเงิน</th>
+              <th scope="col">สัดส่วน</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {activeItems.map((item) => (
+              <tr key={item.id || item.name}>
+                <td>{item.name}</td>
+                <td>฿{formatMoney(item.amount)}</td>
+                <td>{item.percentage}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 });

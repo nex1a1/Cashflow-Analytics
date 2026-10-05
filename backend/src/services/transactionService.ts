@@ -20,6 +20,9 @@ interface FrequentItem {
   lastDate: string;
 }
 
+/** Escape LIKE wildcards so user text matches literally (pair with ESCAPE '\'). */
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, '\\$&');
+
 class TransactionService {
   getAll(startDate?: string, endDate?: string): TransactionWithDetails[] {
     let query = `
@@ -54,68 +57,41 @@ class TransactionService {
       params.push(endDate);
     }
 
-    query += ` ORDER BY t.date ASC, t.created_at ASC`;
+    // created_at only has 1-second resolution (batch adds tie) — rowid keeps entry order stable
+    query += ` ORDER BY t.date ASC, t.created_at ASC, t.rowid ASC`;
 
     return db.prepare(query).all(...params) as TransactionWithDetails[];
   }
 
-  /**
-   * Helper to find or create a category by name
-   */
+  /** Lookup only — never creates. (It used to insert into an arbitrary "first" group, i.e. an income group.) */
   getCategoryIdByName(name: string): string | null {
-    let cat = db.prepare("SELECT id FROM categories WHERE name = ?").get(name) as { id: string } | undefined;
-    if (!cat) {
-      // Create a default category if not found
-      // Find a default group (first one available)
-      const defaultGroup = db.prepare("SELECT id FROM cashflow_groups LIMIT 1").get() as { id: string } | undefined;
-      if (defaultGroup) {
-        const id = crypto.randomUUID();
-        db.prepare("INSERT INTO categories (id, name, cashflow_group_id) VALUES (?, ?, ?)")
-          .run(id, name, defaultGroup.id);
-        return id;
-      }
-      return null;
-    }
-    return cat.id;
+    const cat = db.prepare("SELECT id FROM categories WHERE name = ?").get(name) as { id: string } | undefined;
+    return cat ? cat.id : null;
   }
 
   /**
-   * AI-Lite: Suggest category based on description keywords or historical matches
+   * Suggest a category from the user's own history. Read-only: POST /transactions/predict calls this.
+   * The old keyword rules pointed at emoji-named categories that no database has, so they could only ever
+   * create junk, and they outranked the history — removed.
    */
   suggestCategory(description: string): string | null {
     if (!description) return null;
-    const desc = description.toLowerCase();
 
-    // 1. Keyword Mapping (The "Shark" Rules)
-    const rules = [
-      { keywords: ['7-eleven', 'เซเว่น', 'cj express', 'lotus', 'big c', 'mart'], category: '🛒 สินค้าทั่วไป' },
-      { keywords: ['grab', 'foodpanda', 'lineman', 'shopeefood', 'กิน', 'food', 'อาหาร', 'ข้าว', 'เตี๋ยว', 'ตำ'], category: '🍔 อาหารและเครื่องดื่ม' },
-      { keywords: ['bts', 'mrt', 'grab taxi', 'bolt', 'เติมน้ำมัน', 'ptt', 'shell', 'caltex', 'บางจาก'], category: '🚗 การเดินทาง' },
-      { keywords: ['ais', 'true', 'dtac', 'netflix', 'spotify', 'youtube', 'internet', 'เน็ต'], category: '🌐 บริการดิจิทัล' },
-      { keywords: ['หอ', 'คอนโด', 'ไฟฟ้า', 'ประปา', 'ค่าส่วนกลาง', 'rent'], category: '🏠 ที่พักอาศัย' }
-    ];
-
-    for (const rule of rules) {
-      if (rule.keywords.some(k => desc.includes(k))) {
-        return this.getCategoryIdByName(rule.category);
-      }
-    }
-
-    // 2. Historical Match (Exact description match from past transactions)
+    // 1. Exact description match from past transactions
     const history = db.prepare(`
-      SELECT category_id FROM transactions 
-      WHERE LOWER(description) = ? AND is_deleted = 0 
+      SELECT category_id FROM transactions
+      WHERE LOWER(description) = ? AND is_deleted = 0
       LIMIT 1
-    `).get(desc) as { category_id: string } | undefined;
+    `).get(description.toLowerCase()) as { category_id: string } | undefined;
 
     if (history) return history.category_id;
 
-    // 3. Fuzzy Historical Match (Similar description)
+    // 2. Fuzzy match on the first word
     const fuzzy = db.prepare(`
-      SELECT category_id FROM transactions 
-      WHERE description LIKE ? AND is_deleted = 0 
+      SELECT category_id FROM transactions
+      WHERE description LIKE ? ESCAPE '\\' AND is_deleted = 0
       ORDER BY created_at DESC LIMIT 1
-    `).get(`%${description.split(' ')[0]}%`) as { category_id: string } | undefined;
+    `).get(`%${escapeLike(description.split(' ')[0])}%`) as { category_id: string } | undefined;
 
     return fuzzy ? fuzzy.category_id : null;
   }
@@ -131,21 +107,30 @@ class TransactionService {
     `).get(value) as { n: number }).n;
   }
 
+  /** YYYY-MM-DD or D/M/YYYY, Gregorian or Buddhist year; anything else is a 400 (it used to be stored as-is). */
   private normalizeDate(dateStr?: string): string {
-    if (dateStr?.includes('/')) {
-      const [d, m, y] = dateStr.split('/');
-      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-    }
-    return dateStr || '';
+    const raw = (dateStr ?? '').trim();
+    const dmy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(raw);
+    const iso = dmy ? null : /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    const bad = () => new ApiError(400, `วันที่ไม่ถูกต้อง: "${raw}" (ใช้ YYYY-MM-DD หรือ DD/MM/YYYY)`);
+    if (!dmy && !iso) throw bad();
+
+    const [d, m] = dmy ? [Number(dmy[1]), Number(dmy[2])] : [Number(iso![3]), Number(iso![2])];
+    let y = Number(dmy ? dmy[3] : iso![1]);
+    if (y > 2400) y -= 543; // พ.ศ. → ค.ศ.
+    const probe = new Date(Date.UTC(y, m - 1, d));
+    if (y < 1900 || y > 2400 || probe.getUTCFullYear() !== y || probe.getUTCMonth() !== m - 1 || probe.getUTCDate() !== d) throw bad();
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
   private resolveCategoryId(tx: any): string | undefined {
     let categoryId = tx.category_id;
     if (!categoryId || categoryId === '') {
-      if (tx.category) {
-        categoryId = this.getCategoryIdByName(tx.category);
-      }
-      if (!categoryId) {
+      const name = typeof tx.category === 'string' ? tx.category.trim() : '';
+      if (name) {
+        categoryId = this.getCategoryIdByName(name);
+        if (!categoryId) throw new ApiError(400, `ไม่พบหมวดหมู่ "${name}" สร้างหมวดหมู่ก่อนบันทึกรายการ`);
+      } else {
         categoryId = this.suggestCategory(tx.description);
       }
     }
@@ -344,26 +329,13 @@ class TransactionService {
       .trim();
 
     const tokens = sanitized.split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) {
-      // If only symbols were entered, fallback directly to LIKE
-      return db.prepare(`
-        SELECT 
-          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
-          c.name as category, cg.type as group_type
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE (t.description LIKE ? OR c.name LIKE ?) AND t.is_deleted = 0
-        ORDER BY t.date DESC
-        LIMIT 50
-      `).all(`%${raw}%`, `%${raw}%`);
-    }
+    if (tokens.length === 0) return this.searchLike(raw); // only symbols were entered
 
     const ftsQuery = tokens.map(t => `"${t}"*`).join(' ');
 
     try {
       const rows = db.prepare(`
-        SELECT 
+        SELECT
           t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
           c.name as category, cg.type as group_type
         FROM transactions_fts f
@@ -374,21 +346,29 @@ class TransactionService {
         ORDER BY rank
       `).all(ftsQuery);
 
-      return rows;
+      // FTS5's tokenizer cannot split Thai (no spaces), so it only matches the start of a run of text:
+      // "ไก่" never finds "ข้าวมันไก่". An empty FTS answer therefore falls through to a substring search.
+      return rows.length > 0 ? rows : this.searchLike(raw);
     } catch (ftsErr: any) {
       console.warn('[WARN] FTS5 search query error, falling back to LIKE:', ftsErr.message);
-      return db.prepare(`
-        SELECT 
-          t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
-          c.name as category, cg.type as group_type
-        FROM transactions t
-        JOIN categories c ON t.category_id = c.id
-        JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
-        WHERE (t.description LIKE ? OR c.name LIKE ?) AND t.is_deleted = 0
-        ORDER BY t.date DESC
-        LIMIT 50
-      `).all(`%${raw}%`, `%${raw}%`);
+      return this.searchLike(raw);
     }
+  }
+
+  /** Literal substring search over description and category name (the FTS5 fallback). */
+  private searchLike(raw: string): any[] {
+    const pattern = `%${escapeLike(raw)}%`;
+    return db.prepare(`
+      SELECT
+        t.id, t.date, t.description, t.amount, t.category_id, t.created_at, t.allocation_type, t.asset_id, t.units, t.trade_side,
+        c.name as category, cg.type as group_type
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      JOIN cashflow_groups cg ON c.cashflow_group_id = cg.id
+      WHERE (t.description LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\') AND t.is_deleted = 0
+      ORDER BY t.date DESC
+      LIMIT 50
+    `).all(pattern, pattern);
   }
 
   /**

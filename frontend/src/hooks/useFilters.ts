@@ -205,12 +205,12 @@ export default function useFilters({
     if (advancedFilterDate !== 'ALL') {
       if (advancedFilterDate === 'WEEKDAY') {
         filtered = filtered.filter(t => {
-          const day = new Date(t.date).getDay();
+          const day = parseDateStrToObj(t.date).getDay(); // local date: new Date("YYYY-MM-DD") is UTC and flips the weekday west of UTC
           return day !== 0 && day !== 6;
         });
       } else if (advancedFilterDate === 'WEEKEND') {
         filtered = filtered.filter(t => {
-          const day = new Date(t.date).getDay();
+          const day = parseDateStrToObj(t.date).getDay();
           return day === 0 || day === 6;
         });
       } else if (advancedFilterDate.includes(',')) {
@@ -262,7 +262,7 @@ export default function useFilters({
     // 6. Day Type (Weekend/Weekday) Filter
     if (dayTypeFilter !== 'ALL') {
       filtered = filtered.filter(t => {
-        const day = new Date(t.date).getDay();
+        const day = parseDateStrToObj(t.date).getDay();
         const isWeekend = day === 0 || day === 6;
         return dayTypeFilter === 'WEEKEND' ? isWeekend : !isWeekend;
       });

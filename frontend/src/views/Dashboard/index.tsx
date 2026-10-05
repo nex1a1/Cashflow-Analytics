@@ -12,6 +12,7 @@ import TopTransactions from './components/TopTransactions';
 import ActivityTimeline from './components/ActivityTimeline';
 import CashflowTable from './components/CashflowTable';
 import PortfolioSnapshot from './components/PortfolioSnapshot';
+import BudgetEnvelopes from './components/BudgetEnvelopes';
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '../../types';
 
 export interface DashboardViewProps {
@@ -92,6 +93,7 @@ export default function DashboardView(props: DashboardViewProps) {
 
         <div className="flex flex-col gap-4 w-full">
           <SummaryCards />
+          <BudgetEnvelopes />
           <PortfolioSnapshot />
           <ExpenseProportion />
         </div>

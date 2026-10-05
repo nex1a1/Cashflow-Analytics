@@ -199,7 +199,7 @@ function calculateForecastingDetails({
   // day N = N-th day of the month / pay cycle (datesInPeriod is the full unit for single-month views)
   const lastDayOfMonth = datesInPeriod.length;
   const currentDay = Math.max(1, datesInPeriod.indexOf(localTodayIso()) + 1);
-  const remainingDays = Math.max(1, lastDayOfMonth - currentDay);
+  const remainingDays = Math.max(0, lastDayOfMonth - currentDay); // 0 on the last day: today is already counted in the run rate
   const effectiveDays = datesInPeriod.length || 1;
   const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
 
@@ -221,7 +221,7 @@ function calculateForecastingDetails({
   const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
 
   const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
-  const daysToBudget = remainingDays;
+  const daysToBudget = Math.max(1, remainingDays); // never divide by 0
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
   let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
@@ -512,7 +512,9 @@ function buildAllocationBreakdown(
   });
 
   const explicitSavings = allocTotals.savings || 0;
-  const unspentSurplus = Math.max(0, netCashflow);
+  // netCashflow = income − expense still contains the money that was invested (savings is its own group type,
+  // not an expense), so only what is left after the savings rows is "unspent" — otherwise it is counted twice
+  const unspentSurplus = Math.max(0, netCashflow - (totals.savings || 0));
   const totalSavingsActual = explicitSavings + unspentSurplus;
 
   const allocationItems = [
@@ -961,8 +963,10 @@ export default function useAnalytics({
   // Heaviest computation — only re-runs when data or filter criteria change
   const coreAggregation = useMemo(() => {
     const catMapLookup = createCategoryMap(categories);
-    // backend summary is grouped by calendar month — pay-cycle periods are aggregated client-side only
-    const useBackendTotals = Boolean(summaryData) && !isCyclePeriod(filterPeriod);
+    // backend summary is grouped by calendar month — pay-cycle periods are aggregated client-side only.
+    // A comma list ("2026-08,2026-10") has no date bounds, so the loader fetched the WHOLE database: its summary
+    // is not the summary of the chosen months either.
+    const useBackendTotals = Boolean(summaryData) && !isCyclePeriod(filterPeriod) && !filterPeriod.includes(',');
     const groupMeta = resolveCashflowGroups(cashflowGroups);
 
     const datesInPeriod = generateDatesForPeriod(filterPeriod, transactions);

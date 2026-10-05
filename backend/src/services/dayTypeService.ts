@@ -1,5 +1,6 @@
 import db from '../config/db';
 import { DayType } from '../types';
+import { ApiError } from '../middleware/ApiError';
 
 class DayTypeService {
   getAll(): DayType[] {
@@ -26,6 +27,8 @@ class DayTypeService {
   }
 
   delete(id: string) {
+    const n = (db.prepare('SELECT COUNT(*) AS c FROM calendar_days WHERE day_type_id = ?').get(id) as { c: number }).c;
+    if (n > 0) throw new ApiError(409, `ลบไม่ได้: มี ${n} วันในปฏิทินใช้ประเภทวันนี้อยู่ เปลี่ยนประเภทวันเหล่านั้นก่อน`);
     return db.prepare('DELETE FROM day_types WHERE id = ?').run(id);
   }
 }

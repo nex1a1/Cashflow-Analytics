@@ -52,12 +52,14 @@ class CategoryService {
   }
 
   delete(id: string) {
-    // ลบหมวดนี้ = ลบรายการในหมวดทิ้งถาวร (ไม่มี undo) — ถ้าเป็นรายการซื้อขาย ต้นทุนและตำแหน่งในพอร์ตจะหายตามไปด้วย
+    // ลบหมวดได้เมื่อไม่มีรายการที่ยังใช้งานอยู่แล้วเท่านั้น (ด้านล่างกวาดเฉพาะแถวที่ถูกลบแบบ soft ไปพร้อมกัน)
     const n = transactionService.countLiveTrades({ categoryId: id });
     if (n > 0) throw new ApiError(409, `ลบไม่ได้: หมวดนี้มี ${n} รายการซื้อขายสินทรัพย์อยู่ในพอร์ต ลบรายการเหล่านั้นก่อน`);
+    // the UI only knows the rows of the period it has loaded, so the real guard has to live here
+    const live = (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE category_id = ? AND is_deleted = 0').get(id) as { c: number }).c;
+    if (live > 0) throw new ApiError(409, `ลบไม่ได้: หมวดนี้ยังมี ${live} รายการ ลบหรือย้ายรายการเหล่านั้นไปหมวดอื่นก่อน`);
     return db.transaction(() => {
-      // ลบรายการบัญชีทั้งหมดที่อ้างอิงหมวดหมู่นี้ออกก่อน (รวมถึงที่ถูกลบซอฟต์ลบไปแล้ว)
-      // เพื่อไม่ให้ติด FOREIGN KEY constraint
+      // แถวที่ถูกลบแบบ soft (is_deleted = 1) ยังอ้างอิงหมวดนี้อยู่ ต้องลบทิ้งก่อนไม่งั้นติด FOREIGN KEY
       db.prepare('DELETE FROM transactions WHERE category_id = ?').run(id);
       
       // จากนั้นค่อยลบหมวดหมู่
