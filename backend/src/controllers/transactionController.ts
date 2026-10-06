@@ -129,8 +129,8 @@ export const getFrequentItems = (req: Request, res: Response, next: NextFunction
 
 export const predictCategories = (req: Request, res: Response, next: NextFunction) => {
   const { descriptions } = req.body;
-  if (!Array.isArray(descriptions)) {
-    return res.status(400).json({ error: 'descriptions must be an array' });
+  if (!Array.isArray(descriptions) || descriptions.some(d => typeof d !== 'string')) {
+    return res.status(400).json({ error: 'descriptions must be an array of strings' });
   }
 
   try {

@@ -18,8 +18,8 @@ const RETENTION_DAYS = 7;
 
 class BackupService {
   private getBackupDir(): string {
-    const baseDir = path.join(__dirname, '../../');
-    return path.join(baseDir, 'backups');
+    // BACKUP_DIR lets tests (like DB_PATH) stay away from the real backups, which pruning deletes from
+    return process.env.BACKUP_DIR || path.join(__dirname, '../../backups');
   }
 
   private getLocalDateStr(date: Date): string {

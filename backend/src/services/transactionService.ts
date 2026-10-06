@@ -134,11 +134,8 @@ class TransactionService {
         categoryId = this.suggestCategory(tx.description);
       }
     }
-    if (!categoryId) {
-      const fallback = db.prepare("SELECT id FROM categories WHERE name LIKE '%อื่น%' OR name LIKE '%เบ็ดเตล็ด%' LIMIT 1").get() as { id: string } | undefined
-                    || db.prepare("SELECT id FROM categories LIMIT 1").get() as { id: string } | undefined;
-      categoryId = fallback?.id;
-    }
+    // No silent "any category with อื่น in its name" fallback: that could be an income category.
+    if (!categoryId) throw new ApiError(400, `ไม่ได้ระบุหมวดหมู่ของรายการ "${tx.description ?? ''}"`);
     return categoryId;
   }
 
@@ -252,28 +249,11 @@ class TransactionService {
     const startDate = `${yearStr}-${monthStr.padStart(2, '0')}-01`;
     const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
-    // Query affected items before deletion to log exact details without truncation
-    const targetRows = db.prepare(`
-      SELECT t.id, t.date, t.description, t.amount, c.name as category
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      WHERE t.date >= ? AND t.date < ? AND t.is_deleted = 0
-    `).all(startDate, endDate) as Array<{ id: string, date: string, description: string, amount: number, category: string | null }>;
-
-    const totalSatang = targetRows.reduce((sum, r) => sum + (r.amount || 0), 0);
-    const totalBaht = (totalSatang / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
     const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE date >= ? AND date < ? AND is_deleted = 0')
       .run(startDate, endDate);
 
-    console.log(`[Service: Delete Month] ลบข้อมูลทั้งเดือน: ${isoMonth} (ช่วงวันที่: ${startDate} ถึง ${endDate}) | จำนวนที่ได้รับผลกระทบ: ${result.changes} รายการ | ยอดเงินรวม: ฿${totalBaht}`);
-    if (targetRows.length > 0) {
-      console.log(`[Service: Delete Month Details] รายการที่ถูกลบในเดือน ${isoMonth} (${targetRows.length} รายการ):`);
-      targetRows.forEach((r, idx) => {
-        const itemBaht = (r.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        console.log(`   ${idx + 1}. [${r.date}] ID: ${r.id} | "${r.description}" | ฿${itemBaht} | หมวดหมู่: "${r.category || 'ไม่ระบุ'}"`);
-      });
-    }
+    // One line (architecture rule 28); the rows can be undone from the frontend's snapshot.
+    console.log(`[Service: Delete Month] ลบข้อมูลทั้งเดือน ${isoMonth} (${startDate} ถึง ${endDate}): ${result.changes} รายการ`);
     return result;
   }
 

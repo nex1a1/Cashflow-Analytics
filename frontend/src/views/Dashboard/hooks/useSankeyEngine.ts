@@ -384,6 +384,19 @@ function buildStandardSankeyFlows({
   });
 }
 
+/**
+ * Net total per group (a sell row is negative, so a savings group = buys − sells, same as every other view).
+ * Only groups that net above zero become flows — a Sankey link can't carry a negative amount.
+ */
+export function computeGroupTotals(categories: any[], categoryTotals: Record<string, number>): Record<string, number> {
+  const net: Record<string, number> = {};
+  categories.forEach((cat: any) => {
+    const groupId = cat.cashflow_group_id || cat.cashflowGroup;
+    if (groupId && categoryTotals[cat.id]) net[groupId] = (net[groupId] || 0) + categoryTotals[cat.id];
+  });
+  return Object.fromEntries(Object.entries(net).filter(([, amount]) => amount > 0));
+}
+
 export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 'standard' }: SankeyEngineProps) {
   const { transactions, analytics, categories, cashflowGroups, filterPeriod } = useDashboardContext();
 
@@ -406,20 +419,12 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
       processSankeyTransaction(t, { filterPeriod, categoryMap, groupMap, categoryTotals, catAllocTotals });
     });
 
-    const groupTotals: Record<string, number> = {};
-    categories.forEach((cat: any) => {
-      const total = categoryTotals[cat.id];
-      const groupId = cat.cashflow_group_id || cat.cashflowGroup;
-      if (total > 0 && groupId) {
-        if (!groupTotals[groupId]) groupTotals[groupId] = 0;
-        groupTotals[groupId] += total;
-      }
-    });
+    const groupTotals = computeGroupTotals(categories, categoryTotals);
 
     let totalInc = 0;
     let totalExp = 0;
     let totalSav = 0;
-    
+
     const sortedGroupTotals = Object.entries(groupTotals)
       .map(([groupId, amount]) => ({ groupId, amount, g: groupMap[groupId] }))
       .filter(item => item.g)

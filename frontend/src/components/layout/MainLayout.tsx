@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { useAppUI } from '../../context/AppUIContext';
 import { useAppData } from '../../context/AppDataContext';
 import { useAppFilter } from '../../context/AppFilterContext';
+import { localTodayIso } from '../../utils/payCycle';
 
 // View Components
 import DashboardView from '../../views/Dashboard/index';
@@ -14,6 +15,7 @@ import CalendarView from '../../views/Calendar';
 import LedgerView from '../../views/Ledger/index';
 import SettingsView from '../../views/Settings';
 import PortfolioView from '../../views/Portfolio';
+import TaxView from '../../views/Tax';
 
 // Modals
 import BatchAddModal from '../modals/BatchAddModal/index';
@@ -97,7 +99,7 @@ export default function MainLayout() {
             setAddForm(prev => ({
               ...prev,
               type: 'expense',
-              date: new Date().toISOString().split('T')[0],
+              date: localTodayIso(),
               category: categories.find(c => c.type === 'expense')?.name || '',
               assetId: undefined,
               side: undefined,
@@ -212,6 +214,12 @@ export default function MainLayout() {
           {activeTab === 'portfolio' && (
             <div key="portfolio">
               <PortfolioView />
+            </div>
+          )}
+
+          {activeTab === 'tax' && (
+            <div key="tax">
+              <TaxView />
             </div>
           )}
 

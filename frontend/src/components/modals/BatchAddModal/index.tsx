@@ -6,6 +6,8 @@ import AnimatedNumber from '../../ui/AnimatedNumber';
 import BatchForm, { BatchFormValues, ExternalFormControls } from './BatchForm';
 import QuickSuggest from './QuickSuggest';
 import CartList from './CartList';
+import RecurringSection from '../../shared/RecurringSection';
+import { RecurringItem, RecurringRow } from '@/utils/recurring';
 import { Category, CashflowGroup, DayType, FrequentItem, AllocationType, TransactionPayload } from '../../../types';
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
@@ -61,6 +63,7 @@ export default function BatchAddModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [suggCatFilter, setSuggCatFilter] = useState('ALL');
   const [currentFormType, setCurrentFormType] = useState(defaultType || 'expense');
+  const [formDate, setFormDate] = useState(defaultDate || '');
 
   const formMethodsRef = useRef<ExternalFormControls | null>(null);
   const prevIsOpen = useRef(false);
@@ -216,6 +219,51 @@ export default function BatchAddModal({
     }
   }, []);
 
+  // รายการประจำ: ของในตะกร้านับว่า "ลงแล้ว" ด้วย — เปลี่ยนเดือนแล้วกดเติมต่อได้ทั้งปีในรอบเดียว
+  const cartRows = useMemo<RecurringRow[]>(() => pendingItems.map(i => ({
+    id: i.id, date: i.date, category_id: i._catObj?.id || i.category_id, description: i.description,
+    amount: i.side === 'sell' ? -i.amount : i.amount, allocation_type: i.allocation_type, asset_id: i.asset_id,
+  })), [pendingItems]);
+
+  const applyRecurring = useCallback((item: RecurringItem) => {
+    applyAddFormSuggestion(item);
+    formMethodsRef.current?.setValue('date', item.suggestedDate, { shouldValidate: true });
+  }, [applyAddFormSuggestion]);
+
+  const fillMissingRecurring = useCallback((items: RecurringItem[]) => {
+    setPendingItems(prev => [...prev, ...items.map((item): PendingBatchItem => {
+      const catObj = catMap[item.categoryId];
+      const isSavings = catObj?.type === 'savings';
+      return {
+        id: `temp_${crypto.randomUUID()}`,
+        date: item.suggestedDate,
+        category: catObj?.name || 'อื่นๆ',
+        category_id: item.categoryId,
+        description: item.description || catObj?.name || 'อื่นๆ',
+        amount: item.amount,
+        allocation_type: (item.allocation_type as AllocationType | null) ?? undefined,
+        dayNote: '',
+        _catObj: catObj,
+        _isInc: catObj?.type === 'income',
+        _isSavings: isSavings,
+        side: isSavings ? 'buy' : undefined,
+        asset_id: null,
+        units: null,
+      };
+    })]);
+  }, [catMap]);
+
+  // element memoized so the memoized QuickSuggest panel does not re-render on every keystroke
+  const recurringSlot = useMemo(() => (
+    <RecurringSection
+      targetDate={formDate}
+      localRows={cartRows}
+      catMap={catMap}
+      onApply={applyRecurring}
+      onFillMissing={fillMissingRecurring}
+    />
+  ), [formDate, cartRows, catMap, applyRecurring, fillMissingRecurring]);
+
   const [saveError, setSaveError] = useState<string | null>(null);
   const submitBatch = async () => {
     if (pendingItems.length === 0) return;
@@ -319,6 +367,7 @@ export default function BatchAddModal({
             isProcessing={isProcessing}
             externalFormSetter={(methods) => { formMethodsRef.current = methods; }}
             onTypeChange={setCurrentFormType}
+            onDateChange={setFormDate}
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
             editingItem={editingItem}
@@ -335,6 +384,7 @@ export default function BatchAddModal({
             onApplySuggestion={applyAddFormSuggestion}
             isProcessing={isProcessing}
             frequentItems={frequentItems}
+            headerSlot={recurringSlot}
           />
 
           <CartList

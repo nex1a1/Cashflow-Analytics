@@ -63,6 +63,7 @@ export interface BatchFormProps {
   isProcessing?: boolean;
   externalFormSetter?: (controls: ExternalFormControls) => void;
   onTypeChange?: (type: string) => void;
+  onDateChange?: (date: string) => void;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
   editingItem?: PendingBatchItem | null;
@@ -79,6 +80,7 @@ function BatchForm({
   isProcessing,
   externalFormSetter,
   onTypeChange,
+  onDateChange,
   dayTypes = {},
   dayTypeConfig = [],
   editingItem,
@@ -162,6 +164,10 @@ function BatchForm({
   useEffect(() => {
     if (onTypeChange) onTypeChange(formType);
   }, [formType, onTypeChange]);
+
+  useEffect(() => {
+    if (onDateChange) onDateChange(formDate);
+  }, [formDate, onDateChange]);
 
   const onSubmit = (data: BatchFormValues) => {
     onSubmitItem(data);

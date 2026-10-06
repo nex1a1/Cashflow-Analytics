@@ -14,7 +14,8 @@ export function useMenu() {
     rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not([disabled])')?.focus();
     const onDown = (e: MouseEvent) => { if (!rootRef.current?.contains(e.target as Node)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setOpen(false); triggerRef.current?.focus(); return; }
+      // stopPropagation: a menu inside a modal must not also close the modal (its Esc listener sits on window)
+      if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); triggerRef.current?.focus(); return; }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       const items = Array.from(rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? []);
       const i = items.indexOf(document.activeElement as HTMLElement);

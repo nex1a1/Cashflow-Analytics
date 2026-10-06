@@ -56,7 +56,6 @@ export const transactionService = {
     }).then(handleResponse<{ success: boolean; count: number }>),
     deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>),
     deleteMonth: (isoMonth: string): Promise<{ success: boolean; message?: string }> => fetch(`${API_URL}/month/${isoMonth}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean; message?: string }>),
-    deleteAll: (): Promise<{ success: boolean }> => fetch(API_URL, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>),
     resetAll: (): Promise<{ success: boolean; message?: string }> => fetch(RESET_API_URL, {
         method: 'DELETE',
         headers: { 'X-Confirm-Reset': 'true' }

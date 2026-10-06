@@ -7,7 +7,8 @@ class SettingService {
   }
 
   upsert(key: string, value: any) {
-    const valueStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    // Always JSON, so a string like "123" or "true" reads back as a string (getAllSettings JSON.parses)
+    const valueStr = JSON.stringify(value ?? null);
     const stmt = db.prepare(`
       INSERT INTO settings (key, value)
       VALUES (?, ?)

@@ -106,9 +106,10 @@ class AssetService {
         INSERT INTO assets (id, name, kind, symbol, unit_label) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind, symbol = excluded.symbol, unit_label = excluded.unit_label
       `).run(id, input.name, input.kind, symbol, input.unit_label?.trim() || null);
-      // เปลี่ยนประเภท/สัญลักษณ์ = ราคาที่แคชไว้เป็นของอีกตัว
+      // เปลี่ยนประเภท/สัญลักษณ์ = ราคาที่แคชไว้และราคาที่กรอกเองเป็นของอีกตัว
       if (prev && (prev.kind !== input.kind || prev.symbol !== symbol)) {
         db.prepare('DELETE FROM price_cache WHERE asset_id = ?').run(id);
+        db.prepare('UPDATE assets SET manual_price = NULL, manual_price_at = NULL WHERE id = ?').run(id);
       }
     })();
     return id;

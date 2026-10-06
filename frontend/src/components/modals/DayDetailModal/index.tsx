@@ -4,6 +4,8 @@ import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../uti
 import DailyForm from './DailyForm';
 import DayNoteField from './DayNoteField';
 import QuickSuggest from './QuickSuggest';
+import RecurringSection from '../../shared/RecurringSection';
+import { RecurringRow } from '@/utils/recurring';
 import TransactionList from './TransactionList';
 import DatePicker from '../../ui/DatePicker';
 import { Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../../../types';
@@ -153,6 +155,9 @@ export default function DayDetailModal({
     });
   }, [transactions, localItems, activeDateStr, catMap]);
 
+  // รายการประจำนับแถวที่ระบบโหลดไว้แล้ว + ที่เพิ่งกดบันทึก (ยังรอ API) ว่า "ลงแล้ว"
+  const knownRows = useMemo<RecurringRow[]>(() => [...transactions, ...localItems], [transactions, localItems]);
+
   const expenses   = dayTx.filter(t => {
     const cat = (t.category_id && catMap[t.category_id]) || (t.category && catMap[t.category]);
     return cat?.type === 'expense';
@@ -231,7 +236,7 @@ export default function DayDetailModal({
     border: 'border-line',
     textPri: 'text-slate-100',
     textMuted: 'text-slate-400',
-    closeBtn: `p-1.5 rounded-none transition-colors absolute top-4 right-4 z-10 hover:bg-surface-elevated text-slate-400`,
+    closeBtn: `p-1.5 rounded-none transition-colors absolute top-3 right-3 z-10 hover:bg-surface-elevated text-slate-400`,
   };
 
   return (
@@ -435,6 +440,7 @@ export default function DayDetailModal({
           onApplySuggestion={applySuggestion}
           isProcessing={isSaving}
           frequentItems={frequentItems}
+          headerSlot={<RecurringSection targetDate={activeDateStr} localRows={knownRows} catMap={catMap} onApply={applySuggestion} />}
         />
 
       </div>

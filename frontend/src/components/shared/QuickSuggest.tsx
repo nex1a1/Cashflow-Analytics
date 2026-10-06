@@ -24,6 +24,8 @@ export interface QuickSuggestProps {
   className?: string;
   cashflowGroups?: CashflowGroup[];
   defaultLimit?: number;
+  /** แถวใต้หัวข้อ (ปุ่มรายการประจำ) — แผงของมันลอยทับรายการ ไม่ดันเนื้อหา */
+  headerSlot?: React.ReactNode;
 }
 
 function QuickSuggest({
@@ -38,7 +40,8 @@ function QuickSuggest({
   frequentItems = [],
   className = "",
   cashflowGroups = [],
-  defaultLimit = 10
+  defaultLimit = 10,
+  headerSlot
 }: QuickSuggestProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -322,10 +325,13 @@ function QuickSuggest({
     <div className={`flex flex-col min-h-0 ${className}`}>
       {/* Header */}
       <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-2 text-slate-300">
-        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 
+        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
         รายการแนะนำ {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
       </h4>
-      
+
+      {/* own full-width row: the right end of the header sits under DayDetail's close button */}
+      {headerSlot}
+
       {/* Filtering Inputs Section */}
       <div className="space-y-2 mb-2 shrink-0">
         {/* Search & In-line Toggle */}

@@ -23,7 +23,7 @@ import {
   ExportTypeFilter,
   HeaderLanguage,
 } from './types';
-import { convertPeriodMode } from '../../../utils/payCycle';
+import { convertPeriodMode, localTodayIso } from '../../../utils/payCycle';
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
@@ -123,7 +123,7 @@ export default function ExportModal({
 
     setTimeout(() => {
       try {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = localTodayIso();
         const periodSuffix = exportPeriod.replace(/[^a-zA-Z0-9_-]/g, '_');
 
         if (exportFormat === 'backup_json') {

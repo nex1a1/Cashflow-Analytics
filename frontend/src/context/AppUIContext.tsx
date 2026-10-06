@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { AppUIContextValue, QuickAddFormData } from '../types';
 import { STORAGE_KEYS } from '../constants';
+import { localTodayIso } from '../utils/payCycle';
 
 const AppUIContext = createContext<AppUIContextValue | undefined>(undefined);
 
@@ -27,7 +28,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   const [showImportGuide, setShowImportGuide] = useState<boolean>(false);
   const [addForm, setAddForm] = useState<QuickAddFormData>({
     type: 'expense',
-    date: new Date().toISOString().split('T')[0],
+    date: localTodayIso(),
     category: '',
     description: '',
     amount: '',
@@ -46,7 +47,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   }, [activeTab]);
 
   const handleOpenAddModal = useCallback((dateStr?: string, type: string = 'expense') => {
-    const formattedDate = dateStr || new Date().toISOString().split('T')[0];
+    const formattedDate = dateStr || localTodayIso();
     setAddForm(prev => ({
       ...prev,
       date: formattedDate,
@@ -61,7 +62,7 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   }, []);
 
   const handleOpenTradeModal = useCallback((assetId: string, side: 'buy' | 'sell') => {
-    setAddForm({ type: 'savings', date: new Date().toISOString().split('T')[0], category: '', description: '', amount: '', assetId, side });
+    setAddForm({ type: 'savings', date: localTodayIso(), category: '', description: '', amount: '', assetId, side });
     setShowAddModal(true);
   }, []);
 
