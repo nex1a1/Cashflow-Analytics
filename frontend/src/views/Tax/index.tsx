@@ -172,7 +172,7 @@ const TaxView = memo(function TaxView() {
             <span className="text-[11px] text-ink-muted">จากแบบ ภ.ง.ด.90/91 ที่ยื่นแล้ว · เก็บเป็นประวัติ</span>
           </div>
           <div className="divide-y divide-line">
-            <DateField key={`${year}:date:${form.filed?.date ?? ''}`} id="tax-filed-date" value={form.filed?.date} onSave={v => saveFiled('date', v)} />
+            <DateField key={`${year}:date`} id="tax-filed-date" value={form.filed?.date} onSave={v => saveFiled('date', v)} />
             {FILED_INPUTS.map(([field, label, hint]) => (
               <MoneyField key={`${year}:filed:${field}`} id={`tax-filed-${field}`} label={label} hint={hint} value={form.filed?.[field]} onSave={v => saveFiled(field, v)} />
             ))}
@@ -377,9 +377,20 @@ function EstimateBody({ estimate: e, filed }: { estimate: TaxEstimate; filed?: T
   );
 }
 
-/** วันที่ยื่น — native date input, บันทึกเมื่อเปลี่ยน (ว่าง = ลบ) */
+/**
+ * วันที่ยื่น — native date input, บันทึกเมื่อเปลี่ยน (ว่าง = ลบ).
+ * input ถูก key ด้วยค่าที่เก็บไว้ (โหลดค่าเสร็จทีหลัง/เปลี่ยนค่าแล้วต้องแสดงตาม) ซึ่งทำให้อัปเดตแบบ optimistic + rollback สร้าง input ใหม่สองครั้ง
+ * จึงจำสิ่งที่ผู้ใช้เลือกไว้ใน draft เมื่อบันทึกไม่สำเร็จ (กฎ: บันทึกพลาดต้องคงค่าที่พิมพ์ไว้) — state นี้ต้องอยู่ที่ DateField ซึ่งไม่ถูก remount
+ */
 function DateField({ id, value, onSave }: { id: string; value: string | undefined; onSave: (date: string | null) => Promise<boolean> }) {
   const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
+  const change = async (v: string | null) => {
+    if (v === (value ?? null)) { setError(null); setDraft(null); return; }
+    const ok = await onSave(v);
+    setError(ok ? null : 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
+    setDraft(ok ? null : (v ?? ''));
+  };
   return (
     <div className="px-4 py-2">
       <div className="flex items-center gap-3">
@@ -388,10 +399,11 @@ function DateField({ id, value, onSave }: { id: string; value: string | undefine
           <span className="text-[11px] text-ink-muted truncate">ตามใบเสร็จ / ใบยืนยันการยื่น</span>
         </label>
         <input
+          key={JSON.stringify([value ?? '', draft])} // draft null (none) and '' (cleared) must differ
           id={id}
           type="date"
-          defaultValue={value ?? ''}
-          onChange={async e => { const v = e.currentTarget.value || null; if (v !== (value ?? null)) setError((await onSave(v)) ? null : 'บันทึกไม่สำเร็จ ลองอีกครั้ง'); }}
+          defaultValue={draft ?? value ?? ''}
+          onChange={e => change(e.currentTarget.value || null)}
           aria-invalid={!!error}
           aria-describedby={`${id}-err`}
           className="w-36 h-7 px-2 text-xs tabular-nums border bg-canvas border-line-strong text-ink-display shrink-0 [color-scheme:dark]"
@@ -402,18 +414,25 @@ function DateField({ id, value, onSave }: { id: string; value: string | undefine
   );
 }
 
-/** ช่องเงินบาทที่บันทึกตอน blur / Enter — ว่าง = ลบค่า; ผิดรูปหรือบันทึกไม่สำเร็จแสดง error ข้างช่องและคงที่พิมพ์ไว้ */
+/**
+ * ช่องเงินบาทที่บันทึกตอน blur / Enter — ว่าง = ลบค่า; ผิดรูปหรือบันทึกไม่สำเร็จแสดง error ข้างช่องและคงที่พิมพ์ไว้.
+ * input ถูก key ด้วยค่าที่เก็บไว้ (โหลดค่าเสร็จทีหลังต้องแสดงตาม และบันทึกสำเร็จแล้วจัดรูปเป็น 500,000) ซึ่งทำให้อัปเดตแบบ optimistic + rollback
+ * สร้าง input ใหม่สองครั้งแล้วข้อความที่พิมพ์หาย จึงจำไว้ใน draft เมื่อบันทึกไม่สำเร็จ
+ */
 function MoneyField({ id, label, hint, value, onSave }: {
   id: string; label: string; hint: string; value: number | undefined; onSave: (satang: number | null) => Promise<boolean>;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
   const commit = async (text: string) => {
     const clean = text.replace(/[,\s฿]/g, '');
     const num = clean === '' ? null : Number(clean);
     if (num != null && !(Number.isFinite(num) && num >= 0)) { setError('ใส่เป็นตัวเลข เช่น 420000'); return; }
     const next = num == null ? null : Math.round(num * 100);
-    if (next === (value ?? null)) { setError(null); return; }
-    setError((await onSave(next)) ? null : 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
+    if (next === (value ?? null)) { setError(null); setDraft(null); return; }
+    const ok = await onSave(next);
+    setError(ok ? null : 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
+    setDraft(ok ? null : text);
   };
   return (
     <div className="px-4 py-2">
@@ -423,10 +442,10 @@ function MoneyField({ id, label, hint, value, onSave }: {
           <span className="text-[11px] text-ink-muted truncate">{hint}</span>
         </label>
         <input
-          key={value ?? ''}
+          key={JSON.stringify([value ?? '', draft])} // draft null (none) and '' (cleared) must differ
           id={id}
           inputMode="decimal"
-          defaultValue={value != null ? (value / 100).toLocaleString('th-TH') : ''}
+          defaultValue={draft ?? (value != null ? (value / 100).toLocaleString('th-TH') : '')}
           placeholder="ยังไม่ได้กรอก"
           onBlur={e => commit(e.currentTarget.value)}
           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}

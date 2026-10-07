@@ -171,7 +171,8 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
         tooltip: {
           ...baseOptions.plugins?.tooltip,
           mode: 'index', intersect: false,
-          filter: (tooltipItem: any) => tooltipItem.raw > 0,
+          // Hide empty series, but keep a negative one (Cashflow in a deficit month).
+          filter: (tooltipItem: any) => Boolean(Number(tooltipItem.raw)),
           callbacks: {
             ...baseOptions.plugins?.tooltip?.callbacks,
             footer: (tooltipItems: any[]) => {

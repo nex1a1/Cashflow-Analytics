@@ -164,7 +164,7 @@ export default function CategoryMatrixFilter({
 
     // Filter by search query
     if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
+      const q = searchTerm.trim().toLowerCase();
       result = result
         .map(item => {
           const groupMatches = item.group.name?.toLowerCase().includes(q);
@@ -483,35 +483,35 @@ export default function CategoryMatrixFilter({
         <div className="w-full text-[11px] font-black py-1 pl-1.5 pr-14 truncate text-ink-soft font-mono">
           {triggerLabel}
         </div>
-        
-        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 shrink-0">
-          {isActive && (
-            <>
-              <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black font-mono bg-accent/20 text-accent-ink border border-accent/40 leading-none">
-                {selectedCatNames.size}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange('ALL');
-                }}
-                className="p-0.5 rounded-none text-ink-muted hover:text-ink-display hover:bg-accent/40 transition-colors cursor-pointer"
-                title="รีเซ็ตกลับเป็นเลือกทุกหมวดหมู่"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </>
-          )}
-          <ChevronDown className={`w-3 h-3 transition-transform ${isActive ? 'text-accent-ink' : 'text-ink-muted'} ${isOpen ? 'rotate-180' : ''}`} />
-        </div>
-        
+
         {isActive && (
           <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
             <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
           </span>
         )}
       </button>
+
+      {/* Count, reset and chevron sit over the button's right edge as SIBLINGS (a button inside a button is
+          invalid HTML). The strip ignores the pointer so a click on the count / chevron still opens the menu;
+          only the reset button takes clicks. */}
+      <div className="absolute right-1.5 top-0 bottom-0 flex items-center gap-1 pointer-events-none">
+        {isActive && (
+          <>
+            <span className="px-1.5 py-0.5 rounded-none text-[11px] font-black font-mono bg-accent/20 text-accent-ink border border-accent/40 leading-none">
+              {selectedCatNames.size}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange('ALL')}
+              className="pointer-events-auto p-0.5 rounded-none text-ink-muted hover:text-ink-display hover:bg-accent/40 transition-colors cursor-pointer"
+              title="รีเซ็ตกลับเป็นเลือกทุกหมวดหมู่"
+            >
+              <X className="w-2.5 h-2.5" />
+            </button>
+          </>
+        )}
+        <ChevronDown className={`w-3 h-3 transition-transform ${isActive ? 'text-accent-ink' : 'text-ink-muted'} ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
 
       {/* ── Floating 2-Tier Chips Matrix Popover ── */}
       {isOpen && (

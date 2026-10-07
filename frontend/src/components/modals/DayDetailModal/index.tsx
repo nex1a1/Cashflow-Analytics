@@ -242,7 +242,7 @@ export default function DayDetailModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="รายละเอียดรายวัน" tabIndex={-1} 
-        className={`${tokens.surface} shadow-[0_16px_48px_rgb(0_0_0/calc(0.6*var(--shadow-k)))] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[750px] md:min-h-[615px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
+        className={`${tokens.surface} shadow-[0_16px_48px_rgb(0_0_0/calc(0.6*var(--shadow-k)))] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[780px] md:min-h-[650px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
 

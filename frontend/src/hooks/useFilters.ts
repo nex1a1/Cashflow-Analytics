@@ -295,9 +295,9 @@ export default function useFilters({
     categories
   ]);
 
-  const isCategoryActive = Array.isArray(advancedFilterCategory)
-    ? advancedFilterCategory.length > 0
-    : advancedFilterCategory !== 'ALL';
+  // Any list counts, an empty one too: it shows nothing (see the category filter above), so the
+  // "clear filters" button must be there to undo it.
+  const isCategoryActive = advancedFilterCategory !== 'ALL';
 
   const isFilterActive = Boolean(
     searchQuery ||

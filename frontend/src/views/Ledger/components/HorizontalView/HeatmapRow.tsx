@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { hexToRgb } from '../../../../utils/formatters';
 import HeatmapCell from './HeatmapCell';
+import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
 import { Category, TransactionDisplay, DayType } from '../../../../types';
 
 import { tc, readable, TOKENS } from '@/constants/theme';
@@ -38,12 +39,12 @@ const HeatmapRow = memo(function HeatmapRow({
 }: HeatmapRowProps) {
   const total = dailyTotal[date] || 0;
 
-  const defTypeId = isWeekend ? (dayTypeConfig[1]?.id || dayTypeConfig[0]?.id) : dayTypeConfig[0]?.id;
-  const curTypeId = dayTypes[date] || defTypeId;
+  const curTypeId = dayTypes[date] || resolveDefaultDayTypeId(dayTypeConfig, isWeekend);
   const typeConf  = dayTypeConfig.find(dt => dt.id === curTypeId);
   const typeColor = typeConf?.color || tc('ink-muted');
   const typeRgb   = typeConf?.color ? hexToRgb(typeConf.color) : hexToRgb(TOKENS['ink-muted']);
-  const sparkPct  = grandTotal > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
+  // A day with spending always shows at least a sliver; a day with none shows no bar.
+  const sparkPct  = total > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
 
   return (
     <tr style={{ height: ROW_H }}

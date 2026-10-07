@@ -355,7 +355,9 @@ export function useLedgerStats({
     />
   );
 
-  const isSavingsGroup = (g: CashflowGroup) => g.type === 'savings' || g.name.includes('ลงทุน') || g.name.includes('ออม');
+  // The group's type decides (item 36). Guessing from the name listed an income group called
+  // "รายได้จากการลงทุน" under savings as well, and made "ค่าลงทุนธุรกิจ" a savings card.
+  const isSavingsGroup = (g: CashflowGroup) => g.type === 'savings';
   const isIncomeGroup = (g: CashflowGroup) => g.type === 'income';
   const isExpenseGroup = (g: CashflowGroup) => !isIncomeGroup(g) && !isSavingsGroup(g);
 

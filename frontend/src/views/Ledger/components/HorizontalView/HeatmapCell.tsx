@@ -29,8 +29,13 @@ const moveFocus = (e: React.KeyboardEvent<HTMLTableCellElement>) => {
   let c = td.cellIndex;
   for (;;) {
     r += dir[0]; c += dir[1];
-    const next = rows[r]?.cells[c];
-    if (!next) return;
+    if (r < 0 || r >= rows.length) return;
+    const next = rows[r].cells[c];
+    if (!next) {
+      // A month banner row has a single cell: step over it when moving up / down, stop at a row's end.
+      if (dir[0] !== 0) continue;
+      return;
+    }
     if (next.tabIndex === 0) { next.focus(); next.scrollIntoView({ block: 'nearest', inline: 'nearest' }); return; }
   }
 };

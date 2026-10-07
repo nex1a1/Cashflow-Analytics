@@ -14,8 +14,10 @@ const getTooltipOptions = () => ({
 
 const formatTickValue = (v: number): string => {
   if (v === 0) return '0';
-  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
-  if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
+  const sign = v < 0 ? '-' : '';
+  const abs = Math.abs(v);
+  if (abs >= 1000000) return `${sign}${(abs / 1000000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}k`;
   return v.toLocaleString();
 };
 

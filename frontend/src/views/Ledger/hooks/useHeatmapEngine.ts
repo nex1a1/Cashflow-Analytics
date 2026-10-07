@@ -45,8 +45,8 @@ export function useHeatmapEngine(
         return false;
       }
 
-      // 2. Category selection filter
-      if (Array.isArray(selectedCategories) && selectedCategories.length > 0) {
+      // 2. Category selection filter (an empty list = nothing selected = no rows, as in the list view)
+      if (Array.isArray(selectedCategories)) {
         if (!selectedCategories.includes(catName)) return false;
       } else if (typeof selectedCategories === 'string' && selectedCategories !== 'ALL') {
         if (catName !== selectedCategories) return false;
