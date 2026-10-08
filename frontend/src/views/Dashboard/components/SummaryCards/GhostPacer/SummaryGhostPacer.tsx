@@ -4,7 +4,7 @@ import {
   Gauge, TrendingDown, TrendingUp, Flag, History,
   Compass, ArrowDownRight, ArrowUpRight, Minus, Ghost
 } from 'lucide-react';
-import { formatMoney, formatAmount } from '@/utils/formatters';
+import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer } from '../helpers';
 import { GhostPacerChart } from './GhostPacerChart';
@@ -86,7 +86,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
           <div className="flex items-center gap-1.5 text-[11px] font-mono">
             <span className="text-neutral-400">เทียบเดือนก่อน:</span>
             <span className={`font-bold ${ghost.text}`}>
-              {isLeading ? '▼ ช้ากว่า' : '▲ เร็วกว่า'} ฿{formatAmount(Math.abs(Math.round(deltaVsGhost)))} ({Math.abs(deltaVsGhostPct).toFixed(1)}%)
+              {isLeading ? '▼ ช้ากว่า' : '▲ เร็วกว่า'} {formatBahtShort(Math.abs(Math.round(deltaVsGhost)))} ({Math.abs(deltaVsGhostPct).toFixed(1)}%)
             </span>
           </div>
         </div>
@@ -140,7 +140,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${ghost.text}`}>
-                  {isLeading ? '-' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsGhost))} />
+                  {isLeading ? '−' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsGhost))} />
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   {deltaVsGhostPct >= 0 ? '+' : ''}{deltaVsGhostPct.toFixed(1)}%
@@ -153,7 +153,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[11px] font-mono text-neutral-400">
                   <span className={`${ghost.text} font-bold`}>{currentPeriod} (เดือนนี้):</span>
-                  <span className="text-white font-bold tabular-nums">฿{formatMoney(currentSpendToDate)}</span>
+                  <span className="text-white font-bold tabular-nums">{formatBaht(currentSpendToDate)}</span>
                 </div>
                 <div className="h-1 w-full bg-neutral-900 overflow-hidden border border-neutral-800">
                   <div
@@ -166,7 +166,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[11px] font-mono text-neutral-400">
                   <span className="text-neutral-400 inline-flex items-center gap-1"><Ghost size={10} className="shrink-0" /> {prevPeriod} (เดือนก่อน):</span>
-                  <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(ghostSpendToDate)}</span>
+                  <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(ghostSpendToDate)}</span>
                 </div>
                 <div className="h-1 w-full bg-neutral-900 overflow-hidden border border-neutral-800">
                   <div
@@ -204,7 +204,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${bench.text}`}>
-                  {isBenchLeading ? '-' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsBenchmark))} />
+                  {isBenchLeading ? '−' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsBenchmark))} />
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   {deltaVsBenchmarkPct >= 0 ? '+' : ''}{deltaVsBenchmarkPct.toFixed(1)}%
@@ -215,11 +215,11 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[11px] font-mono">
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400">จ่ายสะสมเฉลี่ย 3 เดือน:</span>
-                <span className="text-sky-400 font-bold tabular-nums">฿{formatMoney(benchmarkSpendToDate)}</span>
+                <span className="text-sky-400 font-bold tabular-nums">{formatBaht(benchmarkSpendToDate)}</span>
               </div>
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400">จ่ายจริงเดือนนี้:</span>
-                <span className="text-white font-bold tabular-nums">฿{formatMoney(currentSpendToDate)}</span>
+                <span className="text-white font-bold tabular-nums">{formatBaht(currentSpendToDate)}</span>
               </div>
             </div>
           </div>
@@ -254,7 +254,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
                 </div>
                 <div className={`text-xs font-mono font-bold tabular-nums flex items-center gap-0.5 ${eom.text}`}>
                   {isEomLeading ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
-                  ฿{formatAmount(Math.abs(Math.round(deltaEom)))}
+                  {formatBahtShort(Math.abs(Math.round(deltaEom)))}
                 </div>
               </div>
             )}
@@ -262,11 +262,11 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             <div className="mt-1 pt-1 border-t border-neutral-800/80 space-y-1 text-[11px] font-mono">
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400 inline-flex items-center gap-1"><Ghost size={10} className="shrink-0" /> ยอดจบจริงเดือนก่อน:</span>
-                <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(ghostTotalExpense)}</span>
+                <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(ghostTotalExpense)}</span>
               </div>
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-neutral-400">ประมาณการเดือนนี้:</span>
-                <span className="text-white font-bold tabular-nums">฿{formatMoney(projectedExpense)}</span>
+                <span className="text-white font-bold tabular-nums">{formatBaht(projectedExpense)}</span>
               </div>
             </div>
           </div>

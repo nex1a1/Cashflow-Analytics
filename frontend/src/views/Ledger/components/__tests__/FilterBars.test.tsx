@@ -242,19 +242,19 @@ describe('HorizontalFilterBar (table view)', () => {
   /** Holds the filters in real state, as the Ledger does, and exposes the latest value. */
   let current: HeatmapEngineOptions;
   let clearSpy: ReturnType<typeof vi.fn>;
-  function Harness({ initial, monthTransactions, activeCount, isFilterActive = false }: {
-    initial?: HeatmapEngineOptions; monthTransactions: TransactionDisplay[]; activeCount?: number; isFilterActive?: boolean;
+  function Harness({ initial, monthTransactions, activeCount, isFilterActive = false, cats = categories }: {
+    initial?: HeatmapEngineOptions; monthTransactions: TransactionDisplay[]; activeCount?: number; isFilterActive?: boolean; cats?: Category[];
   }) {
     const [filters, setFilters] = useState<HeatmapEngineOptions>(initial ?? { selectedCategories: 'ALL', includeFixedCosts: false, allocationFilter: 'ALL', dayTypeFilter: 'ALL', hideZeroDays: false });
     current = filters;
     return (
       <HorizontalFilterBar
-        categories={categories} cashflowGroups={[]} monthTransactions={monthTransactions}
+        categories={cats} cashflowGroups={[]} monthTransactions={monthTransactions}
         filters={filters} setFilters={setFilters} clearFilters={clearSpy} isFilterActive={isFilterActive} activeCount={activeCount}
       />
     );
   }
-  const bar = (monthTransactions: TransactionDisplay[] = [tx('a', 'c-food'), tx('b', 'c-fun')], initial?: HeatmapEngineOptions, extra: { activeCount?: number; isFilterActive?: boolean } = {}) =>
+  const bar = (monthTransactions: TransactionDisplay[] = [tx('a', 'c-food'), tx('b', 'c-fun')], initial?: HeatmapEngineOptions, extra: { activeCount?: number; isFilterActive?: boolean; cats?: Category[] } = {}) =>
     mount(<Harness monthTransactions={monthTransactions} initial={initial} {...extra} />);
   const change = (v: 'ALL' | string[]) => act(() => h.matrix.onChange(v));
   const FIXED = EXCLUDED_HEATMAP_CATEGORIES;
@@ -345,6 +345,19 @@ describe('HorizontalFilterBar (table view)', () => {
       change(categories.filter(c => c.type === 'expense').map(c => c.name));
       expect(current.includeFixedCosts).toBe(true);
       expect((current.selectedCategories as string[]).length).toBe(6);
+    });
+
+    it('picking every expense category switches the bills on even when the list lacks one of them', () => {
+      const noWater = categories.filter(c => c.name !== 'ค่าน้ำ'); // the user never made a water category
+      bar([tx('a', 'c-food')], undefined, { cats: noWater });
+      change(noWater.filter(c => c.type === 'expense').map(c => c.name));
+      expect(current.includeFixedCosts).toBe(true);
+    });
+
+    it('a list that merely CONTAINS the categories with rows is not "the default" — it stays a list', () => {
+      bar([tx('a', 'c-food'), tx('b', 'c-fun')], { selectedCategories: ['ค่ากิน'], includeFixedCosts: false });
+      change(['ค่ากิน', 'บันเทิง', 'ค่าน้ำ']); // everything with rows, plus one that has none
+      expect(current.selectedCategories).toEqual(['ค่ากิน', 'บันเทิง', 'ค่าน้ำ']);
     });
 
     it('exactly the categories that have rows this month → back to "all" (the default view)', () => {

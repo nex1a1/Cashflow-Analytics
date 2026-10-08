@@ -115,14 +115,14 @@ describe('DayDetailModal — header and summary', () => {
   it('adds up only that day: income, expense, net savings (a sell subtracts) and what is left', async () => {
     await mount();
     expect(chip('รับ')).toBe('+฿1,000.00');
-    expect(chip('จ่าย')).toBe('-฿485.00'); // 120 + 65 + 300, not the 999 from tomorrow
+    expect(chip('จ่าย')).toBe('−฿485.00'); // 120 + 65 + 300, not the 999 from tomorrow
     expect(chip('ลงทุน/ออม')).toBe('฿300.00'); // 500 buy − 200 sell
     expect(chip('สุทธิ')).toBe('+฿215.00'); // 1000 − 485 − 300
   });
 
   it('flags a negative net in the danger colour and prefixes it with a minus', async () => {
     await mount({ transactions: [tx('x1', 'ค่ากิน', 'c-food', 50, 'ข้าว')] });
-    expect(chip('สุทธิ')).toBe('-฿50.00');
+    expect(chip('สุทธิ')).toBe('−฿50.00');
     const net = [...document.querySelectorAll('span')].find(s => s.firstElementChild?.textContent === 'สุทธิ')!;
     expect(net.className).toContain('text-danger');
   });

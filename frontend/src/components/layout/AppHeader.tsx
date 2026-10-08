@@ -16,6 +16,8 @@ export interface AppHeaderProps {
   transactionCount: number;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  taxEnabled?: boolean;
+  portfolioEnabled?: boolean;
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
   groupedOptions: GroupedOptions;
@@ -68,6 +70,7 @@ function DataActions({ isProcessing, onExport, onImport, onGuide }: {
 export default function AppHeader({
   dbStatus, transactionCount,
   activeTab, setActiveTab,
+  taxEnabled = true, portfolioEnabled = true,
   filterPeriod, setFilterPeriod,
   groupedOptions,
   isProcessing,
@@ -171,7 +174,7 @@ export default function AppHeader({
       {/* ── Sub Header (Tab Navigation & Context Actions - Folder/Terminal Tabs) ── */}
       <div className="sticky top-0 z-30 flex flex-col md:flex-row justify-between items-stretch px-4 md:px-6 border-b border-line bg-surface-hover shadow-lg">
         <div className="flex w-full md:w-auto overflow-x-auto items-stretch" style={{ scrollbarWidth: 'none' }}>
-          {TABS.map(({ id, label, icon: Icon }) => {
+          {TABS.filter(t => (taxEnabled || t.id !== 'tax') && (portfolioEnabled || t.id !== 'portfolio')).map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
             const locked = id === 'tax' && taxLocked && !isActive;
             return (

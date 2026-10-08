@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dropdown from '@/components/shared/Dropdown';
 import FieldError from '@/components/shared/FieldError';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { PortfolioAsset } from '@/types';
 import {
   isGoldKind, toBaseUnits, fromBaseUnits, pricePerDisplayUnit, trimNum, checkPriceSanity, GRAMS_PER_BAHT_GOLD,
@@ -159,7 +159,7 @@ const UnitsEditor = memo(function UnitsEditor({ asset, side, units, amount, onUn
       )}
       {market != null && perUnit != null && diffPct != null && (
         <p className={`text-[11px] tabular-nums ${farOff ? 'text-warn font-semibold' : 'text-ink-muted'}`}>
-          ตลาดล่าสุด ฿{formatMoney(market)} ต่อ{unitName} · ที่กรอก{diffPct >= 0 ? 'สูงกว่า' : 'ต่ำกว่า'} {Math.abs(diffPct).toFixed(1)}%
+          ตลาดล่าสุด {formatBaht(market)} ต่อ{unitName} · ที่กรอก{diffPct >= 0 ? 'สูงกว่า' : 'ต่ำกว่า'} {Math.abs(diffPct).toFixed(1)}%
           {farOff && ' — ห่างจากตลาดมาก ตรวจหน่วยและจำนวนเงินอีกครั้ง'}
         </p>
       )}

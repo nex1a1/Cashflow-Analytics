@@ -5,7 +5,7 @@ import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { portfolioService } from '@/services/api';
 import { AssetKind, PortfolioAsset, PricePreview } from '@/types';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { tc } from '@/constants/theme';
 import { ASSET_KIND_LABELS, GRAMS_PER_BAHT_GOLD, defaultUnitLabel, formatUnits, isGoldKind } from './portfolioHelpers';
 import { KIND_META } from './assetKinds';
@@ -21,7 +21,13 @@ const normSymbol = (kind: AssetKind, v: string) => {
   return kind === 'crypto' ? t.toLowerCase() : kind === 'us_stock' || kind === 'th_stock' ? t.toUpperCase() : t;
 };
 
-type PreviewState = { status: 'idle' } | { status: 'loading' } | { status: 'done'; result: PricePreview };
+/** digits and at most one decimal point ("12.4.5" -> "12.45"), so a typo can't become a price Number() reads as NaN and silently drops */
+const priceDigits = (v: string) => {
+  const [int, ...frac] = v.replace(/[^\d.]/g, '').split('.');
+  return frac.length ? `${int}.${frac.join('')}` : int;
+};
+
+type PreviewState ={ status: 'idle' } | { status: 'loading' } | { status: 'done'; result: PricePreview };
 
 /** ทดสอบดึงราคาสดหลังหยุดพิมพ์ 0.6 วินาที — ไม่บันทึกอะไร ไว้จับสัญลักษณ์ผิดก่อนเพิ่มจริง */
 function usePricePreview(kind: AssetKind, symbol: string): PreviewState {
@@ -64,8 +70,8 @@ const PricePreviewBox = ({ kind, symbol, unit, state }: { kind: AssetKind; symbo
         <Check className="w-4 h-4 shrink-0 mt-0.5 text-income" aria-hidden="true" />
         <div className="min-w-0">
           <p className="font-bold text-ink-display tabular-nums">
-            ฿{formatMoney(r.price)} <span className="font-normal text-ink-body">ต่อ{unit}</span>
-            {isGoldKind(kind) && <span className="ml-2 font-normal text-ink-body">≈ ฿{formatMoney(r.price / GRAMS_PER_BAHT_GOLD)} ต่อกรัม</span>}
+            {formatBaht(r.price)} <span className="font-normal text-ink-body">ต่อ{unit}</span>
+            {isGoldKind(kind) && <span className="ml-2 font-normal text-ink-body">≈ {formatBaht(r.price / GRAMS_PER_BAHT_GOLD)} ต่อกรัม</span>}
           </p>
           <p className="mt-0.5 text-[11px] text-ink-muted">แหล่งข้อมูล: {r.source}</p>
         </div>
@@ -221,7 +227,7 @@ const AssetForm = memo(function AssetForm({ asset, onSaved, onDeleted, onCancel 
         {!editing && !meta.auto && (
           <div className="max-w-[260px]">
             <label htmlFor="asset-price" className={LABEL}>ราคาปัจจุบันต่อ{unit || 'หน่วย'} (฿) <span className="font-normal text-ink-muted">ไม่บังคับ</span></label>
-            <input id="asset-price" inputMode="decimal" value={price} onChange={e => setPrice(e.target.value.replace(/[^\d.]/g, ''))} className={`${INPUT} tabular-nums text-right`} placeholder="เช่น 12.4567" />
+            <input id="asset-price" inputMode="decimal" value={price} onChange={e => setPrice(priceDigits(e.target.value))} className={`${INPUT} tabular-nums text-right`} placeholder="เช่น 12.4567" />
             <p className={HINT}>ใส่ไว้จะเห็นมูลค่าและกำไรทันที แก้ทีหลังได้ที่ตารางพอร์ต</p>
           </div>
         )}
@@ -230,7 +236,7 @@ const AssetForm = memo(function AssetForm({ asset, onSaved, onDeleted, onCancel 
           <dl className="grid grid-cols-3 gap-[1px] bg-line border border-line">
             {[
               ['ที่ถืออยู่', asset.units > 0 ? `${formatUnits(asset.units)} ${asset.unitLabel || 'หน่วย'}` : '–'],
-              ['ต้นทุนรวม', asset.units > 0 ? `฿${formatMoney(asset.cost)}` : '–'],
+              ['ต้นทุนรวม', asset.units > 0 ? `${formatBaht(asset.cost)}` : '–'],
               ['รายการซื้อขาย', `${asset.trades.length} รายการ`],
             ].map(([k, v]) => (
               <div key={k} className="bg-surface px-3 py-2.5">

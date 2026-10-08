@@ -3,7 +3,7 @@ import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronFirst, ChevronLas
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
-import { getThaiDayInfo, formatThaiDateShort } from '../../../../utils/formatters';
+import { getThaiDayInfo, formatThaiDateShort, formatBaht } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
 import CategorySelect from '../../../../components/shared/CategorySelect';
 import AllocationSelect from '@/components/shared/AllocationSelect';
@@ -454,11 +454,11 @@ export default function LedgerTable({
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end">
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">รายรับหน้านี้</span>
-            <span className="text-xs font-black tabular-nums text-income font-mono">฿{formatMoney(pageInc)}</span>
+            <span className="text-xs font-black tabular-nums text-income font-mono">{formatBaht(pageInc)}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">รายจ่ายหน้านี้</span>
-            <span className="text-xs font-black tabular-nums text-expense font-mono">฿{formatMoney(pageExp)}</span>
+            <span className="text-xs font-black tabular-nums text-expense font-mono">{formatBaht(pageExp)}</span>
           </div>
         </div>
       </div>

@@ -62,12 +62,12 @@ describe('PortfolioSnapshot', () => {
     h.portfolio = portfolio({ marketValue: 90_000, unrealized: -10_000, realized: -500 });
     mount();
     const loss = stat('กำไร/ขาดทุน ที่ยังไม่ขาย');
-    expect(loss.textContent).toContain('-10,000.00');
+    expect(loss.textContent).toContain('−10,000.00');
     expect(loss.textContent).toContain('-10.0%');
     expect(loss.textContent).not.toContain('+');
     expect(loss.className).not.toContain('bg-income/10');
     expect(loss.querySelector('.text-ink-soft')).not.toBeNull();
-    expect(stat('ขายแล้ว').textContent).toContain('-500.00');
+    expect(stat('ขายแล้ว').textContent).toContain('−500.00');
   });
 
   it('zero cost: no percentage (no division by zero)', () => {

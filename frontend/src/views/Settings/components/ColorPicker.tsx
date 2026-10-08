@@ -138,11 +138,14 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
 
   const handleHexInputChange = (val: string) => {
     setHexInput(val);
-    const cleanVal = val.trim();
-    if (/^#?([0-9A-F]{3}|[0-9A-F]{6})$/i.test(cleanVal)) {
-      const formatted = cleanVal.startsWith('#') ? cleanVal : `#${cleanVal}`;
-      onChange(formatted);
-    }
+    // six digits are complete as soon as they are typed; three could still be the start of six ("#ff0" -> "#ff0000"), so those wait for blur / Enter
+    if (/^#?[0-9A-F]{6}$/i.test(val.trim())) onChange(val.trim().startsWith('#') ? val.trim() : `#${val.trim()}`);
+  };
+
+  // Always stored as six digits: other screens append two more for transparency ("#RRGGBB35"), which breaks on "#f00"
+  const commitShortHex = () => {
+    const m = /^#?([0-9A-F]{3})$/i.exec(hexInput.trim());
+    if (m) onChange(`#${m[1].replace(/./g, '$&$&')}`);
   };
 
   return (
@@ -274,6 +277,8 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                   type="text"
                   value={hexInput}
                   onChange={e => handleHexInputChange(e.target.value)}
+                  onBlur={commitShortHex}
+                  onKeyDown={e => { if (e.key === 'Enter') commitShortHex(); }}
                   maxLength={7}
                   className="w-full bg-transparent text-xs font-mono font-bold text-ink-body outline-none text-right uppercase"
                   placeholder="#000000"

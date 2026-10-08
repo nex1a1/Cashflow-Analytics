@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/SummaryVitals.tsx
 import React, { memo } from 'react';
 import { Activity, Wallet, Navigation, TrendingDown } from 'lucide-react';
-import { formatMoney, calculatePeriodDelta } from '@/utils/formatters';
+import { formatMoney, calculatePeriodDelta, formatBaht } from '@/utils/formatters';
 import sharkLogo from '@/assets/images/shark-white.svg';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer, SectionHeader, BUDGET_RULES } from './helpers';
@@ -68,7 +68,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <Shimmer className="h-4 w-24" />
             ) : (
               <span className="text-[11px] font-bold text-neutral-400 tabular-nums truncate">
-                เฉลี่ย ฿{formatMoney(avgIncomePerDay)} / วัน
+                เฉลี่ย {formatBaht(avgIncomePerDay)} / วัน
               </span>
             )}
             {!showSkeleton && (
@@ -119,7 +119,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <Shimmer className="h-4 w-24" />
             ) : (
               <span className="text-[11px] font-bold text-neutral-400 tabular-nums truncate">
-                เฉลี่ย ฿{formatMoney(avgExpensePerDay)} / วัน
+                เฉลี่ย {formatBaht(avgExpensePerDay)} / วัน
               </span>
             )}
             {!showSkeleton && (

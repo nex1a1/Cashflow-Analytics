@@ -132,7 +132,7 @@ describe('CashflowTable — columns and rows', () => {
     set({ analytics: analytics([month('2026-08', 10_000, 12_000, 0), month('2026-09', 10_000, 5_000, 0)]) });
     mount();
     const [, net, left, spent] = [...rowOf(AUG).querySelectorAll('td')].slice(-4);
-    expect(net.textContent).toBe('-2,000.00');
+    expect(net.textContent).toBe('−2,000.00');
     expect(net.className).toContain('text-danger');
     expect(left.textContent).toBe('-20.0%');
     expect(left.className).toContain('text-danger');

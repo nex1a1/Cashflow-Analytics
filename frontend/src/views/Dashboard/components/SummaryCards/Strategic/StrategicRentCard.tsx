@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Home, Building2, Zap, Globe, Droplets } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { RentSub } from '../types';
@@ -46,25 +46,25 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Building2 size={13} className="shrink-0 text-sky-400" /> ค่าเช่า
             </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(rentSub.rent)}</span>
+            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.rent)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Zap size={13} className="shrink-0 text-amber-400" /> ค่าไฟ
             </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(rentSub.electricity)}</span>
+            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.electricity)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Globe size={13} className="shrink-0 text-indigo-400" /> ค่าเน็ต
             </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(rentSub.internet)}</span>
+            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.internet)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Droplets size={13} className="shrink-0 text-cyan-400" /> ค่าน้ำ
             </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(rentSub.water)}</span>
+            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.water)}</span>
           </div>
           </>
           )}
@@ -81,7 +81,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
               <span className="text-xs text-neutral-400 font-normal ml-1">ของรายรับ</span>
             </div>
             <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              ฿{formatMoney(rentTotal)}
+              {formatBaht(rentTotal)}
             </div>
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">

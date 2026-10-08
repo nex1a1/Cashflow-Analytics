@@ -143,7 +143,7 @@ describe('LedgerTable — what each kind of row shows', () => {
     const r = rows()[0];
     expect(r.querySelector('[data-testid="cat"]')!.getAttribute('data-type')).toBe('expense');
     expect(r.querySelector('[data-testid="alloc"]')).not.toBeNull();
-    expect(cell(r, 4).textContent).toBe('-฿1,234.50');
+    expect(cell(r, 4).textContent).toBe('−฿1,234.50');
   });
 
   it('an expense with no allocation of its own shows WANT; its own allocation wins', () => {
@@ -185,7 +185,7 @@ describe('LedgerTable — what each kind of row shows', () => {
 
   it('a zero amount is an empty cell, not "0.00" typed in', () => {
     mount({ currentData: [row('z', { amount: 0 })] });
-    expect(cell(rows()[0], 4).textContent).toBe('-฿0.00');
+    expect(cell(rows()[0], 4).textContent).toBe('−฿0.00');
   });
 
   it('the badge title says buy / sell, the asset and the units', () => {

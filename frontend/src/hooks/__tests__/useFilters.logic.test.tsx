@@ -118,7 +118,9 @@ describe('useFilters — the filters', () => {
     set(c => c.setAdvancedFilterDate('2026-01-03,2026-01-06'));
     expect(ids()).toEqual(['food', 'gold', 'sell']);
     set(c => c.setAdvancedFilterDate('2026-01-04:2026-01-05'));
-    expect(ids()).toEqual(['fun', 'pay']);
+    expect(ids()).toEqual(['fun', 'pay']); // the end day is in
+    set(c => c.setAdvancedFilterDate('2026-01-05:2026-01-06'));
+    expect(ids()).toEqual(['fun', 'pay', 'gold', 'sell']); // and so is the start day
     set(c => c.setAdvancedFilterDate('WEEKEND'));
     expect(ids()).toEqual(['food']);
     set(c => c.setAdvancedFilterDate('WEEKDAY'));
@@ -167,6 +169,16 @@ describe('useFilters — the filters', () => {
     expect(ids()).toEqual(['fun']);
     set(c => c.setAllocationFilter('savings'));
     expect(ids()).toEqual(['gold', 'sell']);
+  });
+
+  it('a row with no allocation anywhere counts as WANT', () => {
+    const noAlloc: any[] = [...cats, { id: 'c-misc', name: 'จิปาถะ', type: 'expense' }];
+    hook = renderHook(() => useFilters({ transactions: [{ id: 'm', date: '2026-01-05', category_id: 'c-misc', category: 'จิปาถะ', amount: 10, description: '' } as TransactionDisplay], categories: noAlloc }));
+    act(() => { hook.result.current.setFilterPeriod('2026-01'); });
+    set(c => c.setAllocationFilter('want'));
+    expect(ids()).toEqual(['m']);
+    set(c => c.setAllocationFilter('need'));
+    expect(ids()).toEqual([]);
   });
 
   it('weekday / weekend switch', () => {
@@ -250,6 +262,14 @@ describe('useFilters — what the period contains', () => {
     hook = setup([{ id: 'x', date: '2026-01-05', category: 'หมวดเก่า', amount: 1, description: '' } as TransactionDisplay]);
     expect([...f().activeCategoryNames]).toEqual(['หมวดเก่า']);
     expect([...f().activeCashflowGroupIds]).toEqual([]);
+  });
+
+  it.each(Array.from({ length: 12 }, (_, i) => i + 1))('month %i belongs to the right quarter and half-year', (m) => {
+    const mm = String(m).padStart(2, '0');
+    hook = setup(data, [`2026-${mm}`]);
+    const y = f().groupedOptions.yearsMap['2026'];
+    expect([...y.quarters]).toEqual([`2026-Q${Math.ceil(m / 3)}`]);
+    expect([...y.halves]).toEqual([`2026-H${m <= 6 ? 1 : 2}`]);
   });
 
   it('period picker options are grouped by year with the quarters and halves that have data', () => {

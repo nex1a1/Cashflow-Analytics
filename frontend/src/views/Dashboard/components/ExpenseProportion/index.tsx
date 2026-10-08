@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion/index.tsx
 import React, { useMemo, useState, useCallback } from 'react';
 import { Inbox, TrendingUp } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { getDoughnutChartOptions } from '@/utils/chartOptions';
 import { useDashboardContext } from '../../context/DashboardContext';
 import {
@@ -201,9 +201,9 @@ export function ExpenseProportion() {
               const item = activeItems[context.dataIndex];
               const pct = item?.percentage;
               if (pct) {
-                return ` ฿${formatMoney(val)} (${pct}%)`;
+                return ` ${formatBaht(val)} (${pct}%)`;
               }
-              return ` ฿${formatMoney(val)}`;
+              return ` ${formatBaht(val)}`;
             }
           }
         }

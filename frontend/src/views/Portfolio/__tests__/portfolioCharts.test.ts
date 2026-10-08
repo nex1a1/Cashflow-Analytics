@@ -46,6 +46,20 @@ describe('portfolioCharts', () => {
     expect([k[0].priced, k[1].priced]).toEqual([true, false]);
   });
 
+  it('สัดส่วน: มูลค่ารวมเป็นศูนย์ ได้ 0% ไม่ใช่ NaN (ทั้งรายตัวและรายประเภท)', () => {
+    const p = { assets: [asset('z', { marketValue: 0, cost: 0 })] } as Portfolio;
+    expect(buildAllocation(p)[0].pct).toBe(0);
+    expect(buildAllocationByKind(p)[0].pct).toBe(0);
+  });
+
+  it('ประวัติมูลค่า: มีแค่ต้นทุน (ไม่มีมูลค่า) ก็ยังมีจุดของวันนี้ · มีประวัติเก่าก็ไม่ว่างแม้ตัวเลขสดเป็นศูนย์', () => {
+    expect(withLivePoint([], { marketValue: 0, cost: 50 }, '2026-09-30')).toEqual([{ date: '2026-09-30', marketValue: 0, cost: 50 }]);
+    expect(withLivePoint([{ date: '2026-09-29', marketValue: 10, cost: 9 }], { marketValue: 0, cost: 0 }, '2026-09-30')).toEqual([
+      { date: '2026-09-29', marketValue: 10, cost: 9 },
+      { date: '2026-09-30', marketValue: 0, cost: 0 },
+    ]);
+  });
+
   it('ประวัติมูลค่า: จุดของวันนี้มาจากตัวเลขสด แทนที่ของที่จดไว้วันเดียวกัน · ว่างทั้งหมด = []', () => {
     const h = [{ date: '2026-09-29', marketValue: 100, cost: 90 }, { date: '2026-09-30', marketValue: 110, cost: 90 }];
     expect(withLivePoint(h, { marketValue: 120, cost: 95 }, '2026-09-30')).toEqual([

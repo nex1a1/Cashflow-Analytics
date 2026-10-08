@@ -53,13 +53,16 @@ describe('useLedgerData — sorting', () => {
     expect(latest.sortConfig.direction).toBe('desc');
   });
 
-  it('switching to another column starts descending again', () => {
+  it('switching to another column starts descending again — whatever the old column was doing', () => {
     mount([tx('a', { category: 'ก' }), tx('b', { category: 'ข' })], '2026-01', '');
+    act(() => latest.handleSort('amount')); // desc
+    act(() => latest.handleSort('category'));
+    expect(latest.sortConfig).toEqual({ key: 'category', direction: 'desc' });
+    expect(idsOf(latest.sortedTransactions)).toEqual(['b', 'a']);
     act(() => latest.handleSort('amount'));
     act(() => latest.handleSort('amount')); // now asc
     act(() => latest.handleSort('category'));
     expect(latest.sortConfig).toEqual({ key: 'category', direction: 'desc' });
-    expect(idsOf(latest.sortedTransactions)).toEqual(['b', 'a']);
   });
 
   it('only the date column counts as date-sorted (that is what keeps a day together on a page)', () => {
@@ -107,10 +110,22 @@ describe('useLedgerData — the order inside one day follows Settings', () => {
     expect(idsOf(latest.sortedTransactions)).toEqual(['alias', 'food']); // its group (order 1) comes before food (order 2)
   });
 
-  it('rows of an unknown category go last, not first', () => {
-    const rows = [tx('ghost', { category_id: 'gone' }), tx('lunch', { category_id: 'c-lunch' })];
-    mount(rows, '2026-01', '', opts);
+  it('rows of an unknown category go last, not first — whichever order they arrive in', () => {
+    const ghost = tx('ghost', { category_id: 'gone' });
+    const lunch = tx('lunch', { category_id: 'c-lunch' });
+    const m = mount([ghost, lunch], '2026-01', '', opts);
     expect(idsOf(latest.sortedTransactions)).toEqual(['lunch', 'ghost']);
+    m.update([lunch, ghost], '2026-01', '', opts);
+    expect(idsOf(latest.sortedTransactions)).toEqual(['lunch', 'ghost']);
+  });
+
+  it('inside one group, a row whose category is not in the list goes after the ones that are, either way round', () => {
+    const known = tx('known', { category_id: 'c-lunch', cashflow_group_id: 'g-food' } as Partial<TransactionDisplay>);
+    const stray = tx('stray', { category_id: 'c-gone-too', cashflow_group_id: 'g-food' } as Partial<TransactionDisplay>); // same group, so only the category decides
+    const m = mount([stray, known], '2026-01', '', opts);
+    expect(idsOf(latest.sortedTransactions)).toEqual(['known', 'stray']);
+    m.update([known, stray], '2026-01', '', opts);
+    expect(idsOf(latest.sortedTransactions)).toEqual(['known', 'stray']);
   });
 
   it('an earlier DATE still beats the settings order', () => {

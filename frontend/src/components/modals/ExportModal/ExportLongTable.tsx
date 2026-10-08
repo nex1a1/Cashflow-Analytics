@@ -66,7 +66,7 @@ export default function ExportLongTable({
 
             let typeBadgeClass = 'text-expense bg-expense/5 border-expense/20';
             let amountColor = 'text-expense';
-            let amountPrefix = '-';
+            let amountPrefix = '−';
 
             if (isIncome) {
               typeBadgeClass = 'text-emerald-400 bg-emerald-950/30 border-emerald-900/40';
@@ -75,7 +75,7 @@ export default function ExportLongTable({
             } else if (isSavings) {
               typeBadgeClass = 'text-cyan-400 bg-cyan-950/30 border-cyan-900/40';
               amountColor = 'text-cyan-400';
-              amountPrefix = '±';
+              amountPrefix = t.amount < 0 ? '' : '±'; // a sell already carries its own minus sign
             }
 
             const groupId = cat?.cashflowGroup || cat?.cashflow_group_id;

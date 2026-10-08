@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { PlusCircle, Banknote, X } from 'lucide-react';
 import { useMenu } from '@/hooks/useMenu';
 import { PAY_DAY, PAY_DAY_START } from '@/utils/payCycle';
-import { formatMoney, formatAmount } from '../../../utils/formatters';
+import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '../../../utils/formatters';
 import { DayType, TransactionDisplay } from '../../../types';
 import DayTypeSelect from '@/components/shared/DayTypeSelect';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
@@ -167,7 +167,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
              {(cellData.exp > 0 || hiddenExpCount > 0) ? (
               <span className="tabular-nums tracking-tight flex items-center gap-1">
                 {cellData.exp > 0 && (
-                  <span className={`-ml-1.5 px-1.5 rounded-pill ${CALENDAR_HEAT_CHIP[heat]}`}>฿{formatAmount(cellData.exp)}</span>
+                  <span className={`-ml-1.5 px-1.5 rounded-pill ${CALENDAR_HEAT_CHIP[heat]}`}>{formatBahtShort(cellData.exp)}</span>
                 )}
                 {hiddenExpCount > 0 && <MoreButton count={hiddenExpCount} tone="expense" onOpen={() => list.setOpen(o => !o)} open={list.open} triggerRef={list.triggerRef} />}
               </span>
@@ -175,7 +175,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
              {cellData.inc > 0 && (
               <span className="text-income tabular-nums tracking-tight flex items-center gap-1">
                 {hiddenIncCount > 0 && <MoreButton count={hiddenIncCount} tone="income" onOpen={() => list.setOpen(o => !o)} open={list.open} triggerRef={hiddenExpCount > 0 ? undefined : list.triggerRef} />}
-                +฿{formatAmount(cellData.inc)}
+                +{formatBahtShort(cellData.inc)}
               </span>
             )}
           </div>
@@ -188,7 +188,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             <div
               key={`inc_${tx.id}`}
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx"
-              title={`${tx.description} — ฿${formatMoney(tx.amount)}`}
+              title={`${tx.description} — ${formatBaht(tx.amount)}`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">
@@ -208,7 +208,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
             <div
               key={`exp_${tx.id}`}
               className="flex items-center gap-1.5 min-w-0 text-[11px] leading-tight py-0.5 group/tx"
-              title={`${tx.description} — ฿${formatMoney(tx.amount)}`}
+              title={`${tx.description} — ${formatBaht(tx.amount)}`}
             >
               <div className="w-[3px] h-3.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="truncate min-w-0 font-medium text-ink-soft flex-1 group-hover/tx:text-ink-display transition-none">

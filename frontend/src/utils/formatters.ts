@@ -18,21 +18,32 @@ export const formatThaiDateShort = (iso: string): string => {
   return `${Number(d)} ${THAI_MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;
 };
 
+/** Negative amounts are written with a true minus sign, never a hyphen: "−฿500.00". */
+export const MINUS = '−';
+/** Locale output "-1,234.50" -> "−1,234.50"; a value that rounds to zero ("-0.00") shows no sign at all. */
+const trueMinus = (s: string): string => (/[1-9]/.test(s) ? s.replace('-', MINUS) : s.replace('-', ''));
+
 export const formatMoney = (amount: number | string): string =>
-  (Number(amount) || 0).toLocaleString('th-TH', {
+  trueMinus((Number(amount) || 0).toLocaleString('th-TH', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  }));
 
 /**
  * Compact amount formatting: trims trailing decimal zeros (e.g. 100 -> "100", 100.5 -> "100.5").
  * Used across Calendar view surfaces (grid cells, header, legend) so displayed totals stay consistent.
  */
 export const formatAmount = (amount: number | string): string =>
-  (Number(amount) || 0).toLocaleString('th-TH', {
+  trueMinus((Number(amount) || 0).toLocaleString('th-TH', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  });
+  }));
+
+/** The minus goes in front of the baht sign: "฿500.00" / "−฿500.00", never "฿-500.00". */
+const withBaht = (s: string): string => (s.startsWith(MINUS) ? `${MINUS}฿${s.slice(1)}` : `฿${s}`);
+export const formatBaht = (amount: number | string): string => withBaht(formatMoney(amount));
+/** Same as formatBaht but trims trailing zeros ("฿100", "฿100.5"), like formatAmount. */
+export const formatBahtShort = (amount: number | string): string => withBaht(formatAmount(amount));
 
 /**
  * Converts integer Satang (cents) to decimal Baht.
@@ -263,7 +274,7 @@ export const calculatePeriodDelta = ({
       isGood,
       isFlat: false,
       text: `ใหม่ (${compareLabel})`,
-      tooltipText: `ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}฿${formatMoney(current)})`,
+      tooltipText: `ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}${formatBaht(current)})`,
       cls: isGood
         ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
         : (type === 'expense'
@@ -300,7 +311,7 @@ export const calculatePeriodDelta = ({
   const formattedPct = Math.abs(percent) >= 1000 ? '>999%' : `${Math.abs(percent).toFixed(1)}%`;
   const text = isFlat ? `0.0% ${compareLabel}` : `${arrow} ${formattedPct} ${compareLabel}`;
   const diffSign = diff >= 0 ? '+' : '';
-  const tooltipText = `ช่วงก่อนหน้า: ฿${formatMoney(prev)} (${diffSign}฿${formatMoney(diff)})`;
+  const tooltipText = `ช่วงก่อนหน้า: ${formatBaht(prev)} (${diffSign}${formatBaht(diff)})`;
 
   return {
     hasDelta: true,

@@ -89,4 +89,6 @@ export interface ExportFooterProps {
   executeExport: () => void;
   stats: ExportStats;
   isExporting: boolean;
+  /** Why the last attempt did not produce a file (shown next to the download button). */
+  error?: string | null;
 }

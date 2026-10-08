@@ -31,7 +31,7 @@ export default function AmountEditableInput({ initialValue, isInc = false, tone,
 
   const handleBlur = async () => {
     // Remove commas, signs, and currency symbols before parsing just in case
-    const cleanValue = String(value).replaceAll(',', '').replace('+', '').replace('-', '').replace('฿', '').trim();
+    const cleanValue = String(value).replaceAll(',', '').replace('+', '').replace('-', '').replace('−', '').replace('฿', '').trim();
     const numVal = Number(cleanValue);
     // Never turn a typo into ฿0: the cell stays open with the message until it's fixed or Esc'd
     if (cleanValue === '' || !Number.isFinite(numVal) || numVal <= 0) {
@@ -60,7 +60,7 @@ export default function AmountEditableInput({ initialValue, isInc = false, tone,
   const hasValue = value !== '' && value !== undefined && value !== null;
   const displayVal = hasValue ? formatMoney(value) : (placeholder || '0.00');
   const activeColor = tone ? tc(tone) : isInc ? tc('income') : tc('expense'); // Emerald for income, Vivid Rose Red for expense
-  const prefix = tone ? '฿' : isInc ? '+฿' : '-฿';
+  const prefix = tone ? '฿' : isInc ? '+฿' : '−฿';
   const fontStyle: React.CSSProperties = { color: activeColor, fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" };
 
   return (

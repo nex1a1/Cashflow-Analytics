@@ -123,6 +123,19 @@ describe('useImportCSV — confirming', () => {
     expect(api.dayTypeService.save).not.toHaveBeenCalled();
   });
 
+  it('sends amounts as numbers, including the ones the user retyped in the preview (the field hands back text)', async () => {
+    const { result, saveToDb } = setup();
+    await act(async () => { await result.current.handleFileUpload(upload(twoRows)); });
+    act(() => result.current.setImportPreview((p: any) => ({
+      ...p, items: p.items.map((i: any) => (i.description === 'ข้าวมันไก่' ? { ...i, amount: '72.5' } : i)),
+    })));
+    await act(async () => { await result.current.confirmImport({}); });
+
+    const sent = saveToDb.mock.calls[0][0];
+    expect(sent.map((i: any) => i.amount)).toEqual(expect.arrayContaining([72.5, 100, 50]));
+    expect(sent.every((i: any) => typeof i.amount === 'number')).toBe(true);
+  });
+
   it('a day type label that does not exist yet is saved before the calendar uses it', async () => {
     const { result } = setup();
     await act(async () => {

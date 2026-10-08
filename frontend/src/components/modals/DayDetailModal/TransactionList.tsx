@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Wallet, Coins, Inbox, PiggyBank } from 'lucide-react';
 import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton';
-import { formatMoney, hexToRgb } from '../../../utils/formatters';
+import { formatMoney, hexToRgb, formatBaht } from '../../../utils/formatters';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 import { usePortfolio } from '@/context/PortfolioContext';
 
@@ -83,13 +83,13 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
 
       {/* Amount (Ledger Inter Font) */}
       <span className={`text-xs font-bold shrink-0 tabular-nums tracking-tight ${isInc ? 'text-emerald-400' : isSav ? (isSell ? 'text-info' : 'text-savings') : 'text-expense'}`}>
-        {isSav ? '฿' : isInc ? '+฿' : '-฿'}{formatMoney(absAmount)}
+        {isSav ? '฿' : isInc ? '+฿' : '−฿'}{formatMoney(absAmount)}
       </span>
 
       <ConfirmDeleteButton
         onConfirm={() => onDeleteClick(tx.id)}
         tooltip="ลบรายการ"
-        itemLabel={`${tx.description || tx.category} ${isInc ? '+' : isSav ? '' : '-'}฿${formatMoney(absAmount)}`}
+        itemLabel={`${tx.description || tx.category} ${isInc ? '+' : isSav ? '' : '−'}${formatBaht(absAmount)}`}
       />
     </div>
   );

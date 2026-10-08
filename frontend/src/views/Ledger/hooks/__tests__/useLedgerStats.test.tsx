@@ -165,7 +165,7 @@ describe('useLedgerStats — a group card', () => {
 
   it('expense: −amount and share of EXPENSE (not of income)', () => {
     const c = card(stats().activeExpenseCards, 'ค่ากิน');
-    expect(c.textContent).toContain('-฿1,000.00');
+    expect(c.textContent).toContain('−฿1,000.00');
     expect(share(c)).toBe('10.0%'); // 1,000 / 10,000 (of income it would be 3.3%)
     expect(c.textContent).toContain('3 รายการ');
     expect(c.textContent).toContain('OUT');

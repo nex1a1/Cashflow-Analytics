@@ -1,6 +1,6 @@
 // src/views/Dashboard/components/MainChart/MainChartTextAlternative.tsx
 import React, { memo } from 'react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 
 interface SankeyFlow { from: string; to: string; flow: number }
 interface Series { label?: string; hidden?: boolean; data?: unknown[] }
@@ -35,7 +35,7 @@ export const MainChartTextAlternative = memo(({ caption, isSankey, data }: Props
               <tr key={`${f.from}>${f.to}>${i}`}>
                 <td>{f.from}</td>
                 <td>{f.to}</td>
-                <td>฿{formatMoney(f.flow)}</td>
+                <td>{formatBaht(f.flow)}</td>
               </tr>
             ))}
           </tbody>
@@ -64,7 +64,7 @@ export const MainChartTextAlternative = memo(({ caption, isSankey, data }: Props
             <tr key={`${label}-${row}`}>
               <th scope="row">{label}</th>
               {series.map((ds, i) => (
-                <td key={`${ds.label}-${i}`}>฿{formatMoney(Number((ds.data as number[])[row]) || 0)}</td>
+                <td key={`${ds.label}-${i}`}>{formatBaht(Number((ds.data as number[])[row]) || 0)}</td>
               ))}
             </tr>
           ))}

@@ -41,3 +41,30 @@ describe('CalendarDayCell day note', () => {
     expect(classes).not.toContain('overflow-hidden');
   });
 });
+
+describe('CalendarDayCell negative amounts', () => {
+  const sell = { id: 's1', description: 'ขายทอง', category: 'ออมทอง', amount: -200, group_type: 'savings' } as never;
+  const html = renderToStaticMarkup(
+    <CalendarDayCell
+      day={9}
+      dateStr="2025-06-09"
+      isToday={false}
+      isWeekend={false}
+      dayTypeConfig={[{ id: 'work', name: 'workday', label: 'ทำงาน', color: '#3B82F6' }]}
+      dayType="work"
+      data={{ exp: 0, inc: 0, items: [sell], incItems: [] }}
+      handleDayTypeChange={() => {}}
+      onSelectDate={() => {}}
+    />,
+  );
+
+  it('a savings sell reads −฿200.00 in its tooltip, never ฿-200.00', () => {
+    expect(html).toContain('title="ขายทอง — −฿200.00"');
+    expect(html).not.toContain('฿-');
+  });
+
+  it('and −200 in the row, with the true minus sign', () => {
+    expect(html).toContain('−200</span>');
+    expect(html).not.toContain('>-200<');
+  });
+});

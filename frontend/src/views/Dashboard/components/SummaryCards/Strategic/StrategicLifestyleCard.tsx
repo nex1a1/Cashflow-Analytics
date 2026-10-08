@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Zap } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { WantCategory, BreakdownEntry } from '../types';
@@ -55,7 +55,7 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
               <span className="text-xs text-neutral-400 font-normal ml-1">ของรายรับ</span>
             </div>
             <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              ฿{formatMoney(variableTotal)}
+              {formatBaht(variableTotal)}
             </div>
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">

@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion/ExpenseProportionChart.tsx
 import React, { useMemo } from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { formatMoney } from '../../../../utils/formatters';
+import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { ExpenseProportionChartProps } from './types';
 
 import { tc } from '@/constants/theme';
@@ -91,7 +91,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
             {activeItems.map((item) => (
               <tr key={item.id || item.name}>
                 <td>{item.name}</td>
-                <td>฿{formatMoney(item.amount)}</td>
+                <td>{formatBaht(item.amount)}</td>
                 <td>{item.percentage}%</td>
               </tr>
             ))}

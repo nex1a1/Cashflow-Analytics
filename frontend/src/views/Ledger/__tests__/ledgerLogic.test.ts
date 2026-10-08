@@ -90,6 +90,11 @@ describe('paginateTransactions', () => {
     expect(pages.every(p => new Set(p.map(r => r.date)).size <= 2)).toBe(true);
   });
 
+  it('fills a page right up to the page size: two days of 25 are one page of 50, a third day starts the next', () => {
+    const rows = [...day('2026-09-01', 25), ...day('2026-09-02', 25), ...day('2026-09-03', 1)];
+    expect(paginateTransactions(rows, 'date').map(p => p.length)).toEqual([50, 1]);
+  });
+
   it('lets a single busy day exceed the page size instead of splitting it', () => {
     const pages = paginateTransactions(day('2026-09-01', 60), 'date');
     expect(pages.map(p => p.length)).toEqual([60]);

@@ -28,6 +28,8 @@ export default function DebouncedInput({
   latestValueRef.current = value;
   const [saveError, setSaveError] = useState<string | null>(null);
   const savingRef = useRef(false);
+  // text handed to onDebouncedChange and not answered yet: Enter saves and then blurs, and that blur must not send the same text again
+  const inFlightRef = useRef<string | null>(null);
   const keepTypedRef = useRef(false);
   const errorId = useId();
   const isBlank = (v: string) => !!requiredMessage && v.trim() === '';
@@ -48,12 +50,12 @@ export default function DebouncedInput({
 
   const save = async (v: string) => {
     savingRef.current = true;
+    inFlightRef.current = v;
     let ok: unknown;
     try { ok = await onDebouncedChange(v); } catch { ok = false; }
     savingRef.current = false;
+    inFlightRef.current = null;
     keepTypedRef.current = ok === false;
-    // the rollback may have re-synced the old value before this line ran: put the typed text back
-    if (ok === false && latestValueRef.current !== v) setValue(v);
     setSaveError(ok === false ? 'บันทึกไม่สำเร็จ ลองอีกครั้ง' : null);
   };
 
@@ -63,7 +65,7 @@ export default function DebouncedInput({
       timerRef.current = null;
     }
     if (isBlank(latestValueRef.current)) return;
-    if (latestValueRef.current !== initialValue) {
+    if (latestValueRef.current !== initialValue && latestValueRef.current !== inFlightRef.current) {
       save(latestValueRef.current);
     }
   };
@@ -109,6 +111,7 @@ export default function DebouncedInput({
 
   const input = (
     <input
+      {...rest}
       ref={inputRef}
       type="text"
       value={value}
@@ -119,7 +122,6 @@ export default function DebouncedInput({
       placeholder={placeholder}
       aria-invalid={error ? true : undefined}
       aria-describedby={error ? errorId : undefined}
-      {...rest}
     />
   );
 

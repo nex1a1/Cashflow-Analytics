@@ -1,7 +1,7 @@
 import React from 'react';
 import { List, Rows, Folders, Coins } from 'lucide-react';
 import sharkWhite from '../../../assets/images/shark-white.svg';
-import { formatMoney as formatValue, hexToRgb } from '../../../utils/formatters';
+import { formatBaht, hexToRgb } from '../../../utils/formatters';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 
 import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
@@ -234,7 +234,7 @@ function CategoryLegendSection({
               >
                 <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                 <span>{cat.name}</span>
-                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">฿{formatValue(amt)}</span>
+                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatBaht(amt)}</span>
               </button>
             );
           })}
@@ -244,7 +244,7 @@ function CategoryLegendSection({
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || tc('ink-muted');
             let amtColor = 'text-expense';
-            let amtPrefix = '-';
+            let amtPrefix = '−';
             if (groupObj.type === 'income') {
               amtColor = 'text-income';
               amtPrefix = '+';
@@ -262,7 +262,7 @@ function CategoryLegendSection({
                     <span className="truncate">{groupObj.name}</span>
                   </span>
                   <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>
-                    {amtPrefix}฿{formatValue(groupTotal)}
+                    {amtPrefix}{formatBaht(groupTotal)}
                   </span>
                 </div>
 
@@ -289,7 +289,7 @@ function CategoryLegendSection({
                       >
                         <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
                         <span>{cat.name}</span>
-                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">฿{formatValue(amt)}</span>
+                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatBaht(amt)}</span>
                       </button>
                     );
                   })}
@@ -329,7 +329,7 @@ function AllocationOverviewSection({
                 <span className="w-2.5 h-2.5 rounded-none" style={{ backgroundColor: row.dot }} /> {row.label}
               </span>
               <span className="font-bold tabular-nums tracking-tight text-ink-display">
-                ฿{formatValue(row.total)} ({row.pct}%)
+                {formatBaht(row.total)} ({row.pct}%)
               </span>
             </div>
             {legendLayoutMode === 'grouped' && row.cats.length > 0 && (
@@ -342,7 +342,7 @@ function AllocationOverviewSection({
                         {cat.name} <span className="text-ink-body text-[11px] font-normal font-sans">({cat.groupName})</span>
                       </span>
                     </span>
-                    <span className="font-bold tabular-nums tracking-tight text-ink-display ml-2 shrink-0">฿{formatValue(cat.amount)}</span>
+                    <span className="font-bold tabular-nums tracking-tight text-ink-display ml-2 shrink-0">{formatBaht(cat.amount)}</span>
                   </div>
                 ))}
               </div>

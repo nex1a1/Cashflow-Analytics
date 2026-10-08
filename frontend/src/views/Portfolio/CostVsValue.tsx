@@ -3,13 +3,13 @@ import { Bar as BarChart, Line } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import { Portfolio } from '@/types';
 import { tc } from '@/constants/theme';
-import { formatMoney, formatThaiDateShort } from '@/utils/formatters';
+import { formatMoney, formatThaiDateShort, formatBaht } from '@/utils/formatters';
 import { AnalysisTabHeader } from '@/views/Dashboard/components/SummaryCards/Strategic/SummaryStrategic';
 import { buildInvestedSeries, withLivePoint } from './portfolioCharts';
 import { todayIso } from './portfolioHelpers';
 
-const baht = (n: number) => `฿${formatMoney(n)}`;
-const signedBaht = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}฿${formatMoney(Math.abs(n))}`;
+const baht = (n: number) => `${formatBaht(n)}`;
+const signedBaht = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatBaht(Math.abs(n))}`;
 // กำไร = เขียว, ขาดทุน = เหลือง (ไม่ใช้แดง) ตามหลักเดียวกับตัวเลขกำไร/ขาดทุนในหน้านี้
 const gainText = (n: number) => (n > 0 ? 'text-income' : n < 0 ? 'text-warn' : 'text-ink-display');
 const gainBar = (n: number) => (n >= 0 ? 'bg-income' : 'bg-warn');
@@ -38,7 +38,7 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 const axisTick = { color: tc('ink-muted'), font: { size: 11 } };
-const moneyTick = (v: string | number) => `฿${formatMoney(Number(v))}`;
+const moneyTick = (v: string | number) => `${formatBaht(Number(v))}`;
 const BASE = { responsive: true, maintainAspectRatio: false, animation: false } as const;
 
 /** กำไร/ขาดทุนรายสินทรัพย์ (บาท) แท่งแนวนอน — เฉพาะตัวที่มีราคา */

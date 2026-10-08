@@ -86,10 +86,10 @@ export default function ExportWideTable({
                     <td
                       key={cat.id}
                       className={`py-2 px-3 text-right font-mono text-xs tabular-nums whitespace-nowrap ${
-                        total > 0 ? 'text-neutral-200 font-medium' : 'text-neutral-600'
+                        total !== 0 ? 'text-neutral-200 font-medium' : 'text-neutral-600'
                       }`}
                     >
-                      {total > 0 ? formatMoney(total) : '—'}
+                      {total !== 0 ? formatMoney(total) : '—'}
                     </td>
                   );
                 })}

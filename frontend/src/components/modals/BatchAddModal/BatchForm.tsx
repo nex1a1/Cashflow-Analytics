@@ -170,6 +170,7 @@ function BatchForm({
   }, [formDate, onDateChange]);
 
   const onSubmit = (data: BatchFormValues) => {
+    if (isProcessing) return; // the cart is being saved and then emptied: an item added now would vanish unseen
     onSubmitItem(data);
     setValue('description', '');
     setValue('units', '');

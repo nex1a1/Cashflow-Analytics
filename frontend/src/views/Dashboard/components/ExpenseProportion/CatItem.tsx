@@ -1,6 +1,6 @@
 // src/views/Dashboard/components/ExpenseProportion/CatItem.tsx
 import React from 'react';
-import { formatMoney } from '../../../../utils/formatters';
+import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { CatItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
@@ -15,7 +15,7 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
     onFocus={() => onHover(idx)}
     onBlur={() => onHover(-1)}
     tabIndex={0}
-    aria-label={`${cat.name}: ฿${formatMoney(cat.amount)} (${cat.percentage}%)`}
+    aria-label={`${cat.name}: ${formatBaht(cat.amount)} (${cat.percentage}%)`}
     className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
       isHovered
         ? 'bg-surface-elevated/90 border-accent-ink z-10'

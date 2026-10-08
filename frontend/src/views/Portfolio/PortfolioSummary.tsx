@@ -1,12 +1,12 @@
 import { memo, useMemo } from 'react';
 import { Portfolio } from '@/types';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import CostVsValue from './CostVsValue';
 import AllocationPanel from './AllocationPanel';
 import { buildInvestedSeries } from './portfolioCharts';
 import { describeHolding, MIN_ANNUAL_DAYS, plColor, portfolioAnnualReturn, todayIso } from './portfolioHelpers';
 
-const plMoney = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}฿${formatMoney(Math.abs(n))}`;
+const plMoney = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatBaht(Math.abs(n))}`;
 const plPct = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(2)}%`;
 
 const Row = ({ label, value, valueClass = 'text-ink-display', sub, small = false }: { label: string; value: string; valueClass?: string; sub?: string; small?: boolean }) => (
@@ -35,9 +35,9 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
         <section aria-label="สรุปพอร์ต" className="bg-surface p-5 flex flex-col gap-4">
           <div>
             <h2 className="text-[13px] font-bold text-ink-display">มูลค่าพอร์ตตอนนี้</h2>
-            <p className="mt-2 text-[32px] leading-none font-black tabular-nums tracking-tight text-ink-display">฿{formatMoney(totals.marketValue)}</p>
+            <p className="mt-2 text-[32px] leading-none font-black tabular-nums tracking-tight text-ink-display">{formatBaht(totals.marketValue)}</p>
             <p className="mt-2 text-[13px] text-ink-body tabular-nums">
-              ต้นทุนที่ถืออยู่ <span className="font-bold text-ink-soft">฿{formatMoney(totals.cost)}</span>
+              ต้นทุนที่ถืออยู่ <span className="font-bold text-ink-soft">{formatBaht(totals.cost)}</span>
               {holding && <span> · ถือมา {holding}</span>}
             </p>
           </div>
@@ -45,7 +45,7 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
             <Row label="กำไร/ขาดทุนรวม" value={plMoney(totalPl)} valueClass={plColor(totalPl)} sub={totalPct == null ? undefined : plPct(totalPct)} />
             <Row small label="ยังไม่ขาย" value={plMoney(totals.unrealized)} valueClass={plColor(totals.unrealized)} />
             <Row small label="ขายแล้ว" value={plMoney(totals.realized)} valueClass={plColor(totals.realized)} />
-            <Row small label="% คิดจากเงินที่ซื้อทั้งหมด" value={`฿${formatMoney(totals.bought)}`} valueClass="text-ink-soft" />
+            <Row small label="% คิดจากเงินที่ซื้อทั้งหมด" value={`${formatBaht(totals.bought)}`} valueClass="text-ink-soft" />
             {annual.days > 0 && (
               annual.rate == null
                 ? <Row label="ผลตอบแทนเฉลี่ยต่อปี" value="–" valueClass="text-ink-muted" sub={annual.days < MIN_ANNUAL_DAYS ? 'ถือยังไม่ถึง 1 ปี' : undefined} />
@@ -54,8 +54,8 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
           </dl>
           {generalSavings !== 0 && (
             <dl className="flex flex-col">
-              <Row small label="เงินออมทั่วไป (ไม่ผูกสินทรัพย์ ไม่มีมูลค่าตลาด)" value={`฿${formatMoney(generalSavings)}`} valueClass="text-ink-soft" />
-              <Row small label="รวมพอร์ตและเงินออมทั่วไป" value={`฿${formatMoney(totals.marketValue + generalSavings)}`} />
+              <Row small label="เงินออมทั่วไป (ไม่ผูกสินทรัพย์ ไม่มีมูลค่าตลาด)" value={`${formatBaht(generalSavings)}`} valueClass="text-ink-soft" />
+              <Row small label="รวมพอร์ตและเงินออมทั่วไป" value={`${formatBaht(totals.marketValue + generalSavings)}`} />
             </dl>
           )}
           {totalPl < 0 && (
@@ -74,7 +74,7 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
 
       {totals.unpricedCount > 0 && (
         <p className="text-[11px] text-warn">
-          {totals.unpricedCount} สินทรัพย์ยังไม่มีราคา (ต้นทุน ฿{formatMoney(totals.unpricedCost)}) จึงไม่รวมในมูลค่าและกำไร/ขาดทุนด้านบน — กรอกราคาเองในแถวนั้นได้
+          {totals.unpricedCount} สินทรัพย์ยังไม่มีราคา (ต้นทุน {formatBaht(totals.unpricedCost)}) จึงไม่รวมในมูลค่าและกำไร/ขาดทุนด้านบน — กรอกราคาเองในแถวนั้นได้
         </p>
       )}
     </div>

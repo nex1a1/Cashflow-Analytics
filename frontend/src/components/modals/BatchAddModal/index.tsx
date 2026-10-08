@@ -12,6 +12,7 @@ import { Category, CashflowGroup, DayType, FrequentItem, AllocationType, Transac
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { signedTradeAmount } from '@/views/Portfolio/portfolioHelpers';
+import { bahtToSatang, satangToBaht } from '@/utils/formatters';
 
 export interface PendingBatchItem {
   id: string;
@@ -294,20 +295,20 @@ export default function BatchAddModal({
     }
   };
 
-  // Cart financial summary breakdowns
+  // Cart financial summary breakdowns — added up in satang so 0.10 + 0.20 against 0.30 nets to 0, not -0.00
   const totalExpense = useMemo(() =>
-    pendingItems.filter(i => !i._isInc && !i._isSavings).reduce((sum, i) => sum + i.amount, 0),
+    satangToBaht(pendingItems.filter(i => !i._isInc && !i._isSavings).reduce((sum, i) => sum + bahtToSatang(i.amount), 0)),
     [pendingItems]
   );
   const netSavings = useMemo(() =>
-    pendingItems.filter(i => i._isSavings).reduce((sum, i) => sum + (i.side === 'sell' ? -i.amount : i.amount), 0),
+    satangToBaht(pendingItems.filter(i => i._isSavings).reduce((sum, i) => sum + (i.side === 'sell' ? -1 : 1) * bahtToSatang(i.amount), 0)),
     [pendingItems]
   );
-  const totalIncome = useMemo(() => 
-    pendingItems.filter(i => i._isInc).reduce((sum, i) => sum + i.amount, 0),
+  const totalIncome = useMemo(() =>
+    satangToBaht(pendingItems.filter(i => i._isInc).reduce((sum, i) => sum + bahtToSatang(i.amount), 0)),
     [pendingItems]
   );
-  const netAmount = totalIncome - totalExpense - netSavings;
+  const netAmount = satangToBaht(bahtToSatang(totalIncome) - bahtToSatang(totalExpense) - bahtToSatang(netSavings));
 
   if (!isOpen) return null;
 
@@ -417,7 +418,7 @@ export default function BatchAddModal({
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">ลงทุน/ออม:</span>
                     <span className="text-base font-black text-savings tabular-nums">
-                      {netSavings < 0 ? '-' : ''}<AnimatedNumber value={Math.abs(netSavings)} /> ฿
+                      {netSavings < 0 ? '−' : ''}<AnimatedNumber value={Math.abs(netSavings)} /> ฿
                     </span>
                   </div>
                 )}

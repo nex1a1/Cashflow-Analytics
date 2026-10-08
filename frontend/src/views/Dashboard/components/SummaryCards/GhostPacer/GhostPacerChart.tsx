@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/GhostPacer/GhostPacerChart.tsx
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { Ghost } from 'lucide-react';
-import { formatMoney, formatAmount } from '@/utils/formatters';
+import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
 
 import { tc, FONT_MONO } from '@/constants/theme';
 import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
@@ -301,7 +301,7 @@ export const GhostPacerChart = memo(({
                   fontFamily={FONT_MONO}
                   textAnchor="end"
                 >
-                  ฿{formatAmount(Math.round(val))}
+                  {formatBahtShort(Math.round(val))}
                 </text>
               </g>
             );
@@ -388,7 +388,7 @@ export const GhostPacerChart = memo(({
             <g transform={`translate(${xEOM + 6}, ${ghostEomY - 7})`}>
               <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={tc('ink-body')} strokeWidth="0.8" rx="2" />
               <text x="6" y="11" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                เดือนก่อนจบ ฿{formatAmount(Math.round(ghostFinal))}
+                เดือนก่อนจบ {formatBahtShort(Math.round(ghostFinal))}
               </text>
             </g>
           )}
@@ -398,7 +398,7 @@ export const GhostPacerChart = memo(({
             <g transform={`translate(${xEOM + 6}, ${curEomY - 7})`}>
               <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={paceColor} strokeWidth="0.8" rx="2" />
               <text x="6" y="11" fill={paceColor} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                คาดจบเดือนนี้ ฿{formatAmount(Math.round(projectedExpense))}
+                คาดจบเดือนนี้ {formatBahtShort(Math.round(projectedExpense))}
               </text>
             </g>
           )}
@@ -482,22 +482,22 @@ export const GhostPacerChart = memo(({
                   textAnchor="end"
                 >
                   {hoverData.deltaGhost === 0 ? '±฿0' : hoverData.deltaGhost < 0
-                    ? `-฿${formatAmount(Math.abs(Math.round(hoverData.deltaGhost)))} (${hoverData.deltaGhostPct.toFixed(0)}%)`
-                    : `+฿${formatAmount(Math.round(hoverData.deltaGhost))} (+${hoverData.deltaGhostPct.toFixed(0)}%)`}
+                    ? `−${formatBahtShort(Math.abs(Math.round(hoverData.deltaGhost)))} (${hoverData.deltaGhostPct.toFixed(0)}%)`
+                    : `+${formatBahtShort(Math.round(hoverData.deltaGhost))} (+${hoverData.deltaGhostPct.toFixed(0)}%)`}
                 </text>
 
                 {/* Row 2: Current Month Spend */}
                 <text x="8" y="40" fill={hoverColor} fontSize="11" fontFamily={FONT_MONO}>
-                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">฿{formatMoney(hoverData.curSpend)}</tspan>
+                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hoverData.curSpend)}</tspan>
                 </text>
 
                 {/* Row 3: Ghost Month Spend */}
                 <text x="8" y="58" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO}>
-                  เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">฿{formatMoney(hoverData.ghostSpend)}</tspan>
+                  เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">{formatBaht(hoverData.ghostSpend)}</tspan>
                 </text>
                 {hoverData.benchSpend > 0 && (
                   <text x={tipW - 8} y="58" fill={tc('info')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-                    เฉลี่ย ฿{formatAmount(Math.round(hoverData.benchSpend))}
+                    เฉลี่ย {formatBahtShort(Math.round(hoverData.benchSpend))}
                   </text>
                 )}
               </g>

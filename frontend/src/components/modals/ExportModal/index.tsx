@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ExportModal/index.tsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { transactionService } from '../../../services/api';
 import { TransactionDisplay } from '../../../types';
 import ExportHeader from './ExportHeader';
@@ -51,30 +51,38 @@ export default function ExportModal({
   const [localTransactions, setLocalTransactions] = useState<TransactionDisplay[]>([]);
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // The page's rows are only the fallback when the fetch fails. Read through a ref, not a dependency: a parent that passes a new
+  // array on every render (or none at all, which defaults to a new [] each time) would otherwise refetch in a loop and reset the user's choices.
+  const fallbackRef = useRef(filteredTransactions);
+  fallbackRef.current = filteredTransactions;
 
   // Sync initial period when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setExportPeriod(convertPeriodMode(initialPeriod || 'ALL', false));
-      setPreviewSearch('');
-      setIsExporting(false);
+    if (!isOpen) return;
+    let current = true; // an answer that arrives after the modal was closed or reopened is stale
+    setExportPeriod(convertPeriodMode(initialPeriod || 'ALL', false));
+    setPreviewSearch('');
+    setIsExporting(false);
+    setExportError(null);
 
-      const fetchAllData = async () => {
-        setIsFetching(true);
-        try {
-          const all = await transactionService.getAll();
-          setLocalTransactions(all);
-        } catch (err) {
-          console.error('Export fetch failed, falling back to props:', err);
-          setLocalTransactions(filteredTransactions);
-        } finally {
-          setIsFetching(false);
-        }
-      };
+    const fetchAllData = async () => {
+      setIsFetching(true);
+      try {
+        const all = await transactionService.getAll();
+        if (current) setLocalTransactions(all);
+      } catch (err) {
+        console.error('Export fetch failed, falling back to props:', err);
+        if (current) setLocalTransactions(fallbackRef.current);
+      } finally {
+        if (current) setIsFetching(false);
+      }
+    };
 
-      fetchAllData();
-    }
-  }, [isOpen, initialPeriod, filteredTransactions]);
+    fetchAllData();
+    return () => { current = false; };
+  }, [isOpen, initialPeriod]);
 
   // ESC key guard
   useEffect(() => {
@@ -120,6 +128,7 @@ export default function ExportModal({
     if ((!dataToExport.length && exportFormat !== 'backup_json') || isExporting) return;
 
     setIsExporting(true);
+    setExportError(null);
 
     setTimeout(() => {
       try {
@@ -168,13 +177,15 @@ export default function ExportModal({
           const filename = `CashflowShark_Ledger_${periodSuffix}_${todayStr}.csv`;
           downloadFileBlob(csvContent, filename);
         }
-      } catch (err) {
-        console.error('Export generation error:', err);
-      } finally {
         setTimeout(() => {
           setIsExporting(false);
           onClose();
         }, 500);
+      } catch (err) {
+        // stay open: closing as if it worked would leave the user waiting for a file that never came
+        console.error('Export generation error:', err);
+        setExportError('สร้างไฟล์ไม่สำเร็จ ลองอีกครั้ง หรือเลือกรูปแบบอื่น');
+        setIsExporting(false);
       }
     }, 200);
   };
@@ -234,6 +245,7 @@ export default function ExportModal({
           executeExport={executeExport}
           stats={stats}
           isExporting={isExporting}
+          error={exportError}
         />
       </div>
     </div>

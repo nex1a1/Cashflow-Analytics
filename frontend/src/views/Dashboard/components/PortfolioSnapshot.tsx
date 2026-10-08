@@ -2,7 +2,7 @@ import { memo, type ReactNode } from 'react';
 import { PiggyBank, ChevronRight, WifiOff, TrendingUp, TrendingDown } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { useAppUI } from '@/context/AppUIContext';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { describePriceAge, plColor } from '@/views/Portfolio/portfolioHelpers';
 
 interface StatProps {
@@ -49,8 +49,8 @@ const PortfolioSnapshot = memo(function PortfolioSnapshot() {
       <span className="flex items-center gap-2 px-5 shrink-0 bg-savings text-canvas text-xs font-black">
         <PiggyBank className="w-5 h-5" /> พอร์ตลงทุน
       </span>
-      <Stat label="มูลค่าปัจจุบัน" value={`฿${formatMoney(totals.marketValue)}`} />
-      <Stat label="ต้นทุน" value={`฿${formatMoney(totals.cost)}`} valueClass="text-ink-soft" />
+      <Stat label="มูลค่าปัจจุบัน" value={`${formatBaht(totals.marketValue)}`} />
+      <Stat label="ต้นทุน" value={`${formatBaht(totals.cost)}`} valueClass="text-ink-soft" />
       <Stat
         label="กำไร/ขาดทุน ที่ยังไม่ขาย"
         value={`${gain ? '+' : ''}${formatMoney(totals.unrealized)}`}

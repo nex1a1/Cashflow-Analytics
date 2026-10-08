@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React, { useEffect } from 'react';
 import AppHeader from './AppHeader';
 import AppToast from '../shared/AppToast';
 
@@ -8,6 +8,7 @@ import { useAppUI } from '../../context/AppUIContext';
 import { useAppData } from '../../context/AppDataContext';
 import { useAppFilter } from '../../context/AppFilterContext';
 import { localTodayIso } from '../../utils/payCycle';
+import useJsonSetting from '../../hooks/useJsonSetting';
 
 // View Components
 import DashboardView from '../../views/Dashboard/index';
@@ -23,8 +24,13 @@ import ExportModal from '../modals/ExportModal';
 import ImportGuideModal from '../modals/ImportGuideModal';
 import ImportPreviewModal from '../modals/ImportPreviewModal';
 
+// ค่าเริ่มต้น = เปิด (ผู้ใช้เดิมไม่เสียแท็บ); ปิดเมื่อบันทึกเป็น false เท่านั้น
+const parseEnabled = (raw: unknown) => raw !== false && raw !== 'false';
+
 export default function MainLayout() {
   const { toast, showToast: triggerToast } = useToast();
+  const [taxEnabled, updateTaxEnabled] = useJsonSetting('tax_enabled', parseEnabled);
+  const [portfolioEnabled, updatePortfolioEnabled] = useJsonSetting('portfolio_enabled', parseEnabled);
 
   const {
     activeTab, setActiveTab,
@@ -75,7 +81,12 @@ export default function MainLayout() {
     getFilterLabel
   } = useAppFilter();
 
-  const showSuccess = () => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
+  // ปิดโหมดภาษีขณะเปิดแท็บภาษีค้างอยู่ (เช่น เปิดแอปใหม่) → กลับไปหน้าภาพรวม
+  useEffect(() => {
+    if ((!taxEnabled && activeTab === 'tax') || (!portfolioEnabled && activeTab === 'portfolio')) setActiveTab('insights');
+  }, [taxEnabled, portfolioEnabled, activeTab, setActiveTab]);
+
+  const showSuccess =() => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
 
   return (
     <div
@@ -90,6 +101,8 @@ export default function MainLayout() {
           transactionCount={totalCount}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          taxEnabled={taxEnabled}
+          portfolioEnabled={portfolioEnabled}
           filterPeriod={filterPeriod}
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
@@ -135,6 +148,7 @@ export default function MainLayout() {
                 categories={categories}
                 dayTypeConfig={dayTypeConfig}
                 dayTypes={dayTypes}
+                showPortfolio={portfolioEnabled}
                 isLoading={isProcessing}
               />
             </div>
@@ -211,13 +225,13 @@ export default function MainLayout() {
             </div>
           )}
 
-          {activeTab === 'portfolio' && (
+          {activeTab === 'portfolio' && portfolioEnabled && (
             <div key="portfolio">
               <PortfolioView />
             </div>
           )}
 
-          {activeTab === 'tax' && (
+          {activeTab === 'tax' && taxEnabled && (
             <div key="tax">
               <TaxView />
             </div>
@@ -245,6 +259,10 @@ export default function MainLayout() {
                 handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
                 transactions={transactions}
                 triggerToast={triggerToast}
+                taxEnabled={taxEnabled}
+                onTaxEnabledChange={(on) => { void updateTaxEnabled(() => on); }}
+                portfolioEnabled={portfolioEnabled}
+                onPortfolioEnabledChange={(on) => { void updatePortfolioEnabled(() => on); }}
               />
             </div>
           )}
@@ -287,6 +305,7 @@ export default function MainLayout() {
         onClose={() => setShowExportModal(false)}
         transactions={transactions}
         categories={categories}
+        cashflowGroups={cashflowGroups}
         dayTypes={dayTypes}
         dayTypeConfig={dayTypeConfig}
         groupedOptions={groupedOptions}

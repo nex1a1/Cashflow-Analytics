@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/TopTransactions.tsx
 import React, { useMemo, memo } from 'react';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
@@ -263,7 +263,7 @@ export default function TopTransactions() {
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
             className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
-            title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (฿${formatMoney(allFilteredExpenseSum)})`}
+            title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (${formatBaht(allFilteredExpenseSum)})`}
           >
             <span className="text-neutral-400">ยอดรวม:</span>
             <span className="text-expense font-bold tabular-nums">{formatMoney(topSum)}</span>

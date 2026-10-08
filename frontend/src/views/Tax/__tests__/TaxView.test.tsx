@@ -513,6 +513,8 @@ describe('TaxView — copy summary and failures', () => {
     expect(copied).toContain('ภาษี ปี 2026');
     expect(copied).toContain('เงินได้สุทธิ: ฿231,000'); // 251,000 − 20,000 RMF
     expect(copied).toContain('ลดหย่อนจาก Ledger:');
+    expect(copied).toMatch(/หักค่าใช้จ่าย 50% ไม่เกิน [\d,]+: −฿[\d,]+/); // a deduction step is negative: minus before the baht sign
+    expect(copied).not.toContain('฿-');
     expect(copied).toContain('RMF: จ่าย ฿20,000 · ลดหย่อนได้ ฿20,000');
     expect(h.showToast).toHaveBeenCalledWith('คัดลอกสรุปภาษีแล้ว', 'success');
   });

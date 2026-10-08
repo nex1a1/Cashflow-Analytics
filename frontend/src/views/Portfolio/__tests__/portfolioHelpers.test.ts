@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { signedTradeAmount, tradeSideOf, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades, xirr, portfolioAnnualReturn, sortAssets, plColor } from '../portfolioHelpers';
+import { pricePerDisplayUnit, signedTradeAmount, tradeSideOf, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades, xirr, portfolioAnnualReturn, sortAssets, plColor } from '../portfolioHelpers';
 import type { PortfolioAsset } from '@/types';
 
 describe('portfolioHelpers', () => {
@@ -94,5 +94,115 @@ describe('portfolioHelpers', () => {
     expect(plColor(1)).toBe('text-income');
     expect(plColor(-1)).toBe('text-ink-soft');
     expect(plColor(null)).toBe('text-ink-display');
+  });
+});
+
+describe('portfolioHelpers boundaries', () => {
+  const DAY = 86_400_000;
+  const t = (id: string, date: string, side: 'buy' | 'sell', units: number, amount: number) => ({ id, date, side, units, amount, pricePerUnit: amount / units, description: '' });
+  const mk = (id: string, over: Partial<PortfolioAsset> = {}): PortfolioAsset => ({
+    id, name: id, kind: 'us_stock', symbol: null, unitLabel: null, autoPrice: true, units: 1, cost: 100, avgCostPerUnit: 100,
+    price: null, priceAt: null, priceSource: null, marketValue: null, unrealized: null, unrealizedPct: null, realized: 0, oversold: false, trades: [], ...over,
+  });
+
+  it('a buy is always positive, even if the number arrives negative; zero counts as a buy', () => {
+    expect(signedTradeAmount('buy', -480)).toBe(480);
+    expect(signedTradeAmount('sell', 480)).toBe(-480);
+    expect(tradeSideOf(0)).toBe('buy');
+  });
+
+  it('a price is stale only after more than 24 hours', () => {
+    const now = Date.parse('2026-09-30T12:00:00.000Z');
+    const at = (ms: number) => new Date(now - ms).toISOString();
+    expect(describePriceAge(at(13 * 3_600_000), now)!.stale).toBe(false);
+    expect(describePriceAge(at(DAY), now)!.stale).toBe(false);
+    expect(describePriceAge(at(DAY + 1), now)!.stale).toBe(true);
+    expect(describePriceAge('', now)).toBeNull();
+  });
+
+  it('units keep up to six decimals', () => {
+    expect(formatUnits(0.123456)).toBe('0.123456');
+    expect(formatUnits(0.1234567)).toBe('0.123457');
+  });
+
+  it('price per unit shown to the user: per gram for gold, unchanged otherwise', () => {
+    expect(pricePerDisplayUnit(15_244, true)).toBeCloseTo(1000, 6);
+    expect(pricePerDisplayUnit(15_244, false)).toBe(15_244);
+  });
+
+  it('trimNum gives nothing for zero, negatives and non-numbers', () => {
+    expect(trimNum(0, 2)).toBe('');
+    expect(trimNum(-1, 2)).toBe('');
+    expect(trimNum(NaN, 2)).toBe('');
+    expect(trimNum(Infinity, 2)).toBe('');
+    expect(trimNum(1.5, 4)).toBe('1.5');
+  });
+
+  it('price sanity: exactly 3x either way is fine, beyond is flagged', () => {
+    expect(checkPriceSanity(300, 100)).toBe('ok');
+    expect(checkPriceSanity(300.01, 100)).toBe('far');
+    expect(checkPriceSanity(100 / 3, 100)).toBe('ok');
+    expect(checkPriceSanity(33, 100)).toBe('far');
+    expect(checkPriceSanity(250, 100)).toBe('ok'); // 2.5x is within the allowed range
+    expect(checkPriceSanity(45, 100)).toBe('ok');
+    expect(checkPriceSanity(1000, 0)).toBe('ok');
+    expect(checkPriceSanity(1000, -5)).toBe('ok'); // a negative market price is not a reference
+  });
+
+  it('holding time: same day is 0 days, a trade dated after "today" is 0 days, one full month is a month', () => {
+    expect(describeHolding('2026-10-08', '2026-10-08')).toBe('0 วัน');
+    expect(describeHolding('2026-10-09', '2026-10-08')).toBe('0 วัน');
+    expect(describeHolding('2026-09-10', '2026-10-10')).toBe('1 เดือน');
+    expect(describeHolding('2026-09-10', '2026-10-09')).toBe('29 วัน');
+  });
+
+  it('summarizeTrades: floating-point dust after selling everything becomes exactly zero', () => {
+    const r = summarizeTrades([t('a', '2026-01-01', 'buy', 0.1, 10), t('b', '2026-01-02', 'buy', 0.2, 20), t('c', '2026-01-03', 'sell', 0.3, 40)]);
+    expect(r.rows[2].balance).toBe(0);
+    expect(r.rows[2].realized).toBeCloseTo(10, 9); // 40 - 30 cost
+    expect(r.soldUnits).toBe(0.3);
+    expect(r.boughtUnits).toBeCloseTo(0.3, 12);
+  });
+
+  it('summarizeTrades: after a full sell-out the next buy starts a fresh average', () => {
+    const r = summarizeTrades([t('a', '2026-01-01', 'buy', 1, 100), t('b', '2026-01-02', 'sell', 1, 150), t('c', '2026-01-03', 'buy', 1, 500), t('d', '2026-01-04', 'sell', 1, 520)]);
+    expect(r.rows[3].realized).toBe(20); // 520 - 500, nothing left over from the first lot
+  });
+
+  it('xirr finds big losses and big gains, not only the common range', () => {
+    expect(xirr([{ date: '2025-01-01', amount: -100 }, { date: '2026-01-01', amount: 20 }])!).toBeCloseTo(-0.8, 3);
+    expect(xirr([{ date: '2025-01-01', amount: -100 }, { date: '2026-01-01', amount: 300 }])!).toBeCloseTo(2, 3);
+    expect(xirr([{ date: '2025-01-01', amount: -100 }, { date: '2026-01-01', amount: 100 }])!).toBeCloseTo(0, 6);
+  });
+
+  it('annual return: trades dated after today do not give negative days', () => {
+    const future = mk('f', { units: 0, trades: [t('a', '2026-12-01', 'buy', 1, 100), t('b', '2026-12-20', 'sell', 1, 120)] });
+    expect(portfolioAnnualReturn([future], '2026-10-08')).toEqual({ rate: null, days: 0 });
+  });
+
+  it('annual return needs 365 days, exactly 365 is enough', () => {
+    const a = mk('a', { units: 1, marketValue: 110, trades: [t('a', '2025-10-08', 'buy', 1, 100)] });
+    const r = portfolioAnnualReturn([a], '2026-10-08');
+    expect(r.days).toBe(365);
+    expect(r.rate!).toBeCloseTo(0.1, 3);
+    expect(portfolioAnnualReturn([a], '2026-10-07').rate).toBeNull();
+  });
+
+  it('annual return: a held asset without a price is left out, a held one is valued today', () => {
+    const priced = mk('p', { units: 1, marketValue: 120, trades: [t('a', '2025-01-01', 'buy', 1, 100)] });
+    const unpriced = mk('u', { units: 1, marketValue: null, trades: [t('b', '2025-01-01', 'buy', 1, 100000)] });
+    const r = portfolioAnnualReturn([priced, unpriced], '2026-01-01');
+    expect(r.rate!).toBeCloseTo(0.2, 3); // the unpriced 100000 would drag this down if it were included
+  });
+
+  it('sortAssets orders names the way Thai/Latin readers expect (case-insensitive) and keeps equal names in input order', () => {
+    const list = [mk('1', { name: 'B' }), mk('2', { name: 'a' }), mk('3', { name: 'A' })];
+    const names = (dir: 'asc' | 'desc') => sortAssets(list, { key: 'name', dir }, {}).map(x => x.name);
+    expect(names('asc')[0]).toBe('a');
+    expect(names('asc')[2]).toBe('B');
+    expect(names('desc')[0]).toBe('B');
+    const same = [mk('x1', { name: 'Same' }), mk('x2', { name: 'Same' }), mk('x3', { name: 'Same' })];
+    expect(sortAssets(same, { key: 'name', dir: 'asc' }, {}).map(x => x.id)).toEqual(['x1', 'x2', 'x3']);
+    expect(sortAssets(same, { key: 'name', dir: 'desc' }, {}).map(x => x.id)).toEqual(['x1', 'x2', 'x3']);
   });
 });

@@ -188,6 +188,8 @@ export default function CategorySelect({
 
   // Selection handler
   const handleSelect = useCallback((categoryId: string) => {
+    // the list (with the focused row / search box) is about to unmount: hand focus back first, so a caller that moves it elsewhere still wins
+    triggerRef.current?.focus();
     onChange(categoryId);
     setOpen(false);
     setSearchQuery('');

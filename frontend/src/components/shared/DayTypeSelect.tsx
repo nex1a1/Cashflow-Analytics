@@ -171,7 +171,7 @@ export default function DayTypeSelect({
       return;
     }
 
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' || e.key === 'Tab') {
       e.preventDefault();
       e.stopPropagation();
       handleClose();

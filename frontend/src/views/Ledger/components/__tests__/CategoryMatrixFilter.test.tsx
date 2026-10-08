@@ -275,11 +275,13 @@ describe('CategoryMatrixFilter — choosing', () => {
   });
 
   it('the matching quick button is lit', () => {
+    const lit = (t: string, cls: string) => byText('button', t)!.classList.contains(cls); // (every button has a hover: variant, so match whole classes)
     mount({ initial: ALL_NAMES });
-    expect(byText('button', '[เลือกทั้งหมด]')!.className).toContain('text-accent-ink');
+    expect(lit('[เลือกทั้งหมด]', 'text-accent-ink')).toBe(true);
+    expect(lit('[ล้างการเลือก]', 'text-danger')).toBe(false);
     click(byText('button', '[ล้างการเลือก]'));
-    expect(byText('button', '[ล้างการเลือก]')!.className).toContain('text-danger');
-    expect(byText('button', '[เลือกทั้งหมด]')!.className).not.toContain('text-accent-ink font-black');
+    expect(lit('[ล้างการเลือก]', 'text-danger')).toBe(true);
+    expect(lit('[เลือกทั้งหมด]', 'text-accent-ink')).toBe(false);
   });
 });
 
@@ -327,6 +329,14 @@ describe('CategoryMatrixFilter — edge cases', () => {
     mount({ categories: [], cashflowGroups: [] });
     expect(label()).toBe('หมวดหมู่ทั้งหมด (0)');
     expect(popover()!.textContent).toContain('ไม่พบหมวดหมู่ที่ค้นหา');
+    expect(byText('button', '[เลือกทั้งหมด]')!.classList.contains('text-accent-ink')).toBe(false); // nothing is "all selected" when nothing exists
+  });
+
+  it('income groups sit in their own green box; the other groups do not', () => {
+    mount();
+    expect(groupChip('เงินเดือน').parentElement!.className).toContain('bg-income/10');
+    expect(groupChip('ค่ากิน').parentElement!.className).not.toContain('bg-income/10');
+    expect(groupChip('ลงทุน/ออม').parentElement!.className).not.toContain('bg-income/10');
   });
 
   it('a group with no available categories is not listed', () => {

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { hexToRgb, formatMoney } from '../../../../utils/formatters';
+import { hexToRgb, formatMoney, formatBaht } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
 import { tc, readable, TOKENS } from '@/constants/theme';
@@ -67,7 +67,7 @@ const HeatmapCell = memo(function HeatmapCell({
       } as React.CSSProperties}
       onMouseEnter={(e) => handleCellHover(e, date, cat.id, cat, items)}
       tabIndex={hasData ? 0 : undefined}
-      aria-label={hasData ? `${date} ${cat.name} ฿${formatMoney(cellSum)} (${items.length} รายการ)` : undefined}
+      aria-label={hasData ? `${date} ${cat.name} ${formatBaht(cellSum)} (${items.length} รายการ)` : undefined}
       onFocus={hasData ? (e) => handleCellHover(e, date, cat.id, cat, items) : undefined}
       onBlur={hasData ? handleCellLeave : undefined}
       onKeyDown={hasData ? moveFocus : undefined}

@@ -17,7 +17,7 @@ import { useAppFilter } from '@/context/AppFilterContext';
 import { Shimmer } from '@/views/Dashboard/components/SummaryCards/helpers';
 import { isCyclePeriod, stripCycle, localTodayIso, CYCLE_PREFIX, cyclePresetRange } from '@/utils/payCycle';
 
-const baht = (satang: number) => `฿${Math.round(satang / 100).toLocaleString('th-TH')}`;
+const baht = (satang: number) => `${satang < 0 ? '−' : ''}฿${Math.round(Math.abs(satang) / 100).toLocaleString('th-TH')}`;
 const SECTION = 'border border-line bg-surface';
 const SECTION_HEAD = 'flex items-center gap-3 px-4 py-2 border-b border-line';
 

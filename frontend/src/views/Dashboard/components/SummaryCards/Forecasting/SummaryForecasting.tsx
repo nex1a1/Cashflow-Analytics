@@ -3,7 +3,7 @@ import {
   TrendingDown, Gauge, ShieldCheck, Home, Wallet, Navigation,
   Zap, Award, AlertTriangle, CheckCircle2
 } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer, formatSignedMoney } from '../helpers';
 import { ForecastingTrajectoryChart } from './ForecastingTrajectoryChart';
@@ -121,7 +121,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                   <AnimatedNumber value={projectedExpense} />
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-                  เพดาน ฿{formatMoney(maxAllowedExpense)}
+                  เพดาน {formatBaht(maxAllowedExpense)}
                 </div>
               </div>
             )}
@@ -146,21 +146,21 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 <Home size={12} className="text-sky-400 shrink-0" />
                 ภาระคงที่ / ที่พัก:
               </span>
-              <span className="text-sky-400 font-bold tabular-nums">฿{formatMoney(fixedTotal)}</span>
+              <span className="text-sky-400 font-bold tabular-nums">{formatBaht(fixedTotal)}</span>
             </div>
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 <Wallet size={12} className="text-expense shrink-0" />
                 จ่ายประจำวันแล้ว ({currentDay} วัน):
               </span>
-              <span className="text-white font-bold tabular-nums">฿{formatMoney(variableUpToToday)}</span>
+              <span className="text-white font-bold tabular-nums">{formatBaht(variableUpToToday)}</span>
             </div>
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 <Navigation size={12} className="text-neutral-400 shrink-0" />
                 ประเมินคงเหลือ ({remainingDays} วัน):
               </span>
-              <span className="text-neutral-300 font-bold tabular-nums">฿{formatMoney(projectedVariableRemaining)}</span>
+              <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(projectedVariableRemaining)}</span>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                   <span className="text-xs text-neutral-400 ml-1 font-normal">/วัน</span>
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-                  ใช้จริง ฿{formatMoney(actualDailyVariableAvg)}/ว
+                  ใช้จริง {formatBaht(actualDailyVariableAvg)}/ว
                 </div>
               </div>
             )}
@@ -214,9 +214,9 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 เหลือก่อนชนเพดาน:
               </span>
               {headroom >= 0 ? (
-                <span className="text-emerald-400 font-black tabular-nums">+฿{formatMoney(headroom)}/วัน</span>
+                <span className="text-emerald-400 font-black tabular-nums">+{formatBaht(headroom)}/วัน</span>
               ) : (
-                <span className="text-danger font-black tabular-nums">-฿{formatMoney(requiredDailyReduction)}/วัน</span>
+                <span className="text-danger font-black tabular-nums">−{formatBaht(requiredDailyReduction)}/วัน</span>
               )}
             </div>
           </div>
@@ -241,7 +241,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
                   projectedSurplus >= 0 ? 'text-emerald-400' : 'text-danger'
                 }`}>
-                  {projectedSurplus >= 0 ? `+฿${formatMoney(projectedSurplus)}` : `-฿${formatMoney(Math.abs(projectedSurplus))}`}
+                  {projectedSurplus >= 0 ? `+${formatBaht(projectedSurplus)}` : `−${formatBaht(Math.abs(projectedSurplus))}`}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   ออม {projectedSurplusPct}%
@@ -276,7 +276,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 สถานะงบ:
               </span>
               {requiredReduction > 0 ? (
-                <span className="text-danger font-bold">ต้องลดอีก ฿{formatMoney(requiredReduction)}</span>
+                <span className="text-danger font-bold">ต้องลดอีก {formatBaht(requiredReduction)}</span>
               ) : (
                 <span className="text-emerald-400 font-bold">คุมงบได้ตามเป้า</span>
               )}

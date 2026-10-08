@@ -8,7 +8,7 @@ import {
   RotateCcw,
   AlertTriangle,
 } from 'lucide-react';
-import { formatMoney } from '../../../../utils/formatters';
+import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { DisplayMode, ExpenseProportionHeaderProps, SortMode } from './types';
 
 interface ModeSwitcherProps {
@@ -132,7 +132,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
     <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-pill text-[11px]">
       <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
       <span className="font-black text-amber-300 uppercase tracking-wider">
-        จำลองลด {excludedCount} หมวด (-฿{formatMoney(totalReduced)})
+        จำลองลด {excludedCount} หมวด (−{formatBaht(totalReduced)})
       </span>
       <button
         onClick={onReset}

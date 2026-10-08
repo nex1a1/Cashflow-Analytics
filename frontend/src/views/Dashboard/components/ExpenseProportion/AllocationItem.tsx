@@ -1,6 +1,6 @@
 import React from 'react';
 import { EyeOff, MapPin, AlertCircle, AlertTriangle, Waves } from 'lucide-react';
-import { formatMoney } from '../../../../utils/formatters';
+import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { AllocationGroupItemData, AllocationItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
@@ -56,12 +56,12 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   let varianceText = '';
   if (isNeedsOrWants) {
     varianceText = varianceAmount >= 0 
-      ? `+฿${formatMoney(varianceAmount)} ในโควตา` 
-      : `-฿${formatMoney(Math.abs(varianceAmount))} เกินโควตา`;
+      ? `+${formatBaht(varianceAmount)} ในโควตา` 
+      : `−${formatBaht(Math.abs(varianceAmount))} เกินโควตา`;
   } else {
     varianceText = varianceAmount >= 0 
-      ? `+฿${formatMoney(varianceAmount)} เกินเป้าออม` 
-      : `ขาดอีก ฿${formatMoney(Math.abs(varianceAmount))}`;
+      ? `+${formatBaht(varianceAmount)} เกินเป้าออม` 
+      : `ขาดอีก ${formatBaht(Math.abs(varianceAmount))}`;
   }
 
   // Track is a fixed, honest 0-100% linear scale — fill width always equals the real percentage.
@@ -119,7 +119,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[11px] font-bold tracking-wide uppercase text-slate-300">
-              เป้า {item.target}% (฿{formatMoney(targetAmount)})
+              เป้า {item.target}% ({formatBaht(targetAmount)})
             </span>
           </div>
         </div>
@@ -209,7 +209,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                           <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={g.icon} color={g.color} size={14} /> {g.name}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-[11px]">
-                          <span className="text-slate-400">฿{formatMoney(g.amount)}</span>
+                          <span className="text-slate-400">{formatBaht(g.amount)}</span>
                           <span className="font-black text-danger">
                             {relPct.toFixed(0)}% ของส่วนนี้
                           </span>
@@ -235,7 +235,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <span>เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
                     </div>
                     <div className="text-[11px] text-slate-300 mt-0.5">
-                      ส่วนที่เกิน: ฿{formatMoney(Math.abs(varianceAmount))}
+                      ส่วนที่เกิน: {formatBaht(Math.abs(varianceAmount))}
                     </div>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <span>ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
                     </div>
                     <div className="text-[11px] text-slate-300 mt-0.5">
-                      ยอดออมที่ขาด: ฿{formatMoney(Math.abs(varianceAmount))}
+                      ยอดออมที่ขาด: {formatBaht(Math.abs(varianceAmount))}
                     </div>
                   </div>
                 </div>

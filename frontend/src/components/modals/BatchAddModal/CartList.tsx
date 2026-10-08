@@ -113,7 +113,7 @@ function CartList({
                   </div>
                   <div className="flex items-center gap-1 pl-2 shrink-0">
                     <span className={`text-xs font-bold tabular-nums tracking-tight shrink-0 mr-1 ${item._isInc ? 'text-emerald-400' : item._isSavings ? (item.side === 'sell' ? 'text-info' : 'text-savings') : 'text-expense'}`}>
-                      {item._isSavings ? '฿' : item._isInc ? '+฿' : '-฿'}{formatMoney(item.amount)}
+                      {item._isSavings ? '฿' : item._isInc ? '+฿' : '−฿'}{formatMoney(item.amount)}
                     </span>
                     <button 
                       type="button" 

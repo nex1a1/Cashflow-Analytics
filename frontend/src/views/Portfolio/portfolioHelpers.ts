@@ -10,8 +10,6 @@ export const ASSET_KIND_LABELS: Record<AssetKind, string> = {
   other: 'อื่นๆ',
 };
 
-export const ASSET_KIND_OPTIONS = (Object.keys(ASSET_KIND_LABELS) as AssetKind[]).map(k => ({ value: k, label: ASSET_KIND_LABELS[k] }));
-
 const UNIT_LABELS: Record<AssetKind, string> = {
   gold_bar: 'บาททอง',
   gold_ornament: 'บาททอง',
@@ -23,16 +21,6 @@ const UNIT_LABELS: Record<AssetKind, string> = {
 };
 
 export const defaultUnitLabel = (kind: AssetKind): string => UNIT_LABELS[kind];
-
-/** ข้อความช่วยกรอกสัญลักษณ์ของแต่ละประเภท; '' = ไม่ต้องกรอก */
-export const symbolHint = (kind: AssetKind): string => {
-  switch (kind) {
-    case 'us_stock': return 'เช่น AAPL';
-    case 'th_stock': return 'เช่น PTT';
-    case 'crypto': return 'CoinGecko id เช่น bitcoin';
-    default: return '';
-  }
-};
 
 /** ซื้อ/ขาย → ยอดมีเครื่องหมาย (ขาย = ลบ) ตามที่ API และผลรวมทุกหน้าใช้ */
 export const signedTradeAmount = (side: 'buy' | 'sell', amount: number): number =>

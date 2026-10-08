@@ -328,7 +328,7 @@ describe('SummaryStrategic — average cash left per day', () => {
 
   it('negative: shows a minus sign and says "ติดลบสุทธิ/วัน"', () => {
     show({ netCashflow: -3_000 });
-    expect(text()).toContain('-฿100.00');
+    expect(text()).toContain('−฿100.00');
     expect(text()).toContain('ติดลบสุทธิ/วัน');
   });
 
@@ -434,10 +434,10 @@ describe('SummaryForecasting — end of month forecast', () => {
   it('over the ceiling: says how much to cut per day and in total, and the surplus turns negative', () => {
     forecast({ safeToSpend: 100, projectedExpense: 31_500, projectedSurplus: -1_500 }, { actualDailyVariableAvg: 200, requiredDailyReduction: 100, requiredReduction: 1_500, projectedSurplusPct: -5 });
     const t = text();
-    expect(t).toContain('-฿100.00/วัน');
+    expect(t).toContain('−฿100.00/วัน');
     expect(t).toContain('อัตราใช้จริง: 200% ของเพดาน');
     expect(t).toContain('ต้องลดอีก ฿1,500.00');
-    expect(t).toContain('-฿1,500.00');
+    expect(t).toContain('−฿1,500.00');
     expect(t).toContain('เฝ้าระวัง');
   });
 

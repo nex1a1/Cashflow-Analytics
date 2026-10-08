@@ -4,7 +4,7 @@ import {
   getBarChartOptions,
   getLineChartOptions,
 } from '@/utils/chartOptions';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 
@@ -19,7 +19,7 @@ function formatAllocLine(label: string, amount: number, total: number, isCurrent
   if (amount <= 0) return '';
   const pct = total > 0 ? ((amount / total) * 100).toFixed(1) : '0.0';
   const marker = isCurrentFlow ? ' ◄ (เส้นทางนี้)' : '';
-  return `  ${label}: ฿${formatMoney(amount)} (${pct}%)${marker}`;
+  return `  ${label}: ${formatBaht(amount)} (${pct}%)${marker}`;
 }
 
 function buildSankeyAllocLines(item: any): string[] {
@@ -29,7 +29,7 @@ function buildSankeyAllocLines(item: any): string[] {
 
   const lines = [
     '──────────────────────',
-    `รวมทั้งหมวด: ฿${formatMoney(total)}`
+    `รวมทั้งหมวด: ${formatBaht(total)}`
   ];
 
   const needLine = formatAllocLine('Need', need, total, item.from?.includes('Need'));
@@ -48,7 +48,7 @@ function formatSankeyTooltipLabel(c: any): string[] {
   const item = c.dataset?.data?.[c.dataIndex];
   if (!item) return [];
 
-  const lines = [`฿${formatMoney(item.flow)} (${item.percent || '-'})`];
+  const lines = [`${formatBaht(item.flow)} (${item.percent || '-'})`];
   if (item.allocBreakdown) {
     lines.push(...buildSankeyAllocLines(item));
   }

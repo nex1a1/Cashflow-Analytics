@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
-import { formatMoney, formatAmount } from '@/utils/formatters';
+import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
 
 import { tc, FONT_MONO } from '@/constants/theme';
 interface TrajectoryChartProps {
@@ -300,7 +300,7 @@ export const ForecastingTrajectoryChart = memo(({
                   fontFamily={FONT_MONO}
                   textAnchor="end"
                 >
-                  ฿{formatAmount(Math.round(ceiling * f))}
+                  {formatBahtShort(Math.round(ceiling * f))}
                 </text>
                 {/* Right side guideline */}
                 {isSafeRight && (
@@ -346,7 +346,7 @@ export const ForecastingTrajectoryChart = memo(({
             fontWeight="bold"
             textAnchor="end"
           >
-            ฿{formatAmount(Math.round(ceiling))}
+            {formatBahtShort(Math.round(ceiling))}
           </text>
 
           {/* Left & Right Y-axis tick and label for 0 (Baseline) */}
@@ -401,7 +401,7 @@ export const ForecastingTrajectoryChart = memo(({
           <g transform={`translate(${xEOM + 6}, ${ceilLabelY - 7})`}>
             <rect x="0" y="0" width="124" height="15" fill={tc('canvas')} stroke={tc('ink-muted')} strokeWidth="0.8" rx="2" />
             <text x="6" y="11" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-              เพดาน ฿{formatMoney(ceiling)}
+              เพดาน {formatBaht(ceiling)}
             </text>
           </g>
 
@@ -459,7 +459,7 @@ export const ForecastingTrajectoryChart = memo(({
               fontWeight="bold"
               textAnchor="middle"
             >
-              วันนี้: ฿{formatMoney(spentToDate)}
+              วันนี้: {formatBaht(spentToDate)}
             </text>
           </g>
 
@@ -484,7 +484,7 @@ export const ForecastingTrajectoryChart = memo(({
               fontFamily={FONT_MONO}
               fontWeight="bold"
             >
-              จบเดือน ฿{formatMoney(projectedExpense)}
+              จบเดือน {formatBaht(projectedExpense)}
             </text>
           </g>
 
@@ -589,9 +589,9 @@ export const ForecastingTrajectoryChart = memo(({
                   textAnchor="end"
                 >
                   {hoverData.isFuture
-                    ? `วันละ ฿${formatAmount(Math.round(hoverData.dailyAmount))}`
+                    ? `วันละ ${formatBahtShort(Math.round(hoverData.dailyAmount))}`
                     : hoverData.dailyAmount > 0
-                      ? `+฿${formatAmount(Math.round(hoverData.dailyAmount))}`
+                      ? `+${formatBahtShort(Math.round(hoverData.dailyAmount))}`
                       : '฿0'}
                 </text>
 
@@ -603,7 +603,7 @@ export const ForecastingTrajectoryChart = memo(({
                   fontSize="11"
                   fontFamily={FONT_MONO}
                 >
-                  สะสม: <tspan fill={tc('ink-display')} fontWeight="bold">฿{formatMoney(hoverData.cumulative)}</tspan>
+                  สะสม: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hoverData.cumulative)}</tspan>
                 </text>
                 <text
                   x={tipW - 8}

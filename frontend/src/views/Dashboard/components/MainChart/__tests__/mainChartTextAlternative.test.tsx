@@ -4,6 +4,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MainChartTextAlternative } from '../MainChartTextAlternative';
 
 describe('MainChartTextAlternative', () => {
+  it('writes a negative value with the minus in front of the baht sign', () => {
+    const html = renderToStaticMarkup(
+      <MainChartTextAlternative caption="กระแสเงินสดสุทธิ" isSankey={false} data={{ labels: ['ม.ค.'], datasets: [{ label: 'Net', data: [-1250.5] }] }} />,
+    );
+    expect(html).toContain('<th scope="row">ม.ค.</th><td>−฿1,250.50</td>');
+    expect(html).not.toContain('฿-');
+  });
+
   it('lists Sankey flows as from / to / amount rows', () => {
     const html = renderToStaticMarkup(
       <MainChartTextAlternative

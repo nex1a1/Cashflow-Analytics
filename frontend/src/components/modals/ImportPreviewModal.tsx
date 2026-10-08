@@ -1,6 +1,7 @@
 // src/components/ImportPreviewModal.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap } from 'lucide-react';
+import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap, ClipboardList } from 'lucide-react';
+import FieldError from '../shared/FieldError';
 import { CATEGORY_ICON_MAP } from '../../constants/categoryIcons';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
@@ -17,8 +18,9 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
   const [previewPage, setPreviewPage] = useState(1);
   const PER_PAGE = 30;
 
-  // กลับไปหน้า 1 เสมอเมื่อข้อมูลเปลี่ยน
-  useEffect(() => { if (importPreview) setPreviewPage(1); }, [importPreview]);
+  // กลับไปหน้า 1 เมื่อเปิดพรีวิวใหม่เท่านั้น — การแก้/ลบแถวสร้าง importPreview ใหม่ทุกครั้ง ถ้าผูกกับอ็อบเจกต์นี้ ผู้ใช้จะเด้งกลับหน้า 1 ทุกตัวอักษรที่พิมพ์
+  const isOpen = Boolean(importPreview);
+  useEffect(() => { if (isOpen) setPreviewPage(1); }, [isOpen]);
 
   // ดักปุ่ม ESC
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
   const allCats  = importPreview?.updatedCategories || categories;
 
   // ใช้ useMemo และ Slice แบ่งหน้าแบบตรงไปตรงมา
-  const { pageItems, totalPages } = useMemo(() => {
+  const { pageItems, totalPages, page } = useMemo(() => {
     const total = Math.ceil(allItems.length / PER_PAGE) || 1;
     // ป้องกันกรณีลบข้อมูลจนหมดหน้า แล้วเลขหน้าค้าง
     const safePage = Math.min(previewPage, total); 
@@ -42,12 +44,22 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
     
     return {
       pageItems: allItems.slice(startIndex, startIndex + PER_PAGE),
-      totalPages: total
+      totalPages: total,
+      page: safePage // what is shown, so the counter and the arrows agree with the rows even after the last page was emptied
     };
   }, [allItems, previewPage]);
 
   // hook ทุกตัวต้องอยู่เหนือบรรทัดนี้ (modal ถูก mount ตลอดโดย importPreview เป็น null ก่อน ลำดับ hook ต้องคงที่)
   if (!importPreview) return null;
+
+  // A blank or zero amount would be saved as a ฿0 row, and a negative one on an expense is refused by the server (failing the whole file).
+  // Only a savings row may be negative: that is a sell.
+  const kindOf = (name: string) => allCats.find((c: any) => c.name === name)?.type;
+  const isBadAmount = (i: any) => {
+    const n = Number(i.amount);
+    return !Number.isFinite(n) || n === 0 || (n < 0 && kindOf(i.category) !== 'savings');
+  };
+  const badCount = allItems.filter(isBadAmount).length;
 
   const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
 
@@ -60,7 +72,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         <div className="px-5 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
           <div>
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
-              📋 ตรวจสอบก่อนนำเข้า <span className="text-ink-muted font-normal">/ Data Import Preview</span>
+              <ClipboardList className="w-4 h-4 text-accent-ink" aria-hidden="true" /> ตรวจสอบก่อนนำเข้า <span className="text-ink-muted font-normal">/ Data Import Preview</span>
             </h3>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-slate-300">
@@ -86,7 +98,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2.5 text-[11px] font-bold border-b shrink-0 bg-surface-hover border-line text-slate-300 uppercase tracking-wider select-none">
+        <div className="grid grid-cols-[64px_120px_1fr_80px_36px] gap-2 px-4 py-2.5 text-[11px] font-bold border-b shrink-0 bg-surface-hover border-line text-slate-300 uppercase tracking-wider select-none">
           <span>ประเภท</span><span>หมวดหมู่</span><span>รายละเอียด</span><span className="text-right">จำนวนเงิน</span><span />
         </div>
 
@@ -98,6 +110,8 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             pageItems.map((item: any, idx: number) => {
               const catObj = allCats.find((c: any) => c.name === item.category);
               const isInc  = catObj?.type === 'income';
+              const isSav  = catObj?.type === 'savings';
+              const bad    = isBadAmount(item);
               const isNewDate = idx === 0 || item.date !== pageItems[idx - 1].date;
               
               return (
@@ -107,13 +121,15 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                       {item.date}
                     </div>
                   )}
-                  <div className="grid grid-cols-[55px_120px_1fr_80px_36px] gap-2 px-4 py-2 items-center border-b transition-colors border-line/50 hover:bg-surface-hover/50">
+                  <div className="grid grid-cols-[64px_120px_1fr_80px_36px] gap-2 px-4 py-2 items-center border-b transition-colors border-line/50 hover:bg-surface-hover/50">
                     <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-none text-center truncate ${
                       isInc 
                         ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
-                        : 'bg-expense/5 text-expense border border-expense/15'
+                        : isSav
+                          ? 'bg-savings/10 text-savings border border-savings/30'
+                          : 'bg-expense/5 text-expense border border-expense/15'
                     }`}>
-                      {isInc ? 'รายรับ' : 'รายจ่าย'}
+                      {isInc ? 'รายรับ' : isSav ? 'เงินออม' : 'รายจ่าย'}
                     </span>
                     <select 
                       value={item.category} 
@@ -139,7 +155,10 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                       step="any" 
                       value={item.amount} 
                       onChange={e => updateItem(item.id, 'amount', e.target.value)} 
-                      className={`${inputCls} text-right font-bold`} 
+                      aria-label="จำนวนเงิน"
+                      aria-invalid={bad}
+                      aria-describedby={bad ? 'import-amount-err' : undefined}
+                      className={`${inputCls} text-right font-bold ${bad ? 'tint-danger' : ''}`} 
                     />
                     
                     <button 
@@ -159,21 +178,22 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         <div className="px-5 py-3 border-t border-line bg-surface flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 select-none">
             <button 
-              onClick={() => setPreviewPage(p => Math.max(1, p - 1))} 
-              disabled={previewPage === 1}
+              onClick={() => setPreviewPage(Math.max(1, page - 1))} 
+              disabled={page === 1}
               className="p-1.5 rounded-none border border-line-strong disabled:opacity-30 bg-surface text-slate-300 hover:bg-surface-hover transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-mono text-slate-400">หน้า {previewPage}/{totalPages} ({allItems.length} รายการ)</span>
+            <span className="text-xs font-mono text-slate-400">หน้า {page}/{totalPages} ({allItems.length} รายการ)</span>
             <button 
-              onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))} 
-              disabled={previewPage === totalPages || totalPages === 0}
+              onClick={() => setPreviewPage(Math.min(totalPages, page + 1))} 
+              disabled={page === totalPages}
               className="p-1.5 rounded-none border border-line-strong disabled:opacity-30 bg-surface text-slate-300 hover:bg-surface-hover transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+          <FieldError id="import-amount-err" message={badCount > 0 ? `แก้จำนวนเงิน ${badCount} รายการที่ว่าง เป็น 0 หรือติดลบ (ติดลบได้เฉพาะการขายในหมวดลงทุน/ออม) ก่อนนำเข้า` : null} />
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
               onClick={() => setImportPreview(null)}
@@ -183,7 +203,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
             </button>
             <button 
               onClick={confirmImport} 
-              disabled={isProcessing || allItems.length === 0}
+              disabled={isProcessing || allItems.length === 0 || badCount > 0}
               className="flex-1 sm:flex-none px-6 py-2.5 rounded-none font-bold text-xs text-on-accent bg-accent hover:bg-accent-active border border-accent-ink transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
             >
               {isProcessing ? <Zap className="w-3.5 h-3.5 animate-pulse" /> : <CheckCircle className="w-3.5 h-3.5" />}

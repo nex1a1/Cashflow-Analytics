@@ -17,10 +17,10 @@ describe('axis tick labels', () => {
   });
 
   it('shortens negative values the same way (a deficit month sits on the same axis)', () => {
-    expect(f(-250)).toBe('-250');
-    expect(f(-1000)).toBe('-1.0k');
-    expect(f(-12_500)).toBe('-12.5k');
-    expect(f(-2_500_000)).toBe('-2.5M');
+    expect(f(-250)).toBe('−250');
+    expect(f(-1000)).toBe('−1.0k');
+    expect(f(-12_500)).toBe('−12.5k');
+    expect(f(-2_500_000)).toBe('−2.5M');
   });
 
   it('passes a category label through untouched', () => {
@@ -30,7 +30,7 @@ describe('axis tick labels', () => {
   it('the secondary (net cashflow) axis shortens the same way', () => {
     const g = tick(getComboChartOptions('linear', true, '#FFFFFF'), 'y1');
     expect(g(1500)).toBe('1.5k');
-    expect(g(-1500)).toBe('-1.5k');
+    expect(g(-1500)).toBe('−1.5k');
   });
 });
 

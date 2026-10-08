@@ -78,7 +78,7 @@ const ImportGuideModal = memo(function ImportGuideModal({
   }, [categorySource, systemExpenseCategories]);
 
   // Copy Headers to Clipboard
-  const handleCopyHeaders = useCallback(() => {
+  const handleCopyHeaders = useCallback(async () => {
     let text = '';
     if (selectedFormat === 'long') {
       text = getLongHeaders(longVariation, headerLang).join(delimiter);
@@ -86,7 +86,12 @@ const ImportGuideModal = memo(function ImportGuideModal({
       text = getWideHeaders(effectiveCategories, headerLang).map(h => `"${h}"`).join(delimiter);
     }
 
-    navigator.clipboard.writeText(text);
+    try {
+      await navigator.clipboard.writeText(text); // missing in insecure contexts, and the browser may refuse it
+    } catch {
+      showToast('คัดลอกไม่สำเร็จ เบราว์เซอร์ไม่อนุญาตให้เข้าถึงคลิปบอร์ด', 'error');
+      return;
+    }
     setCopied(true);
     showToast('คัดลอกรายชื่อหัวตารางลงคลิปบอร์ดแล้ว', 'success');
     setTimeout(() => setCopied(false), 2000);

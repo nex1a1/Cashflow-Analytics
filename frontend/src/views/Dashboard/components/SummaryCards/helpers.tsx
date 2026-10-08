@@ -1,17 +1,17 @@
 // src/views/Dashboard/components/SummaryCards/helpers.tsx
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { BreakdownEntry } from './types';
 
 /**
  * Formats a signed monetary value with the sign BEFORE the ฿ symbol.
- * e.g. -1234 → "-฿1,234.00"  |  1234 → "฿1,234.00"
+ * e.g. -1234 → "−฿1,234.00"  |  1234 → "฿1,234.00"
  */
 export const formatSignedMoney = (value: number): string => {
   const abs = Math.abs(value);
-  return value < 0 ? `-฿${formatMoney(abs)}` : `฿${formatMoney(abs)}`;
+  return value < 0 ? `−${formatBaht(abs)}` : `${formatBaht(abs)}`;
 };
 
 export const Shimmer = ({ className }: { className?: string }) => (
@@ -115,7 +115,7 @@ export function renderTopItemsOverlay(
         {icon} {label}
       </span>
       <div className={`flex items-baseline gap-1 leading-tight ${wide ? '' : 'mt-1'}`}>
-        <span className="text-[13px] font-black text-white tabular-nums">฿{formatMoney(amount)}</span>
+        <span className="text-[13px] font-black text-white tabular-nums">{formatBaht(amount)}</span>
         {pctLabel && <span className="text-[11px] font-bold text-neutral-400">({pctLabel})</span>}
       </div>
     </div>

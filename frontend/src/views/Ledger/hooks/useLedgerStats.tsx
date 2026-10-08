@@ -3,6 +3,7 @@ import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 import { toISODate } from '../../../utils/dateHelpers';
 import { monthKeyOf } from '../../../utils/payCycle';
+import { formatBaht } from '../../../utils/formatters';
 import { buildCatTypeMap, sumIncomeExpense } from '../ledgerMath';
 
 import { tc, readable } from '@/constants/theme';
@@ -70,7 +71,7 @@ function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolea
     activeBgColor: 'bg-expense/5',
     defaultColor: g.color || tc('ink-muted'),
     amtColor: 'text-expense',
-    amtSign: '-',
+    amtSign: '−',
     badgeText: 'OUT',
     pulseClass: 'bg-expense',
     borderColorActive: tc('expense', 0.4),
@@ -115,7 +116,7 @@ const LedgerStatCategoryRow: React.FC<LedgerStatCategoryRowProps> = ({ cat, tota
         >
           {relativePct}%
         </span>
-        <span className="font-extrabold" style={{ color: catColor }}>฿{formatMoney(cat.amount)}</span>
+        <span className="font-extrabold" style={{ color: catColor }}>{formatBaht(cat.amount)}</span>
       </div>
     </div>
   );
@@ -217,9 +218,9 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
           <div className="flex items-baseline justify-between gap-1">
             <span 
               className={`text-[17px] font-black tabular-nums tracking-tight truncate ${theme.amtColor}`}
-              title={`${theme.amtSign}฿${formatMoney(total)}`}
+              title={`${theme.amtSign}${formatBaht(total)}`}
             >
-              {theme.amtSign}฿{formatMoney(total)}
+              {theme.amtSign}{formatBaht(total)}
             </span>
             <span className="text-[11.5px] font-black text-ink-body tabular-nums">
               {pctOfTotal}%
@@ -230,9 +231,9 @@ const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
             {uniqueMonths > 1 && (
               <span 
                 className="truncate ml-1"
-                title={`฿${formatMoney(total / uniqueMonths)}/เดือน`}
+                title={`${formatBaht(total / uniqueMonths)}/เดือน`}
               >
-                ฿{formatMoney(total / uniqueMonths)}/ด.
+                {formatBaht(total / uniqueMonths)}/ด.
               </span>
             )}
           </div>
@@ -331,9 +332,9 @@ export function useLedgerStats({
 
   const getSubValue = (total: number) => {
     if (uniqueMonths > 1) {
-      return `เฉลี่ย ฿${formatMoney(total / uniqueMonths)} / เดือน`;
+      return `เฉลี่ย ${formatBaht(total / uniqueMonths)} / เดือน`;
     }
-    return `เฉลี่ย ฿${formatMoney(total / periodDays)} / วัน`;
+    return `เฉลี่ย ${formatBaht(total / periodDays)} / วัน`;
   };
 
   const renderCard = (g: CashflowGroup) => (

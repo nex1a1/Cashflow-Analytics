@@ -132,10 +132,12 @@ function parseWideCsvRow(row: string[], headers: string[], context: any) {
   return rowItems;
 }
 
-const importType = (typeStr: string): GroupType =>
-  typeStr === 'รายรับ' || typeStr === 'income' ? 'income'
-    : typeStr === 'เงินออม' || typeStr === 'savings' ? 'savings'
+const importType = (typeStr: string): GroupType => {
+  const t = (typeStr ?? '').trim().toLowerCase(); // the guide's English template writes INCOME / SAVINGS; people type "Income" in Excel
+  return t === 'รายรับ' || t === 'income' ? 'income'
+    : t === 'เงินออม' || t === 'savings' ? 'savings'
       : 'expense';
+};
 
 /** The group a category created by the import lives in: one of its type, preferring a catch-all named "อื่น…". */
 function pickGroup(groups: CashflowGroup[], type: GroupType): CashflowGroup | undefined {
@@ -363,7 +365,8 @@ export default function useImportCSV({
         for (const d of dayTypesToCreate) await dayTypeService.save(d);
 
         const idByName = new Map<string, string>(updatedCategories.map((c: Category) => [c.name, c.id]));
-        await saveToDb(items.map((i: any) => ({ ...i, category_id: idByName.get(i.category) })));
+        // amount: the preview's number field hands back text once the user has retyped it
+        await saveToDb(items.map((i: any) => ({ ...i, amount: Number(i.amount), category_id: idByName.get(i.category) })));
 
         // Only the days whose type actually changes (the map also holds every day that was already set)
         const savedDays: Record<string, string> = {};

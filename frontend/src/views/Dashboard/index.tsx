@@ -35,6 +35,7 @@ export interface DashboardViewProps {
   isLoading: boolean;
   dayTypeConfig: DayType[];
   dayTypes: Record<string, any>;
+  showPortfolio?: boolean;
 }
 
 export default function DashboardView(props: DashboardViewProps) {
@@ -94,7 +95,7 @@ export default function DashboardView(props: DashboardViewProps) {
         <div className="flex flex-col gap-4 w-full">
           <SummaryCards />
           <BudgetEnvelopes />
-          <PortfolioSnapshot />
+          {props.showPortfolio !== false && <PortfolioSnapshot />}
           <ExpenseProportion />
         </div>
 

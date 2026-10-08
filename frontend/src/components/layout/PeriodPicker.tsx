@@ -58,6 +58,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
 
   const ref = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { currentMonth, lastMonth, currentYear } = useMemo(() => {
     const today = localTodayIso();
@@ -73,13 +74,14 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    // stopPropagation: inside the Export modal (its Esc listener sits on window) one press must close only this dropdown
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); triggerRef.current?.focus(); } };
     // fixed dropdown doesn't follow its scrolling parent → close on any scroll outside the picker
     const onScroll = (e: Event) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey);
     if (floating) window.addEventListener('scroll', onScroll, true);
-    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll, true); };
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll, true); };
   }, [open, floating]);
 
   // On open: a range reopens in ช่วงเวลา, a list in หลายเดือน (cycle year/H/Q presets stay in เดี่ยว)
@@ -417,6 +419,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
         </button>
         <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
         <button
+          ref={triggerRef}
           onClick={() => setOpen(o => !o)}
           aria-haspopup="dialog"
           aria-expanded={open}

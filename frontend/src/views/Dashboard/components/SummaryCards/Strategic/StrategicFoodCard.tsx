@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { UtensilsCrossed, TrendingDown, Briefcase, Trophy } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, getFoodStatus, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
@@ -64,7 +64,7 @@ export const StrategicFoodCard = memo(({
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <UtensilsCrossed size={13} className="shrink-0 text-orange-400" /> รวมค่าอาหาร
             </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(foodTotal)}</span>
+            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(foodTotal)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
@@ -79,14 +79,14 @@ export const StrategicFoodCard = memo(({
               <Briefcase size={13} className="shrink-0 text-neutral-400" /> วันทำงาน vs หยุด
             </span>
             <span className="text-[12px] font-black text-neutral-200 tabular-nums leading-tight mt-1">
-              ฿{formatMoney(foodWorkdayAvg)} <span className="text-neutral-500 font-normal">/</span> ฿{formatMoney(foodHolidayAvg)}
+              {formatBaht(foodWorkdayAvg)} <span className="text-neutral-500 font-normal">/</span> {formatBaht(foodHolidayAvg)}
             </span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Trophy size={13} className="shrink-0 text-amber-400" /> พีคสูงสุดใน 1 วัน
             </span>
-            <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">฿{formatMoney(maxFoodDayAmount)}</span>
+            <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">{formatBaht(maxFoodDayAmount)}</span>
           </div>
           </>
           )}
@@ -99,11 +99,11 @@ export const StrategicFoodCard = memo(({
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
             <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-orange-400'}`}>
-              ฿{formatMoney(foodDailyAvg)}
+              {formatBaht(foodDailyAvg)}
               <span className="text-xs text-neutral-400 font-normal ml-1">/วัน</span>
             </div>
             <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              ฿{formatMoney(foodTotal)}
+              {formatBaht(foodTotal)}
             </div>
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
@@ -113,8 +113,8 @@ export const StrategicFoodCard = memo(({
             />
           </div>
           <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-            <span>ทำงาน ฿{formatMoney(foodWorkdayAvg)}</span>
-            <span className="text-neutral-500">หยุด ฿{formatMoney(foodHolidayAvg)}</span>
+            <span>ทำงาน {formatBaht(foodWorkdayAvg)}</span>
+            <span className="text-neutral-500">หยุด {formatBaht(foodHolidayAvg)}</span>
           </div>
         </div>
       )}

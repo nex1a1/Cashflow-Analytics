@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown, Tag, ArrowDownWideNarrow } from 'lucide-react';
-import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo } from '../../../utils/formatters';
+import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo, formatBaht } from '../../../utils/formatters';
 import DailyForm from './DailyForm';
 import DayNoteField from './DayNoteField';
 import QuickSuggest from './QuickSuggest';
@@ -344,17 +344,17 @@ export default function DayDetailModal({
               <div className="flex items-center gap-2 mt-2 flex-wrap tabular-nums tracking-tight">
                 {totalInc > 0 && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
-                    <span className="text-[11px] font-medium opacity-80">รับ</span> +฿{formatMoney(totalInc)}
+                    <span className="text-[11px] font-medium opacity-80">รับ</span> +{formatBaht(totalInc)}
                   </span>
                 )}
                 {totalExp > 0 && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-expense/10 text-expense border border-expense/40 flex items-center gap-1">
-                    <span className="text-[11px] font-medium opacity-80">จ่าย</span> -฿{formatMoney(totalExp)}
+                    <span className="text-[11px] font-medium opacity-80">จ่าย</span> −{formatBaht(totalExp)}
                   </span>
                 )}
                 {netSavings !== 0 && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-savings/10 text-savings border border-savings/30 flex items-center gap-1">
-                    <span className="text-[11px] font-medium opacity-80">ลงทุน/ออม</span> {netSavings > 0 ? '' : '-'}฿{formatMoney(Math.abs(netSavings))}
+                    <span className="text-[11px] font-medium opacity-80">ลงทุน/ออม</span> {netSavings > 0 ? '' : '−'}{formatBaht(Math.abs(netSavings))}
                   </span>
                 )}
                 {dayTx.length > 0 && (
@@ -364,7 +364,7 @@ export default function DayDetailModal({
                       : 'bg-danger/10 text-danger border-danger/30'
                   }`}>
                     <span className="text-[11px] font-medium opacity-80">สุทธิ</span>
-                    {net >= 0 ? `+฿${formatMoney(net)}` : `-฿${formatMoney(Math.abs(net))}`}
+                    {net >= 0 ? `+${formatBaht(net)}` : `−${formatBaht(Math.abs(net))}`}
                   </span>
                 )}
                 <DayNoteField key={activeDateStr} dateStr={activeDateStr} note={dayNotes[activeDateStr] ?? NO_NOTE} onSave={handleDayNoteChange} />

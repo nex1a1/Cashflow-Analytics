@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { AssetInput, Portfolio } from '../types';
 import { portfolioService } from '../services/api';
+import { latestOnly } from '../utils/latestOnly';
 import { useAppData } from './AppDataContext';
 import { useToast } from './ToastContext';
 
@@ -32,9 +33,12 @@ export const PortfolioProvider: React.FC<{ children: ReactNode }> = ({ children 
   const portfolioRef = useRef<Portfolio | null>(null);
   portfolioRef.current = portfolio;
 
+  const beginLoad = useRef(latestOnly()).current;
   const reload = useCallback(async () => {
+    const isCurrent = beginLoad(); // a slow older answer must not overwrite a newer one
     try {
-      setPortfolio(await portfolioService.get());
+      const next = await portfolioService.get();
+      if (isCurrent()) setPortfolio(next);
     } catch (err) {
       console.error('Failed to load portfolio:', err); // คงข้อมูลเดิมไว้ ไม่ล้มทั้งแอป
     }

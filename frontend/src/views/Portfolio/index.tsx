@@ -67,7 +67,7 @@ const PortfolioView = memo(function PortfolioView() {
         <div className="flex items-center gap-3">
           {age && (
             <span className={`text-[11px] font-semibold ${age.stale || offline ? 'text-warn' : 'text-ink-muted'}`}>
-              ราคา{age.label.replace('ข้อมูล ', '')}
+              ราคา{age.label.replace('ข้อมูล', '')}
             </span>
           )}
           <button

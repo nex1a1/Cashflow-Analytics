@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { TrendingDown, Briefcase, Palmtree, Lock, Target } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, formatSignedMoney } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
@@ -31,7 +31,7 @@ export const StrategicDailyExpenseCard = memo(({
     thresholdRow={!showSkeleton && (
       <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
         <span>ยอดจ่ายรวมทั้งช่วง</span>
-        <span className="text-white font-bold tabular-nums">฿{formatMoney(totalExpense)}</span>
+        <span className="text-white font-bold tabular-nums">{formatBaht(totalExpense)}</span>
       </div>
     )}
     showOverlay={!showSkeleton}
@@ -43,25 +43,25 @@ export const StrategicDailyExpenseCard = memo(({
           <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
             <Briefcase size={13} className="shrink-0 text-expense" /> วันทำงาน
           </span>
-          <span className="text-[13px] font-black text-expense tabular-nums leading-tight mt-1">฿{formatMoney(dailyWorkdayAvg)}</span>
+          <span className="text-[13px] font-black text-expense tabular-nums leading-tight mt-1">{formatBaht(dailyWorkdayAvg)}</span>
         </div>
         <div className="bg-canvas p-2 flex flex-col justify-center text-left">
           <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
             <Palmtree size={13} className="shrink-0 text-expense" /> วันหยุด
           </span>
-          <span className="text-[13px] font-black text-expense tabular-nums leading-tight mt-1">฿{formatMoney(dailyHolidayAvg)}</span>
+          <span className="text-[13px] font-black text-expense tabular-nums leading-tight mt-1">{formatBaht(dailyHolidayAvg)}</span>
         </div>
         <div className="bg-canvas p-2 flex flex-col justify-center text-left">
           <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
             <Lock size={13} className="shrink-0 text-sky-400" /> จำเป็น/วัน
           </span>
-          <span className="text-[13px] font-black text-neutral-300 tabular-nums leading-tight mt-1">฿{formatMoney(dailyFixed)}</span>
+          <span className="text-[13px] font-black text-neutral-300 tabular-nums leading-tight mt-1">{formatBaht(dailyFixed)}</span>
         </div>
         <div className="bg-canvas p-2 flex flex-col justify-center text-left">
           <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
             <Target size={13} className="shrink-0 text-amber-400" /> ตามใจ/วัน
           </span>
-          <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">฿{formatMoney(dailyVariable)}</span>
+          <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">{formatBaht(dailyVariable)}</span>
         </div>
       </div>
     )}
@@ -75,7 +75,7 @@ export const StrategicDailyExpenseCard = memo(({
         </div>
         <div className="text-[11px] font-mono text-neutral-400 leading-none flex items-center justify-between">
           <span>เฉลี่ยรวมทุกวัน</span>
-          <span className="text-neutral-500">ทำงาน ฿{formatMoney(dailyWorkdayAvg)}</span>
+          <span className="text-neutral-500">ทำงาน {formatBaht(dailyWorkdayAvg)}</span>
         </div>
       </div>
     )}

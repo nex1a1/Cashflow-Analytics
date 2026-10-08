@@ -139,14 +139,18 @@ describe('LedgerCommandPanel', () => {
     panel({ net: -2500, sumInc: 1000, sumExp: 3500, savingsRate: -250 });
     const net = block('คงเหลือสุทธิ');
     expect(net.textContent).toContain('ขาดดุล');
-    expect(net.textContent).toContain('-2,500.00');
+    expect(net.textContent).toContain('−2,500.00');
     expect(net.className).toContain('border-l-expense');
     expect(net.querySelector('.text-danger')).not.toBeNull();
   });
 
-  it('break-even counts as a surplus', () => {
+  it('break-even counts as a surplus (the label "คงเหลือสุทธิ" already contains "เหลือ", so look at the badge)', () => {
     panel({ net: 0, sumInc: 100, sumExp: 100, savingsRate: 0 });
-    expect(block('คงเหลือสุทธิ').textContent).toContain('เหลือ');
+    const net = block('คงเหลือสุทธิ');
+    const badges = [...net.querySelectorAll('span')].map(s => s.textContent);
+    expect(badges).toContain('เหลือ');
+    expect(badges).not.toContain('ขาดดุล');
+    expect(net.className).toContain('border-l-income');
   });
 
   it('no rate chip when there is no income', () => {

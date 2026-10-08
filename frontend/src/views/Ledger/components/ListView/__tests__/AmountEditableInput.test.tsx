@@ -36,7 +36,7 @@ afterEach(() => {
 describe('AmountEditableInput — what it shows', () => {
   it('an expense: −฿ and the formatted amount', () => {
     mount({ initialValue: 1234.5 });
-    expect(shown()).toBe('-฿1,234.50');
+    expect(shown()).toBe('−฿1,234.50');
   });
 
   it('an income: +฿', () => {
@@ -71,18 +71,23 @@ describe('AmountEditableInput — what it shows', () => {
   it('an empty / zero amount shows the placeholder', () => {
     for (const initialValue of ['', 0, '0']) {
       mount({ initialValue });
-      expect(shown()).toBe('-฿0.00');
+      expect(shown()).toBe('−฿0.00');
       act(() => root!.unmount()); container!.remove();
     }
-    mount({ initialValue: '', placeholder: 'ใส่จำนวน' });
-    expect(shown()).toBe('-฿ใส่จำนวน');
+    for (const initialValue of ['', 0, '0']) {
+      mount({ initialValue, placeholder: 'ใส่จำนวน' });
+      expect(shown(), String(initialValue)).toBe('−฿ใส่จำนวน');
+      act(() => root!.unmount()); container!.remove();
+    }
+    mount({ initialValue: 5, placeholder: 'ใส่จำนวน' });
+    expect(shown()).toBe('−฿5.00');
   });
 
   it('follows the value it is given while it is not being edited', () => {
     mount({ initialValue: 100 });
     props = { ...props, initialValue: 999 };
     render();
-    expect(shown()).toBe('-฿999.00');
+    expect(shown()).toBe('−฿999.00');
   });
 
   it('but never overwrites what is being typed', async () => {
@@ -134,13 +139,21 @@ describe('AmountEditableInput — editing', () => {
     await enter('250');
     expect(props.onSave).not.toHaveBeenCalled();
     expect(q('input')).toBeNull();
-    expect(shown()).toBe('-฿250.00');
+    expect(shown()).toBe('−฿250.00');
   });
 
   it('250 typed as 250.00 is also "unchanged"', async () => {
     mount({ initialValue: 250 });
     await enter('250.00');
     expect(props.onSave).not.toHaveBeenCalled();
+  });
+});
+
+describe('AmountEditableInput — typing what the app displays', () => {
+  it.each([['−฿300'], ['−300'], ['฿300'], ['-300'], ['+300']])('%s is read as 300 (the sign comes from the row type)', async (typed) => {
+    mount({ initialValue: 250 });
+    await enter(typed);
+    expect(props.onSave).toHaveBeenCalledWith(300);
   });
 });
 
@@ -178,7 +191,7 @@ describe('AmountEditableInput — a typo never becomes ฿0', () => {
     await enter('abc');
     key(input(), 'Escape');
     expect(q('input')).toBeNull();
-    expect(shown()).toBe('-฿250.00');
+    expect(shown()).toBe('−฿250.00');
     expect(container!.textContent).not.toContain('ใส่จำนวนเงิน');
     expect(props.onSave).not.toHaveBeenCalled();
   });
@@ -188,7 +201,7 @@ describe('AmountEditableInput — a typo never becomes ฿0', () => {
     await open();
     type(input(), '999');
     key(input(), 'Escape');
-    expect(shown()).toBe('-฿250.00');
+    expect(shown()).toBe('−฿250.00');
     expect(props.onSave).not.toHaveBeenCalled();
   });
 });

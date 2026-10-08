@@ -3,7 +3,7 @@ import { Doughnut } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import { Portfolio } from '@/types';
 import { tc, type ThemeToken } from '@/constants/theme';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { AllocationItem, assetColorMap, buildAllocation, buildAllocationByKind } from './portfolioCharts';
 
 type Mode = 'asset' | 'kind';
@@ -28,7 +28,7 @@ const baseOptions = (items: AllocationItem[]): ChartOptions<'doughnut'> => ({
       titleColor: tc('ink-display'),
       bodyColor: tc('gray-300'),
       callbacks: {
-        label: c => ` ฿${formatMoney(Number(c.raw))} (${items[c.dataIndex]?.pct.toFixed(1)}%)`,
+        label: c => ` ${formatBaht(Number(c.raw))} (${items[c.dataIndex]?.pct.toFixed(1)}%)`,
       },
     },
   },
@@ -110,7 +110,7 @@ const AllocationPanel = memo(function AllocationPanel({ portfolio }: { portfolio
         </div>
       </div>
       <p className="mt-auto text-[11px] text-ink-muted tabular-nums">
-        รวม ฿{formatMoney(view.total)}{view.anyUnpriced && ' · บางรายการยังไม่มีราคา ใช้ต้นทุนแทน'}
+        รวม {formatBaht(view.total)}{view.anyUnpriced && ' · บางรายการยังไม่มีราคา ใช้ต้นทุนแทน'}
       </p>
     </div>
   );

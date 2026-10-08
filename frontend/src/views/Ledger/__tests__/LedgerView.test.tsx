@@ -216,10 +216,13 @@ describe('LedgerView — empty and loading', () => {
     expect(fn.clearFilters).toHaveBeenCalled();
   });
 
-  it('while the very first load has nothing yet, a loading overlay shows', () => {
+  it('while the very first load has nothing yet, a loading overlay shows over an empty first page', () => {
     mount({ displayTransactions: [], transactions: [], isLoading: true });
     expect(text()).toContain('กำลังโหลดรายการ...');
     expect(text()).not.toContain('ไม่พบรายการ');
+    expect(text()).toContain('หน้า 1 • แสดง 0 จาก 0 รายการ');
+    expect(q<HTMLInputElement>('input[aria-label="เลขหน้า"]')!.value).toBe('1');
+    expect(text()).toContain('/1'); // one (empty) page, never "page 1 of 0"
   });
 
   it('a reload that already has rows does not cover them', () => {
@@ -292,6 +295,15 @@ describe('LedgerView — table (horizontal) view', () => {
     expect(text()).toContain('1 ตัวกรองทำงานอยู่');
     click(byText('button', 'ล้างตัวกรอง'));
     expect(q('tfoot')!.textContent).toContain('1,100.00');
+  });
+
+  it('switching on "include rent / water / power / internet" counts as a table filter too', () => {
+    mount();
+    toTable();
+    click(filterToggle());
+    expect(filterToggle().className).not.toContain('!border-warn');
+    click(byText('button', 'รวมค่าหอ/น้ำ/ไฟ/เน็ต'));
+    expect(filterToggle().className).toContain('!border-warn');
   });
 
   it('table filters are kept when switching to the list and back', () => {

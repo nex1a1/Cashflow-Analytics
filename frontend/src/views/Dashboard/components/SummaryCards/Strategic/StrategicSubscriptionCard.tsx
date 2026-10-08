@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Repeat } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { SubscriptionService, BreakdownEntry } from '../types';
@@ -94,7 +94,7 @@ export const StrategicSubscriptionCard = memo(({
               <span className="text-xs text-neutral-400 font-normal ml-1">{isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย'}</span>
             </div>
             <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              ฿{formatMoney(subscriptionTotal)}
+              {formatBaht(subscriptionTotal)}
             </div>
           </div>
           <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">

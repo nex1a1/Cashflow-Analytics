@@ -161,7 +161,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
 
                     let typeBadgeClass = 'text-expense bg-expense/5 border-expense/20';
                     let amountColor = 'text-expense';
-                    let amountPrefix = '-';
+                    let amountPrefix = '−';
                     let typeDisplay = headerLang === 'en' ? 'EXPENSE' : 'EXPENSE';
 
                     if (isIncome) {

@@ -425,7 +425,7 @@ function QuickSuggest({
 
             {formType === 'expense' && allocationFilter !== 'ALL' && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
-                <span>{allocationFilter}</span>
+                <span>{allocationFilter === 'savings' ? 'SAVE' : allocationFilter}</span>
                 <button 
                   type="button" 
                   onClick={() => setAllocationFilter('ALL')}
@@ -536,7 +536,7 @@ function QuickSuggest({
 
                     <div className="flex items-center justify-end gap-1.5 pl-2 shrink-0 border-l border-line/60">
                       <span className={`text-xs font-bold tabular-nums tracking-tight ${formType === 'expense' ? 'text-expense group-hover:text-red-300' : 'text-emerald-400 group-hover:text-emerald-300'} transition-colors`}>
-                        {formType === 'savings' ? '฿' : formType === 'expense' ? '-฿' : '+฿'}{formatMoney(s.amount)}
+                        {formType === 'savings' ? '฿' : formType === 'expense' ? '−฿' : '+฿'}{formatMoney(s.amount)}
                       </span>
                       <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
                         {s.count}x
@@ -773,11 +773,11 @@ function QuickSuggest({
                         onChange={e => setSortBy(e.target.value)}
                         className={tokens.select}
                       >
-                        <option value="frequent">🔥 ยอดนิยม (ความถี่)</option>
-                        <option value="recent">🕒 ล่าสุด (วันที่)</option>
-                        <option value="amountDesc">💸 แพง ➔ ถูก</option>
-                        <option value="amountAsc">🪙 ถูก ➔ แพง</option>
-                        <option value="alphabetical">🔤 ตามตัวอักษร</option>
+                        <option value="frequent">ยอดนิยม (ความถี่)</option>
+                        <option value="recent">ล่าสุด (วันที่)</option>
+                        <option value="amountDesc">แพง ➔ ถูก</option>
+                        <option value="amountAsc">ถูก ➔ แพง</option>
+                        <option value="alphabetical">ตามตัวอักษร</option>
                       </select>
                     </div>
                   </div>

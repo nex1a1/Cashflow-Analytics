@@ -173,7 +173,7 @@ describe('ExpenseProportion — 50/30/20', () => {
 
     expect(alloc('จำเป็น').textContent).toContain('เป้า 50% (฿50,000.00)');
     expect(alloc('จำเป็น').textContent).toContain('+฿5,000.00 ในโควตา');
-    expect(alloc('ตามใจ').textContent).toContain('-฿5,000.00 เกินโควตา');
+    expect(alloc('ตามใจ').textContent).toContain('−฿5,000.00 เกินโควตา');
     expect(alloc('ออม/เหลือ').textContent).toContain('+฿0.00 เกินเป้าออม');
   });
 
@@ -190,7 +190,7 @@ describe('ExpenseProportion — 50/30/20', () => {
   it('the cell label spells the whole verdict for assistive tech', () => {
     mount();
     toAllocation();
-    expect(alloc('ตามใจ').getAttribute('aria-label')).toBe('ตามใจ: 35.0% (เป้า 30%) — -฿5,000.00 เกินโควตา');
+    expect(alloc('ตามใจ').getAttribute('aria-label')).toBe('ตามใจ: 35.0% (เป้า 30%) — −฿5,000.00 เกินโควตา');
   });
 
   it('lists the groups of each part with their share of it, and the unassigned remainder of savings', () => {
@@ -206,7 +206,7 @@ describe('ExpenseProportion — 50/30/20', () => {
     mount();
     toAllocation();
     click([...alloc('ตามใจ').querySelectorAll('button')].find(b => b.textContent!.includes('บันเทิง')));
-    expect(text()).toContain('จำลองลด 1 หมวด (-฿20,000.00)');
+    expect(text()).toContain('จำลองลด 1 หมวด (−฿20,000.00)');
     expect(alloc('ตามใจ').textContent).toContain('฿ 15,000.00'); // 35,000 − 20,000
     expect(alloc('ตามใจ').textContent).toContain('+฿15,000.00 ในโควตา');
     expect(alloc('ออม/เหลือ').textContent).toContain('฿ 40,000.00'); // income 100,000 − (45,000 + 15,000)
@@ -219,12 +219,12 @@ describe('ExpenseProportion — 50/30/20', () => {
     const groupBtn = (name: string) => [...container!.querySelectorAll<HTMLButtonElement>('[role="group"] button')].find(b => b.textContent!.includes(name))!;
     click(groupBtn('บันเทิง'));
     click(groupBtn('ช้อปปิ้ง'));
-    expect(text()).toContain('จำลองลด 2 หมวด (-฿35,000.00)');
+    expect(text()).toContain('จำลองลด 2 หมวด (−฿35,000.00)');
     expect(groupBtn('บันเทิง').title).toContain('เปิดหมวดหมู่นี้กลับมา');
     expect(groupBtn('บันเทิง').querySelector('[aria-label="ยกเว้นจากการคำนวณ"]')).not.toBeNull();
 
     click(groupBtn('ช้อปปิ้ง'));
-    expect(text()).toContain('จำลองลด 1 หมวด (-฿20,000.00)');
+    expect(text()).toContain('จำลองลด 1 หมวด (−฿20,000.00)');
 
     click(byText('button', 'คืนค่า'));
     expect(text()).not.toContain('จำลองลด');

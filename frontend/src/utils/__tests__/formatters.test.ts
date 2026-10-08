@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { 
   formatMoney, 
+  formatAmount,
+  formatBaht,
+  formatBahtShort,
   satangToBaht,
   bahtToSatang,
   getThaiMonth, 
@@ -53,6 +56,50 @@ describe('formatters utility', () => {
     it('handles non-numeric inputs gracefully', () => {
       expect(formatMoney('')).toBe('0.00');
       expect(formatMoney(Number.NaN)).toBe('0.00');
+    });
+  });
+
+  describe('negative amounts: a true minus, in front of the baht sign', () => {
+    it('formatMoney and formatAmount use the minus sign (U+2212), not a hyphen', () => {
+      expect(formatMoney(-500)).toBe('−500.00');
+      expect(formatMoney(-1234567.891)).toBe('−1,234,567.89');
+      expect(formatMoney('-0.5')).toBe('−0.50');
+      expect(formatAmount(-100)).toBe('−100');
+      expect(formatAmount(-100.5)).toBe('−100.5');
+      expect(formatMoney(-500)).not.toContain('-');
+    });
+
+    it('a value that rounds to zero shows no sign at all', () => {
+      expect(formatMoney(-0.004)).toBe('0.00');
+      expect(formatMoney(-0)).toBe('0.00');
+      expect(formatAmount(-0.001)).toBe('0');
+      expect(formatBaht(-0.004)).toBe('฿0.00');
+    });
+
+    it('formatBaht puts the minus before the baht sign: −฿500.00, never ฿-500.00', () => {
+      expect(formatBaht(500)).toBe('฿500.00');
+      expect(formatBaht(-500)).toBe('−฿500.00');
+      expect(formatBaht(-1234.5)).toBe('−฿1,234.50');
+      expect(formatBaht('-12')).toBe('−฿12.00');
+      expect(formatBaht(0)).toBe('฿0.00');
+      expect(formatBaht(Number.NaN)).toBe('฿0.00');
+    });
+
+    it('formatBahtShort is the same without trailing zeros', () => {
+      expect(formatBahtShort(100)).toBe('฿100');
+      expect(formatBahtShort(-100)).toBe('−฿100');
+      expect(formatBahtShort(-100.5)).toBe('−฿100.5');
+    });
+
+    it('the period-delta tooltip writes a negative change the same way', () => {
+      const r = calculatePeriodDelta({ current: 8000, prev: 10000, hasPriorData: true, type: 'expense' });
+      expect(r.tooltipText).toBe('ช่วงก่อนหน้า: ฿10,000.00 (−฿2,000.00)');
+      const up = calculatePeriodDelta({ current: 12000, prev: 10000, hasPriorData: true, type: 'income' });
+      expect(up.tooltipText).toBe('ช่วงก่อนหน้า: ฿10,000.00 (+฿2,000.00)');
+      const loss = calculatePeriodDelta({ current: -3000, prev: -1000, hasPriorData: true, type: 'net' });
+      expect(loss.tooltipText).toBe('ช่วงก่อนหน้า: −฿1,000.00 (−฿2,000.00)');
+      const fresh = calculatePeriodDelta({ current: -500, prev: 0, hasPriorData: true, type: 'net' });
+      expect(fresh.tooltipText).toBe('ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง −฿500.00)');
     });
   });
 

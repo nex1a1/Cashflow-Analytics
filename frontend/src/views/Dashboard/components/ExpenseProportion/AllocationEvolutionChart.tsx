@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion/AllocationEvolutionChart.tsx
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
-import { formatMoney, THAI_MONTHS_SHORT } from '@/utils/formatters';
+import { formatMoney, THAI_MONTHS_SHORT, formatBaht } from '@/utils/formatters';
 import type { AllocationEvolutionMonth } from '@/utils/allocationEvolutionHelpers';
 
 
@@ -304,17 +304,17 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                   <>
                     <text x="10" y="38" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={NEED_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill={tc('ink-display')} dx="4">จำเป็น ฿{formatMoney(hovered.needAmt)}</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">จำเป็น {formatBaht(hovered.needAmt)}</tspan>
                       <tspan fill={hovered.needPct > 50 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.needPct.toFixed(0)}%)</tspan>
                     </text>
                     <text x="10" y="58" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={WANT_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill={tc('ink-display')} dx="4">ตามใจ ฿{formatMoney(hovered.wantAmt)}</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">ตามใจ {formatBaht(hovered.wantAmt)}</tspan>
                       <tspan fill={hovered.wantPct > 30 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.wantPct.toFixed(0)}%)</tspan>
                     </text>
                     <text x="10" y="78" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={SAVINGS_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill={tc('ink-display')} dx="4">ออม ฿{formatMoney(hovered.savingsAmt)}</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">ออม {formatBaht(hovered.savingsAmt)}</tspan>
                       <tspan fill={hovered.savingsPct < 20 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.savingsPct.toFixed(0)}%)</tspan>
                     </text>
                   </>

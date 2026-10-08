@@ -2,6 +2,7 @@
 import React from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { ExportFooterProps } from './types';
+import FieldError from '../../shared/FieldError';
 
 export default function ExportFooter({
   exportFormat,
@@ -13,6 +14,7 @@ export default function ExportFooter({
   executeExport,
   stats,
   isExporting,
+  error,
 }: ExportFooterProps) {
   const isBackupJson = exportFormat === 'backup_json';
   const periodLabel = getFilterLabel ? getFilterLabel(exportPeriod) : exportPeriod;
@@ -70,6 +72,8 @@ export default function ExportFooter({
           </>
         )}
       </div>
+
+      <FieldError id="export-err" message={error} />
 
       {/* Buttons */}
       <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Award, ArrowDownToLine, Lock, Target, PiggyBank } from 'lucide-react';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatBaht } from '@/utils/formatters';
 import { Shimmer, formatSignedMoney } from '../helpers';
 
 interface VictoryCardProps {
@@ -65,25 +65,25 @@ export const StrategicVictoryCard = memo(({
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน
             </span>
-            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">฿{formatMoney(dailyIncome)}</span>
+            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailyIncome)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Lock size={13} className="shrink-0 text-neutral-400" /> จำเป็น/วัน
             </span>
-            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(dailyFixed)}</span>
+            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyFixed)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <Target size={13} className="shrink-0 text-neutral-400" /> ตามใจ/วัน
             </span>
-            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">฿{formatMoney(dailyVariable)}</span>
+            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyVariable)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <PiggyBank size={13} className="shrink-0 text-emerald-400" /> ออม/วัน
             </span>
-            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">฿{formatMoney(dailySavings)}</span>
+            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailySavings)}</span>
           </div>
         </div>
       )}
