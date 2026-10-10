@@ -36,6 +36,7 @@ docs/
 debug_scripts/
 coverage/
 .vitest/
+.vite/
 *.test.db
 *.test.sqlite
 
