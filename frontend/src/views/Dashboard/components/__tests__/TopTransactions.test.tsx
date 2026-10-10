@@ -209,6 +209,17 @@ describe('TopTransactions — row details', () => {
     expect(document.body.textContent).toContain('ค่ากิน');
   });
 
+  it('a row that only carries the category name (no id) still finds its category', () => {
+    const legacy = { ...tx('a', 500, 'c-food'), category_id: undefined, group_type: undefined };
+    set({ transactions: [legacy] });
+    mount();
+    expect(document.body.textContent).toContain('ค่ากิน'); // an expense, known only through its category name
+    act(() => root!.unmount()); container!.remove();
+    set({ transactions: [legacy], hideFixedExpenses: true });
+    mount();
+    expect(document.body.textContent).not.toContain('ค่ากิน'); // and that category is a NEED
+  });
+
   it('the bar behind each row is relative to the biggest, with a small floor so a tiny row is still visible', () => {
     set({ transactions: [tx('big', 1000, 'c-food'), tx('tiny', 1, 'c-food')] });
     mount();

@@ -209,6 +209,12 @@ describe('useSankeyEngine — NEED / WANT / SAVINGS layout', () => {
     expect(find(list, 'Want', 'บันเทิง')!.allocBreakdown).toMatchObject({ need: 1_000, want: 3_000, total: 4_000, catName: 'บันเทิง' });
   });
 
+  it('a category whose rows carry an unknown allocation value still shows, under Want', () => {
+    set({ transactions: [...month.filter(t => t.id !== 'fun'), tx('fun-odd', '2026-10-03', 'c-fun', 4_000, { allocation_type: 'bogus' as never })] });
+    const list = alloc();
+    expect(find(list, 'Want', 'บันเทิง')).toMatchObject({ flow: 4_000 });
+  });
+
   it('categories hang under their allocation, biggest first, savings categories under Savings', () => {
     const list = alloc();
     expect(list.filter(f => f.from.startsWith('Need')).map(f => f.to)).toEqual(['ค่าเช่า (8,000.00)', 'ข้าว (2,000.00)']);

@@ -1,7 +1,7 @@
 // src/utils/analyticsHelpers.ts
-import { isDateInFilter, parseDateStrToObj } from './dateHelpers';
+import { parseDateStrToObj } from './dateHelpers';
 import { getThaiMonth, hexToRgb } from './formatters';
-import { Category, CashflowGroup, DayType, TransactionDisplay } from '../types';
+import { Category, DayType } from '../types';
 import { isSingleUnitPeriod } from './payCycle';
 import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 
@@ -16,21 +16,6 @@ export const createCategoryMap = (categories: Category[]): Record<string, Catego
     return acc; 
   }, {});
 
-export interface CashflowTotals {
-  income: number;
-  expense: number;
-  savings: number;
-  weekend: number;
-  weekday: number;
-  food: number;
-  fixed: number;
-  variable: number;
-  rent: number;
-  it: number;
-  invest: number;
-  dayOfWeekMap: Record<number, number>;
-}
-
 export interface CashflowMonthData {
   monthStr: string;
   totalExp: number;
@@ -38,239 +23,6 @@ export interface CashflowMonthData {
   totalSav: number;
   groups: Record<string, number>;
 }
-
-export const extractYearMonth = (dateStr: string): string | null => {
-  if (!dateStr) return null;
-  let y: string, m: string;
-  if (dateStr.includes('-')) {
-    [y, m] = dateStr.split('-');
-  } else {
-    const parts = dateStr.split('/');
-    if (parts.length < 3) return null;
-    [y, m] = [parts[2], parts[1]];
-  }
-  return (y && m) ? `${y}-${m.padStart(2, '0')}` : null;
-};
-
-const accumulateExpenseTotals = (
-  amt: number,
-  itemDate: string,
-  groupName: string,
-  isFixed: boolean,
-  totals: CashflowTotals
-) => {
-  totals.expense += amt;
-  const dateObj = parseDateStrToObj(itemDate);
-  const dayOfWeek = dateObj.getDay();
-
-  if (dayOfWeek === 0 || dayOfWeek === 6) totals.weekend += amt;
-  else totals.weekday += amt;
-
-  totals.dayOfWeekMap[dayOfWeek] += amt;
-
-  const isRent = groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
-  const isFood = groupName.includes('กิน') || groupName.includes('อาหาร') || groupName.includes('food');
-  const isIT   = groupName.includes('คอม') || groupName.includes('ไอที') || groupName.includes('it');
-  const isInv  = groupName.includes('ลงทุน') || groupName.includes('ออม') || groupName.includes('invest');
-
-  if (isRent) totals.rent += amt;
-  else if (isFood) totals.food += amt;
-  else if (isIT) totals.it += amt;
-  else if (isInv) totals.invest += amt;
-
-  if (isFixed) totals.fixed += amt;
-  else totals.variable += amt;
-};
-
-interface CashflowContextResult {
-  isInc: boolean;
-  isSav: boolean;
-  cGroup: string;
-  isFixed: boolean;
-  groupName: string;
-}
-
-const resolveCashflowContext = (
-  item: TransactionDisplay,
-  catMap: Record<string, Category>,
-  cashflowGroups: CashflowGroup[]
-): CashflowContextResult => {
-  const catObj = (item.category_id ? catMap[item.category_id] : undefined) || catMap[item.category] || {
-    id: 'unknown',
-    name: item.category || 'unknown',
-    type: 'expense' as const,
-    cashflowGroup: null,
-    allocation_type: 'want' as const
-  };
-  const cGroupId = catObj.cashflowGroup || catObj.cashflow_group_id;
-  const groupObj = cashflowGroups?.find(g => g.id === cGroupId);
-  const groupType = groupObj?.type || catObj.type || 'expense';
-  const groupName = (groupObj?.name || '').toLowerCase();
-
-  const isInc = groupType === 'income';
-  const isSav = groupType === 'savings';
-
-  const fallbackIncId = cashflowGroups?.find(g => g.type === 'income')?.id || 'cg_bonus';
-  const fallbackSavId = cashflowGroups?.find(g => g.type === 'savings')?.id || 'cg_savings';
-  const fallbackExpId = cashflowGroups?.find(g => g.type === 'expense')?.id || 'cg_variable';
-
-  let cGroup = cGroupId;
-  if (!cGroup) {
-    if (isInc) cGroup = fallbackIncId;
-    else if (isSav) cGroup = fallbackSavId;
-    else cGroup = fallbackExpId;
-  }
-  const isFixed = (item.allocation_type || groupObj?.allocation_type || catObj.allocation_type) === 'need';
-
-  return { isInc, isSav, cGroup, isFixed, groupName };
-};
-
-export interface CashflowMapResult {
-  cashflowMap: Record<string, CashflowMonthData>;
-  dayIncomeMap: Record<string, number>;
-  dayExpenseMap: Record<string, number>;
-  uniqueMonthsSet: Set<string>;
-  totals: CashflowTotals;
-  filteredTx: TransactionDisplay[];
-}
-
-/**
- * Groups and aggregates transaction data into a cashflow map by month.
- */
-export const generateCashflowMap = (
-  transactions: TransactionDisplay[],
-  filterPeriod: string,
-  catMap: Record<string, Category>,
-  cashflowGroups: CashflowGroup[]
-): CashflowMapResult => {
-  const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
-  const uniqueMonthsSet = new Set<string>();
-  const cashflowMap: Record<string, CashflowMonthData> = {};
-  const dayIncomeMap: Record<string, number> = {};
-  const dayExpenseMap: Record<string, number> = {};
-  
-  const totals: CashflowTotals = {
-    income: 0,
-    expense: 0,
-    savings: 0,
-    weekend: 0,
-    weekday: 0,
-    food: 0,
-    fixed: 0,
-    variable: 0,
-    rent: 0,
-    it: 0,
-    invest: 0,
-    dayOfWeekMap: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
-  };
-
-  filteredTx.forEach(item => {
-    if (!item.date) return;
-    const ym = extractYearMonth(item.date);
-    if (!ym) return;
-
-    const amt = typeof item.amount === 'number' ? item.amount : (Number.parseFloat(String(item.amount)) || 0);
-    const { isInc, isSav, cGroup, isFixed, groupName } = resolveCashflowContext(item, catMap, cashflowGroups);
-
-    uniqueMonthsSet.add(ym);
-
-    if (!cashflowMap[ym]) {
-      cashflowMap[ym] = { monthStr: ym, totalExp: 0, income: 0, totalSav: 0, groups: {} };
-      cashflowGroups.forEach(g => { cashflowMap[ym].groups[g.id] = 0; });
-    }
-
-    if (cashflowMap[ym].groups[cGroup] !== undefined) {
-      cashflowMap[ym].groups[cGroup] += amt;
-    }
-
-    if (isInc) {
-      totals.income += amt;
-      cashflowMap[ym].income += amt;
-      dayIncomeMap[item.date] = (dayIncomeMap[item.date] || 0) + amt;
-    } else if (isSav) {
-      totals.savings += amt;
-      cashflowMap[ym].totalSav += amt;
-    } else {
-      cashflowMap[ym].totalExp += amt;
-      dayExpenseMap[item.date] = (dayExpenseMap[item.date] || 0) + amt;
-      accumulateExpenseTotals(amt, item.date, groupName, isFixed, totals);
-    }
-  });
-
-  return { cashflowMap, dayIncomeMap, dayExpenseMap, uniqueMonthsSet, totals, filteredTx };
-};
-
-export interface CategoryStatsCollector {
-  catMapData: Record<string, number>;
-  dailyAllMap: Record<string, number>;
-  monthlyAllMap: Record<string, number>;
-  dailyCatMap: Record<string, Record<string, number>>;
-  monthlyCatMap: Record<string, Record<string, number>>;
-  chartTotal: number;
-}
-
-const accumulateCategoryItem = (
-  item: TransactionDisplay,
-  catMap: Record<string, Category>,
-  stats: CategoryStatsCollector
-) => {
-  if (!item.date) return;
-  const amt = typeof item.amount === 'number' ? item.amount : (Number.parseFloat(String(item.amount)) || 0);
-  const catId = item.category_id || (catMap[item.category]?.id) || 'unknown';
-  const ym = extractYearMonth(item.date);
-
-  stats.catMapData[catId] = (stats.catMapData[catId] || 0) + amt;
-  stats.dailyAllMap[item.date] = (stats.dailyAllMap[item.date] || 0) + amt;
-  if (ym) stats.monthlyAllMap[ym] = (stats.monthlyAllMap[ym] || 0) + amt;
-
-  if (!stats.dailyCatMap[catId]) stats.dailyCatMap[catId] = {};
-  stats.dailyCatMap[catId][item.date] = (stats.dailyCatMap[catId][item.date] || 0) + amt;
-
-  if (ym) {
-    if (!stats.monthlyCatMap[catId]) stats.monthlyCatMap[catId] = {};
-    stats.monthlyCatMap[catId][ym] = (stats.monthlyCatMap[catId][ym] || 0) + amt;
-  }
-  stats.chartTotal += amt;
-};
-
-export interface CategoryStatsResult extends CategoryStatsCollector {
-  chartTx: TransactionDisplay[];
-}
-
-/**
- * Calculates category breakdown and mapping for charts.
- */
-export const calculateCategoryStats = (
-  transactions: TransactionDisplay[],
-  _categories: Category[],
-  filterPeriod: string,
-  _dashboardCategory: string | string[],
-  hideFixedExpenses: boolean,
-  catMap: Record<string, Category>
-): CategoryStatsResult => {
-  const filteredTx = transactions.filter(t => isDateInFilter(t.date, filterPeriod));
-  const chartTx = filteredTx.filter(t => {
-    const catObj = (t.category_id ? catMap[t.category_id] : undefined) || catMap[t.category] || { type: 'expense' };
-    if (catObj.type === 'income') return false;
-    if (hideFixedExpenses && (t.allocation_type || catObj.allocation_type) === 'need') return false;
-    return true;
-  });
-
-  const stats: CategoryStatsCollector = {
-    catMapData: {},
-    dailyAllMap: {},
-    monthlyAllMap: {},
-    dailyCatMap: {},
-    monthlyCatMap: {},
-    chartTotal: 0
-  };
-
-  chartTx.forEach(item => {
-    accumulateCategoryItem(item, catMap, stats);
-  });
-
-  return { ...stats, chartTx };
-};
 
 interface MainChartDataParams {
   chartGroupBy: 'daily' | 'monthly';
@@ -379,7 +131,6 @@ function buildSpecificCategoryDataset(
   const catObj: Partial<Category> = catMap[catName] || {};
   const catId = catObj.id || catName;
   const catColor = catObj.color || tc('ink-muted');
-  const rgb = hexToRgb(catColor);
 
   const data = showMonthly
     ? sortedMonthsKeys.map(m => monthlyCatMap[catId]?.[m] || 0)
@@ -391,7 +142,7 @@ function buildSpecificCategoryDataset(
     label: catName,
     data,
     borderColor: catColor,
-    backgroundColor: rgb ? `rgba(${rgb}, 0.1)` : 'transparent',
+    backgroundColor: `rgba(${hexToRgb(catColor)}, 0.1)`,
     borderWidth: 2,
     fill: activeCatsCount === 1,
     tension: 0.3,
@@ -559,19 +310,11 @@ export const calculateDayTypeCounts = (
   const dayTypeCounts: Record<string, number> = {};
   dayTypeConfig.forEach(dt => { dayTypeCounts[dt.id] = 0; });
   
-  datesInPeriod.forEach(dateStr => {
-    let y: string, m: string, d: string;
-    if (dateStr.includes('-')) {
-      [y, m, d] = dateStr.split('-');
-    } else {
-      [d, m, y] = dateStr.split('/');
-    }
-    const dayOfWeek = new Date(Number.parseInt(y, 10), Number.parseInt(m, 10) - 1, Number.parseInt(d, 10)).getDay();
+  datesInPeriod.forEach(dateStr => { // YYYY-MM-DD (generateDatesForPeriod)
+    const dayOfWeek = parseDateStrToObj(dateStr).getDay();
     // same rule as the calendar / day modal (by name code, so re-ordering day types in Settings can't flip it)
-    const defaultType = resolveDefaultDayTypeId(dayTypeConfig, dayOfWeek === 0 || dayOfWeek === 6);
-    const currentType = dayTypes[dateStr] || defaultType;
-    if (currentType && dayTypeCounts[currentType] !== undefined) dayTypeCounts[currentType]++;
-    else if (currentType) dayTypeCounts[currentType] = 1;
+    const currentType = dayTypes[dateStr] || resolveDefaultDayTypeId(dayTypeConfig, dayOfWeek === 0 || dayOfWeek === 6);
+    if (currentType) dayTypeCounts[currentType] = (dayTypeCounts[currentType] || 0) + 1;
   });
 
   return dayTypeCounts;

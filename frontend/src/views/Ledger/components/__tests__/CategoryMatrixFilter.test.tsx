@@ -127,6 +127,12 @@ describe('CategoryMatrixFilter — the button', () => {
     mount({ initial: 'กาแฟ' as unknown as string[] }, false);
     expect(label()).toBe('กาแฟ');
   });
+
+  it('a single name that is not on offer counts as everything', () => {
+    mount({ initial: 'ไม่มีหมวดนี้' as unknown as string[] });
+    expect(isOn(catChip('กาแฟ'))).toBe(true);
+    expect(isOn(catChip('หนัง'))).toBe(true);
+  });
 });
 
 describe('CategoryMatrixFilter — opening and closing', () => {
@@ -169,6 +175,27 @@ describe('CategoryMatrixFilter — the two tiers', () => {
     expect(groupChip('เงินเดือน').textContent).toContain('0/2');
     expect(popover()!.textContent).toContain('ชั้นที่ 1');
     expect(popover()!.textContent).toContain('ชั้นที่ 2');
+  });
+
+  it('two income groups sit side by side; one fills the row', () => {
+    const two = [...groups, { id: 'g-side', name: 'งานเสริม', type: 'income', order_index: 5 } as CashflowGroup];
+    mount({ cashflowGroups: two, categories: [...cats, { id: 'c-side', name: 'ฟรีแลนซ์', type: 'income', cashflow_group_id: 'g-side', order_index: 1 }] });
+    const box = () => isolateGroup('เงินเดือน').closest('div.bg-income\\/10')!;
+    expect(box().classList.contains('sm:grid-cols-2')).toBe(true);
+    act(() => root!.unmount()); container!.remove();
+    mount();
+    expect(box().classList.contains('grid-cols-1')).toBe(true);
+    expect(box().classList.contains('sm:grid-cols-2')).toBe(false);
+  });
+
+  it('a click keeps the list where it was scrolled', async () => {
+    mount({ initial: ['กาแฟ'] });
+    const list = popover()!.querySelector<HTMLElement>('.overflow-y-auto') ?? popover()!;
+    list.scrollTop = 120;
+    click(catChip('หนัง'));
+    list.scrollTop = 0; // a re-render that jumped back to the top
+    await act(async () => { await new Promise(r => requestAnimationFrame(() => r(null))); });
+    expect(list.scrollTop).toBe(120);
   });
 
   it('a category with no group lands in "หมวดหมู่อื่นๆ"', () => {

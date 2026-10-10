@@ -133,10 +133,7 @@ export function ExpenseProportion() {
       if (targetType === 'amount') {
         return prev === 'amount-desc' ? 'amount-asc' : 'amount-desc';
       }
-      if (targetType === 'order') {
-        return prev === 'order-asc' ? 'order-desc' : 'order-asc';
-      }
-      return 'amount-desc';
+      return prev === 'order-asc' ? 'order-desc' : 'order-asc';
     });
   }, []);
 

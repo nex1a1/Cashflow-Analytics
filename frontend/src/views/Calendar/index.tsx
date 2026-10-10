@@ -7,7 +7,7 @@ import LegendAllocationBlock, { LegendGroupItem, AllocationTotals, AllocCatItem 
 import MonthOnlyNotice from './components/MonthOnlyNotice';
 import { resolveDefaultDayTypeId, THAI_MONTHS } from './utils/calendarPeriodHelpers';
 import { processCalendarTransaction, CalendarDayData, CalendarTotals, CategoryAllocationAmount } from './utils/calendarAggregates';
-import { periodUnitDates, parseDateStrToObj, toISODate } from '../../utils/dateHelpers';
+import { periodUnitDates, parseDateStrToObj } from '../../utils/dateHelpers';
 import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, localTodayIso, CYCLE_PREFIX, cycleLabel, cycleRangeLabel } from '../../utils/payCycle';
 import {
   CashflowGroup,
@@ -109,7 +109,7 @@ function CalendarView({
 
   // Pre-filter transactions for the current month once for performance
   const currentMonthTransactions = useMemo(
-    () => transactions.filter(t => t.date && periodDateSet.has(toISODate(t.date))),
+    () => transactions.filter(t => t.date && periodDateSet.has(t.date)),
     [transactions, periodDateSet],
   );
 
@@ -156,8 +156,6 @@ function CalendarView({
 
   const dayTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    dayTypeConfig.forEach(dt => { counts[dt.id] = 0; });
-
     for (const dateStr of periodDates) {
       const dow = parseDateStrToObj(dateStr).getDay();
       const isWeekend = dow === 0 || dow === 6;
@@ -195,10 +193,6 @@ function CalendarView({
     });
 
     const activeCatsArray = Array.from(catsMap.values());
-    if (activeCatsArray.length === 0) {
-      return { sortedGroups: [] as LegendGroupItem[], catAmounts: {} };
-    }
-
     const groupsMap: Record<string, LegendGroupItem> = {};
     const getGroupObj = (groupId: string | null | undefined, categoryType: string | undefined) => {
       const type = categoryType || 'expense';
@@ -223,7 +217,8 @@ function CalendarView({
       const groupId = (!rawGroupId || rawGroupId === 'uncategorized')
         ? `uncategorized_${effectiveType}`
         : rawGroupId;
-      const groupKey = `${effectiveType}_${groupId}`;
+      // key = กลุ่มเท่านั้น: หมวดที่ type ไม่ตรงกับกลุ่ม (กลุ่มชนะ) ต้องไม่แตกเป็นแถวซ้ำ · กลุ่มสำรองมี type อยู่ใน id แล้ว
+      const groupKey = groupId;
       const amt = catAmounts[cat.id] || 0;
 
       if (!groupsMap[groupKey]) {

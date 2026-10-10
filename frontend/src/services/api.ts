@@ -8,7 +8,6 @@ import {
     DayType,
     CalendarDay,
     DashboardAnalytics,
-    BackupFileInfo,
     Portfolio,
     AssetInput,
     PriceRefreshResult,
@@ -20,136 +19,101 @@ const CATEGORIES_API_URL = API_URL.replace('/transactions', '/categories');
 const GROUPS_API_URL = API_URL.replace('/transactions', '/groups');
 const DAY_TYPES_API_URL = API_URL.replace('/transactions', '/day-types');
 const ANALYTICS_API_URL = API_URL.replace('/transactions', '/analytics');
-const BACKUP_API_URL = API_URL.replace('/transactions', '/backup');
-const BACKUPS_API_URL = API_URL.replace('/transactions', '/backups');
 const PORTFOLIO_API_URL = API_URL.replace('/transactions', '/portfolio');
 const ASSETS_API_URL = API_URL.replace('/transactions', '/assets');
 const PRICES_REFRESH_API_URL = API_URL.replace('/transactions', '/prices/refresh');
 const PRICES_PREVIEW_API_URL = API_URL.replace('/transactions', '/prices/preview');
 
-const handleResponse = async <T = any>(response: Response): Promise<T> => {
+// Error messages end up in toasts / inline errors, so the backend's generic English ones are turned into Thai;
+// its own reasons (409 "ลบไม่ได้ …", trigger texts) are already written for the user and pass through.
+const GENERIC_ERRORS: Record<string, (status: number) => string> = {
+    'Validation Error': () => 'ข้อมูลที่ส่งไปไม่ถูกต้อง',
+    'Internal Server Error': status => `เซิร์ฟเวอร์ขัดข้อง (HTTP ${status})`,
+};
+
+const request = async <T = any>(url: string, init?: RequestInit): Promise<T> => {
+    const response = await fetch(url, init).catch(() => {
+        throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
+    });
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Network response was not ok' }));
-        throw new Error(error.error || `HTTP error! status: ${response.status}`);
+        const reason: unknown = (await response.json().catch(() => null))?.error;
+        if (typeof reason !== 'string' || !reason) throw new Error(`เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ${response.status})`);
+        throw new Error(GENERIC_ERRORS[reason]?.(response.status) ?? reason);
     }
     return response.json();
 };
 
+const postJson = <T = any>(url: string, body: unknown) => request<T>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+});
+
+const del = (url: string) => request<{ success: boolean }>(url, { method: 'DELETE' });
+
+const withDates = (url: string, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return params.toString() ? `${url}?${params.toString()}` : url;
+};
+
 export const transactionService = {
-    getAll: (startDate?: string, endDate?: string): Promise<TransactionDisplay[]> => {
-        let url = API_URL;
-        if (startDate || endDate) {
-            const params = new URLSearchParams();
-            if (startDate) params.append('startDate', startDate);
-            if (endDate) params.append('endDate', endDate);
-            url += `?${params.toString()}`;
-        }
-        return fetch(url).then(handleResponse<TransactionDisplay[]>);
-    },
-    getCount: (): Promise<{ count: number }> => fetch(`${API_URL}/count`).then(handleResponse<{ count: number }>),
-    getPeriods: (): Promise<string[]> => fetch(`${API_URL}/periods`).then(handleResponse<string[]>),
-    getFrequentItems: (): Promise<FrequentItem[]> => fetch(`${API_URL}/frequent`).then(handleResponse<FrequentItem[]>),
-    save: (items: TransactionPayload | TransactionPayload[]): Promise<{ success: boolean; count: number }> => fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Array.isArray(items) ? items : [items])
-    }).then(handleResponse<{ success: boolean; count: number }>),
-    deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>),
-    deleteMonth: (isoMonth: string): Promise<{ success: boolean; message?: string }> => fetch(`${API_URL}/month/${isoMonth}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean; message?: string }>),
-    resetAll: (): Promise<{ success: boolean; message?: string }> => fetch(RESET_API_URL, {
+    getAll: (startDate?: string, endDate?: string) => request<TransactionDisplay[]>(withDates(API_URL, startDate, endDate)),
+    getCount: () => request<{ count: number }>(`${API_URL}/count`),
+    getPeriods: () => request<string[]>(`${API_URL}/periods`),
+    getFrequentItems: () => request<FrequentItem[]>(`${API_URL}/frequent`),
+    save: (items: TransactionPayload | TransactionPayload[]) =>
+        postJson<{ success: boolean; count: number }>(API_URL, Array.isArray(items) ? items : [items]),
+    deleteById: (id: string) => del(`${API_URL}/${id}`),
+    deleteMonth: (isoMonth: string) => request<{ success: boolean; message?: string }>(`${API_URL}/month/${isoMonth}`, { method: 'DELETE' }),
+    resetAll: () => request<{ success: boolean; message?: string }>(RESET_API_URL, {
         method: 'DELETE',
         headers: { 'X-Confirm-Reset': 'true' }
-    }).then(handleResponse<{ success: boolean; message?: string }>),
-    search: (query: string): Promise<TransactionDisplay[]> => fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`).then(handleResponse<TransactionDisplay[]>)
+    }),
+    search: (query: string) => request<TransactionDisplay[]>(`${API_URL}/search?q=${encodeURIComponent(query)}`)
 };
 
 export const analyticsService = {
-    getDashboardData: (startDate?: string, endDate?: string): Promise<DashboardAnalytics> => {
-        let url = ANALYTICS_API_URL;
-        const params = new URLSearchParams();
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
-        
-        if (params.toString()) {
-            url += `?${params.toString()}`;
-        }
-        return fetch(url).then(handleResponse<DashboardAnalytics>);
-    }
+    getDashboardData: (startDate?: string, endDate?: string) =>
+        request<DashboardAnalytics>(withDates(ANALYTICS_API_URL, startDate, endDate))
 };
 
 export const calendarService = {
-    getAll: (): Promise<CalendarDay[]> => fetch(CALENDAR_API_URL).then(handleResponse<CalendarDay[]>),
+    getAll: () => request<CalendarDay[]>(CALENDAR_API_URL),
     /** note / note_icon: undefined = ไม่ส่งไป (backend คงของเดิม — เปลี่ยนแค่ประเภทวันต้องไม่ลบโน้ต), '' = ลบ */
-    save: (date: string, type_id: string, note?: string, note_icon?: string): Promise<{ success: boolean }> => fetch(CALENDAR_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, type_id, note, note_icon })
-    }).then(handleResponse<{ success: boolean }>)
+    save: (date: string, type_id: string, note?: string, note_icon?: string) =>
+        postJson<{ success: boolean }>(CALENDAR_API_URL, { date, type_id, note, note_icon })
 };
 
 export const dayTypeService = {
-    getAll: (): Promise<DayType[]> => fetch(DAY_TYPES_API_URL).then(handleResponse<DayType[]>),
-    save: (dayType: Partial<DayType>): Promise<{ success: boolean }> => fetch(DAY_TYPES_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dayType)
-    }).then(handleResponse<{ success: boolean }>),
-    deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${DAY_TYPES_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>)
+    getAll: () => request<DayType[]>(DAY_TYPES_API_URL),
+    save: (dayType: Partial<DayType>) => postJson<{ success: boolean }>(DAY_TYPES_API_URL, dayType),
+    deleteById: (id: string) => del(`${DAY_TYPES_API_URL}/${id}`)
 };
 
 export const settingsService = {
-    getAll: (): Promise<Record<string, any>> => fetch(SETTINGS_API_URL).then(handleResponse<Record<string, any>>),
-    save: (key: string, value: any): Promise<{ success: boolean }> => fetch(SETTINGS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, value })
-    }).then(handleResponse<{ success: boolean }>)
+    getAll: () => request<Record<string, any>>(SETTINGS_API_URL),
+    save: (key: string, value: any) => postJson<{ success: boolean }>(SETTINGS_API_URL, { key, value })
 };
 
 export const categoryService = {
-    getAll: (): Promise<Category[]> => fetch(CATEGORIES_API_URL).then(handleResponse<Category[]>),
-    save: (category: Partial<Category>): Promise<{ success: boolean }> => fetch(CATEGORIES_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(category)
-    }).then(handleResponse<{ success: boolean }>),
-    deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${CATEGORIES_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>)
+    getAll: () => request<Category[]>(CATEGORIES_API_URL),
+    save: (category: Partial<Category>) => postJson<{ success: boolean }>(CATEGORIES_API_URL, category),
+    deleteById: (id: string) => del(`${CATEGORIES_API_URL}/${id}`)
 };
 
 export const groupService = {
-    getAll: (): Promise<CashflowGroup[]> => fetch(GROUPS_API_URL).then(handleResponse<CashflowGroup[]>),
-    save: (group: Partial<CashflowGroup>): Promise<{ success: boolean }> => fetch(GROUPS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(group)
-    }).then(handleResponse<{ success: boolean }>),
-    deleteById: (id: string): Promise<{ success: boolean }> => fetch(`${GROUPS_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>)
-};
-
-export const backupService = {
-    list: (): Promise<BackupFileInfo[]> => fetch(BACKUPS_API_URL).then(handleResponse<BackupFileInfo[]>),
-    create: (): Promise<{ success: boolean; message: string; filename: string }> => fetch(BACKUP_API_URL, {
-        method: 'POST'
-    }).then(handleResponse<{ success: boolean; message: string; filename: string }>)
+    getAll: () => request<CashflowGroup[]>(GROUPS_API_URL),
+    save: (group: Partial<CashflowGroup>) => postJson<{ success: boolean }>(GROUPS_API_URL, group),
+    deleteById: (id: string) => del(`${GROUPS_API_URL}/${id}`)
 };
 
 export const portfolioService = {
-    get: (): Promise<Portfolio> => fetch(PORTFOLIO_API_URL).then(handleResponse<Portfolio>),
-    saveAsset: (asset: AssetInput): Promise<{ success: boolean; id: string }> => fetch(ASSETS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(asset)
-    }).then(handleResponse<{ success: boolean; id: string }>),
-    deleteAsset: (id: string): Promise<{ success: boolean }> => fetch(`${ASSETS_API_URL}/${id}`, { method: 'DELETE' }).then(handleResponse<{ success: boolean }>),
-    setManualPrice: (id: string, price: number): Promise<{ success: boolean }> => fetch(`${ASSETS_API_URL}/${id}/price`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price })
-    }).then(handleResponse<{ success: boolean }>),
-    refreshPrices: (): Promise<{ results: PriceRefreshResult[] }> => fetch(PRICES_REFRESH_API_URL, { method: 'POST' }).then(handleResponse<{ results: PriceRefreshResult[] }>),
-    previewPrice: (kind: AssetKind, symbol: string | null): Promise<PricePreview> => fetch(PRICES_PREVIEW_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, symbol })
-    }).then(handleResponse<PricePreview>)
+    get: () => request<Portfolio>(PORTFOLIO_API_URL),
+    saveAsset: (asset: AssetInput) => postJson<{ success: boolean; id: string }>(ASSETS_API_URL, asset),
+    deleteAsset: (id: string) => del(`${ASSETS_API_URL}/${id}`),
+    setManualPrice: (id: string, price: number) => postJson<{ success: boolean }>(`${ASSETS_API_URL}/${id}/price`, { price }),
+    refreshPrices: () => request<{ results: PriceRefreshResult[] }>(PRICES_REFRESH_API_URL, { method: 'POST' }),
+    previewPrice: (kind: AssetKind, symbol: string | null) => postJson<PricePreview>(PRICES_PREVIEW_API_URL, { kind, symbol })
 };

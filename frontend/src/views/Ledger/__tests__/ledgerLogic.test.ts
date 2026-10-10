@@ -1,16 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { buildCatTypeMap, resolveTxType, sumIncomeExpense } from '../ledgerMath';
-import { compareTransactions, normalizeDateForSort, paginateTransactions } from '../hooks/useLedgerData';
+import { compareTransactions, paginateTransactions } from '../hooks/useLedgerData';
 
 const tx = (over: Record<string, unknown>) => ({ id: String(Math.random()), date: '2026-09-01', category: '', amount: 0, ...over }) as any;
-
-describe('normalizeDateForSort', () => {
-  it('turns ISO and DD/MM/YYYY into the same sortable string', () => {
-    expect(normalizeDateForSort('2026-09-08')).toBe('20260908');
-    expect(normalizeDateForSort('08/09/2026')).toBe('20260908');
-    expect(normalizeDateForSort('')).toBe('');
-  });
-});
 
 describe('resolveTxType / sumIncomeExpense', () => {
   const map = buildCatTypeMap([
@@ -58,8 +50,9 @@ describe('compareTransactions', () => {
   const sorted = (rows: any[], key: string, direction: 'asc' | 'desc') =>
     [...rows].sort((a, b) => compareTransactions(a, b, { key, direction }, {}, {}, {}));
 
-  it('sorts by date across mixed formats', () => {
-    const rows = [tx({ id: 'a', date: '09/09/2026' }), tx({ id: 'b', date: '2026-09-01' }), tx({ id: 'c', date: '2026-09-05' })];
+  it('sorts by date (a row without one goes first)', () => {
+    const rows = [tx({ id: 'a', date: '2026-09-09' }), tx({ id: 'b', date: '2026-09-01' }), tx({ id: 'c', date: '2026-09-05' })];
+    expect(sorted([...rows, tx({ id: 'z', date: '' })], 'date', 'asc').map(r => r.id)).toEqual(['z', 'b', 'c', 'a']);
     expect(sorted(rows, 'date', 'asc').map(r => r.id)).toEqual(['b', 'c', 'a']);
     expect(sorted(rows, 'date', 'desc').map(r => r.id)).toEqual(['a', 'c', 'b']);
   });

@@ -92,6 +92,6 @@ describe('handleDayTypeChange', () => {
     const { result } = await mount();
     api.calendarService.save.mockRejectedValue(new Error('offline'));
     await act(async () => { await result.current.app.handleDayTypeChange('2026-10-05', 'dt-b'); });
-    expect(result.current.app.dayTypes['2026-10-05']).toBeUndefined();
+    expect('2026-10-05' in result.current.app.dayTypes).toBe(false);
   });
 });

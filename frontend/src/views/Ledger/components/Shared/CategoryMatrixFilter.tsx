@@ -219,11 +219,7 @@ export default function CategoryMatrixFilter({
     }
   };
 
-  const handleToggleCategory = (catName: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleToggleCategory = (catName: string) => {
     preserveScroll(() => {
       const nextSet = new Set(selectedCatNames);
       if (nextSet.has(catName)) {
@@ -235,11 +231,7 @@ export default function CategoryMatrixFilter({
     });
   };
 
-  const handleToggleGroup = (groupCats: Category[], e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleToggleGroup = (groupCats: Category[]) => {
     preserveScroll(() => {
       const groupCatNames = groupCats.map(c => c.name);
       const isGroupFullySelected = groupCatNames.every(name => selectedCatNames.has(name));
@@ -257,57 +249,40 @@ export default function CategoryMatrixFilter({
     });
   };
 
-  const handleIsolateGroup = (groupCats: Category[], e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const stop = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
+
+  const handleIsolateGroup = (groupCats: Category[], e: React.MouseEvent) => {
+    stop(e);
     preserveScroll(() => {
       const groupCatNames = groupCats.map(c => c.name);
       onChange(groupCatNames);
     });
   };
 
-  const handleIsolateCategory = (catName: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleIsolateCategory = (catName: string, e: React.MouseEvent) => {
+    stop(e);
     preserveScroll(() => {
       onChange([catName]);
     });
   };
 
-  const handleSelectAll = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleSelectAll = (e: React.MouseEvent) => {
+    stop(e);
     preserveScroll(() => {
       onChange(allAvailableNames);
     });
   };
 
-  const handleSelectActiveOnly = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleSelectActiveOnly = (e: React.MouseEvent) => { // its button only shows while some category has rows
+    stop(e);
     preserveScroll(() => {
-      if (!activeCategoryNames || activeCategoryNames.size === 0) {
-        onChange('ALL');
-        return;
-      }
-      const activeNames = allAvailableNames.filter(name => activeCategoryNames.has(name));
+      const activeNames = allAvailableNames.filter(name => activeCategoryNames!.has(name));
       onChange(activeNames);
     });
   };
 
-  const handleClearAll = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleClearAll = (e: React.MouseEvent) => {
+    stop(e);
     preserveScroll(() => {
       onChange([]);
     });

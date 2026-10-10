@@ -138,11 +138,6 @@ describe('useHeatmapEngine — rows (dates)', () => {
     expect(engine({}, rows, ['2026-01-06', '2026-01-04', '2026-01-05']).sortedDates).toEqual(['2026-01-04', '2026-01-05', '2026-01-06']);
   });
 
-  it('sorts dd/mm/yyyy dates by the real date, not as text', () => {
-    const mixed = [tx('p', 'c-food', 1, '02/02/2026'), tx('q', 'c-food', 1, '10/01/2026'), tx('r', 'c-food', 1, '2026-01-20')];
-    expect(engine({}, mixed).sortedDates).toEqual(['10/01/2026', '2026-01-20', '02/02/2026']);
-  });
-
   it('hides days with no spending when asked', () => {
     const dates = ['2026-01-03', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07'];
     expect(engine({ hideZeroDays: true }, rows, dates).sortedDates).toEqual(['2026-01-04', '2026-01-05', '2026-01-06']);
@@ -208,11 +203,6 @@ describe('useHeatmapEngine — formatDate', () => {
     expect(fmt('2026-01-04')).toEqual({ day: 4, month: THAI_MONTHS_SHORT[0], dayName: THAI_DAY_CONFIG[0].label, isWeekend: true });
     expect(fmt('2026-01-05')).toEqual({ day: 5, month: THAI_MONTHS_SHORT[0], dayName: THAI_DAY_CONFIG[1].label, isWeekend: false });
     expect(fmt('2026-01-03').isWeekend).toBe(true); // Saturday
-  });
-
-  it('reads dd/mm/yyyy, including a Buddhist-era year', () => {
-    expect(fmt('05/01/2026')).toEqual(fmt('2026-01-05'));
-    expect(fmt('05/01/2569')).toEqual(fmt('2026-01-05'));
   });
 
   it('gives back something printable for a malformed date', () => {

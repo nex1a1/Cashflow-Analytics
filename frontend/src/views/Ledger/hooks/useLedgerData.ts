@@ -34,17 +34,9 @@ function compareByCategory(a: TransactionDisplay, b: TransactionDisplay, directi
   return direction === 'asc' ? res : -res;
 }
 
-export function normalizeDateForSort(d: string): string {
-  if (!d) return '';
-  if (d.includes('-')) return d.replace(/-/g, '');
-  const parts = d.split('/');
-  if (parts.length === 3) return `${parts[2]}${parts[1]}${parts[0]}`;
-  return d;
-}
-
 function compareByDate(a: TransactionDisplay, b: TransactionDisplay, sortConfig: SortConfig) {
-  const valA = normalizeDateForSort(a.date);
-  const valB = normalizeDateForSort(b.date);
+  const valA = a.date; // ISO dates sort as text
+  const valB = b.date;
   if (valA === valB) return 0;
   const res = valA.localeCompare(valB);
   const dir = sortConfig.key === 'date' ? sortConfig.direction : 'asc';

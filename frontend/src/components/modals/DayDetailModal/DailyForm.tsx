@@ -57,7 +57,7 @@ export default function DailyForm({
   externalFormSetter,
   onTypeChange
 }: DailyFormProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm<DailyFormValues>({
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors }, setFocus } = useForm<DailyFormValues>({
     resolver: zodResolver(dailyAddSchema) as any,
     defaultValues: {
       type: (defaultType as DailyFormValues['type']) || 'expense',
@@ -81,11 +81,13 @@ export default function DailyForm({
   const isApplyingSuggestionRef = useRef(false);
 
   const customSetValue = useCallback((name: any, value: any, options: any) => {
-    if (name === 'categoryId' && options?.skipAllocationDefault) {
+    // only when the category really changes: the same category never re-runs the effect, so the flag would stick
+    // and swallow the default of the next category the user picks by hand
+    if (name === 'categoryId' && options?.skipAllocationDefault && value !== getValues('categoryId')) {
       isApplyingSuggestionRef.current = true;
     }
     setValue(name, value, options);
-  }, [setValue]);
+  }, [setValue, getValues]);
 
   // 1. Expose form methods to parent (for hotkeys & QuickSuggest)
   useEffect(() => {
@@ -193,7 +195,6 @@ export default function DailyForm({
             {[
               { val: 'need', label: 'NEED', color: 'text-rose-400' },
               { val: 'want', label: 'WANT', color: 'text-amber-400' },
-              { val: 'savings', label: 'SAVE', color: 'text-savings' }
             ].map(opt => {
               const isSelected = allocationType === opt.val;
               const activeStyle = isSelected ? `bg-surface-elevated ${opt.color}` : tokens.textMuted;

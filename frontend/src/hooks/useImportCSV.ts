@@ -1,27 +1,24 @@
 // src/hooks/useImportCSV.ts
 import { useState, useRef, useCallback } from 'react';
 import { PREDICT_API_URL } from '../constants';
-import { autoCategorize, parseCSV, cleanNumber } from '../utils/csvParser';
+import { parseCSV, cleanNumber } from '../utils/csvParser';
 import { parseLooseDate } from '../utils/dateHelpers';
 import { splitImportDuplicates } from '../utils/importDedupe';
 import { calendarService, categoryService, dayTypeService, transactionService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { CashflowGroup, Category, DayType, GroupType } from '../types';
 
-function extractUniqueDescriptions(parsedRows: string[][], isCsvLong: boolean, headers: string[]): Set<string> {
+/** Descriptions of the long table, sent to /predict so rows without a category can take the one history suggests. */
+function extractUniqueDescriptions(parsedRows: string[][], headers: string[]): Set<string> {
   const uniqueDescriptions = new Set<string>();
   const h1 = (headers[1] || '').toLowerCase();
   for (let i = 1; i < parsedRows.length; i++) {
     const row = parsedRows[i];
     if (row.length < 2) continue;
-    let desc = '';
-    if (isCsvLong) {
-      if ((headers[1] === 'ชนิดวัน' || h1 === 'daytype' || h1 === 'day_type') && row.length >= 6) desc = row[4];
-      else if ((headers[1] === 'ประเภท' || h1 === 'type') && row.length >= 5) desc = row[3];
-      else desc = row[2];
-    } else {
-      desc = row[row.length - 1];
-    }
+    let desc: string;
+    if ((headers[1] === 'ชนิดวัน' || h1 === 'daytype' || h1 === 'day_type') && row.length >= 6) desc = row[4];
+    else if ((headers[1] === 'ประเภท' || h1 === 'type') && row.length >= 5) desc = row[3];
+    else desc = row[2];
     if (desc) uniqueDescriptions.add(desc);
   }
   return uniqueDescriptions;
@@ -93,36 +90,39 @@ function parseLongCsvRow(row: string[], headers: string[], context: any) {
 }
 
 const EXCLUDE_CATEGORIES = ['date', 'วันที่', 'notes', 'หมายเหตุ', 'รวม', 'total'];
+const isNoteHeader = (h: string) => /note|หมายเหตุ/i.test(h || '');
 
+// Wide table = one column per category (the Import guide's template uses the user's own category names as headers):
+// the header IS the category, created like any new category of the long format when it does not exist yet.
 function parseWideCsvRow(row: string[], headers: string[], context: any) {
-  const { dateStr, predictions, getOrCreateCategory, updatedCategories } = context;
-  const noteColIndex = headers.length - 1;
-  const note = row.length === headers.length ? row[noteColIndex] || '' : '';
+  const { dateStr, getOrCreateCategory, updatedCategories } = context;
+  const noteColIndex = headers.findIndex(isNoteHeader); // -1: the file has no notes column
+  const note = noteColIndex > 0 ? row[noteColIndex] || '' : '';
+  const isKnown = (name: string) => updatedCategories.some((c: Category) => c.name === name);
   const rowItems: any[] = [];
 
   for (let j = 1; j < Math.min(row.length, headers.length); j++) {
     if (j === noteColIndex) continue;
     const rawHeader = headers[j];
-    if (!rawHeader || EXCLUDE_CATEGORIES.some(exc => rawHeader.toLowerCase().includes(exc))) continue;
+    if (!rawHeader) continue;
+    const cleanStr = rawHeader.replace(/[\n\r]/g, ' ').trim();
+    // the user's own category wins: "ข้าวรวมมิตร" is not the total column, "ซอฟต์แวร์ & AI" keeps its English part
+    const known = isKnown(cleanStr);
+    if (!known && EXCLUDE_CATEGORIES.some(exc => cleanStr.toLowerCase().includes(exc))) continue;
 
     const amount = cleanNumber(row[j]);
     if (amount === 0) continue;
 
-    const cleanStr = rawHeader.replace(/[\n\r]/g, ' ').trim();
+    // old sheets wrote "ค่าอาหาร (Food)" / "ค่าอาหาร Food": an unknown header keeps only its Thai part
     const rawBase = cleanStr.split('(')[0].trim();
     const enIndex = rawBase.search(/[a-zA-Z]/);
-    const catName = (enIndex !== -1 ? rawBase.slice(0, enIndex).trim() : rawBase) || cleanStr;
+    const catName = known ? cleanStr : ((enIndex !== -1 ? rawBase.slice(0, enIndex).trim() : rawBase) || cleanStr);
     const description = note?.trim() ? `${catName} · ${note.trim()}` : catName;
-
-    const predicted = predictions[description] || predictions[note?.trim()];
-    const finalCatName = predicted
-      ? getOrCreateCategory(predicted.name, 'รายจ่าย')
-      : autoCategorize(description, catName, updatedCategories);
 
     rowItems.push({
       id: crypto.randomUUID(),
       date: dateStr,
-      category: finalCatName,
+      category: getOrCreateCategory(catName, 'รายจ่าย'),
       description,
       amount: Math.abs(amount),
       dayNote: note,
@@ -273,8 +273,7 @@ export default function useImportCSV({
           headers.length >= 4 &&
           (headers[1] === 'ประเภท' || headers[1] === 'หมวดหมู่' || headers[1] === 'ชนิดวัน' ||
            h1 === 'daytype' || h1 === 'day_type' || h1 === 'type' || h1 === 'category');
-        const uniqueDescriptions = extractUniqueDescriptions(parsedRows, isCsvLong, headers);
-        const predictions = await fetchSharkBrainPredictions(uniqueDescriptions);
+        const predictions = isCsvLong ? await fetchSharkBrainPredictions(extractUniqueDescriptions(parsedRows, headers)) : {};
 
         const newDayTypes = { ...dayTypes };
         const updatedDayTypeConfig = [...dayTypeConfig];

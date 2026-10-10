@@ -98,12 +98,11 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     setIsFetchingPeriod(true);
     const { startDate, endDate, fetchStartDate } = getPeriodDateRange(period);
     try {
+      // both loaders handle their own errors (offline status / no summary), so this never rejects
       await Promise.all([
         loadAnalytics(startDate, endDate),
         loadData(fetchStartDate || startDate, endDate)
       ]);
-    } catch (err) {
-      console.error('Failed loading period data:', err);
     } finally {
       // an older request finishing must not switch the spinner off while the newer one is still loading
       if (isCurrent()) setIsFetchingPeriod(false);
@@ -133,6 +132,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     } catch (err: any) {
       console.error('Failed to save day type to DB:', err);
       setDayTypes(prev => {
+        if (prev[dateStr] !== type) return prev; // a newer change owns this day now
         const next = { ...prev };
         if (before === undefined) delete next[dateStr];
         else next[dateStr] = before;
@@ -152,7 +152,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     const typeId = dayTypes[dateStr] || resolveDefaultDayTypeId(dayTypeConfig, dow === 0 || dow === 6);
     if (!typeId) return false;
 
-    const apply = (value: DayNote) => setDayNotes(prev => {
+    const apply = (value: DayNote, onlyIf?: DayNote) => setDayNotes(prev => {
+      const cur = prev[dateStr] ?? { text: '', icon: '' };
+      if (onlyIf && (cur.text !== onlyIf.text || cur.icon !== onlyIf.icon)) return prev; // a newer note owns this day now
       const map = { ...prev };
       if (value.text) map[dateStr] = value;
       else delete map[dateStr];
@@ -165,21 +167,23 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       return true;
     } catch (err) {
       console.error('Failed to save day note to DB:', err);
-      apply(before);
+      apply(before, next);
       return false;
     }
   }, [dayNotes, dayTypes, dayTypeConfig]);
 
   const handleDayTypeConfigChange = useCallback(async (id: string, field: string, value: any) => {
     const dt = dayTypeConfig.find(d => d.id === id);
-    if (!dt) return;
+    if (!dt) return false;
     const updatedDt = { ...dt, [field]: value };
     setDayTypeConfig(prev => prev.map(d => (d.id === id ? updatedDt : d)));
     try {
       await dayTypeService.save(updatedDt);
       return true;
     } catch (err: any) {
-      setDayTypeConfig(prev => prev.map(d => (d.id === id ? dt : d)));
+      // roll back only this field, and only while it still holds this edit
+      setDayTypeConfig(prev => prev.map(d =>
+        (d.id === id && (d as any)[field] === value ? { ...d, [field]: (dt as any)[field] } : d)));
       triggerToast('อัปเดตประเภทวันไม่สำเร็จ: ' + err.message, 'error');
       return false;
     }
@@ -226,8 +230,10 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
           await dayTypeService.save(dt);
         }
       } catch (err: any) {
-        setDayTypeConfig(dayTypeConfig);
         triggerToast('ไม่สามารถบันทึกลำดับได้: ' + err.message, 'error');
+        // rows are saved one by one: the ones before the failure are already stored, so show the server's order
+        const fresh = await dayTypeService.getAll().catch(() => null);
+        setDayTypeConfig(fresh?.length ? fresh : dayTypeConfig);
       }
     }
   }, [dayTypeConfig, triggerToast]);

@@ -86,7 +86,7 @@ function BatchForm({
   editingItem,
   onCancelEdit
 }: BatchFormProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors }, setFocus } = useForm<BatchFormValues>({
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors }, setFocus } = useForm<BatchFormValues>({
     resolver: zodResolver(batchAddSchema),
     defaultValues: {
       type: (defaultType as BatchFormValues['type']) || 'expense',
@@ -128,11 +128,12 @@ function BatchForm({
   const isApplyingSuggestionRef = useRef(false);
 
   const customSetValue: UseFormSetValue<BatchFormValues> = useCallback((name: any, value: any, options?: any) => {
-    if (name === 'categoryId' && options?.skipAllocationDefault) {
+    // only when the category really changes (see DailyForm): a stuck flag swallows the next category's default
+    if (name === 'categoryId' && options?.skipAllocationDefault && value !== getValues('categoryId')) {
       isApplyingSuggestionRef.current = true;
     }
     setValue(name, value, options);
-  }, [setValue]);
+  }, [setValue, getValues]);
 
   const selectedCatId = watch('categoryId');
   useEffect(() => {
@@ -274,7 +275,6 @@ function BatchForm({
           <DatePicker 
             value={formDate} 
             onChange={(v) => setValue('date', v, { shouldValidate: true })} 
-            required 
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
             className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink"
@@ -326,7 +326,6 @@ function BatchForm({
               {[
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
                 { val: 'want', label: 'WANT', color: 'text-amber-400' },
-                { val: 'savings', label: 'SAVE', color: 'text-savings' }
               ].map(opt => {
                 const isSelected = allocationType === opt.val;
                 return (

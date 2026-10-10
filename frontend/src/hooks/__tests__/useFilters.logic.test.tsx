@@ -111,16 +111,14 @@ describe('useFilters — the filters', () => {
     expect(ids()).toEqual(['gold', 'sell']);
   });
 
-  it('date: one day, a list, a range, weekdays or weekends', () => {
+  it('date: one day, a list (what the date picker sends, ranges included), weekdays or weekends', () => {
     hook = setup();
     set(c => c.setAdvancedFilterDate('2026-01-05'));
     expect(ids()).toEqual(['fun', 'pay']);
     set(c => c.setAdvancedFilterDate('2026-01-03,2026-01-06'));
     expect(ids()).toEqual(['food', 'gold', 'sell']);
-    set(c => c.setAdvancedFilterDate('2026-01-04:2026-01-05'));
-    expect(ids()).toEqual(['fun', 'pay']); // the end day is in
-    set(c => c.setAdvancedFilterDate('2026-01-05:2026-01-06'));
-    expect(ids()).toEqual(['fun', 'pay', 'gold', 'sell']); // and so is the start day
+    set(c => c.setAdvancedFilterDate('2026-01-04,2026-01-05,2026-01-06'));
+    expect(ids()).toEqual(['fun', 'pay', 'gold', 'sell']);
     set(c => c.setAdvancedFilterDate('WEEKEND'));
     expect(ids()).toEqual(['food']);
     set(c => c.setAdvancedFilterDate('WEEKDAY'));
@@ -311,6 +309,29 @@ describe('useFilters — search', () => {
     await settle();
     expect(h.calls).toEqual(['กาแฟ']); // trimmed
     expect(ids()).toEqual(['found']);
+  });
+
+  it('a failed search never shows the previous query\'s results; it searches the loaded rows instead', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    h.result = found;
+    hook = setup([...data, tx('ชานม', '2026-01-05', 'c-food', 45, { description: 'ชานมไข่มุก' }), tx('coffee', '2026-01-05', 'c-food', 70, { description: 'Iced Coffee' })]);
+    set(c => c.setSearchQuery('กาแฟ'));
+    act(() => { vi.advanceTimersByTime(300); });
+    await settle();
+    expect(ids()).toEqual(['found']);
+    h.fail = true;
+    set(c => c.setSearchQuery('ชานม'));
+    act(() => { vi.advanceTimersByTime(300); });
+    await settle();
+    expect(ids()).toEqual(['ชานม']); // matched by description, within the period
+    set(c => c.setSearchQuery('บันเทิง'));
+    act(() => { vi.advanceTimersByTime(300); });
+    await settle();
+    expect(ids()).toEqual(['fun']); // matched by category name, like the server's LIKE fallback
+    set(c => c.setSearchQuery('coffee'));
+    act(() => { vi.advanceTimersByTime(300); });
+    await settle();
+    expect(ids()).toEqual(['coffee']); // English ignores letter case ("Iced Coffee")
   });
 
   it('a blank search goes back to the normal list and does not call the server', async () => {

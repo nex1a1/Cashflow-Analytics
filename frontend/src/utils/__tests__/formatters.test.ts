@@ -113,6 +113,8 @@ describe('formatters utility', () => {
     it('returns raw string if not matching YYYY-MM format', () => {
       expect(getThaiMonth('invalid')).toBe('invalid');
       expect(getThaiMonth('')).toBe('');
+      expect(getThaiMonth('2026-13')).toBe('2026-13');
+      expect(getThaiMonth('2026-00')).toBe('2026-00');
     });
   });
 
@@ -132,6 +134,15 @@ describe('formatters utility', () => {
     it('formats comma-separated multi-month periods', () => {
       expect(getFilterLabel('2026-01,2026-02,2026-03')).toBe('เลือกเฉพาะเจาะจง (3 เดือน)');
     });
+
+    it('every half and quarter has its Thai name; an unknown code or text is shown as is', () => {
+      expect(getFilterLabel('2026-H2')).toBe('ครึ่งปีหลัง (H2/2026)');
+      expect(getFilterLabel('2026-Q2')).toBe('ไตรมาส 2 (Q2/2026)');
+      expect(getFilterLabel('2026-Q3')).toBe('ไตรมาส 3 (Q3/2026)');
+      expect(getFilterLabel('2026-Q4')).toBe('ไตรมาส 4 (Q4/2026)');
+      expect(getFilterLabel('2026-X9')).toBe('2026-X9');
+      expect(getFilterLabel('junk')).toBe('junk');
+    });
   });
 
   describe('hexToRgb', () => {
@@ -145,9 +156,11 @@ describe('formatters utility', () => {
       expect(hexToRgb('#f00')).toBe('255, 0, 0');
     });
 
-    it('returns fallback rgb for invalid colors', () => {
-      expect(hexToRgb('')).toBe('148, 163, 184');
-      expect(hexToRgb('invalid')).toBe('148, 163, 184');
+    it('anything that is not a hex colour falls back to the ink-body token', () => {
+      for (const bad of ['', null, undefined, 'invalid', '#12345', '#zzzzzz', 'rgb(1,2,3)']) {
+        expect(hexToRgb(bad)).toBe('156, 163, 175'); // #9CA3AF
+      }
+      expect(hexToRgb('#0a0B0c')).toBe('10, 11, 12');
     });
   });
 
@@ -193,6 +206,63 @@ describe('formatters utility', () => {
       expect(result.formattedPct).toBe('20.0%');
       expect(result.arrow).toBe('↓');
       expect(result.isGood).toBe(true); // Less expense is good!
+    });
+
+    const d = (current: number, prev: number, type: 'income' | 'expense' | 'net' = 'income', periodLabel = 'MoM') =>
+      calculatePeriodDelta({ current, prev, hasPriorData: true, type, periodLabel });
+    const GOOD = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
+    const BAD = 'border-danger/30 bg-danger/10 text-danger';
+    const FLAT = 'border-neutral-800 bg-neutral-900/60 text-neutral-400';
+
+    it('says in Thai what it compares with; an unknown code is shown as is, PoP by default', () => {
+      expect(d(12, 10).text).toBe('↑ 20.0% เทียบเดือนก่อน');
+      expect(d(12, 10, 'income', 'QoQ').text).toBe('↑ 20.0% เทียบไตรมาสก่อน');
+      expect(d(12, 10, 'income', 'HoH').text).toBe('↑ 20.0% เทียบครึ่งปีก่อน');
+      expect(d(12, 10, 'income', 'YoY').text).toBe('↑ 20.0% เทียบปีก่อน');
+      expect(d(12, 10, 'income', 'XYZ').text).toBe('↑ 20.0% XYZ');
+      expect(calculatePeriodDelta({ current: 12, prev: 10, hasPriorData: true }).text).toBe('↑ 20.0% เทียบช่วงก่อน');
+    });
+
+    it('more spending is bad, more income or net is good; the colour follows', () => {
+      expect(d(12, 10, 'expense')).toMatchObject({ isGood: false, cls: BAD, arrow: '↑' });
+      expect(d(8, 10, 'income')).toMatchObject({ isGood: false, cls: BAD, arrow: '↓' });
+      expect(d(12, 10, 'net')).toMatchObject({ isGood: true, cls: GOOD });
+      expect(d(8, 10, 'expense')).toMatchObject({ isGood: true, cls: GOOD });
+    });
+
+    it('a change within ±0.05% is flat: neutral, no arrow', () => {
+      expect(d(10004, 10000)).toMatchObject({ isFlat: true, arrow: '–', isGood: false, cls: FLAT, text: '0.0% เทียบเดือนก่อน' });
+      expect(d(9996, 10000, 'expense')).toMatchObject({ isFlat: true, cls: FLAT });
+      expect(d(10006, 10000)).toMatchObject({ isFlat: false, arrow: '↑', formattedPct: '0.1%' });
+    });
+
+    it('a negative previous total compares against its size; a huge change is capped at >999%', () => {
+      expect(d(500, -1000, 'net')).toMatchObject({ diff: 1500, formattedPct: '150.0%', arrow: '↑', isGood: true });
+      expect(d(20000, 10).formattedPct).toBe('>999%');
+      expect(d(10009, 1000).formattedPct).toBe('900.9%');
+      expect(d(1100, 100).formattedPct).toBe('>999%'); // exactly +1000%
+    });
+
+    it('the tooltip writes the previous total and the signed change in baht', () => {
+      expect(d(12, 10).tooltipText).toBe('ช่วงก่อนหน้า: ฿10.00 (+฿2.00)');
+      expect(d(10, 10).tooltipText).toBe('ช่วงก่อนหน้า: ฿10.00 (+฿0.00)');
+      expect(d(8, 10).tooltipText).toBe('ช่วงก่อนหน้า: ฿10.00 (−฿2.00)');
+    });
+
+    it('nothing before and nothing now: flat 0%', () => {
+      expect(d(0, 0)).toMatchObject({ hasDelta: true, formattedPct: '0.0%', arrow: '–', isFlat: true, isGood: false, text: '0.0% เทียบเดือนก่อน', cls: FLAT });
+    });
+
+    it('nothing before but something now: "ใหม่", good or bad by type', () => {
+      expect(d(500, 0)).toMatchObject({ formattedPct: 'ใหม่', arrow: '↑', diff: 500, prev: 0, isGood: true, isFlat: false, cls: GOOD, text: 'ใหม่ (เทียบเดือนก่อน)', tooltipText: 'ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง +฿500.00)' });
+      expect(d(500, 0, 'expense')).toMatchObject({ isGood: false, cls: BAD });
+      expect(d(-500, 0, 'net')).toMatchObject({ arrow: '↓', isGood: false, cls: BAD, tooltipText: 'ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง −฿500.00)' });
+      expect(d(-500, 0, 'expense').isGood).toBe(true);
+    });
+
+    it('no earlier data, or the whole history: no comparison at all', () => {
+      expect(calculatePeriodDelta({ current: 5, prev: 1, hasPriorData: false })).toMatchObject({ hasDelta: false, text: 'ช่วงแรก', tooltipText: 'ไม่มีข้อมูลช่วงก่อนหน้าให้เทียบ', isFlat: true, diff: 0 });
+      expect(calculatePeriodDelta({ current: 5, prev: 1, hasPriorData: true, periodLabel: 'ALL' })).toMatchObject({ hasDelta: false, text: 'ทั้งหมด', tooltipText: 'แสดงข้อมูลทั้งหมด (ไม่มีช่วงก่อนหน้าให้เทียบ)' });
     });
   });
 

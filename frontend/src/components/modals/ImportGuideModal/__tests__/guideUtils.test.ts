@@ -57,6 +57,16 @@ describe('Import Guide Utils', () => {
       expect(headers[headers.length - 2]).toBe('รวม (Total)');
     });
 
+    it('sample rows use the first four categories, filling missing ones with sample names', () => {
+      const keys = (cats: string[]) => getWideSampleRows(cats).flatMap(r => Object.keys(r.categoryAmounts));
+      expect(new Set(keys([]))).toEqual(new Set(['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI']));
+      expect(new Set(keys(['ข้าว', 'กาแฟ']))).toEqual(new Set(['ข้าว', 'กาแฟ', 'การเดินทาง', 'ซอฟต์แวร์ & AI']));
+      expect(new Set(keys(['a', 'b', 'c', 'd', 'e']))).toEqual(new Set(['a', 'b', 'c', 'd']));
+      for (const r of getWideSampleRows([])) {
+        expect(Object.values(r.categoryAmounts).reduce((s: number, v) => s + (v ?? 0), 0)).toBeCloseTo(r.total, 2); // each row adds up
+      }
+    });
+
     it('supports English headers for wide format', () => {
       const headers = getWideHeaders(['Food', 'Transport'], 'en');
       expect(headers).toEqual(['Date', 'Food', 'Transport', 'Total', 'Notes']);

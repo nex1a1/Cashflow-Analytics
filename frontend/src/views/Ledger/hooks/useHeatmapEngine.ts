@@ -99,10 +99,7 @@ export function useHeatmapEngine(
       dates = dates.filter(d => activeDateSet.has(d));
     }
 
-    return dates.sort((a, b) => {
-      const parse = (d: string) => d.includes('/') ? d.split('/').reverse().join('') : d.replace(/-/g, '');
-      return parse(a).localeCompare(parse(b));
-    });
+    return dates.sort((a, b) => a.localeCompare(b)); // ISO dates sort as text
   }, [allDates, expenseTransactions, dayTypeFilter, hideZeroDays]);
 
   const cellMap = useMemo(() => {
@@ -164,21 +161,10 @@ export function useHeatmapEngine(
   }, [sortedDates, activeCategories, cellMap]);
 
   const formatDate = useCallback((dateStr: string) => {
-    let dayNum: number, monthIdx: number, yearNum: number;
-    if (dateStr.includes('-')) {
-      const parts = dateStr.split('-');
-      if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
-      yearNum  = Number.parseInt(parts[0], 10);
-      monthIdx = Number.parseInt(parts[1], 10) - 1;
-      dayNum   = Number.parseInt(parts[2], 10);
-    } else {
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
-      dayNum   = Number.parseInt(parts[0], 10);
-      monthIdx = Number.parseInt(parts[1], 10) - 1;
-      yearNum  = Number.parseInt(parts[2], 10);
-    }
-    if (yearNum > 2500) yearNum -= 543;
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return { day: dateStr, month: '', dayName: '', isWeekend: false };
+    const [yearNum, month, dayNum] = parts.map(Number);
+    const monthIdx = month - 1;
     const dateObj = new Date(yearNum, monthIdx, dayNum);
     const dow     = dateObj.getDay();
     return { day: dayNum, month: THAI_MONTHS_SHORT[monthIdx] || '', dayName: THAI_DAY_CONFIG[dow]?.label || '', isWeekend: dow === 0 || dow === 6 };

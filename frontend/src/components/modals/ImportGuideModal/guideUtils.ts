@@ -142,14 +142,8 @@ export interface WideSampleRow {
 }
 
 export function getWideSampleRows(categories: string[]): WideSampleRow[] {
-  const cats = categories.length > 0
-    ? categories
-    : ['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI', 'ของใช้ในบ้าน'];
-
-  const c0 = cats[0] || 'อาหาร';
-  const c1 = cats[1] || 'ช้อปปิ้งออนไลน์';
-  const c2 = cats[2] || 'การเดินทาง';
-  const c3 = cats[3] || 'ซอฟต์แวร์ & AI';
+  // the user's first four categories; missing ones are filled with sample names
+  const [c0, c1, c2, c3] = ['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI'].map((sample, i) => categories[i] || sample);
 
   return [
     {

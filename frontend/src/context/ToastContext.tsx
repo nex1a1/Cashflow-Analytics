@@ -42,8 +42,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   // One timer at a time — a stale timer from the previous toast must not hide the next one early
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // a timer still pending after a manual hide only hides again; the next showToast clears it first
   const hideToast = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
     setToast(prev => ({ ...prev, visible: false, action: undefined }));
   }, []);
 

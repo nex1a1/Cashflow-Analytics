@@ -4,6 +4,8 @@ import { useToast } from '../context/ToastContext';
 import { categoryService, groupService } from '../services/api';
 import { Category, CashflowGroup } from '../types';
 
+const TYPE_LABELS: Record<string, string> = { income: 'รายรับ', expense: 'รายจ่าย', savings: 'ลงทุน/ออม' };
+
 export default function useCategories(
   initialCategories: Category[],
   setCashflowGroups?: (groups: CashflowGroup[]) => void
@@ -74,8 +76,9 @@ export default function useCategories(
         await categoryService.save(toSave);
       } catch (err: any) {
         console.error('Failed to save category:', err);
-        // Rollback optimistic update
-        setCategories(prev => prev.map(c => c.id === catId ? cat : c));
+        // Roll back only this field, and only while it still holds this edit — a newer edit (of this or another field) stays
+        setCategories(prev => prev.map(c =>
+          c.id === catId && (c as any)[field] === value ? { ...c, [field]: (cat as any)[field] } : c));
         showToast('ไม่สามารถบันทึกหมวดหมู่ได้: ' + (err?.message || 'ข้อผิดพลาด'), 'error');
         return false;
       }
@@ -87,14 +90,12 @@ export default function useCategories(
     async (type?: string) => {
       try {
         const groups = await groupService.getAll();
-        const typedGroup = groups.find((g: any) => g.type === type);
-        // หมวดออม/ลงทุนต้องอยู่ในกลุ่มชนิด savings เท่านั้น ไม่ตกไปกลุ่มรายจ่าย
-        const defaultGroup = typedGroup || (type === 'savings' ? undefined : groups[0]);
+        // ประเภทของหมวดมาจากกลุ่ม: ต้องลงกลุ่มชนิดเดียวกันเท่านั้น ไม่ตกไปกลุ่มแรก (รายรับใหม่จะกลายเป็นรายจ่ายเงียบๆ)
+        const defaultGroup = type ? groups.find((g: any) => g.type === type) : groups[0];
 
         if (!defaultGroup) {
-          showToast(type === 'savings'
-            ? 'กรุณาสร้างกลุ่มชนิด "ลงทุน/ออม" ก่อนเพิ่มหมวดหมู่'
-            : 'กรุณาสร้างกลุ่มก่อนเพิ่มหมวดหมู่', 'error');
+          const label = TYPE_LABELS[type ?? ''];
+          showToast(label ? `กรุณาสร้างกลุ่มชนิด "${label}" ก่อนเพิ่มหมวดหมู่` : 'กรุณาสร้างกลุ่มก่อนเพิ่มหมวดหมู่', 'error');
           return;
         }
 

@@ -219,7 +219,7 @@ describe('MainLayout — what each view is given', () => {
     });
   });
 
-  it('settings gets every category, group and day-type handler, and "delete all" is handed the toast', () => {
+  it('settings gets every category, group and day-type handler, and "delete all" goes straight to the data handler', () => {
     reset('settings');
     mount();
     expect(h.props.Settings).toMatchObject({
@@ -229,8 +229,7 @@ describe('MainLayout — what each view is given', () => {
       dayTypeConfig, handleDayTypeConfigChange: h.data.handleDayTypeConfigChange, handleAddDayType: h.data.handleAddDayType, handleDeleteDayType: h.data.handleDeleteDayType,
       handleMoveDayType: h.data.handleMoveDayType, transactions, triggerToast: h.toast.showToast,
     });
-    h.props.Settings.handleDeleteAllData();
-    expect(h.data.handleDeleteAllData).toHaveBeenCalledWith({ setShowToast: h.toast.showToast });
+    expect(h.props.Settings.handleDeleteAllData).toBe(h.data.handleDeleteAllData);
   });
 
   it('the toast is the one from the toast context', () => {

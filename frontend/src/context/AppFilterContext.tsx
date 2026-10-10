@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, ReactNode } from 'react';
-import { AppFilterContextValue, TransactionDisplay } from '../types';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { AppFilterContextValue } from '../types';
 import { getFilterLabel } from '../utils/formatters';
 import useFilters from '../hooks/useFilters';
 import useAnalytics from '../hooks/useAnalytics';
@@ -30,7 +30,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     hideWantExpenses,
     dashboardCategory,
     chartGroupBy,
-    topXLimit,
   } = useAppUI();
 
   // Filters Hook
@@ -75,9 +74,11 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   // Document Title Synchronization
   useEffect(() => {
     const tabLabels: Record<string, string> = {
-      dashboard: 'Dashboard',
+      insights: 'Dashboard',
       calendar: 'Calendar',
       ledger: 'Ledger',
+      portfolio: 'Portfolio',
+      tax: 'Tax',
       settings: 'Settings'
     };
     const tabLabel = tabLabels[activeTab] || 'Home';
@@ -85,16 +86,8 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     document.title = `SHARK | ${tabLabel} [${periodLabel}]`;
   }, [activeTab, filterPeriod]);
 
-  const validAnalyticsTxs = useMemo(
-    () =>
-      transactions.filter(
-        t => categories.find(c => c.name === t.category)?.cashflowGroup !== 'debt'
-      ),
-    [transactions, categories]
-  );
-
   const analytics = useAnalytics({
-    transactions: validAnalyticsTxs,
+    transactions,
     categories,
     filterPeriod,
     cashflowGroups,
@@ -102,7 +95,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     hideWantExpenses,
     dashboardCategory,
     chartGroupBy,
-    topXLimit,
     dayTypes,
     dayTypeConfig,
     summaryData,

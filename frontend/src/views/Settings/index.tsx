@@ -79,20 +79,18 @@ const SettingsView = memo(function SettingsView({
   }), [onAddCategory]);
 
   const handleChangeCashflowGroup = useCallback(async (id: string, field: string, value: any) => {
-    // 1. Snapshot previous state for rollback
-    const previousGroups = [...cashflowGroups];
-    
-    // 2. Optimistic Update
+    // 1. Optimistic Update
     setCashflowGroups(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
-    
-    // 3. Persistent Save (silent to prevent toast storms during debounced typing)
+
+    // 2. Persistent Save (silent to prevent toast storms during debounced typing)
     const group = cashflowGroups.find(g => g.id === id);
     if (group) {
       try {
         await handleUpdateCashflowGroup({ ...group, [field]: value }, { silent: true });
       } catch {
-        // Rollback state if persistent save failed
-        setCashflowGroups(previousGroups);
+        // Roll back only this field, and only while it still holds this edit — newer edits (any group, any field) stay
+        setCashflowGroups(prev => prev.map(g =>
+          g.id === id && (g as any)[field] === value ? { ...g, [field]: (group as any)[field] } : g));
         return false;
       }
     }

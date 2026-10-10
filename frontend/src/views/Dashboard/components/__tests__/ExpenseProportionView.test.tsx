@@ -174,17 +174,22 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(alloc('จำเป็น').textContent).toContain('เป้า 50% (฿50,000.00)');
     expect(alloc('จำเป็น').textContent).toContain('+฿5,000.00 ในโควตา');
     expect(alloc('ตามใจ').textContent).toContain('−฿5,000.00 เกินโควตา');
-    expect(alloc('ออม/เหลือ').textContent).toContain('+฿0.00 เกินเป้าออม');
+    expect(alloc('ออม/เหลือ').textContent).toContain('+฿0.00 เกินเป้า');
+    expect(text()).not.toContain('เป้าออม'); // the third part is money left over, not savings
   });
 
   it('over quota is danger-styled, in quota is green; short savings say how much is missing', () => {
-    set({ sortedAllocation: allocation.map(a => (a.id === 'savings' ? { ...a, amount: 15_000, percentage: '15.0' } : a)) });
+    set({ sortedAllocation: allocation.map(a => (a.id === 'savings' ? { ...a, amount: 15_000, percentage: '15.0', groups: [{ id: 'g-inv', name: 'ลงทุน', amount: 5_000 }] } : a)) });
     mount();
     toAllocation();
     expect(alloc('ตามใจ').querySelector('.bg-danger\\/20')).not.toBeNull();
     expect(alloc('จำเป็น').querySelector('.bg-emerald-500\\/15')).not.toBeNull();
     expect(alloc('ออม/เหลือ').textContent).toContain('ขาดอีก ฿5,000.00');
     expect(alloc('ออม/เหลือ').querySelector('.bg-amber-500\\/20')).not.toBeNull();
+    expect(alloc('ออม/เหลือ').textContent).toContain('เงินเหลือที่ขาด: ฿5,000.00');
+    // the over-quota pin speaks Thai
+    expect(alloc('ตามใจ').textContent).toContain('เพดาน 30%');
+    expect(text()).not.toContain('LIMIT');
   });
 
   it('the cell label spells the whole verdict for assistive tech', () => {
@@ -193,12 +198,35 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(alloc('ตามใจ').getAttribute('aria-label')).toBe('ตามใจ: 35.0% (เป้า 30%) — −฿5,000.00 เกินโควตา');
   });
 
+  it('a numeric share works the same as a formatted one, and a part with no groups says there is no data', () => {
+    set({ sortedAllocation: allocation.map(a => (a.id === 'needs' ? { ...a, percentage: 60, amount: 60_000 } : a.id === 'wants' ? { ...a, groups: [] } : a)) });
+    mount();
+    toAllocation();
+    expect(alloc('จำเป็น').getAttribute('aria-label')).toBe('จำเป็น: 60% (เป้า 50%) — −฿10,000.00 เกินโควตา');
+    expect(alloc('จำเป็น').textContent).toContain('เกินโควตา +10.0%');
+    expect(alloc('จำเป็น').textContent).toContain('เพดาน 50%');
+    expect(alloc('ตามใจ').textContent).toContain('ไม่มีข้อมูล');
+  });
+
+  it('focus inside a part highlights it until focus leaves the part', () => {
+    mount();
+    toAllocation();
+    const [first, second] = alloc('ตามใจ').querySelectorAll<HTMLButtonElement>('button');
+    act(() => first.focus());
+    expect(alloc('ตามใจ').className).toContain('border-accent-ink');
+    act(() => second.focus()); // moving within the part keeps it highlighted
+    expect(alloc('ตามใจ').className).toContain('border-accent-ink');
+    act(() => second.blur());
+    expect(alloc('ตามใจ').className).not.toContain('border-accent-ink');
+  });
+
   it('lists the groups of each part with their share of it, and the unassigned remainder of savings', () => {
     mount();
     toAllocation();
     expect(alloc('จำเป็น').textContent).toContain('ที่พัก');
     expect(alloc('จำเป็น').textContent).toContain('67%'); // 30,000 of 45,000
-    expect(alloc('ออม/เหลือ').textContent).toContain('Net Surplus (เหลือสุทธิ)');
+    expect(alloc('ออม/เหลือ').textContent).toContain('เหลือสุทธิ');
+    expect(alloc('ออม/เหลือ').textContent).not.toContain('Net Surplus');
     expect(alloc('ออม/เหลือ').textContent).toContain('100%');
   });
 

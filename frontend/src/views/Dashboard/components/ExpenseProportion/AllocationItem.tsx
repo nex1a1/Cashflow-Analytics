@@ -60,7 +60,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       : `−${formatBaht(Math.abs(varianceAmount))} เกินโควตา`;
   } else {
     varianceText = varianceAmount >= 0 
-      ? `+${formatBaht(varianceAmount)} เกินเป้าออม` 
+      ? `+${formatBaht(varianceAmount)} เกินเป้า` 
       : `ขาดอีก ${formatBaht(Math.abs(varianceAmount))}`;
   }
 
@@ -68,7 +68,6 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   // (Previously rescaled against a synthetic max so the bar looked "fuller" than reality; that
   // misrepresented actual spend, so the pin is clamped only for label legibility, not the track itself.)
   const clampedPct = Math.min(100, percentage);
-  const targetPinPos = Math.min(98, Math.max(2, item.target));
   const actualSpentPos = clampedPct;
 
   const isOverBudget = isNeedsOrWants && percentage > item.target;
@@ -78,17 +77,6 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   const overBudgetPct = isOverBudget ? (actualSpentPos - Math.min(item.target, 100)) : 0;
   const savingsDeficitPct = isUnderSavings ? (Math.min(item.target, 100) - actualSpentPos) : 0;
 
-  // Pin badge alignment
-  let pinTranslateClass = "-translate-x-1/2 items-center";
-  let arrowAlignClass = "justify-center";
-  if (targetPinPos >= 85) {
-    pinTranslateClass = "-translate-x-full items-end";
-    arrowAlignClass = "justify-end pr-1";
-  } else if (targetPinPos <= 15) {
-    pinTranslateClass = "translate-x-0 items-start";
-    arrowAlignClass = "justify-start pl-1";
-  }
-
   let cumulativePct = 0;
 
   return (
@@ -96,9 +84,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       onMouseEnter={() => onHover(idx)}
       onMouseLeave={() => onHover(-1)}
       onFocus={() => onHover(idx)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) onHover(-1);
-      }}
+      onBlur={() => onHover(-1)} // focus moving inside the part re-highlights it at once via onFocus
       role="group"
       aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${varianceText}`}
       className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
@@ -151,8 +137,8 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
             {/* ─── DEDICATED PIN TRACK (ABOVE BAR - z-10) ─── */}
             <div className="h-5 relative w-full pointer-events-none mb-0.5 z-10">
               <div 
-                className={`absolute bottom-0 flex flex-col z-10 ${pinTranslateClass}`}
-                style={{ left: `${targetPinPos}%` }}
+                className="absolute bottom-0 flex flex-col z-10 -translate-x-1/2 items-center"
+                style={{ left: `${item.target}%` }}
               >
                 <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
                   isOverBudget
@@ -160,9 +146,9 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                     : 'bg-canvas text-amber-300 border border-amber-400/80'
                 }`}>
                   <MapPin size={11} className="shrink-0" />
-                  <span>{isOverBudget ? `LIMIT ${item.target}%` : `เป้า ${item.target}%`}</span>
+                  <span>{isOverBudget ? `เพดาน ${item.target}%` : `เป้า ${item.target}%`}</span>
                 </span>
-                <div className={`w-full flex ${arrowAlignClass}`}>
+                <div className="w-full flex justify-center">
                   <span 
                     className={`text-[11px] leading-none -mt-0.5 font-bold ${
                       isOverBudget ? 'text-danger' : 'text-amber-400'
@@ -253,7 +239,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
                       <span>ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
                     </div>
                     <div className="text-[11px] text-slate-300 mt-0.5">
-                      ยอดออมที่ขาด: {formatBaht(Math.abs(varianceAmount))}
+                      เงินเหลือที่ขาด: {formatBaht(Math.abs(varianceAmount))}
                     </div>
                   </div>
                 </div>
@@ -263,7 +249,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               <div 
                 className="absolute top-0 bottom-0 w-[2px] z-30 pointer-events-none" 
                 style={{
-                  left: targetPinPos >= 99.5 ? 'calc(100% - 2px)' : `${targetPinPos}%`,
+                  left: `${item.target}%`,
                   backgroundColor: isOverBudget ? tc('danger') : tc('warn')
                 }}
               />
@@ -335,7 +321,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
               <div className="flex items-center gap-1.5 min-w-0">
                 <Waves size={13} className="shrink-0 opacity-80 text-emerald-400" />
                 <span className="text-[11px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
-                  Net Surplus (เหลือสุทธิ)
+                  เหลือสุทธิ
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">

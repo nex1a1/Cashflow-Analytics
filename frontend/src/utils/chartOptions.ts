@@ -33,7 +33,7 @@ const getScaleOptions = (beginAtZero = false, yType = 'linear', autoSkip = true)
     },
     grid: {
       display: true,
-      color: 'rgba(148, 163, 184, 0.05)',
+      color: tc('ink-body', 0.05),
       drawTicks: false,
     },
     border: { display: false },
@@ -50,13 +50,13 @@ const getScaleOptions = (beginAtZero = false, yType = 'linear', autoSkip = true)
       callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,
     },
     grid: { 
-      color: 'rgba(148, 163, 184, 0.12)', 
+      color: tc('ink-body', 0.12),
       lineWidth: 1,
       drawTicks: false,
     },
     border: { 
       display: true, 
-      color: 'rgba(148, 163, 184, 0.2)',
+      color: tc('ink-body', 0.2),
       dash: [4, 4] 
     },
   },

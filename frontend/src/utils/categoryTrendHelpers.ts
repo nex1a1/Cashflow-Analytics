@@ -56,11 +56,7 @@ export function buildCategoryTrends(
 
     if (isAll) {
       delta = latestAmount - periodAvg;
-      if (periodAvg > 0) {
-        pctChange = ((latestAmount - periodAvg) / periodAvg) * 100;
-      } else if (latestAmount === 0) {
-        pctChange = 0;
-      }
+      pctChange = ((latestAmount - periodAvg) / periodAvg) * 100; // > 0: a category is only listed when it has spending
     } else {
       delta = latestAmount - (priorAmount ?? 0);
       if (priorAmount !== null) {

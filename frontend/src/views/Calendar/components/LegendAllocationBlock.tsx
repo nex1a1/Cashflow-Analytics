@@ -243,14 +243,16 @@ function CategoryLegendSection({
         <div className="flex flex-col flex-grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || tc('ink-muted');
+            // รายจ่ายแสดงเป็นยอดลบ · ลงทุน/ออมขายมากกว่าซื้อได้ ติดลบก็เป็น −฿ (ไม่ใช่ ±−฿) · ศูนย์ไม่มีเครื่องหมาย
             let amtColor = 'text-expense';
-            let amtPrefix = '−';
+            let amtPrefix = '';
+            const shownTotal = groupObj.type === 'expense' ? -groupTotal : groupTotal;
             if (groupObj.type === 'income') {
               amtColor = 'text-income';
-              amtPrefix = '+';
+              if (shownTotal > 0) amtPrefix = '+';
             } else if (groupObj.type === 'savings') {
               amtColor = 'text-savings';
-              amtPrefix = '±';
+              if (shownTotal > 0) amtPrefix = '±';
             }
             
             return (
@@ -262,7 +264,7 @@ function CategoryLegendSection({
                     <span className="truncate">{groupObj.name}</span>
                   </span>
                   <span className={`text-[13px] font-bold tracking-tight tabular-nums shrink-0 ml-2 ${amtColor}`}>
-                    {amtPrefix}{formatBaht(groupTotal)}
+                    {amtPrefix}{formatBaht(shownTotal)}
                   </span>
                 </div>
 
@@ -310,9 +312,9 @@ function AllocationOverviewSection({
   // ฐานของเปอร์เซ็นต์: รายรับ เมื่อมีเงินเหลือ (จำเป็น+ตามใจ+เงินเหลือ = รายรับ) · ไม่งั้นเป็นรายจ่ายรวม
   const basisLabel = allocationTotals.savings > 0 ? 'สัดส่วนของรายรับ' : 'สัดส่วนของรายจ่าย';
   const rows = [
-    { label: 'จำเป็น', dot: ALLOCATION_COLORS.need, pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
-    { label: 'ตามใจ', dot: ALLOCATION_COLORS.want, pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
-    { label: 'เงินเหลือ', dot: ALLOCATION_COLORS.savings, pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
+    { label: 'NEED', dot: ALLOCATION_COLORS.need, pct: allocationTotals.needPct, total: allocationTotals.need, cats: allocationTotals.needCats },
+    { label: 'WANT', dot: ALLOCATION_COLORS.want, pct: allocationTotals.wantPct, total: allocationTotals.want, cats: allocationTotals.wantCats },
+    { label: 'SAVE', dot: ALLOCATION_COLORS.savings, pct: allocationTotals.savingsPct, total: allocationTotals.savings, cats: allocationTotals.savingsCats },
   ];
 
   return (
@@ -356,15 +358,15 @@ function AllocationOverviewSection({
         <div className="h-2 w-full bg-surface border border-line flex rounded-full overflow-hidden mt-1 shrink-0 z-10">
           <div
             style={{ width: `${allocationTotals.needPct}%`, backgroundColor: ALLOCATION_COLORS.need }}
-            title={`จำเป็น: ${allocationTotals.needPct}%`}
+            title={`NEED: ${allocationTotals.needPct}%`}
           />
           <div 
             style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: ALLOCATION_COLORS.want }} 
-            title={`ตามใจ: ${allocationTotals.wantPct}%`}
+            title={`WANT: ${allocationTotals.wantPct}%`}
           />
           <div 
             style={{ width: `${allocationTotals.savingsPct}%`, backgroundColor: ALLOCATION_COLORS.savings }} 
-            title={`เงินเหลือ: ${allocationTotals.savingsPct}%`}
+            title={`SAVE: ${allocationTotals.savingsPct}%`}
           />
         </div>
       )}

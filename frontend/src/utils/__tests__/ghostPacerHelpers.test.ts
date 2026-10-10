@@ -95,4 +95,23 @@ describe('paceTone', () => {
     expect(paceTone(0, 0)).toBe('TIED');
     expect(paceTone(10, 0)).toBe('TRAIL');
   });
+
+  it('the 3-month benchmark averages only the months that had spending; a shorter month holds its last value', () => {
+    // March 2026 (31 days). Feb (28 days): 280 on day 1. Jan: 100 on day 1, 50 on day 31. Dec: nothing → left out.
+    const pacer = calculateGhostPacerData({
+      globalDailySum: { '2026-02-01': 280, '2026-01-01': 100, '2026-01-31': 50 },
+      filterPeriod: '2026-03', isCurrentMonth: false, projectedExpense: 0,
+    });
+    expect(pacer.benchmarkDailySeries).toHaveLength(31);
+    expect(pacer.benchmarkDailySeries[0]).toBe(190); // (280 + 100) / 2
+    expect(pacer.benchmarkDailySeries[29]).toBe(190);
+    expect(pacer.benchmarkDailySeries[30]).toBe(215); // Feb stays at 280 on "day 31", Jan reaches 150
+    expect(pacer.benchmarkSpendToDate).toBe(215);
+  });
+
+  it('no history at all: the benchmark is zero, not NaN', () => {
+    const pacer = calculateGhostPacerData({ globalDailySum: { '2026-03-02': 50 }, filterPeriod: '2026-03', isCurrentMonth: false, projectedExpense: 0 });
+    expect(pacer.benchmarkDailySeries.every(v => v === 0)).toBe(true);
+    expect(pacer.benchmarkSpendToDate).toBe(0);
+  });
 });

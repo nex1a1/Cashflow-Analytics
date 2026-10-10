@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 // frontend/src/components/modals/ExportModal/__tests__/exportUtils.test.ts
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   escapeCsvCell,
   resolveDayTypeInfo,
@@ -10,6 +11,7 @@ import {
   buildFullExtendedCsv,
   buildSystemBackupJson,
   calculateExportStats,
+  downloadFileBlob,
 } from '../exportUtils';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../../../types';
 
@@ -307,5 +309,33 @@ describe('exportUtils', () => {
       expect(stats.rowCount).toBe(2); // 2 distinct dates
       expect(stats.hasData).toBe(true);
     });
+  });
+});
+
+describe('downloadFileBlob', () => {
+  // bytes, not text: a text decoder swallows the BOM
+  const bytes = (b: Blob) => new Promise<number[]>(r => { const fr = new FileReader(); fr.onload = () => r([...new Uint8Array(fr.result as ArrayBuffer)]); fr.readAsArrayBuffer(b); });
+  const utf8 = (s: string) => [...new TextEncoder().encode(s)];
+
+  it('CSV gets a UTF-8 BOM (Excel reads Thai); JSON does not; the temporary link is cleaned up', async () => {
+    const blobs: Blob[] = [];
+    const created = vi.fn((b: Blob) => { blobs.push(b); return 'blob:x'; });
+    const revoked = vi.fn();
+    Object.assign(URL, { createObjectURL: created, revokeObjectURL: revoked }); // jsdom has neither
+    const clicks: string[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicks.push(`${this.getAttribute('download')}|${this.getAttribute('href')}|${this.style.visibility}|${document.body.contains(this)}`);
+    });
+
+    downloadFileBlob('ก,ข', 'a.csv');
+    downloadFileBlob('{"a":1}', 'b.json', true);
+
+    expect(clicks).toEqual(['a.csv|blob:x|hidden|true', 'b.json|blob:x|hidden|true']);
+    expect(document.querySelectorAll('a').length).toBe(0);
+    expect(revoked).toHaveBeenCalledTimes(2);
+    expect(blobs.map(b => b.type)).toEqual(['text/csv;charset=utf-8;', 'application/json;charset=utf-8;']);
+    expect(await bytes(blobs[0])).toEqual([0xEF, 0xBB, 0xBF, ...utf8('ก,ข')]);
+    expect(await bytes(blobs[1])).toEqual(utf8('{"a":1}'));
+    click.mockRestore();
   });
 });

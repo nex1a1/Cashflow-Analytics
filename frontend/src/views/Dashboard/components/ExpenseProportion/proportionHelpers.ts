@@ -84,10 +84,7 @@ export function sortProportionItems<T extends ProportionItem>(
     if (sortMode === 'order-asc') {
       return (orderA - orderB) || (b.amount - a.amount);
     }
-    if (sortMode === 'order-desc') {
-      return (orderB - orderA) || (b.amount - a.amount);
-    }
-    return b.amount - a.amount;
+    return (orderB - orderA) || (b.amount - a.amount); // order-desc
   });
 }
 

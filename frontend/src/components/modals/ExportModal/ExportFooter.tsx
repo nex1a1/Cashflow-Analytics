@@ -1,8 +1,15 @@
 // frontend/src/components/modals/ExportModal/ExportFooter.tsx
 import React from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { ExportFooterProps } from './types';
+import { ExportFooterProps, ExportFormatKey } from './types';
 import FieldError from '../../shared/FieldError';
+
+const FORMAT_LABELS: Record<ExportFormatKey, string> = {
+  long: 'Long Ledger CSV',
+  wide: 'Wide Matrix CSV',
+  full_csv: 'Full Detail CSV',
+  backup_json: 'Full Backup JSON',
+};
 
 export default function ExportFooter({
   exportFormat,
@@ -19,20 +26,6 @@ export default function ExportFooter({
   const isBackupJson = exportFormat === 'backup_json';
   const periodLabel = getFilterLabel ? getFilterLabel(exportPeriod) : exportPeriod;
 
-  const getFormatLabel = () => {
-    switch (exportFormat) {
-      case 'long':
-        return 'Long Ledger CSV';
-      case 'wide':
-        return 'Wide Matrix CSV';
-      case 'full_csv':
-        return 'Full Detail CSV';
-      case 'backup_json':
-        return 'Full Backup JSON';
-      default:
-        return exportFormat;
-    }
-  };
 
   const isDownloadDisabled = (!stats.hasData && !isBackupJson) || isExporting;
 
@@ -43,7 +36,7 @@ export default function ExportFooter({
         <div className="flex items-center gap-1.5">
           <span className="text-neutral-500 font-bold uppercase text-[11px]">รูปแบบ:</span>
           <span className="text-neutral-200 font-bold px-1.5 py-0.5 rounded-pill bg-surface-hover border border-line">
-            {getFormatLabel()}
+            {FORMAT_LABELS[exportFormat]}
           </span>
         </div>
 

@@ -60,7 +60,7 @@ describe('AllocationSelect — trigger', () => {
     [undefined, 'WANT', 'ทั่วไป'],
     ['want', 'WANT', 'ทั่วไป'],
     ['need', 'NEED', 'จำเป็น'],
-    ['savings', 'SAVE', 'เงินออม'],
+    ['savings', 'WANT', 'ทั่วไป'], // SAVE is for investment groups only (they show ซื้อ/ขาย, not this picker)
     [null, 'WANT', 'ทั่วไป'],
     ['bogus', 'WANT', 'ทั่วไป'],
     ['SAVE', 'WANT', 'ทั่วไป'],
@@ -71,7 +71,7 @@ describe('AllocationSelect — trigger', () => {
   });
 
   it('is tinted with the colour of the current allocation', () => {
-    for (const [value, color] of [['need', ALLOCATION_COLORS.need], ['want', ALLOCATION_COLORS.want], ['savings', ALLOCATION_COLORS.savings]] as const) {
+    for (const [value, color] of [['need', ALLOCATION_COLORS.need], ['want', ALLOCATION_COLORS.want]] as const) {
       render({ value });
       const rgb = hexToRgb(color);
       expect(trigger().style.backgroundColor).toBe(css('backgroundColor', `rgba(${rgb}, 0.12)`));
@@ -101,27 +101,25 @@ describe('AllocationSelect — trigger', () => {
 });
 
 describe('AllocationSelect — opening and choosing', () => {
-  it('a click opens a listbox of three options in the page body, the current one marked', () => {
+  it('a click opens a listbox of the two expense allocations (no SAVE) in the page body, the current one marked', () => {
     render({ value: 'need' });
     open();
     expect(trigger().getAttribute('aria-expanded')).toBe('true');
     expect(list()!.parentElement).toBe(document.body);
     expect(list()!.getAttribute('aria-label')).toBe('เลือกประเภทการจัดสรรเงิน');
-    expect(options().map(o => o.textContent)).toEqual(['NEEDจำเป็น50%', 'WANTทั่วไป30%', 'SAVEเงินออม20%']);
-    expect(options().map(o => o.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false']);
-    expect(options().map(o => o.querySelectorAll('svg.lucide-check').length)).toEqual([1, 0, 0]);
-    expect(options().map(o => o.title)).toEqual([
-      'รายจ่ายจำเป็น · ปัจจัย 4 ดำรงชีพ', 'รายจ่ายตามใจ · ไลฟ์สไตล์ ความสุข', 'เงินออม · เงินสำรองฉุกเฉิน · ลงทุน',
-    ]);
+    expect(options().map(o => o.textContent)).toEqual(['NEEDจำเป็น50%', 'WANTทั่วไป30%']);
+    expect(options().map(o => o.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+    expect(options().map(o => o.querySelectorAll('svg.lucide-check').length)).toEqual([1, 0]);
+    expect(options().map(o => o.title)).toEqual(['รายจ่ายจำเป็น · ปัจจัย 4 ดำรงชีพ', 'รายจ่ายตามใจ · ไลฟ์สไตล์ ความสุข']);
   });
 
   it('the selected option is outlined and tinted in its own colour', () => {
-    render({ value: 'savings' });
+    render({ value: 'want' });
     open();
-    const rgb = hexToRgb(ALLOCATION_COLORS.savings);
-    const [need, , save] = options();
-    expect(save.style.borderColor).toBe(css('borderColor', `rgba(${rgb}, 0.55)`));
-    expect(save.style.backgroundColor).toBe(css('backgroundColor', `rgba(${rgb}, 0.14)`));
+    const rgb = hexToRgb(ALLOCATION_COLORS.want);
+    const [need, want] = options();
+    expect(want.style.borderColor).toBe(css('borderColor', `rgba(${rgb}, 0.55)`));
+    expect(want.style.backgroundColor).toBe(css('backgroundColor', `rgba(${rgb}, 0.14)`));
     expect(need.style.backgroundColor).toBe('');
   });
 
@@ -145,7 +143,7 @@ describe('AllocationSelect — opening and choosing', () => {
 
   it('each option reports its own key', () => {
     render();
-    for (const [i, k] of ['need', 'want', 'savings'].entries()) { open(); click(options()[i]); expect(onChange).toHaveBeenLastCalledWith(k); }
+    for (const [i, k] of ['need', 'want'].entries()) { open(); click(options()[i]); expect(onChange).toHaveBeenLastCalledWith(k); }
   });
 
   it('choosing the current value still reports it', () => {
@@ -158,7 +156,7 @@ describe('AllocationSelect — opening and choosing', () => {
   it('clicks never reach a clickable parent (a table row, a card)', () => {
     render();
     open();
-    click(options()[2]);
+    click(options()[1]);
     open();
     open();
     expect(parentClick).not.toHaveBeenCalled();
@@ -192,16 +190,16 @@ describe('AllocationSelect — look while open, icons', () => {
 
   it('each allocation has its own icon on the trigger and in the list', () => {
     const seen = new Set<string | undefined>();
-    for (const value of ['need', 'want', 'savings']) { render({ value }); seen.add(iconOf(trigger())); }
-    expect(seen.size).toBe(3);
+    for (const value of ['need', 'want']) { render({ value }); seen.add(iconOf(trigger())); }
+    expect(seen.size).toBe(2);
     open();
-    expect(new Set(options().map(iconOf)).size).toBe(3);
+    expect(new Set(options().map(iconOf)).size).toBe(2);
   });
 
   it('an unknown value marks WANT as the selected option', () => {
     render({ value: 'bogus' });
     open();
-    expect(options().map(o => o.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    expect(options().map(o => o.getAttribute('aria-selected'))).toEqual(['false', 'true']);
   });
 
   it('while open the trigger drops its tinted border (the ring takes over), turns the chevron, and gets the ring class', () => {
@@ -219,9 +217,9 @@ describe('AllocationSelect — look while open, icons', () => {
   it('hovering the last option and pressing Enter picks it (the highlight follows the pointer, not a fixed row)', () => {
     render({ value: 'need' });
     press(trigger(), 'Enter');
-    hover(options()[2]);
+    hover(options()[1]);
     press(trigger(), 'Enter');
-    expect(onChange).toHaveBeenCalledWith('savings');
+    expect(onChange).toHaveBeenCalledWith('want');
   });
 });
 
@@ -389,19 +387,17 @@ describe('AllocationSelect — keyboard', () => {
   });
 
   it('opening by key highlights the current option first; the arrows then move and wrap', () => {
-    render({ value: 'savings' });
+    render({ value: 'want' });
     press(trigger(), 'Enter');
     const bg = () => options().map(o => o.style.backgroundColor);
     const rgbOf = (c: string) => hexToRgb(c);
-    // savings is selected (0.14); nothing else is focused
-    expect(bg()[2]).toBe(css('backgroundColor', `rgba(${rgbOf(ALLOCATION_COLORS.savings)}, 0.14)`));
+    // want is selected (0.14); nothing else is focused
+    expect(bg()[1]).toBe(css('backgroundColor', `rgba(${rgbOf(ALLOCATION_COLORS.want)}, 0.14)`));
     expect(bg()[0]).toBe('');
 
     press(trigger(), 'ArrowDown'); // wraps to NEED
     expect(bg()[0]).toBe(css('backgroundColor', `rgba(${rgbOf(ALLOCATION_COLORS.need)}, 0.08)`));
-    press(trigger(), 'ArrowUp'); // back to SAVE
-    press(trigger(), 'ArrowUp'); // WANT
-    expect(bg()[1]).toBe(css('backgroundColor', `rgba(${rgbOf(ALLOCATION_COLORS.want)}, 0.08)`));
+    press(trigger(), 'ArrowUp'); // wraps back to WANT
     expect(bg()[0]).toBe('');
   });
 
@@ -423,17 +419,17 @@ describe('AllocationSelect — keyboard', () => {
     press(trigger(), 'Enter');
     press(trigger(), 'ArrowUp');
     press(trigger(), 'Enter');
-    expect(onChange).toHaveBeenCalledWith('savings');
+    expect(onChange).toHaveBeenCalledWith('want');
   });
 
   it.each(['Enter', ' '])('"%s" picks the highlighted option, closes and refocuses', (k) => {
-    render({ value: 'want' });
-    press(trigger(), 'Enter'); // highlight = WANT
-    press(trigger(), 'ArrowDown'); // SAVE
+    render({ value: 'need' });
+    press(trigger(), 'Enter'); // highlight = NEED
+    press(trigger(), 'ArrowDown'); // WANT
     windowKey.mockClear();
     const e = press(trigger(), k);
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith('savings');
+    expect(onChange).toHaveBeenCalledWith('want');
     expect(list()).toBeNull();
     expect(e.defaultPrevented).toBe(true);
     expect(windowKey).not.toHaveBeenCalled();
@@ -472,7 +468,7 @@ describe('AllocationSelect — as a memoised component', () => {
   it('does not need re-rendering to follow a new value', () => {
     render({ value: 'need' });
     expect(trigger().textContent).toBe('NEED');
-    render({ value: 'savings' });
-    expect(trigger().textContent).toBe('SAVE');
+    render({ value: 'want' });
+    expect(trigger().textContent).toBe('WANT');
   });
 });

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Check, Home, ShoppingBag, Landmark } from 'lucide-react';
+import { ChevronDown, Check, Home, ShoppingBag } from 'lucide-react';
 import { ALLOCATION_COLORS, readable, tc } from '@/constants/theme';
 import { hexToRgb } from '@/utils/formatters';
 
-export type AllocationTypeKey = 'need' | 'want' | 'savings';
+/** An expense is NEED or WANT. SAVE means investing: savings-group rows carry it implicitly and show ซื้อ/ขาย instead of this picker. */
+export type AllocationTypeKey = 'need' | 'want';
 
 export interface AllocationSelectProps {
   value?: string | null;
@@ -43,15 +44,6 @@ const ALLOCATION_CONFIGS: AllocationConfig[] = [
     color: ALLOCATION_COLORS.want,
     icon: ShoppingBag,
   },
-  {
-    id: 'savings',
-    label: 'SAVE',
-    nameThai: 'เงินออม',
-    quota: 'เป้า 20%',
-    desc: 'เงินออม · เงินสำรองฉุกเฉิน · ลงทุน',
-    color: ALLOCATION_COLORS.savings,
-    icon: Landmark,
-  },
 ];
 
 const CONFIG_MAP = ALLOCATION_CONFIGS.reduce<Record<string, AllocationConfig>>((acc, cfg) => {
@@ -85,7 +77,7 @@ export const AllocationSelect = memo(function AllocationSelect({
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Current selected item
-  const currentKey: AllocationTypeKey = (value === 'need' || value === 'savings') ? value : 'want';
+  const currentKey: AllocationTypeKey = value === 'need' ? 'need' : 'want';
   const currentCfg = CONFIG_MAP[currentKey] || CONFIG_MAP.want;
   const currentColor = currentCfg.color;
   const currentRgb = useMemo(() => hexToRgb(currentColor), [currentColor]);

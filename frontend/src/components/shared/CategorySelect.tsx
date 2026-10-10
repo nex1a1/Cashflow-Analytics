@@ -297,8 +297,7 @@ export default function CategorySelect({
   // Pill variant styles for table cell; text goes through readable() for legibility
   const pillColor = selectedCategory?.color || (type === 'income' ? tc('income') : tc('expense'));
   const pillStyles = useMemo(() => {
-    const defaultRgb = '148, 163, 184';
-    const rgb = hexToRgb(pillColor || '') || defaultRgb;
+    const rgb = hexToRgb(pillColor);
 
     const textColor = readable(pillColor); // theme-aware 4.5:1 (lightens on dark, darkens on light)
 

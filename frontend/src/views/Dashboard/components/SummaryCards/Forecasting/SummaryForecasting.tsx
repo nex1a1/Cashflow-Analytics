@@ -97,7 +97,6 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
         projectedExpense={projectedExpense}
         projectedSurplus={projectedSurplus}
         actualDailySeries={actualDailySeries}
-        paceColor={paceStatus.color}
       />
 
       {/* 3. 3-Column Cockpit Telemetry Pods */}
@@ -244,7 +243,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                   {projectedSurplus >= 0 ? `+${formatBaht(projectedSurplus)}` : `−${formatBaht(Math.abs(projectedSurplus))}`}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-                  ออม {projectedSurplusPct}%
+                  เหลือ {projectedSurplusPct}%
                 </div>
               </div>
             )}

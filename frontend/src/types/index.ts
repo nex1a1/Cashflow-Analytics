@@ -130,12 +130,6 @@ export interface DashboardAnalytics {
   [key: string]: any;
 }
 
-export interface BackupFileInfo {
-  name: string;
-  size: number;
-  createdAt: string | Date;
-}
-
 export interface GroupedPeriodOption {
   months: Set<string>;
   quarters: Set<string>;
@@ -226,7 +220,7 @@ export interface AppDataContextValue {
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean>;
   handleDeleteTransaction: (id: string) => Promise<any>;
   handleDeleteMonth: (month: string) => Promise<boolean>;
-  handleDeleteAllData: (opts?: any) => Promise<void>;
+  handleDeleteAllData: () => Promise<void>;
   handleSaveBatch: (items: any[]) => Promise<void>;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   confirmImport: (opts?: any) => Promise<void>;
@@ -242,7 +236,7 @@ export interface AppDataContextValue {
   handleAddDayType: () => Promise<void>;
   handleDeleteDayType: (id: string) => Promise<void>;
   handleMoveDayType: (id: string, direction: 'UP' | 'DOWN') => Promise<void>;
-  handleUpdateCashflowGroup: (group: any) => Promise<void>;
+  handleUpdateCashflowGroup: (group: any, options?: { silent?: boolean }) => Promise<void>;
   handleAddCashflowGroup: () => Promise<void>;
   handleDeleteCashflowGroup: (id: string) => Promise<void>;
   handleMoveCashflowGroup: (id: string, direction: 'UP' | 'DOWN') => Promise<void>;

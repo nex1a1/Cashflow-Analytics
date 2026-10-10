@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion/AllocationEvolutionChart.tsx
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
-import { formatMoney, THAI_MONTHS_SHORT, formatBaht } from '@/utils/formatters';
+import { THAI_MONTHS_SHORT, formatBaht } from '@/utils/formatters';
 import type { AllocationEvolutionMonth } from '@/utils/allocationEvolutionHelpers';
 
 
@@ -112,20 +112,20 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
           <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">
-            50/30/20 EVOLUTION
+            แนวโน้ม 50/30/20
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: NEED_COLOR }} />
-          <span className="text-neutral-300 font-bold">จำเป็น เป้า 50%</span>
+          <span className="text-neutral-300 font-bold">NEED เป้า 50%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: WANT_COLOR }} />
-          <span className="text-neutral-300 font-bold">ตามใจ เพดาน 30%</span>
+          <span className="text-neutral-300 font-bold">WANT เพดาน 30%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: SAVINGS_COLOR }} />
-          <span className="text-neutral-300 font-bold">เงินออม เป้า 20%</span>
+          <span className="text-neutral-300 font-bold">SAVE เป้า 20%</span>
         </div>
       </div>
 
@@ -153,7 +153,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                 x2={padL + plotW}
                 y2={getY(pct)}
                 stroke={pct === 50 || pct === 80 ? tc('ink-body') : tc('line')}
-                strokeWidth={pct === 50 || pct === 80 ? 1 : 1}
+                strokeWidth={1}
                 strokeDasharray={pct === 50 || pct === 80 ? '4 3' : undefined}
                 opacity={pct === 50 || pct === 80 ? 0.7 : 1}
               />
@@ -314,7 +314,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                     </text>
                     <text x="10" y="78" fontSize="11" fontFamily={FONT_MONO}>
                       <tspan fill={SAVINGS_COLOR} fontWeight="bold">■</tspan>
-                      <tspan fill={tc('ink-display')} dx="4">ออม {formatBaht(hovered.savingsAmt)}</tspan>
+                      <tspan fill={tc('ink-display')} dx="4">เหลือ {formatBaht(hovered.savingsAmt)}</tspan>
                       <tspan fill={hovered.savingsPct < 20 ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({hovered.savingsPct.toFixed(0)}%)</tspan>
                     </text>
                   </>
@@ -335,7 +335,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         const breaches: string[] = [];
         if (latest.needPct > 50) breaches.push('รายจ่ายจำเป็นเกินเป้า');
         if (latest.wantPct > 30) breaches.push('รายจ่ายตามใจเกินเพดาน');
-        if (latest.savingsPct < 20) breaches.push('เงินออมต่ำกว่าเป้า');
+        if (latest.savingsPct < 20) breaches.push('เงินเหลือต่ำกว่าเป้า');
         if (breaches.length === 0) return null;
         return (
           <div className="flex items-center gap-1.5 px-3 py-2 border-t border-line text-[11px] font-mono text-danger bg-danger/5">

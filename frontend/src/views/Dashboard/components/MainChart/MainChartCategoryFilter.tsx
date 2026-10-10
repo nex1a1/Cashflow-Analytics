@@ -43,10 +43,6 @@ export const MainChartCategorySelector = memo(({
     variableCatNames.every(n => activeCats.includes(n));
 
   const toggleCategory = useCallback((catName: string) => {
-    if (catName === 'ALL') {
-      setDashboardCategory(['ALL']);
-      return;
-    }
     let currentActive = activeCats.includes('ALL') ? [...allExpenseCatNames] : [...activeCats];
     if (currentActive.includes(catName)) {
       currentActive = currentActive.filter(c => c !== catName);

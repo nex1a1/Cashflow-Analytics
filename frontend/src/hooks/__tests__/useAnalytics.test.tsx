@@ -69,6 +69,12 @@ describe('useAnalytics', () => {
       expect(a.sortedAllocation.reduce((s: number, i: any) => s + i.amount, 0)).toBe(30000);
     });
 
+    it('names the slices in plain Thai; the third one is money left over (investing sits inside it)', () => {
+      expect(month([]).sortedAllocation.map((i: any) => [i.id, i.name])).toEqual(
+        expect.arrayContaining([['needs', 'NEED'], ['wants', 'WANT'], ['savings', 'SAVE']]),
+      );
+    });
+
     it('without any investing the whole leftover is savings', () => {
       expect(slice(month([]), 'savings')).toBe(10000);
     });

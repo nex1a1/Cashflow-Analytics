@@ -8,7 +8,7 @@ export default function DashboardSkeleton() {
   const border = 'border-line';
 
   return (
-    <div className="w-full pb-10 flex flex-col gap-4 animate-in fade-in duration-300">
+    <div role="status" aria-busy="true" aria-label="กำลังโหลดข้อมูล" className="w-full pb-10 flex flex-col gap-4 animate-in fade-in duration-300">
       {/* Summary Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {SKELETON_CARD_KEYS.map((cardKey) => (

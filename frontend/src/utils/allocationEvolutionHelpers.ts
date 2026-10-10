@@ -35,11 +35,7 @@ function isEvolutionEligible(period: string, periodMonths: string[]): boolean {
   if (filterPeriod.includes(',') || filterPeriod.includes('_')) {
     return periodMonths.length >= MIN_CUSTOM_RANGE_MONTHS; // custom range / multi-select
   }
-  if (filterPeriod === 'ALL') return true;
-  if (/^\d{4}-Q[1-4]$/.test(filterPeriod)) return true; // quarter
-  if (/^\d{4}-H[1-2]$/.test(filterPeriod)) return true; // half-year
-  if (/^\d{4}$/.test(filterPeriod)) return true; // full year
-  return false;
+  return true; // ALL / year / half / quarter
 }
 
 function buildEvolutionLabel(hasData: boolean, monthCount: number): string {

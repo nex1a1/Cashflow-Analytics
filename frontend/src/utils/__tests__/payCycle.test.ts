@@ -27,7 +27,7 @@ describe('payCycle', () => {
     expect(isDateInFilter('2026-08-10', 'cycle:2026-07')).toBe(true);
     expect(isDateInFilter('2026-07-25', 'cycle:2026-07')).toBe(true);
     expect(isDateInFilter('2026-07-24', 'cycle:2026-07')).toBe(false);
-    expect(isDateInFilter('10/01/2027', 'cycle:2026-12')).toBe(true); // DD/MM/YYYY + year boundary
+    expect(isDateInFilter('2027-01-10', 'cycle:2026-12')).toBe(true); // year boundary
     expect(isDateInFilter('2026-05-01', 'cycle:2026-03_2026-04')).toBe(true);
     expect(isDateInFilter('2026-05-25', 'cycle:2026-03_2026-04')).toBe(false);
     expect(isDateInFilter('2020-01-01', 'cycle:ALL')).toBe(true);

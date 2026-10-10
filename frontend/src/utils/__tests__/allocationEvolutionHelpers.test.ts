@@ -33,6 +33,7 @@ describe('allocationEvolutionHelpers', () => {
 
     const multi = calculateAllocationEvolution(emptyMap, '2026-01,2026-05,2026-09', ['2026-01', '2026-05', '2026-09']);
     expect(multi.eligible).toBe(true);
+    expect(calculateAllocationEvolution(emptyMap, '2026-01,2026-05', ['2026-01', '2026-05']).eligible).toBe(false);
   });
 
   it('computes need/want/savings percentages that sum to 100 for a populated month', () => {

@@ -36,9 +36,8 @@ export function resolveAllocationType(
   if (t.allocation_type) return t.allocation_type;
   const groupId = catObj?.cashflowGroup || catObj?.cashflow_group_id;
   if (!groupId) return 'want';
-  const groupObj = cashflowGroups.find(g => g.id === groupId);
-  if (groupObj?.type === 'savings') return 'savings';
-  return groupObj?.allocation_type || 'want';
+  // แถวกลุ่มลงทุน/ออมไม่มาถึงตรงนี้ (processCalendarTransaction ออกไปก่อน)
+  return cashflowGroups.find(g => g.id === groupId)?.allocation_type || 'want';
 }
 
 export function processCalendarTransaction(
@@ -51,10 +50,8 @@ export function processCalendarTransaction(
   totals: CalendarTotals
 ) {
   if (!t.date) return;
-  const dateParts = t.date.split('-');
-  if (dateParts.length < 3) return;
-  const txD = Number.parseInt(dateParts[2], 10);
-  if (!dayData[txD]) return;
+  const txD = Number.parseInt(t.date.split('-')[2], 10);
+  if (!dayData[txD]) return; // also catches a malformed date (NaN)
 
   const catObj = findCategory(t);
   const catId = catObj ? catObj.id : (t.category_id || t.category || 'other');

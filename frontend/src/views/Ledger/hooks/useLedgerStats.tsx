@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
-import { toISODate } from '../../../utils/dateHelpers';
 import { monthKeyOf } from '../../../utils/payCycle';
 import { formatBaht } from '../../../utils/formatters';
 import { buildCatTypeMap, sumIncomeExpense } from '../ledgerMath';
@@ -323,7 +322,7 @@ export function useLedgerStats({
   const uniqueMonths = useMemo(() => {
     const months = new Set<string>();
     displayTransactions.forEach(t => {
-      if (t.date) months.add(monthKeyOf(toISODate(t.date), filterPeriod));
+      if (t.date) months.add(monthKeyOf(t.date, filterPeriod));
     });
     return months.size;
   }, [displayTransactions, filterPeriod]);

@@ -256,7 +256,7 @@ export default function MainLayout() {
                 handleAddDayType={handleAddDayType}
                 handleDeleteDayType={handleDeleteDayType}
                 handleMoveDayType={handleMoveDayType}
-                handleDeleteAllData={() => handleDeleteAllData({ setShowToast: triggerToast })}
+                handleDeleteAllData={handleDeleteAllData}
                 transactions={transactions}
                 triggerToast={triggerToast}
                 taxEnabled={taxEnabled}

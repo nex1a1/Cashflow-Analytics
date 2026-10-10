@@ -74,10 +74,10 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
 
   const allocationLabel =
     group.allocation_type === 'need'
-      ? 'จำเป็น'
+      ? 'NEED'
       : group.allocation_type === 'savings'
-        ? 'เงินออม'
-        : 'ตามใจ';
+        ? 'SAVE'
+        : 'WANT';
 
   const allocationColorCls =
     group.allocation_type === 'need'

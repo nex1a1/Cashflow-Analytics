@@ -51,7 +51,8 @@ export default function useFilters({
   }, [searchQuery]);
 
   // State to hold FTS5 search results from database
-  const [searchResults, setSearchResults] = useState<TransactionDisplay[]>([]);
+  // null = the server search failed: fall back to the rows already loaded (never keep the previous query's results)
+  const [searchResults, setSearchResults] = useState<TransactionDisplay[] | null>([]);
 
   // Fetch FTS5 search results from backend when debouncedSearch is active
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function useFilters({
       })
       .catch(err => {
         console.error('Failed to search using FTS5:', err);
+        if (active) setSearchResults(null);
       });
 
     return () => {
@@ -79,15 +81,15 @@ export default function useFilters({
 
   // Sync searchResults when transactions state updates (e.g. inline edits)
   useEffect(() => {
-    if (debouncedSearch.trim() && searchResults.length > 0) {
+    if (debouncedSearch.trim() && searchResults?.length) {
       setSearchResults(prevResults =>
-        prevResults.map(r => {
+        prevResults && prevResults.map(r => {
           const updated = transactions.find(t => t.id === r.id);
           return updated || r;
         })
       );
     }
-  }, [transactions, debouncedSearch, searchResults.length]);
+  }, [transactions, debouncedSearch, searchResults?.length]);
 
   // reset filters when period changes
   useEffect(() => {
@@ -184,7 +186,9 @@ export default function useFilters({
 
   // ── displayTransactions: filtered list สำหรับ LedgerView ────
   const displayTransactions: TransactionDisplay[] = useMemo(() => {
-    const baseTransactions = debouncedSearch.trim() ? searchResults : transactions;
+    const q = debouncedSearch.trim().toLowerCase();
+    const baseTransactions = !q ? transactions
+      : searchResults ?? transactions.filter(t => `${t.description ?? ''} ${t.category ?? ''}`.toLowerCase().includes(q));
     let filtered = baseTransactions.filter(t => isDateInFilter(t.date, filterPeriod));
 
     const getCat = (t: TransactionDisplay) =>
@@ -192,13 +196,8 @@ export default function useFilters({
 
     // 1. Type Filter (Income/Expense/Savings)
     if (typeFilter !== 'ALL') {
-      filtered = filtered.filter(t => {
-        const cat = getCat(t);
-        if (typeFilter === 'INCOME') return cat?.type === 'income';
-        if (typeFilter === 'EXPENSE') return cat?.type === 'expense';
-        if (typeFilter === 'SAVINGS') return cat?.type === 'savings';
-        return true;
-      });
+      const type = typeFilter.toLowerCase(); // INCOME / EXPENSE / SAVINGS
+      filtered = filtered.filter(t => getCat(t)?.type === type);
     }
 
     // 2. Date Filter
@@ -216,9 +215,6 @@ export default function useFilters({
       } else if (advancedFilterDate.includes(',')) {
         const dateSet = new Set(advancedFilterDate.split(','));
         filtered = filtered.filter(t => dateSet.has(t.date));
-      } else if (advancedFilterDate.includes(':')) {
-        const [start, end] = advancedFilterDate.split(':');
-        filtered = filtered.filter(t => t.date >= start && t.date <= end);
       } else {
         filtered = filtered.filter(t => t.date === advancedFilterDate);
       }

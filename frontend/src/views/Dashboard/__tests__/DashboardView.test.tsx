@@ -25,10 +25,6 @@ vi.mock('@/views/Dashboard/components/MainChart', () => make('chart'));
 vi.mock('@/views/Dashboard/components/TopTransactions', () => make('top'));
 vi.mock('@/views/Dashboard/components/ActivityTimeline', () => make('timeline'));
 vi.mock('@/views/Dashboard/components/CashflowTable', () => make('table'));
-vi.mock('@/views/Dashboard/components/DashboardSkeleton', async () => {
-  const React = await import('react');
-  return { default: () => React.createElement('div', { 'data-testid': 'skeleton' }) };
-});
 
 const tx = { id: 't1', date: '2026-10-05', category: 'ข้าว', description: 'x', amount: 50 };
 const props = (over: Partial<DashboardViewProps> = {}): DashboardViewProps => ({
@@ -59,7 +55,11 @@ afterEach(() => {
 describe('DashboardView', () => {
   it('cold boot (loading, nothing loaded yet) shows the full-page skeleton and no section', () => {
     mount(props({ transactions: [], isLoading: true }));
-    expect(container!.querySelector('[data-testid="skeleton"]')).not.toBeNull();
+    // the real skeleton: placeholders in the page's shape, announced as loading
+    const skeleton = container!.querySelector('[role="status"]')!;
+    expect(skeleton.getAttribute('aria-label')).toBe('กำลังโหลดข้อมูล');
+    expect(skeleton.getAttribute('aria-busy')).toBe('true');
+    expect(skeleton.querySelectorAll('.animate-pulse').length).toBeGreaterThan(4);
     expect(sections()).toHaveLength(0);
   });
 
@@ -68,7 +68,7 @@ describe('DashboardView', () => {
     expect(container!.textContent).toContain('ยังไม่มีข้อมูลสำหรับการวิเคราะห์');
     expect(container!.textContent).toContain('เพิ่มรายการแรก');
     expect(sections()).toHaveLength(0);
-    expect(container!.querySelector('[data-testid="skeleton"]')).toBeNull();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
   });
 
   it('reads top to bottom: summary → budgets → portfolio → proportion → chart + top → timeline → table', () => {
@@ -88,7 +88,7 @@ describe('DashboardView', () => {
     const rerender = mount(props());
     expect(sections().every(s => s.dataset.skeleton === 'false')).toBe(true);
     rerender(props({ isLoading: true, filterPeriod: '2026-11' }));
-    expect(container!.querySelector('[data-testid="skeleton"]')).toBeNull();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
     expect(sections()).toHaveLength(8);
     expect(sections().every(s => s.dataset.skeleton === 'true' && s.dataset.period === '2026-11')).toBe(true);
   });
@@ -96,7 +96,7 @@ describe('DashboardView', () => {
   it('the skeleton gives way to the sections once rows arrive', () => {
     const rerender = mount(props({ transactions: [], isLoading: true }));
     rerender(props({ isLoading: false }));
-    expect(container!.querySelector('[data-testid="skeleton"]')).toBeNull();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
     expect(sections()).toHaveLength(8);
   });
 });

@@ -1,35 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 export interface EditableInputProps {
-  initialValue?: string | number;
-  type?: string;
-  onSave: (val: any) => void;
+  initialValue?: string;
+  onSave: (val: string) => void;
   className?: string;
   placeholder?: string;
 }
 
-export default function EditableInput({
-  initialValue, type = 'text', onSave, className, placeholder
-}: EditableInputProps) {
+/** Text cell that saves on blur / Enter; Esc puts the old text back without saving. */
+export default function EditableInput({ initialValue, onSave, className, placeholder }: EditableInputProps) {
   const [val, setVal] = useState(initialValue ?? '');
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // blur() runs before the Esc reset re-renders, so the blur handler still sees the typed text
+  const cancelled = useRef(false);
 
   useEffect(() => { setVal(initialValue ?? ''); }, [initialValue]);
 
   const handleSave = () => {
-    let finalVal = val;
-    if (type === 'number') { 
-      finalVal = val === '' ? 0 : Number.parseFloat(String(val)) || 0; 
-      setVal(finalVal); 
-    }
-    if (finalVal !== initialValue) onSave(finalVal);
+    if (cancelled.current) { cancelled.current = false; return; }
+    if (val !== (initialValue ?? '')) onSave(val);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      inputRef.current?.blur();
-    }
+    if (e.key === 'Enter') inputRef.current?.blur();
     if (e.key === 'Escape') {
+      cancelled.current = true;
       setVal(initialValue ?? '');
       inputRef.current?.blur();
     }
@@ -38,13 +33,12 @@ export default function EditableInput({
   return (
     <input
       ref={inputRef}
-      type={type}
+      type="text"
       value={val}
       onChange={(e) => setVal(e.target.value)}
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
       className={className}
-      step={type === 'number' ? 'any' : undefined}
       placeholder={placeholder}
     />
   );

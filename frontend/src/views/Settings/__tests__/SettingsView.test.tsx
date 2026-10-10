@@ -388,16 +388,36 @@ describe('SettingsView changing a group', () => {
     expect(props.handleUpdateCashflowGroup).toHaveBeenCalledWith({ ...FOOD, name: 'อาหาร' }, { silent: true });
   });
 
-  it('a refused save puts the old groups back and reports failure', async () => {
+  it('a refused save puts the old value back and reports failure', async () => {
     mount({ handleUpdateCashflowGroup: vi.fn(async () => { throw new Error('400'); }) });
     let ok: boolean | undefined;
     await act(async () => { ok = await change('g-food', 'name', 'อาหาร'); });
     expect(ok).toBe(false);
     const calls = call(props.setCashflowGroups).mock.calls;
     expect(calls).toHaveLength(2);
-    expect(typeof calls[0][0]).toBe('function');
-    expect(calls[1][0]).toEqual(GROUPS);
-    expect(calls[1][0]).not.toBe(GROUPS); // a snapshot copy, taken before the change
+    const optimistic = (calls[0][0] as (p: CashflowGroup[]) => CashflowGroup[])(GROUPS);
+    const rollback = calls[1][0] as (p: CashflowGroup[]) => CashflowGroup[];
+    expect(rollback(optimistic)).toEqual(GROUPS);
+  });
+
+  // แก้กลุ่มหนึ่ง (บันทึกไม่ผ่าน) ระหว่างนั้นแก้อีกช่อง/อีกกลุ่มไปแล้ว: ย้อนแค่ค่าที่บันทึกไม่ผ่าน ไม่ย้อนทั้งรายการ
+  it('a refused save does not undo newer edits of other fields or groups', async () => {
+    mount({ handleUpdateCashflowGroup: vi.fn(async () => { throw new Error('400'); }) });
+    await act(async () => { await change('g-food', 'name', 'อาหาร'); });
+    const rollback = call(props.setCashflowGroups).mock.calls[1][0] as (p: CashflowGroup[]) => CashflowGroup[];
+    const meanwhile = GROUPS.map(g =>
+      g.id === 'g-food' ? { ...g, name: 'อาหาร', color: '#000000' } : g.id === 'g-bills' ? { ...g, name: 'บิลใหม่' } : g);
+    const after = rollback(meanwhile);
+    expect(after.find(g => g.id === 'g-food')).toEqual({ ...FOOD, color: '#000000' });
+    expect(after.find(g => g.id === 'g-bills')!.name).toBe('บิลใหม่');
+  });
+
+  it('a refused save does not undo a newer value of the same field', async () => {
+    mount({ handleUpdateCashflowGroup: vi.fn(async () => { throw new Error('400'); }) });
+    await act(async () => { await change('g-food', 'name', 'ร่าง'); });
+    const rollback = call(props.setCashflowGroups).mock.calls[1][0] as (p: CashflowGroup[]) => CashflowGroup[];
+    const meanwhile = GROUPS.map(g => (g.id === 'g-food' ? { ...g, name: 'สุดท้าย' } : g));
+    expect(rollback(meanwhile).find(g => g.id === 'g-food')!.name).toBe('สุดท้าย');
   });
 
   it('a group that is not in the list is shown as changed but nothing is saved', async () => {

@@ -286,6 +286,97 @@ describe('CashflowTable — hover details', () => {
     act(() => { th.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
     expect(document.querySelector('.fixed.pointer-events-none')).toBeNull();
   });
+
+  const over = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body })); });
+  const out = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
+  const tooltip = () => document.querySelector<HTMLElement>('body > .fixed.pointer-events-none');
+  const at = (el: Element, left: number) => { el.getBoundingClientRect = () => ({ left, top: 40, width: 100, height: 30, right: left + 100, bottom: 70, x: left, y: 40, toJSON() {} }) as DOMRect; };
+
+  it('the group tooltip lists the categories with figures and stays inside the window at both edges', () => {
+    mount();
+    const th = q('thead button[aria-label^="กลุ่มรายจ่าย ที่พัก"]')!.closest('th')!;
+    at(th, 0);
+    over(th);
+    expect(tooltip()!.textContent).toContain('หมวดหมู่ย่อย (2):');
+    expect(tooltip()!.style.left).toBe('118px'); // half its 220px width + 8px in from the left edge
+    expect(tooltip()!.style.top).toBe('34px');
+    out(th);
+    at(th, 1000);
+    over(th);
+    expect(tooltip()!.style.left).toBe(`${window.innerWidth - 118}px`);
+    at(th, 400);
+    over(th);
+    expect(tooltip()!.style.left).toBe('450px');
+  });
+
+  it('hovering a category header shows the category tooltip, clamped the same way', () => {
+    mount();
+    expand('กลุ่มรายจ่าย ที่พัก');
+    const th = q('thead th[title="ค่าไฟ"]')!;
+    at(th, 0);
+    over(th);
+    expect(tooltip()!.textContent).toContain('กลุ่มหลัก:');
+    expect(tooltip()!.textContent).toContain('ค่าไฟ');
+    expect(tooltip()!.textContent).not.toContain('หมวดหมู่ย่อย');
+    expect(tooltip()!.style.left).toBe('98px');
+    out(th);
+    expect(tooltip()).toBeNull();
+    at(th, 1000);
+    over(th);
+    expect(tooltip()!.style.left).toBe(`${window.innerWidth - 98}px`);
+  });
+
+  it('hovering a row lights up its month and expense-total cells', () => {
+    mount();
+    over(rowOf(SEP));
+    expect(monthBtn(SEP).closest('td')!.className).toContain('bg-surface-hover/80');
+    expect(rowOf(SEP).querySelectorAll('td')[4].className).toContain('text-accent-ink');
+    out(rowOf(SEP));
+    expect(rowOf(SEP).querySelectorAll('td')[4].className).not.toContain('text-accent-ink');
+  });
+});
+
+describe('CashflowTable — income categories', () => {
+  const withBonus = () => {
+    const a = analytics([month('2026-08', 30_000, 8_000, 4_000), month('2026-09', 35_000, 9_000, 5_000), month('2026-10', 32_000, 8_000, 0)]);
+    a.monthlyCatMap['c-salary'] = { '2026-08': 30_000, '2026-09': 30_000, '2026-10': 32_000 };
+    (a.monthlyCatMap as Record<string, Record<string, number>>)['c-bonus'] = { '2026-09': 5_000 };
+    set({
+      analytics: a,
+      categories: [...categories, { id: 'c-bonus', name: 'โบนัส', cashflow_group_id: 'g-inc' }],
+      transactions: [...transactions, tx('b2', '2026-09-26', 'c-bonus', 5_000)],
+    });
+  };
+
+  it('expanding an income group shows its categories with their own figures and totals', () => {
+    withBonus();
+    mount();
+    expand('กลุ่มรายรับ เงินเดือน');
+    expect(q('thead th[title="เงินเดือน"]')).not.toBeNull();
+    expect(q('thead th[title="โบนัส"]')).not.toBeNull();
+    expect(cells(SEP).slice(1, 4)).toEqual(['35,000.00', '30,000.00', '5,000.00']);
+    expect(footer().slice(1, 4)).toEqual(['97,000.00', '92,000.00', '5,000.00']);
+  });
+
+  it('excluding an income category takes it out of the income figure, the net and the footer', () => {
+    withBonus();
+    mount();
+    expand('กลุ่มรายรับ เงินเดือน');
+    click(q('thead button[title="ยกเว้นหมวด โบนัส จากการคำนวณ"]'));
+    expect(cells(SEP)[1]).toBe('30,000.00');
+    expect(summary(SEP)[1]).toBe('16,000.00');
+    expect(footer()[1]).toBe('92,000.00');
+    expect(q('thead th[title="โบนัส"]')!.className).toContain('opacity-30');
+  });
+
+  it('excluding the income group fades its category columns in the header and the footer', () => {
+    withBonus();
+    mount();
+    expand('กลุ่มรายรับ เงินเดือน');
+    click(q('thead button[title="ยกเว้นกลุ่ม เงินเดือน จากการคำนวณ"]'));
+    expect(q('thead th[title="โบนัส"]')!.className).toContain('opacity-30');
+    expect([...container!.querySelectorAll('tfoot td')][3].className).toContain('line-through');
+  });
 });
 
 describe('CashflowTable — pay-cycle mode', () => {

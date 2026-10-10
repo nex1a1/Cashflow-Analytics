@@ -1,13 +1,14 @@
 // src/hooks/useAnalytics.js
 import { useMemo } from 'react';
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '../types';
-import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj, toISODate } from '../utils/dateHelpers';
+import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj } from '../utils/dateHelpers';
 import { 
   createCategoryMap, 
   generateMainChartData, 
   calculateDayTypeCounts 
 } from '../utils/analyticsHelpers';
 import { calculateGhostPacerData } from '../utils/ghostPacerHelpers';
+import { BUDGET_RULES, WARN_AT } from '../views/Dashboard/components/SummaryCards/helpers';
 import { calculateAllocationEvolution } from '../utils/allocationEvolutionHelpers';
 import { isCyclePeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso } from '../utils/payCycle';
 
@@ -69,18 +70,15 @@ function accumulateSubscriptionTotals(t: any, amt: number, catName: string, catI
   });
 }
 
-function matchesDashboardFilter(catId: string, catName: string, isNeed: boolean, activeFilters: string[]) {
-  if (activeFilters.includes('ALL')) return true;
-  if (activeFilters.includes('FIXED') && isNeed) return true;
-  if (activeFilters.includes('VARIABLE') && !isNeed) return true;
-  if (activeFilters.includes(catId) || activeFilters.includes(catName)) return true;
-  return false;
+// dashboardCategory is ['ALL'] or a list of category ids / names (MainChart category filter)
+function matchesDashboardFilter(catId: string, catName: string, activeFilters: string[]) {
+  return activeFilters.includes('ALL') || activeFilters.includes(catId) || activeFilters.includes(catName);
 }
 
 function accumulateFilteredExpense(t: any, txContext: any, ym: string, isoDate: string, state: any) {
   const { amt, catId, aType, isWant, cGroup, groupObj } = txContext;
   const {
-    dailyAllMap, monthlyAllMap, chartTx, catMapData, wantCatMapData,
+    dailyAllMap, monthlyAllMap, catMapData, wantCatMapData,
     dailyCatMap, monthlyCatMap, allocTotals, dailyAllocMap, monthlyAllocMap,
     allocGroupsMap, groupTotals,
   } = state;
@@ -88,7 +86,6 @@ function accumulateFilteredExpense(t: any, txContext: any, ym: string, isoDate: 
   dailyAllMap[isoDate] = (dailyAllMap[isoDate] || 0) + amt;
   monthlyAllMap[ym] = (monthlyAllMap[ym] || 0) + amt;
   state.chartTotal += amt;
-  chartTx.push(t);
 
   catMapData[catId] = (catMapData[catId] || 0) + amt;
   if (isWant) {
@@ -153,37 +150,6 @@ function accumulateDayOfWeekStats(amt: number, isoDate: string, isFood: boolean,
   }
 }
 
-function calculateSparklines({ useBackendTotals, summaryData, isSingleMonthView, datesInPeriod, dayIncomeMap, dayExpenseMap, sortedMonthsKeys, cashflowMap }: any) {
-  const sparklineIncome: number[] = [];
-  const sparklineExpense: number[] = [];
-  const sparklineNet: number[] = [];
-
-  if (useBackendTotals && summaryData.monthly && !isSingleMonthView) {
-    summaryData.monthly.forEach((m: any) => {
-      sparklineIncome.push(m.income);
-      sparklineExpense.push(m.expense);
-      sparklineNet.push(m.income - m.expense);
-    });
-  } else if (isSingleMonthView) {
-    datesInPeriod.forEach((d: string) => {
-      const inc = dayIncomeMap[d] || 0;
-      const exp = dayExpenseMap[d] || 0;
-      sparklineIncome.push(inc);
-      sparklineExpense.push(exp);
-      sparklineNet.push(inc - exp);
-    });
-  } else {
-    sortedMonthsKeys.forEach((m: string) => {
-      const inc = cashflowMap[m].income;
-      const exp = cashflowMap[m].totalExp;
-      sparklineIncome.push(inc);
-      sparklineExpense.push(exp);
-      sparklineNet.push(inc - exp);
-    });
-  }
-  return { sparklineIncome, sparklineExpense, sparklineNet };
-}
-
 function calculateForecastingDetails({
   isCurrentMonth,
   datesInPeriod,
@@ -224,19 +190,22 @@ function calculateForecastingDetails({
   const daysToBudget = Math.max(1, remainingDays); // never divide by 0
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
+  // Warn before the deficit: at this pace, does the month still end with the leftover target (BUDGET_RULES, same as the grade)?
+  // ("rate > safe-to-spend" is the same condition as "projected deficit", so it could never warn early.)
+  const target = BUDGET_RULES.surplus.min;
   let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
   if (projectedSurplus < 0) {
     paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
-  } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend * 1.15) {
+  } else if (projectedSurplusPct < target) {
     paceStatus = { code: 'OVER_PACING', label: 'ใช้เร็วเกินแผน', color: tc('warn'), bg: 'bg-amber-950/30' };
-  } else if (safeToSpend > 0 && dailyLivingRunRate > safeToSpend) {
+  } else if (projectedSurplusPct < target / WARN_AT) {
     paceStatus = { code: 'MODERATE', label: 'ใกล้เพดาน', color: tc('info'), bg: 'bg-blue-950/30' };
   }
 
   let eomStatus = { code: 'EXCELLENT', label: 'เหลือเงินมาก', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
   if (projectedSurplus < 0) {
     eomStatus = { code: 'DEFICIT', label: 'เสี่ยงติดลบ', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
-  } else if (projectedSurplusPct < 5) {
+  } else if (projectedSurplusPct < target) {
     eomStatus = { code: 'TIGHT', label: 'เหลือน้อย', color: tc('warn'), bg: 'bg-amber-950/40', border: 'border-amber-500' };
   } else if (projectedSurplusPct < 20) {
     eomStatus = { code: 'STABLE', label: 'พอดีตัว', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
@@ -330,7 +299,7 @@ function resolveFallbackGroupId(cGroupId: string | undefined, isInc: boolean, is
 function checkExpenseFilterPass(isNeed: boolean, isWant: boolean, hideFixedExpenses: boolean, hideWantExpenses: boolean, catId: string, catName: string, activeFilters: string[]) {
   if (hideFixedExpenses && isNeed) return false;
   if (hideWantExpenses && isWant) return false;
-  return matchesDashboardFilter(catId, catName, isNeed, activeFilters);
+  return matchesDashboardFilter(catId, catName, activeFilters);
 }
 
 function accumulateExpenseItem({ t, txContext, ym, isoDate, isFood, isRent, isSubscription, hideFixedExpenses, hideWantExpenses, activeFilters, totals, cashflowMap, dayExpenseMap, stateRef, cGroup }: any) {
@@ -400,19 +369,8 @@ function processAnalyticsTx({
   return { isFood, isRent, isSubscription };
 }
 
-function filterCategoriesByDashboard(categories: Category[], cashflowGroups: CashflowGroup[], activeFilters: string[]) {
-  if (activeFilters.includes('ALL')) return categories;
-  return categories.filter((c: any) => {
-    const catGroupObj = cashflowGroups?.find((g: any) => g.id === c.cashflow_group_id) || {};
-    const isNeedCat = (c.allocation_type || (catGroupObj as any).allocation_type) === 'need';
-    const isWantCat = (c.allocation_type || (catGroupObj as any).allocation_type) === 'want';
-    if (activeFilters.includes('FIXED') && isNeedCat) return true;
-    if (activeFilters.includes('VARIABLE') && isWantCat) return true;
-    return activeFilters.includes(c.id) || activeFilters.includes(c.name);
-  });
-}
-
-function buildSortedCategories(catMapData: any, catMapLookup: any, chartTotal: number, filteredCats: any[]) {
+// catMapData already holds only rows that passed the dashboard filter; rows of a deleted category are left out
+function buildSortedCategories(catMapData: any, catMapLookup: any, chartTotal: number, categories: Category[]) {
   return Object.entries(catMapData)
     .map(([catId, amount]: [string, any]) => {
       const catObj = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'package', color: tc('ink-body'), order_index: 999 };
@@ -427,7 +385,7 @@ function buildSortedCategories(catMapData: any, catMapLookup: any, chartTotal: n
         order_index: catObj.order_index ?? 999
       };
     })
-    .filter((c: any) => filteredCats.some((fc: any) => fc.id === c.id))
+    .filter((c: any) => categories.some(fc => fc.id === c.id))
     .sort((a: any, b: any) => b.amount - a.amount);
 }
 
@@ -483,16 +441,7 @@ function buildGroupBreakdown(
     }))
     .sort((a: any, b: any) => (a.order_index - b.order_index) || (b.amount - a.amount));
 
-  const groupChartData = {
-    labels: sortedGroups.map((g: any) => g.name),
-    datasets: [{
-      data: sortedGroups.map((g: any) => g.amount),
-      backgroundColor: sortedGroups.map((g: any) => g.color),
-      borderWidth: 2, borderColor: tc('line'),
-    }],
-  };
-
-  return { sortedGroups, groupChartData };
+  return { sortedGroups };
 }
 
 function buildAllocationBreakdown(
@@ -518,9 +467,9 @@ function buildAllocationBreakdown(
   const totalSavingsActual = explicitSavings + unspentSurplus;
 
   const allocationItems = [
-    { id: 'needs', name: 'Needs (Essential)', amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
-    { id: 'wants', name: 'Wants (Lifestyle)', amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'Savings & Net', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
+    { id: 'needs', name: 'NEED', amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
+    { id: 'wants', name: 'WANT', amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
+    { id: 'savings', name: 'SAVE', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
@@ -533,16 +482,7 @@ function buildAllocationBreakdown(
     percentage: allocationTotal > 0 ? ((item.amount / allocationTotal) * 100).toFixed(1) : 0
   }));
 
-  const allocationChartData = {
-    labels: sortedAllocation.map((i: any) => i.name),
-    datasets: [{
-      data: sortedAllocation.map((i: any) => i.amount),
-      backgroundColor: sortedAllocation.map((i: any) => i.color),
-      borderWidth: 2, borderColor: tc('line'),
-    }],
-  };
-
-  return { sortedAllocation, allocationChartData };
+  return { sortedAllocation };
 }
 
 function calculateWorkdayAndHolidayStats(datesInPeriod: string[], totals: any) {
@@ -781,7 +721,6 @@ function createInitialAnalyticsState() {
   const monthlyCatMap: Record<string, Record<string, number>> = {};
   const dailyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
   const monthlyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
-  const chartTx: any[] = [];
   const globalDailySum: Record<string, number> = {};
   const prevTotals = { income: 0, expense: 0, net: 0, txCount: 0 };
   const forecastRef = { expenseUpToToday: 0, variableUpToToday: 0, foodUpToToday: 0, rentUpToToday: 0 };
@@ -793,7 +732,6 @@ function createInitialAnalyticsState() {
     groupTotals,
     dailyAllMap,
     monthlyAllMap,
-    chartTx,
     catMapData,
     wantCatMapData,
     dailyCatMap,
@@ -821,7 +759,6 @@ function createInitialAnalyticsState() {
     monthlyCatMap,
     dailyAllocMap,
     monthlyAllocMap,
-    chartTx,
     globalDailySum,
     prevTotals,
     forecastRef,
@@ -846,7 +783,7 @@ function executeTransactionAggregation({
   const { globalDailySum, prevTotals, uniqueMonthsSet, cashflowMap, dayIncomeMap, dayExpenseMap, stateRef, totals, forecastRef } = state;
 
   transactions.forEach((t: any) => {
-    const isoDate = toISODate(t.date);
+    const isoDate = t.date;
     if (!isoDate) return;
 
     const txContext = resolveTransactionContext(t, catMapLookup, cashflowGroups, fallbackExpId);
@@ -910,10 +847,9 @@ function calculateGlobalMaxThreshold(globalDailySum: Record<string, number>) {
 
 function calculateSavingsMetrics(totals: any, uniqueMonthsSet: any) {
   const actualSavings = totals.income - totals.expense;
-  const explicitSavings = totals.savings || 0;
   const numMonths = uniqueMonthsSet.size || 1;
   const savingsRate = totals.income > 0 ? Number.parseFloat(((actualSavings / totals.income) * 100).toFixed(1)) : 0;
-  return { actualSavings, explicitSavings, numMonths, savingsRate };
+  return { numMonths, savingsRate };
 }
 
 function calculateFinancialPercentages(totals: any) {
@@ -923,8 +859,6 @@ function calculateFinancialPercentages(totals: any) {
     foodPercentage: hasExp ? ((totals.food / totals.expense) * 100).toFixed(1) : 0,
     foodPctOfIncome: hasInc ? ((totals.food / totals.income) * 100).toFixed(1) : 0,
     rentPercentage: hasInc ? ((totals.rent / totals.income) * 100).toFixed(1) : 0,
-    fixedPercentage: hasExp ? ((totals.fixed / totals.expense) * 100).toFixed(1) : 0,
-    variablePercentage: hasExp ? ((totals.variable / totals.expense) * 100).toFixed(1) : 0,
     subscriptionPercentage: hasExp ? ((totals.subscription / totals.expense) * 100).toFixed(1) : 0,
     subscriptionPctOfIncome: hasInc ? ((totals.subscription / totals.income) * 100).toFixed(1) : 0,
   };
@@ -939,7 +873,6 @@ export interface UseAnalyticsProps {
   hideWantExpenses?: boolean;
   dashboardCategory?: string | string[];
   chartGroupBy?: string;
-  topXLimit?: number;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
   summaryData?: any;
@@ -954,7 +887,6 @@ export default function useAnalytics({
   hideWantExpenses = false,
   dashboardCategory = 'ALL', 
   chartGroupBy = 'monthly',
-  topXLimit = 7,
   dayTypes,
   dayTypeConfig,
   summaryData
@@ -998,13 +930,12 @@ export default function useAnalytics({
     }
 
     const netCashflow = totals.income - totals.expense;
-    const { actualSavings, explicitSavings, numMonths, savingsRate } = calculateSavingsMetrics(totals, uniqueMonthsSet);
+    const { numMonths, savingsRate } = calculateSavingsMetrics(totals, uniqueMonthsSet);
 
-    const filteredCats = filterCategoriesByDashboard(categories, cashflowGroups, activeFilters);
-    const sortedCats = buildSortedCategories(state.catMapData, catMapLookup, chartTotal, filteredCats);
+    const sortedCats = buildSortedCategories(state.catMapData, catMapLookup, chartTotal, categories);
 
-    const { sortedGroups, groupChartData } = buildGroupBreakdown(state.catMapData, catMapLookup, state.groupTotals, cashflowGroups, numMonths, chartTotal);
-    const { sortedAllocation, allocationChartData } = buildAllocationBreakdown(state.allocTotals, state.allocGroupsMap, totals, netCashflow);
+    const { sortedGroups } = buildGroupBreakdown(state.catMapData, catMapLookup, state.groupTotals, cashflowGroups, numMonths, chartTotal);
+    const { sortedAllocation } = buildAllocationBreakdown(state.allocTotals, state.allocGroupsMap, totals, netCashflow);
 
     if (useBackendTotals && !windowMeta.isSingleMonthView) {
       applyBackendMonthlyCashflow(cashflowMap, summaryData);
@@ -1069,8 +1000,8 @@ export default function useAnalytics({
 
     return {
       catMapLookup, windowMeta, datesInPeriod, state, totals, prevTotals,
-      netCashflow, actualSavings, explicitSavings, savingsRate, numMonths, chartTotal,
-      sortedCats, sortedGroups, groupChartData, sortedAllocation, allocationChartData,
+      netCashflow, savingsRate, numMonths, chartTotal,
+      sortedCats, sortedGroups, sortedAllocation,
       sortedCashflow, sortedMonthsKeys, cashflowMap,
       globalMaxThreshold, dayTypeCounts,
       foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
@@ -1083,21 +1014,12 @@ export default function useAnalytics({
   }, [transactions, filterPeriod, categories, cashflowGroups, hideFixedExpenses, hideWantExpenses, dashboardCategory, dayTypes, dayTypeConfig, summaryData]);
 
   // ── Phase 2: Chart & Sparkline Generation ─────────────────────────
-  // Re-runs only when chart display settings change (chartGroupBy, topXLimit)
+  // Re-runs only when chart display settings change (chartGroupBy)
   const chartAndPresentation = useMemo(() => {
     const {
       catMapLookup, windowMeta, datesInPeriod, state, sortedCats,
       sortedMonthsKeys, cashflowMap, useBackendTotals,
     } = coreAggregation;
-
-    const catChartData = {
-      labels: sortedCats.map((c: any) => c.name),
-      datasets: [{
-        data: sortedCats.map((c: any) => c.amount),
-        backgroundColor: sortedCats.map((c: any) => c.color),
-        borderWidth: 2, borderColor: tc('line'),
-      }],
-    };
 
     const { chartData: mainChartData, chartType: mainChartType } = generateMainChartData({
       chartGroupBy: chartGroupBy as any, filterPeriod, sortedMonthsKeys, cashflowMap,
@@ -1105,21 +1027,8 @@ export default function useAnalytics({
       dashboardCategory, monthlyAllMap: state.monthlyAllMap, monthlyCatMap: state.monthlyCatMap, dailyCatMap: state.dailyCatMap, catMap: catMapLookup
     });
 
-    const { sparklineIncome, sparklineExpense, sparklineNet } = calculateSparklines({
-      useBackendTotals,
-      summaryData,
-      isSingleMonthView: windowMeta.isSingleMonthView,
-      datesInPeriod,
-      dayIncomeMap: state.dayIncomeMap,
-      dayExpenseMap: state.dayExpenseMap,
-      sortedMonthsKeys,
-      cashflowMap,
-    });
-
-    const topTransactions = [...state.chartTx].sort((a: any, b: any) => b.amount - a.amount).slice(0, topXLimit);
-
-    return { catChartData, mainChartData, mainChartType, sparklineIncome, sparklineExpense, sparklineNet, topTransactions };
-  }, [coreAggregation, chartGroupBy, topXLimit, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory, summaryData]);
+    return { mainChartData, mainChartType };
+  }, [coreAggregation, chartGroupBy, filterPeriod, hideFixedExpenses, hideWantExpenses, dashboardCategory]);
 
   // ── Phase 3: Final Analytics Assembly ─────────────────────────────
   const analytics = useMemo(() => {
@@ -1135,10 +1044,9 @@ export default function useAnalytics({
       ghostPacerDetails: core.ghostPacerDetails,
       allocationEvolution: core.allocationEvolution,
       prevTotals: core.prevTotals, totalExpense: core.totals.expense, totalIncome: core.totals.income,
-      totalSavings: core.totals.savings || 0, actualSavings: core.actualSavings, explicitSavings: core.explicitSavings,
+      totalSavings: core.totals.savings || 0,
       netCashflow: core.netCashflow, savingsRate: core.savingsRate, chartTotal: core.chartTotal, numMonths: core.numMonths,
       sortedCats: core.sortedCats,
-      topTransactions: charts.topTransactions,
       dailyAvg: core.adjustedDailyAvg,
       foodTotal: core.totals.food, foodDailyAvg: core.adjustedFoodDailyAvg,
       foodPercentage: core.pcts.foodPercentage,
@@ -1152,24 +1060,18 @@ export default function useAnalytics({
       subscriptionPercentage: core.pcts.subscriptionPercentage,
       subscriptionPctOfIncome: core.pcts.subscriptionPctOfIncome,
       subscriptionSub: core.totals.subscriptionSub,
-      subscriptionItems: core.totals.subscriptionItems,
       topSubscriptionServices: core.topSubscriptionServices,
       rentTotal: core.totals.rent,
       rentPercentage: core.pcts.rentPercentage,
       rentSub: core.totals.rentSub,
       fixedTotal: core.totals.fixed, variableTotal: core.totals.variable,
-      fixedPercentage: core.pcts.fixedPercentage,
-      variablePercentage: core.pcts.variablePercentage,
-      sparklineIncome: charts.sparklineIncome, sparklineExpense: charts.sparklineExpense, sparklineNet: charts.sparklineNet,
-      weekendTotal: core.totals.weekend, weekdayTotal: core.totals.weekday,
       globalMaxThreshold: core.globalMaxThreshold, datesInPeriod: core.datesInPeriod, filterPeriod, dayTypeCounts: core.dayTypeCounts,
-      dailyAllMap: core.state.dailyAllMap, monthlyAllMap: core.state.monthlyAllMap,
-      dailyAllocMap: core.state.dailyAllocMap, monthlyAllocMap: core.state.monthlyAllocMap,
+      dailyAllMap: core.state.dailyAllMap,
       sortedMonthsKeys: core.sortedMonthsKeys, monthlyCatMap: core.state.monthlyCatMap, dailyCatMap: core.state.dailyCatMap,
-      catChartData: charts.catChartData, mainChartData: charts.mainChartData, mainChartType: charts.mainChartType,
+      mainChartData: charts.mainChartData, mainChartType: charts.mainChartType,
       sortedCashflow: core.sortedCashflow,
-      sortedGroups: core.sortedGroups, groupChartData: core.groupChartData,
-      sortedAllocation: core.sortedAllocation, allocationChartData: core.allocationChartData
+      sortedGroups: core.sortedGroups,
+      sortedAllocation: core.sortedAllocation
     };
   }, [coreAggregation, chartAndPresentation, filterPeriod]);
 

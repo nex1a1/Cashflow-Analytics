@@ -1,7 +1,6 @@
 // src/views/Dashboard/components/CashflowTable/useFilteredMaps.ts
 import { useMemo } from 'react';
 import { CashflowGroup, Category, TransactionDisplay } from '@/types';
-import { toISODate } from '@/utils/dateHelpers';
 import { Analytics, MonthlyMap, MonthRow } from './types';
 
 interface UseFilteredMapsParams {
@@ -80,8 +79,7 @@ export function useFilteredMaps({
 
       const dateStr = (t as { date?: string }).date;
       if (!dateStr) return;
-      const iso = toISODate(dateStr);
-      const ym = keyFn ? keyFn(iso) : iso.substring(0, 7);
+      const ym = keyFn ? keyFn(dateStr) : dateStr.substring(0, 7);
       const amt = (t as { amount?: number }).amount || 0;
 
       if (catMap[catId]?.[ym] !== undefined) catMap[catId][ym] += amt;

@@ -1,26 +1,17 @@
 import { THAI_MONTHS_SHORT } from './formatters';
-import { isCyclePeriod, isSingleUnitPeriod, stripCycle, PAY_DAY } from './payCycle';
+import { isSingleUnitPeriod, stripCycle } from './payCycle';
 
 export const DAY_LABELS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as const;
 
-export function splitDateValue(v: string): string[] {
-  if (!v) return [];
-  if (v.includes(',')) return v.split(',').filter(Boolean);
-  if (v.includes(':')) return v.split(':').filter(Boolean);
-  return [v];
-}
+export const splitDateValue = (v: string): string[] => (v ? v.split(',') : []);
 
 export function parseValue(v?: string | null, filterPeriod?: string | null): Date {
-  if (v && v !== 'ALL' && v !== 'WEEKDAY' && v !== 'WEEKEND') {
-    const targetStr = splitDateValue(v)[0];
-    if (targetStr) {
-      const [y, m, d] = targetStr.split('-').map(Number);
-      if (y && m && d) return new Date(y, m - 1, d);
-    }
-  }
+  // ALL / WEEKDAY / WEEKEND are not dates (NaN), so they fall through to the period
+  const [y, m, d] = splitDateValue(v ?? '')[0]?.split('-').map(Number) ?? [];
+  if (y && m && d) return new Date(y, m - 1, d);
   if (filterPeriod && isSingleUnitPeriod(filterPeriod)) {
-    const [py, pm] = stripCycle(filterPeriod).split('-').map(Number);
-    return new Date(py, pm - 1, isCyclePeriod(filterPeriod) ? PAY_DAY : 1);
+    const [py, pm] = stripCycle(filterPeriod).split('-').map(Number); // a pay cycle opens on its salary month
+    return new Date(py, pm - 1, 1);
   }
   return new Date();
 }
@@ -102,27 +93,31 @@ export function formatDisplay(v?: string | null, placeholder = 'เลือก�
   }
 
   const ranges = groupContiguousDates(rawDates);
-  if (ranges.length === 1) {
-    const r = ranges[0];
-    const [y1, m1, d1] = r[0].split('-').map(Number);
-    const lastDate = r[r.length - 1];
-    const [, , d2] = (lastDate || '').split('-').map(Number);
-    if (d1 === d2) return `${d1} ${THAI_MONTHS_SHORT[m1 - 1]} ${y1}`;
-    return `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} ${y1}`;
-  }
-
-  const summaryParts = ranges.map(r => {
-    const [, , d1] = r[0].split('-').map(Number);
-    const lastDate = r[r.length - 1];
-    const [, , d2] = (lastDate || '').split('-').map(Number);
-    return d1 === d2 ? `${d1}` : `${d1}-${d2}`;
-  });
-
+  const first = ranges[0][0];
   const lastRange = ranges[ranges.length - 1];
-  const lastDateStr = lastRange ? lastRange[lastRange.length - 1] : '';
-  const [, lm] = (lastDateStr || '').split('-').map(Number);
+  const last = lastRange[lastRange.length - 1];
+  if (ranges.length === 1) {
+    const [y1, y2] = [first.slice(0, 4), last.slice(0, 4)];
+    return y1 === y2 ? `${formatRangeLabel(ranges[0])} ${y1}` : `${dayMonth(first)} ${y1} - ${dayMonth(last)} ${y2}`;
+  }
+  // All in one month: name it once ("1, 3-5 ก.ย."); otherwise every range carries its own month
+  if (first.slice(0, 7) === last.slice(0, 7)) {
+    const days = ranges.map(r => r.length === 1 ? `${dayOf(r[0])}` : `${dayOf(r[0])}-${dayOf(r[r.length - 1])}`);
+    return `${days.join(', ')} ${THAI_MONTHS_SHORT[Number(last.slice(5, 7)) - 1]}`;
+  }
+  return ranges.map(r => formatRangeLabel(r, '-')).join(', ');
+}
 
-  return `${summaryParts.join(', ')} ${THAI_MONTHS_SHORT[(lm || 1) - 1]}`;
+const dayOf = (s: string) => Number(s.slice(8, 10));
+const dayMonth = (s: string) => `${dayOf(s)} ${THAI_MONTHS_SHORT[Number(s.slice(5, 7)) - 1]}`;
+
+/** One contiguous run of YYYY-MM-DD: "13 ก.ย." · "13 - 15 ก.ย." · "31 ม.ค. - 1 ก.พ." */
+export function formatRangeLabel(range: string[], sep = ' - '): string {
+  const first = range[0];
+  const last = range[range.length - 1];
+  if (range.length === 1) return dayMonth(first);
+  if (first.slice(0, 7) === last.slice(0, 7)) return `${dayOf(first)}${sep}${dayMonth(last)}`;
+  return `${dayMonth(first)}${sep}${dayMonth(last)}`;
 }
 
 export const MIN_YEAR = 2000;

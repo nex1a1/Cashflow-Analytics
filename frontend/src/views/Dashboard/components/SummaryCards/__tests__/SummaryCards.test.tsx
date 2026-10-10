@@ -208,6 +208,36 @@ describe('SummaryStrategic — rule cards', () => {
     expect(overBadges()).toBe(1);
   });
 
+  it('lifestyle: the top 4 want categories with their share; one fills the row, 2–3 add the total, 4 fill the grid', () => {
+    const want = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `w${i}`, name: `ตามใจ${i}`, icon: 'gift', amount: 1_000 * (n - i), pctOfWant: 10 * (n - i) }));
+    const lifestyle = () => card('รายจ่ายตามใจ');
+    show({ topWantCategories: want(5) });
+    expect(lifestyle().textContent).toContain('ตามใจ3');
+    expect(lifestyle().textContent).not.toContain('ตามใจ4'); // only four
+    expect(lifestyle().textContent).toContain('(50%)');
+    expect(lifestyle().textContent).not.toContain('รวมรายจ่ายตามใจ');
+    act(() => root!.unmount()); container!.remove();
+    show({ topWantCategories: want(3) });
+    expect(lifestyle().textContent).toContain('รวมรายจ่ายตามใจ฿6,000.00(100%)');
+    act(() => root!.unmount()); container!.remove();
+    show({ topWantCategories: want(2) });
+    expect(lifestyle().textContent).toContain('รวมรายจ่ายตามใจ฿6,000.00');
+    expect(lifestyle().textContent).not.toContain('(100%)');
+    act(() => root!.unmount()); container!.remove();
+    show({ topWantCategories: want(1) });
+    expect(lifestyle().querySelector('.col-span-2')!.textContent).toContain('ตามใจ0');
+    expect(lifestyle().textContent).not.toContain('รวมรายจ่ายตามใจ');
+    act(() => root!.unmount()); container!.remove();
+    show({ topWantCategories: undefined });
+    expect(lifestyle().textContent).toContain('ไม่มีรายจ่ายตามใจ');
+  });
+
+  it('lifestyle: over 30% of income is danger and flagged', () => {
+    show({ variableTotal: 10_000 });
+    expect(card('รายจ่ายตามใจ').className).toContain('border-l-danger');
+    expect(card('รายจ่ายตามใจ').textContent).toContain('เกินเกณฑ์');
+  });
+
   it('rent: exactly at the limit is not over, and costs nothing in the grade', () => {
     show({ rentPercentage: 30 });
     expect(overBadges()).toBe(0);
@@ -394,6 +424,11 @@ describe('SummaryStrategic — tabs', () => {
     expect(document.activeElement).toBe(tabs[2]);
     key(tabs[2], 'Home');
     expect(document.activeElement).toBe(tabs[0]);
+    key(tabs[0], 'Enter'); // not a move key
+    expect(document.activeElement).toBe(tabs[0]);
+    act(() => tabs[0].blur());
+    key(q('[role="tablist"]')!, 'ArrowRight'); // focus is not on a tab: nothing to move
+    expect(document.activeElement).toBe(document.body);
   });
 });
 
@@ -429,6 +464,9 @@ describe('SummaryForecasting — end of month forecast', () => {
     expect(t).toContain('+฿10,000.00');
     expect(t).toContain('คุมงบได้ตามเป้า');
     expect(t).not.toContain('ต้องลดอีก');
+    // the projected leftover is money left, not savings (SAVE means investing only)
+    expect(t).toContain('เหลือ 33%');
+    expect(t).not.toContain('ออม 33%');
   });
 
   it('over the ceiling: says how much to cut per day and in total, and the surplus turns negative', () => {

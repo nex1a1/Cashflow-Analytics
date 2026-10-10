@@ -9,7 +9,7 @@ import { CashflowTableFooter } from './CashflowTableFooter';
 import { GroupTooltip } from './GroupTooltip';
 import { useFilteredMaps } from './useFilteredMaps';
 import { CommonTableProps, HoveredGroupState, MonthRow } from './types';
-import { isDateInFilter, toISODate } from '@/utils/dateHelpers';
+import { isDateInFilter } from '@/utils/dateHelpers';
 import { isCyclePeriod, toCycleKey, cycleRange, localTodayIso } from '@/utils/payCycle';
 
 const EMPTY_SET: Set<string> = new Set();
@@ -24,7 +24,7 @@ export default function CashflowTable() {
     if (!isCycleMode || !analytics?.sortedCashflow) return EMPTY_SET;
     let firstDate = '';
     transactions.forEach((t) => {
-      const iso = toISODate(t.date);
+      const iso = t.date;
       if (iso && isDateInFilter(iso, filterPeriod) && (!firstDate || iso < firstDate)) firstDate = iso;
     });
     const today = localTodayIso();

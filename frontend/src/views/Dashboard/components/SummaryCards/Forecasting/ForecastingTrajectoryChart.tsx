@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
-import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
+import { formatBaht, formatBahtShort } from '@/utils/formatters';
 
 import { tc, FONT_MONO } from '@/constants/theme';
 interface TrajectoryChartProps {
@@ -11,7 +11,6 @@ interface TrajectoryChartProps {
   projectedExpense: number;
   projectedSurplus: number;
   actualDailySeries: number[];
-  paceColor?: string;
 }
 
 export const ForecastingTrajectoryChart = memo(({
@@ -24,7 +23,7 @@ export const ForecastingTrajectoryChart = memo(({
   projectedSurplus,
   actualDailySeries,
 }: TrajectoryChartProps) => {
-  const spentToDate = actualDailySeries && actualDailySeries.length > 0
+  const spentToDate = actualDailySeries.length > 0
     ? actualDailySeries[actualDailySeries.length - 1]
     : (fixedTotal + variableUpToToday);
   const ceiling = Math.max(1, maxAllowedExpense);
@@ -159,10 +158,10 @@ export const ForecastingTrajectoryChart = memo(({
     let dailyAmount = 0;
 
     if (!isFuture) {
-      cumulative = actualDailySeries && actualDailySeries.length >= day
+      cumulative = actualDailySeries.length >= day
         ? actualDailySeries[day - 1]
         : (day === curDayClamped ? spentToDate : 0);
-      const prevCumulative = day > 1 && actualDailySeries && actualDailySeries.length >= day - 1
+      const prevCumulative = day > 1 && actualDailySeries.length >= day - 1
         ? actualDailySeries[day - 2]
         : 0;
       dailyAmount = Math.max(0, cumulative - prevCumulative);
@@ -175,7 +174,7 @@ export const ForecastingTrajectoryChart = memo(({
 
     const x = getX(day);
     const y = getY(cumulative);
-    const pctOfCeiling = ceiling > 0 ? (cumulative / ceiling) * 100 : 0;
+    const pctOfCeiling = (cumulative / ceiling) * 100;
 
     hoverData = {
       day,
@@ -490,19 +489,23 @@ export const ForecastingTrajectoryChart = memo(({
 
           {/* 10. Bottom Axis Timeline Ticks */}
           <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke={tc('line')} strokeWidth="1" />
-          <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
+          {xToday - padL > 90 && (
+            <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
+          )}
           <text x={xToday} y={padT + plotH + 12} fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle" fontWeight="bold">
             Day {curDayClamped} (วันนี้)
           </text>
-          <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-            Day {totalDays}
-          </text>
+          {xEOM - xToday > 100 && (
+            <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
+              Day {totalDays}
+            </text>
+          )}
 
           {/* 10b. Mid-axis Day Number Ticks (5, 10, 15…) */}
           {dayTicks.map((d) => {
             const x = getX(d);
             if (x < padL + 16 || x > xEOM - 16) return null;
-            if (Math.abs(x - xToday) < 22) return null;
+            if (Math.abs(x - xToday) < 60) return null; // "Day N (วันนี้)" is ~95px wide, centered on today
             return (
               <g key={d}>
                 <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke={tc('ink-muted')} strokeWidth="1" />

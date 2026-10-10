@@ -147,16 +147,12 @@ export const getFilterLabel = (period: string): string => {
   return period;
 };
 
-export const hexToRgb = (hexStr: string | null | undefined = tc('ink-body')): string => {
-    if (!hexStr || typeof hexStr !== 'string') return '148, 163, 184';
-    const raw = hexStr.replace('#', '');
-    const hex = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
-    if (hex.length !== 6) return '148, 163, 184'; 
-    const r = Number.parseInt(hex.substring(0, 2), 16);
-    const g = Number.parseInt(hex.substring(2, 4), 16);
-    const b = Number.parseInt(hex.substring(4, 6), 16);
-    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '148, 163, 184';
-    return `${r}, ${g}, ${b}`;
+/** "#RRGGBB" / "#RGB" → "r, g, b" for rgba(); anything else falls back to the ink-body token */
+export const hexToRgb = (hexStr?: string | null): string => {
+  const raw = (hexStr || '').replace('#', '');
+  const hex = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return hexToRgb(tc('ink-body'));
+  return [0, 2, 4].map(i => Number.parseInt(hex.slice(i, i + 2), 16)).join(', ');
 };
 
 export interface ThaiDayInfo {
@@ -247,8 +243,8 @@ export const calculatePeriodDelta = ({
   }
 
   // Handle prior period = 0
-  if (!prev || prev === 0) {
-    if (!current || current === 0) {
+  if (!prev) {
+    if (!current) {
       return {
         hasDelta: true,
         formattedPct: '0.0%',
@@ -275,11 +271,7 @@ export const calculatePeriodDelta = ({
       isFlat: false,
       text: `ใหม่ (${compareLabel})`,
       tooltipText: `ช่วงก่อนหน้า: ฿0.00 (ส่วนต่าง ${current >= 0 ? '+' : ''}${formatBaht(current)})`,
-      cls: isGood
-        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-        : (type === 'expense'
-          ? 'border-danger/30 bg-danger/10 text-danger'
-          : 'border-danger/30 bg-danger/10 text-danger'),
+      cls: isGood ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-danger/30 bg-danger/10 text-danger',
     };
   }
 
@@ -289,23 +281,10 @@ export const calculatePeriodDelta = ({
   const isDown = percent < -0.05;
   const isFlat = !isUp && !isDown;
 
-  let isGood = false;
-  if (type === 'income' || type === 'net') {
-    isGood = isUp;
-  } else if (type === 'expense') {
-    isGood = isDown; // Expense reduction is good
-  }
+  const isGood = type === 'expense' ? isDown : isUp; // spending less is good
 
   let cls = 'border-neutral-800 bg-neutral-900/60 text-neutral-400';
-  if (!isFlat) {
-    if (isGood) {
-      cls = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
-    } else {
-      cls = type === 'expense'
-        ? 'border-danger/30 bg-danger/10 text-danger'
-        : 'border-danger/30 bg-danger/10 text-danger';
-    }
-  }
+  if (!isFlat) cls = isGood ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-danger/30 bg-danger/10 text-danger';
 
   const arrow = isUp ? '↑' : (isDown ? '↓' : '–');
   const formattedPct = Math.abs(percent) >= 1000 ? '>999%' : `${Math.abs(percent).toFixed(1)}%`;

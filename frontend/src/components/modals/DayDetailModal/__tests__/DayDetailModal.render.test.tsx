@@ -172,6 +172,22 @@ describe('DayDetailModal — day type fallback', () => {
     expect(byText('span', 'วันหยุด')).not.toBeNull();
   });
 
+  it('with a change handler the badge becomes a picker that changes this day', async () => {
+    const handleDayTypeChange = vi.fn();
+    await mount({ transactions: [], handleDayTypeChange });
+    const toggle = [...document.querySelectorAll('button')].find(b => b.textContent?.trim() === 'วันทำงาน')!;
+    click(toggle);
+    const holiday = [...document.querySelectorAll('button')].filter(b => b.textContent?.includes('วันหยุด')).at(-1)!;
+    click(holiday);
+    expect(handleDayTypeChange).toHaveBeenCalledWith(DAY, 'dt-hol');
+  });
+
+  it('rows with the same type, group, category and amount keep a stable order by id', async () => {
+    const same = (id: string, d: string) => tx(id, 'ค่ากิน', 'c-food', 50, d);
+    await mount({ transactions: [same('b2', 'สอง'), same('a1', 'หนึ่ง'), same('c3', 'สาม')] });
+    expect(rowTitles()).toEqual(['หนึ่ง', 'สอง', 'สาม']);
+  });
+
   it('prefers the stored day type over the fallback', async () => {
     await mount({ transactions: [], dayTypes: { [DAY]: 'dt-hol' } });
     expect(byText('span', 'วันหยุด')).not.toBeNull();
@@ -226,6 +242,18 @@ describe('DayDetailModal — adding an item', () => {
     expect(typeof onSave.mock.calls[0][0].id).toBe('string');
     expect(amountInput().value).toBe('');
     expect(descInput().value).toBe('');
+  });
+
+  it('an expense is NEED or WANT only (SAVE means investing, which has its own form tab); a click overrides the category default', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    await mount({ transactions: [], onSave });
+    const alloc = [...document.querySelectorAll<HTMLButtonElement>('form button')].filter(b => ['NEED', 'WANT', 'SAVE'].includes(b.textContent!.trim()));
+    expect(alloc.map(b => b.textContent!.trim())).toEqual(['NEED', 'WANT']);
+    click(alloc[1]);
+    type(amountInput(), '20');
+    click(saveBtn());
+    await flushAll();
+    expect(onSave.mock.calls[0][0]).toMatchObject({ category_id: 'c-food', allocation_type: 'want' });
   });
 
   it('uses the category name when the description is left empty', async () => {
@@ -354,6 +382,49 @@ describe('DayDetailModal — quick suggestions', () => {
     await act(async () => { await new Promise(r => setTimeout(r, 30)); });
     expect(descInput().value).toBe('ข้าวมันไก่');
     expect(amountInput().value).toBe('60');
+  });
+
+  it('a suggestion in the category already picked keeps its allocation, and the next category change still takes that category\'s default', async () => {
+    const cats = [...categories, { id: 'c-rent', name: 'ค่าเช่า', type: 'expense', order_index: 5, cashflow_group_id: 'g-exp', allocation_type: 'need' } as Category];
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    await mount({ transactions: [], categories: cats, onSave, frequentItems: [
+      { categoryId: 'c-food', categoryName: 'ค่ากิน', description: 'บุฟเฟต์', amount: 900, allocation_type: 'want', count: 3, lastDate: '2026-10-01' },
+    ] });
+    click(document.querySelector('.sugg-item')); // same category as the form's default (ค่ากิน), but WANT
+    await act(async () => { await new Promise(r => setTimeout(r, 30)); });
+    // pick ค่าเช่า (NEED) by hand
+    click([...document.querySelectorAll<HTMLButtonElement>('form button')].find(b => b.textContent?.includes('ค่ากิน'))!);
+    click([...document.querySelectorAll<HTMLButtonElement>('.tactical-scrollbar button')].find(b => b.querySelector('span.font-semibold')?.textContent === 'ค่าเช่า')!);
+    click(saveBtn());
+    await flushAll();
+    expect(onSave.mock.calls[0][0]).toMatchObject({ category_id: 'c-rent', allocation_type: 'need' });
+  });
+
+  it('a suggestion in another category keeps its own allocation instead of that category\'s default', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    await mount({ transactions: [], onSave, frequentItems: [
+      { categoryId: 'c-fun', categoryName: 'บันเทิง', description: 'ค่าเน็ตบ้าน', amount: 599, allocation_type: 'need', count: 4, lastDate: '2026-10-01' },
+    ] });
+    click(document.querySelector('.sugg-item')); // บันเทิง defaults to WANT, the suggestion says NEED
+    await act(async () => { await new Promise(r => setTimeout(r, 30)); });
+    click(saveBtn());
+    await flushAll();
+    expect(onSave.mock.calls[0][0]).toMatchObject({ category_id: 'c-fun', allocation_type: 'need', amount: 599 });
+  });
+
+  it('after a suggestion, the next category picked by hand takes its own default again', async () => {
+    const cats = [...categories, { id: 'c-shop', name: 'ช้อปปิ้ง', type: 'expense', order_index: 6, cashflow_group_id: 'g-exp', allocation_type: 'want' } as Category];
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    await mount({ transactions: [], categories: cats, onSave, frequentItems: [
+      { categoryId: 'c-fun', categoryName: 'บันเทิง', description: 'ค่าเน็ตบ้าน', amount: 599, allocation_type: 'need', count: 4, lastDate: '2026-10-01' },
+    ] });
+    click(document.querySelector('.sugg-item')); // บันเทิง, but NEED
+    await act(async () => { await new Promise(r => setTimeout(r, 30)); });
+    click([...document.querySelectorAll<HTMLButtonElement>('form button')].find(b => b.textContent?.includes('บันเทิง'))!);
+    click([...document.querySelectorAll<HTMLButtonElement>('.tactical-scrollbar button')].find(b => b.querySelector('span.font-semibold')?.textContent === 'ช้อปปิ้ง')!);
+    click(saveBtn());
+    await flushAll();
+    expect(onSave.mock.calls[0][0]).toMatchObject({ category_id: 'c-shop', allocation_type: 'want' });
   });
 
   it('switches to the income suggestions when the form switches to income', async () => {

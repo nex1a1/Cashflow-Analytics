@@ -346,16 +346,17 @@ describe('BatchAddModal — the form types', () => {
     expect(q<HTMLInputElement>('#batch-units')!.value).toBe(''); // … and choosing the asset again does not bring the old 0.5 back
   });
 
-  it('a category\'s own allocation is applied when it is picked, and the NEED/WANT/SAVE buttons override it', async () => {
+  it('a category\'s own allocation is applied when it is picked, and the NEED/WANT buttons override it (an expense has no SAVE: that is investing)', async () => {
     await mount();
-    const selected = () => ['NEED', 'WANT', 'SAVE'].filter(l => byText('button', l)!.className.includes('bg-surface-elevated ') || byText('button', l)!.classList.contains('bg-surface-elevated'));
+    expect(byText('button', 'SAVE')).toBeNull();
+    const selected = () => ['NEED', 'WANT'].filter(l => byText('button', l)!.classList.contains('bg-surface-elevated'));
     await pickCategory('ค่ากิน');
     expect(selected()).toEqual(['NEED']);
     await pickCategory('บันเทิง');
     expect(selected()).toEqual(['WANT']);
-    click(byText('button', 'SAVE'));
+    click(byText('button', 'NEED'));
     await flush();
-    expect(selected()).toEqual(['SAVE']);
+    expect(selected()).toEqual(['NEED']);
   });
 
   it('an added expense carries the allocation the user chose', async () => {
@@ -1090,6 +1091,22 @@ describe('BatchAddModal — quick suggestions', () => {
     expect(document.activeElement).toBe(amountInput());
   });
 
+  it('a suggestion in the category already picked does not swallow the default of the next category picked by hand', async () => {
+    const cats = [...categories, { id: 'c-rent', name: 'ค่าเช่า', type: 'expense', order_index: 5, cashflow_group_id: 'g-exp', allocation_type: 'need' } as Category];
+    const onSaveBatch = vi.fn().mockResolvedValue(undefined);
+    await mount({ categories: cats, onSaveBatch, frequentItems: [
+      { categoryId: 'c-food', categoryName: 'ค่ากิน', description: 'บุฟเฟต์', amount: 900, allocation_type: 'want', count: 3, lastDate: '2026-10-01' },
+    ] });
+    expect(categoryTrigger().textContent).toContain('ค่ากิน');
+    click(items()[0]); // same category, WANT
+    await wait(50);
+    await pickCategory('ค่าเช่า'); // NEED
+    await add('100', 'ห้อง');
+    click(saveBtn());
+    await flushAll();
+    expect(onSaveBatch.mock.calls[0][0][0]).toMatchObject({ category_id: 'c-rent', allocation_type: 'need' });
+  });
+
   it('the suggestions are locked while the cart is being saved', async () => {
     let finish!: () => void;
     await mount({ frequentItems: frequent, onSaveBatch: vi.fn(() => new Promise<void>(r => { finish = r; })) });
@@ -1202,6 +1219,26 @@ describe('BatchAddModal — recurring items', () => {
       { date: '2026-10-05', category_id: 'c-food', description: 'ค่าห้อง', amount: 3000, allocation_type: 'need' },
       { date: '2026-10-20', category_id: 'c-fun', description: 'ค่าไฟ', amount: 1000 },
     ]);
+  });
+
+  it('× hides a false positive (saved), and "ซ่อนไว้ N · แสดงทั้งหมด" brings it back', async () => {
+    h.history = [...rent, ...power];
+    await mount();
+    await flushAll();
+    await openRecurring();
+    const names = () => [...panel()!.querySelectorAll('li')].map(r => r.textContent!.includes('ค่าห้อง') ? 'ค่าห้อง' : 'ค่าไฟ');
+    click(q('button[aria-label="ซ่อน \\"ค่าไฟ\\" จากรายการประจำ"]'));
+    await flushAll();
+    expect(names()).toEqual(['ค่าห้อง']);
+    expect(h.saved.at(-1)![0]).toBe('recurring_hidden');
+    expect(h.saved.at(-1)![1]).toHaveLength(1);
+    const showAll = byText('button', 'ซ่อนไว้ 1 · แสดงทั้งหมด');
+    expect(showAll).not.toBeNull();
+    click(showAll);
+    await flushAll();
+    expect(names()).toEqual(['ค่าห้อง', 'ค่าไฟ']);
+    expect(h.saved.at(-1)).toEqual(['recurring_hidden', []]);
+    expect(byText('button', 'ซ่อนไว้ 1 · แสดงทั้งหมด')).toBeNull();
   });
 
   it('what is already in the cart counts as recorded, so a second fill adds nothing twice', async () => {

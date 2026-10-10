@@ -116,6 +116,10 @@ describe('Import guide — wide templates are importable', () => {
       expect(preview.items).toHaveLength(filled.length);
       expect(preview.items.reduce((s: number, i: any) => s + Number(i.amount), 0)).toBeCloseTo(filled.reduce((s, f) => s + (f[2] as number), 0), 2);
       expect(preview.items.some((i: any) => i.category === 'Notes' || /Total|รวม/.test(i.category))).toBe(false);
+      // each cell lands in the category its column names (not all in the first expense category)
+      const key = (c: string, a: number) => `${c}|${Number(a).toFixed(2)}`;
+      expect(preview.items.map((i: any) => key(i.category, i.amount)).sort())
+        .toEqual(filled.map(([, c, a]) => key(String(c), Number(a))).sort());
     },
   );
 });

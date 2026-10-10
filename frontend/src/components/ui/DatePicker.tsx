@@ -12,10 +12,9 @@ import {
   Briefcase,
   Palmtree,
 } from 'lucide-react';
-import { THAI_MONTHS, THAI_MONTHS_SHORT } from '@/utils/formatters';
+import { THAI_MONTHS } from '@/utils/formatters';
 import {
   DAY_LABELS,
-  splitDateValue,
   parseValue,
   toValueStr,
   getDatesInRange,
@@ -24,11 +23,12 @@ import {
   stepMonth,
   stepYear,
   getPresetDates,
+  formatRangeLabel,
   MIN_YEAR,
   MAX_YEAR,
 } from '@/utils/datePickerHelpers';
-
-export { DAY_LABELS, splitDateValue, parseValue, toValueStr, getDatesInRange, groupContiguousDates, formatDisplay };
+import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
+import type { DayType } from '@/types';
 
 interface ResolveDayStyleProps {
   dayIsSelected: boolean;
@@ -78,23 +78,10 @@ function resolveDayStyle({
   return { dayStyle: `${textMain} ${hoverDay}`, isDimmed: false };
 }
 
-function resolveDayTypeObj(y: number, m: number, d: number, dateStr: string, dayTypes: Record<string, string>, dayTypeConfig: any[]) {
-  if (!dayTypeConfig || dayTypeConfig.length === 0) return null;
-  const explicitTypeId = dayTypes[dateStr];
-  if (explicitTypeId) {
-    const found = dayTypeConfig.find((dt: any) => dt.id === explicitTypeId);
-    if (found) return found;
-  }
-  const dow = new Date(y, m, d).getDay();
-  const isWknd = dow === 0 || dow === 6;
-  if (isWknd) {
-    return dayTypeConfig.find((dt: any) =>
-      dt.id === 'HOLIDAY' || dt.id === 'OFF' || dt.name === 'HOLIDAY' || dt.label?.includes('หยุด')
-    ) || dayTypeConfig[1] || dayTypeConfig[0];
-  }
-  return dayTypeConfig.find((dt: any) =>
-    dt.id === 'WORK' || dt.name === 'WORK' || dt.label?.includes('ทำงาน')
-  ) || dayTypeConfig[0];
+// Same fallback as the calendar (CLAUDE.md 41(i)): an unmarked day, or one whose type was deleted, shows the default type
+function resolveDayTypeObj(dateStr: string, weekend: boolean, dayTypes: Record<string, string>, dayTypeConfig: DayType[]) {
+  return dayTypeConfig.find(dt => dt.id === dayTypes[dateStr])
+    ?? dayTypeConfig.find(dt => dt.id === resolveDefaultDayTypeId(dayTypeConfig, weekend));
 }
 
 function getDayDataDotColor(val?: string | null) {
@@ -113,10 +100,10 @@ interface DatePickerDayCellProps {
   isToday: (d: number) => boolean;
   value?: string | null;
   dayTypes: Record<string, string>;
-  dayTypeConfig: any[];
+  dayTypeConfig: DayType[];
   textMain: string;
   hoverDay: string;
-  onDayClick: (d: number) => void;
+  onDayClick: (d: number, e: React.MouseEvent) => void;
   onMouseDown: (d: number, e: React.MouseEvent) => void;
   onMouseEnter: (d: number) => void;
 }
@@ -138,9 +125,7 @@ function DatePickerDayCell({
   onMouseDown,
   onMouseEnter,
 }: DatePickerDayCellProps) {
-  const monthStr = String(m + 1).padStart(2, '0');
-  const dayStr = String(d).padStart(2, '0');
-  const dateStr = `${y}-${monthStr}-${dayStr}`;
+  const dateStr = toValueStr(new Date(y, m, d));
 
   const weekend = new Date(y, m, d).getDay() === 0 || new Date(y, m, d).getDay() === 6;
   const dayHasData = hasData(d);
@@ -163,13 +148,13 @@ function DatePickerDayCell({
     hoverDay,
   });
 
-  const dayTypeObj = resolveDayTypeObj(y, m, d, dateStr, dayTypes, dayTypeConfig);
+  const dayTypeObj = resolveDayTypeObj(dateStr, weekend, dayTypes, dayTypeConfig);
 
   return (
     <button
       key={d}
       type="button"
-      onClick={() => onDayClick(d)}
+      onClick={(e) => onDayClick(d, e)}
       onMouseDown={(e) => onMouseDown(d, e)}
       onMouseEnter={() => onMouseEnter(d)}
       className={`relative h-7 w-full rounded-none text-xs font-medium transition-all flex items-center justify-center cursor-pointer select-none ${dayStyle}`}
@@ -178,7 +163,7 @@ function DatePickerDayCell({
       {dayTypeObj && (
         <span
           className="absolute top-0 inset-x-0 h-[2.5px] pointer-events-none z-10"
-          style={{ backgroundColor: dayTypeObj.color }}
+          style={{ backgroundColor: dayTypeObj.color ?? undefined }}
         />
       )}
       <span>{d}</span>
@@ -193,12 +178,7 @@ function parseDraftDatesFromValue(value?: string | null): Set<string> {
   if (!value || value === 'ALL' || value === 'WEEKDAY' || value === 'WEEKEND') {
     return new Set();
   }
-  if (value.includes(',')) return new Set(value.split(','));
-  if (value.includes(':')) {
-    const [s, e] = value.split(':');
-    return new Set(getDatesInRange(s, e));
-  }
-  return new Set([value]);
+  return new Set(value.split(','));
 }
 
 function applyRangeSelection(baseline: Set<string>, range: string[], mode: boolean): Set<string> {
@@ -211,12 +191,7 @@ function applyRangeSelection(baseline: Set<string>, range: string[], mode: boole
   return next;
 }
 
-function formatConfirmedValue(draftDates: Set<string>, allowAll?: boolean): string {
-  if (draftDates.size === 0) return allowAll ? 'ALL' : '';
-  if (draftDates.size === 1) return Array.from(draftDates)[0];
-  const sorted = Array.from(draftDates).sort((a: string, b: string) => a.localeCompare(b));
-  return sorted.join(',');
-}
+const formatConfirmedValue = (draftDates: Set<string>) => Array.from(draftDates).sort((a, b) => a.localeCompare(b)).join(',');
 
 interface DatePickerTriggerProps {
   variant?: string;
@@ -301,17 +276,15 @@ function DatePickerTrigger({
 export interface DatePickerProps {
   value: string;
   onChange: (val: string) => void;
-  required?: boolean;
   variant?: 'default' | 'hud' | string;
   placeholder?: string;
+  /** filter mode: "every day" (ALL) / weekday / weekend modes and picking several days, confirmed at the end */
   allowAll?: boolean;
-  isMulti?: boolean;
   availableDates?: string[];
   filterPeriod?: string;
   dayTypes?: Record<string, string>;
-  dayTypeConfig?: any[];
+  dayTypeConfig?: DayType[];
   className?: string;
-  align?: 'left' | 'right' | 'auto';
   customTrigger?: (props: {
     open: boolean;
     setOpen: (o: boolean) => void;
@@ -326,15 +299,14 @@ export default function DatePicker({
   variant = 'default',
   placeholder = 'เลือกวันที่',
   allowAll = false,
-  isMulti = allowAll,
   availableDates = [],
   filterPeriod,
   dayTypes = {},
   dayTypeConfig = [],
   className,
-  align = 'auto',
   customTrigger,
 }: DatePickerProps) {
+  const isMulti = allowAll;
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => parseValue(value, filterPeriod));
 
@@ -342,23 +314,16 @@ export default function DatePicker({
   const [draftDates, setDraftDates] = useState(() => parseDraftDatesFromValue(value));
 
   // Drag Sweep States
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<string | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<string | null>(null);
-  const [dragBaseline, setDragBaseline] = useState<Set<string>>(new Set());
-  const [dragMode, setDragMode] = useState(true); // true = add range, false = remove range
+  // add = the press started on an unselected day (sweep adds), else the sweep removes
+  const [drag, setDrag] = useState<{ start: string; current: string; baseline: Set<string>; add: boolean } | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [resolvedAlign, setResolvedAlign] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+  const [resolvedAlign, setResolvedAlign] = useState<'left' | 'right'>('left');
   const [resolvedVerticalAlign, setResolvedVerticalAlign] = useState<'bottom' | 'top'>('bottom');
 
   // Auto-detect horizontal and vertical alignment to avoid overflow clipping
   useEffect(() => {
     if (!open) return;
-    if (align === 'left' || align === 'right') {
-      setResolvedAlign(align);
-    }
-
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       let limitRight = window.innerWidth;
@@ -381,13 +346,7 @@ export default function DatePicker({
       }
 
       // Horizontal check: Popover width is w-80 (320px) + buffer (16px)
-      if (align !== 'left' && align !== 'right') {
-        if (rect.left + 336 > limitRight) {
-          setResolvedAlign('right');
-        } else {
-          setResolvedAlign('left');
-        }
-      }
+      setResolvedAlign(rect.left + 336 > limitRight ? 'right' : 'left');
 
       // Vertical check: Popover height is ~380px (header, mode buttons, grid, summary, presets, footer)
       const popoverHeight = 380;
@@ -398,7 +357,7 @@ export default function DatePicker({
         setResolvedVerticalAlign('bottom');
       }
     }
-  }, [open, align]);
+  }, [open]);
 
   // Sync state when popover opens or value/period changes
   useEffect(() => {
@@ -435,27 +394,20 @@ export default function DatePicker({
   }, [open]);
 
   // Global mouseup handler to release drag even if mouse leaves window
+  // Compute active preview dates during drag
+  const activeDraftDates = useMemo(() => drag
+    ? applyRangeSelection(drag.baseline, getDatesInRange(drag.start, drag.current), drag.add)
+    : draftDates, [drag, draftDates]);
+
   useEffect(() => {
-    if (!isDragging) return;
+    if (!drag) return;
     const handleGlobalMouseUp = () => {
-      if (dragStart && dragCurrent) {
-        const range = getDatesInRange(dragStart, dragCurrent);
-        setDraftDates(applyRangeSelection(dragBaseline, range, dragMode));
-      }
-      setIsDragging(false);
-      setDragStart(null);
-      setDragCurrent(null);
+      setDraftDates(activeDraftDates);
+      setDrag(null);
     };
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging, dragStart, dragCurrent, dragBaseline, dragMode]);
-
-  // Compute active preview dates during drag
-  const activeDraftDates = useMemo(() => {
-    if (!isDragging || !dragStart || !dragCurrent) return draftDates;
-    const range = getDatesInRange(dragStart, dragCurrent);
-    return applyRangeSelection(dragBaseline, range, dragMode);
-  }, [isDragging, dragStart, dragCurrent, dragBaseline, dragMode, draftDates]);
+  }, [drag, activeDraftDates]);
 
   const y = viewDate.getFullYear();
   const m = viewDate.getMonth();
@@ -476,44 +428,33 @@ export default function DatePicker({
 
   const availableSet = useMemo(() => new Set(availableDates || []), [availableDates]);
 
-  const hasData = (d: number) => {
-    const monthStr = String(m + 1).padStart(2, '0');
-    const dayStr = String(d).padStart(2, '0');
-    const dateStr = `${y}-${monthStr}-${dayStr}`;
-    return availableSet.has(dateStr);
-  };
+  const dateOf = (d: number) => toValueStr(new Date(y, m, d));
+  const hasData = (d: number) => availableSet.has(dateOf(d));
 
   const prevMonth = () => setViewDate(stepMonth(viewDate, -1));
   const nextMonth = () => setViewDate(stepMonth(viewDate, 1));
-  const prevYear = () => {
-    if (isAtMinYear) return;
-    const next = stepYear(viewDate, -1);
-    setViewDate(next);
-  };
-  const nextYear = () => {
-    if (isAtMaxYear) return;
-    const next = stepYear(viewDate, 1);
-    setViewDate(next);
-  };
+  // the year buttons are disabled at the limits, and stepYear clamps anyway
+  const prevYear = () => setViewDate(stepYear(viewDate, -1));
+  const nextYear = () => setViewDate(stepYear(viewDate, 1));
 
-  // Click on day cell
-  const handleDayClick = (d: number) => {
-    const monthStr = String(m + 1).padStart(2, '0');
-    const dayStr = String(d).padStart(2, '0');
-    const dateStr = `${y}-${monthStr}-${dayStr}`;
+  // Click on day cell. A mouse already acted on mousedown; this is the keyboard path (Enter/Space = click with detail 0)
+  const handleDayClick = (d: number, e: React.MouseEvent) => {
+    const dateStr = dateOf(d);
 
     if (!isMulti) {
       onChange(dateStr);
       setOpen(false);
+    } else if (e.detail === 0) {
+      const next = new Set(draftDates);
+      if (!next.delete(dateStr)) next.add(dateStr);
+      setDraftDates(next);
     }
   };
 
   // Mouse Down handler on day cell (Start drag / single click)
   const handleMouseDown = (d: number, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent text drag selection
-    const monthStr = String(m + 1).padStart(2, '0');
-    const dayStr = String(d).padStart(2, '0');
-    const dateStr = `${y}-${monthStr}-${dayStr}`;
+    const dateStr = dateOf(d);
 
     if (!isMulti) {
       onChange(dateStr);
@@ -521,24 +462,12 @@ export default function DatePicker({
       return;
     }
 
-    const alreadySelected = draftDates.has(dateStr);
-    const mode = !alreadySelected; // true = add range, false = remove range
-
-    setIsDragging(true);
-    setDragStart(dateStr);
-    setDragCurrent(dateStr);
-    setDragBaseline(new Set(draftDates));
-    setDragMode(mode);
+    setDrag({ start: dateStr, current: dateStr, baseline: draftDates, add: !draftDates.has(dateStr) });
   };
 
   // Mouse Enter handler on day cell (Update drag range)
   const handleMouseEnter = (d: number) => {
-    if (!isMulti || !isDragging) return;
-    const monthStr = String(m + 1).padStart(2, '0');
-    const dayStr = String(d).padStart(2, '0');
-    const dateStr = `${y}-${monthStr}-${dayStr}`;
-
-    setDragCurrent(dateStr);
+    setDrag(prev => prev && { ...prev, current: dateOf(d) });
   };
 
   // Remove contiguous range of dates
@@ -549,25 +478,18 @@ export default function DatePicker({
   };
 
   // Confirm multi-selection
-  const handleConfirm = () => {
-    if (draftDates.size === 0) return;
-    onChange(formatConfirmedValue(draftDates, allowAll));
+  const handleConfirm = () => { // disabled while nothing is picked
+    onChange(formatConfirmedValue(draftDates));
     setOpen(false);
   };
 
   const handleModeSelect = (mode: string) => {
-    setDraftDates(new Set());
-    if (value === mode) {
-      onChange(allowAll ? 'ALL' : '');
-    } else {
-      onChange(mode);
-    }
+    onChange(value === mode ? 'ALL' : mode); // the value changes, so the sync effect resets the draft
     // Do NOT auto-close so the user sees the mode change
   };
 
   const handleClear = () => {
-    setDraftDates(new Set());
-    onChange(allowAll ? 'ALL' : '');
+    onChange('ALL'); // the draft is re-read from the value on the next open
     setOpen(false);
   };
 
@@ -585,12 +507,7 @@ export default function DatePicker({
   };
 
   const presets = useMemo(() => getPresetDates(viewDate), [viewDate]);
-  const todayStr = useMemo(() => toValueStr(new Date()), []);
-  const yesterdayStr = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return toValueStr(d);
-  }, []);
+  const now = getPresetDates(); // every render: a picker left mounted overnight must not keep yesterday's "today"
 
   const isActive = Boolean(value && value !== 'ALL');
 
@@ -791,18 +708,11 @@ export default function DatePicker({
                   </span>
                 ) : (
                   dateRanges.map((range) => {
-                    const [, m1, d1] = range[0].split('-').map(Number);
-                    const lastDate = range[range.length - 1] || '';
-                    const [, , d2] = lastDate.split('-').map(Number);
-
-                    const label =
-                      range.length === 1
-                        ? `${d1} ${THAI_MONTHS_SHORT[m1 - 1]}`
-                        : `${d1} - ${d2} ${THAI_MONTHS_SHORT[m1 - 1]} (${range.length} วัน)`;
+                    const label = range.length === 1 ? formatRangeLabel(range) : `${formatRangeLabel(range)} (${range.length} วัน)`;
 
                     return (
                       <span
-                        key={`${range[0]}_${lastDate}`}
+                        key={range[0]}
                         className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono font-bold bg-accent/15 border border-accent/40 text-accent-ink rounded-pill"
                       >
                         {label}
@@ -826,14 +736,14 @@ export default function DatePicker({
           <div className="mt-2 pt-2 border-t border-line flex items-center gap-1 flex-wrap">
             <button
               type="button"
-              onClick={() => handleApplyPreset(todayStr)}
+              onClick={() => handleApplyPreset(now.today)}
               className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               วันนี้
             </button>
             <button
               type="button"
-              onClick={() => handleApplyPreset(yesterdayStr)}
+              onClick={() => handleApplyPreset(now.yesterday)}
               className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               เมื่อวาน
@@ -857,13 +767,13 @@ export default function DatePicker({
           {/* ================= ACTION & CONFIRMATION FOOTER ================= */}
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-line gap-1.5">
             <div className="flex items-center gap-1">
-              <button
+              {allowAll && <button
                 type="button"
                 onClick={handleClear}
                 className="text-[11px] font-bold px-2 py-1 rounded-none transition-colors text-ink-body hover:text-white hover:bg-surface-elevated flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3 text-ink-muted" /> ล้าง
-              </button>
+              </button>}
             </div>
 
             {isMulti && (

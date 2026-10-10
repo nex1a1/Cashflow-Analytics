@@ -94,6 +94,8 @@ export default function useTransactionData({
         if (isCurrent()) setSummaryData(data);
       } catch (err) {
         console.error('Failed to load analytics:', err);
+        // the previous window's summary must not be shown under the new period (useAnalytics falls back to the rows)
+        if (isCurrent()) setSummaryData(null);
       }
     },
     [beginAnalyticsLoad]
@@ -118,7 +120,7 @@ export default function useTransactionData({
    */
   const bootstrap = useCallback(async () => {
     setIsBootstrapping(true);
-    try {
+    try { // every step catches its own failure, so one broken list never blocks the others
       // 1. Periods & Frequent Items (Master Lists)
       try {
         const [periods, frequent, total] = await Promise.all([
@@ -184,8 +186,6 @@ export default function useTransactionData({
       } catch (err) {
         console.error('Calendar load failed:', err);
       }
-    } catch (err) {
-      console.error('Bootstrap failed overall:', err);
     } finally {
       setIsBootstrapping(false);
     }
@@ -233,7 +233,6 @@ export default function useTransactionData({
         }
 
         // 1. Optimistic UI Update
-        const previousTransactions = [...transactions];
         const newTransactions = [...transactions];
         newTransactions[itemIndex] = updatedItem;
         setTransactions(sortTransactions(newTransactions));
@@ -245,7 +244,12 @@ export default function useTransactionData({
           return true;
         } catch (err) {
           console.error('Update failed:', err);
-          setTransactions(previousTransactions);
+          // Undo only what this edit changed (a category brings its name/icon/allocation), and only while the row still holds it
+          const undo = Object.fromEntries(Object.keys(updatedItem)
+            .filter(k => (updatedItem as any)[k] !== (item as any)[k])
+            .map(k => [k, (item as any)[k]]));
+          setTransactions(prev => sortTransactions(prev.map(t =>
+            t.id === id && (t as any)[field] === value ? { ...t, ...undo } : t)));
           return false;
         }
       }
@@ -314,7 +318,7 @@ export default function useTransactionData({
   );
 
   const handleDeleteAllData = useCallback(
-    async (opts?: { setShowToast?: any }) => {
+    async () => {
       setIsProcessing(true);
       try {
         await transactionService.resetAll();
@@ -323,7 +327,7 @@ export default function useTransactionData({
           window.location.reload();
         }, 1000);
       } catch (err: any) {
-        showToast('Error: ' + err.message, 'error');
+        showToast('ล้างข้อมูลไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         setIsProcessing(false);
       }

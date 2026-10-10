@@ -52,13 +52,12 @@ function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean })
 interface MiniLineProps {
   trend: CategoryTrend;
   color: string;
-  cycle: boolean;
   hoveredIdx: number | null;
   onHover: (idx: number | null) => void;
 }
 
-function MiniLine({ trend, color, cycle, hoveredIdx, onHover }: MiniLineProps) {
-  const { series, keys, hasPartial } = trend;
+function MiniLine({ trend, color, hoveredIdx, onHover }: MiniLineProps) {
+  const { series, hasPartial } = trend;
   const max = Math.max(...series, 1);
   const n = series.length;
   const x = (i: number) => (n === 1 ? W / 2 : (i / (n - 1)) * W);
@@ -259,7 +258,6 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
       <MiniLine
         trend={trend}
         color={color}
-        cycle={cycle}
         hoveredIdx={hoveredIdx}
         onHover={setHoveredIdx}
       />
@@ -294,7 +292,7 @@ export const SparklineGraph = memo(() => {
   if (trends[0].keys.length < 2) {
     return (
       <div className="h-full flex items-center justify-center text-[12px] text-slate-500">
-        ต้องเลือกช่วงเวลาอย่างน้อย 2 {cycle ? 'รอบ' : 'เดือน'} เพื่อดู Sparkline
+        ต้องเลือกช่วงเวลาอย่างน้อย 2 {cycle ? 'รอบ' : 'เดือน'} เพื่อดูแนวโน้ม
       </div>
     );
   }

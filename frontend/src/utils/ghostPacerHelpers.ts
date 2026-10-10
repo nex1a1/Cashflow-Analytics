@@ -128,21 +128,9 @@ export function calculateGhostPacerData({
   const historicalSeriesList = [prevDailySeries, m2Series, m3Series].filter(s => s.length > 0 && s.some(v => v > 0));
 
   for (let d = 1; d <= lastDayOfMonth; d++) {
-    if (historicalSeriesList.length === 0) {
-      benchmarkDailySeries.push(0);
-      continue;
-    }
-
-    let sum = 0;
-    let count = 0;
-    for (const hSeries of historicalSeriesList) {
-      const idx = Math.min(d, hSeries.length) - 1;
-      if (idx >= 0 && hSeries[idx] !== undefined) {
-        sum += hSeries[idx];
-        count++;
-      }
-    }
-    benchmarkDailySeries.push(count > 0 ? Math.round(sum / count) : 0);
+    // a shorter month holds its last value (31 Mar compares with 28 Feb)
+    const sum = historicalSeriesList.reduce((s, h) => s + h[Math.min(d, h.length) - 1], 0);
+    benchmarkDailySeries.push(historicalSeriesList.length ? Math.round(sum / historicalSeriesList.length) : 0);
   }
 
   // Ghost spend at exact same day
@@ -150,9 +138,7 @@ export function calculateGhostPacerData({
     ? prevDailySeries[currentDay - 1]
     : (prevDailySeries[prevDailySeries.length - 1] || 0);
 
-  const benchmarkSpendToDate = benchmarkDailySeries.length >= currentDay
-    ? benchmarkDailySeries[currentDay - 1]
-    : 0;
+  const benchmarkSpendToDate = benchmarkDailySeries[currentDay - 1]; // as long as the current unit
 
   // Deltas
   const deltaVsGhost = currentSpendToDate - ghostSpendToDate;

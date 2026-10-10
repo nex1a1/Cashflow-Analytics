@@ -11,14 +11,14 @@ import {
   stepMonth,
   stepYear,
   getPresetDates,
+  formatRangeLabel,
 } from '../datePickerHelpers';
 
 describe('datePickerHelpers', () => {
   describe('splitDateValue', () => {
-    it('handles single date, comma-separated, and colon-separated dates', () => {
+    it('handles single date and comma-separated dates', () => {
       expect(splitDateValue('2026-09-13')).toEqual(['2026-09-13']);
       expect(splitDateValue('2026-09-13,2026-09-14')).toEqual(['2026-09-13', '2026-09-14']);
-      expect(splitDateValue('2026-09-13:2026-09-14')).toEqual(['2026-09-13', '2026-09-14']);
       expect(splitDateValue('')).toEqual([]);
     });
   });
@@ -37,6 +37,21 @@ describe('datePickerHelpers', () => {
       expect(parsed.getFullYear()).toBe(2027);
       expect(parsed.getMonth()).toBe(10); // Nov = 10
       expect(parsed.getDate()).toBe(1);
+    });
+
+    it('a pay cycle opens on its salary month; a year or a range is not one month, so today', () => {
+      const c = parseValue('WEEKDAY', 'cycle:2026-07');
+      expect([c.getFullYear(), c.getMonth()]).toEqual([2026, 6]);
+      const now = new Date();
+      for (const p of ['2026', '2026-01_2026-03']) {
+        const d = parseValue('ALL', p);
+        expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([now.getFullYear(), now.getMonth(), now.getDate()]);
+      }
+    });
+
+    it('a list opens on its first date; junk falls back', () => {
+      expect(toValueStr(parseValue('2026-03-05,2026-04-01'))).toBe('2026-03-05');
+      expect(toValueStr(parseValue('2026-03', '2027-11'))).toBe('2027-11-01');
     });
   });
 
@@ -62,6 +77,15 @@ describe('datePickerHelpers', () => {
     });
   });
 
+  describe('groupContiguousDates (input order does not matter)', () => {
+    it('sorts before grouping', () => {
+      expect(groupContiguousDates(['2026-09-03', '2026-09-01', '2026-09-02', '2026-09-07'])).toEqual([
+        ['2026-09-01', '2026-09-02', '2026-09-03'], ['2026-09-07'],
+      ]);
+      expect(groupContiguousDates([])).toEqual([]);
+    });
+  });
+
   describe('formatDisplay', () => {
     it('formats single date with day of week and Thai month', () => {
       // 2026-09-13 is Sunday (อา.)
@@ -75,8 +99,52 @@ describe('datePickerHelpers', () => {
     });
 
     it('formats continuous ranges', () => {
-      const formatted = formatDisplay('2026-09-01,2026-09-02,2026-09-03');
-      expect(formatted).toContain('1 - 3 ก.ย. 2026');
+      expect(formatDisplay('2026-09-01,2026-09-02,2026-09-03')).toBe('1 - 3 ก.ย. 2026');
+    });
+
+    it('a range that crosses a month names both months', () => {
+      expect(formatDisplay('2026-01-30,2026-01-31,2026-02-01,2026-02-02')).toBe('30 ม.ค. - 2 ก.พ. 2026');
+    });
+
+    it('a range that crosses a year names both years', () => {
+      expect(formatDisplay('2025-12-31,2026-01-01')).toBe('31 ธ.ค. 2025 - 1 ม.ค. 2026');
+    });
+
+    it('several ranges in one month name the month once', () => {
+      expect(formatDisplay('2026-09-01,2026-09-03,2026-09-04,2026-09-05')).toBe('1, 3-5 ก.ย.');
+    });
+
+    it('several ranges over several months give each its month', () => {
+      expect(formatDisplay('2026-01-05,2026-01-30,2026-01-31,2026-02-01,2026-02-10')).toBe('5 ม.ค., 30 ม.ค.-1 ก.พ., 10 ก.พ.');
+    });
+
+    it('an unreadable value falls back to the placeholder', () => {
+      expect(formatDisplay('abc', 'วันที่')).toBe('วันที่');
+      expect(formatDisplay('', 'วันที่')).toBe('วันที่');
+      expect(formatDisplay('ALL', 'วันที่')).toBe('วันที่');
+    });
+  });
+
+  describe('stepMonth at the year limits', () => {
+    it('stays put instead of leaving 2000..2050', () => {
+      expect(toValueStr(stepMonth(new Date(2000, 0, 15), -1))).toBe('2000-01-15');
+      expect(toValueStr(stepMonth(new Date(2050, 11, 15), 1))).toBe('2050-12-15');
+      expect(toValueStr(stepMonth(new Date(2050, 10, 30), 1))).toBe('2050-12-30');
+    });
+  });
+
+  describe('stepYear on 29 Feb', () => {
+    it('lands on 28 Feb in a common year', () => {
+      expect(toValueStr(stepYear(new Date(2028, 1, 29), 1))).toBe('2029-02-28');
+      expect(toValueStr(stepYear(new Date(2028, 1, 29), -4))).toBe('2024-02-29');
+    });
+  });
+
+  describe('formatRangeLabel', () => {
+    it('one day, a range inside a month, and a range across months', () => {
+      expect(formatRangeLabel(['2026-09-13'])).toBe('13 ก.ย.');
+      expect(formatRangeLabel(['2026-09-13', '2026-09-14', '2026-09-15'])).toBe('13 - 15 ก.ย.');
+      expect(formatRangeLabel(['2026-01-31', '2026-02-01'])).toBe('31 ม.ค. - 1 ก.พ.');
     });
   });
 

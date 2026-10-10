@@ -85,4 +85,17 @@ describe('buildCategoryTrends', () => {
     expect(t.pctChange).toBeNull();
     expect(t.delta).toBe(250);
   });
+
+  it('only the current, unfinished period: it is the latest one; nothing at all: no latest', () => {
+    const [t] = buildCategoryTrends(['2026-02'], { test: { '2026-02': 80 } }, '2026-02', true);
+    expect(t).toMatchObject({ latestKey: '2026-02', latestAmount: 80, pctChange: 0, delta: 0 });
+    expect(buildCategoryTrends(['2026-05'], { test: { '2026-05': 80 } }, '2026-02', true)).toEqual([]); // only future keys
+  });
+
+  it('ALL mode: a latest period below the average is a negative change', () => {
+    const [t] = buildCategoryTrends(['2026-01', '2026-02', '2026-03'], { test: { '2026-01': 300, '2026-02': 0 } }, '2026-03', true);
+    expect(t.latestKey).toBe('2026-02');
+    expect(t.pctChange).toBe(-100); // average 100, latest 0
+    expect(t.delta).toBe(-100);
+  });
 });

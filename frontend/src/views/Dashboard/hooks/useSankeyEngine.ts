@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { formatMoney, hexToRgb } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
-import { toISODate, isDateInFilter } from '@/utils/dateHelpers';
+import { isDateInFilter } from '@/utils/dateHelpers';
 import { TransactionDisplay, Category, CashflowGroup } from '@/types';
 import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 interface SankeyEngineProps {
@@ -66,8 +66,7 @@ function recordCategoryAllocation(catAllocTotals: Record<string, any>, catId: st
 
 function processSankeyTransaction(t: any, { filterPeriod, categoryMap, groupMap, categoryTotals, catAllocTotals }: any) {
   if (t.is_deleted) return;
-  const isoDate = toISODate(t.date);
-  if (!isDateInFilter(isoDate, filterPeriod)) return;
+  if (!isDateInFilter(t.date, filterPeriod)) return;
 
   const amt = Number.parseFloat(t.amount) || 0;
   const cat = t.category_id ? categoryMap.get(t.category_id) : categoryMap.get(t.category);
@@ -192,6 +191,7 @@ function buildAllocationSankeyFlows({
       const g = groupMap[groupId];
       const allocs = catAllocTotals[cat.id] || { need: 0, want: 0, savings: 0 };
       const catTotal = categoryTotals[cat.id] || 0;
+      // rows with an allocation outside need/want/savings were not bucketed: count the category as WANT
       if (g?.type === 'expense' && catTotal > 0 && !allocs.need && !allocs.want && !allocs.savings) {
         allocs.want = catTotal;
       }

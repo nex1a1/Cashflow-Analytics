@@ -133,8 +133,7 @@ export default function DayNoteField({ dateStr, note, onSave }: DayNoteFieldProp
       e.currentTarget.blur();
     } else if (e.key === 'Escape') {
       // Esc ปิดช่องแก้ไขก่อน ไม่ปิดโมดัล (โมดัลปิดด้วย Esc ที่ window) — กดอีกครั้งจึงปิดโมดัล
-      e.stopPropagation();
-      e.currentTarget.value = note.text;
+      e.stopPropagation(); // the input unmounts; it reopens on note.text (defaultValue)
       setError(null);
       setPickedIcon(null);
       setEditing(false);

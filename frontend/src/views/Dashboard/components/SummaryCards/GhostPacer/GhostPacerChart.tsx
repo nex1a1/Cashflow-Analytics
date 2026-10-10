@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/GhostPacer/GhostPacerChart.tsx
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { Ghost } from 'lucide-react';
-import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
+import { formatBaht, formatBahtShort } from '@/utils/formatters';
 
 import { tc, FONT_MONO } from '@/constants/theme';
 import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
@@ -57,20 +57,20 @@ export const GhostPacerChart = memo(({
   const totalDays = Math.max(1, lastDayOfMonth);
   const curDayClamped = Math.max(1, Math.min(currentDay, totalDays));
 
-  const spentToDate = currentDailySeries && currentDailySeries.length > 0
+  const spentToDate = currentDailySeries.length > 0
     ? currentDailySeries[Math.min(curDayClamped, currentDailySeries.length) - 1]
     : 0;
 
-  const ghostSpentToDate = prevDailySeries && prevDailySeries.length > 0
+  const ghostSpentToDate = prevDailySeries.length > 0
     ? prevDailySeries[Math.min(curDayClamped, prevDailySeries.length) - 1]
     : 0;
 
-  const ghostFinal = ghostTotalExpense || (prevDailySeries && prevDailySeries.length > 0
+  const ghostFinal = ghostTotalExpense || (prevDailySeries.length > 0
     ? prevDailySeries[prevDailySeries.length - 1]
     : 0);
 
   // Maximum scale across current spend, projected, ghost, and benchmark
-  const maxBenchmark = benchmarkDailySeries && benchmarkDailySeries.length > 0
+  const maxBenchmark = benchmarkDailySeries.length > 0
     ? Math.max(...benchmarkDailySeries)
     : 0;
   const maxY = Math.max(1, spentToDate, projectedExpense, ghostFinal, maxBenchmark) * 1.12;
@@ -176,7 +176,7 @@ export const GhostPacerChart = memo(({
 
     let curSpend = 0;
     if (!isFuture) {
-      curSpend = currentDailySeries && currentDailySeries.length >= day
+      curSpend = currentDailySeries.length >= day
         ? currentDailySeries[day - 1]
         : (day === curDayClamped ? spentToDate : 0);
     } else {
@@ -185,11 +185,11 @@ export const GhostPacerChart = memo(({
       curSpend = spentToDate + (projectedExpense - spentToDate) * futureProgress;
     }
 
-    const ghostSpend = prevDailySeries && prevDailySeries.length >= day
+    const ghostSpend = prevDailySeries.length >= day
       ? prevDailySeries[day - 1]
-      : (prevDailySeries && prevDailySeries.length > 0 ? prevDailySeries[prevDailySeries.length - 1] : 0);
+      : (prevDailySeries.length > 0 ? prevDailySeries[prevDailySeries.length - 1] : 0);
 
-    const benchSpend = benchmarkDailySeries && benchmarkDailySeries.length >= day
+    const benchSpend = benchmarkDailySeries.length >= day
       ? benchmarkDailySeries[day - 1]
       : 0;
 
@@ -215,7 +215,13 @@ export const GhostPacerChart = memo(({
   const tipH = 68;
   let tooltipX = 0;
   let tooltipY = 0;
+  let deltaLabel = '';
   if (hoverData) {
+    // True minus on both numbers; no percentage when last month had nothing yet (it would read +0%).
+    const { deltaGhost, deltaGhostPct, ghostSpend } = hoverData;
+    const sign = deltaGhost < 0 ? '−' : '+';
+    deltaLabel = deltaGhost === 0 ? '±฿0'
+      : `${sign}${formatBahtShort(Math.abs(Math.round(deltaGhost)))}${ghostSpend > 0 ? ` (${sign}${Math.abs(deltaGhostPct).toFixed(0)}%)` : ''}`;
     if (hoverData.x + tipW + 14 > viewW) {
       tooltipX = hoverData.x - tipW - 12;
     } else {
@@ -481,9 +487,7 @@ export const GhostPacerChart = memo(({
                   fontWeight="bold"
                   textAnchor="end"
                 >
-                  {hoverData.deltaGhost === 0 ? '±฿0' : hoverData.deltaGhost < 0
-                    ? `−${formatBahtShort(Math.abs(Math.round(hoverData.deltaGhost)))} (${hoverData.deltaGhostPct.toFixed(0)}%)`
-                    : `+${formatBahtShort(Math.round(hoverData.deltaGhost))} (+${hoverData.deltaGhostPct.toFixed(0)}%)`}
+                  {deltaLabel}
                 </text>
 
                 {/* Row 2: Current Month Spend */}

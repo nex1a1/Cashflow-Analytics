@@ -259,8 +259,7 @@ function QuickSuggest({
         if (amountFilter === 'under100') return amt < 100;
         if (amountFilter === '100to500') return amt >= 100 && amt <= 500;
         if (amountFilter === '500to2000') return amt > 500 && amt <= 2000;
-        if (amountFilter === 'over2000') return amt > 2000;
-        return true;
+        return amt > 2000; // 'over2000', the last option of the select
       });
     }
 

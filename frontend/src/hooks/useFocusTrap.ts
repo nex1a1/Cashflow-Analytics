@@ -36,7 +36,7 @@ export function useFocusTrap<T extends HTMLElement>() {
 
     cleanup.current = () => {
       document.removeEventListener('keydown', onKeyDown);
-      if (opener && document.contains(opener)) opener.focus();
+      opener?.focus(); // a detached opener simply ignores focus()
     };
   }, []);
 }
