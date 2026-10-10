@@ -320,7 +320,7 @@ export default function BatchAddModal({
   return (
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="สรุปค่าใช้จ่ายประจำวัน" tabIndex={-1} 
-        className={`rounded-none shadow-2xl shadow-black/80 flex flex-col w-full max-w-[1460px] h-[82vh] min-h-[540px] max-h-[755px] overflow-hidden border ${tokens.surface}`}
+        className={`rounded-none shadow-2xl shadow-black/80 flex flex-col w-full max-w-[1460px] h-[82vh] min-h-[540px] max-h-[820px] overflow-hidden border ${tokens.surface}`}
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
 

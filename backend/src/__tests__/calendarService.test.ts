@@ -3,7 +3,8 @@ import Database from 'better-sqlite3';
 import type { Request, Response } from 'express';
 import db from '../config/db';
 import { upsertCalendarDay } from '../controllers/calendarController';
-import { ensureCalendarNoteIcon, initSchema } from '../models/schema';
+import { initSchema } from '../models/schema';
+import { ensureCalendarNoteIcon } from '../models/migrations';
 import calendarService from '../services/calendarService';
 import { calendarDaySchema } from '../validations/calendarValidation';
 

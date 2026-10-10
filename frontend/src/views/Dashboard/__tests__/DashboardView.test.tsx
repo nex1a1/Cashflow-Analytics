@@ -87,10 +87,16 @@ describe('DashboardView', () => {
   it('a filter change while data is loading keeps the sections up and flags them as loading (no full skeleton flash)', () => {
     const rerender = mount(props());
     expect(sections().every(s => s.dataset.skeleton === 'false')).toBe(true);
-    rerender(props({ isLoading: true, filterPeriod: '2026-11' }));
-    expect(container!.querySelector('[role="status"]')).toBeNull();
-    expect(sections()).toHaveLength(8);
-    expect(sections().every(s => s.dataset.skeleton === 'true' && s.dataset.period === '2026-11')).toBe(true);
+    vi.useFakeTimers();
+    try {
+      rerender(props({ isLoading: true, filterPeriod: '2026-11' }));
+      expect(container!.querySelector('[role="status"]')).toBeNull();
+      expect(sections()).toHaveLength(8);
+      // a fast load keeps the old numbers up: no skeleton flicker
+      expect(sections().every(s => s.dataset.skeleton === 'false')).toBe(true);
+      act(() => { vi.advanceTimersByTime(400); });
+      expect(sections().every(s => s.dataset.skeleton === 'true' && s.dataset.period === '2026-11')).toBe(true);
+    } finally { vi.useRealTimers(); }
   });
 
   it('the skeleton gives way to the sections once rows arrive', () => {

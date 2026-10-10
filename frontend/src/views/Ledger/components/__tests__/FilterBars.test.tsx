@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React, { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import FilterBar from '../Shared/FilterBar';
+import FilterBar from '../common/FilterBar';
 import HorizontalFilterBar from '../HorizontalView/HorizontalFilterBar';
 import { EXCLUDED_HEATMAP_CATEGORIES, HeatmapEngineOptions } from '../../hooks/useHeatmapEngine';
 import { byText, click, q, type } from '@/test-utils/dom';
@@ -10,7 +10,7 @@ import type { Category, TransactionDisplay } from '@/types';
 
 const h = vi.hoisted(() => ({ matrix: null as any, date: null as any }));
 // The category matrix and the date picker are tested on their own; here they only report what they were given.
-vi.mock('@/views/Ledger/components/Shared/CategoryMatrixFilter', async () => {
+vi.mock('@/views/Ledger/components/common/CategoryMatrixFilter', async () => {
   const React = await import('react');
   return { default: (p: any) => { h.matrix = p; return React.createElement('div', { 'data-testid': 'matrix' }); } };
 });

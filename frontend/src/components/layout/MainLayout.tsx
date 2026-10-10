@@ -107,7 +107,7 @@ export default function MainLayout() {
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
           categories={categories}
-          isProcessing={isProcessing}
+          isProcessing={isCsvProcessing}
           onClickAddQuick={() => {
             setAddForm(prev => ({
               ...prev,

@@ -71,7 +71,7 @@ describe('loadData', () => {
     await act(async () => { await result.current.d.loadData('2026-10-01', '2026-10-31'); });
     expect(api.transactionService.getAll).toHaveBeenCalledWith('2026-10-01', '2026-10-31');
     expect(result.current.d.transactions.map(t => t.id)).toEqual(['a', 'b', 'c']);
-    expect(setters.setDbStatus).toHaveBeenNthCalledWith(1, 'กำลังโหลด...');
+    expect(setters.setDbStatus).not.toHaveBeenCalledWith('กำลังโหลด...'); // no badge flicker per period change
     expect(setters.setDbStatus).toHaveBeenLastCalledWith('Online (SQLite3)');
   });
 

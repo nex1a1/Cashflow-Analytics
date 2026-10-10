@@ -129,28 +129,26 @@ describe('CashflowGroupsCard type and allocation', () => {
 
   it('an expense group has an allocation picker showing its allocation; changing it reports the value', () => {
     mount({ cashflowGroups: [FOOD] });
-    const trigger = q<HTMLButtonElement>('button.allocation-trigger')!;
-    expect(trigger.textContent).toBe('NEED');
-    click(trigger);
-    click([...document.querySelectorAll<HTMLElement>('[role="option"]')].find(o => o.textContent!.includes('WANT')));
+    expect(q('[role="radio"][aria-checked="true"]')!.textContent).toBe('NEED');
+    click([...document.querySelectorAll<HTMLElement>('[role="radio"]')].find(o => o.textContent === 'WANT'));
     expect(props.handleChangeCashflowGroup).toHaveBeenCalledWith('g-food', 'allocation_type', 'want');
   });
 
   it('an expense group with no allocation reads WANT', () => {
     mount({ cashflowGroups: [{ ...FOOD, allocation_type: null }] });
-    expect(q<HTMLButtonElement>('button.allocation-trigger')!.textContent).toBe('WANT');
+    expect(q('[role="radio"][aria-checked="true"]')!.textContent).toBe('WANT');
   });
 
   it('a savings group is always SAVE, with no picker', () => {
     mount({ cashflowGroups: [SAVE] });
-    expect(q('button.allocation-trigger')).toBeNull();
+    expect(q('.allocation-trigger')).toBeNull();
     const label = [...container!.querySelectorAll<HTMLElement>('div[title]')].find(d => d.textContent === 'SAVE')!;
     expect(label.title).toBe('กลุ่มลงทุน/ออมเป็น SAVE เสมอ');
   });
 
   it('an income group has neither', () => {
     mount({ cashflowGroups: [INCOME] });
-    expect(q('button.allocation-trigger')).toBeNull();
+    expect(q('.allocation-trigger')).toBeNull();
     expect(container!.textContent).not.toContain('SAVE');
   });
 });

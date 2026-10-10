@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import LedgerHeaderActions from '../LedgerHeaderActions';
 import LedgerCommandPanel, { LedgerGroupBreakdownSection, getSavingsRateStyle } from '../LedgerCommandPanel';
-import SegmentButton from '../Shared/SegmentButton';
+import SegmentButton from '../common/SegmentButton';
 import { byText, click } from '@/test-utils/dom';
 import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
 import { formatMoney } from '@/utils/formatters';

@@ -4,6 +4,7 @@
 // แถบแสดงเฉพาะตอนเลือกดูเดือนเดียว/รอบเดียว และนับแค่ "ใช้จริง" (วันที่ <= วันนี้);
 // รายการล่วงหน้าเป็นแผน แสดงเป็นส่วนจางและไม่ทำให้สีเปลี่ยน
 import { PAY_DAY_START, monthKeyOf, shiftMonth, stripCycle } from './payCycle';
+import { parseDateStrToObj, resolvePeriodDateBounds } from './dateHelpers';
 
 export const BUDGETS_SETTING_KEY = 'group_budgets';
 /** เกินงบ = ส้ม ไม่ใช่แดง: เกินสิบกว่าบาทไม่ควรทำให้ตกใจ แดงเมื่อเกิน 120% */
@@ -74,4 +75,15 @@ export const computeEnvelopes = (rows: EnvelopeRow[], budgets: Record<string, nu
     const avg = prev.length ? Math.round(prev.reduce((s, k) => s + (prevTotal[k] ?? 0), 0) / prev.length) : null;
     return { groupId, budget, spent, planned, avg, avgUnits: prev.length, level: budgetLevel(spent, budget) };
   });
+};
+
+/** สัดส่วนของเดือน/รอบที่ผ่านไปแล้ว (นับวันนี้ด้วย) สำหรับเส้น "ควรใช้ถึงตรงนี้" — null ถ้าช่วงยังไม่เริ่มหรือจบไปแล้ว */
+export const periodElapsed = (period: string, today: string): number | null => {
+  const b = resolvePeriodDateBounds(period);
+  if (!b) return null;
+  const t = parseDateStrToObj(today);
+  const DAY = 86_400_000;
+  const total = Math.round((b.end.getTime() - b.start.getTime()) / DAY) + 1;
+  const done = Math.round((t.getTime() - b.start.getTime()) / DAY) + 1;
+  return done < 1 || done >= total ? null : done / total;
 };

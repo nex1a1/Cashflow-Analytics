@@ -103,8 +103,8 @@ describe('BudgetEnvelopes — what is counted', () => {
     const t = row('ค่ากิน').textContent!;
     expect(t).toContain('฿3,500 / ฿5,000');
     expect(t).toContain('เหลือ ฿1,500');
-    expect(t).toContain('แผนอีก ฿700');
-    expect(document.body.textContent).toContain('แผน = รายการที่ลงวันที่ล่วงหน้า');
+    expect(t).toContain('คาดการณ์อีก ฿700');
+    expect(document.body.textContent).toContain('สีจาง = คาดการณ์');
   });
 
   it('ignores savings / income rows, rows without a category and other months', () => {
@@ -131,8 +131,8 @@ describe('BudgetEnvelopes — what is counted', () => {
 
   it('no plan line and no average when there is nothing to show', () => {
     mount();
-    expect(document.body.textContent).not.toContain('แผนอีก');
-    expect(document.body.textContent).not.toContain('แผน = รายการ');
+    expect(document.body.textContent).not.toContain('คาดการณ์อีก');
+    expect(document.body.textContent).not.toContain('สีจาง = คาดการณ์');
   });
 
   it('in cycle mode the unit is "รอบ" and the cycle (25th–24th) decides what is in it', () => {
@@ -194,7 +194,7 @@ describe('BudgetEnvelopes — colour steps', () => {
 
 describe('BudgetEnvelopes — loading', () => {
   it('shows shimmer instead of numbers while the new period loads (the rows still belong to the old one)', () => {
-    set({ isLoading: true, transactions: [tx('a', '2026-10-05', 'c-food', 3_000)] });
+    set({ showSkeleton: true, transactions: [tx('a', '2026-10-05', 'c-food', 3_000)] });
     mount();
     expect(document.body.textContent).not.toContain('฿3,000');
     expect(document.querySelectorAll('.animate-pulse').length).toBe(4); // bar + figures for two rows

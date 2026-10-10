@@ -14,13 +14,14 @@ vi.mock('@/components/shared/CategorySelect', async () => {
 });
 vi.mock('@/components/shared/AllocationSelect', async () => {
   const React = await import('react');
-  return { default: () => React.createElement('span', { 'data-testid': 'alloc' }) };
+  const real = await vi.importActual<typeof import('@/components/shared/AllocationSelect')>('@/components/shared/AllocationSelect');
+  return { SegmentedToggle: real.SegmentedToggle, default: () => React.createElement('span', { 'data-testid': 'alloc' }) };
 });
 vi.mock('@/components/ui/DatePicker', async () => {
   const React = await import('react');
   return { default: () => React.createElement('span', { 'data-testid': 'date' }) };
 });
-vi.mock('@/views/Ledger/components/Shared/CategoryMatrixFilter', async () => {
+vi.mock('@/views/Ledger/components/common/CategoryMatrixFilter', async () => {
   const React = await import('react');
   return { default: () => React.createElement('span', { 'data-testid': 'matrix' }) };
 });

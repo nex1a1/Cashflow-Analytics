@@ -3,7 +3,7 @@ import { formatMoney } from '../../utils/formatters';
 import { isDateInFilter } from '../../utils/dateHelpers';
 
 // Shared Components
-import FilterBar from './components/Shared/FilterBar';
+import FilterBar from './components/common/FilterBar';
 import HorizontalFilterBar from './components/HorizontalView/HorizontalFilterBar';
 
 // Extracted Sub-Components

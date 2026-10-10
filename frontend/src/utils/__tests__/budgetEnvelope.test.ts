@@ -54,3 +54,13 @@ describe('budgetEnvelope', () => {
     expect(e.avg).toBe(200000);
   });
 });
+
+import { periodElapsed } from '../budgetEnvelope';
+describe('periodElapsed', () => {
+  it('counts today inside a calendar month', () => expect(periodElapsed('2026-10', '2026-10-10')).toBeCloseTo(10 / 31));
+  it('follows a 25–24 cycle', () => expect(periodElapsed('cycle:2026-10', '2026-10-25')).toBeCloseTo(1 / 31));
+  it('hides for past or future periods', () => {
+    expect(periodElapsed('2026-09', '2026-10-10')).toBeNull();
+    expect(periodElapsed('2026-11', '2026-10-10')).toBeNull();
+  });
+});

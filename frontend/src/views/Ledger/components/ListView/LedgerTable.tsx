@@ -1,14 +1,39 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pencil, PlusCircle, ChevronLeft, ChevronRight, ChevronFirst, ChevronLast } from 'lucide-react';
+import { Pencil, Plus, Minus, TrendingUp, ChevronLeft, ChevronRight, ChevronFirst, ChevronLast } from 'lucide-react';
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
 import { getThaiDayInfo, formatThaiDateShort, formatBaht } from '../../../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../../types';
 import CategorySelect from '../../../../components/shared/CategorySelect';
-import AllocationSelect from '@/components/shared/AllocationSelect';
+import AllocationSelect, { SegmentedToggle } from '@/components/shared/AllocationSelect';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { readable } from '@/constants/theme';
+import { readable, TOKENS } from '@/constants/theme';
+
+// Income and investing share the same green, so the icon carries the meaning: + เข้า, − ออก, กราฟ = ลงทุน.
+const ADD_BUTTONS = [
+  { type: 'income' as const, label: 'เพิ่มรายรับ', Icon: Plus, cls: 'text-income hover:bg-income/15' },
+  { type: 'expense' as const, label: 'เพิ่มรายจ่าย', Icon: Minus, cls: 'text-expense hover:bg-expense/15' },
+  { type: 'savings' as const, label: 'เพิ่มลงทุน/ออม', Icon: TrendingUp, cls: 'text-savings hover:bg-savings/15' },
+];
+
+function AddRowButtons({ date, onAdd }: { date: string; onAdd: (date: string, type: 'income' | 'expense' | 'savings') => void }) {
+  return (
+    <div className="flex items-center gap-[1px] bg-line opacity-0 group-hover:opacity-100 focus-within:opacity-100 shrink-0">
+      {ADD_BUTTONS.map(({ type, label, Icon, cls }) => (
+        <button key={type} type="button" onClick={() => onAdd(date, type)} title={`${label} (${date})`} aria-label={label}
+          className={`w-5 h-5 flex items-center justify-center bg-surface rounded-none ${cls}`}>
+          <Icon className="w-3.5 h-3.5" strokeWidth={2.5} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const TRADE_OPTIONS = [
+  { id: 'buy' as const, label: 'ซื้อ', desc: 'ซื้อ · เงินออกไปลงทุน', color: TOKENS.savings },
+  { id: 'sell' as const, label: 'ขาย', desc: 'ขาย · เงินกลับเข้ามา', color: TOKENS.info },
+];
 
 interface SortConfig {
   key: string;
@@ -92,8 +117,168 @@ export default function LedgerTable({
     setPageInput(String(p));
   };
 
+  const pager = (
+        <div className="inline-flex items-center border border-line bg-surface divide-x divide-line select-none">
+          {/* Jump to First Page (|<) */}
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage <= 1}
+            className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
+              currentPage <= 1
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+            }`}
+            title="หน้าแรกสุด (หน้า 1)"
+          >
+            <ChevronFirst className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Jump -10 (Only if totalPages > 10) */}
+          {totalPages > 10 && (
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 10, 1))}
+              disabled={currentPage <= 1}
+              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
+                currentPage <= 1
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+              }`}
+              title={`ถอยหลัง 10 หน้า (ไปหน้า ${Math.max(currentPage - 10, 1)})`}
+            >
+              -10
+            </button>
+          )}
+
+          {/* Jump -5 (Only if totalPages > 5) */}
+          {totalPages > 5 && (
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 5, 1))}
+              disabled={currentPage <= 1}
+              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
+                currentPage <= 1
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+              }`}
+              title={`ถอยหลัง 5 หน้า (ไปหน้า ${Math.max(currentPage - 5, 1)})`}
+            >
+              -5
+            </button>
+          )}
+
+          {/* Previous Page (< ก่อนหน้า) */}
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage <= 1}
+            className={`flex items-center justify-center gap-1 w-[90px] h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
+              currentPage <= 1
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+            }`}
+            title={`หน้าก่อนหน้า (ไปหน้า ${Math.max(currentPage - 1, 1)})`}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">ก่อนหน้า</span>
+          </button>
+          
+          {/* Direct Page Input Box */}
+          <div 
+            className="flex items-center h-7 gap-1.5 px-2.5 bg-canvas text-[11px] font-black font-mono tabular-nums text-ink-soft"
+            title="หน้าปัจจุบัน / ทั้งหมด — คลิกเพื่อพิมพ์เลขหน้า แล้วกด Enter (หรือใช้ลูกศรขึ้น/ลง)"
+          >
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              aria-label="เลขหน้า"
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onClick={(e: React.MouseEvent<HTMLInputElement>) => (e.target as HTMLInputElement).select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handlePageSubmit();
+                  e.currentTarget.blur();
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                } else if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.max(prev - 1, 1));
+                }
+              }}
+              onBlur={handlePageSubmit}
+              className="w-7 text-center bg-surface-hover text-ink-display font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
+            />
+            <span className="text-ink-muted font-normal select-none">/</span>
+            <span className="w-7 text-center text-ink-body font-extrabold select-none">{totalPages}</span>
+          </div>
+
+          {/* Next Page (ถัดไป >) */}
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage >= totalPages}
+            className={`flex items-center justify-center gap-1 w-[90px] h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
+              currentPage >= totalPages
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+            }`}
+            title={`หน้าถัดไป (ไปหน้า ${Math.min(currentPage + 1, totalPages)})`}
+          >
+            <span className="hidden sm:inline">ถัดไป</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Jump +5 (Only if totalPages > 5) */}
+          {totalPages > 5 && (
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 5, totalPages))}
+              disabled={currentPage >= totalPages}
+              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
+                currentPage >= totalPages
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+              }`}
+              title={`ข้ามไปข้างหน้า 5 หน้า (ไปหน้า ${Math.min(currentPage + 5, totalPages)})`}
+            >
+              +5
+            </button>
+          )}
+
+          {/* Jump +10 (Only if totalPages > 10) */}
+          {totalPages > 10 && (
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 10, totalPages))}
+              disabled={currentPage >= totalPages}
+              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
+                currentPage >= totalPages
+                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+              }`}
+              title={`ข้ามไปข้างหน้า 10 หน้า (ไปหน้า ${Math.min(currentPage + 10, totalPages)})`}
+            >
+              +10
+            </button>
+          )}
+
+          {/* Jump to Last Page (>|) */}
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage >= totalPages}
+            className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
+              currentPage >= totalPages
+                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
+                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
+            }`}
+            title={`หน้าสุดท้าย (หน้า ${totalPages})`}
+          >
+            <ChevronLast className="w-3.5 h-3.5" />
+          </button>
+        </div>
+  );
+
   return (
     <div className="flex flex-col w-full">
+      {/* Same pager above the table, so changing page needs no scroll to the bottom */}
+      {totalPages > 1 && <div className="flex justify-center py-2 border-b bg-surface border-line/60">{pager}</div>}
       <div className="overflow-auto no-scrollbar relative" style={{ scrollbarWidth: 'thin' }}>
         <table className="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[780px] bg-canvas">
           <thead className="sticky top-0 z-20 border-b bg-surface border-line/65">
@@ -156,32 +341,7 @@ export default function LedgerTable({
                             {formatThaiDateShort(item.date)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button 
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'income')} 
-                            className="p-0.5 rounded-none text-income hover:text-income hover:bg-income/10 transition-colors" 
-                            title={`เพิ่มรายรับ (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'expense')} 
-                            className="p-0.5 rounded-none text-expense hover:text-danger hover:bg-expense/15 transition-colors" 
-                            title={`เพิ่มรายจ่าย (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'savings')}
-                            className="p-0.5 rounded-none text-savings hover:bg-savings/10 transition-colors"
-                            title={`เพิ่มลงทุน/ออม (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <AddRowButtons date={item.date} onAdd={handleOpenAddModal} />
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-1.5 w-full">
@@ -192,32 +352,7 @@ export default function LedgerTable({
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          <button 
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'income')} 
-                            className="p-0.5 rounded-none text-income hover:text-income hover:bg-income/10 transition-colors" 
-                            title={`เพิ่มรายรับ (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'expense')} 
-                            className="p-0.5 rounded-none text-expense hover:text-danger hover:bg-expense/15 transition-colors" 
-                            title={`เพิ่มรายจ่าย (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAddModal(item.date, 'savings')}
-                            className="p-0.5 rounded-none text-savings hover:bg-savings/10 transition-colors"
-                            title={`เพิ่มลงทุน/ออม (${item.date})`}
-                          >
-                            <PlusCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <AddRowButtons date={item.date} onAdd={handleOpenAddModal} />
                       </div>
                     )}
                   </td>
@@ -237,16 +372,14 @@ export default function LedgerTable({
                   
                   <td className="px-2 py-1 align-middle text-center w-[95px] min-w-[95px] max-w-[95px]">
                     {isSav ? (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateTransaction(item.id, 'amount', -item.amount)}
-                        title={`${isSell ? 'ขาย' : 'ซื้อ'}${item.asset_id && assetNames[item.asset_id] ? ` · ${assetNames[item.asset_id]}` : ' · ออมทั่วไป'}${item.units ? ` · ${item.units} หน่วย` : ''} — คลิกเพื่อสลับซื้อ/ขาย`}
-                        className={`inline-flex items-center justify-center px-2 py-1 text-[11px] font-black border rounded-pill ${
-                          isSell ? 'bg-info/10 text-info border-info/30' : 'bg-savings/10 text-savings border-savings/30'
-                        }`}
-                      >
-                        {isSell ? 'ขาย' : 'ซื้อ'}
-                      </button>
+                      <div title={`${item.asset_id && assetNames[item.asset_id] ? assetNames[item.asset_id] : 'ออมทั่วไป'}${item.units ? ` · ${item.units} หน่วย` : ''}`}>
+                        <SegmentedToggle
+                          options={TRADE_OPTIONS}
+                          value={isSell ? 'sell' : 'buy'}
+                          onChange={() => handleUpdateTransaction(item.id, 'amount', -item.amount)}
+                          label="ซื้อหรือขาย"
+                        />
+                      </div>
                     ) : !isInc ? (
                       <AllocationSelect  
                         value={aType} 
@@ -292,163 +425,7 @@ export default function LedgerTable({
           หน้า {currentPage} • แสดง {currentData.length} จาก {sortedTransactions.length} รายการ
         </div>
 
-        {/* Center: Symmetric Speed Cockpit Pagination */}
-        <div className="inline-flex items-center border border-line bg-surface divide-x divide-line select-none">
-          {/* Jump to First Page (|<) */}
-          <button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage <= 1}
-            className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
-              currentPage <= 1
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-            }`}
-            title="หน้าแรกสุด (หน้า 1)"
-          >
-            <ChevronFirst className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Jump -10 (Only if totalPages > 10) */}
-          {totalPages > 10 && (
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 10, 1))}
-              disabled={currentPage <= 1}
-              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
-                currentPage <= 1
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-              }`}
-              title={`ถอยหลัง 10 หน้า (ไปหน้า ${Math.max(currentPage - 10, 1)})`}
-            >
-              -10
-            </button>
-          )}
-
-          {/* Jump -5 (Only if totalPages > 5) */}
-          {totalPages > 5 && (
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 5, 1))}
-              disabled={currentPage <= 1}
-              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
-                currentPage <= 1
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-              }`}
-              title={`ถอยหลัง 5 หน้า (ไปหน้า ${Math.max(currentPage - 5, 1)})`}
-            >
-              -5
-            </button>
-          )}
-
-          {/* Previous Page (< ก่อนหน้า) */}
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage <= 1}
-            className={`flex items-center gap-1 h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
-              currentPage <= 1
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-            }`}
-            title={`หน้าก่อนหน้า (ไปหน้า ${Math.max(currentPage - 1, 1)})`}
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">ก่อนหน้า</span>
-          </button>
-          
-          {/* Direct Page Input Box */}
-          <div 
-            className="flex items-center h-7 gap-1.5 px-2.5 bg-canvas text-[11px] font-black font-mono tabular-nums text-ink-soft"
-            title="คลิกเพื่อพิมพ์เลขหน้า แล้วกด Enter (หรือใช้ลูกศรขึ้น/ลง)"
-          >
-            <span className="text-ink-muted font-normal uppercase tracking-wider text-[11px] select-none">หน้า</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              aria-label="เลขหน้า"
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              onClick={(e: React.MouseEvent<HTMLInputElement>) => (e.target as HTMLInputElement).select()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handlePageSubmit();
-                  e.currentTarget.blur();
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
-                } else if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  setCurrentPage(prev => Math.max(prev - 1, 1));
-                }
-              }}
-              onBlur={handlePageSubmit}
-              className="w-7 text-center bg-surface-hover text-ink-display font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
-            />
-            <span className="text-ink-muted font-normal select-none">/</span>
-            <span className="text-ink-body font-extrabold select-none">{totalPages}</span>
-          </div>
-
-          {/* Next Page (ถัดไป >) */}
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage >= totalPages}
-            className={`flex items-center gap-1 h-7 px-2.5 text-[11px] font-black font-mono uppercase tracking-wider transition-none ${
-              currentPage >= totalPages
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-            }`}
-            title={`หน้าถัดไป (ไปหน้า ${Math.min(currentPage + 1, totalPages)})`}
-          >
-            <span className="hidden sm:inline">ถัดไป</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Jump +5 (Only if totalPages > 5) */}
-          {totalPages > 5 && (
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 5, totalPages))}
-              disabled={currentPage >= totalPages}
-              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
-                currentPage >= totalPages
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-              }`}
-              title={`ข้ามไปข้างหน้า 5 หน้า (ไปหน้า ${Math.min(currentPage + 5, totalPages)})`}
-            >
-              +5
-            </button>
-          )}
-
-          {/* Jump +10 (Only if totalPages > 10) */}
-          {totalPages > 10 && (
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 10, totalPages))}
-              disabled={currentPage >= totalPages}
-              className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono tracking-tighter transition-none ${
-                currentPage >= totalPages
-                  ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                  : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-              }`}
-              title={`ข้ามไปข้างหน้า 10 หน้า (ไปหน้า ${Math.min(currentPage + 10, totalPages)})`}
-            >
-              +10
-            </button>
-          )}
-
-          {/* Jump to Last Page (>|) */}
-          <button
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage >= totalPages}
-            className={`flex items-center justify-center h-7 px-2 text-[11px] font-black font-mono transition-none ${
-              currentPage >= totalPages
-                ? 'opacity-20 cursor-not-allowed pointer-events-none text-ink-muted'
-                : 'text-ink-soft hover:bg-surface-elevated hover:text-ink-display active:bg-surface-elevated cursor-pointer'
-            }`}
-            title={`หน้าสุดท้าย (หน้า ${totalPages})`}
-          >
-            <ChevronLast className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {pager}
 
         {/* Right: Page Totals */}
         <div className="flex items-center gap-6">

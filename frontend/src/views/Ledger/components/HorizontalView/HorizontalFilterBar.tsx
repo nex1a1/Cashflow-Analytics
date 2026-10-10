@@ -3,8 +3,8 @@ import {
   Building2, Calendar, EyeOff, RefreshCw, Sparkles, 
   SlidersHorizontal, Check, Folder, MousePointer2
 } from 'lucide-react';
-import CategoryMatrixFilter from '../Shared/CategoryMatrixFilter';
-import SegmentButton from '../Shared/SegmentButton';
+import CategoryMatrixFilter from '../common/CategoryMatrixFilter';
+import SegmentButton from '../common/SegmentButton';
 import { EXCLUDED_HEATMAP_CATEGORIES, HeatmapEngineOptions } from '../../hooks/useHeatmapEngine';
 import { Category, CashflowGroup, TransactionDisplay } from '../../../../types';
 

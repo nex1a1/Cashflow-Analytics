@@ -1,5 +1,5 @@
 // src/views/Dashboard/index.tsx
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Inbox } from 'lucide-react';
 import { DashboardProvider } from './context/DashboardContext';
 import DashboardSkeleton from './components/DashboardSkeleton';
@@ -43,7 +43,15 @@ export default function DashboardView(props: DashboardViewProps) {
   
   // ── Logic: Smooth Loading Transition (Cold boot vs filter changes) ──
   const isInitialBoot = isLoading && (!transactions || transactions.length === 0);
-  const showSkeleton = isLoading;
+  // Period loads are usually instant: swapping every widget to a skeleton and back read as a flicker.
+  // Keep the previous numbers on screen and only show skeletons if the load is actually slow.
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (!isLoading) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 400);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+  const showSkeleton = isLoading && slowLoad;
 
   // Memoize the context value to avoid recreating it on every single render
   const dashboardContextValue = useMemo(() => ({

@@ -64,7 +64,7 @@ export default function useTransactionData({
       dataRange.current = { start: startDate, end: endDate };
       const isCurrent = beginDataLoad();
       try {
-        setDbStatus('กำลังโหลด...');
+        // no "loading" status here: it fired on every period change and made the header badges flicker
         const txData = await transactionService.getAll(startDate || undefined, endDate || undefined);
         if (!isCurrent()) return;
         setTransactions(sortTransactions(txData));

@@ -16,7 +16,8 @@ vi.mock('@/components/shared/CategorySelect', async () => {
 });
 vi.mock('@/components/shared/AllocationSelect', async () => {
   const React = await import('react');
-  return { default: (p: any) => React.createElement('button', { 'data-testid': 'alloc', 'data-value': p.value, onClick: () => p.onChange('need') }, 'alloc') };
+  const real = await vi.importActual<typeof import('@/components/shared/AllocationSelect')>('@/components/shared/AllocationSelect');
+  return { SegmentedToggle: real.SegmentedToggle, default: (p: any) => React.createElement('button', { 'data-testid': 'alloc', 'data-value': p.value, onClick: () => p.onChange('need') }, 'alloc') };
 });
 
 const categories: Category[] = [
@@ -155,14 +156,14 @@ describe('LedgerTable — what each kind of row shows', () => {
     mount({ currentData: [buy] });
     const r = rows()[0];
     expect(r.querySelector('[data-testid="cat"]')!.getAttribute('data-type')).toBe('savings');
-    expect(byText('button', 'ซื้อ')).not.toBeNull();
+    expect(q('[role="radio"][aria-checked="true"]')!.textContent).toBe('ซื้อ');
     expect(r.querySelector('[data-testid="alloc"]')).toBeNull();
     expect(cell(r, 4).textContent).toBe('฿2,000.00');
   });
 
   it('a negative savings amount is a SELL, shown as its size', () => {
     mount({ currentData: [sell] });
-    expect(byText('button', 'ขาย')).not.toBeNull();
+    expect(q('[role="radio"][aria-checked="true"]')!.textContent).toBe('ขาย');
     expect(cell(rows()[0], 4).textContent).toBe('฿500.00');
   });
 
@@ -188,20 +189,20 @@ describe('LedgerTable — what each kind of row shows', () => {
     expect(cell(rows()[0], 4).textContent).toBe('−฿0.00');
   });
 
-  it('the badge title says buy / sell, the asset and the units', () => {
+  it('the toggle title says the asset and the units', () => {
     h.portfolio = { assets: [{ id: 'a1', name: 'ทองคำแท่ง' }] };
     mount({ currentData: [{ ...buy, id: 'buy-asset', asset_id: 'a1', units: 2.5 } as TransactionDisplay, { ...sell, id: 'sell-asset', asset_id: 'a1', units: 1 } as TransactionDisplay, buy] });
-    const titles = [...container!.querySelectorAll('td button[title*="คลิกเพื่อสลับซื้อ/ขาย"]')].map(b => b.getAttribute('title'));
-    expect(titles[0]).toContain('ซื้อ · ทองคำแท่ง · 2.5 หน่วย');
-    expect(titles[1]).toContain('ขาย · ทองคำแท่ง · 1 หน่วย');
-    expect(titles[2]).toContain('ซื้อ · ออมทั่วไป'); // no asset
+    const titles = [...container!.querySelectorAll('[role="radiogroup"]')].map(g => g.parentElement!.getAttribute('title'));
+    expect(titles[0]).toBe('ทองคำแท่ง · 2.5 หน่วย');
+    expect(titles[1]).toBe('ทองคำแท่ง · 1 หน่วย');
+    expect(titles[2]).toBe('ออมทั่วไป'); // no asset
     expect(titles[2]).not.toContain('หน่วย');
   });
 
   it('an asset that is no longer in the portfolio falls back to "ออมทั่วไป"', () => {
     h.portfolio = { assets: [] };
     mount({ currentData: [{ ...buy, asset_id: 'gone', units: 1 } as TransactionDisplay] });
-    expect(container!.querySelector('td button[title*="ออมทั่วไป"]')).not.toBeNull();
+    expect(container!.querySelector('td div[title*="ออมทั่วไป"]')).not.toBeNull();
   });
 
   it('works while the portfolio has not loaded', () => {
@@ -262,11 +263,12 @@ describe('LedgerTable — editing a row', () => {
     expect(fn.handleUpdateTransaction).toHaveBeenCalledWith('b1', 'amount', 900);
   });
 
-  it('the buy / sell badge flips the sign of the amount', () => {
+  it('the buy / sell toggle flips the sign of the amount', () => {
     mount({ currentData: [row('b1', { category: 'ออมทอง', category_id: 'c-gold', amount: 500 }), row('s1', { category: 'ออมทอง', category_id: 'c-gold', amount: -300 })] });
-    click(byText('button', 'ซื้อ'));
+    const [r1, r2] = rows();
+    click([...r1.querySelectorAll<HTMLElement>('[role="radio"]')].find(b => b.textContent === 'ขาย'));
     expect(fn.handleUpdateTransaction).toHaveBeenLastCalledWith('b1', 'amount', -500);
-    click(byText('button', 'ขาย'));
+    click([...r2.querySelectorAll<HTMLElement>('[role="radio"]')].find(b => b.textContent === 'ซื้อ'));
     expect(fn.handleUpdateTransaction).toHaveBeenLastCalledWith('s1', 'amount', 300);
   });
 });
