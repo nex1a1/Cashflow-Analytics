@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 import { PlusCircle } from 'lucide-react';
 
 interface AccentStyle {

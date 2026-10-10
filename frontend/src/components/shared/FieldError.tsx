@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
 /** Inline error under a field. Link it from the input with aria-describedby={id} + aria-invalid. */

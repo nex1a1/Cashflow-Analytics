@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/SummaryCards/Strategic/StrategicCardShell.tsx
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { StrategicCardShellProps } from '../types';
 
 export const StrategicCardShell = memo(({

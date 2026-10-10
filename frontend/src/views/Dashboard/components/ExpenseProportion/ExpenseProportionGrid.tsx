@@ -115,4 +115,3 @@ export const ExpenseProportionGrid = React.memo<ExpenseProportionGridProps>(({
 });
 
 ExpenseProportionGrid.displayName = 'ExpenseProportionGrid';
-export default ExpenseProportionGrid;

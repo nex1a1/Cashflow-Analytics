@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ImportGuideModal/GuideFooter.tsx
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Download, Copy, CheckCircle } from 'lucide-react';
 import { GuideFooterProps } from './types';
 import { LONG_VARIATION_INFO } from './guideUtils';

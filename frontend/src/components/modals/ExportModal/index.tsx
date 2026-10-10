@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ExportModal/index.tsx
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { transactionService } from '../../../services/api';
 import { TransactionDisplay } from '../../../types';
 import ExportHeader from './ExportHeader';

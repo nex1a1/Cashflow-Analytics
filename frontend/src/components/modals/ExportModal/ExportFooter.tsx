@@ -1,5 +1,4 @@
 // frontend/src/components/modals/ExportModal/ExportFooter.tsx
-import React from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { ExportFooterProps, ExportFormatKey } from './types';
 import FieldError from '../../shared/FieldError';

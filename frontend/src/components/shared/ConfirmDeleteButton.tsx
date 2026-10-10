@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useConfirmTimeout } from '@/hooks/useConfirmTimeout';
 

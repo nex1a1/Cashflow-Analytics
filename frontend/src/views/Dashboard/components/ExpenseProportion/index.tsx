@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/ExpenseProportion/index.tsx
-import React, { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Inbox, TrendingUp } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { getDoughnutChartOptions } from '@/utils/chartOptions';
 import { useDashboardContext } from '../../context/DashboardContext';
 import {
@@ -294,5 +294,3 @@ export function ExpenseProportion() {
     </div>
   );
 }
-
-export default React.memo(ExpenseProportion);

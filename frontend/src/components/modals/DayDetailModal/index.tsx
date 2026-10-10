@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, ChevronDown, Tag, ArrowDownWideNarrow } from 'lucide-react';
-import { formatMoney, hexToRgb, THAI_MONTHS, getThaiDayInfo, formatBaht } from '../../../utils/formatters';
+import { hexToRgb, THAI_MONTHS, getThaiDayInfo, formatBaht } from '../../../utils/formatters';
 import DailyForm from './DailyForm';
 import DayNoteField from './DayNoteField';
 import QuickSuggest from './QuickSuggest';

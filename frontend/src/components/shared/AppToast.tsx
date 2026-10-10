@@ -1,5 +1,4 @@
 // src/components/AppToast.tsx
-import React from 'react';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 import { ToastInfo, useToast } from '../../context/ToastContext';
 

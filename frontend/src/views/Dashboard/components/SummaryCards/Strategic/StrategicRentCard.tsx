@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Home, Building2, Zap, Globe, Droplets } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { Shimmer, BUDGET_RULES, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { RentSub } from '../types';

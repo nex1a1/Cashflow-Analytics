@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ExportModal/ExportPreview.tsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Search, X, Loader2, AlertCircle, Info } from 'lucide-react';
 import { ExportPreviewProps } from './types';
 import ExportLongTable from './ExportLongTable';

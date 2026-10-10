@@ -5,7 +5,7 @@ import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { portfolioService } from '@/services/api';
 import { AssetKind, PortfolioAsset, PricePreview } from '@/types';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { tc } from '@/constants/theme';
 import { ASSET_KIND_LABELS, GRAMS_PER_BAHT_GOLD, defaultUnitLabel, formatUnits, isGoldKind } from './portfolioHelpers';
 import { KIND_META } from './assetKinds';

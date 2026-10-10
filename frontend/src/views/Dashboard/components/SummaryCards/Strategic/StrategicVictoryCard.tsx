@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Award, ArrowDownToLine, Lock, Target, PiggyBank } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { Shimmer, formatSignedMoney } from '../helpers';
 
 interface VictoryCardProps {

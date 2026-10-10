@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CalendarPlus, X, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useConfirmTimeout } from '@/hooks/useConfirmTimeout';
 import FieldError from '../../shared/FieldError';

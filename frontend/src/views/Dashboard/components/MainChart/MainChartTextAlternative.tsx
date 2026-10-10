@@ -1,6 +1,6 @@
 // src/views/Dashboard/components/MainChart/MainChartTextAlternative.tsx
-import React, { memo } from 'react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { memo } from 'react';
+import { formatBaht } from '@/utils/formatters';
 
 interface SankeyFlow { from: string; to: string; flow: number }
 interface Series { label?: string; hidden?: boolean; data?: unknown[] }

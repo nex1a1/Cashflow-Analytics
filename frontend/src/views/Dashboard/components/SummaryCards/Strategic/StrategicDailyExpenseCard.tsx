@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { TrendingDown, Briefcase, Palmtree, Lock, Target } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { Shimmer, formatSignedMoney } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 

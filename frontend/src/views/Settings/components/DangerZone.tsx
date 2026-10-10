@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { AlertCircle } from 'lucide-react';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
 import SectionCard from './SectionCard';

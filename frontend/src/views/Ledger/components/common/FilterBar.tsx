@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Search, X, Hash, CalendarDays, MousePointer2, 
-  Folder, Tag, ChevronDown, ChevronUp, RefreshCw, Sparkles, SlidersHorizontal
+  Folder, ChevronDown, ChevronUp, RefreshCw, Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CategoryMatrixFilter from './CategoryMatrixFilter';

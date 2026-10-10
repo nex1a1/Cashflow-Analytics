@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import React, { act, useRef, useState } from 'react';
+import { act, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { MainChartFilterMenu, MainChartCategorySelector } from '../MainChartCategoryFilter';
 import { click, byText, q, type } from '@/test-utils/dom';

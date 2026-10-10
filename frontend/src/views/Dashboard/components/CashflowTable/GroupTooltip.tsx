@@ -1,5 +1,4 @@
 // src/views/Dashboard/components/CashflowTable/GroupTooltip.tsx
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { hexToRgb } from '@/utils/formatters';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';

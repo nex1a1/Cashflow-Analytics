@@ -1,10 +1,10 @@
 // src/views/Dashboard/components/SummaryCards/GhostPacer/SummaryGhostPacer.tsx
-import React, { memo } from 'react';
+import { memo } from 'react';
 import {
-  Gauge, TrendingDown, TrendingUp, Flag, History,
-  Compass, ArrowDownRight, ArrowUpRight, Minus, Ghost
+  Gauge, Flag, History,
+  Compass, ArrowDownRight, ArrowUpRight, Ghost
 } from 'lucide-react';
-import { formatMoney, formatAmount, formatBaht, formatBahtShort } from '@/utils/formatters';
+import { formatBaht, formatBahtShort } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer } from '../helpers';
 import { GhostPacerChart } from './GhostPacerChart';

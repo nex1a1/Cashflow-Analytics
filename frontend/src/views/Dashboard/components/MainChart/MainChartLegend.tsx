@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart/MainChartLegend.tsx
-import React, { useMemo, useCallback, memo } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { updateActiveCategories, getDatasetIndicatorStyle } from './helpers';
 import {

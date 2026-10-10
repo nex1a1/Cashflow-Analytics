@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { hexToRgb, formatMoney, formatBaht } from '../../../../utils/formatters';
+import { hexToRgb, formatBaht } from '../../../../utils/formatters';
 import { Category, TransactionDisplay } from '../../../../types';
 
 import { tc, readable, TOKENS } from '@/constants/theme';

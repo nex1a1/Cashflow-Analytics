@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Lock, CalendarClock } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';

@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart/MainChartCategoryFilter.tsx
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import {
   Layers, Filter, ChevronDown, Search,
   LayoutGrid, Shuffle, Check, X

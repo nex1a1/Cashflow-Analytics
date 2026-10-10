@@ -34,7 +34,6 @@ const rerender = (p: Portfolio) => act(() => root!.render(<CostVsValue portfolio
 const text = () => container!.textContent ?? '';
 const tab = (label: string) => [...container!.querySelectorAll<HTMLElement>('[role="tab"]')].find(t => t.textContent === label)!;
 const goto = (label: string) => click(tab(label));
-const probe = (c: string) => { const i = document.createElement('i'); i.style.color = c; return i.style.color; };
 
 // Bravo 180 > Alpha 150 > Charlie (unpriced, cost 50); Delta is sold out
 const alpha = () => mkAsset('a', { name: 'Alpha', units: 1, cost: 100, marketValue: 150, trades: [trade('t1', '2026-03-10', 'buy', 1, 100)] });

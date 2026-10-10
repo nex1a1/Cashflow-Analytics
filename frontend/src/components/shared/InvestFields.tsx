@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dropdown from '@/components/shared/Dropdown';
 import FieldError from '@/components/shared/FieldError';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { PortfolioAsset } from '@/types';
 import {
   isGoldKind, toBaseUnits, fromBaseUnits, pricePerDisplayUnit, trimNum, checkPriceSanity, GRAMS_PER_BAHT_GOLD,

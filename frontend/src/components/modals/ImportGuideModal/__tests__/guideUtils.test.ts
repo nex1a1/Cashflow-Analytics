@@ -8,7 +8,6 @@ import {
   getWideHeaders,
   getWideSampleRows,
   generateWideCsvContent,
-  LONG_VARIATION_INFO,
   resolveDayTypeVisual,
   downloadSampleCsv,
 } from '../guideUtils';

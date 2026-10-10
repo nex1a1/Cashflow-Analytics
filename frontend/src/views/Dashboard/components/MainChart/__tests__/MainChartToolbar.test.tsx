@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { MainChartToolbar } from '../MainChartToolbar';
 import { ToolbarToggleSwitch, ToolbarViewModes, ToolbarAllocationSelector, ToolbarLineStyleSelector } from '../MainChartToolbarControls';
-import { click, byText, q } from '@/test-utils/dom';
+import { click, byText } from '@/test-utils/dom';
 
 const h = vi.hoisted(() => ({ ctx: {} as Record<string, unknown> }));
 vi.mock('@/views/Dashboard/context/DashboardContext', () => ({ useDashboardContext: () => h.ctx }));

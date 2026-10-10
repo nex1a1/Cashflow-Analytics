@@ -1,5 +1,5 @@
 // src/components/ImportPreviewModal.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Trash2, ChevronLeft, ChevronRight, CheckCircle, Zap, ClipboardList } from 'lucide-react';
 import FieldError from '../shared/FieldError';
 import { CATEGORY_ICON_MAP } from '../../constants/categoryIcons';

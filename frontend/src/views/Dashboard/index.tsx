@@ -1,5 +1,5 @@
 // src/views/Dashboard/index.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Inbox } from 'lucide-react';
 import { DashboardProvider } from './context/DashboardContext';
 import DashboardSkeleton from './components/DashboardSkeleton';
@@ -39,7 +39,7 @@ export interface DashboardViewProps {
 }
 
 export default function DashboardView(props: DashboardViewProps) {
-  const { transactions, analytics, isLoading } = props;
+  const { transactions, isLoading } = props;
   
   // ── Logic: Smooth Loading Transition (Cold boot vs filter changes) ──
   const isInitialBoot = isLoading && (!transactions || transactions.length === 0);

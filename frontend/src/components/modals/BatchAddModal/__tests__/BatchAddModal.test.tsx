@@ -1154,7 +1154,6 @@ describe('BatchAddModal — recurring items', () => {
   const hist = (id: string, date: string, category_id: string, description: string, amount: number) => ({ id, date, category_id, description, amount, allocation_type: 'need' });
   const rent = ['2026-07-05', '2026-08-05', '2026-09-05'].map((d, i) => hist(`r${i}`, d, 'c-food', 'ค่าห้อง', 3000));
   const power = [['2026-07-20', 800], ['2026-08-20', 900], ['2026-09-20', 1000]].map(([d, a], i) => hist(`p${i}`, d as string, 'c-fun', 'ค่าไฟ', a as number));
-  const panelButton = () => byText('button', 'รายการประจำ') ?? [...document.querySelectorAll<HTMLElement>('button[aria-expanded]')][0];
   const recurringTrigger = () => [...document.querySelectorAll<HTMLElement>('button[aria-expanded]')].find(b => b.textContent!.includes('รายการประจำ'))!;
   const panel = () => q('section[aria-label^="รายการประจำ"]');
   /** Opens the panel. jsdom has no stylesheet, so the host's computed padding is '' and the panel height would be NaN — give it one. */

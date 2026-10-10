@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { createPortal } from 'react-dom';
-import { formatMoney, formatBaht } from '../../../../utils/formatters';
+import { formatBaht } from '../../../../utils/formatters';
 import { TransactionDisplay, Category } from '../../../../types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 

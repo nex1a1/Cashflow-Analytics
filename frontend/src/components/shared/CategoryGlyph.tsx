@@ -1,7 +1,6 @@
 // frontend/src/components/shared/CategoryGlyph.tsx
 // Single source of truth for rendering a category/group `icon` value: a curated key or legacy emoji
 // renders as a monochrome Lucide icon tinted with the item's own color (Pure Lucide Mandate).
-import React from 'react';
 import { CATEGORY_ICON_MAP, DEFAULT_CATEGORY_ICON } from '@/constants/categoryIcons';
 
 export interface CategoryGlyphProps {

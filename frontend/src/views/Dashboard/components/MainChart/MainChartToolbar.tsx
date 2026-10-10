@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Activity } from 'lucide-react';
 import { useDashboardContext } from '../../context/DashboardContext';
 import { stripCycle } from '@/utils/payCycle';

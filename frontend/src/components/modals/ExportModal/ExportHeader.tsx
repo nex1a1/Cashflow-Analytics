@@ -1,5 +1,4 @@
 // frontend/src/components/modals/ExportModal/ExportHeader.tsx
-import React from 'react';
 import { FileDown, X } from 'lucide-react';
 import { ExportHeaderProps } from './types';
 

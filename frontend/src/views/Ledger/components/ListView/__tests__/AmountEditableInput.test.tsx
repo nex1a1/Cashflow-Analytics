@@ -24,7 +24,6 @@ const shown = () => container!.textContent!;
 const open = async () => { click(box()); await flush(); };
 /** Types a value and leaves the field the way a user does. */
 const enter = async (value: string) => { await open(); type(input(), value); act(() => input().blur()); await flush(); };
-const alert = () => container!.querySelector('[role="alert"], [id]')?.textContent ?? '';
 
 afterEach(() => {
   if (root) act(() => root!.unmount());

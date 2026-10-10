@@ -64,4 +64,3 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
 ));
 
 CatItem.displayName = 'CatItem';
-export default CatItem;

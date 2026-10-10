@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ExportModal/ExportWideTable.tsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Category, TransactionDisplay } from '../../../types';
 import { formatMoney } from '../../../utils/formatters';
 import { fromISODate } from '../../../utils/dateHelpers';

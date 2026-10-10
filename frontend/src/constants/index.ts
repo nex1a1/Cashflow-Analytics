@@ -6,13 +6,6 @@ export const CALENDAR_API_URL = 'http://localhost:3000/api/calendar';
 export const RESET_API_URL = 'http://localhost:3000/api/reset-all';
 export const SETTINGS_API_URL = 'http://localhost:3000/api/settings';
 
-export const OLD_PALETTE_MAP = {
-  'slate': '#64748B', 'red': '#EF4444', 'orange': '#F97316', 'amber': '#F59E0B',
-  'green': '#10B981', 'teal': '#14B8A6', 'blue': '#3B82F6', 'indigo': '#6366F1',
-  'purple': '#8B5CF6', 'pink': '#EC4899', 'rose': '#F43F5E', 'gundam-blue': '#da291c',
-  'gundam-red': '#b01e0a', 'gundam-gold': '#fff200', 'income-green': '#059669'
-};
-
 /**
  * DEFAULT_CATEGORIES now use null for cashflowGroup to signify that
  * they should be resolved dynamically against the database groups.

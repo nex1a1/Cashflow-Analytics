@@ -2,7 +2,7 @@
 // Large-scale curated icon grid for category/group `icon`.
 // Features: 580px desktop popover, 12-column high-legibility grid, 251 Lucide icons,
 // category pills with Lucide icons (zero emojis), instant bilingual search, and clean footer.
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, PackageOpen, Trash2 } from 'lucide-react';
 import {

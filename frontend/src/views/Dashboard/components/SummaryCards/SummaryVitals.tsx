@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/SummaryVitals.tsx
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Activity, Wallet, Navigation, TrendingDown } from 'lucide-react';
-import { formatMoney, calculatePeriodDelta, formatBaht } from '@/utils/formatters';
+import { calculatePeriodDelta, formatBaht } from '@/utils/formatters';
 import sharkLogo from '@/assets/images/shark-white.svg';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer, SectionHeader, BUDGET_RULES } from './helpers';

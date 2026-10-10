@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { Portfolio } from '@/types';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import CostVsValue from './CostVsValue';
 import AllocationPanel from './AllocationPanel';
 import { buildInvestedSeries } from './portfolioCharts';

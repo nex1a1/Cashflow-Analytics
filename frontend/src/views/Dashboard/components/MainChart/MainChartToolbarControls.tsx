@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart/MainChartToolbarControls.tsx
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Layers } from 'lucide-react';
 import { tc } from '@/constants/theme';
 import {

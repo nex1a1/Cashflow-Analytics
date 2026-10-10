@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ExportModal/ExportBackupView.tsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Database, FolderTree, Calendar, Receipt, FileJson, CheckCircle2 } from 'lucide-react';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../../types';
 import { buildSystemBackupJson } from './exportUtils';

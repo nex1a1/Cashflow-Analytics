@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Category, CashflowGroup } from '../../../types';
 import { findOrphanCategories } from '../settingsHelpers';

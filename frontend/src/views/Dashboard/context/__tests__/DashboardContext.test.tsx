@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
 import { DashboardProvider, useDashboardContext, type DashboardContextValue } from '../DashboardContext';
 import { renderHook } from '@/test-utils/renderHook';
 

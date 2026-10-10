@@ -1,15 +1,13 @@
 // frontend/src/components/modals/ExportModal/ExportSidebar.tsx
-import React from 'react';
 import {
   ClipboardList,
   FileSpreadsheet,
   Layers,
   Database,
   ShieldCheck,
-  Check,
 } from 'lucide-react';
 import PeriodPicker from '../../layout/PeriodPicker';
-import { ExportFormatCardProps, ExportFormatKey, ExportSidebarProps, ExportTypeFilter } from './types';
+import { ExportFormatCardProps, ExportSidebarProps } from './types';
 
 const ExportFormatCard = ({
   formatKey,

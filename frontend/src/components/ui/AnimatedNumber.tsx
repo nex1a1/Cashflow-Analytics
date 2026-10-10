@@ -1,5 +1,4 @@
 // src/components/ui/AnimatedNumber.tsx
-import React from 'react';
 import { formatMoney } from '../../utils/formatters';
 
 export interface AnimatedNumberProps {

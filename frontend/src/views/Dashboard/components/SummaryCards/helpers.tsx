@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/helpers.tsx
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { BreakdownEntry } from './types';
 

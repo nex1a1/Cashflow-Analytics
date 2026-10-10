@@ -1,11 +1,11 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import {
   TrendingDown, Gauge, ShieldCheck, Home, Wallet, Navigation,
   Zap, Award, AlertTriangle, CheckCircle2
 } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
-import { Shimmer, formatSignedMoney } from '../helpers';
+import { Shimmer } from '../helpers';
 import { ForecastingTrajectoryChart } from './ForecastingTrajectoryChart';
 import type { SummaryAnalytics, ForecastingDetails } from '../types';
 

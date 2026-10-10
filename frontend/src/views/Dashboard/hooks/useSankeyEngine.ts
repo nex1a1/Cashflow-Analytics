@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { formatMoney, hexToRgb } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isDateInFilter } from '@/utils/dateHelpers';
-import { TransactionDisplay, Category, CashflowGroup } from '@/types';
+import { TransactionDisplay, CashflowGroup } from '@/types';
 import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 interface SankeyEngineProps {
   chartViewType: string;

@@ -1,5 +1,4 @@
 // frontend/src/components/modals/ExportModal/ExportLongTable.tsx
-import React from 'react';
 import { Category, CashflowGroup, TransactionDisplay } from '../../../types';
 import { formatMoney } from '../../../utils/formatters';
 import { fromISODate } from '../../../utils/dateHelpers';

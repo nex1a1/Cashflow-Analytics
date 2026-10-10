@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
-import { AppDataContextValue, Category, CashflowGroup, DayNote, DayType, FrequentItem, TransactionDisplay } from '../types';
+import { AppDataContextValue, CashflowGroup, DayNote, DayType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
 import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';

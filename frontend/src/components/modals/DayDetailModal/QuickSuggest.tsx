@@ -1,4 +1,3 @@
-import React from 'react';
 import SharedQuickSuggest, { QuickSuggestProps } from '../../shared/QuickSuggest';
 
 export default function QuickSuggest(props: QuickSuggestProps) {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import React, { act, useState } from 'react';
+import { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import DebouncedInput, { DebouncedInputProps } from '../components/DebouncedInput';
 import { type, key, q } from '@/test-utils/dom';

@@ -1,5 +1,4 @@
 // src/views/Dashboard/components/CashflowTable/CashflowTableSummaryCells.tsx
-import React from 'react';
 import { formatMoney } from '@/utils/formatters';
 import { getSummaryCellBg, renderMoMBadge } from './helpers';
 import {

@@ -3,7 +3,7 @@ import { Bar as BarChart, Line } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import { Portfolio } from '@/types';
 import { tc } from '@/constants/theme';
-import { formatMoney, formatThaiDateShort, formatBaht } from '@/utils/formatters';
+import { formatThaiDateShort, formatBaht } from '@/utils/formatters';
 import { AnalysisTabHeader } from '@/views/Dashboard/components/SummaryCards/Strategic/SummaryStrategic';
 import { buildInvestedSeries, withLivePoint } from './portfolioCharts';
 import { todayIso } from './portfolioHelpers';

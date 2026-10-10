@@ -1,5 +1,5 @@
 // src/views/Dashboard/components/MainChart/index.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Chart } from 'react-chartjs-2';
 
 import { useDashboardContext } from '../../context/DashboardContext';

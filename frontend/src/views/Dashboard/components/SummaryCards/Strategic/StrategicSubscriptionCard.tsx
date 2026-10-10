@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Repeat } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT, OverBadge } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { SubscriptionService, BreakdownEntry } from '../types';

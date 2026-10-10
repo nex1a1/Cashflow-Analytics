@@ -1,4 +1,3 @@
-import React from 'react';
 
 const SKELETON_CARD_KEYS = ['card-income', 'card-expense', 'card-savings', 'card-burn'];
 

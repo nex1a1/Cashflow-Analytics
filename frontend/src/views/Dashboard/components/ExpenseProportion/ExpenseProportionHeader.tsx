@@ -1,5 +1,4 @@
 // src/views/Dashboard/components/ExpenseProportion/ExpenseProportionHeader.tsx
-import React from 'react';
 import {
   PieChart,
   ArrowDownWideNarrow,
@@ -8,7 +7,7 @@ import {
   RotateCcw,
   AlertTriangle,
 } from 'lucide-react';
-import { formatMoney, formatBaht } from '../../../../utils/formatters';
+import { formatBaht } from '../../../../utils/formatters';
 import { DisplayMode, ExpenseProportionHeaderProps, SortMode } from './types';
 
 interface ModeSwitcherProps {
@@ -212,5 +211,3 @@ export function ExpenseProportionHeader({
     </div>
   );
 }
-
-export default ExpenseProportionHeader;

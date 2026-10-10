@@ -16,7 +16,6 @@ const render = (over: Partial<StatCardProps> = {}) =>
 beforeEach(() => { host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); document.body.innerHTML = ''; });
 
-const withClass = (cls: string) => [...host.querySelectorAll(`.${cls}`)];
 const trend = () => host.querySelector('.rounded-pill');
 
 describe('StatCard — vitals (default)', () => {

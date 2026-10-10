@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ImportGuideModal/index.tsx
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useToast } from '../../../context/ToastContext';
 import { useAppData } from '../../../context/AppDataContext';
 import GuideHeader from './GuideHeader';

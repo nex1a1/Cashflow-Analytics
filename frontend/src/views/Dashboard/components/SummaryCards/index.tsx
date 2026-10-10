@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDashboardContext } from '../../context/DashboardContext';
 import { SummaryVitals } from './SummaryVitals';
 import { SummaryStrategic } from './Strategic/SummaryStrategic';

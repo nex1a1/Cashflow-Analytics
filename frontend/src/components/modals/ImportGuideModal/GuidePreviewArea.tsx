@@ -1,7 +1,7 @@
 // frontend/src/components/modals/ImportGuideModal/GuidePreviewArea.tsx
-import React, { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Search, X, Info, ChevronDown, ChevronUp, Layers } from 'lucide-react';
-import { Category, DayType } from '../../../types';
+import { Category } from '../../../types';
 import { formatMoney } from '../../../utils/formatters';
 import { GuidePreviewAreaProps } from './types';
 import {
@@ -10,8 +10,6 @@ import {
   getWideHeaders,
   getWideSampleRows,
   resolveDayTypeVisual,
-  LongVariation,
-  HeaderLanguage,
 } from './guideUtils';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 

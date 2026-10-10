@@ -3,7 +3,7 @@ import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
 import { CALENDAR_HEAT_CHIP, CALENDAR_HEAT_STEPS } from '../utils/calendarHeat';
 import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
-import { formatMoney, hexToRgb, THAI_MONTHS_SHORT, formatBaht } from '../../../utils/formatters';
+import { hexToRgb, THAI_MONTHS_SHORT, formatBaht } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
 import { localTodayIso } from '../../../utils/payCycle';
 import { DayNote, DayType, TransactionDisplay } from '../../../types';

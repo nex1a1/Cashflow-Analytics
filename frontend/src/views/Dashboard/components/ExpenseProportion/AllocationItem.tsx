@@ -347,4 +347,3 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
 });
 
 AllocationItem.displayName = 'AllocationItem';
-export default AllocationItem;

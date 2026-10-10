@@ -1,5 +1,5 @@
 // frontend/src/components/modals/ImportGuideModal/guideUtils.ts
-import { Category, DayType } from '../../../types';
+import { DayType } from '../../../types';
 
 export type LongVariation = 'full' | 'standard' | 'minimal';
 export type HeaderLanguage = 'th' | 'en';

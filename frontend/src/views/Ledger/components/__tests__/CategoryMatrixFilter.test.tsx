@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest';
-import React, { act, useState } from 'react';
+import { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import CategoryMatrixFilter from '../common/CategoryMatrixFilter';
 import { byText, click, key, q, type } from '@/test-utils/dom';

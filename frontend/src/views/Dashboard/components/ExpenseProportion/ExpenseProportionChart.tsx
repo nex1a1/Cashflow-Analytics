@@ -103,4 +103,3 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
 });
 
 ExpenseProportionChart.displayName = 'ExpenseProportionChart';
-export default ExpenseProportionChart;

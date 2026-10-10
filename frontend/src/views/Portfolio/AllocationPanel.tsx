@@ -3,7 +3,7 @@ import { Doughnut } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
 import { Portfolio } from '@/types';
 import { tc, type ThemeToken } from '@/constants/theme';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatBaht } from '@/utils/formatters';
 import { AllocationItem, assetColorMap, buildAllocation, buildAllocationByKind } from './portfolioCharts';
 
 type Mode = 'asset' | 'kind';

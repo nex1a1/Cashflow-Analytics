@@ -1,5 +1,4 @@
 // src/views/Dashboard/components/CashflowTable/FilterToolbar.tsx
-import React from 'react';
 import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, RotateCcw } from 'lucide-react';
 import { FilterToolbarProps } from './types';
 

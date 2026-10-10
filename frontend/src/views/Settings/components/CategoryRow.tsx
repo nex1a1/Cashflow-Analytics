@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import Dropdown from '@/components/shared/Dropdown';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
