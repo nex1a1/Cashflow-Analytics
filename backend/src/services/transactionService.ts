@@ -139,29 +139,22 @@ class TransactionService {
     return categoryId;
   }
 
+  /**
+   * รายรับไม่มีสัดส่วน, แถวลงทุน/ออม = SAVE เสมอ, รายจ่าย = NEED/WANT เท่านั้น (SAVE หมายถึงลงทุน):
+   * ค่าของแถวเองก่อน ไม่มีหรือเป็น SAVE ให้ใช้ของกลุ่ม แล้วค่อย WANT
+   */
   private resolveAllocationType(categoryId?: string, currentAlloc?: string | null): string | null {
     if (!categoryId) return currentAlloc ?? 'want';
-    const categoryGroup = db.prepare(`
-      SELECT cg.type 
+    const group = db.prepare(`
+      SELECT cg.type, cg.allocation_type
       FROM cashflow_groups cg
       JOIN categories c ON c.cashflow_group_id = cg.id
       WHERE c.id = ?
-    `).get(categoryId) as { type: string } | undefined;
+    `).get(categoryId) as { type: string; allocation_type: string | null } | undefined;
 
-    if (categoryGroup?.type === 'income') {
-      return null;
-    }
-    if (currentAlloc) {
-      return currentAlloc;
-    }
-    const groupDefault = db.prepare(`
-      SELECT cg.allocation_type 
-      FROM cashflow_groups cg
-      JOIN categories c ON c.cashflow_group_id = cg.id
-      WHERE c.id = ?
-    `).get(categoryId) as { allocation_type: string } | undefined;
-    
-    return groupDefault?.allocation_type || 'want';
+    if (group?.type === 'income') return null;
+    if (group?.type === 'savings') return 'savings';
+    return [currentAlloc, group?.allocation_type].find(a => a === 'need' || a === 'want') ?? 'want';
   }
 
   private getGroupType(categoryId?: string): string | undefined {

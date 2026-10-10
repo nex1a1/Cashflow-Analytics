@@ -39,7 +39,8 @@ class GroupService {
       group.id,
       group.name,
       group.type,
-      group.type === 'income' ? null : group.type === 'savings' ? 'savings' : (group.allocation_type || 'want'), // รายรับไม่มี NEED/WANT, ออม/ลงทุน = SAVE เสมอ
+      // รายรับไม่มี NEED/WANT, ออม/ลงทุน = SAVE เสมอ, รายจ่าย = NEED/WANT เท่านั้น (SAVE หมายถึงลงทุน)
+      group.type === 'income' ? null : group.type === 'savings' ? 'savings' : (group.allocation_type === 'need' ? 'need' : 'want'),
       group.order_index || 0,
       group.color || null,
       group.icon || null,

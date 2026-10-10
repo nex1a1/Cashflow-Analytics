@@ -439,21 +439,17 @@ describe('QuickSuggest — allocation, amount, sort, limit', () => {
     expect(names()).toEqual(EXPENSE_BY_FREQUENCY);
   });
 
-  it('the chip for the savings allocation reads SAVE, like its button (not the raw key "savings")', () => {
-    render({ frequentItems: [item('c-food', 'ค่ากิน', 'ออมจากกิน', 10, 1, '2026-10-01', 'savings')] });
+  it('expenses filter by NEED / WANT only: SAVE means investing, so it is not offered', () => {
+    render();
     openPanel();
-    click(inPanel('SAVE'));
-    openPanel();
-    expect(summaryChips()).toEqual(['SAVE']);
+    expect(inPanel('SAVE')).toBeFalsy();
   });
 
-  it('WANT and SAVE work too, and "ทั้งหมด" clears', () => {
+  it('WANT works too, and "ทั้งหมด" clears', () => {
     render();
     openPanel();
     click(inPanel('WANT'));
     expect(names()).toEqual(['กาแฟ', 'ชาบู', 'บุฟเฟ่ต์']);
-    click(inPanel('SAVE'));
-    expect(names()).toEqual([]);
     click(inPanel('ทั้งหมด'));
     expect(names()).toEqual(EXPENSE_BY_FREQUENCY);
   });

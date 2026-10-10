@@ -424,7 +424,7 @@ function QuickSuggest({
 
             {formType === 'expense' && allocationFilter !== 'ALL' && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
-                <span>{allocationFilter === 'savings' ? 'SAVE' : allocationFilter}</span>
+                <span>{allocationFilter}</span>
                 <button 
                   type="button" 
                   onClick={() => setAllocationFilter('ALL')}
@@ -709,12 +709,11 @@ function QuickSuggest({
               {formType === 'expense' && (
                 <div>
                   <span className={tokens.label}>ประเภทการจัดสรร</span>
-                  <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
+                  <div className="grid grid-cols-3 gap-1 bg-surface border border-line p-0.5">
                     {[
                       { val: 'ALL', label: 'ทั้งหมด', color: 'border-slate-500 text-slate-200 bg-slate-800/30' },
                       { val: 'need', label: 'NEED', color: 'border-rose-500/60 text-rose-400 bg-rose-950/30' },
                       { val: 'want', label: 'WANT', color: 'border-amber-500/60 text-amber-400 bg-amber-950/30' },
-                      { val: 'savings', label: 'SAVE', color: 'border-savings/60 text-savings bg-savings/10' }
                     ].map(opt => {
                       const isActive = allocationFilter === opt.val;
                       return (
