@@ -19,7 +19,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'];
+const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5172', 'http://127.0.0.1:5172', 'http://localhost:3000'];
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : defaultAllowedOrigins;
@@ -53,7 +53,7 @@ backupService.createBackup().catch(err => {
 app.use('/api', apiRoutes);
 
 // Static Frontend Asset Serving (Production Build)
-const frontendDist = path.join(__dirname, '../frontend/dist');
+const frontendDist = process.env.PUBLIC_DIR || path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'))) {
   console.log(`Serving Web Client from: ${frontendDist}`);
   app.use(express.static(frontendDist));

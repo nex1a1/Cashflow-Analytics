@@ -2,9 +2,8 @@ import React from 'react';
 import { DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 
 // โครงเดียวกับหน้าจริง (หัว → ตาราง → สรุป → legend) เพื่อให้ตอนข้อมูลมาไม่มีอะไรกระโดด
-// ไม่ใส่ animate-pulse: static engine (index.css) ปิด animation ทั้งหมดอยู่แล้ว
 export default function CalendarSkeleton(): React.ReactElement {
-  const block = 'bg-surface-elevated rounded-none';
+  const block = 'bg-surface-elevated rounded-none animate-pulse';
 
   return (
     <div className="flex flex-col h-full space-y-3.5 w-full">

@@ -39,7 +39,7 @@ type TabId = typeof TABS[number]['id'];
 
 const axisTick = { color: tc('ink-muted'), font: { size: 11 } };
 const moneyTick = (v: string | number) => `${formatBaht(Number(v))}`;
-const BASE = { responsive: true, maintainAspectRatio: false, animation: false } as const;
+const BASE = { responsive: true, maintainAspectRatio: false } as const;
 
 /** กำไร/ขาดทุนรายสินทรัพย์ (บาท) แท่งแนวนอน — เฉพาะตัวที่มีราคา */
 function GainChart({ rows }: { rows: { name: string; cost: number; value: number | null }[] }) {

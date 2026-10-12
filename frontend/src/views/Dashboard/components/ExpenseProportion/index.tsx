@@ -54,7 +54,7 @@ function ExpenseProportionSkeleton() {
   return (
     <div className="flex flex-row items-stretch h-32">
       <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-line/40 bg-surface-elevated/30">
-        {/* animate-spin is the Static Performance Engine's one carve-out for loading feedback (animate-pulse is globally neutralized) */}
+        {/* spinner = loading feedback */}
         <div className="w-10 h-10 rounded-full border-4 border-line border-t-accent-ink animate-spin" />
       </div>
       <div className="flex-1 grid grid-cols-5 gap-[1px] bg-surface-elevated/20">

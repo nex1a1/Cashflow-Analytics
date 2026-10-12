@@ -193,3 +193,12 @@ export const getPeriodDateRange = (period: string): PeriodDateRange => {
 
   return { startDate, endDate, fetchStartDate };
 };
+
+/** Are `period`'s rows inside the window `transactions` holds? (null = nothing loaded; null bounds = everything) */
+export const periodRowsLoaded = (rows: { start: string | null; end: string | null } | null, period: string): boolean => {
+  if (!rows) return false;
+  if (rows.start === null && rows.end === null) return true;
+  const want = getPeriodDateRange(period);
+  if (!want.startDate || !want.endDate) return false; // ALL / multi-month need everything
+  return (rows.start === null || rows.start <= want.startDate) && (rows.end === null || want.endDate <= rows.end);
+};

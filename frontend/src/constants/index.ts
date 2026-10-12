@@ -1,10 +1,10 @@
 // src/constants/index.js
 
-export const API_URL = 'http://localhost:3000/api/transactions';
-export const PREDICT_API_URL = 'http://localhost:3000/api/transactions/predict';
-export const CALENDAR_API_URL = 'http://localhost:3000/api/calendar';
-export const RESET_API_URL = 'http://localhost:3000/api/reset-all';
-export const SETTINGS_API_URL = 'http://localhost:3000/api/settings';
+export const API_URL = '/api/transactions';
+export const PREDICT_API_URL = '/api/transactions/predict';
+export const CALENDAR_API_URL = '/api/calendar';
+export const RESET_API_URL = '/api/reset-all';
+export const SETTINGS_API_URL = '/api/settings';
 
 /**
  * DEFAULT_CATEGORIES now use null for cashflowGroup to signify that

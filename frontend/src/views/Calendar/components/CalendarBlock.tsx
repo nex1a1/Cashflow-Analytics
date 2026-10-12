@@ -36,6 +36,8 @@ export interface CalendarBlockProps {
   excludedCategoryIds: Set<string>;
   toggleCategory: (catId: string) => void;
   maxDailyExpense: number;
+  /** rows for these dates are still loading: skeleton chips + cells instead of ฿0 / empty days */
+  rowsPending?: boolean;
 }
 
 const BLANK_CELL = 'min-h-[120px] 2xl:min-h-[145px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40';
@@ -59,7 +61,8 @@ const CalendarBlock = React.memo(function CalendarBlock({
   handleOpenAddModal,
   excludedCategoryIds,
   toggleCategory,
-  maxDailyExpense
+  maxDailyExpense,
+  rowsPending = false
 }: CalendarBlockProps): React.ReactElement {
   const today = localTodayIso();
   const [stepMid, stepHigh, stepPeak] = CALENDAR_HEAT_STEPS.map(s => `฿${s.toLocaleString('en-US')}`);
@@ -80,22 +83,25 @@ const CalendarBlock = React.memo(function CalendarBlock({
             {title}
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
-            {monthInc > 0 && (
+            {rowsPending && [0, 1, 2].map(i => (
+              <span key={i} className="h-[22px] w-28 bg-surface-elevated animate-pulse" aria-hidden="true" />
+            ))}
+            {!rowsPending && monthInc > 0 && (
               <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-income/10 text-income border-income/30">
                 ▲ {formatBaht(monthInc)}
               </span>
             )}
-            {monthExp > 0 && (
+            {!rowsPending && monthExp > 0 && (
               <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-expense/10 text-expense border-expense/30">
                 ▼ {formatBaht(monthExp)}
               </span>
             )}
-            {(monthInc > 0 || monthExp > 0) && (
+            {!rowsPending && (monthInc > 0 || monthExp > 0) && (
               <span className={`text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight ${monthNet >= 0 ? 'bg-income/10 text-income border-income/30' : 'bg-danger/10 text-danger border-danger/30'}`}>
                 คงเหลือ {formatBaht(monthNet)}
               </span>
             )}
-            {monthSav !== 0 && (
+            {!rowsPending && monthSav !== 0 && (
               <span className="text-[12px] font-bold px-3 py-0.5 rounded-pill border tabular-nums tracking-tight bg-surface-elevated text-ink-soft border-line">
                 ในนี้ลงทุน/ออม {monthSav < 0 ? '−' : ''}{formatBaht(Math.abs(monthSav))}
               </span>
@@ -176,6 +182,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 monthEdgeLeft={monthEdgeLeft}
                 popUp={popUp}
                 alignRight={alignRight}
+                loading={rowsPending}
               />
             );
           })}

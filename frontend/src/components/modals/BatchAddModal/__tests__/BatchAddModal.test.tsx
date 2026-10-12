@@ -349,7 +349,7 @@ describe('BatchAddModal — the form types', () => {
   it('a category\'s own allocation is applied when it is picked, and the NEED/WANT buttons override it (an expense has no SAVE: that is investing)', async () => {
     await mount();
     expect(byText('button', 'SAVE')).toBeNull();
-    const selected = () => ['NEED', 'WANT'].filter(l => byText('button', l)!.classList.contains('bg-surface-elevated'));
+    const selected = () => ['NEED', 'WANT'].filter(l => byText('button', l)!.getAttribute('aria-pressed') === 'true');
     await pickCategory('ค่ากิน');
     expect(selected()).toEqual(['NEED']);
     await pickCategory('บันเทิง');

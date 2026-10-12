@@ -98,10 +98,10 @@ describe('tooltips', () => {
     expect(t.cornerRadius).toBe(0);
   });
 
-  it('the legend is off (the page draws its own) and animation is off', () => {
+  it('the legend is off (the page draws its own) and animation follows the global default', () => {
     for (const o of [getComboChartOptions(), getLineChartOptions(), getDoughnutChartOptions()] as any[]) {
       expect(o.plugins.legend.display).toBe(false);
-      expect(o.animation).toBe(false);
+      expect(o.animation).toBeUndefined(); // inherits the global short animation (main.tsx)
     }
   });
 

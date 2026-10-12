@@ -43,7 +43,7 @@ const mount = (el: React.ReactElement) => {
 };
 const btn = (text: string) => byText('button', text)!;
 const text = () => container!.textContent!;
-const on = (b: HTMLElement) => !b.className.includes('bg-surface border-line');
+const on = (b: HTMLElement) => b.getAttribute('aria-pressed') === 'true';
 
 beforeEach(() => { h.matrix = null; h.date = null; });
 afterEach(() => {

@@ -15,6 +15,8 @@ interface HeatmapCellProps {
   maxCellValue: number;
   handleCellHover: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
   handleCellLeave: () => void;
+  /** Click / Enter / Space: keep the tooltip open so its list can be scrolled. */
+  handleCellPin: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
   formatMoney: (val: number | string) => string;
 }
 
@@ -43,7 +45,7 @@ const moveFocus = (e: React.KeyboardEvent<HTMLTableCellElement>) => {
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity,
   border, ROW_H, maxCellValue,
-  handleCellHover, handleCellLeave, formatMoney
+  handleCellHover, handleCellPin, handleCellLeave, formatMoney
 }: HeatmapCellProps) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
@@ -70,7 +72,11 @@ const HeatmapCell = memo(function HeatmapCell({
       aria-label={hasData ? `${date} ${cat.name} ${formatBaht(cellSum)} (${items.length} รายการ)` : undefined}
       onFocus={hasData ? (e) => handleCellHover(e, date, cat.id, cat, items) : undefined}
       onBlur={hasData ? handleCellLeave : undefined}
-      onKeyDown={hasData ? moveFocus : undefined}
+      onClick={hasData ? (e) => handleCellPin(e, date, cat.id, cat, items) : undefined}
+      onKeyDown={hasData ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellPin(e, date, cat.id, cat, items); }
+        else moveFocus(e);
+      } : undefined}
     >
       {hasData ? (
         <div style={{

@@ -216,6 +216,8 @@ export interface AppDataContextValue {
   // CRUD Actions
   refreshData: () => Promise<void>;
   loadPeriodData: (period: string) => Promise<void>;
+  /** the date window `transactions` holds (null = not loaded yet; null bounds = everything) */
+  rowsRange: { start: string | null; end: string | null } | null;
   handleSaveTransaction: (tx: any) => Promise<any>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean>;
   handleDeleteTransaction: (id: string) => Promise<any>;

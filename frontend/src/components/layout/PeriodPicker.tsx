@@ -167,20 +167,20 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   const quick = (active: boolean) =>
     `flex-1 text-center text-[11px] font-medium px-1.5 py-1 border transition-colors ${
       active
-        ? 'bg-accent/15 border-accent-ink text-ink-display font-bold'
+        ? 'bg-accent/15 border-accent-ink text-ink-display font-bold m-pick'
         : 'border-line/70 bg-surface/80 text-ink-body hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong'
     }`;
 
   // ── Body (both modes): mode tabs · ด่วน · ALL · year accordion · confirm footers ──
-  const itemBase = 'w-full text-left px-2.5 py-1.5 text-xs flex items-center gap-2 border';
+  const itemBase = 'w-full text-left px-2.5 py-1.5 text-xs flex items-center gap-2 border active:scale-[0.98]';
   const itemIdle = 'border-line bg-surface text-ink-soft hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong';
-  const itemActive = 'border-accent-ink bg-accent/15 text-ink-display font-bold';
-  const pillBase = 'text-[11px] py-1 px-1.5 font-medium border text-center';
+  const itemActive = 'border-accent-ink bg-accent/15 text-ink-display font-bold m-pick';
+  const pillBase = 'text-[11px] py-1 px-1.5 font-medium border text-center active:scale-95';
   const pillIdle = 'border-line bg-surface text-ink-muted hover:text-ink-display hover:bg-surface-elevated hover:border-line-strong';
-  const pillActive = 'border-accent-ink bg-accent text-on-accent font-bold';
-  const pillRangeEdge = 'border-income bg-income text-on-accent font-bold';
-  const pillRangeBetween = 'border-income/50 bg-income/20 text-income font-semibold';
-  const pillMultiActive = 'border-warn bg-warn text-canvas font-bold';
+  const pillActive = 'border-accent-ink bg-accent text-on-accent font-bold m-pick';
+  const pillRangeEdge = 'border-income bg-income text-on-accent font-bold m-pick';
+  const pillRangeBetween = 'border-income/50 bg-income/20 text-income font-semibold m-fade-in';
+  const pillMultiActive = 'border-warn bg-warn text-canvas font-bold m-pick';
 
   const calYearHasSelection = (year: string) => {
     if (calMode === 'multi') return picked.some(m => m.startsWith(`${year}-`));
@@ -202,7 +202,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
             aria-pressed={calMode === id}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 border text-[11px] font-semibold ${
               calMode === id
-                ? 'bg-accent text-on-accent font-bold border-accent-ink'
+                ? 'bg-accent text-on-accent font-bold border-accent-ink m-pick'
                 : 'text-ink-muted hover:text-ink-display bg-canvas hover:bg-surface-elevated border-line hover:border-line-strong'
             }`}
           >
@@ -213,7 +213,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
       </div>
 
       {calMode === 'standard' && (hasCurrentMonth || hasLastMonth || hasCurrentYear) && (
-        <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-line bg-surface/50">
+        <div className="m-reveal flex items-center gap-1.5 px-2 py-1.5 border-b border-line bg-surface/50">
           <span className="flex items-center gap-1 text-[11px] text-ink-muted font-bold pr-1 shrink-0">
             <Zap className="w-3 h-3" />
             ด่วน
@@ -225,21 +225,21 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
       )}
 
       {calMode === 'range' && (
-        <div className="px-2.5 py-1.5 border-b border-income/20 bg-income/5 flex items-center gap-2 text-[11px] text-income">
+        <div className="m-reveal px-2.5 py-1.5 border-b border-income/20 bg-income/5 flex items-center gap-2 text-[11px] text-income">
           {[!rangeStart, !!rangeStart && !rangeEnd].map((on, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span className="text-income/70">→</span>}
-              <span className={`inline-flex items-center justify-center w-4 h-4 font-bold border shrink-0 ${on ? 'bg-income border-income text-on-accent' : 'border-income/40'}`}>{i + 1}</span>
+              <span className={`inline-flex items-center justify-center w-4 h-4 font-bold border shrink-0 ${on ? 'bg-income border-income text-on-accent m-pick' : 'border-income/40'}`}>{i + 1}</span>
             </React.Fragment>
           ))}
           <span className="flex-1 truncate flex items-center gap-1">
-            {!rangeStart ? `เลือก${unitWord}เริ่มต้น` : !rangeEnd ? `เลือก${unitWord}สิ้นสุด` : <><Check className="w-3 h-3" /> พร้อมยืนยัน</>}
+            {!rangeStart ? `เลือก${unitWord}เริ่มต้น` : !rangeEnd ? `เลือก${unitWord}สิ้นสุด` : <span className="m-pop-in flex items-center gap-1"><Check className="w-3 h-3" /> พร้อมยืนยัน</span>}
           </span>
         </div>
       )}
 
       {calMode === 'multi' && picked.length === 0 && (
-        <div className="px-2.5 py-1.5 border-b border-warn/20 bg-warn/5 text-[11px] text-warn">
+        <div className="m-reveal px-2.5 py-1.5 border-b border-warn/20 bg-warn/5 text-[11px] text-warn">
           คลิก{unitWord}ใดก็ได้เพื่อเพิ่มเข้าการเลือก
         </div>
       )}
@@ -271,15 +271,15 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                     className="w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between font-bold text-ink-display bg-canvas border border-line hover:border-line-strong hover:bg-surface-elevated"
                   >
                     <span className="flex items-center gap-1.5">
-                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isExpanded ? 'rotate-90 text-accent-ink' : 'text-ink-body'}`} />
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-accent-ink' : 'text-ink-body'}`} />
                       <span className="tabular-nums">{year}</span>
-                      {calYearHasSelection(year) && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />}
+                      {calYearHasSelection(year) && <span className={`m-pop-in w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />}
                     </span>
                     <span className="text-[11px] text-ink-muted font-normal tabular-nums">{data.months.size} {unitWord}</span>
                   </button>
 
                   {isExpanded && (
-                    <div className="ml-1.5 pl-1.5 border-l space-y-1 mt-1 mb-1 border-line-strong">
+                    <div className="m-reveal ml-1.5 pl-1.5 border-l space-y-1 mt-1 mb-1 border-line-strong">
                       {calMode === 'standard' && (() => {
                         const whole = presetFor(year, 'Y', data);
                         const presetRow = (ids: string[], cols: string) => {
@@ -307,7 +307,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                         );
                       })()}
 
-                      <div className="grid grid-cols-3 gap-1 px-0.5 pt-0.5">
+                      <div className="m-stagger grid grid-cols-3 gap-1 px-0.5 pt-0.5">
                         {months.map((m: string) => {
                           let cls = pillIdle;
                           if (calMode === 'range') {
@@ -334,7 +334,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
       </div>
 
       {calMode === 'range' && (
-        <div className="p-1.5 border-t border-line bg-surface flex flex-col gap-1.5">
+        <div className="m-reveal p-1.5 border-t border-line bg-surface flex flex-col gap-1.5">
           <div className="py-1 px-2 border border-income/30 bg-income/10 text-income flex items-center justify-between min-h-[28px]">
             <p className="text-[11px] font-bold flex-1">
               {rangeStart && rangeEnd
@@ -360,11 +360,11 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
       )}
 
       {calMode === 'multi' && (
-        <div className="p-1.5 border-t border-line bg-surface flex flex-col gap-1.5">
+        <div className="m-reveal p-1.5 border-t border-line bg-surface flex flex-col gap-1.5">
           {picked.length > 0 && (
             <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-0.5 custom-scrollbar">
               {[...picked].sort().map(m => (
-                <span key={m} className="flex items-center gap-1 px-1 py-0.5 rounded-pill border border-warn/50 bg-warn/15 text-warn text-[11px]">
+                <span key={m} className="m-pop-in flex items-center gap-1 px-1 py-0.5 rounded-pill border border-warn/50 bg-warn/15 text-warn text-[11px]">
                   {THAI_MONTHS_SHORT[Number.parseInt(m.split('-')[1], 10) - 1]} {m.slice(2, 4)}
                   <button onClick={() => setPicked(prev => prev.filter(x => x !== m))} aria-label={`เอา ${label(m)} ออก`} className="hover:text-danger ml-0.5">
                     <X className="w-3 h-3" />
@@ -426,8 +426,8 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
           className="flex items-center gap-2 px-3 py-1.5 text-ink-display text-xs font-bold min-w-[170px]"
         >
           <CalendarDays className="w-3.5 h-3.5 shrink-0 text-accent-ink" />
-          <span className="flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
-          <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${open ? 'rotate-180' : ''}`} />
+          <span key={rawPeriod} className="m-in flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
+          <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
         <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
         <button
@@ -446,7 +446,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
         <div
           role="dialog"
           aria-label="เลือกช่วงเวลา"
-          className={`${floating ? 'fixed' : 'absolute right-0 top-full'} mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] z-50 overflow-hidden`}
+          className={`${floating ? 'fixed origin-top-left' : 'absolute right-0 top-full origin-top-right'} mt-1 w-[380px] bg-canvas border border-line-strong shadow-[0_8px_24px_rgb(0_0_0/calc(0.45*var(--shadow-k)))] z-50 overflow-hidden`}
         >
           {/* ── Calendar / Pay-cycle switch ── */}
           {allowCycle && (
@@ -461,7 +461,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
                   aria-pressed={cycle === isCycle}
                   onClick={() => { if (cycle !== isCycle) setRawPeriod(convertPeriodMode(rawPeriod, cycle)); }}
                   className={`flex-1 py-2 text-[11px] font-bold border-b-2 -mb-px ${
-                    cycle === isCycle ? 'border-b-accent-ink text-ink-display bg-surface' : 'border-b-transparent text-ink-muted hover:text-ink-display'
+                    cycle === isCycle ? 'border-b-accent-ink text-ink-display bg-surface m-pick' : 'border-b-transparent text-ink-muted hover:text-ink-display'
                   }`}
                 >
                   {label}

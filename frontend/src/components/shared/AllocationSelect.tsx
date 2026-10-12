@@ -43,8 +43,13 @@ export function SegmentedToggle<T extends string>({ options, value, onChange, la
       aria-label={label}
       onKeyDown={handleKeyDown}
       onClick={(e) => e.stopPropagation()}
-      className={`allocation-trigger w-full inline-flex gap-[1px] bg-line select-none ${SIZE[size]} ${className}`}
+      className={`allocation-trigger relative w-full inline-flex bg-surface select-none [&>button+button]:border-l ${SIZE[size]} ${className}`}
     >
+      {/* The picked option's tint glides between the halves (.m-slide). */}
+      <span aria-hidden className="m-slide absolute inset-y-0 left-0 w-1/2" style={{
+        translate: value === options[0].id ? '0 0' : '100% 0',
+        backgroundColor: `rgba(${hexToRgb(options.find(o => o.id === value)?.color ?? options[0].color)}, 0.18)`,
+      }} />
       {options.map((o) => {
         const on = o.id === value;
         return (
@@ -58,10 +63,10 @@ export function SegmentedToggle<T extends string>({ options, value, onChange, la
             disabled={disabled}
             title={o.desc}
             onClick={() => !on && onChange(o.id)}
-            className={`flex-1 min-w-0 px-1 font-mono font-black tracking-wider rounded-none ${
-              on ? '' : 'bg-surface text-ink-muted hover:text-ink-body cursor-pointer'
+            className={`relative flex-1 min-w-0 px-1 font-mono font-black tracking-wider rounded-none border-line ${
+              on ? '' : 'text-ink-muted hover:text-ink-body cursor-pointer'
             }`}
-            style={on ? { backgroundColor: `rgba(${hexToRgb(o.color)}, 0.18)`, color: readable(o.color) } : undefined}
+            style={on ? { color: readable(o.color) } : undefined}
           >
             {o.label}
           </button>

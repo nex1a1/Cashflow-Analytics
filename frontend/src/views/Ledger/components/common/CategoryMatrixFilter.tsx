@@ -492,7 +492,7 @@ export default function CategoryMatrixFilter({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.7*var(--shadow-k)))] p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
+          className="animate-in zoom-in-95 absolute left-0 right-0 top-[calc(100%+6px)] z-[999] rounded-none border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.7*var(--shadow-k)))] p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
         >
           {/* Section Header Bar */}
           <div className="flex items-center justify-between flex-wrap gap-1.5 pb-2 border-b border-line">

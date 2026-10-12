@@ -23,7 +23,8 @@ export interface DayDetailModalProps {
   cashflowGroups?: CashflowGroup[];
   onClose: () => void;
   onSave: (tx: any) => Promise<any> | void;
-  onDelete: (id: string) => void;
+  /** May return a promise: the deleted row stays faded out until it settles. */
+  onDelete: (id: string) => unknown;
   dayTypes?: Record<string, string>;
   dayTypeConfig?: DayType[];
   frequentItems?: FrequentItem[];
@@ -227,8 +228,8 @@ export default function DayDetailModal({
 
   // Confirmation happens in the row's ConfirmDeleteButton
   const handleDelete = (id: string) => {
-    if (localItems.some(i => i.id === id)) setLocalItems(prev => prev.filter(i => i.id !== id));
-    else onDelete(id);
+    if (localItems.some(i => i.id === id)) return setLocalItems(prev => prev.filter(i => i.id !== id));
+    return onDelete(id);
   };
 
   const tokens = {
@@ -375,41 +376,42 @@ export default function DayDetailModal({
             {dayTx.length > 0 && (
               <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-0.5 select-none">เรียงตาม</span>
-                <button
-                  type="button"
-                  onClick={() => setSortBy('category')}
-                  title="เรียงตามหมวดหมู่"
-                  aria-label="เรียงตามหมวดหมู่"
-                  aria-pressed={sortBy === 'category'}
-                  className={`flex items-center gap-1 px-1.5 py-1 rounded-pill border text-[11px] font-medium transition-colors cursor-pointer ${
-                    sortBy === 'category'
-                      ? 'bg-accent/15 border-accent/40 text-expense'
-                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'
-                  }`}
-                >
-                  <Tag className="w-3 h-3 shrink-0" />
-                  <span>หมวดหมู่</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSortBy('amount')}
-                  title="เรียงตามจำนวนเงิน"
-                  aria-label="เรียงตามจำนวนเงิน"
-                  aria-pressed={sortBy === 'amount'}
-                  className={`flex items-center gap-1 px-1.5 py-1 rounded-pill border text-[11px] font-medium transition-colors cursor-pointer ${
-                    sortBy === 'amount'
-                      ? 'bg-accent/15 border-accent/40 text-expense'
-                      : 'border-line-strong bg-surface text-slate-400 hover:text-slate-200 hover:border-accent-ink'
-                  }`}
-                >
-                  <ArrowDownWideNarrow className="w-3 h-3 shrink-0" />
-                  <span>จำนวนเงิน</span>
-                </button>
+                <div className="relative grid grid-cols-2 p-0.5 rounded-pill border border-line-strong bg-surface">
+                  <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] rounded-pill bg-accent/15"
+                    style={{ translate: sortBy === 'amount' ? '100% 0' : '0 0' }} />
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('category')}
+                    title="เรียงตามหมวดหมู่"
+                    aria-label="เรียงตามหมวดหมู่"
+                    aria-pressed={sortBy === 'category'}
+                    className={`relative flex items-center justify-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
+                      sortBy === 'category' ? 'text-expense' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Tag className="w-3 h-3 shrink-0" />
+                    <span>หมวดหมู่</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('amount')}
+                    title="เรียงตามจำนวนเงิน"
+                    aria-label="เรียงตามจำนวนเงิน"
+                    aria-pressed={sortBy === 'amount'}
+                    className={`relative flex items-center justify-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
+                      sortBy === 'amount' ? 'text-expense' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowDownWideNarrow className="w-3 h-3 shrink-0" />
+                    <span>จำนวนเงิน</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
           <TransactionList
+            key={`list-${activeDateStr}`}
             dayTx={dayTx}
             catMap={catMap}
             handleDelete={handleDelete}

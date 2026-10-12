@@ -204,13 +204,15 @@ function BatchForm({
     <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-surface-hover border-line">
       
       {/* Type Toggle: Expense / Savings & Investment / Income */}
-      <div className="grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
-        <button 
-          type="button" 
+      <div className="relative grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
+        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-sm"
+          style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
+        <button
+          type="button"
           onClick={() => handleTypeChange('expense')}
-          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
-            formType === 'expense' 
-              ? 'bg-surface-elevated text-expense shadow-sm' 
+          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+            formType === 'expense'
+              ? 'text-expense'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -219,9 +221,9 @@ function BatchForm({
         <button
           type="button"
           onClick={() => handleTypeChange('savings')}
-          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
             formType === 'savings'
-              ? 'bg-surface-elevated text-savings shadow-sm'
+              ? 'text-savings'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -230,9 +232,9 @@ function BatchForm({
         <button
           type="button"
           onClick={() => handleTypeChange('income')}
-          className={`h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
-            formType === 'income' 
-              ? 'bg-surface-elevated text-emerald-400 shadow-sm' 
+          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
+            formType === 'income'
+              ? 'text-emerald-400'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -322,7 +324,9 @@ function BatchForm({
           </div>
           
           {formType === 'expense' && (
-            <div className="h-9 flex p-0.5 rounded-none border shrink-0 bg-canvas border-line">
+            <div className="relative h-9 grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line">
+              <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] bg-surface-elevated"
+                style={{ translate: allocationType === 'want' ? '100% 0' : '0 0' }} />
               {[
                 { val: 'need', label: 'NEED', color: 'text-rose-400' },
                 { val: 'want', label: 'WANT', color: 'text-amber-400' },
@@ -331,10 +335,11 @@ function BatchForm({
                 return (
                   <button 
                     key={opt.val} 
-                    type="button" 
+                    type="button"
+                    aria-pressed={isSelected}
                     onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                    className={`h-full px-2.5 text-[11px] font-black rounded-none transition-all flex items-center justify-center ${
-                      isSelected ? `bg-surface-elevated ${opt.color}` : 'text-slate-500 hover:text-slate-300'
+                    className={`relative h-full px-2.5 text-[11px] font-black rounded-none transition-all flex items-center justify-center ${
+                      isSelected ? opt.color : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
                     {opt.label}

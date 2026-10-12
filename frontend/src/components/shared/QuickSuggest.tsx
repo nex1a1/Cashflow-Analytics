@@ -293,6 +293,9 @@ function QuickSuggest({
     return sourceItems;
   }, [frequentItems, catLookup, formType, searchQuery, selectedCatIds, selectedGroup, allocationFilter, amountFilter, sortBy, limitCount]);
 
+  // Changes whenever a filter does (not the search box: re-animating on every keystroke would jitter).
+  const listKey = [formType, selectedGroup, selectedCatIds.join('|'), allocationFilter, amountFilter, sortBy, limitCount].join('~');
+
   const handleResetAll = () => {
     setSelectedGroup(null);
     setSelectedCatIds([]);
@@ -325,7 +328,7 @@ function QuickSuggest({
       {/* Header */}
       <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-2 text-slate-300">
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-        รายการแนะนำ {quickSuggestions.length > 0 && `(${quickSuggestions.length})`}
+        รายการแนะนำ {quickSuggestions.length > 0 && <span key={quickSuggestions.length} className="m-pop-in inline-block">({quickSuggestions.length})</span>}
       </h4>
 
       {/* own full-width row: the right end of the header sits under DayDetail's close button */}
@@ -372,7 +375,7 @@ function QuickSuggest({
             <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent-ink' : 'text-slate-400'}`} />
             <span>ตัวกรอง</span>
             {activeFiltersCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent">
+              <span key={activeFiltersCount} className="m-pop-in px-1.5 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent">
                 {activeFiltersCount}
               </span>
             )}
@@ -387,7 +390,7 @@ function QuickSuggest({
             {selectedCatObjs.map(cat => (
               <span 
                 key={cat.id} 
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border text-[11px] font-bold"
+                className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border text-[11px] font-bold"
                 style={{ 
                   borderColor: `rgba(${hexToRgb(cat.color || tc('ink-muted'))}, 0.5)`, 
                   color: readable(cat.color || tc('gray-200')) 
@@ -408,7 +411,7 @@ function QuickSuggest({
 
             {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
             {selectedCatObjs.length === 0 && activeGroupObj && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} fallbackEmoji="📁" />
                 <span>กลุ่ม: {activeGroupObj.name}</span>
                 <button 
@@ -423,7 +426,7 @@ function QuickSuggest({
             )}
 
             {formType === 'expense' && allocationFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
+              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
                 <span>{allocationFilter}</span>
                 <button 
                   type="button" 
@@ -435,7 +438,7 @@ function QuickSuggest({
               </span>
             )}
             {amountFilter !== 'ALL' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>ช่วงราคา</span>
                 <button 
                   type="button" 
@@ -447,7 +450,7 @@ function QuickSuggest({
               </span>
             )}
             {limitCount !== String(defaultLimit) && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
+              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
                 <span>{limitCount === 'ALL' ? 'แสดงทั้งหมด' : `แสดง ${limitCount}`}</span>
                 <button 
                   type="button" 
@@ -474,11 +477,13 @@ function QuickSuggest({
         {/* Suggestions List (Always full height, never pushed or shrunk!) */}
         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 relative z-10">
           {quickSuggestions.length === 0 ? (
-            <p className="text-xs text-center py-10 text-slate-500 font-medium">
+            <p key={listKey} className="m-fade-in text-xs text-center py-10 text-slate-500 font-medium">
               ไม่พบคำแนะนำที่ตรงกับตัวกรอง
             </p>
           ) : (
-            <div className="flex flex-col gap-1">
+            // keyed by the filters: picking / removing a group, category or option re-mounts the list,
+            // so the rows under the filter panel rise back in one after another (m-stagger)
+            <div key={listKey} className="m-stagger flex flex-col gap-1">
               {quickSuggestions.map((s, idx) => {
                 const catObj = catLookup[s.categoryId] || catLookup[s.categoryName];
                 const catColor = catObj?.color || tc('gray-300');
@@ -490,15 +495,15 @@ function QuickSuggest({
                 const itemKey = `${s.categoryId}-${s.description}-${s.amount}-${idx}`;
 
                 return (
-                  <button 
-                    type="button" 
-                    key={itemKey} 
-                    onClick={() => onApplySuggestion(s)} 
+                  <button
+                    type="button"
+                    key={itemKey}
+                    onClick={() => onApplySuggestion(s)}
                     disabled={isProcessing}
                     style={{
                       ['--cat-rgb' as any]: hexToRgb(catColor),
                     }}
-                    className="sugg-item w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border transition-none relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
+                    className="sugg-item w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border active:scale-[0.985] relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
                   >
                     {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
                     <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: catColor }} />
@@ -552,7 +557,7 @@ function QuickSuggest({
         {showFilterMenu && (
           <div 
             ref={filterOverlayRef}
-            className="absolute top-0 left-0 right-0 z-30 bg-canvas border border-line-strong shadow-md shadow-black/40 p-3 flex flex-col justify-between max-h-[85%] overflow-hidden"
+            className="m-reveal absolute top-0 left-0 right-0 z-30 bg-canvas border border-line-strong shadow-md shadow-black/40 p-3 flex flex-col justify-between max-h-[85%] overflow-hidden"
           >
             {/* Modal Header */}
             <div className="pb-1.5 border-b border-line flex items-center justify-between text-slate-300 shrink-0">
@@ -617,9 +622,9 @@ function QuickSuggest({
                             setSelectedGroup(g.id);
                           }
                         }}
-                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-pill cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-pill cursor-pointer active:scale-95 ${
                           isGrpActive
-                            ? 'border-accent-ink bg-accent/20 text-white font-black'
+                            ? 'border-accent-ink bg-accent/20 text-white font-black m-pick'
                             : selectedCountInGroup > 0
                               ? 'border-slate-500 bg-surface-hover text-slate-200 font-bold'
                               : 'border-line bg-canvas text-slate-400 hover:text-slate-200 hover:border-slate-500'
@@ -628,7 +633,7 @@ function QuickSuggest({
                         {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={16} />}
                         <span>{g.name}</span>
                         {selectedCountInGroup > 0 && (
-                          <span className="ml-0.5 px-1 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent leading-none">
+                          <span key={selectedCountInGroup} className="m-pop-in ml-0.5 px-1 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent leading-none">
                             {selectedCountInGroup}
                           </span>
                         )}
@@ -639,7 +644,7 @@ function QuickSuggest({
 
                 {/* Tier 2: Sub-categories ONLY when a specific group is selected (NO "ทุกหมวดในกลุ่มนี้" button) */}
                 {selectedGroup !== null && (
-                  <div className="mt-1.5 p-1.5 bg-surface border border-line">
+                  <div className="m-reveal mt-1.5 p-1.5 bg-surface border border-line">
                     <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-hairline text-[11px]">
                       <span className="text-slate-400 font-bold flex items-center gap-1">
                         {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} />}
@@ -690,11 +695,11 @@ function QuickSuggest({
                             } : ({
                               ['--chip-rgb' as any]: rgb,
                             } as React.CSSProperties)}
-                            className={`px-2 py-0.5 text-[11px] font-bold border transition-none flex items-center gap-1 rounded-pill cursor-pointer ${
-                              isCatActive ? 'font-black shadow-sm ring-1 ring-white/10' : 'cat-chip-btn'
+                            className={`px-2 py-0.5 text-[11px] font-bold border flex items-center gap-1 rounded-pill cursor-pointer active:scale-95 ${
+                              isCatActive ? 'font-black shadow-sm ring-1 ring-white/10 m-pick' : 'cat-chip-btn'
                             }`}
                           >
-                            {isCatActive && <Check className="w-2.5 h-2.5 text-white shrink-0" />}
+                            {isCatActive && <Check className="m-pop-in w-2.5 h-2.5 text-white shrink-0" />}
                             {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={15} />}
                             <span>{c.name}</span>
                           </button>
@@ -723,7 +728,7 @@ function QuickSuggest({
                           onClick={() => setAllocationFilter(opt.val)}
                           className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
                             isActive
-                              ? `${opt.color} font-black`
+                              ? `${opt.color} font-black m-pick`
                               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
                           }`}
                         >
@@ -742,13 +747,13 @@ function QuickSuggest({
                 className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 py-1 cursor-pointer"
               >
                 <span>ตัวเลือกเพิ่มเติม (ช่วงราคา, การเรียง, จำนวน)</span>
-                <ChevronDown className={`w-3 h-3 transition-transform ${showMoreFilters || hasSecondaryFilterActive ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showMoreFilters || hasSecondaryFilterActive ? 'rotate-180' : ''}`} />
               </button>
 
               {(showMoreFilters || hasSecondaryFilterActive) && (
                 <>
                   {/* Amount Range & Sort Order (2-Column Compact Row) */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="m-reveal grid grid-cols-2 gap-2">
                     <div>
                       <span className={tokens.label}>ช่วงจำนวนเงิน</span>
                       <select
@@ -781,7 +786,7 @@ function QuickSuggest({
                   </div>
 
                   {/* Items Display Limit (10, 20, 30, ทั้งหมด) */}
-                  <div>
+                  <div className="m-reveal">
                     <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
                     <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
                       {limitOptions.map(opt => {
@@ -793,7 +798,7 @@ function QuickSuggest({
                             onClick={() => setLimitCount(opt.val)}
                             className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
                               isActive
-                                ? 'border-accent-ink bg-accent/20 text-white font-black'
+                                ? 'border-accent-ink bg-accent/20 text-white font-black m-pick'
                                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
                             }`}
                           >

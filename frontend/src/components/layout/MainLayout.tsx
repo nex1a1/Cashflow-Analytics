@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import AppHeader from './AppHeader';
 import AppToast from '../shared/AppToast';
 
@@ -8,6 +8,7 @@ import { useAppUI } from '../../context/AppUIContext';
 import { useAppData } from '../../context/AppDataContext';
 import { useAppFilter } from '../../context/AppFilterContext';
 import { localTodayIso } from '../../utils/payCycle';
+import { periodRowsLoaded } from '../../utils/dateHelpers';
 import useJsonSetting from '../../hooks/useJsonSetting';
 
 // View Components
@@ -51,7 +52,7 @@ export default function MainLayout() {
     dayTypes, dayTypeConfig, frequentItems,
     dbStatus, isProcessing, isCsvProcessing,
     importPreview, setImportPreview, fileInputRef,
-    refreshData, handleSaveTransaction, handleUpdateTransaction,
+    rowsRange, refreshData, handleSaveTransaction, handleUpdateTransaction,
     handleDeleteTransaction, handleDeleteAllData,
     handleSaveBatch, handleFileUpload, confirmImport,
     handleCategoryChange, handleDeleteCategory, handleAddCategory, handleMoveCategory,
@@ -85,6 +86,9 @@ export default function MainLayout() {
   useEffect(() => {
     if ((!taxEnabled && activeTab === 'tax') || (!portfolioEnabled && activeTab === 'portfolio')) setActiveTab('insights');
   }, [taxEnabled, portfolioEnabled, activeTab, setActiveTab]);
+
+  // going forward the new month isn't loaded yet (only 3 back are): Calendar shows cell skeletons instead of empty days
+  const calendarRowsPending = !periodRowsLoaded(rowsRange, filterPeriod);
 
   const showSuccess =() => { triggerToast('ทำรายการสำเร็จ!', 'success'); };
 
@@ -126,7 +130,7 @@ export default function MainLayout() {
         />
 
         {/* No z-index here: it would make this wrapper a stacking context and trap the fixed modals rendered inside views (DayDetailModal, AssetsModal) beneath the z-60 header */}
-        <div className="p-6 relative flex-grow bg-canvas">
+        <div className="tab-stage p-6 relative flex-grow bg-canvas">
           {activeTab === 'insights' && (
             <div key="insights">
               <DashboardView
@@ -159,6 +163,7 @@ export default function MainLayout() {
               <CalendarView
                 transactions={transactions}
                 filterPeriod={filterPeriod}
+                rowsPending={calendarRowsPending}
                 setFilterPeriod={setFilterPeriod}
                 handleOpenAddModal={handleOpenAddModal}
                 categories={categories}

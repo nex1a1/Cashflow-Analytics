@@ -161,17 +161,19 @@ export default function DailyForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
-      <div className={`flex p-0.5 rounded-none border bg-canvas border-line`}>
-        <button type="button" onClick={() => handleTypeChange('expense')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'bg-surface-elevated text-expense shadow-sm' : tokens.textMuted}`}>
+      <div className={`relative flex p-0.5 rounded-none border bg-canvas border-line`}>
+        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-sm"
+          style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
+        <button type="button" onClick={() => handleTypeChange('expense')}
+          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'text-expense' : tokens.textMuted}`}>
           รายจ่าย
         </button>
         <button type="button" onClick={() => handleTypeChange('savings')}
-          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'savings' ? 'bg-surface-elevated text-savings shadow-sm' : tokens.textMuted}`}>
+          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'savings' ? 'text-savings' : tokens.textMuted}`}>
           ลงทุน/ออม
         </button>
-        <button type="button" onClick={() => handleTypeChange('income')} 
-          className={`flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? 'bg-surface-elevated text-emerald-400 shadow-sm' : tokens.textMuted}`}>
+        <button type="button" onClick={() => handleTypeChange('income')}
+          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? 'text-emerald-400' : tokens.textMuted}`}>
           รายรับ
         </button>
       </div>
@@ -191,16 +193,18 @@ export default function DailyForm({
         </div>
 
         {formType === 'expense' && (
-          <div className="flex p-0.5 rounded-none border shrink-0 bg-canvas border-line">
+          <div className="relative grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line">
+            <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] bg-surface-elevated"
+              style={{ translate: allocationType === 'want' ? '100% 0' : '0 0' }} />
             {[
               { val: 'need', label: 'NEED', color: 'text-rose-400' },
               { val: 'want', label: 'WANT', color: 'text-amber-400' },
             ].map(opt => {
               const isSelected = allocationType === opt.val;
-              const activeStyle = isSelected ? `bg-surface-elevated ${opt.color}` : tokens.textMuted;
+              const activeStyle = isSelected ? opt.color : tokens.textMuted;
               return (
-                <button key={opt.val} type="button" onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                  className={`px-2 py-1 text-[11px] font-black rounded-none transition-all ${activeStyle}`}>
+                <button key={opt.val} type="button" aria-pressed={isSelected} onClick={() => setValue('allocation_type', opt.val as AllocationType)}
+                  className={`relative px-2 py-1 text-[11px] font-black rounded-none transition-all ${activeStyle}`}>
                   {opt.label}
                 </button>
               );

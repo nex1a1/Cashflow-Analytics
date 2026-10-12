@@ -1,6 +1,6 @@
 import React from 'react';
 import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
-import { Activity, TrendingUp, TrendingDown, Wallet, ChevronUp, ChevronDown } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, Wallet, ChevronDown } from 'lucide-react';
 
 export function getSavingsRateStyle(savingsRate: number): string {
   if (savingsRate >= BUDGET_RULES.surplus.min) return 'bg-income/10 text-income border-income/20';
@@ -126,17 +126,8 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
           className="w-full py-1.5 px-4 bg-surface hover:bg-surface-hover border-t border-line/80 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest font-mono text-ink-body hover:text-ink-display transition-colors group cursor-pointer"
           title="ขยาย/หุบ แผงจำแนกหมวดหมู่ย่อย"
         >
-          {showGroupBreakdown ? (
-            <>
-              <ChevronUp className="w-3.5 h-3.5 text-accent-ink group-hover:-translate-y-0.5 transition-transform" />
-              <span>หุบการจำแนกตามกลุ่มรายรับ-รายจ่าย</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-3.5 h-3.5 text-ink-muted group-hover:text-accent-ink group-hover:translate-y-0.5 transition-transform" />
-              <span>ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย ({totalActiveGroupCards} กลุ่ม)</span>
-            </>
-          )}
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGroupBreakdown ? 'rotate-180 text-accent-ink group-hover:-translate-y-0.5' : 'text-ink-muted group-hover:text-accent-ink group-hover:translate-y-0.5'}`} />
+          <span>{showGroupBreakdown ? 'หุบการจำแนกตามกลุ่มรายรับ-รายจ่าย' : `ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย (${totalActiveGroupCards} กลุ่ม)`}</span>
         </button>
       )}
     </div>
@@ -158,7 +149,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
   const hasBothIncomeAndSavings = activeIncomeCards.length > 0 && activeSavingsCards.length > 0;
 
   return (
-    <div className="flex flex-col gap-4 pb-2 mt-2">
+    <div className="m-reveal flex flex-col gap-4 pb-2 mt-2">
       {hasIncomeOrSavings && (
         <div className="flex flex-wrap justify-center items-stretch gap-6 pb-2">
           {activeIncomeCards.length > 0 && (
@@ -167,7 +158,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>รายรับ</span>
               </div>
-              <div className="flex flex-wrap items-stretch justify-center gap-3">
+              <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3">
                 {activeIncomeCards}
               </div>
             </div>
@@ -185,7 +176,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
                 <Wallet className="w-3.5 h-3.5" />
                 <span>การออมและลงทุน</span>
               </div>
-              <div className="flex flex-wrap items-stretch justify-center gap-3">
+              <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3">
                 {activeSavingsCards}
               </div>
             </div>
@@ -199,7 +190,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
             <TrendingDown className="w-3.5 h-3.5" />
             <span>รายจ่าย</span>
           </div>
-          <div className="flex flex-wrap items-stretch justify-center gap-3 pb-1 px-1">
+          <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3 pb-1 px-1">
             {activeExpenseCards}
           </div>
         </div>

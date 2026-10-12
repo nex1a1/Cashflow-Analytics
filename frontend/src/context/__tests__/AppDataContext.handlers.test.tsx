@@ -95,8 +95,26 @@ describe('provider', () => {
     expect(result.current.app.isProcessing).toBe(true);
     await act(async () => { rows.resolve([]); await p; });
     expect(result.current.app.isProcessing).toBe(false);
+    expect(result.current.app.rowsRange).toEqual({ start: '2026-07-01', end: '2026-10-31' });
     expect(api.analyticsService.getDashboardData).toHaveBeenLastCalledWith('2026-10-01', '2026-10-31');
-    expect(api.transactionService.getAll).toHaveBeenLastCalledWith('2026-07-01', '2026-10-31');
+    expect(api.transactionService.getAll).toHaveBeenCalledWith('2026-07-01', '2026-10-31');
+    // the next month is fetched ahead, so stepping forward draws without waiting
+    expect(api.transactionService.getAll).toHaveBeenLastCalledWith('2026-08-01', '2026-11-30');
+  });
+
+  it('stepping forward uses the prefetched window before the fresh fetch answers', async () => {
+    const { result } = await mount();
+    api.transactionService.getAll.mockResolvedValueOnce([]) // October
+      .mockResolvedValueOnce([{ id: 'nov', date: '2026-11-03', category: 'ข้าว', amount: 1 }]); // November, fetched ahead
+    await act(async () => { await result.current.app.loadPeriodData('2026-10'); });
+    const fresh = deferred<unknown[]>();
+    api.transactionService.getAll.mockImplementationOnce(() => fresh.promise);
+    let p!: Promise<void>;
+    await act(async () => { p = result.current.app.loadPeriodData('2026-11'); });
+    expect(result.current.app.rowsRange).toEqual({ start: '2026-08-01', end: '2026-11-30' });
+    expect(result.current.app.transactions.map(t => t.id)).toEqual(['nov']);
+    await act(async () => { fresh.resolve([]); await p; });
+    expect(result.current.app.transactions).toEqual([]); // the fresh answer wins
   });
 
   it('an older period finishing does not stop the spinner of the newer one', async () => {

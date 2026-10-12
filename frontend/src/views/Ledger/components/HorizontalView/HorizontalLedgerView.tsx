@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Inbox } from 'lucide-react';
 
 // Hooks & Logic
@@ -52,6 +52,11 @@ export default function HorizontalLedgerView({
 }: HorizontalLedgerViewProps) {
   // UI State
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  // Pinned = clicked: the tooltip stays (and takes the mouse) so a long list can be scrolled.
+  // While pinned, hovering other cells / leaving the table does nothing.
+  const [pinnedKey, setPinnedKey] = useState<string | null>(null);
+  const pinnedRef = useRef<string | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   // ─── 1. Engine: Pure Data Logic ───
   const {
@@ -69,6 +74,7 @@ export default function HorizontalLedgerView({
 
   // ─── 2. Event Handlers ───
   const handleCellHover = useCallback((e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => {
+    if (pinnedRef.current) return;
     if (!items || items.length === 0) {
       setTooltip(null);
       return;
@@ -85,8 +91,41 @@ export default function HorizontalLedgerView({
   }, []);
 
   const handleCellLeave = useCallback(() => {
+    if (pinnedRef.current) return;
     setTooltip(null);
   }, []);
+
+  const pin = useCallback((key: string | null) => { pinnedRef.current = key; setPinnedKey(key); }, []);
+  const unpin = useCallback(() => { pin(null); setTooltip(null); }, [pin]);
+
+  const handleCellPin = useCallback((e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => {
+    const key = `${date}|${catId}`;
+    if (pinnedRef.current === key) { pin(null); return; } // same cell again: back to a plain hover tooltip
+    pin(null);
+    handleCellHover(e, date, catId, cat, items);
+    pin(key);
+  }, [handleCellHover, pin]);
+
+  useEffect(() => {
+    if (!pinnedKey) return;
+    const inTip = (t: EventTarget | null) => t instanceof Node && !!tooltipRef.current?.contains(t);
+    // A data cell's own click re-pins / toggles; anything else outside the tooltip closes it.
+    const onDown = (e: PointerEvent) => {
+      if (inTip(e.target) || (e.target as Element).closest?.('.heatmap-cell[tabindex="0"]')) return;
+      unpin();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') unpin(); };
+    // The tooltip is placed from the cell's position when pinned, so any scroll but its own list detaches it.
+    const onScroll = (e: Event) => { if (!inTip(e.target)) unpin(); };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [pinnedKey, unpin]);
 
   // ─── 3. Styles ───
   const border  = 'rgb(var(--overlay) / 0.06)';
@@ -121,7 +160,7 @@ export default function HorizontalLedgerView({
     <div className="relative">
       
       {/* ── Tooltip ── */}
-      <HeatmapTooltip tooltip={tooltip} />
+      <HeatmapTooltip tooltip={tooltip} pinned={!!pinnedKey} onClose={unpin} panelRef={tooltipRef} />
 
       {/* ── Table ── */}
       <div className="w-full" style={{ overflowX: 'auto' }}>
@@ -210,6 +249,7 @@ export default function HorizontalLedgerView({
                     activeCategories={activeCategories} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig}
                     handleCellLeave={handleCellLeave}
                     handleCellHover={handleCellHover}
+                    handleCellPin={handleCellPin}
                     bgBase={bgBase} border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
                     maxDailyTotal={maxDailyTotal}
                     formatMoney={formatMoney}

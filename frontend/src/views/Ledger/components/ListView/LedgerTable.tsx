@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Minus, TrendingUp, ChevronLeft, ChevronRight, ChevronFirst, ChevronLast } from 'lucide-react';
 import EditableInput from '../../../../components/ui/EditableInput';
 import AmountEditableInput from './AmountEditableInput';
@@ -9,6 +9,7 @@ import CategorySelect from '../../../../components/shared/CategorySelect';
 import AllocationSelect, { SegmentedToggle } from '@/components/shared/AllocationSelect';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { readable, TOKENS } from '@/constants/theme';
+import { useFlipList } from '@/hooks/useFlipList';
 
 // Income and investing share the same green, so the icon carries the meaning: + เข้า, − ออก, กราฟ = ลงทุน.
 const ADD_BUTTONS = [
@@ -102,8 +103,9 @@ export default function LedgerTable({
     () => Object.fromEntries((portfolio?.assets ?? []).map(a => [a.id, a.name])) as Record<string, string>,
     [portfolio],
   );
-
-
+  // Rows slide / rise in after search, filters, sorting, paging, add and delete.
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  useFlipList(bodyRef);
 
   useEffect(() => {
     setPageInput(String(currentPage));
@@ -297,7 +299,7 @@ export default function LedgerTable({
               <th className="sticky right-0 z-30 bg-surface border-l border-line/60 w-12 text-center" />
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={bodyRef}>
             {currentData.map((item, index, arr) => {
               const isNewDate  = !isDateSorted || index === 0 || item.date !== arr[index - 1].date;
               const catObj     = categories.find(c => c.id === item.category_id) || categories.find(c => c.name === item.category);
@@ -310,8 +312,9 @@ export default function LedgerTable({
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
 
               return (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
+                  data-flip-id={item.id}
                   className={`group border-b border-line/30 hover:bg-surface-elevated/10 ${
                     isDateBoundary ? 'border-t border-t-line-strong' : ''
                   }`}

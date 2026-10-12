@@ -4,6 +4,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
 import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';
 import { latestOnly } from '../utils/latestOnly';
+import { CYCLE_PREFIX, isCyclePeriod, isSingleUnitPeriod, shiftMonth, stripCycle } from '../utils/payCycle';
 import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 import useCategories from '../hooks/useCategories';
 import useTransactionData from '../hooks/useTransactionData';
@@ -52,6 +53,8 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     isBootstrapping,
     setIsProcessing: setTxProcessing,
     loadData,
+    prefetchData,
+    rowsRange,
     loadAnalytics,
     bootstrap,
     saveToDb,
@@ -105,9 +108,16 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       ]);
     } finally {
       // an older request finishing must not switch the spinner off while the newer one is still loading
-      if (isCurrent()) setIsFetchingPeriod(false);
+      if (isCurrent()) {
+        setIsFetchingPeriod(false);
+        // the next month/cycle is the likely next click and isn't in this window (only 3 back are): fetch it now
+        if (isSingleUnitPeriod(period)) {
+          const next = getPeriodDateRange(`${isCyclePeriod(period) ? CYCLE_PREFIX : ''}${shiftMonth(stripCycle(period), 1)}`);
+          prefetchData(next.fetchStartDate || next.startDate, next.endDate);
+        }
+      }
     }
-  }, [loadAnalytics, loadData, beginPeriodLoad]);
+  }, [loadAnalytics, loadData, prefetchData, beginPeriodLoad]);
 
   // Bootstrap once on mount
   const hasBootstrapped = useRef(false);
@@ -362,6 +372,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     totalCount,
     refreshData,
     loadPeriodData,
+    rowsRange,
     handleSaveTransaction,
     handleUpdateTransaction,
     handleDeleteTransaction,

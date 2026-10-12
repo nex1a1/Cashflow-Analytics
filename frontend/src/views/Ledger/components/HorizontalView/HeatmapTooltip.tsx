@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, type Ref } from 'react';
+import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { formatBaht } from '../../../../utils/formatters';
 import { TransactionDisplay, Category } from '../../../../types';
@@ -16,9 +17,13 @@ export interface TooltipData {
 
 interface HeatmapTooltipProps {
   tooltip: TooltipData | null;
+  /** Clicked open: takes the mouse (scrollable list) and shows a close button. */
+  pinned?: boolean;
+  onClose?: () => void;
+  panelRef?: Ref<HTMLDivElement>;
 }
 
-const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipProps) {
+const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, pinned = false, onClose, panelRef }: HeatmapTooltipProps) {
   const isVisible = !!tooltip;
 
   if (!isVisible || typeof document === 'undefined') return null;
@@ -33,7 +38,9 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
 
   return createPortal(
     <div
-      className="fixed z-[99999] pointer-events-none"
+      ref={panelRef}
+      className={`fixed z-[99999] ${pinned ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      {...(pinned ? { role: 'dialog', 'aria-label': ` ` } : {})}
       style={{ 
         left: `${tooltip.x}px`,
         top: topPos,
@@ -67,6 +74,14 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip }: HeatmapTooltipP
               {tooltip.date}
             </p>
           </div>
+          {pinned ? (
+            <button type="button" onClick={onClose} aria-label="ปิด" title="ปิด (Esc)"
+              className="ml-auto p-1 text-ink-muted hover:text-ink-display hover:bg-surface-elevated">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: tc('ink-muted'), whiteSpace: 'nowrap' }}>คลิกเพื่อค้างไว้</span>
+          )}
         </div>
         <div style={{ maxHeight: 240, overflowY: 'auto' }} className="custom-scrollbar">
           {tooltip.items.map((item, i) => (

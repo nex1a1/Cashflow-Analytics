@@ -54,6 +54,10 @@ export default function useTransactionData({
   // A slow earlier response (e.g. "ALL") must not overwrite the window the user picked afterwards
   const beginDataLoad = useMemo(() => latestOnly(), []);
   const beginAnalyticsLoad = useMemo(() => latestOnly(), []);
+  // the date window `transactions` holds right now (null = not loaded yet; null bounds = everything)
+  const [rowsRange, setRowsRange] = useState<{ start: string | null; end: string | null } | null>(null);
+  // one window fetched ahead (the next month/cycle), used once by loadData and re-fetched by refreshData
+  const prefetched = useRef<{ key: string; start: string | null; end: string | null; rows: Promise<TransactionDisplay[]> } | null>(null);
   const { showToast } = useToast();
 
   /**
@@ -63,21 +67,43 @@ export default function useTransactionData({
     async (startDate: string | null, endDate: string | null) => {
       dataRange.current = { start: startDate, end: endDate };
       const isCurrent = beginDataLoad();
+      const key = `${startDate}|${endDate}`;
+      const hit = prefetched.current?.key === key ? prefetched.current.rows : null;
+      prefetched.current = null;
+      if (hit) {
+        // show the prefetched window at once, then the fresh fetch below replaces it (an edit made since stays correct)
+        const rows = await hit.catch(() => null);
+        if (rows && isCurrent()) {
+          setTransactions(sortTransactions(rows));
+          setRowsRange({ start: startDate, end: endDate });
+        }
+      }
       try {
         // no "loading" status here: it fired on every period change and made the header badges flicker
         const txData = await transactionService.getAll(startDate || undefined, endDate || undefined);
         if (!isCurrent()) return;
         setTransactions(sortTransactions(txData));
+        setRowsRange({ start: startDate, end: endDate });
         setDbStatus('Online (SQLite3)');
       } catch (err) {
         if (!isCurrent()) return;
         console.error(err);
         setTransactions([]);
+        setRowsRange({ start: startDate, end: endDate });
         setDbStatus('Offline (Database Error)');
       }
     },
     [setDbStatus, beginDataLoad]
   );
+
+  /** Fetch a window in the background so the next loadData of exactly that window draws without waiting */
+  const prefetchData = useCallback((startDate: string | null, endDate: string | null) => {
+    const key = `${startDate}|${endDate}`;
+    if (prefetched.current?.key === key) return;
+    const rows = transactionService.getAll(startDate || undefined, endDate || undefined);
+    rows.catch(() => {}); // a failed prefetch just means the normal fetch waits
+    prefetched.current = { key, start: startDate, end: endDate, rows };
+  }, []);
 
   /**
    * Loads aggregated analytics summary for a window
@@ -102,6 +128,10 @@ export default function useTransactionData({
   );
 
   const refreshData = useCallback(async () => {
+    // data changed: the window fetched ahead is stale, fetch it again
+    const ahead = prefetched.current;
+    prefetched.current = null;
+    if (ahead) prefetchData(ahead.start, ahead.end);
     try {
       await Promise.all([
         loadData(dataRange.current.start, dataRange.current.end),
@@ -113,7 +143,7 @@ export default function useTransactionData({
     } catch (err) {
       console.error('Refresh failed', err);
     }
-  }, [loadData, loadAnalytics]);
+  }, [loadData, loadAnalytics, prefetchData]);
 
   /**
    * Initial bootstrap of master data
@@ -345,6 +375,8 @@ export default function useTransactionData({
     isBootstrapping,
     setIsProcessing,
     loadData,
+    prefetchData,
+    rowsRange,
     loadAnalytics,
     bootstrap,
     saveToDb,

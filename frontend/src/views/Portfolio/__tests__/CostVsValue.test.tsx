@@ -208,13 +208,13 @@ describe('CostVsValue gain tab', () => {
     expect(lastBar().data.datasets[0].backgroundColor).toEqual([tc('income')]);
   });
 
-  it('horizontal bars without a legend, no animation', () => {
+  it('horizontal bars without a legend, default animation', () => {
     mount(base());
     goto('กำไร/ขาดทุน');
     const o = lastBar().options;
     expect(o.indexAxis).toBe('y');
     expect(o.plugins.legend.display).toBe(false);
-    expect(o.animation).toBe(false);
+    expect(o.animation).toBeUndefined(); // inherits the global short animation (main.tsx)
     expect(o.maintainAspectRatio).toBe(false);
     expect(o.scales.y.grid.display).toBe(false);
   });

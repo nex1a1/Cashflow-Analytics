@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.env
+**/.vite
+backend/data
+backend/backups
+docs
+.git
+.claude

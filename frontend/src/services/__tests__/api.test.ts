@@ -4,7 +4,7 @@ import {
   categoryService, groupService, portfolioService,
 } from '../api';
 
-const BASE = 'http://localhost:3000/api';
+const BASE = '/api';
 type Call = [string, RequestInit | undefined];
 
 /** Stubs fetch with one answer; returns the recorded calls. */

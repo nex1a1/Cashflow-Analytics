@@ -15,7 +15,6 @@ const MODES: { id: Mode; label: string }[] = [
 const baseOptions = (items: AllocationItem[]): ChartOptions<'doughnut'> => ({
   responsive: true,
   maintainAspectRatio: false,
-  animation: false,
   cutout: '68%',
   plugins: {
     legend: { display: false },

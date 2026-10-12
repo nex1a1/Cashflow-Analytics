@@ -40,6 +40,8 @@ export interface CalendarViewProps {
   handleDeleteTransaction?: (id: string) => void;
   onSaveTransaction?: (tx: TransactionPayload) => void | Promise<void>;
   isLoading: boolean;
+  /** the period's rows haven't arrived yet (stepping forward): cells show skeletons, not empty days */
+  rowsPending?: boolean;
   frequentItems?: FrequentItem[];
   onSwitchToAnalysisMode?: () => void;
 }
@@ -49,7 +51,7 @@ function CalendarView({
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayNotes, handleDayNoteChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
-  isLoading, frequentItems = [], onSwitchToAnalysisMode
+  isLoading, rowsPending = false, frequentItems = [], onSwitchToAnalysisMode
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
@@ -408,6 +410,7 @@ function CalendarView({
           excludedCategoryIds={excludedCategoryIds}
           toggleCategory={toggleCategory}
           maxDailyExpense={maxDailyExpense}
+          rowsPending={rowsPending}
         />
 
         {/* 2. Legend & Allocation Block */}
@@ -438,7 +441,7 @@ function CalendarView({
           cashflowGroups={cashflowGroups}
           onClose={() => setSelectedDate(null)}
           onSave={async (item) => { if (onSaveTransaction) await onSaveTransaction(item); }}
-          onDelete={(id) => { if (handleDeleteTransaction) handleDeleteTransaction(id); }}
+          onDelete={(id) => handleDeleteTransaction?.(id)}
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}
           frequentItems={frequentItems}

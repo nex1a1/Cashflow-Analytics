@@ -27,6 +27,11 @@ ChartJS.register(
 defaults.font.family = "'Inter', 'Bai Jamjuree', sans-serif";
 defaults.color = tc('ink-body');
 defaults.borderColor = tc('line');
+// Short grow-in for every chart (Chart.js default is 1s); none when the OS asks for reduced motion.
+defaults.set('animation', {
+  duration: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
+  easing: 'easeOutQuart',
+});
 
 applyTheme();
 

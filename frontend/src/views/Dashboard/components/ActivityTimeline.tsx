@@ -80,7 +80,9 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
   ];
 
   return (
-    <div className="relative flex p-1 rounded-none border shadow-sm bg-surface border-line-strong">
+    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-sm bg-surface border-line-strong">
+      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-sm bg-surface-elevated/60"
+        style={{ translate: viewMode === 'heatmap' ? '100% 0' : '0 0' }} />
       {modeButtons.map((btn) => {
         const Icon = btn.icon;
         const isActive = viewMode === btn.id;
@@ -90,15 +92,12 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
             type="button"
             aria-pressed={isActive}
             onClick={() => setViewMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
+            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? btn.color : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> 
             <span>{btn.label}</span>
-            {isActive && (
-              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-surface-elevated/60" />
-            )}
           </button>
         );
       })}
@@ -306,7 +305,9 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
   ];
 
   return (
-    <div className="relative flex p-1 rounded-none border shadow-sm bg-surface border-line-strong">
+    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-sm bg-surface border-line-strong">
+      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-sm bg-surface-elevated/60"
+        style={{ translate: layoutMode === 'calendar' ? '100% 0' : '0 0' }} />
       {layoutButtons.map((btn) => {
         const Icon = btn.icon;
         const isActive = layoutMode === btn.id;
@@ -316,15 +317,12 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
             type="button"
             aria-pressed={isActive}
             onClick={() => setLayoutMode(btn.id)}
-            className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
+            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? 'text-slate-100' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> 
             <span>{btn.label}</span>
-            {isActive && (
-              <div className="absolute inset-0 rounded-none shadow-sm z-[-1] bg-surface-elevated/60" />
-            )}
           </button>
         );
       })}

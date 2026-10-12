@@ -4,7 +4,7 @@ import {
   SlidersHorizontal, Check, Folder, MousePointer2
 } from 'lucide-react';
 import CategoryMatrixFilter from '../common/CategoryMatrixFilter';
-import SegmentButton from '../common/SegmentButton';
+import SegmentGroup from '../common/SegmentGroup';
 import { EXCLUDED_HEATMAP_CATEGORIES, HeatmapEngineOptions } from '../../hooks/useHeatmapEngine';
 import { Category, CashflowGroup, TransactionDisplay } from '../../../../types';
 
@@ -174,7 +174,7 @@ export default function HorizontalFilterBar({
   }, [setFilters]);
 
   return (
-    <div className="relative rounded-none border border-line/60 bg-surface mb-4 z-40">
+    <div className="m-reveal relative rounded-none border border-line/60 bg-surface mb-4 z-40">
       
       {/* Header bar */}
       <div className="px-3.5 py-2 bg-canvas border-b border-line/60 flex items-center justify-between flex-wrap gap-2">
@@ -225,25 +225,11 @@ export default function HorizontalFilterBar({
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
               การจัดสรรเงิน (Need / Want)
             </span>
-            <div className="flex rounded-none p-0.5 border bg-surface border-line">
-              <SegmentButton 
-                label="ทั้งหมด" 
-                active={allocationFilter === 'ALL'} 
-                onClick={() => setFilters(prev => ({ ...prev, allocationFilter: 'ALL' }))} 
-              />
-              <SegmentButton 
-                label="Need" 
-                active={allocationFilter === 'need'} 
-                onClick={() => setFilters(prev => ({ ...prev, allocationFilter: 'need' }))} 
-                colorScheme="rose" 
-              />
-              <SegmentButton 
-                label="Want" 
-                active={allocationFilter === 'want'} 
-                onClick={() => setFilters(prev => ({ ...prev, allocationFilter: 'want' }))} 
-                colorScheme="amber" 
-              />
-            </div>
+            <SegmentGroup value={allocationFilter} onChange={v => setFilters(prev => ({ ...prev, allocationFilter: v }))} options={[
+              { value: 'ALL', label: 'ทั้งหมด' },
+              { value: 'need', label: 'Need', colorScheme: 'rose' },
+              { value: 'want', label: 'Want', colorScheme: 'amber' },
+            ]} />
           </div>
 
           {/* Display Toggles */}
@@ -311,25 +297,11 @@ export default function HorizontalFilterBar({
             <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
               กรองตามวันทำงาน / วันหยุด
             </span>
-            <div className="flex rounded-none p-0.5 border bg-surface border-line">
-              <SegmentButton 
-                label="ทุกวัน" 
-                active={dayTypeFilter === 'ALL'} 
-                onClick={() => setFilters(prev => ({ ...prev, dayTypeFilter: 'ALL' }))} 
-              />
-              <SegmentButton 
-                label="วันทำงาน" 
-                active={dayTypeFilter === 'WEEKDAY'} 
-                onClick={() => setFilters(prev => ({ ...prev, dayTypeFilter: 'WEEKDAY' }))} 
-                colorScheme="emerald" 
-              />
-              <SegmentButton 
-                label="วันหยุด" 
-                active={dayTypeFilter === 'WEEKEND'} 
-                onClick={() => setFilters(prev => ({ ...prev, dayTypeFilter: 'WEEKEND' }))} 
-                colorScheme="amber" 
-              />
-            </div>
+            <SegmentGroup value={dayTypeFilter} onChange={v => setFilters(prev => ({ ...prev, dayTypeFilter: v }))} options={[
+              { value: 'ALL', label: 'ทุกวัน' },
+              { value: 'WEEKDAY', label: 'วันทำงาน', colorScheme: 'emerald' },
+              { value: 'WEEKEND', label: 'วันหยุด', colorScheme: 'amber' },
+            ]} />
           </div>
 
           <div className="text-[11px] text-ink-muted font-mono">

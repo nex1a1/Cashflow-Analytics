@@ -334,6 +334,16 @@ describe('useFilters — search', () => {
     expect(ids()).toEqual(['coffee']); // English ignores letter case ("Iced Coffee")
   });
 
+  it('while the server is answering it shows the local matches, not an empty list (no "ไม่พบรายการ" flash)', async () => {
+    h.result = found;
+    hook = setup();
+    set(c => c.setSearchQuery('บันเทิง'));
+    act(() => { vi.advanceTimersByTime(300); }); // request sent, not answered yet
+    expect(ids()).toEqual(['fun']);
+    await settle();
+    expect(ids()).toEqual(['found']);
+  });
+
   it('a blank search goes back to the normal list and does not call the server', async () => {
     hook = setup();
     set(c => c.setSearchQuery('   '));

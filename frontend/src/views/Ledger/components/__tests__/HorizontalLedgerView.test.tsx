@@ -306,6 +306,62 @@ describe('HorizontalLedgerView — tooltip', () => {
     expect(tip()).toBeNull();
   });
 
+  it('clicking a cell pins it: it takes the mouse, survives leaving the table and hovering other cells', () => {
+    rect(300, 400);
+    mount();
+    click(firstFoodCell());
+    expect(tip()!.className).toContain('pointer-events-auto');
+    expect(tip()!.getAttribute('role')).toBe('dialog');
+    leaveTable();
+    hover(cellsOf(dateRows()[0])[1]); // 30 Jan food
+    expect(tip()!.textContent).toContain('2026-02-01');
+  });
+
+  it('a pinned tooltip closes with ×, Esc, a click outside or a page scroll — but not a scroll of its own list', () => {
+    rect(300, 400);
+    mount();
+    click(firstFoodCell());
+    act(() => { (tip()!.querySelector('button[aria-label="ปิด"]') as HTMLElement).click(); });
+    expect(tip()).toBeNull();
+
+    click(firstFoodCell());
+    act(() => { tip()!.querySelector('.custom-scrollbar')!.dispatchEvent(new Event('scroll')); });
+    expect(tip()).not.toBeNull();
+    key(document.body, 'Escape');
+    expect(tip()).toBeNull();
+
+    click(firstFoodCell());
+    act(() => { document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })); });
+    expect(tip()).toBeNull();
+
+    click(firstFoodCell());
+    act(() => { window.dispatchEvent(new Event('scroll')); });
+    expect(tip()).toBeNull();
+  });
+
+  it('clicking the pinned cell again unpins (back to a hover tooltip); clicking another cell moves the pin', () => {
+    rect(300, 400);
+    mount();
+    click(firstFoodCell());
+    click(cellsOf(dateRows()[0])[1]);
+    expect(tip()!.textContent).toContain('2026-01-30');
+    expect(tip()!.className).toContain('pointer-events-auto');
+    click(cellsOf(dateRows()[0])[1]);
+    expect(tip()!.className).toContain('pointer-events-none');
+    leaveTable();
+    expect(tip()).toBeNull();
+  });
+
+  it('Enter pins from the keyboard', () => {
+    rect(300, 400);
+    mount();
+    act(() => firstFoodCell().focus());
+    key(firstFoodCell(), 'Enter');
+    expect(tip()!.className).toContain('pointer-events-auto');
+    act(() => firstFoodCell().blur());
+    expect(tip()).not.toBeNull();
+  });
+
   it('works from the keyboard: focusing a cell shows it, leaving hides it', () => {
     rect(300, 400);
     mount();

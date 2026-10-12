@@ -159,6 +159,36 @@ describe('DayDetailModal — sorting', () => {
     click(q('button[aria-label="เรียงตามหมวดหมู่"]'));
     expect(order(rowTitles() as string[])).toEqual(['ข้าวมันไก่', 'กาแฟ', 'ดูหนัง']);
   });
+
+  it('re-sorting slides each moved row from its old spot; an added row rises in and pushes the rest (not on first render)', async () => {
+    // jsdom has no layout: put each row 50px below the previous one, in DOM order.
+    const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const top = this.dataset.flipId ? [...document.querySelectorAll('[data-flip-id]')].indexOf(this) * 50 : 0;
+      return { top } as DOMRect;
+    });
+    const animate = vi.fn();
+    (HTMLElement.prototype as any).animate = animate;
+    const moves = () => {
+      const m = Object.fromEntries(animate.mock.calls.map((c, i) =>
+        [(animate.mock.contexts[i] as HTMLElement).dataset.flipId, c[0][0].opacity === 0 ? 'in' : c[0][0].translate]));
+      animate.mockClear();
+      return m;
+    };
+    try {
+      const { rerender } = await mount();
+      expect(animate).not.toHaveBeenCalled();
+      click(q('button[aria-label="เรียงตามจำนวนเงิน"]'));
+      // ข้าวมันไก่ (t1) 120, กาแฟ (t2) 65, ดูหนัง (t3) 300: t3 jumps up two rows, the others drop one.
+      expect(moves()).toEqual({ t3: '0 100px', t1: '0 -50px', t2: '0 -50px' });
+
+      // DOM order: t4 | t5 t6 | t3 t1 t2. A 200-baht expense lands between t3 and t1.
+      await rerender({ transactions: [...dayRows, tx('t8', 'ค่ากิน', 'c-food', 200, 'ใหม่', { allocation_type: 'need' })] });
+      expect(moves()).toEqual({ t8: 'in', t1: '0 -50px', t2: '0 -50px' });
+    } finally {
+      rect.mockRestore();
+      delete (HTMLElement.prototype as any).animate;
+    }
+  });
 });
 
 describe('DayDetailModal — day type fallback', () => {
@@ -449,6 +479,27 @@ describe('DayDetailModal — deleting a row', () => {
     click(deleteBtn('ข้าวมันไก่'));
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledWith('t1');
+  });
+
+  it('fades the row out first, deletes after the fade, and brings the row back if it is still there (delete failed)', async () => {
+    let finish!: () => void;
+    const fade = { finished: new Promise<void>(r => { finish = r; }), cancel: vi.fn() };
+    const animate = vi.fn(() => fade);
+    (HTMLElement.prototype as any).animate = animate;
+    try {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      await mount({ onDelete });
+      click(deleteBtn('ข้าวมันไก่'));
+      click(deleteBtn('ข้าวมันไก่'));
+      expect(animate).toHaveBeenCalledWith([{ opacity: 1 }, { opacity: 0 }], expect.objectContaining({ fill: 'forwards' }));
+      expect(onDelete).not.toHaveBeenCalled();
+      await act(async () => { finish(); await Promise.resolve(); await Promise.resolve(); });
+      expect(onDelete).toHaveBeenCalledWith('t1');
+      await act(() => new Promise(r => setTimeout(r, 150)));
+      expect(fade.cancel).toHaveBeenCalled(); // the parent never removed the row
+    } finally {
+      delete (HTMLElement.prototype as any).animate;
+    }
   });
 
   it('Esc disarms the button without closing the modal; a second Esc closes it', async () => {

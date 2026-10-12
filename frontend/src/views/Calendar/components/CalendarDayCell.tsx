@@ -36,6 +36,8 @@ export interface CalendarDayCellProps {
   popUp?: boolean;
   /** คอลัมน์ท้ายสัปดาห์: popover ชิดขอบขวาของช่อง ไม่ให้ล้นออกนอกตารางแล้วโดนตัดยอดเงิน */
   alignRight?: boolean;
+  /** the day's rows are still loading: pulse bars instead of an empty body */
+  loading?: boolean;
 }
 
 const CalendarDayCell = memo(function CalendarDayCell({
@@ -45,10 +47,12 @@ const CalendarDayCell = memo(function CalendarDayCell({
   monthEdgeTop = false,
   monthEdgeLeft = false,
   popUp = false,
-  alignRight = false
+  alignRight = false,
+  loading = false
 }: CalendarDayCellProps): React.ReactElement {
   const list = useMenu();
-  const isPayDay = Number(dateStr.slice(8, 10)) === PAY_DAY && dateStr >= PAY_DAY_START;
+  const dayNum = Number(dateStr.slice(8, 10));
+  const isPayDay = dayNum === PAY_DAY && dateStr >= PAY_DAY_START;
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
 
   // ระดับความแพงของวัน (เกณฑ์ ฿ ตายตัว ดู calendarHeat.ts) — ไม่ย้อมสีเมื่อ < 2
@@ -158,9 +162,18 @@ const CalendarDayCell = memo(function CalendarDayCell({
         />
       </div>
 
-      {/* ส่วนแสดงรายการธุรกรรม */}
+      {/* ส่วนแสดงรายการธุรกรรม — ระหว่างโหลด (เลื่อนไปเดือนข้างหน้า) เป็นแท่ง skeleton แบบเดียวกับ CalendarSkeleton;
+          key เปลี่ยนตอนข้อมูลมา → รายการ fade เข้าแทน skeleton */}
+      {loading ? (
+        <div key="loading" className="flex flex-col flex-grow gap-1.5 p-2" aria-hidden="true">
+          {dayNum % 3 === 0 && <div className="h-3 w-14 bg-surface-elevated animate-pulse" />}
+          {dayNum % 4 === 0 && <div className="h-3 w-16 bg-surface-elevated animate-pulse" />}
+          {dayNum % 5 === 0 && <div className="h-3 w-12 bg-surface-elevated animate-pulse" />}
+        </div>
+      ) : (
       <div
-        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none"
+        key="rows"
+        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none m-fade-in"
       >
         {(cellData.exp > 0 || cellData.inc > 0 || hiddenExpCount > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-line/20 pb-0.5">
@@ -221,6 +234,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
           );
         })}
       </div>
+      )}
 
       {list.open && (
         <div

@@ -96,51 +96,82 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* ELITE Financial Intelligence - Disable Moving Animations   */
+/* MICRO-MOTION — small, fast, CSS only                        */
 /* ────────────────────────────────────────────────────────── */
-
-/* 1. Globally disable standard transitions & keyframe animations */
-*, ::before, ::after {
-  transition-property: none !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  scroll-behavior: auto !important;
+/* Entrances animate the individual `translate` / `scale` properties, not `transform`, so they compose
+   with Tailwind's transform utilities (-translate-x-1/2 etc.) instead of overriding them. Fill mode is
+   `backwards` so nothing is left behind after the animation: a lingering translate would make the tab
+   wrapper a stacking context and trap the fixed modals rendered inside views. */
+:root {
+  --m-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --m-rise: 6px;
+  --m-drop: -4px;
+  --m-scale: 0.97;
+  --m-press: 1px;
 }
 
-/* 2. Exception: Allow rotating loader spinners (animate-spin) so loading states still function */
-.animate-spin,
-.spinner,
-[class*="animate-spin"],
-[class*="spinner"] {
-  animation-name: spin !important;
-  animation-duration: 1s !important;
-  animation-iteration-count: infinite !important;
-  animation-timing-function: linear !important;
+@keyframes m-fade { from { opacity: 0; } }
+@keyframes m-rise { from { opacity: 0; translate: 0 var(--m-rise); } }
+@keyframes m-drop { from { opacity: 0; translate: 0 var(--m-drop); } }
+@keyframes m-pop  { from { opacity: 0; scale: var(--m-scale); translate: 0 calc(var(--m-rise) / 2); } }
+
+/* 1. Interactive feedback: colour/border/shadow ease instead of snapping. :where() = zero specificity,
+      so any Tailwind transition-* / duration-* class on the element still wins. */
+:where(button, a, input, select, textarea, summary, [role="button"], [role="tab"], [role="option"]) {
+  transition-property: color, background-color, border-color, outline-color, box-shadow, opacity, transform, translate, scale, filter;
+  transition-duration: 150ms;
+  transition-timing-function: var(--m-ease);
+}
+:where(button:not(:disabled), [role="button"]):active {
+  translate: 0 var(--m-press);
+  transition-duration: 60ms;
 }
 
-/* 3. Disable hover-translate-y, scale-up, or translate-x actions */
-.hover\:-translate-y-\[1px\]:hover,
-.hover\:-translate-y-0\.5:hover,
-.hover\:scale-105:hover,
-.group-hover\/cell\:translate-x-1,
-.group-hover\/cell\:scale-105,
-.hover\:z-20:hover {
-  transform: none !important;
-}
+/* 2. Tab switch: each tab's wrapper remounts (keyed), so the view rises in once. */
+.tab-stage > * { animation: m-rise 260ms var(--m-ease) backwards; }
 
-/* 4. Disable keyframe entries from Tailwind Animate (slide-in, zoom-in, fade-in, etc.) */
-.animate-in {
-  animation: none !important;
-  transform: none !important;
-  opacity: 1 !important;
-}
+/* 3. Modals: backdrop fades, panel pops. Popovers / listboxes / existing animate-in markup pop too. */
+:has(> [role="dialog"][aria-modal="true"]) { animation: m-fade 160ms ease-out backwards; }
+[role="dialog"],
+[role="listbox"],
+.animate-in.zoom-in-95 { animation: m-pop 200ms var(--m-ease) backwards; }
+.animate-in.fade-in { animation: m-fade 160ms ease-out backwards; }
 
-/* 5. Disable pulse effects (bounce is unused and not in the design) */
-.animate-pulse {
-  animation: none !important;
-  opacity: 1 !important;
+/* 4. Toast slides up; inline errors drop in; hover tooltips fade. */
+.toast-enter { animation: m-rise 220ms var(--m-ease) backwards; }
+[role="alert"]:not(.toast-enter) { animation: m-drop 160ms var(--m-ease) backwards; }
+[role="tooltip"] { transition: opacity 120ms ease-out, translate 120ms var(--m-ease); }
+
+/* 5. Expanding panels (Ledger group breakdown, filter panels) unfold from the top; their card rows
+      follow in a short capped stagger. Collapse is instant (the panels unmount). */
+@keyframes m-reveal { from { opacity: 0; clip-path: inset(0 0 var(--m-clip) 0); translate: 0 var(--m-drop); } }
+.m-reveal { animation: m-reveal 240ms var(--m-ease) backwards; }
+.m-stagger > * { animation: m-rise 220ms var(--m-ease) backwards; animation-delay: 210ms; }
+.m-stagger > :nth-child(1) { animation-delay: 0ms; }
+.m-stagger > :nth-child(2) { animation-delay: 30ms; }
+.m-stagger > :nth-child(3) { animation-delay: 60ms; }
+.m-stagger > :nth-child(4) { animation-delay: 90ms; }
+.m-stagger > :nth-child(5) { animation-delay: 120ms; }
+.m-stagger > :nth-child(6) { animation-delay: 150ms; }
+.m-stagger > :nth-child(7) { animation-delay: 180ms; }
+
+/* 6. Selection feedback: a class that is ADDED starts its animation, so an option that becomes
+      selected (m-pick) settles in from a hair smaller; small things that mount (chips, a changed
+      label) use m-in / m-pop-in. */
+@keyframes m-pick { from { scale: var(--m-pick); } }
+.m-pick { animation: m-pick 220ms var(--m-ease); }
+.m-in { animation: m-rise 200ms var(--m-ease) backwards; }
+.m-pop-in { animation: m-pop 180ms var(--m-ease) backwards; }
+.m-fade-in { animation: m-fade 200ms ease-out backwards; }
+/* A segmented control's active background glides to the picked option (set `translate` inline). */
+.m-slide { transition: translate 220ms var(--m-ease), background-color 220ms var(--m-ease); }
+
+/* 7. Reduced motion: keep fades and colour changes (they carry state), drop the movement and loops. */
+:root { --m-clip: 100%; --m-pick: 0.9; }
+@media (prefers-reduced-motion: reduce) {
+  :root { --m-rise: 0px; --m-drop: 0px; --m-scale: 1; --m-press: 0px; --m-clip: 0%; --m-pick: 1; }
+  .animate-pulse { animation: none; }
+  .m-slide { transition: none; }
 }
 
 /* ────────────────────────────────────────────────────────── */
@@ -153,6 +184,11 @@ h1, h2, h3, h4, h5, h6 {
 
 .heatmap-cell {
   position: relative;
+}
+
+/* The crosshair (::after) stays instant; the cell itself eases its glow. */
+.heatmap-cell > div {
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out, filter 120ms ease-out;
 }
 
 /* Zero-JS Column Highlighting Trick */

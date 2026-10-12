@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import LedgerHeaderActions from '../LedgerHeaderActions';
 import LedgerCommandPanel, { LedgerGroupBreakdownSection, getSavingsRateStyle } from '../LedgerCommandPanel';
-import SegmentButton from '../common/SegmentButton';
+import SegmentGroup from '../common/SegmentGroup';
 import { byText, click } from '@/test-utils/dom';
 import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
 import { formatMoney } from '@/utils/formatters';
@@ -229,36 +229,37 @@ describe('LedgerGroupBreakdownSection', () => {
   });
 });
 
-describe('SegmentButton', () => {
-  const seg = (active: boolean, colorScheme?: React.ComponentProps<typeof SegmentButton>['colorScheme']) => {
-    const onClick = vi.fn();
-    mount(<SegmentButton label="ทดสอบ" active={active} onClick={onClick} colorScheme={colorScheme} />);
-    return { onClick, el: btn('ทดสอบ') };
+describe('SegmentGroup', () => {
+  const OPTIONS = [
+    { value: 'ALL', label: 'ทั้งหมด' },
+    { value: 'need', label: 'Need', colorScheme: 'rose' },
+    { value: 'want', label: 'Want', colorScheme: 'amber' },
+  ] as const;
+  const group = (value: string) => {
+    const onChange = vi.fn();
+    mount(<SegmentGroup options={[...OPTIONS]} value={value} onChange={onChange} />);
+    return { onChange, slider: container!.querySelector<HTMLElement>('.m-slide')! };
   };
 
-  it('is a plain button that reports clicks', () => {
-    const { onClick, el } = seg(false);
-    expect(el.getAttribute('type')).toBe('button');
-    click(el);
-    expect(onClick).toHaveBeenCalledTimes(1);
+  it('reports the clicked option and marks only the active one pressed', () => {
+    const { onChange } = group('ALL');
+    click(btn('Want'));
+    expect(onChange).toHaveBeenCalledWith('want');
+    expect(OPTIONS.map(o => btn(o.label).getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
   });
 
-  it('idle looks the same whatever its colour scheme', () => {
-    const a = seg(false, 'emerald').el.className;
-    act(() => root!.unmount()); container!.remove();
-    const b = seg(false, 'rose').el.className;
-    expect(a).toBe(b);
-    expect(a).not.toContain('font-black text-income');
+  it('slides the background under the active option, in its colour; the label takes the colour too', () => {
+    const { slider } = group('want');
+    expect(slider.style.translate).toBe('200% 0');
+    expect(slider.style.width).toContain('(100% - 4px)'); // jsdom rewrites calc(x / 3)
+    expect(slider.className).toContain('bg-warn/10');
+    expect(btn('Want').className).toContain('text-warn');
+    expect(btn('Need').className).not.toContain('text-expense');
   });
 
-  it.each([
-    ['emerald', 'text-income'], ['rose', 'text-expense'], ['indigo', 'text-savings'], ['amber', 'text-warn'],
-    ['sky', 'text-info'], ['red', 'text-accent-ink'], ['blue', 'text-ink-display'],
-  ] as const)('active %s uses %s', (scheme, cls) => {
-    expect(seg(true, scheme).el.className).toContain(cls);
-  });
-
-  it('active with no scheme is the neutral one', () => {
-    expect(seg(true).el.className).toContain('text-ink-display');
+  it('no scheme is the neutral one; an unknown value falls back to the first option', () => {
+    const { slider } = group('nope');
+    expect(slider.style.translate).toBe('0% 0');
+    expect(slider.className).toContain('bg-surface-elevated');
   });
 });

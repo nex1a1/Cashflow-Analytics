@@ -980,3 +980,41 @@ describe('QuickSuggest — where a category\'s group comes from', () => {
     expect(chips()[1].querySelector('svg.lucide-check')).toBeNull();
   });
 });
+
+describe('QuickSuggest — the list re-enters when a filter changes', () => {
+  const list = () => q('.m-stagger')!;
+
+  it('picking a group, a category or an option re-mounts the list (so the rows rise back in); the search box does not', () => {
+    render();
+    const first = list();
+    type(searchBox(), 'ข้าว');
+    expect(list()).toBe(first); // typing never replays it
+    type(searchBox(), '');
+    openPanel();
+    click(inPanelStarting('ผันแปร'));
+    const afterGroup = list();
+    expect(afterGroup).not.toBe(first);
+    click(inPanel('WANT'));
+    expect(list()).not.toBe(afterGroup);
+  });
+
+  it('removing a filter from the summary chips (×) re-mounts it too', () => {
+    render();
+    openPanel();
+    click(inPanel('WANT'));
+    click(inPanelStarting('แสดงผลลัพธ์'));
+    const before = list();
+    const chipX = [...document.querySelectorAll<HTMLButtonElement>('.pt-0\\.5 > span button')][0];
+    click(chipX);
+    expect(list()).not.toBe(before);
+  });
+
+  it('applying a suggestion leaves the list alone (no mark, no re-mount)', () => {
+    render();
+    const before = list();
+    click(rows()[0]);
+    expect(onApply).toHaveBeenCalledTimes(1);
+    expect(list()).toBe(before);
+    expect(rows()[0].getAttribute('aria-pressed')).toBeNull();
+  });
+});

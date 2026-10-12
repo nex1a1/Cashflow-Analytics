@@ -1,11 +1,11 @@
 import React from 'react';
 import { 
   Search, X, Hash, CalendarDays, MousePointer2, 
-  Folder, ChevronDown, ChevronUp, RefreshCw, Sparkles, SlidersHorizontal
+  Folder, ChevronDown, RefreshCw, Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CategoryMatrixFilter from './CategoryMatrixFilter';
-import SegmentButton from './SegmentButton';
+import SegmentGroup from './SegmentGroup';
 import { Category, CashflowGroup, DayType } from '../../../../types';
 
 interface FilterBarProps {
@@ -113,11 +113,11 @@ export default function FilterBar({
 
         {/* Center: Quick Type Filter */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex rounded-none p-0.5 border bg-surface border-line">
-            <SegmentButton label="ทั้งหมด" active={typeFilter === 'ALL'} onClick={() => setTypeFilter('ALL')} />
-            <SegmentButton label="รายรับ" active={typeFilter === 'INCOME'} onClick={() => setTypeFilter('INCOME')} colorScheme="emerald" />
-            <SegmentButton label="รายจ่าย" active={typeFilter === 'EXPENSE'} onClick={() => setTypeFilter('EXPENSE')} colorScheme="rose" />
-          </div>
+          <SegmentGroup value={typeFilter} onChange={setTypeFilter} options={[
+            { value: 'ALL', label: 'ทั้งหมด' },
+            { value: 'INCOME', label: 'รายรับ', colorScheme: 'emerald' },
+            { value: 'EXPENSE', label: 'รายจ่าย', colorScheme: 'rose' },
+          ]} />
         </div>
 
         {/* Right: Advanced Filters Toggle & Clear */}
@@ -139,7 +139,7 @@ export default function FilterBar({
                 {advancedActiveCount}
               </span>
             )}
-            {isExpanded ? <ChevronUp className="w-3 h-3 text-accent-ink" /> : <ChevronDown className="w-3 h-3 text-ink-muted" />}
+            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-accent-ink' : 'text-ink-muted'}`} />
           </button>
 
           {isFilterActive && (
@@ -157,7 +157,7 @@ export default function FilterBar({
 
       {/* ================= COLLAPSIBLE ADVANCED FILTER SECTION (ROW 2) ================= */}
       {isExpanded && (
-        <div className="border-t border-line/60">
+        <div className="m-reveal border-t border-line/60">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_348px_minmax(320px,1.5fr)] gap-[1px] bg-surface-elevated/50 relative z-20">
             
             {/* COLUMN 1: SCOPE & ALLOCATION */}
@@ -204,12 +204,12 @@ export default function FilterBar({
                 <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
                   การจัดสรรเงิน
                 </span>
-                <div className="flex rounded-none p-0.5 border bg-surface border-line">
-                  <SegmentButton label="ทั้งหมด" active={allocationFilter === 'ALL'} onClick={() => setAllocationFilter('ALL')} />
-                  <SegmentButton label="Need" active={allocationFilter === 'need'} onClick={() => setAllocationFilter('need')} colorScheme="rose" />
-                  <SegmentButton label="Want" active={allocationFilter === 'want'} onClick={() => setAllocationFilter('want')} colorScheme="amber" />
-                  <SegmentButton label="Save" active={allocationFilter === 'savings'} onClick={() => setAllocationFilter('savings')} colorScheme="indigo" />
-                </div>
+                <SegmentGroup value={allocationFilter} onChange={setAllocationFilter} options={[
+                  { value: 'ALL', label: 'ทั้งหมด' },
+                  { value: 'need', label: 'Need', colorScheme: 'rose' },
+                  { value: 'want', label: 'Want', colorScheme: 'amber' },
+                  { value: 'savings', label: 'Save', colorScheme: 'indigo' },
+                ]} />
               </div>
             </div>
 

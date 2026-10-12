@@ -99,7 +99,6 @@ export const getComboChartOptions = (yType = 'linear', autoSkip = true, secondar
     maxBarThickness: 80,
     barPercentage: 0.6,
     categoryPercentage: 0.8,
-    animation: false as const,
     scales,
   };
 };
@@ -119,7 +118,6 @@ export const getLineChartOptions = (yType = 'linear', autoSkip = true) => ({
       },
     },
   },
-  animation: false as const,
   scales: getScaleOptions(true, yType, autoSkip),
 });
 
@@ -136,5 +134,4 @@ export const getDoughnutChartOptions = () => ({
       },
     },
   },
-  animation: false as const,
 });

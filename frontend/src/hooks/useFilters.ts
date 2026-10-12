@@ -50,28 +50,25 @@ export default function useFilters({
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // State to hold FTS5 search results from database
-  // null = the server search failed: fall back to the rows already loaded (never keep the previous query's results)
-  const [searchResults, setSearchResults] = useState<TransactionDisplay[] | null>([]);
+  // FTS5 search results from the database, tagged with the query they answer. Used only while that query is
+  // the current one; otherwise (still running, or rows = null because the server search failed) the list falls
+  // back to the rows already loaded — never the previous query's results, never an empty "ไม่พบรายการ" flash.
+  const [searchResults, setSearchResults] = useState<{ q: string; rows: TransactionDisplay[] | null }>({ q: '', rows: null });
 
   // Fetch FTS5 search results from backend when debouncedSearch is active
   useEffect(() => {
-    if (!debouncedSearch.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    const q = debouncedSearch.trim();
+    if (!q) return;
 
     let active = true;
     transactionService
-      .search(debouncedSearch.trim())
+      .search(q)
       .then(results => {
-        if (active) {
-          setSearchResults(results);
-        }
+        if (active) setSearchResults({ q, rows: results });
       })
       .catch(err => {
         console.error('Failed to search using FTS5:', err);
-        if (active) setSearchResults(null);
+        if (active) setSearchResults({ q, rows: null });
       });
 
     return () => {
@@ -81,15 +78,13 @@ export default function useFilters({
 
   // Sync searchResults when transactions state updates (e.g. inline edits)
   useEffect(() => {
-    if (debouncedSearch.trim() && searchResults?.length) {
-      setSearchResults(prevResults =>
-        prevResults && prevResults.map(r => {
-          const updated = transactions.find(t => t.id === r.id);
-          return updated || r;
-        })
-      );
+    if (debouncedSearch.trim() && searchResults.rows?.length) {
+      setSearchResults(prev => prev.rows ? {
+        ...prev,
+        rows: prev.rows.map(r => transactions.find(t => t.id === r.id) || r),
+      } : prev);
     }
-  }, [transactions, debouncedSearch, searchResults?.length]);
+  }, [transactions, debouncedSearch, searchResults.rows?.length]);
 
   // reset filters when period changes
   useEffect(() => {
@@ -187,8 +182,9 @@ export default function useFilters({
   // ── displayTransactions: filtered list สำหรับ LedgerView ────
   const displayTransactions: TransactionDisplay[] = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
+    const server = searchResults.q === debouncedSearch.trim() ? searchResults.rows : null;
     const baseTransactions = !q ? transactions
-      : searchResults ?? transactions.filter(t => `${t.description ?? ''} ${t.category ?? ''}`.toLowerCase().includes(q));
+      : server ?? transactions.filter(t => `${t.description ?? ''} ${t.category ?? ''}`.toLowerCase().includes(q));
     let filtered = baseTransactions.filter(t => isDateInFilter(t.date, filterPeriod));
 
     const getCat = (t: TransactionDisplay) =>

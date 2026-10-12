@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseLooseDate, fromISODate, parseDateStrToObj, isDateInFilter, buildDateSequence, periodUnitDates,
-  resolvePeriodDateBounds, generateDatesForPeriod, getPeriodDateRange,
+  resolvePeriodDateBounds, generateDatesForPeriod, getPeriodDateRange, periodRowsLoaded,
 } from '../dateHelpers';
 
 const iso = (d: Date | undefined) => d && `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -174,4 +174,22 @@ describe('getPeriodDateRange (what to fetch: the period plus the one before it t
       expect(getPeriodDateRange(p)).toEqual({ startDate: null, endDate: null, fetchStartDate: null });
     }
   });
+});
+
+describe('periodRowsLoaded (Calendar cell skeletons)', () => {
+  const win = (p: string) => { const r = getPeriodDateRange(p); return { start: r.fetchStartDate || r.startDate, end: r.endDate }; };
+  it.each([
+    ['2026-10', '2026-10', true],
+    ['2026-10', '2026-09', true],          // one step back: inside the 3-month window
+    ['2026-10', '2026-07', true],
+    ['2026-10', '2026-06', false],
+    ['2026-10', '2026-11', false],         // forward: not fetched yet
+    ['cycle:2026-10', 'cycle:2026-09', true],
+    ['cycle:2026-10', 'cycle:2026-11', false],
+    ['ALL', '2026-11', true],
+    ['2026-10', 'ALL', false],
+  ])('window of %s → %s is %s', (loaded, period, expected) => {
+    expect(periodRowsLoaded(win(loaded), period)).toBe(expected);
+  });
+  it('nothing loaded yet', () => expect(periodRowsLoaded(null, '2026-10')).toBe(false));
 });

@@ -4,6 +4,7 @@ import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton';
 import { formatMoney, hexToRgb, formatBaht } from '../../../utils/formatters';
 import CategoryGlyph from '../../shared/CategoryGlyph';
 import { usePortfolio } from '@/context/PortfolioContext';
+import { useFlipList } from '@/hooks/useFlipList';
 
 import { tc, readable } from '@/constants/theme';
 const ALLOCATION_BADGE_STYLES: Record<string, string> = {
@@ -16,18 +17,28 @@ export interface TxRowProps {
   tx: any;
   catObj?: any;
   assetName?: string;
-  onDeleteClick: (id: string) => void;
+  onDeleteClick: (id: string) => unknown;
 }
 
 export interface TransactionListProps {
   dayTx: any[];
   catMap: Record<string, any>;
-  handleDelete: (id: string) => void;
+  handleDelete: (id: string) => unknown;
   sortBy?: 'category' | 'amount';
   setSortBy?: (sortBy: 'category' | 'amount') => void;
 }
 
 const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
+  const rowRef = React.useRef<HTMLDivElement>(null);
+  // Fade the row out, then delete it (the list then slides the rows below up). The fade holds until the delete
+  // settles; if the row is still here shortly after (delete failed), it comes back. No animation API = delete now.
+  const fadeOutAndDelete = () => {
+    const fade = rowRef.current?.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease-in', fill: 'forwards' });
+    if (!fade) { onDeleteClick(tx.id); return; }
+    fade.finished.catch(() => {})
+      .then(() => onDeleteClick(tx.id))
+      .finally(() => setTimeout(() => { if (rowRef.current) fade.cancel(); }, 100));
+  };
   const isInc = catObj?.type === 'income';
   const isSav = catObj?.type === 'savings';
   const isSell = isSav && Number(tx.amount) < 0;
@@ -40,7 +51,9 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
   const allocBadgeStyle = ALLOCATION_BADGE_STYLES[tx.allocation_type] || ALLOCATION_BADGE_STYLES.savings;
   
   return (
-    <div 
+    <div
+      ref={rowRef}
+      data-flip-id={tx.id}
       className={`flex items-center gap-2.5 px-3 py-2 rounded-none border transition-all ${borderCls} hover:border-line-strong`}
       style={{ backgroundColor: rowBg }}
     >
@@ -87,7 +100,7 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
       </span>
 
       <ConfirmDeleteButton
-        onConfirm={() => onDeleteClick(tx.id)}
+        onConfirm={fadeOutAndDelete}
         tooltip="ลบรายการ"
         itemLabel={`${tx.description || tx.category} ${isInc ? '+' : isSav ? '' : '−'}${formatBaht(absAmount)}`}
       />
@@ -122,8 +135,13 @@ export default function TransactionList({
     textMuted: 'text-slate-400',
   };
 
+  // Rows slide on re-sort / add / delete (the parent remounts this per day, so a new day doesn't animate);
+  // deleted rows fade out in TxRow first.
+  const listRef = React.useRef<HTMLDivElement>(null);
+  useFlipList(listRef);
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5" style={{ scrollbarWidth: 'thin' }}>
+    <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5" style={{ scrollbarWidth: 'thin' }}>
       {dayTx.length === 0 && (
         <div className={`h-full flex flex-col items-center justify-center ${tokens.textMuted} opacity-80`}>
           <Inbox className="w-12 h-12 mb-3 opacity-50" />

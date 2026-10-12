@@ -112,12 +112,12 @@ describe('AllocationPanel per-asset view (default)', () => {
     expect(text()).not.toContain('ยังไม่มีราคา');
   });
 
-  it('chart options: thin ring, no legend, no animation, free sizing', () => {
+  it('chart options: thin ring, no legend, default animation, free sizing', () => {
     mount(base());
     const o = lastChart().options;
     expect(o.cutout).toBe('68%');
     expect(o.plugins.legend.display).toBe(false);
-    expect(o.animation).toBe(false);
+    expect(o.animation).toBeUndefined(); // inherits the global short animation (main.tsx)
     expect(o.maintainAspectRatio).toBe(false);
     expect(o.responsive).toBe(true);
   });

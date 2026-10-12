@@ -22,6 +22,7 @@ interface HeatmapRowProps {
   dayTypeConfig: DayType[];
   handleCellLeave: () => void;
   handleCellHover: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
+  handleCellPin: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
   bgBase: string;
   border: string;
   ROW_H: number | string;
@@ -34,7 +35,7 @@ const HeatmapRow = memo(function HeatmapRow({
   date, rowIdx, day, month, dayName, isWeekend,
   dailyTotal, grandTotal, cellMap, activeCategories,
   dayTypes, dayTypeConfig,
-  handleCellLeave, handleCellHover,
+  handleCellLeave, handleCellHover, handleCellPin,
   bgBase, border, ROW_H, maxCellValue, maxDailyTotal, formatMoney
 }: HeatmapRowProps) {
   const total = dailyTotal[date] || 0;
@@ -131,7 +132,7 @@ const HeatmapRow = memo(function HeatmapRow({
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
             border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
-            handleCellHover={handleCellHover} handleCellLeave={handleCellLeave} formatMoney={formatMoney}
+            handleCellHover={handleCellHover} handleCellPin={handleCellPin} handleCellLeave={handleCellLeave} formatMoney={formatMoney}
           />
         );
       })}
