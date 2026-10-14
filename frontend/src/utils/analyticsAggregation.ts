@@ -252,7 +252,7 @@ function calculateForecastingDetails({
     eomStatus = { code: 'DEFICIT', label: 'เสี่ยงติดลบ', color: tc('danger'), bg: 'bg-danger/10', border: 'border-danger' };
   } else if (projectedSurplusPct < target) {
     eomStatus = { code: 'TIGHT', label: 'เหลือน้อย', color: tc('warn'), bg: 'bg-amber-950/40', border: 'border-amber-500' };
-  } else if (projectedSurplusPct < 20) {
+  } else if (projectedSurplusPct < target / WARN_AT) {
     eomStatus = { code: 'STABLE', label: 'พอดีตัว', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
@@ -529,7 +529,7 @@ function buildAllocationBreakdown(
   const allocationItems = [
     { id: 'needs', name: 'NEED', amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
     { id: 'wants', name: 'WANT', amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'SAVE', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: 20, groups: allocGroupsMap.savings }
+    { id: 'savings', name: 'SAVE', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: BUDGET_RULES.surplus.min, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
@@ -629,7 +629,7 @@ function calculateTopSubscriptionServices(subscriptionItems: SubscriptionItem[],
     .slice(0, 4);
 }
 
-function resolveCashflowGroups(cashflowGroups: CashflowGroup[]) {
+export function resolveCashflowGroups(cashflowGroups: CashflowGroup[]) {
   const groups = cashflowGroups || [];
   const fallbackIncId = groups.find(g => g.type === 'income')?.id || 'cg_bonus';
   const fallbackSavId = groups.find(g => g.type === 'savings')?.id || 'cg_savings';

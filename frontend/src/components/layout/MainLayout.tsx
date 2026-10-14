@@ -18,6 +18,7 @@ import LedgerView from '../../views/Ledger/index';
 import SettingsView from '../../views/Settings';
 import PortfolioView from '../../views/Portfolio';
 import TaxView from '../../views/Tax';
+import KakeiboView from '../../views/Kakeibo';
 
 // Modals
 import BatchAddModal from '../modals/BatchAddModal/index';
@@ -227,6 +228,12 @@ export default function MainLayout() {
                 isLoading={isProcessing}
                 transactions={transactions}
               />
+            </div>
+          )}
+
+          {activeTab === 'kakeibo' && (
+            <div key="kakeibo">
+              <KakeiboView />
             </div>
           )}
 

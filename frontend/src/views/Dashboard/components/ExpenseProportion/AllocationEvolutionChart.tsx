@@ -6,6 +6,7 @@ import type { AllocationEvolutionMonth } from '@/utils/allocationEvolutionHelper
 
 
 import { tc, FONT_MONO, ALLOCATION_COLORS } from '@/constants/theme';
+import { BUDGET_RULES } from '../SummaryCards/helpers';
 interface AllocationEvolutionChartProps {
   months: AllocationEvolutionMonth[];
   /** month / pay-cycle key containing today — later buckets are future-dated entries */
@@ -125,7 +126,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 inline-block shrink-0" style={{ backgroundColor: SAVINGS_COLOR }} />
-          <span className="text-neutral-300 font-bold">SAVE เป้า 20%</span>
+          <span className="text-neutral-300 font-bold">SAVE เป้า {BUDGET_RULES.surplus.min}%</span>
         </div>
       </div>
 

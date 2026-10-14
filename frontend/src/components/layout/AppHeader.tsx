@@ -2,7 +2,8 @@ import React from 'react';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, PiggyBank, ReceiptText, Lock
+  Calendar as CalendarIcon, HelpCircle, PiggyBank, ReceiptText, Lock,
+  BookOpen,
 } from 'lucide-react';
 import { taxYearOf } from '@/utils/taxDeduction';
 import sharkWhite from '../../assets/images/shark-white.svg';
@@ -32,6 +33,7 @@ export interface AppHeaderProps {
 
 const TABS = [
   { id: 'insights', label: 'ภาพรวม',          icon: BarChart3 },
+  { id: 'kakeibo',  label: 'Kakeibo',        icon: BookOpen },
   { id: 'calendar', label: 'ปฏิทิน',           icon: CalendarIcon },
   { id: 'ledger',   label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'portfolio', label: 'พอร์ตลงทุน',       icon: PiggyBank },
@@ -80,7 +82,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }: AppHeaderProps) {
-  const showPeriodPicker = ['insights', 'calendar', 'ledger', 'tax'].includes(activeTab);
+  const showPeriodPicker = ['insights', 'kakeibo', 'calendar', 'ledger', 'tax'].includes(activeTab);
   // ปีภาษี = ทั้งปี: แท็บภาษีกดได้เฉพาะตอนเลือกดูทั้งปี (ถ้าอยู่ในแท็บแล้วเปลี่ยนช่วง หน้านั้นบอกให้เลือกปีเอง)
   const taxLocked = !taxYearOf(filterPeriod);
 

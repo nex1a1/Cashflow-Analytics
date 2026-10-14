@@ -219,22 +219,22 @@ describe('forecast status', () => {
   };
 
   // Day 10 of 30, income 30,000: spending E so far projects 3E for the month → leftover = (30,000 − 3E) / 30,000.
-  // The pace badge warns BEFORE the deficit, against the app's own leftover target (BUDGET_RULES.surplus.min = 10%):
-  // under 10% → over the plan, under 12.5% (10% / WARN_AT) → near the ceiling.
+  // The pace badge warns BEFORE the deficit, against the app's own leftover target (BUDGET_RULES.surplus.min = 20%,
+  // the SAVE share of 50/30/20): under 20% → over the plan, under 25% (20% / WARN_AT) → near the ceiling.
   const pace = (spent: number, day = 10) => at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', spent)], day).paceStatus;
 
-  it('mid-month: leftover of 12.5% or more is on track', () => {
-    expect(pace(8700).code).toBe('ON_TRACK'); // 13%
-    expect(pace(8750).code).toBe('ON_TRACK'); // exactly 12.5%
+  it('mid-month: leftover of 25% or more is on track', () => {
+    expect(pace(7400).code).toBe('ON_TRACK'); // 26%
+    expect(pace(7500).code).toBe('ON_TRACK'); // exactly 25%
   });
 
-  it('mid-month: leftover under 12.5% is near the ceiling (info), still before any deficit', () => {
-    expect(pace(8760)).toMatchObject({ code: 'MODERATE', label: 'ใกล้เพดาน' }); // 12.4%
-    expect(pace(9000).code).toBe('MODERATE'); // exactly 10%: the target is still met
+  it('mid-month: leftover under 25% is near the ceiling (info), still before any deficit', () => {
+    expect(pace(7510)).toMatchObject({ code: 'MODERATE', label: 'ใกล้เพดาน' }); // 24.9%
+    expect(pace(8000).code).toBe('MODERATE'); // exactly 20%: the target is still met
   });
 
-  it('mid-month: leftover under the 10% target is over the plan (amber), still before any deficit', () => {
-    expect(pace(9010)).toMatchObject({ code: 'OVER_PACING', label: 'ใช้เร็วเกินแผน' }); // 9.9%
+  it('mid-month: leftover under the 20% target is over the plan (amber), still before any deficit', () => {
+    expect(pace(8010)).toMatchObject({ code: 'OVER_PACING', label: 'ใช้เร็วเกินแผน' }); // 19.9%
     expect(pace(10000).code).toBe('OVER_PACING'); // exactly 0: nothing left, but not negative
   });
 
@@ -245,23 +245,23 @@ describe('forecast status', () => {
   });
 
   it('the last day uses what was really spent (no projection left)', () => {
-    expect(pace(27100, 30).code).toBe('OVER_PACING'); // 9.7% left
-    expect(pace(26500, 30).code).toBe('MODERATE'); // 11.7%
-    expect(pace(26000, 30).code).toBe('ON_TRACK'); // 13.3%
+    expect(pace(24300, 30).code).toBe('OVER_PACING'); // 19% left
+    expect(pace(23000, 30).code).toBe('MODERATE'); // 23.3%
+    expect(pace(22000, 30).code).toBe('ON_TRACK'); // 26.7%
   });
 
-  it('the end-of-month badge calls under 10% (the same target) "เหลือน้อย"', () => {
-    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 9200)]).eomStatus.code).toBe('TIGHT'); // 8%
-    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 9000)]).eomStatus.code).toBe('STABLE'); // exactly 10%
+  it('the end-of-month badge calls under 20% (the same target) "เหลือน้อย"', () => {
+    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 8200)]).eomStatus.code).toBe('TIGHT'); // 18%
+    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 8000)]).eomStatus.code).toBe('STABLE'); // exactly 20%
   });
 
   it('end-of-month bucket: tight under 5%', () => {
     expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 9700)]).eomStatus.code).toBe('TIGHT'); // 29100 → 3%
   });
 
-  it('20% exactly is not "stable" any more', () => {
-    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 8000)]).eomStatus.code).toBe('EXCELLENT');
-    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 8100)]).eomStatus.code).toBe('STABLE');
+  it('25% (target / WARN_AT) and up is "เหลือเงินมาก"', () => {
+    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 7500)]).eomStatus.code).toBe('EXCELLENT');
+    expect(at([tx('i', '2026-09-01', 'c_inc', 30000), tx('e', '2026-09-05', 'c_movie', 7600)]).eomStatus.code).toBe('STABLE');
   });
 
   it('no income: surplus % is 0, required cuts are reported', () => {

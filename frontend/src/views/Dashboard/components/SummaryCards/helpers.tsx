@@ -41,7 +41,7 @@ export const BUDGET_RULES = {
   subscriptionExp: { max: 8 },  // % of expense — fallback when the period has no income
   lifestyle:       { max: 30 }, // % of income
   food:            { max: 25 }, // % of expense
-  surplus:         { min: 10 }, // (income − expense) % of income
+  surplus:         { min: 20 }, // (income − expense) % of income — same 20% as SAVE in 50/30/20 (Kakeibo goal)
 } as const;
 
 /** Past this share of a `max` the card warns (amber) before it breaches (red). */

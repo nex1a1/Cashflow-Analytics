@@ -22,13 +22,13 @@ describe('gradeBudget', () => {
     expect(gradeBudget({ ...healthy, surplusPct: r.surplus.min - 0.1 }).breaches).toEqual(['เงินเหลือน้อย']);
   });
 
-  it('matches the September 2026 dashboard: lifestyle + subscriptions over → C', () => {
+  it('matches the September 2026 dashboard: lifestyle + subscriptions over, 13.6% left is under the 20% target → D', () => {
     const r = gradeBudget({
       rentPct: 27.7, subscriptionPct: 6.1, hasIncome: true,
       lifestylePct: 42.5, foodPctOfExpense: 5.8, surplusPct: 13.6, netCashflow: 3411.28,
     });
-    expect(r.breaches).toEqual(['บริการรายเดือน', 'WANT']);
-    expect(r.grade.g).toBe('C');
+    expect(r.breaches).toEqual(['บริการรายเดือน', 'WANT', 'เงินเหลือน้อย']);
+    expect(r.grade.g).toBe('D');
   });
 
   it('weighs a deficit double and floors at D', () => {
