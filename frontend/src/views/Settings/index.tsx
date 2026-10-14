@@ -3,6 +3,7 @@ import { Settings2, Info, Coins, Wallet, PiggyBank, ReceiptText } from 'lucide-r
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../types';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
+import FlipBox from './components/FlipBox';
 import SectionCard from './components/SectionCard';
 import CategoryRow from './components/CategoryRow';
 import CashflowGroupsCard from './components/CashflowGroupsCard';
@@ -174,7 +175,7 @@ const SettingsView = memo(function SettingsView({
             badge={expenseCategories.length}
             action={addExpenseAction}
           >
-            <div>
+            <FlipBox>
               {expenseCategories.map((cat, idx) => (
                 <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={false}
                   onMove={handleMoveCategory} onChange={handleCategoryChange}
@@ -185,7 +186,7 @@ const SettingsView = memo(function SettingsView({
               {expenseCategories.length === 0 && (
                 <p className="text-center py-6 text-xs text-ink-muted">ยังไม่มีหมวดหมู่รายจ่าย</p>
               )}
-            </div>
+            </FlipBox>
           </SectionCard>
 
           <SectionCard
@@ -195,7 +196,7 @@ const SettingsView = memo(function SettingsView({
             badge={savingsCategories.length}
             action={addSavingsAction}
           >
-            <div>
+            <FlipBox>
               {savingsCategories.map((cat, idx) => (
                 <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId}
                   placeholder="ชื่อสินทรัพย์/บัญชีออม"
@@ -211,7 +212,7 @@ const SettingsView = memo(function SettingsView({
                     : 'ยังไม่มีหมวดหมู่การลงทุนและการออมเงิน'}
                 </p>
               )}
-            </div>
+            </FlipBox>
           </SectionCard>
 
           <SectionCard
@@ -221,7 +222,7 @@ const SettingsView = memo(function SettingsView({
             badge={incomeCategories.length}
             action={addIncomeAction}
           >
-            <div>
+            <FlipBox>
               {incomeCategories.map((cat, idx) => (
                 <CategoryRow key={cat.id} cat={cat} isNew={cat.id === newCatId} isIncome={true}
                   onMove={handleMoveCategory} onChange={handleCategoryChange}
@@ -232,7 +233,7 @@ const SettingsView = memo(function SettingsView({
               {incomeCategories.length === 0 && (
                 <p className="text-center py-6 text-xs text-ink-muted">ยังไม่มีหมวดหมู่รายรับ</p>
               )}
-            </div>
+            </FlipBox>
           </SectionCard>
         </div>
 

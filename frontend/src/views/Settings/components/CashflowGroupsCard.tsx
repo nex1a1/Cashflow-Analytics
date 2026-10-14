@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Lock, AlertTriangle, Grid } from 'lucide-react';
 import ColorPicker from './ColorPicker';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
+import FlipBox from './FlipBox';
 import SectionCard from './SectionCard';
 import DebouncedInput from './DebouncedInput';
 import IconPicker from '@/components/shared/IconPicker';
@@ -45,13 +46,13 @@ const CashflowGroupsCard = memo(({
       badge={cashflowGroups.length}
       action={addAction}
     >
-      <div className="p-3 space-y-2 bg-canvas/30">
+      <FlipBox className="p-3 space-y-2 bg-canvas/30">
         {[...cashflowGroups].sort((a, b) => a.order_index - b.order_index).map((group, idx, arr) => {
           const hasError = cashflowDeleteError?.id === group.id;
           const txCount  = txCountByGroup[group.id] || 0;
           const inUse    = categories.some(c => c.cashflowGroup === group.id);
           return (
-            <div key={group.id} className="flex flex-col gap-1">
+            <div key={group.id} data-flip-id={group.id} className="flex flex-col gap-1">
               <div className={`flex items-center gap-1.5 p-1.5 border rounded-sm group/cg transition-colors ${
                 hasError
                   ? 'tint-danger bg-danger/5'
@@ -145,7 +146,7 @@ const CashflowGroupsCard = memo(({
         {cashflowGroups.length === 0 && (
           <p className={`text-center py-4 text-xs ${'text-ink-muted'}`}>ยังไม่มีกลุ่ม</p>
         )}
-      </div>
+      </FlipBox>
     </SectionCard>
   );
 });

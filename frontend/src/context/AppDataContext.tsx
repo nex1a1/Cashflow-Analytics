@@ -237,7 +237,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       setDayTypeConfig(updatedConfig);
       try {
         for (const dt of updatedConfig) {
-          await dayTypeService.save(dt);
+          if (dayTypeConfig.find(o => o.id === dt.id)?.order_index !== dt.order_index) await dayTypeService.save(dt);
         }
       } catch (err: any) {
         triggerToast('ไม่สามารถบันทึกลำดับได้: ' + err.message, 'error');
@@ -311,10 +311,8 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
       try {
         for (const group of finalUpdated) {
-          await groupService.save(group);
+          if (sortedGroups.find(o => o.id === group.id)?.order_index !== group.order_index) await groupService.save(group);
         }
-        await loadGroups();
-        triggerToast('จัดเรียงลำดับกลุ่มสำเร็จ', 'success');
       } catch (err: any) {
         console.error('Failed to save groups order:', err);
         triggerToast('ไม่สามารถจัดเรียงลำดับกลุ่มได้: ' + err.message, 'error');

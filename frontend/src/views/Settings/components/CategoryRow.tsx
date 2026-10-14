@@ -57,7 +57,7 @@ const CategoryRow = memo(({
   );
 
   return (
-    <div
+    <div data-flip-id={cat.id}
       style={{ borderLeftColor: groupColor, borderLeftWidth: '1px' }}
       className="flex flex-nowrap items-center gap-1.5 px-2 py-1.5 border-b last:border-0 group/cat border-line hover:bg-surface-hover/30"
     >

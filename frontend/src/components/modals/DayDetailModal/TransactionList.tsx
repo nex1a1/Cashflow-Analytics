@@ -61,25 +61,11 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
       
       {/* Description & Category with Group Breadcrumb */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-xs font-bold truncate text-slate-100">
-            {tx.description || tx.category}
-          </p>
+        <p className="text-xs font-bold break-words text-slate-100">
+          {tx.description || tx.category}
+        </p>
 
-          {/* Allocation Type Badge */}
-          {isSav && (
-            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${isSell ? 'bg-info/10 text-info border-info/30' : ALLOCATION_BADGE_STYLES.savings}`}>
-              {isSell ? 'ขาย' : 'ซื้อ'}{assetName ? ` · ${assetName}` : ''}{tx.units ? ` · ${tx.units}` : ''}
-            </span>
-          )}
-          {tx.allocation_type && !isInc && !isSav && (
-            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${allocBadgeStyle}`}>
-              {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
-            </span>
-          )}
-        </div>
-
-        {/* Group Breadcrumb & Category */}
+        {/* Group Breadcrumb & Category, allocation badge at the end */}
         <div className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5 min-w-0" style={{ color: readable(color) }}>
           <CategoryGlyph icon={catObj?.icon} color={color} size={18} className="shrink-0" />
           {groupObj?.name && (
@@ -91,6 +77,16 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
             </>
           )}
           <span className="truncate font-semibold">{catObj?.name || tx.category}</span>
+          {isSav && (
+            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${isSell ? 'bg-info/10 text-info border-info/30' : ALLOCATION_BADGE_STYLES.savings}`}>
+              {isSell ? 'ขาย' : 'ซื้อ'}{assetName ? ` · ${assetName}` : ''}{tx.units ? ` · ${tx.units}` : ''}
+            </span>
+          )}
+          {tx.allocation_type && !isInc && !isSav && (
+            <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-pill border shrink-0 ${allocBadgeStyle}`}>
+              {(tx.allocation_type === 'savings' ? 'SAVE' : tx.allocation_type).toUpperCase()}
+            </span>
+          )}
         </div>
       </div>
 

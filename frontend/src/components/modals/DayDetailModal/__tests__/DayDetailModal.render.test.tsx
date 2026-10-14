@@ -76,7 +76,7 @@ async function mount(props: Partial<DayDetailModalProps> = {}) {
   return { rerender: async (p: Partial<DayDetailModalProps>) => { render({ ...props, ...p }); await flush(); } };
 }
 
-const rowTitles = () => [...document.querySelectorAll('p.truncate')].map(p => p.textContent);
+const rowTitles = () => [...document.querySelectorAll('p.break-words')].map(p => p.textContent);
 const headings = () => [...document.querySelectorAll('p')].map(p => p.textContent?.trim() ?? '');
 const chip = (label: string) => {
   const el = [...document.querySelectorAll('span')].find(s => s.firstElementChild?.tagName === 'SPAN' && s.firstElementChild.textContent === label);

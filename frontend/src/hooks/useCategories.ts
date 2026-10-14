@@ -189,6 +189,9 @@ export default function useCategories(
           order_index: c.order_index
         });
 
+        // move on screen first; the rows are saved one by one, so a failure reloads from the server
+        const newIndex = new Map(finalUpdated.map(c => [c.id, c.order_index]));
+        setCategories(prev => prev.map(c => newIndex.has(c.id) ? { ...c, order_index: newIndex.get(c.id)! } : c));
         try {
           for (const cat of finalUpdated) {
             const original = currentCategories.find(c => c.id === cat.id);
@@ -196,8 +199,8 @@ export default function useCategories(
               await categoryService.save(toBackend(cat));
             }
           }
-          await loadCategories();
         } catch (err: any) {
+          loadCategories();
           showToast('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: ' + err.message, 'error');
         }
       }

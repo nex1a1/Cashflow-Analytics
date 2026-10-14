@@ -235,7 +235,7 @@ describe('handleMoveCategory', () => {
     const { result } = renderHook(() => useCategories(list()));
     await act(async () => { await result.current.handleMoveCategory('e3', 'UP'); });
     expect(saved()).toEqual([['e2', 3]]); // e3 already had 2 (a duplicate), so it is not re-saved
-    expect(api.categoryService.getAll).toHaveBeenCalled();
+    expect(api.categoryService.getAll).not.toHaveBeenCalled(); // moved on screen first, no reload
   });
 
   it('down works, lower-case direction too', async () => {
@@ -260,12 +260,12 @@ describe('handleMoveCategory', () => {
     expect(saved()).toEqual([['a', 1], ['b', 2]]);
   });
 
-  it('a failed save shows an error and does not reload', async () => {
+  it('a failed save shows an error and reloads from the server', async () => {
     api.categoryService.save.mockRejectedValue(new Error('x'));
     const { result } = renderHook(() => useCategories(list()));
     await act(async () => { await result.current.handleMoveCategory('e2', 'DOWN'); });
     expect(toast.showToast).toHaveBeenCalledWith('ไม่สามารถเปลี่ยนลำดับหมวดหมู่ได้: x', 'error');
-    expect(api.categoryService.getAll).not.toHaveBeenCalled();
+    expect(api.categoryService.getAll).toHaveBeenCalled();
     await flush();
   });
 });

@@ -306,11 +306,11 @@ describe('day type settings', () => {
     expect(result.current.toast.message).toBe('ไม่สามารถลบประเภทวันได้: ใช้อยู่');
   });
 
-  it('move: swaps, renumbers 1..n and saves each', async () => {
+  it('move: swaps, renumbers 1..n and saves only rows that changed', async () => {
     const { result } = await mount();
     await act(async () => { await result.current.app.handleMoveDayType('dt_o', 'UP'); });
     expect(result.current.app.dayTypeConfig.map(d => [d.id, d.order_index])).toEqual([['dt_w', 1], ['dt_o', 2], ['dt_h', 3]]);
-    expect(api.dayTypeService.save.mock.calls.map(([d]) => d.id)).toEqual(['dt_w', 'dt_o', 'dt_h']);
+    expect(api.dayTypeService.save.mock.calls.map(([d]) => d.id)).toEqual(['dt_o', 'dt_h']);
     await act(async () => { await result.current.app.handleMoveDayType('dt_w', 'DOWN'); });
     expect(result.current.app.dayTypeConfig.map(d => d.id)).toEqual(['dt_o', 'dt_w', 'dt_h']);
   });
@@ -396,20 +396,22 @@ describe('cashflow groups', () => {
     expect(result.current.toast.message).toBe('ไม่สามารถลบกลุ่มได้: x');
   });
 
-  it('move: by order, renumbered, saved, reloaded', async () => {
+  it('move: by order, renumbered, only changed rows saved, no reload', async () => {
     const { result } = await mount();
     api.groupService.getAll.mockClear();
     await act(async () => { await result.current.app.handleMoveCashflowGroup('g1', 'UP'); }); // order: g2, g1, g3
-    expect(api.groupService.save.mock.calls.map(([g]) => [g.id, g.order_index])).toEqual([['g1', 1], ['g2', 2], ['g3', 3]]);
-    expect(api.groupService.getAll).toHaveBeenCalled();
-    expect(result.current.toast.message).toBe('จัดเรียงลำดับกลุ่มสำเร็จ');
+    expect(api.groupService.save.mock.calls.map(([g]) => [g.id, g.order_index])).toEqual([['g1', 1], ['g2', 2]]);
+    expect(api.groupService.getAll).not.toHaveBeenCalled();
   });
 
-  it('move down, ends and unknown ids', async () => {
+  it('move down: only changed rows saved', async () => {
     const { result } = await mount();
     await act(async () => { await result.current.app.handleMoveCashflowGroup('g2', 'DOWN'); });
-    expect(api.groupService.save.mock.calls.map(([g]) => g.id)).toEqual(['g1', 'g2', 'g3']);
-    api.groupService.save.mockClear();
+    expect(api.groupService.save.mock.calls.map(([g]) => g.id)).toEqual(['g1', 'g2']);
+  });
+
+  it('move past an end or unknown id: nothing', async () => {
+    const { result } = await mount();
     await act(async () => { await result.current.app.handleMoveCashflowGroup('g2', 'UP'); });
     await act(async () => { await result.current.app.handleMoveCashflowGroup('g3', 'DOWN'); });
     await act(async () => { await result.current.app.handleMoveCashflowGroup('zzz', 'UP'); });
