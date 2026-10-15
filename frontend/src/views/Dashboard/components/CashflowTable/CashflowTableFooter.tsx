@@ -13,7 +13,10 @@ export const CashflowTableFooter = React.memo(({
   excludedMonths, excludedGroups, excludedCategories, categories,
   filteredCatMap = {}, filteredGroupMap = {},
 }: FooterProps) => {
-  const activeMonths: MonthRow[] = (analytics.sortedCashflow as MonthRow[]).filter((r) => !excludedMonths.has(r.monthStr));
+  const activeMonths = useMemo(
+    () => (analytics.sortedCashflow as MonthRow[]).filter((r) => !excludedMonths.has(r.monthStr)),
+    [analytics.sortedCashflow, excludedMonths],
+  );
 
   // Fix #3: pre-compute per-month totals once instead of calling getAdjusted* twice in reduce
   const { totalActiveIncome, totalActiveExpense } = useMemo(() => {
@@ -30,7 +33,6 @@ export const CashflowTableFooter = React.memo(({
       });
     }
     return { totalActiveIncome: income, totalActiveExpense: expense };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMonths, activeIncomeGroups, activeExpenseGroups, excludedGroups, excludedCategories, categories, filteredGroupMap, filteredCatMap, analytics]);
 
   // Fix #13: แสดง message แทนการหาย เมื่อมีแค่เดือนเดียว (moved after hooks — Rules of Hooks)

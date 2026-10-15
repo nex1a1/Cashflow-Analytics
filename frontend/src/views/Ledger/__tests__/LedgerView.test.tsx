@@ -94,7 +94,7 @@ describe('LedgerView — header and summary', () => {
     expect(text()).toContain('30,000.00'); // income
     expect(text()).toContain('1,000.00'); // expense
     expect(text()).toContain('29,000.00'); // net (investing stays inside it)
-    expect(text()).toContain('ในนี้ลงทุน/ออม 2,000.00');
+    expect(text()).toContain('ในนี้ลงทุน/ออม ฿2,000.00');
   });
 
   it('the summary follows the filtered list, not the whole month', () => {

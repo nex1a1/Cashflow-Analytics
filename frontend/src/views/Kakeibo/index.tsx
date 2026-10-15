@@ -183,7 +183,7 @@ const KakeiboView = memo(function KakeiboView() {
           {
             label: s.spendable >= 0 ? 'ใช้ได้อีกก่อนต่ำกว่าเป้า' : 'เลยเป้าเงินเหลือไป',
             value: baht(Math.abs(s.spendable)),
-            note: hasPlan ? `ตามแผนเหลือ ${baht(s.left)} (${leftPct}%) · ถึงวันนี้ ${baht(actual.left)}` : `เหลือจริง ${baht(s.left)} (${leftPct}%)`,
+            note: hasPlan ? `ตามแผนเหลือ ${baht(s.left)} (${leftPct}%) · ถึงวันนี้ใช้ไป ${baht(actual.expense)}` : `เหลือจริง ${baht(s.left)} (${leftPct}%)`,
             // ต่ำกว่าเป้าแต่ยังเหลือ = ส้ม; แดงเฉพาะขาดดุล (รายจ่ายเกินรายรับ)
             tone: s.spendable >= 0 ? 'text-ink-display' : s.left >= 0 ? 'text-warn' : 'text-danger',
           },

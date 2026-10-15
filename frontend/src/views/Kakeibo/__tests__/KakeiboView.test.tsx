@@ -100,7 +100,7 @@ describe('KakeiboView', () => {
     await mount(<KakeiboView />);
     const header = section('Kakeibo');
     expect(header.textContent).toContain('ตามแผนเหลือ ฿2,900.00 (12%)');
-    expect(header.textContent).toContain('ถึงวันนี้ ฿18,400.00');
+    expect(header.textContent).toContain('ถึงวันนี้ใช้ไป ฿6,600.00');
     expect(header.textContent).not.toContain('เหลือจริง');
     expect(hasClass(header, 'text-danger')).toBe(false);
     expect(hasClass(header, 'text-warn')).toBe(true);

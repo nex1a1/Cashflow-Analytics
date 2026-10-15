@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/TopTransactions.tsx
 import React, { useMemo, memo } from 'react';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
-import { formatMoney, formatBaht } from '@/utils/formatters';
+import { formatMoney, formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
@@ -23,11 +23,10 @@ const getSmartDate = (dateStr?: string) => {
   if (diffDays === 0) return 'วันนี้';
   if (diffDays === 1) return 'เมื่อวาน';
   if (diffDays === -1) return 'พรุ่งนี้';
-  if (diffDays > 1 && diffDays <= 7) return `${diffDays} วันที่แล้ว`;
-
-  // Format as DD/MM/YY
+  // Same style as the Ledger date column: "5 ม.ค. 26"
   const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y ? y.slice(2) : ''}`;
+  if (!y || !m || !d) return dateStr;
+  return `${Number(d)} ${THAI_MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;
 };
 
 interface TransactionItemProps {
@@ -265,11 +264,11 @@ export default function TopTransactions() {
             className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (${formatBaht(allFilteredExpenseSum)})`}
           >
-            <span className="text-neutral-400">ยอดรวม:</span>
-            <span className="text-expense font-bold tabular-nums">{formatMoney(topSum)}</span>
+            <span className="text-neutral-400">รวม {displayTransactions.length} รายการนี้</span>
+            <span className="text-expense font-bold tabular-nums">{formatBaht(topSum)}</span>
             {allFilteredExpenseSum > 0 && (
               <span className="text-[11px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
-                {topPctOfTotal}%
+                {topPctOfTotal}% ของรายจ่าย
               </span>
             )}
           </div>

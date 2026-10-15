@@ -6,10 +6,11 @@ import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { readable } from '@/constants/theme';
 import useBudgets from '@/hooks/useBudgets';
 import { parseBudgetInput } from '@/utils/budgetEnvelope';
+import { formatBahtShort } from '@/utils/formatters';
 import type { CashflowGroup } from '@/types';
 
 const TARGET_ICON = <Target className="w-4 h-4" />;
-const baht = (satang: number) => `฿${(satang / 100).toLocaleString('th-TH', { maximumFractionDigits: 2 })}`;
+const baht = (satang: number) => formatBahtShort(satang / 100);
 
 const BTN = 'text-[11px] font-bold px-2.5 py-1 flex items-center gap-1 rounded-sm cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-default';
 

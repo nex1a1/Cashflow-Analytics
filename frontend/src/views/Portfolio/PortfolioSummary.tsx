@@ -4,7 +4,8 @@ import { formatBaht } from '@/utils/formatters';
 import CostVsValue from './CostVsValue';
 import AllocationPanel from './AllocationPanel';
 import { buildInvestedSeries } from './portfolioCharts';
-import { describeHolding, MIN_ANNUAL_DAYS, plColor, portfolioAnnualReturn, todayIso } from './portfolioHelpers';
+import { describeHolding, MIN_ANNUAL_DAYS, plColor, portfolioAnnualReturn } from './portfolioHelpers';
+import { localTodayIso } from '@/utils/payCycle';
 
 const plMoney = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatBaht(Math.abs(n))}`;
 const plPct = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(2)}%`;
@@ -25,7 +26,7 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
   // % คิดจากเงินที่ซื้อทั้งหมด (ไม่ใช่เฉพาะต้นทุนที่ยังถืออยู่) เพื่อให้กำไรจากที่ขายไปแล้วมีฐานของตัวเอง
   const totalPct = totals.bought > 0 ? (totalPl / totals.bought) * 100 : null;
   const first = buildInvestedSeries(portfolio.assets)[0];
-  const today = todayIso();
+  const today = localTodayIso();
   const holding = first ? describeHolding(first.date, today) : null;
   const annual = useMemo(() => portfolioAnnualReturn(portfolio.assets, today), [portfolio.assets, today]);
 

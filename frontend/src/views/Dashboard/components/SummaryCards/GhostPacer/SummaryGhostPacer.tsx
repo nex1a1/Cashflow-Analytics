@@ -4,8 +4,7 @@ import {
   Gauge, Flag, History,
   Compass, ArrowDownRight, ArrowUpRight, Ghost
 } from 'lucide-react';
-import { formatBaht, formatBahtShort } from '@/utils/formatters';
-import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import { formatBaht, formatBahtShort, formatMoney } from '@/utils/formatters';
 import { Shimmer } from '../helpers';
 import { GhostPacerChart } from './GhostPacerChart';
 import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
@@ -140,7 +139,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${ghost.text}`}>
-                  {isLeading ? '−' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsGhost))} />
+                  {isLeading ? '−' : '+'}฿{formatMoney(Math.abs(Math.round(deltaVsGhost)))}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   {deltaVsGhostPct >= 0 ? '+' : ''}{deltaVsGhostPct.toFixed(1)}%
@@ -204,7 +203,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${bench.text}`}>
-                  {isBenchLeading ? '−' : '+'}฿<AnimatedNumber value={Math.abs(Math.round(deltaVsBenchmark))} />
+                  {isBenchLeading ? '−' : '+'}฿{formatMoney(Math.abs(Math.round(deltaVsBenchmark)))}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   {deltaVsBenchmarkPct >= 0 ? '+' : ''}{deltaVsBenchmarkPct.toFixed(1)}%
@@ -250,7 +249,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className="text-2xl xl:text-3xl font-black text-white tabular-nums tracking-tight leading-none">
-                  ฿<AnimatedNumber value={Math.round(projectedExpense)} />
+                  ฿{formatMoney(Math.round(projectedExpense))}
                 </div>
                 <div className={`text-xs font-mono font-bold tabular-nums flex items-center gap-0.5 ${eom.text}`}>
                   {isEomLeading ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}

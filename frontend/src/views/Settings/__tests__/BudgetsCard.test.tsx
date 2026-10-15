@@ -76,11 +76,11 @@ describe('BudgetsCard list', () => {
     expect(container!.querySelector('h2 span')!.textContent).toBe('1');
   });
 
-  it('amounts keep up to two decimals and drop trailing zeros', () => {
+  it('whole amounts drop decimals, others keep two', () => {
     h.budgets = { food: 123_456, misc: 123_450 };
     mount();
     expect(text()).toContain('฿1,234.56');
-    expect(text()).toContain('฿1,234.5');
+    expect(text()).toContain('฿1,234.50');
   });
 
   it('badge is 0 when nothing is set', () => {

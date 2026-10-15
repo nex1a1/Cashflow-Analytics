@@ -124,12 +124,6 @@ export function summarizeTrades(trades: PortfolioTrade[]): TradeSummary {
   return s;
 }
 
-/** วันนี้ตามเวลาเครื่อง รูปแบบ YYYY-MM-DD */
-export const todayIso = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
 /** กำไร = เขียว · ขาดทุน = เทาอ่อนไม่ใช่แดง: ราคาตลาดขึ้นลงเป็นเรื่องปกติ ไม่ใช่ปัญหาที่ต้องรีบทำอะไร (แดงสงวนไว้ให้ปัญหาจริง) */
 export const plColor = (n: number | null | undefined): string =>
   (n == null || n === 0 ? 'text-ink-display' : n > 0 ? 'text-income' : 'text-ink-soft');

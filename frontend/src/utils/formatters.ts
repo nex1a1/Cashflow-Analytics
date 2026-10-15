@@ -30,19 +30,20 @@ export const formatMoney = (amount: number | string): string =>
   }));
 
 /**
- * Compact amount formatting: trims trailing decimal zeros (e.g. 100 -> "100", 100.5 -> "100.5").
+ * Compact amount formatting: whole baht drop the decimals (100 -> "100"), anything with satang
+ * keeps both digits (100.5 -> "100.50", never a lone "100.5").
  * Used across Calendar view surfaces (grid cells, header, legend) so displayed totals stay consistent.
  */
-export const formatAmount = (amount: number | string): string =>
-  trueMinus((Number(amount) || 0).toLocaleString('th-TH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }));
+export const formatAmount = (amount: number | string): string => {
+  const n = Number(amount) || 0;
+  const digits = Math.round(n * 100) % 100 === 0 ? 0 : 2;
+  return trueMinus(n.toLocaleString('th-TH', { minimumFractionDigits: digits, maximumFractionDigits: digits }));
+};
 
 /** The minus goes in front of the baht sign: "฿500.00" / "−฿500.00", never "฿-500.00". */
 const withBaht = (s: string): string => (s.startsWith(MINUS) ? `${MINUS}฿${s.slice(1)}` : `฿${s}`);
 export const formatBaht = (amount: number | string): string => withBaht(formatMoney(amount));
-/** Same as formatBaht but trims trailing zeros ("฿100", "฿100.5"), like formatAmount. */
+/** Same as formatBaht but trims trailing zeros ("฿100", "฿100.50"), like formatAmount. */
 export const formatBahtShort = (amount: number | string): string => withBaht(formatAmount(amount));
 
 /**

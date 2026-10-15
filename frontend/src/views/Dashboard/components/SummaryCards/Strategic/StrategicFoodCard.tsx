@@ -68,10 +68,10 @@ export const StrategicFoodCard = memo(({
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
-              <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนงบ
+              <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนค่าอาหาร
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">
-              {pctOfExpense.toFixed(1)}% <span className="text-[11px] text-neutral-400 font-normal">({pctOfIncome.toFixed(1)}% รับ)</span>
+              {pctOfExpense.toFixed(1)}% <span className="text-[11px] text-neutral-400 font-normal">ของรายจ่าย · {pctOfIncome.toFixed(1)}% ของรายรับ</span>
             </span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">

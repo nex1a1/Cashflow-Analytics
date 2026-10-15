@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CalendarPlus, X, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useConfirmTimeout } from '@/hooks/useConfirmTimeout';
 import FieldError from '../../shared/FieldError';
-import AnimatedNumber from '../../ui/AnimatedNumber';
 import BatchForm, { BatchFormValues, ExternalFormControls } from './BatchForm';
 import QuickSuggest from './QuickSuggest';
 import CartList from './CartList';
@@ -12,7 +11,7 @@ import { Category, CashflowGroup, DayType, FrequentItem, AllocationType, Transac
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { signedTradeAmount } from '@/views/Portfolio/portfolioHelpers';
-import { bahtToSatang, satangToBaht } from '@/utils/formatters';
+import { bahtToSatang, satangToBaht, formatMoney } from '@/utils/formatters';
 
 export interface PendingBatchItem {
   id: string;
@@ -410,7 +409,7 @@ export default function BatchAddModal({
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">รายจ่าย:</span>
                     <span className="text-base font-black text-expense tabular-nums">
-                      <AnimatedNumber value={totalExpense} /> ฿
+                      {formatMoney(totalExpense)} ฿
                     </span>
                   </div>
                 )}
@@ -418,7 +417,7 @@ export default function BatchAddModal({
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">ลงทุน/ออม:</span>
                     <span className="text-base font-black text-savings tabular-nums">
-                      {netSavings < 0 ? '−' : ''}<AnimatedNumber value={Math.abs(netSavings)} /> ฿
+                      {netSavings < 0 ? '−' : ''}{formatMoney(Math.abs(netSavings))} ฿
                     </span>
                   </div>
                 )}
@@ -426,7 +425,7 @@ export default function BatchAddModal({
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] font-medium text-slate-400">รายรับ:</span>
                     <span className="text-base font-black text-emerald-400 tabular-nums">
-                      +<AnimatedNumber value={totalIncome} /> ฿
+                      +{formatMoney(totalIncome)} ฿
                     </span>
                   </div>
                 )}
@@ -434,7 +433,7 @@ export default function BatchAddModal({
                   <div className="flex items-center gap-1 pl-2 border-l border-line-strong">
                     <span className="text-[11px] font-medium text-slate-400">สุทธิ:</span>
                     <span className={`text-base font-black tabular-nums ${netAmount >= 0 ? 'text-emerald-400' : 'text-danger'}`}>
-                      {netAmount >= 0 ? '+' : ''}<AnimatedNumber value={netAmount} /> ฿
+                      {netAmount >= 0 ? '+' : ''}{formatMoney(netAmount)} ฿
                     </span>
                   </div>
                 )}

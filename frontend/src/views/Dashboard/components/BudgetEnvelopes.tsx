@@ -2,12 +2,13 @@ import { memo, useMemo } from 'react';
 import useBudgets from '@/hooks/useBudgets';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { readable } from '@/constants/theme';
+import { formatBahtShort } from '@/utils/formatters';
 import { isCyclePeriod, isSingleUnitPeriod, localTodayIso } from '@/utils/payCycle';
 import { AVG_UNITS, computeEnvelopes, periodElapsed, type BudgetLevel, type EnvelopeRow } from '@/utils/budgetEnvelope';
 import { useDashboardContext } from '../context/DashboardContext';
 import { Shimmer } from './SummaryCards/helpers';
 
-const baht = (satang: number) => `฿${Math.round(satang / 100).toLocaleString('th-TH')}`;
+const baht = (satang: number) => formatBahtShort(Math.round(satang / 100));
 
 // ok = the group's own colour; over budget switches to warn/danger so colour still signals the overrun
 const LEVEL_BAR: Record<BudgetLevel, string> = { ok: '', warn: 'bg-warn', over: 'bg-danger' };

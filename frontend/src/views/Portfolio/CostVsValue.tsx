@@ -6,7 +6,7 @@ import { tc } from '@/constants/theme';
 import { formatThaiDateShort, formatBaht } from '@/utils/formatters';
 import { AnalysisTabHeader } from '@/views/Dashboard/components/SummaryCards/Strategic/SummaryStrategic';
 import { buildInvestedSeries, withLivePoint } from './portfolioCharts';
-import { todayIso } from './portfolioHelpers';
+import { localTodayIso } from '@/utils/payCycle';
 
 const baht = (n: number) => `${formatBaht(n)}`;
 const signedBaht = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatBaht(Math.abs(n))}`;
@@ -24,7 +24,7 @@ function Bar({ label, value, max, barClass, textClass = 'text-ink-body' }: BarPr
       <div className="flex-1 h-3 bg-canvas">
         {value != null && <div className={`h-full ${barClass}`} style={{ width: `${Math.max((value / max) * 100, 1)}%` }} />}
       </div>
-      <span className={`w-[92px] shrink-0 text-right font-mono tabular-nums text-[12px] ${textClass}`}>{value == null ? 'ยังไม่มีราคา' : baht(value)}</span>
+      <span className={`w-[92px] shrink-0 text-right font-mono tabular-nums text-[12px] ${textClass}`}>{value == null ? 'ยังไม่มีราคา' : formatBaht(value)}</span>
     </div>
   );
 }
@@ -83,14 +83,14 @@ function InvestedChart({ assets }: { assets: Portfolio['assets'] }) {
   };
   const options: ChartOptions<'line'> = {
     ...BASE,
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => baht(Number(c.raw)) } } },
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => formatBaht(Number(c.raw)) } } },
     scales: {
       x: { ticks: { ...axisTick, maxTicksLimit: 8 }, grid: { display: false } },
       y: { ticks: { ...axisTick, callback: moneyTick }, grid: { color: tc('line') } },
     },
   };
   return (
-    <div className="relative flex-1 min-h-[200px]" role="img" aria-label={`เงินลงทุนสะสม ล่าสุด ${baht(series[series.length - 1].invested)}`}>
+    <div className="relative flex-1 min-h-[200px]" role="img" aria-label={`เงินลงทุนสะสม ล่าสุด ${formatBaht(series[series.length - 1].invested)}`}>
       <Line data={data} options={options} />
     </div>
   );
@@ -104,7 +104,7 @@ const dayIso = (n: number) => new Date(Math.round(n) * 86_400_000).toISOString()
  * แกน X เป็นจำนวนวันจริง (ไม่ใช่ลำดับจุด) วันที่ไม่ได้เปิดแอปจะเป็นช่วงห่างบนแกน ไม่ถูกบีบให้ชิดกัน
  */
 function HistoryChart({ portfolio }: { portfolio: Portfolio }) {
-  const series = useMemo(() => withLivePoint(portfolio.history, portfolio.totals, todayIso()), [portfolio.history, portfolio.totals]);
+  const series = useMemo(() => withLivePoint(portfolio.history, portfolio.totals, localTodayIso()), [portfolio.history, portfolio.totals]);
   if (series.length < 2) {
     return (
       <p className="m-auto max-w-sm text-center text-xs text-ink-muted">
@@ -128,7 +128,7 @@ function HistoryChart({ portfolio }: { portfolio: Portfolio }) {
         titleColor: tc('ink-display'), bodyColor: tc('gray-300'),
         callbacks: {
           title: items => formatThaiDateShort(dayIso(items[0].parsed.x as number)),
-          label: c => ` ${c.dataset.label}: ${baht(c.parsed.y as number)}`,
+          label: c => ` ${c.dataset.label}: ${formatBaht(c.parsed.y as number)}`,
         },
       },
     },
@@ -139,7 +139,7 @@ function HistoryChart({ portfolio }: { portfolio: Portfolio }) {
   };
   const last = series[series.length - 1];
   return (
-    <div className="relative flex-1 min-h-[200px]" role="img" aria-label={`มูลค่าพอร์ตตามเวลา ล่าสุด ${baht(last.marketValue)} ต้นทุน ${baht(last.cost)}`}>
+    <div className="relative flex-1 min-h-[200px]" role="img" aria-label={`มูลค่าพอร์ตตามเวลา ล่าสุด ${formatBaht(last.marketValue)} ต้นทุน ${formatBaht(last.cost)}`}>
       <Line data={data} options={options} />
     </div>
   );

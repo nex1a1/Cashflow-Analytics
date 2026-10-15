@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import TopTransactions from '../TopTransactions';
+import { THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { choose, q } from '@/test-utils/dom';
 import type { Category, TransactionDisplay } from '@/types';
 
@@ -187,7 +188,7 @@ describe('TopTransactions — row details', () => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
-  it('relative dates for the last week, DD/MM/YY after that', () => {
+  it('today/yesterday/tomorrow by name, other dates like the Ledger (5 ม.ค. 26)', () => {
     set({ transactions: [
       tx('today', 100, 'c-food', { date: iso(0) }), tx('yesterday', 99, 'c-food', { date: iso(-1) }),
       tx('tomorrow', 98, 'c-food', { date: iso(1) }), tx('three', 97, 'c-food', { date: iso(-3) }),
@@ -197,8 +198,8 @@ describe('TopTransactions — row details', () => {
     expect(dateTag('today')).toBe('วันนี้');
     expect(dateTag('yesterday')).toBe('เมื่อวาน');
     expect(dateTag('tomorrow')).toBe('พรุ่งนี้');
-    expect(dateTag('three')).toBe('3 วันที่แล้ว');
-    expect(dateTag('old')).toBe('05/01/26');
+    expect(dateTag('three')).toBe(`${Number(iso(-3).slice(8))} ${THAI_MONTHS_SHORT[Number(iso(-3).slice(5,7)) - 1]} ${iso(-3).slice(2,4)}`);
+    expect(dateTag('old')).toBe('5 ม.ค. 26');
   });
 
   it('shows the amount without a sign and the category name from the category list', () => {

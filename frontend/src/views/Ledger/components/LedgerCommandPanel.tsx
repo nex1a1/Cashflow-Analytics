@@ -1,5 +1,6 @@
 import React from 'react';
 import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
+import { formatBaht } from '@/utils/formatters';
 import { Activity, TrendingUp, TrendingDown, Wallet, ChevronDown } from 'lucide-react';
 
 export function getSavingsRateStyle(savingsRate: number): string {
@@ -14,7 +15,6 @@ export interface LedgerCommandPanelProps {
   sumSav?: number;
   net: number;
   savingsRate: number;
-  formatMoney: (val: number | string) => string;
   getSubValue: (val: number) => React.ReactNode;
   showGroupBreakdown: boolean;
   setShowGroupBreakdown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,7 +27,6 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
   sumSav = 0,
   net,
   savingsRate,
-  formatMoney,
   getSubValue,
   showGroupBreakdown,
   setShowGroupBreakdown,
@@ -58,7 +57,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
           </div>
           <div className="relative z-10 mt-0.5">
             <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-income font-mono">
-              {formatMoney(sumInc)}
+              {formatBaht(sumInc)}
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
@@ -76,7 +75,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
           </div>
           <div className="relative z-10 mt-0.5">
             <div className="text-2xl font-black tabular-nums tracking-tight leading-none text-expense font-mono">
-              {formatMoney(sumExp)}
+              {formatBaht(sumExp)}
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
@@ -104,7 +103,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
           </div>
           <div className="relative z-10 mt-0.5">
             <div className={`text-2xl font-black tabular-nums tracking-tight leading-none font-mono ${isNetPositive ? 'text-income' : 'text-danger'}`}>
-              {formatMoney(net)}
+              {formatBaht(net)}
             </div>
           </div>
           <div className="relative z-10 mt-1 flex items-center justify-between">
@@ -113,7 +112,7 @@ export const LedgerCommandPanel: React.FC<LedgerCommandPanelProps> = ({
             </span>
             {sumSav !== 0 && (
               <span className="text-[11px] font-bold tabular-nums text-savings font-sans" title="เงินลงทุน/ออมสุทธิในช่วงนี้ (ซื้อ − ขาย) ไม่นับเป็นรายจ่าย">
-                ในนี้ลงทุน/ออม {sumSav < 0 ? '−' : ''}{formatMoney(Math.abs(sumSav))}
+                ในนี้ลงทุน/ออม {formatBaht(sumSav)}
               </span>
             )}
           </div>

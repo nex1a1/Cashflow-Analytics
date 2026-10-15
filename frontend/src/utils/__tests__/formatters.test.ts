@@ -65,7 +65,7 @@ describe('formatters utility', () => {
       expect(formatMoney(-1234567.891)).toBe('−1,234,567.89');
       expect(formatMoney('-0.5')).toBe('−0.50');
       expect(formatAmount(-100)).toBe('−100');
-      expect(formatAmount(-100.5)).toBe('−100.5');
+      expect(formatAmount(-100.5)).toBe('−100.50');
       expect(formatMoney(-500)).not.toContain('-');
     });
 
@@ -88,7 +88,7 @@ describe('formatters utility', () => {
     it('formatBahtShort is the same without trailing zeros', () => {
       expect(formatBahtShort(100)).toBe('฿100');
       expect(formatBahtShort(-100)).toBe('−฿100');
-      expect(formatBahtShort(-100.5)).toBe('−฿100.5');
+      expect(formatBahtShort(-100.5)).toBe('−฿100.50');
     });
 
     it('the period-delta tooltip writes a negative change the same way', () => {

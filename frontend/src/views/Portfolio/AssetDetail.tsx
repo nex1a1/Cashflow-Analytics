@@ -3,7 +3,8 @@ import { AlertTriangle } from 'lucide-react';
 import { PortfolioAsset } from '@/types';
 import FieldError from '@/components/shared/FieldError';
 import { formatMoney, formatThaiDateShort } from '@/utils/formatters';
-import { describeHolding, describePriceAge, formatUnits, plColor, summarizeTrades, todayIso } from './portfolioHelpers';
+import { describeHolding, describePriceAge, formatUnits, plColor, summarizeTrades } from './portfolioHelpers';
+import { localTodayIso } from '@/utils/payCycle';
 
 interface AssetDetailProps {
   asset: PortfolioAsset;
@@ -85,7 +86,7 @@ export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProp
         />
         <Tile
           label="ถือมาแล้ว"
-          value={firstDate ? describeHolding(firstDate, todayIso()) : '–'}
+          value={firstDate ? describeHolding(firstDate, localTodayIso()) : '–'}
           sub={firstDate ? `ซื้อครั้งแรก ${formatThaiDateShort(firstDate)}` : undefined}
         />
       </div>

@@ -75,6 +75,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   useEffect(() => {
     const tabLabels: Record<string, string> = {
       insights: 'Dashboard',
+      kakeibo: 'Kakeibo',
       calendar: 'Calendar',
       ledger: 'Ledger',
       portfolio: 'Portfolio',

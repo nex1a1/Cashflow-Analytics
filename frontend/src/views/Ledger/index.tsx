@@ -225,7 +225,6 @@ function LedgerView({
           sumSav={sumSav}
           net={net}
           savingsRate={savingsRate}
-          formatMoney={formatMoney}
           getSubValue={getSubValue}
           showGroupBreakdown={showGroupBreakdown}
           setShowGroupBreakdown={setShowGroupBreakdown}

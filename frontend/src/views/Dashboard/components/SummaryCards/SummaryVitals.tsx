@@ -3,7 +3,6 @@ import { memo } from 'react';
 import { Activity, Wallet, Navigation, TrendingDown } from 'lucide-react';
 import { calculatePeriodDelta, formatBaht } from '@/utils/formatters';
 import sharkLogo from '@/assets/images/shark-white.svg';
-import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import { Shimmer, SectionHeader, BUDGET_RULES } from './helpers';
 import { SummaryAnalytics } from './types';
 
@@ -58,7 +57,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
               <div className="text-2xl xl:text-3xl font-black text-emerald-400 tabular-nums tracking-tight leading-none">
-                <AnimatedNumber value={totalIncome} />
+                {formatBaht(totalIncome)}
               </div>
             )}
           </div>
@@ -109,7 +108,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <Shimmer className="h-8 w-28 my-1" />
             ) : (
               <div className="text-2xl xl:text-3xl font-black text-expense tabular-nums tracking-tight leading-none">
-                <AnimatedNumber value={totalExpense} />
+                {formatBaht(totalExpense)}
               </div>
             )}
           </div>
@@ -162,7 +161,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
                 netCashflow >= 0 ? 'text-emerald-400' : 'text-danger'
               }`}>
-                <AnimatedNumber value={netCashflow} />
+                {formatBaht(netCashflow)}
               </div>
             )}
           </div>

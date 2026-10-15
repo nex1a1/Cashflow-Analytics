@@ -7,7 +7,7 @@ import FieldError from '@/components/shared/FieldError';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { readable } from '@/constants/theme';
 import { latestOnly } from '@/utils/latestOnly';
-import { formatThaiDateShort } from '@/utils/formatters';
+import { formatThaiDateShort, formatBahtShort } from '@/utils/formatters';
 import {
   computeDeductions, estimateTax, parseTaxProfile, taxYearOf, DEDUCTION_TYPES, TAX_PROFILE_SETTING_KEY,
   type DeductionLine, type DeductionTypeId, type TaxRow, type TaxYearForm, type TaxEstimate, type TaxMoneyField, type TaxFiled, type TaxFiledMoneyField, type TaxProfile,
@@ -17,7 +17,7 @@ import { useAppFilter } from '@/context/AppFilterContext';
 import { Shimmer } from '@/views/Dashboard/components/SummaryCards/helpers';
 import { isCyclePeriod, stripCycle, localTodayIso, CYCLE_PREFIX, cyclePresetRange } from '@/utils/payCycle';
 
-const baht = (satang: number) => `${satang < 0 ? '−' : ''}฿${Math.round(Math.abs(satang) / 100).toLocaleString('th-TH')}`;
+const baht = (satang: number) => formatBahtShort(Math.round(satang / 100));
 const SECTION = 'border border-line bg-surface';
 const SECTION_HEAD = 'flex items-center gap-3 px-4 py-2 border-b border-line';
 

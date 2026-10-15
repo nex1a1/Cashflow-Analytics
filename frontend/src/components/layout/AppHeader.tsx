@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { taxYearOf } from '@/utils/taxDeduction';
 import sharkWhite from '../../assets/images/shark-white.svg';
-import AnimatedNumber from '../ui/AnimatedNumber';
 import PeriodPicker from './PeriodPicker';
 
 import { GroupedOptions } from '../../types';
@@ -137,7 +136,7 @@ export default function AppHeader({
               <div className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-pill border bg-surface text-neutral-300 border-line hover:border-accent/30 transition-colors">
                 <span className="text-neutral-500 mr-1 select-none">ทั้งหมด</span>
                 <span className="text-ink-display font-black tracking-wider">
-                  <AnimatedNumber value={transactionCount} integer={true} />
+                  {transactionCount.toLocaleString('th-TH')}
                 </span>
                 <span className="text-neutral-500 ml-1 select-none">รายการ</span>
               </div>

@@ -3,8 +3,7 @@ import {
   TrendingDown, Gauge, ShieldCheck, Home, Wallet, Navigation,
   Zap, Award, AlertTriangle, CheckCircle2
 } from 'lucide-react';
-import { formatBaht } from '@/utils/formatters';
-import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import { formatBaht, formatMoney } from '@/utils/formatters';
 import { Shimmer } from '../helpers';
 import { ForecastingTrajectoryChart } from './ForecastingTrajectoryChart';
 import type { SummaryAnalytics, ForecastingDetails } from '../types';
@@ -117,7 +116,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
             ) : (
               <div className="flex items-baseline justify-between gap-2">
                 <div className="text-2xl xl:text-3xl font-black text-expense tabular-nums tracking-tight leading-none">
-                  <AnimatedNumber value={projectedExpense} />
+                  {formatMoney(projectedExpense)}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
                   เพดาน {formatBaht(maxAllowedExpense)}
@@ -183,7 +182,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
                   headroom >= 0 ? 'text-emerald-400' : 'text-danger'
                 }`}>
-                  <AnimatedNumber value={safeToSpend} />
+                  {formatMoney(safeToSpend)}
                   <span className="text-xs text-neutral-400 ml-1 font-normal">/วัน</span>
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">

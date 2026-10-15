@@ -7,7 +7,6 @@ import LedgerCommandPanel, { LedgerGroupBreakdownSection, getSavingsRateStyle } 
 import SegmentGroup from '../common/SegmentGroup';
 import { byText, click } from '@/test-utils/dom';
 import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
-import { formatMoney } from '@/utils/formatters';
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;
@@ -107,7 +106,7 @@ describe('LedgerCommandPanel', () => {
     const setShow = vi.fn();
     mount(
       <LedgerCommandPanel
-        sumInc={30000} sumExp={10000} sumSav={1500} net={20000} savingsRate={67} formatMoney={formatMoney}
+        sumInc={30000} sumExp={10000} sumSav={1500} net={20000} savingsRate={67}
         getSubValue={(v: number) => `avg ${v}`} showGroupBreakdown={false} setShowGroupBreakdown={setShow} totalActiveGroupCards={4}
         {...over}
       />,
@@ -139,7 +138,7 @@ describe('LedgerCommandPanel', () => {
     panel({ net: -2500, sumInc: 1000, sumExp: 3500, savingsRate: -250 });
     const net = block('คงเหลือสุทธิ');
     expect(net.textContent).toContain('ขาดดุล');
-    expect(net.textContent).toContain('−2,500.00');
+    expect(net.textContent).toContain('−฿2,500.00');
     expect(net.className).toContain('border-l-expense');
     expect(net.querySelector('.text-danger')).not.toBeNull();
   });
@@ -166,10 +165,10 @@ describe('LedgerCommandPanel', () => {
 
   it('mentions the investing inside the net — with a minus for a net sell — and hides it at zero', () => {
     panel({ sumSav: 1500 });
-    expect(text()).toContain('ในนี้ลงทุน/ออม 1,500.00');
+    expect(text()).toContain('ในนี้ลงทุน/ออม ฿1,500.00');
     act(() => root!.unmount()); container!.remove();
     panel({ sumSav: -400 });
-    expect(text()).toContain('ในนี้ลงทุน/ออม −400.00');
+    expect(text()).toContain('ในนี้ลงทุน/ออม −฿400.00');
     act(() => root!.unmount()); container!.remove();
     panel({ sumSav: 0 });
     expect(text()).not.toContain('ในนี้ลงทุน/ออม');
