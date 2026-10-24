@@ -27,7 +27,7 @@ function SummaryTrendCell({
     <td
       onMouseEnter={() => onHover('trend')}
       onMouseLeave={() => onHover(null)}
-      className={`px-3 py-2 font-bold border-l-2 !border-l-line-strong border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
+      className={`px-3 py-2 font-bold border-l-2 border-l-line-strong! border-b ${thinBorder} sticky right-[250px] z-10 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${bgCls}`}
     >
       <div className="flex items-center justify-between gap-1">
         <div className="shrink-0">{expMoMJSX}</div>

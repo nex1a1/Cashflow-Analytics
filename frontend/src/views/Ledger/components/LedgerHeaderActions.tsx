@@ -43,7 +43,7 @@ export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
           isCurrentFilterOpen
             ? 'bg-accent/10 border-accent-ink text-accent-ink'
             : 'bg-surface border-line text-ink-body hover:bg-surface-elevated/40 hover:border-line-strong hover:text-ink-display'
-        } ${isCurrentFilterActive ? '!border-warn !text-warn !bg-warn/10' : ''}`}
+        } ${isCurrentFilterActive ? 'border-warn! text-warn! bg-warn/10!' : ''}`}
         title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" />

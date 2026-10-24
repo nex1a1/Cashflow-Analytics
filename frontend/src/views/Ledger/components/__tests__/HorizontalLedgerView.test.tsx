@@ -52,7 +52,7 @@ const rect = (left: number, top: number, width = 60, height = 34) =>
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) });
 const hover = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: null })); });
 const leaveTable = () => act(() => { q('table')!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
-const tip = () => document.body.querySelector<HTMLElement>('.fixed.z-\\[99999\\]');
+const tip = () => document.body.querySelector<HTMLElement>('.fixed.z-99999');
 
 beforeEach(() => { Element.prototype.scrollIntoView = vi.fn(); });
 afterEach(() => {

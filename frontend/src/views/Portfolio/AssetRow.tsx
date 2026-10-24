@@ -34,7 +34,7 @@ const AssetRow = memo(function AssetRow({ asset, onSetPrice, onTrade, color, wei
         onClick={() => setOpen(o => !o)}
         className={`group border-b border-line cursor-pointer hover:bg-surface-hover ${held ? '' : 'opacity-70'}`}
       >
-        <td className="px-3 py-2.5 sticky left-0 z-[1] bg-surface group-hover:bg-surface-hover">
+        <td className="px-3 py-2.5 sticky left-0 z-1 bg-surface group-hover:bg-surface-hover">
           <button
             type="button"
             aria-expanded={open}

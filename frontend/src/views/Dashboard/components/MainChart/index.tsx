@@ -6,6 +6,8 @@ import { useDashboardContext } from '../../context/DashboardContext';
 import { useSankeyEngine } from '../../hooks/useSankeyEngine';
 import { useChartDataEngine } from '../../hooks/useChartDataEngine';
 import { useChartOptions } from '../../hooks/useChartOptions';
+import { useFutureZone } from '../../hooks/useFutureZone';
+import { futureZonePlugin } from './futureZone';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { MainChartHeader } from './MainChartHeader';
 import { MainChartToolbar } from './MainChartToolbar';
@@ -14,13 +16,15 @@ import { MainChartTextAlternative } from './MainChartTextAlternative';
 import { getMainChartTitle } from './helpers';
 import { SparklineGraph } from './SparklineGraph';
 
+const CHART_PLUGINS = [futureZonePlugin];
+
 export default function MainChart() {
   const {
     analytics, categories, filterPeriod, getFilterLabel,
     hideFixedExpenses, setHideFixedExpenses,
     hideWantExpenses, setHideWantExpenses,
     dashboardCategory, setDashboardCategory,
-    chartGroupBy, setChartGroupBy,
+    chartGroupBy, setChartGroupBy, dailyChartAllowed,
     showSkeleton
   } = useDashboardContext();
 
@@ -72,8 +76,9 @@ export default function MainChart() {
     chartViewType, isBreakdown, isSmoothLine, sankeyData, chartGroupMode: chartGroupBy, hiddenDatasets
   });
   const options = useChartOptions({ chartViewType, isBreakdown, isLogScale });
+  const futureZone = useFutureZone(chartViewType);
 
-  const card = 'rounded-none border shadow-sm transition-colors h-full flex flex-col bg-canvas border-line';
+  const card = 'rounded-none border shadow-xs transition-colors h-full flex flex-col bg-canvas border-line';
   const chartLabel = `${getMainChartTitle(chartViewType, analytics.mainChartType, isBreakdown)} ${getFilterLabel(filterPeriod)}`;
 
   return (
@@ -87,6 +92,7 @@ export default function MainChart() {
         filterPeriod={filterPeriod}
         mainChartType={analytics.mainChartType}
         isBreakdown={isBreakdown}
+        dailyDisabled={dailyChartAllowed === false}
       />
 
       <div className="p-4 flex flex-col flex-1 min-h-0 gap-3">
@@ -123,11 +129,13 @@ export default function MainChart() {
           ) : chartViewType === 'multiples' ? (
             <SparklineGraph />
           ) : (
-            <div className="absolute inset-0">
+            // keyed per mode: a fresh canvas replays Chart.js's grow-in instead of morphing the old bars
+            <div key={isBreakdown ? 'breakdown' : 'standard'} className="absolute inset-0 m-fade-in">
               <Chart
                 type={chartViewType === 'sankey' ? 'sankey' : 'bar' as any}
                 data={displayChartData as any}
                 options={options}
+                plugins={CHART_PLUGINS}
                 aria-label={chartLabel}
               />
               <MainChartTextAlternative caption={chartLabel} isSankey={chartViewType === 'sankey'} data={displayChartData} />
@@ -136,6 +144,7 @@ export default function MainChart() {
         </div>
 
         {chartViewType !== 'multiples' && <MainChartLegend
+          key={isBreakdown ? 'breakdown' : 'standard'}
           legendDatasets={legendDatasets}
           hiddenDatasets={hiddenDatasets}
           setHiddenDatasets={setHiddenDatasets}
@@ -144,6 +153,7 @@ export default function MainChart() {
           setDashboardCategory={setDashboardCategory}
           categories={categories}
           categoriesWithData={categoriesWithData}
+          hasPlan={Boolean(futureZone && futureZone.futureFrom < (displayChartData?.labels?.length ?? 0))}
         />}
       </div>
     </div>

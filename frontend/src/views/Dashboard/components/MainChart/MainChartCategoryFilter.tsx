@@ -74,7 +74,7 @@ export const MainChartCategorySelector = memo(({
   return (
     <>
       {/* Quick Presets */}
-      <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+      <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
         <button
           onClick={() => setDashboardCategory(['ALL'])}
           className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors ${
@@ -101,7 +101,7 @@ export const MainChartCategorySelector = memo(({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="ค้นหาหมวดหมู่..."
-          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-none font-medium transition-colors bg-surface border-line text-slate-200 focus:border-slate-400 placeholder-slate-600"
+          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-hidden font-medium transition-colors bg-surface border-line text-slate-200 focus:border-slate-400 placeholder-slate-600"
         />
         {searchQuery && (
           <button
@@ -197,7 +197,7 @@ export const MainChartFilterMenu = memo(({
       <button
         onClick={() => setShowCatMenu(prev => !prev)}
         style={hasActiveModifiers ? { boxShadow: `inset 0 0 0 1px ${tc('accent', 0.5)}` } : undefined}
-        className={`px-3 py-1.5 border border-line rounded-none text-[11px] font-bold outline-none flex items-center gap-1.5 transition-colors ${
+        className={`px-3 py-1.5 border border-line rounded-none text-[11px] font-bold outline-hidden flex items-center gap-1.5 transition-colors ${
           hasActiveModifiers
             ? 'bg-canvas text-accent-ink'
             : showCatMenu
@@ -216,7 +216,7 @@ export const MainChartFilterMenu = memo(({
       </button>
 
       {showCatMenu && (
-        <div className="absolute right-0 top-full mt-2 w-[460px] max-w-[90vw] rounded-none shadow-2xl border z-[45] flex flex-col overflow-hidden bg-canvas border-line">
+        <div className="absolute right-0 top-full mt-2 w-[460px] max-w-[90vw] rounded-none shadow-2xl border z-45 flex flex-col overflow-hidden bg-canvas border-line">
           {/* Header */}
           <div className="px-3.5 py-2.5 border-b flex items-center justify-between border-line text-slate-200">
             <div className="flex items-center gap-1.5">

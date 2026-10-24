@@ -143,7 +143,7 @@ function CategoryLegendSection({
     }`;
 
   return (
-    <div className="flex-grow flex flex-col min-w-0">
+    <div className="grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
         <span className="text-[13.5px] font-black text-ink-soft flex items-center gap-1.5 shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-accent" /> หมวดหมู่
@@ -197,7 +197,7 @@ function CategoryLegendSection({
           </button>
         </div>
 
-        <div className="h-[1px] bg-line flex-1 min-w-[20px]" />
+        <div className="h-px bg-line flex-1 min-w-[20px]" />
 
         {hasExclusions && (
           <button
@@ -240,7 +240,7 @@ function CategoryLegendSection({
           })}
         </div>
       ) : (
-        <div className="flex flex-col flex-grow min-h-0">
+        <div className="flex flex-col grow min-h-0">
           {sortedGroups.map(({ groupObj, categories: groupCats, groupTotal }) => {
             const groupColor = groupObj.color || tc('ink-muted');
             // รายจ่ายแสดงเป็นยอดลบ · ลงทุน/ออมขายมากกว่าซื้อได้ ติดลบก็เป็น −฿ (ไม่ใช่ ±−฿) · ศูนย์ไม่มีเครื่องหมาย
@@ -268,7 +268,7 @@ function CategoryLegendSection({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 flex-grow pl-1 py-3">
+                <div className="flex flex-wrap items-center gap-1.5 grow pl-1 py-3">
                   {groupCats.map(cat => {
                     const color = cat.color || tc('ink-body');
                     const isExcluded = excludedCategoryIds.has(cat.id);

@@ -17,7 +17,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
 
     return createPortal(
       <div
-        className="fixed pointer-events-none z-[99999]"
+        className="fixed pointer-events-none z-99999"
         style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
       >
         <div className="flex flex-col items-center min-w-[170px] max-w-[320px]">
@@ -89,7 +89,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
 
   return createPortal(
     <div
-      className="fixed pointer-events-none z-[99999]"
+      className="fixed pointer-events-none z-99999"
       style={{ left: x, top: y - 6, transform: 'translate(-50%, -100%)' }}
     >
       <div className="flex flex-col items-center min-w-[200px] max-w-[420px]">

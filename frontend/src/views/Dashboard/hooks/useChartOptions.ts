@@ -7,6 +7,8 @@ import {
 import { formatMoney, formatBaht } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
+import { planTickStyle } from '../components/MainChart/futureZone';
+import { useFutureZone } from './useFutureZone';
 
 import { tc } from '@/constants/theme';
 interface ChartOptionsProps {
@@ -94,6 +96,7 @@ function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, yT
 
 export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: ChartOptionsProps) {
   const { analytics, filterPeriod } = useDashboardContext();
+  const futureZone = useFutureZone(chartViewType);
 
   return useMemo(() => {
     if (!analytics) return {};
@@ -155,11 +158,21 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
       autoSkip
     });
 
+    const planUnit = futureZone?.unit;
     return {
       ...baseOptions,
       scales: {
         ...baseOptions.scales,
-        x: { ...baseOptions.scales?.x, stacked: isStacked },
+        x: {
+          ...baseOptions.scales?.x,
+          stacked: isStacked,
+          ticks: {
+            ...baseOptions.scales?.x?.ticks,
+            ...planTickStyle(futureZone),
+            // few months: label every one so the current month is never skipped
+            ...(planUnit === 'month' && (analytics.sortedMonthsKeys?.length ?? 0) <= 24 && { autoSkip: false }),
+          },
+        },
         y: { 
           ...baseOptions.scales?.y, 
           stacked: isStacked,
@@ -168,6 +181,7 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
       },
       plugins: {
         ...baseOptions.plugins,
+        futureZone: { zone: futureZone },
         tooltip: {
           ...baseOptions.plugins?.tooltip,
           mode: 'index', intersect: false,
@@ -175,6 +189,11 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
           filter: (tooltipItem: any) => Boolean(Number(tooltipItem.raw)),
           callbacks: {
             ...baseOptions.plugins?.tooltip?.callbacks,
+            afterTitle: (items: any[]) => {
+              if (!futureZone || !items.length) return '';
+              if (items[0].dataIndex >= futureZone.futureFrom) return 'แผน · ยังไม่ถึง';
+              return items[0].dataIndex === futureZone.currentIdx ? (planUnit === 'month' ? 'เดือนนี้' : 'วันนี้') : '';
+            },
             footer: (tooltipItems: any[]) => {
               if (!isBreakdown || tooltipItems.length <= 1) return '';
               const sum = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
@@ -184,5 +203,5 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
         },
       },
     };
-  }, [isBreakdown, chartViewType, analytics?.mainChartType, analytics, isLogScale, filterPeriod]);
+  }, [isBreakdown, chartViewType, analytics?.mainChartType, analytics, isLogScale, filterPeriod, futureZone]);
 }

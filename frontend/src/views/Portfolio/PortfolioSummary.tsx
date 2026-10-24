@@ -32,7 +32,7 @@ const PortfolioSummary = memo(function PortfolioSummary({ portfolio }: { portfol
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid xl:grid-cols-[minmax(300px,1fr)_minmax(0,2fr)_minmax(280px,1fr)] gap-[1px] bg-line border border-line">
+      <div className="grid xl:grid-cols-[minmax(300px,1fr)_minmax(0,2fr)_minmax(280px,1fr)] gap-px bg-line border border-line">
         <section aria-label="สรุปพอร์ต" className="bg-surface p-5 flex flex-col gap-4">
           <div>
             <h2 className="text-[13px] font-bold text-ink-display">มูลค่าพอร์ตตอนนี้</h2>

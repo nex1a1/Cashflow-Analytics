@@ -129,7 +129,7 @@ const Dropdown = memo(function Dropdown({
           aria-label={ariaLabel}
           onMouseDown={e => e.stopPropagation()}
           style={{ ...pos, maxHeight: MAX_H }}
-          className="fixed z-[99999] overflow-y-auto py-1 bg-surface border border-line-strong rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.6)]"
+          className="fixed z-99999 overflow-y-auto py-1 bg-surface border border-line-strong rounded-sm shadow-[0_12px_28px_rgb(0_0_0/0.6)]"
         >
           {options.map((o, i) => (
             <div

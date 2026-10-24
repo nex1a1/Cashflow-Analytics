@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -7,7 +9,7 @@ import { click, key, type, q } from '@/test-utils/dom';
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;
-let onChange: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
 let color = '#336699';
 const render = () => act(() => root!.render(<ColorPicker color={color} onChange={onChange as never} />));
 const mount = (c = '#336699') => {
@@ -19,7 +21,7 @@ const mount = (c = '#336699') => {
   render();
 };
 const trigger = () => container!.querySelector<HTMLButtonElement>('button[aria-label="เลือกสี"]')!;
-const palette = () => document.querySelector<HTMLElement>('.fixed.z-\\[9999\\]');
+const palette = () => document.querySelector<HTMLElement>('.fixed.z-9999');
 const open = () => click(trigger());
 const swatches = () => [...palette()!.querySelectorAll<HTMLButtonElement>('button[aria-label^="สี "]')];
 const tabBtn = (label: string) => [...palette()!.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent === label)!;
@@ -148,7 +150,7 @@ describe('ColorPicker spectrum tab', () => {
     expect(ringed.map(b => b.title)).toEqual(['#F90606']);
   });
 
-  it('no ring when the colour is not in the palette', () => {
+  it('no ring-3 when the colour is not in the palette', () => {
     mount('#123456');
     open();
     expect(swatches().some(b => /(^|\s)ring-1 ring-white z-10/.test(b.className))).toBe(false);

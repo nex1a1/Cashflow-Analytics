@@ -98,7 +98,7 @@ export default function FilterBar({
             placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-none text-xs font-semibold bg-surface border-line focus:border-accent-ink text-ink-soft placeholder-ink-muted"
+            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line focus:border-accent-ink text-ink-soft placeholder-ink-muted"
           />
           {searchQuery && (
             <button 
@@ -129,7 +129,7 @@ export default function FilterBar({
               isExpanded
                 ? 'bg-accent/10 border-accent-ink text-accent-ink'
                 : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
-            } ${advancedActiveCount > 0 ? '!border-warn/80 !text-warn !bg-warn/10' : ''}`}
+            } ${advancedActiveCount > 0 ? 'border-warn/80! text-warn! bg-warn/10!' : ''}`}
             title="เปิด/ปิด แผงตัวกรองขั้นสูง (วันที่, กลุ่ม, หมวดหมู่, ช่วงเงิน, การจัดสรร)"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -158,7 +158,7 @@ export default function FilterBar({
       {/* ================= COLLAPSIBLE ADVANCED FILTER SECTION (ROW 2) ================= */}
       {isExpanded && (
         <div className="m-reveal border-t border-line/60">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_348px_minmax(320px,1.5fr)] gap-[1px] bg-surface-elevated/50 relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_348px_minmax(320px,1.5fr)] gap-px bg-surface-elevated/50 relative z-20">
             
             {/* COLUMN 1: SCOPE & ALLOCATION */}
             <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
@@ -182,7 +182,7 @@ export default function FilterBar({
                       placeholder="Min" 
                       value={minAmount}
                       onChange={e => setMinAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                   <span className="text-xs font-black text-ink-muted font-mono">—</span>
@@ -193,7 +193,7 @@ export default function FilterBar({
                       placeholder="Max" 
                       value={maxAmount}
                       onChange={e => setMaxAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-none text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>

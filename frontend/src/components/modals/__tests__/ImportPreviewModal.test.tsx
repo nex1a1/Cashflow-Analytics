@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import React, { act } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createRoot, Root } from 'react-dom/client';
@@ -61,7 +63,7 @@ let root: Root | null = null;
 let container: HTMLElement | null = null;
 let state: any;
 let setPreview: (v: any) => void;
-let host: { confirmImport: ReturnType<typeof vi.fn>; isProcessing?: boolean };
+let host: { confirmImport: AnyMock; isProcessing?: boolean };
 
 function Host({ initial }: { initial: any }) {
   const [s, set] = React.useState<any>(initial);

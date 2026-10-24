@@ -21,12 +21,16 @@ export interface EnvelopeRow {
   date: string; // YYYY-MM-DD
   satang: number;
   groupId: string;
+  /** แถว NEED — ใช้แยกส่วน NEED ออกจากยอดใช้จริง (ไม่ระบุ = ไม่นับเป็น NEED) */
+  need?: boolean;
 }
 
 export interface Envelope {
   groupId: string;
   budget: number;
   spent: number;
+  /** ส่วนของ spent ที่เป็น NEED */
+  spentNeed: number;
   planned: number;
   /** ค่าเฉลี่ยของเดือน/รอบก่อนหน้า (สูงสุด AVG_UNITS ไม่นับก่อนเริ่มระบบ) — null ถ้ายังไม่มีให้เทียบ */
   avg: number | null;
@@ -60,20 +64,21 @@ export const computeEnvelopes = (rows: EnvelopeRow[], budgets: Record<string, nu
 
   return Object.entries(budgets).map(([groupId, budget]) => {
     let spent = 0;
+    let spentNeed = 0;
     let planned = 0;
     const prevTotal: Record<string, number> = {};
     for (const r of rows) {
       if (r.groupId !== groupId) continue;
       const key = monthKeyOf(r.date, period);
       if (key === cur) {
-        if (r.date <= today) spent += r.satang;
+        if (r.date <= today) { spent += r.satang; if (r.need) spentNeed += r.satang; }
         else planned += r.satang;
       } else if (prev.includes(key)) {
         prevTotal[key] = (prevTotal[key] ?? 0) + r.satang;
       }
     }
     const avg = prev.length ? Math.round(prev.reduce((s, k) => s + (prevTotal[k] ?? 0), 0) / prev.length) : null;
-    return { groupId, budget, spent, planned, avg, avgUnits: prev.length, level: budgetLevel(spent, budget) };
+    return { groupId, budget, spent, spentNeed, planned, avg, avgUnits: prev.length, level: budgetLevel(spent, budget) };
   });
 };
 

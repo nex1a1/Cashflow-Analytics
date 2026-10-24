@@ -105,7 +105,7 @@ describe('tooltips', () => {
     }
   });
 
-  it('the doughnut keeps a thin ring', () => {
+  it('the doughnut keeps a thin ring-3', () => {
     expect((getDoughnutChartOptions() as any).cutout).toBe('70%');
   });
 });

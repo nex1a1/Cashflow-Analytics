@@ -91,7 +91,7 @@ describe('AllocationPanel per-asset view (default)', () => {
     expect(legends()[0].querySelector('li .truncate')!.getAttribute('title')).toBe('Alpha');
   });
 
-  it('centre of the ring counts the items', () => {
+  it('centre of the ring-3 counts the items', () => {
     mount(base());
     expect(container!.querySelector('.pointer-events-none')!.textContent).toBe('3 รายการ');
   });

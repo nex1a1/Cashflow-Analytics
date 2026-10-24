@@ -1,6 +1,306 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --radius-*: initial;
+  --radius: 0px;
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-pill: 4px;
+  --radius-full: 9999px;
+
+  --font-sans: Inter, Bai Jamjuree, sans-serif;
+  --font-mono: 'Shark Digits', Inter, Bai Jamjuree, sans-serif;
+
+  --color-neutral-50: rgb(var(--gray-50));
+  --color-neutral-100: rgb(var(--gray-100));
+  --color-neutral-200: rgb(var(--gray-200));
+  --color-neutral-300: rgb(var(--gray-300));
+  --color-neutral-400: rgb(var(--gray-400));
+  --color-neutral-500: rgb(var(--gray-500));
+  --color-neutral-600: rgb(var(--gray-600));
+  --color-neutral-700: rgb(var(--gray-700));
+  --color-neutral-750: rgb(var(--gray-750));
+  --color-neutral-800: rgb(var(--gray-800));
+  --color-neutral-850: rgb(var(--gray-850));
+  --color-neutral-900: rgb(var(--gray-900));
+  --color-neutral-950: rgb(var(--gray-950));
+
+  --color-slate-50: rgb(var(--gray-50));
+  --color-slate-100: rgb(var(--gray-100));
+  --color-slate-200: rgb(var(--gray-200));
+  --color-slate-300: rgb(var(--gray-300));
+  --color-slate-400: rgb(var(--gray-400));
+  --color-slate-500: rgb(var(--gray-500));
+  --color-slate-600: rgb(var(--gray-600));
+  --color-slate-700: rgb(var(--gray-700));
+  --color-slate-750: rgb(var(--gray-750));
+  --color-slate-800: rgb(var(--gray-800));
+  --color-slate-850: rgb(var(--gray-850));
+  --color-slate-900: rgb(var(--gray-900));
+  --color-slate-950: rgb(var(--gray-950));
+
+  --color-gray-50: rgb(var(--gray-50));
+  --color-gray-100: rgb(var(--gray-100));
+  --color-gray-200: rgb(var(--gray-200));
+  --color-gray-300: rgb(var(--gray-300));
+  --color-gray-400: rgb(var(--gray-400));
+  --color-gray-500: rgb(var(--gray-500));
+  --color-gray-600: rgb(var(--gray-600));
+  --color-gray-700: rgb(var(--gray-700));
+  --color-gray-750: rgb(var(--gray-750));
+  --color-gray-800: rgb(var(--gray-800));
+  --color-gray-850: rgb(var(--gray-850));
+  --color-gray-900: rgb(var(--gray-900));
+  --color-gray-950: rgb(var(--gray-950));
+
+  --color-zinc-50: rgb(var(--gray-50));
+  --color-zinc-100: rgb(var(--gray-100));
+  --color-zinc-200: rgb(var(--gray-200));
+  --color-zinc-300: rgb(var(--gray-300));
+  --color-zinc-400: rgb(var(--gray-400));
+  --color-zinc-500: rgb(var(--gray-500));
+  --color-zinc-600: rgb(var(--gray-600));
+  --color-zinc-700: rgb(var(--gray-700));
+  --color-zinc-750: rgb(var(--gray-750));
+  --color-zinc-800: rgb(var(--gray-800));
+  --color-zinc-850: rgb(var(--gray-850));
+  --color-zinc-900: rgb(var(--gray-900));
+  --color-zinc-950: rgb(var(--gray-950));
+
+  --color-stone-50: rgb(var(--gray-50));
+  --color-stone-100: rgb(var(--gray-100));
+  --color-stone-200: rgb(var(--gray-200));
+  --color-stone-300: rgb(var(--gray-300));
+  --color-stone-400: rgb(var(--gray-400));
+  --color-stone-500: rgb(var(--gray-500));
+  --color-stone-600: rgb(var(--gray-600));
+  --color-stone-700: rgb(var(--gray-700));
+  --color-stone-750: rgb(var(--gray-750));
+  --color-stone-800: rgb(var(--gray-800));
+  --color-stone-850: rgb(var(--gray-850));
+  --color-stone-900: rgb(var(--gray-900));
+  --color-stone-950: rgb(var(--gray-950));
+
+  --color-emerald-50: rgb(var(--green-50));
+  --color-emerald-100: rgb(var(--green-100));
+  --color-emerald-200: rgb(var(--green-200));
+  --color-emerald-300: rgb(var(--green-300));
+  --color-emerald-400: rgb(var(--green-400));
+  --color-emerald-500: rgb(var(--green-500));
+  --color-emerald-600: rgb(var(--green-600));
+  --color-emerald-700: rgb(var(--green-700));
+  --color-emerald-800: rgb(var(--green-800));
+  --color-emerald-900: rgb(var(--green-900));
+  --color-emerald-950: rgb(var(--green-950));
+
+  --color-green-50: rgb(var(--green-50));
+  --color-green-100: rgb(var(--green-100));
+  --color-green-200: rgb(var(--green-200));
+  --color-green-300: rgb(var(--green-300));
+  --color-green-400: rgb(var(--green-400));
+  --color-green-500: rgb(var(--green-500));
+  --color-green-600: rgb(var(--green-600));
+  --color-green-700: rgb(var(--green-700));
+  --color-green-800: rgb(var(--green-800));
+  --color-green-900: rgb(var(--green-900));
+  --color-green-950: rgb(var(--green-950));
+
+  --color-amber-50: rgb(var(--warn-50));
+  --color-amber-100: rgb(var(--warn-100));
+  --color-amber-200: rgb(var(--warn-200));
+  --color-amber-300: rgb(var(--warn-300));
+  --color-amber-400: rgb(var(--warn-400));
+  --color-amber-500: rgb(var(--warn-500));
+  --color-amber-600: rgb(var(--warn-600));
+  --color-amber-700: rgb(var(--warn-700));
+  --color-amber-800: rgb(var(--warn-800));
+  --color-amber-900: rgb(var(--warn-900));
+  --color-amber-950: rgb(var(--warn-950));
+
+  --color-yellow-50: rgb(var(--warn-50));
+  --color-yellow-100: rgb(var(--warn-100));
+  --color-yellow-200: rgb(var(--warn-200));
+  --color-yellow-300: rgb(var(--warn-300));
+  --color-yellow-400: rgb(var(--warn-400));
+  --color-yellow-500: rgb(var(--warn-500));
+  --color-yellow-600: rgb(var(--warn-600));
+  --color-yellow-700: rgb(var(--warn-700));
+  --color-yellow-800: rgb(var(--warn-800));
+  --color-yellow-900: rgb(var(--warn-900));
+  --color-yellow-950: rgb(var(--warn-950));
+
+  --color-sky-50: rgb(var(--info-50));
+  --color-sky-100: rgb(var(--info-100));
+  --color-sky-200: rgb(var(--info-200));
+  --color-sky-300: rgb(var(--info-300));
+  --color-sky-400: rgb(var(--info-400));
+  --color-sky-500: rgb(var(--info-500));
+  --color-sky-600: rgb(var(--info-600));
+  --color-sky-700: rgb(var(--info-700));
+  --color-sky-800: rgb(var(--info-800));
+  --color-sky-900: rgb(var(--info-900));
+  --color-sky-950: rgb(var(--info-950));
+
+  --color-blue-50: rgb(var(--info-50));
+  --color-blue-100: rgb(var(--info-100));
+  --color-blue-200: rgb(var(--info-200));
+  --color-blue-300: rgb(var(--info-300));
+  --color-blue-400: rgb(var(--info-400));
+  --color-blue-500: rgb(var(--info-500));
+  --color-blue-600: rgb(var(--info-600));
+  --color-blue-700: rgb(var(--info-700));
+  --color-blue-800: rgb(var(--info-800));
+  --color-blue-900: rgb(var(--info-900));
+  --color-blue-950: rgb(var(--info-950));
+
+  --color-cyan-50: rgb(var(--info-50));
+  --color-cyan-100: rgb(var(--info-100));
+  --color-cyan-200: rgb(var(--info-200));
+  --color-cyan-300: rgb(var(--info-300));
+  --color-cyan-400: rgb(var(--info-400));
+  --color-cyan-500: rgb(var(--info-500));
+  --color-cyan-600: rgb(var(--info-600));
+  --color-cyan-700: rgb(var(--info-700));
+  --color-cyan-800: rgb(var(--info-800));
+  --color-cyan-900: rgb(var(--info-900));
+  --color-cyan-950: rgb(var(--info-950));
+
+  --color-orange-50: rgb(var(--orange-50));
+  --color-orange-100: rgb(var(--orange-100));
+  --color-orange-200: rgb(var(--orange-200));
+  --color-orange-300: rgb(var(--orange-300));
+  --color-orange-400: rgb(var(--orange-400));
+  --color-orange-500: rgb(var(--orange-500));
+  --color-orange-600: rgb(var(--orange-600));
+  --color-orange-700: rgb(var(--orange-700));
+  --color-orange-800: rgb(var(--orange-800));
+  --color-orange-900: rgb(var(--orange-900));
+  --color-orange-950: rgb(var(--orange-950));
+
+  --color-purple-50: rgb(var(--purple-50));
+  --color-purple-100: rgb(var(--purple-100));
+  --color-purple-200: rgb(var(--purple-200));
+  --color-purple-300: rgb(var(--purple-300));
+  --color-purple-400: rgb(var(--purple-400));
+  --color-purple-500: rgb(var(--purple-500));
+  --color-purple-600: rgb(var(--purple-600));
+  --color-purple-700: rgb(var(--purple-700));
+  --color-purple-800: rgb(var(--purple-800));
+  --color-purple-900: rgb(var(--purple-900));
+  --color-purple-950: rgb(var(--purple-950));
+
+  --color-violet-50: rgb(var(--purple-50));
+  --color-violet-100: rgb(var(--purple-100));
+  --color-violet-200: rgb(var(--purple-200));
+  --color-violet-300: rgb(var(--purple-300));
+  --color-violet-400: rgb(var(--purple-400));
+  --color-violet-500: rgb(var(--purple-500));
+  --color-violet-600: rgb(var(--purple-600));
+  --color-violet-700: rgb(var(--purple-700));
+  --color-violet-800: rgb(var(--purple-800));
+  --color-violet-900: rgb(var(--purple-900));
+  --color-violet-950: rgb(var(--purple-950));
+
+  --color-indigo-50: rgb(var(--purple-50));
+  --color-indigo-100: rgb(var(--purple-100));
+  --color-indigo-200: rgb(var(--purple-200));
+  --color-indigo-300: rgb(var(--purple-300));
+  --color-indigo-400: rgb(var(--purple-400));
+  --color-indigo-500: rgb(var(--purple-500));
+  --color-indigo-600: rgb(var(--purple-600));
+  --color-indigo-700: rgb(var(--purple-700));
+  --color-indigo-800: rgb(var(--purple-800));
+  --color-indigo-900: rgb(var(--purple-900));
+  --color-indigo-950: rgb(var(--purple-950));
+
+  --color-red-50: rgb(var(--danger-50));
+  --color-red-100: rgb(var(--danger-100));
+  --color-red-200: rgb(var(--danger-200));
+  --color-red-300: rgb(var(--danger-300));
+  --color-red-400: rgb(var(--danger-400));
+  --color-red-500: rgb(var(--danger-500));
+  --color-red-600: rgb(var(--danger-600));
+  --color-red-700: rgb(var(--danger-700));
+  --color-red-800: rgb(var(--danger-800));
+  --color-red-900: rgb(var(--danger-900));
+  --color-red-950: rgb(var(--danger-950));
+
+  --color-rose-50: rgb(var(--need-50));
+  --color-rose-100: rgb(var(--need-100));
+  --color-rose-200: rgb(var(--need-200));
+  --color-rose-300: rgb(var(--need-300));
+  --color-rose-400: rgb(var(--need-400));
+  --color-rose-500: rgb(var(--need-500));
+  --color-rose-600: rgb(var(--need-600));
+  --color-rose-700: rgb(var(--need-700));
+  --color-rose-800: rgb(var(--need-800));
+  --color-rose-900: rgb(var(--need-900));
+  --color-rose-950: rgb(var(--need-950));
+
+  --color-pink-50: rgb(var(--need-50));
+  --color-pink-100: rgb(var(--need-100));
+  --color-pink-200: rgb(var(--need-200));
+  --color-pink-300: rgb(var(--need-300));
+  --color-pink-400: rgb(var(--need-400));
+  --color-pink-500: rgb(var(--need-500));
+  --color-pink-600: rgb(var(--need-600));
+  --color-pink-700: rgb(var(--need-700));
+  --color-pink-800: rgb(var(--need-800));
+  --color-pink-900: rgb(var(--need-900));
+  --color-pink-950: rgb(var(--need-950));
+
+  --color-white: rgb(var(--ink-display));
+  --color-canvas: rgb(var(--canvas));
+
+  --color-surface: rgb(var(--surface));
+  --color-surface-elevated: rgb(var(--surface-elevated));
+  --color-surface-hover: rgb(var(--surface-hover));
+
+  --color-line: rgb(var(--line));
+  --color-line-strong: rgb(var(--line-strong));
+
+  --color-hairline: rgb(var(--hairline));
+
+  --color-accent: rgb(var(--accent));
+  --color-accent-active: rgb(var(--accent-active));
+  --color-accent-ink: rgb(var(--accent-ink));
+
+  --color-on-accent: rgb(var(--on-accent));
+  --color-gold: rgb(var(--gold));
+  --color-on-gold: rgb(var(--on-gold));
+  --color-income: rgb(var(--income));
+  --color-expense: rgb(var(--expense));
+  --color-savings: rgb(var(--savings));
+  --color-weekend: rgb(var(--weekend));
+  --color-warn: rgb(var(--warn));
+  --color-info: rgb(var(--info));
+
+  --color-danger: rgb(var(--danger));
+  --color-danger-active: rgb(var(--danger-active));
+
+  --color-ink-display: rgb(var(--ink-display));
+  --color-ink-soft: rgb(var(--ink-soft));
+  --color-ink-body: rgb(var(--ink-body));
+  --color-ink-muted: rgb(var(--ink-muted));
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 /* Color tokens (--canvas, --accent, --gray-800 ...) are written to :root as RGB channels
    by applyTheme() in src/constants/theme.ts — edit colors there, not here. */
@@ -116,7 +416,9 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes m-pop  { from { opacity: 0; scale: var(--m-scale); translate: 0 calc(var(--m-rise) / 2); } }
 
 /* 1. Interactive feedback: colour/border/shadow ease instead of snapping. :where() = zero specificity,
-      so any Tailwind transition-* / duration-* class on the element still wins. */
+      and it sits in @layer base because Tailwind 4 utilities are layered (unlayered CSS would beat
+      them), so any transition-* / duration-* class on the element still wins. */
+@layer base {
 :where(button, a, input, select, textarea, summary, [role="button"], [role="tab"], [role="option"]) {
   transition-property: color, background-color, border-color, outline-color, box-shadow, opacity, transform, translate, scale, filter;
   transition-duration: 150ms;
@@ -125,6 +427,7 @@ h1, h2, h3, h4, h5, h6 {
 :where(button:not(:disabled), [role="button"]):active {
   translate: 0 var(--m-press);
   transition-duration: 60ms;
+}
 }
 
 /* 2. Tab switch: each tab's wrapper remounts (keyed), so the view rises in once. */

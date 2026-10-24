@@ -118,7 +118,7 @@ describe('opening and closing', () => {
     expect(host!.firstElementChild!.classList.contains('z-20')).toBe(true);
     open();
     expect(popover()).not.toBeNull();
-    expect(host!.firstElementChild!.classList.contains('z-[60]')).toBe(true);
+    expect(host!.firstElementChild!.classList.contains('z-60')).toBe(true);
     open();
     expect(popover()).toBeNull();
   });

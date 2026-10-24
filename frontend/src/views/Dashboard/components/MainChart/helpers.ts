@@ -81,11 +81,13 @@ export function updateActiveCategories(catName: string, activeCats: string[], al
 
 export function getDatasetIndicatorStyle(ds: LegendDataset) {
   const isLine = ds.type === 'line';
+  // plan styling turns a bar's fill into a per-index function; the swatch shows its solid colour
+  const bg = typeof ds.backgroundColor === 'string' ? ds.backgroundColor : undefined;
   return {
     width: isLine ? 16 : 10,
     height: isLine ? 3 : 10,
     backgroundColor: isLine
-      ? (ds.borderColor || ds.backgroundColor || tc('ink-muted'))
-      : (ds.backgroundColor || ds.borderColor || tc('ink-muted')),
+      ? (ds.borderColor || bg || tc('ink-muted'))
+      : (bg || ds.borderColor || tc('ink-muted')),
   };
 }

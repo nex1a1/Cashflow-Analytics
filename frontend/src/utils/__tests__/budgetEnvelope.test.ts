@@ -43,6 +43,15 @@ describe('budgetEnvelope', () => {
     expect(e.avg).toBe(Math.round((300000 + 150000 + 100000) / 3));
   });
 
+  it('spentNeed counts only NEED rows that already happened', () => {
+    const r = [
+      { date: '2026-10-02', satang: 20000, groupId: 'food', need: true },
+      { date: '2026-10-03', satang: 5000, groupId: 'food' },
+      { date: '2026-10-10', satang: 7000, groupId: 'food', need: true }, // plan
+    ];
+    expect(computeEnvelopes(r, { food: 300000 }, '2026-10', '2026-10-04')[0]).toMatchObject({ spent: 25000, spentNeed: 20000, planned: 7000 });
+  });
+
   it('a past period has no plan, a future period has no spend', () => {
     expect(computeEnvelopes(rows, { food: 300000 }, 'cycle:2026-08', '2026-10-04')[0]).toMatchObject({ spent: 150000, planned: 0 });
     expect(computeEnvelopes(rows, { food: 300000 }, '2026-11', '2026-10-04')[0]).toMatchObject({ spent: 0, planned: 0 });

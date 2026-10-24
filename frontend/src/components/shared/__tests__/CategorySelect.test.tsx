@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -13,9 +15,9 @@ type Rect = { left: number; top: number; width: number; height: number };
 let rect: Rect;
 let root: Root;
 let host: HTMLDivElement;
-let onChange: ReturnType<typeof vi.fn>;
-let windowKey: ReturnType<typeof vi.fn>;
-let scrollIntoView: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
+let windowKey: AnyMock;
+let scrollIntoView: AnyMock;
 
 const cat = (id: string, name: string, type: Category['type'], group: string | null, order: number, color = '#3B82F6'): Category =>
   ({ id, name, type, cashflowGroup: group, order_index: order, color, icon: 'tag' });

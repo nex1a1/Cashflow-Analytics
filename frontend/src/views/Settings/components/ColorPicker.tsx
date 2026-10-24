@@ -154,7 +154,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
         ref={btnRef} 
         onClick={handleOpen} 
         type="button"
-        className="w-5 h-5 border rounded-sm border-line-strong cursor-pointer hover:border-accent/50 transition-colors shadow-sm"
+        className="w-5 h-5 border rounded-sm border-line-strong cursor-pointer hover:border-accent/50 transition-colors shadow-xs"
         style={{ backgroundColor: color }}
         title="เลือกสี"
         aria-label="เลือกสี"
@@ -163,11 +163,11 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
       {open && createPortal(
         <div 
           ref={paletteRef}
-          className="fixed z-[9999] shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[290px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-9999 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[290px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Laser Hairline Accent */}
-          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
+          <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
           <div className="p-3 flex flex-col gap-2">
             {/* Tabs Header */}
@@ -199,7 +199,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
             {/* Tab Content: Spectrum Grid */}
             {tab === 'spectrum' && (
               <div 
-                className="grid gap-[1px] bg-line-strong p-[1px] rounded-sm border border-line/50"
+                className="grid gap-px bg-line-strong p-px rounded-sm border border-line/50"
                 style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
               >
                 {COLOR_PALETTE.map(c => {
@@ -280,7 +280,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                   onBlur={commitShortHex}
                   onKeyDown={e => { if (e.key === 'Enter') commitShortHex(); }}
                   maxLength={7}
-                  className="w-full bg-transparent text-xs font-mono font-bold text-ink-body outline-none text-right uppercase"
+                  className="w-full bg-transparent text-xs font-mono font-bold text-ink-body outline-hidden text-right uppercase"
                   placeholder="#000000"
                   aria-label="รหัสสี HEX"
                 />

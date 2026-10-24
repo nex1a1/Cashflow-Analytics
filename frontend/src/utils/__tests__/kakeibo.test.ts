@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeKakeibo, unitRange } from '../kakeibo';
+import { goalResult, summarizeKakeibo, unitRange } from '../kakeibo';
 
 describe('kakeibo', () => {
   it('October 2026 starts on a Thursday: Thu–Sat, then full weeks, ending Sat 31', () => {
@@ -54,7 +54,7 @@ describe('kakeibo', () => {
   });
 });
 
-import { planLines } from '../kakeibo';
+import { planLines, roundShares } from '../kakeibo';
 
 describe('planLines', () => {
   it('groups this period by section + category (row allocation decides NEED/WANT), largest first', () => {
@@ -100,4 +100,44 @@ describe('planLines', () => {
     expect(p.fixed.map((l) => [l.key, l.actual])).toEqual([['fixed:ai', 75_000]]);
     expect(p.want.map((l) => [l.key, l.actual])).toEqual([['want:ai', 30_000]]);
   });
+});
+
+describe('goalResult', () => {
+  it('met / short / deficit, with the gap to the goal', () => {
+    expect(goalResult(25_000, 5_000, 5_000)).toEqual({ verdict: 'met', pct: 20, diff: 0 });
+    expect(goalResult(25_000, 6_000, 5_000)).toEqual({ verdict: 'met', pct: 24, diff: 1_000 });
+    expect(goalResult(25_000, 2_900, 5_000)).toEqual({ verdict: 'short', pct: 12, diff: 2_100 });
+    expect(goalResult(25_000, -300, 5_000)).toEqual({ verdict: 'deficit', pct: -1, diff: 300 });
+  });
+  it('compares the % rounded to 1 decimal, like the Dashboard grade', () => {
+    // 19.96% -> 20.0% = met (not "short by ฿0.40"), the gap never goes negative
+    expect(goalResult(100_000, 19_960, 20_000)).toEqual({ verdict: 'met', pct: 20, diff: 0 });
+    // 19.94% -> 19.9% = still short
+    expect(goalResult(100_000, 19_940, 20_000)).toEqual({ verdict: 'short', pct: 20, diff: 60 });
+    // the reported case: 19.795% -> 19.8% < 20.0%
+    expect(goalResult(2_506_420, 496_156, 501_284)).toMatchObject({ verdict: 'short', diff: 5_128 });
+  });
+  it('no income = nothing to compare', () => {
+    expect(goalResult(0, 0, 0)).toBeNull();
+  });
+});
+
+describe('planLines: planned part', () => {
+  it('splits each line into done and planned around today (only when today is given)', () => {
+    const rows = [
+      { date: '2026-09-03', amount: 100, group_type: 'expense', allocation_type: 'want', category_id: 'fun', category: 'เที่ยว' },
+      { date: '2026-09-20', amount: 40, group_type: 'expense', allocation_type: 'want', category_id: 'fun', category: 'เที่ยว' },
+    ];
+    expect(planLines(rows, '2026-09', undefined, '2026-09-10')!.want[0]).toMatchObject({ actual: 14_000, planned: 4_000 });
+    expect(planLines(rows, '2026-09', undefined, '2026-09-30')!.want[0].planned).toBe(0);
+    expect(planLines(rows, '2026-09')!.want[0].planned).toBeUndefined();
+  });
+});
+
+describe('roundShares', () => {
+  it('always adds up to 100 (rounding each share alone gave 50 + 28 + 23 = 101)', () => {
+    expect(roundShares([12_535.44, 6_966.6, 5_677.96]).reduce((n, v) => n + v, 0)).toBe(100);
+    expect(roundShares([1, 1, 1]).reduce((n, v) => n + v, 0)).toBe(100);
+  });
+  it('is all zeros when there is nothing to share', () => expect(roundShares([0, 0])).toEqual([0, 0]));
 });

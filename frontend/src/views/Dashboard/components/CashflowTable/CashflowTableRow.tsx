@@ -59,7 +59,7 @@ export const CashflowTableRow = React.memo(({
       onMouseEnter={() => setHoveredRow(row.monthStr)}
       onMouseLeave={() => setHoveredRow(null)}
       className={`group hover:bg-surface-elevated/10 transition-colors ${isPartial ? 'opacity-40' : ''}`}
-      title={isPartial ? 'รอบไม่เต็ม — ไม่นำไปรวมในยอดรวมและการเทียบช่วงก่อนหน้า' : undefined}
+      title={isPartial ? `${isCycleMode ? 'รอบไม่เต็ม' : 'เดือนที่ยังไม่ถึง'} — ไม่นำไปรวมในยอดรวมและการเทียบช่วงก่อนหน้า` : undefined}
     >
       {/* Fix #9: เพิ่ม EyeOff icon บอก state ที่ถูก exclude + cursor hint */}
       <td
@@ -87,7 +87,12 @@ export const CashflowTableRow = React.memo(({
               <span className="text-[11px] font-normal text-neutral-500">{cycleRangeLabel(row.monthStr)}</span>
             </div>
           ) : (
-            <span>{getThaiMonth(row.monthStr)}</span>
+            <span className="inline-flex items-center gap-1">
+              {getThaiMonth(row.monthStr)}
+              {row.monthStr === getLocalTodayString().slice(0, 7) && (
+                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="เดือนปัจจุบัน (ยังไม่จบ)" />
+              )}
+            </span>
           )}
         </button>
       </td>

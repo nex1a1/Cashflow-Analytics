@@ -38,7 +38,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
   return (
     <div className="flex flex-col h-full">
       <SectionHeader icon={Activity} title="ตัวชี้วัดหลัก" />
-      <div className="flex flex-col gap-[1px] bg-surface-elevated flex-1">
+      <div className="flex flex-col gap-px bg-surface-elevated flex-1">
 
         {/* INCOME CELL */}
         <div className="group relative overflow-hidden p-3 flex flex-col justify-between min-h-[80px] border-l border-l-emerald-500 bg-canvas hover:bg-surface-hover transition-none flex-1">

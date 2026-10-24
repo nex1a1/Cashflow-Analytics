@@ -41,7 +41,7 @@ export function FilterToolbar({
               }`}
             />
             {totalExcludedCount > 0 && (
-              <span className="px-1 py-[1px] text-[11px] font-black bg-accent text-on-accent leading-none rounded-none shadow-sm tracking-tighter">
+              <span className="px-1 py-px text-[11px] font-black bg-accent text-on-accent leading-none rounded-none shadow-xs tracking-tighter">
                 {totalExcludedCount}
               </span>
             )}

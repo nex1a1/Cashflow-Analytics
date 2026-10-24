@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, flush, act } from '@/test-utils/renderHook';
@@ -31,7 +33,7 @@ const CATS: Category[] = [
   { id: 'c_sal', name: 'เงินเดือน', icon: 'coins', type: 'income', allocation_type: 'want', cashflowGroup: 'gi' },
 ];
 
-let setters: Omit<UseTransactionDataProps, 'categories'> & Record<string, ReturnType<typeof vi.fn>>;
+let setters: Omit<UseTransactionDataProps, 'categories'> & Record<string, AnyMock>;
 const wrapper = ({ children }: { children: React.ReactNode }) => <ToastProvider>{children}</ToastProvider>;
 
 function mount(categories: Category[] = CATS) {
@@ -39,7 +41,7 @@ function mount(categories: Category[] = CATS) {
 }
 
 beforeEach(() => {
-  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as ReturnType<typeof vi.fn>).mockReset()));
+  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as AnyMock).mockReset()));
   api.transactionService.getAll.mockResolvedValue([]);
   api.transactionService.getCount.mockResolvedValue({ count: 0 });
   api.transactionService.getPeriods.mockResolvedValue([]);

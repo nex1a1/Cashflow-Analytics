@@ -57,4 +57,22 @@ describe('useBudgets', () => {
     await act(async () => { await result.current.setBudget('g1', null); });
     expect(api.save).toHaveBeenCalledWith('group_budgets', { g2: 20000 });
   });
+
+  it('a failed first load: saving retries the load and refuses to overwrite when it still fails', async () => {
+    api.getAll.mockRejectedValue(new Error('offline'));
+    const { default: useBudgets } = await import('../useBudgets');
+    const { result } = renderHook(() => useBudgets());
+    await flush();
+    expect(result.current.ready).toBe(true);
+
+    let ok = true;
+    await act(async () => { ok = await result.current.setBudget('g1', 100); });
+    expect(ok).toBe(false);
+    expect(api.save).not.toHaveBeenCalled();
+
+    api.getAll.mockResolvedValue({ group_budgets: { g2: 20000 } });
+    await act(async () => { ok = await result.current.setBudget('g1', 100); });
+    expect(ok).toBe(true);
+    expect(api.save).toHaveBeenCalledWith('group_budgets', { g2: 20000, g1: 10000 });
+  });
 });

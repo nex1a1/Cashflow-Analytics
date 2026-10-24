@@ -80,8 +80,8 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
   ];
 
   return (
-    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-sm bg-surface border-line-strong">
-      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-sm bg-surface-elevated/60"
+    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-xs bg-surface border-line-strong">
+      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-xs bg-surface-elevated/60"
         style={{ translate: viewMode === 'heatmap' ? '100% 0' : '0 0' }} />
       {modeButtons.map((btn) => {
         const Icon = btn.icon;
@@ -92,7 +92,7 @@ const TimelineModeToggle: React.FC<TimelineModeToggleProps> = ({ viewMode, setVi
             type="button"
             aria-pressed={isActive}
             onClick={() => setViewMode(btn.id)}
-            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
+            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? btn.color : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -127,7 +127,7 @@ const TimelineDayTypeLegend: React.FC<TimelineDayTypeLegendProps> = ({ dayTypeCo
           return (
             <div key={dt.id} className="flex items-center justify-center gap-1.5">
               <div
-                className="w-3 h-3 rounded-none shrink-0 shadow-sm border border-black/20"
+                className="w-3 h-3 rounded-none shrink-0 shadow-xs border border-black/20"
                 style={{ backgroundColor: dt.color || '#475569' }} 
               />
               <span className="text-xs font-bold text-slate-400">
@@ -197,7 +197,7 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
   if (!active) return null;
   return createPortal(
     <div
-      className="fixed pointer-events-none z-[99999]"
+      className="fixed pointer-events-none z-99999"
       style={{ left: x, top: Math.max(10, y - 6), transform: 'translate(-50%, -100%)' }}
     >
       <div className="flex flex-col items-center">
@@ -273,7 +273,7 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
       type="button"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
-      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink focus-visible:z-10 ${
+      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink focus-visible:z-10 ${
         isToday 
           ? 'ring-1 ring-accent-ink z-10' 
           : 'opacity-90 hover:opacity-100 hover:border-accent-ink hover:z-10'
@@ -305,8 +305,8 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
   ];
 
   return (
-    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-sm bg-surface border-line-strong">
-      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-sm bg-surface-elevated/60"
+    <div className="relative grid grid-cols-[1fr_1fr] p-1 rounded-none border shadow-xs bg-surface border-line-strong">
+      <span aria-hidden className="m-slide absolute inset-y-1 left-1 w-[calc((100%-8px)/2)] shadow-xs bg-surface-elevated/60"
         style={{ translate: layoutMode === 'calendar' ? '100% 0' : '0 0' }} />
       {layoutButtons.map((btn) => {
         const Icon = btn.icon;
@@ -317,7 +317,7 @@ const TimelineLayoutToggle: React.FC<TimelineLayoutToggleProps> = ({ layoutMode,
             type="button"
             aria-pressed={isActive}
             onClick={() => setLayoutMode(btn.id)}
-            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${
+            className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink ${
               isActive ? 'text-slate-100' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -519,7 +519,7 @@ export default function ActivityTimeline() {
         <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
           <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
             {calendarMonths.map(month => (
-              <div key={month.key} className="border border-line bg-canvas px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-sm">
+              <div key={month.key} className="border border-line bg-canvas px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-xs">
                 {/* Month Title */}
                 <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-line pb-1 w-full text-center flex items-center justify-center gap-1.5">
                   <div className="w-[3.5px] h-[3.5px] bg-accent rounded-none shrink-0" />
@@ -527,7 +527,7 @@ export default function ActivityTimeline() {
                 </div>
 
                 {/* Week Day Header (Consistent Thai abbreviations) */}
-                <div className="grid grid-cols-7 gap-[1px] mb-1 w-[146px]">
+                <div className="grid grid-cols-7 gap-px mb-1 w-[146px]">
                   {THAI_DAYS_MINI.map((day, i) => (
                     <div key={day} className={`w-[20px] text-center text-[11px] font-black leading-tight ${i === 0 || i === 6 ? 'text-weekend' : 'text-slate-400'}`}>
                       {day}
@@ -536,7 +536,7 @@ export default function ActivityTimeline() {
                 </div>
 
                 {/* Days Grid */}
-                <div className="grid grid-cols-7 gap-[1px] bg-surface-elevated/30 w-[146px]">
+                <div className="grid grid-cols-7 gap-px bg-surface-elevated/30 w-[146px]">
                   {month.gridCells.map((dateStr, idx) => {
                     if (!dateStr) {
                       return <div key={`empty-${month.key}-${idx}`} className="w-[20px] h-[20px] bg-transparent" />;
@@ -576,10 +576,10 @@ export default function ActivityTimeline() {
 
     return (
       <div className="w-full flex justify-[safe_center] overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <div className="flex w-max gap-x-[1px] pr-3">
+        <div className="flex w-max gap-x-px pr-3">
           {/* Day Labels (Sticky) */}
           <div 
-            className="flex flex-col gap-[1px] shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-line bg-surface select-none"
+            className="flex flex-col gap-px shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-line bg-surface select-none"
           >
             <div className="h-4" />
             {THAI_DAYS.map((day, i) => (
@@ -598,7 +598,7 @@ export default function ActivityTimeline() {
           {weeks.map((week, weekIndex) => {
             const weekKey = week.days.find(Boolean) || `wk-${weekIndex}`;
             return (
-              <div key={weekKey} className="flex flex-col gap-[1px] shrink-0">
+              <div key={weekKey} className="flex flex-col gap-px shrink-0">
                 {/* Month Label */}
                 <div className="h-4 relative flex items-end pb-1">
                   {week.monthLabel && (
@@ -667,7 +667,7 @@ export default function ActivityTimeline() {
   };
 
   return (
-    <div className="rounded-none border shadow-sm transition-colors bg-canvas border-line">
+    <div className="rounded-none border shadow-xs transition-colors bg-canvas border-line">
       {/* ─── HEADER (Editorial Style) ─── */}
       <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line w-full gap-4 relative z-20 flex-wrap">
         <div className="flex items-center gap-2">

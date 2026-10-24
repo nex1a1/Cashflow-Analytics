@@ -79,7 +79,7 @@ export const StrategicSubscriptionCard = memo(({
       overlayTitle="เจาะลึกรายเดือน"
       overlayBadge={<span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{statusBadge.label} · {subscriptionCount} รายการ</span>}
       overlayBody={(
-        <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
+        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
           {renderTopItemsOverlay(serviceEntries, 'ไม่มีข้อมูลรายเดือน', Repeat, 'text-purple-400', 'ยอดรวมทั้งหมด', subscriptionTotal)}
         </div>
       )}

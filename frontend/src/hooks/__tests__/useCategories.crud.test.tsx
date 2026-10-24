@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, flush, act } from '@/test-utils/renderHook';
 import useCategories from '../useCategories';
@@ -27,7 +29,7 @@ const deferred = <T,>() => {
 };
 
 beforeEach(() => {
-  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as ReturnType<typeof vi.fn>).mockReset()));
+  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as AnyMock).mockReset()));
   api.categoryService.getAll.mockResolvedValue([]);
   api.categoryService.save.mockResolvedValue({ success: true });
   api.categoryService.deleteById.mockResolvedValue({ success: true });

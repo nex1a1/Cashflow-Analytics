@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -61,7 +63,7 @@ const mount = (over: Partial<SettingsViewProps> = {}) => {
 const section = (title: string) => [...container!.querySelectorAll('h2')].find(h2 => h2.textContent!.startsWith(title))!.closest('div.overflow-hidden') as HTMLElement;
 const names = (title: string) => [...section(title).querySelectorAll<HTMLInputElement>('input[type="text"]')].map(i => i.value);
 const addBtn = (label: string) => [...container!.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent!.trim() === label)!;
-const call = (fnRef: unknown) => (fnRef as ReturnType<typeof vi.fn>);
+const call = (fnRef: unknown) => (fnRef as AnyMock);
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();

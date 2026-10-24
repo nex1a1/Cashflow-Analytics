@@ -193,7 +193,7 @@ export default function ExportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 bg-black/80 z-100 flex items-center justify-center p-3 sm:p-6 backdrop-blur-xs animate-in fade-in duration-150">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="ส่งออกข้อมูล" tabIndex={-1}
         className="relative shadow-2xl flex flex-col w-full max-w-[1400px] h-[86vh] min-h-[540px] max-h-[880px] border border-line-strong bg-canvas overflow-hidden"
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}

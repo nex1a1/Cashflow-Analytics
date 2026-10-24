@@ -20,7 +20,7 @@ const TabToggleRow = memo(function TabToggleRow({ icon, title, onText, offText, 
         <div className="text-xs font-bold text-ink-display">{title}</div>
         <div className="text-[11px] text-ink-body truncate">{enabled ? onText : offText}</div>
       </div>
-      <div role="group" aria-label={title} className="flex gap-[1px] bg-line border border-line shrink-0">
+      <div role="group" aria-label={title} className="flex gap-px bg-line border border-line shrink-0">
         <button type="button" role="switch" aria-checked={!enabled} aria-label={`ปิด${title}`} onClick={() => onChange(false)}
           className={`${SEG} ${!enabled ? 'bg-surface-elevated text-ink-display' : 'bg-surface text-ink-muted hover:text-ink-display'}`}>
           ปิด

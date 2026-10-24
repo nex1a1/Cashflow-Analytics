@@ -126,6 +126,11 @@ function accumulateFilteredExpense(txContext: FilteredExpenseCtx, ym: string, is
   state.chartTotal += amt;
 
   catMapData[catId] = (catMapData[catId] || 0) + amt;
+  // rows dated after today are "plan" (entered ahead): tracked on the side so the proportion view can tell them apart
+  if (isoDate > state.todayIso) {
+    state.catPlanMapData[catId] = (state.catPlanMapData[catId] || 0) + amt;
+    state.allocPlanTotals[aType] = (state.allocPlanTotals[aType] || 0) + amt;
+  }
   if (isWant) {
     wantCatMapData[catId] = (wantCatMapData[catId] || 0) + amt;
   }
@@ -420,7 +425,7 @@ function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: T
 }
 
 // catMapData already holds only rows that passed the dashboard filter; rows of a deleted category are left out
-function buildSortedCategories(catMapData: Record<string, number>, catMapLookup: CatLookup, chartTotal: number, categories: Category[]) {
+function buildSortedCategories(catMapData: Record<string, number>, catMapLookup: CatLookup, chartTotal: number, categories: Category[], catPlanMapData: Record<string, number> = {}) {
   return Object.entries(catMapData)
     .map(([catId, amount]) => {
       const catObj: Partial<Category> = catMapLookup[catId] || { name: 'อื่นๆ', icon: 'package', color: tc('ink-body'), order_index: 999 };
@@ -430,6 +435,7 @@ function buildSortedCategories(catMapData: Record<string, number>, catMapLookup:
         icon: catObj.icon || 'package',
         color: catObj.color || tc('ink-body'),
         amount: Number(amount),
+        planAmount: Math.min(Number(amount), catPlanMapData[catId] || 0),
         percentage: chartTotal > 0 ? ((Number(amount) / chartTotal) * 100).toFixed(1) : '0.0',
         cashflow_group_id: catObj.cashflowGroup || catObj.cashflow_group_id,
         order_index: catObj.order_index ?? 999
@@ -505,6 +511,7 @@ function buildGroupBreakdown(
 }
 
 function buildAllocationBreakdown(
+  allocPlanTotals: Record<string, number>,
   allocTotals: Record<string, number>,
   allocGroupsMap: Record<string, AllocGroupEntry[]>,
   totals: Totals,
@@ -527,9 +534,9 @@ function buildAllocationBreakdown(
   const totalSavingsActual = explicitSavings + unspentSurplus;
 
   const allocationItems = [
-    { id: 'needs', name: 'NEED', amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
-    { id: 'wants', name: 'WANT', amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
-    { id: 'savings', name: 'SAVE', amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: BUDGET_RULES.surplus.min, groups: allocGroupsMap.savings }
+    { id: 'needs', name: 'NEED', planAmount: allocPlanTotals.need || 0, amount: allocTotals.need, color: ALLOCATION_COLORS.need, icon: 'home', target: 50, groups: allocGroupsMap.need },
+    { id: 'wants', name: 'WANT', planAmount: allocPlanTotals.want || 0, amount: allocTotals.want, color: ALLOCATION_COLORS.want, icon: 'shopping-bag', target: 30, groups: allocGroupsMap.want },
+    { id: 'savings', name: 'SAVE', planAmount: 0, amount: Math.max(0, totalSavingsActual), color: ALLOCATION_COLORS.savings, icon: 'landmark', target: BUDGET_RULES.surplus.min, groups: allocGroupsMap.savings }
   ];
 
   let allocationTotal = totals.income;
@@ -808,6 +815,9 @@ function createInitialAnalyticsState() {
     monthlyAllocMap,
     cashflowMap,
     chartTotal: 0,
+    todayIso: localTodayIso(),
+    catPlanMapData: {} as Record<string, number>,
+    allocPlanTotals: {} as Record<string, number>,
   };
 
   return {
@@ -947,10 +957,10 @@ export function computeCoreAnalytics({
   const netCashflow = totals.income - totals.expense;
   const { numMonths, savingsRate } = calculateSavingsMetrics(totals, uniqueMonthsSet);
 
-  const sortedCats = buildSortedCategories(state.catMapData, catMapLookup, chartTotal, categories);
+  const sortedCats = buildSortedCategories(state.catMapData, catMapLookup, chartTotal, categories, state.stateRef.catPlanMapData);
 
   const { sortedGroups } = buildGroupBreakdown(state.catMapData, catMapLookup, state.groupTotals, cashflowGroups, numMonths, chartTotal);
-  const { sortedAllocation } = buildAllocationBreakdown(state.allocTotals, state.allocGroupsMap, totals, netCashflow);
+  const { sortedAllocation } = buildAllocationBreakdown(state.stateRef.allocPlanTotals, state.allocTotals, state.allocGroupsMap, totals, netCashflow);
 
   if (useBackendTotals && !windowMeta.isSingleMonthView) {
     applyBackendMonthlyCashflow(cashflowMap, summaryData);

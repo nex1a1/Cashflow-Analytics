@@ -105,7 +105,7 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
             placeholder="ค้นหาในตัวอย่าง..."
             value={previewSearch}
             onChange={e => setPreviewSearch(e.target.value)}
-            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent-ink rounded-none transition-colors"
+            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-hidden focus:border-accent-ink rounded-none transition-colors"
           />
           {previewSearch && (
             <button

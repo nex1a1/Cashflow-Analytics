@@ -23,7 +23,7 @@ const CategoryGrid = React.memo<CategoryGridProps>(({ items, hoveredIdx, onHover
     <div
       className={`[grid-area:1/1] grid grid-cols-5 gap-px bg-surface-elevated/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
       aria-hidden={!isActive}
-      {...(isActive ? {} : ({ inert: '' } as Record<string, string>))}
+      inert={!isActive}
     >
       {items.map((cat, idx) => (
         <CatItem key={cat.id || cat.name} cat={cat} idx={idx} isHovered={isActive && hoveredIdx === idx} onHover={onHover} />
@@ -54,7 +54,7 @@ const AllocationGrid = React.memo<AllocationGridProps>(({
     <div
       className={`[grid-area:1/1] grid grid-cols-3 gap-px bg-surface-elevated/50 ${isActive ? '' : 'invisible pointer-events-none'}`}
       aria-hidden={!isActive}
-      {...(isActive ? {} : ({ inert: '' } as Record<string, string>))}
+      inert={!isActive}
     >
       {items.map((item, idx) => (
         <AllocationItem

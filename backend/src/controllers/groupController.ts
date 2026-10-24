@@ -21,7 +21,7 @@ export const upsertGroup = (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const deleteGroup = (req: Request, res: Response, next: NextFunction) => {
+export const deleteGroup = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     groupService.delete(req.params.id);
     res.json({ success: true });

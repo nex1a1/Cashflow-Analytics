@@ -99,7 +99,7 @@ export default function MainLayout() {
       style={{ fontFamily: "'Inter', 'Bai Jamjuree', sans-serif" }}
     >
       <div
-        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-accent-ink shadow-xl rounded-none flex-grow flex flex-col overflow-y-auto no-scrollbar relative transition-colors duration-300 scroll-smooth bg-surface"
+        className="max-w-[98%] xl:max-w-[1400px] 2xl:max-w-[1600px] w-full mx-auto my-4 border-t-4 border-accent-ink shadow-xl rounded-none grow flex flex-col overflow-y-auto no-scrollbar relative transition-colors duration-300 scroll-smooth bg-surface"
       >
         <AppHeader
           dbStatus={dbStatus}
@@ -131,7 +131,7 @@ export default function MainLayout() {
         />
 
         {/* No z-index here: it would make this wrapper a stacking context and trap the fixed modals rendered inside views (DayDetailModal, AssetsModal) beneath the z-60 header */}
-        <div className="tab-stage p-6 relative flex-grow bg-canvas">
+        <div className="tab-stage p-6 relative grow bg-canvas">
           {activeTab === 'insights' && (
             <div key="insights">
               <DashboardView
@@ -233,7 +233,7 @@ export default function MainLayout() {
 
           {activeTab === 'kakeibo' && (
             <div key="kakeibo">
-              <KakeiboView />
+              <KakeiboView isLoading={isProcessing} />
             </div>
           )}
 

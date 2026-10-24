@@ -61,7 +61,7 @@ const TxRow = memo(({ tx, catObj, assetName, onDeleteClick }: TxRowProps) => {
       
       {/* Description & Category with Group Breadcrumb */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold break-words text-slate-100">
+        <p className="text-xs font-bold wrap-break-word text-slate-100">
           {tx.description || tx.category}
         </p>
 

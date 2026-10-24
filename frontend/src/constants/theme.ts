@@ -1,7 +1,7 @@
 // Single source of truth for app colors.
 // Ferrari Luxury Editorial dark theme: near-black #181818, deep cockpit #121212, Rosso Corsa #DA291C.
 // applyTheme() writes every entry to :root as RGB channels (`--canvas: 24 24 24`), which
-// tailwind.config.js consumes as rgb(var(--x) / <alpha-value>). JS that needs a real color
+// the @theme block in index.css consumes as rgb(var(--x)). JS that needs a real color
 // string (Chart.js, SVG attributes, hex math) reads the same values through tc().
 
 export const TOKENS = {

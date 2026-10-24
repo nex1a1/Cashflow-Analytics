@@ -155,14 +155,14 @@ export default function DailyForm({
     surfaceAlt: 'bg-surface-hover',
     border: 'border-line',
     textMuted: 'text-slate-400',
-    input: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30'}`,
-    inputError: `px-3 py-2 rounded-sm border outline-none focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas tint-danger text-ink-display focus:ring-danger/30'}`
+    input: `px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30'}`,
+    inputError: `px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas tint-danger text-ink-display focus:ring-danger/30'}`
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
       <div className={`relative flex p-0.5 rounded-none border bg-canvas border-line`}>
-        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-sm"
+        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-xs"
           style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
         <button type="button" onClick={() => handleTypeChange('expense')}
           className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'text-expense' : tokens.textMuted}`}>
@@ -179,7 +179,7 @@ export default function DailyForm({
       </div>
 
       <div className="flex gap-2">
-        <div className="flex-[3]">
+        <div className="flex-3">
           <CategorySelect
             value={selectedCatId}
             onChange={(val) => setValue('categoryId', val, { shouldValidate: true })}
@@ -229,7 +229,7 @@ export default function DailyForm({
       )}
 
       <div className="flex gap-2 items-start">
-        <div className="flex-[2]">
+        <div className="flex-2">
           <input type="text" {...register('description')} onKeyDown={handleKeyDown} placeholder="รายละเอียด..." className={tokens.input} />
         </div>
         <div className="flex-1 min-w-[110px]">
@@ -261,7 +261,7 @@ export default function DailyForm({
           ล้าง
         </button>
         <button type="submit" disabled={isProcessing}
-          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-sm border ${
+          className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-xs border ${
             formType === 'expense' 
               ? 'bg-accent hover:bg-accent-active border-accent-ink text-on-accent' 
               : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-600 text-canvas'

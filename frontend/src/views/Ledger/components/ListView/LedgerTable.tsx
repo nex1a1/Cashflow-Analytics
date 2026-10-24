@@ -20,7 +20,7 @@ const ADD_BUTTONS = [
 
 function AddRowButtons({ date, onAdd }: { date: string; onAdd: (date: string, type: 'income' | 'expense' | 'savings') => void }) {
   return (
-    <div className="flex items-center gap-[1px] bg-line opacity-0 group-hover:opacity-100 focus-within:opacity-100 shrink-0">
+    <div className="flex items-center gap-px bg-line opacity-0 group-hover:opacity-100 focus-within:opacity-100 shrink-0">
       {ADD_BUTTONS.map(({ type, label, Icon, cls }) => (
         <button key={type} type="button" onClick={() => onAdd(date, type)} title={`${label} (${date})`} aria-label={label}
           className={`w-5 h-5 flex items-center justify-center bg-surface rounded-none ${cls}`}>
@@ -208,7 +208,7 @@ export default function LedgerTable({
                 }
               }}
               onBlur={handlePageSubmit}
-              className="w-7 text-center bg-surface-hover text-ink-display font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-none leading-none select-all transition-colors"
+              className="w-7 text-center bg-surface-hover text-ink-display font-black border border-line focus:border-accent-ink focus:ring-1 focus:ring-accent/50 rounded-none text-[11px] py-0.5 outline-hidden leading-none select-all transition-colors"
             />
             <span className="text-ink-muted font-normal select-none">/</span>
             <span className="w-7 text-center text-ink-body font-extrabold select-none">{totalPages}</span>
@@ -397,7 +397,7 @@ export default function LedgerTable({
                   
                   <td className="px-3 py-1 group/input relative align-middle">
                     <Pencil className="w-3 h-3 absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-50 pointer-events-none z-10 text-ink-muted" />
-                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-none focus:ring-1 rounded-none py-1 px-2 pl-7 text-xs font-semibold text-ink-display hover:bg-surface hover:border-line-strong focus:border-accent-ink focus:bg-surface" placeholder="รายละเอียด..." />
+                    <EditableInput initialValue={item.description} onSave={val => handleUpdateTransaction(item.id, 'description', val)} className="w-full bg-transparent border border-transparent outline-hidden focus:ring-1 rounded-none py-0 leading-6 px-2 pl-7 text-xs font-semibold text-ink-display hover:bg-surface hover:border-line-strong focus:border-accent-ink focus:bg-surface" placeholder="รายละเอียด..." />
                   </td>
                   
                   <td className="px-3 py-1 relative align-middle">

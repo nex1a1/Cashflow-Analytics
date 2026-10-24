@@ -75,7 +75,7 @@ export const CashflowTableHeader = React.memo(({
           rowSpan={2}
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 font-bold border-l !border-l-line-strong border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+          className={`px-3 py-2.5 font-bold border-l border-l-line-strong! border-b ${thinBorder} align-middle sticky right-[250px] z-50 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-surface-elevated text-accent-ink' : 'text-accent-ink bg-surface'
           }`}
         >
@@ -141,7 +141,7 @@ export const CashflowTableHeader = React.memo(({
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายรับ ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
                     <CategoryGlyph
                       icon={g.icon}
@@ -227,7 +227,7 @@ export const CashflowTableHeader = React.memo(({
                     aria-expanded={isExpanded}
                     aria-label={`กลุ่มรายจ่าย ${g.name} - คลิกเพื่อ${isExpanded ? 'ยุบ' : 'ขยาย'}`}
                     onClick={() => toggleGroup(g.id)}
-                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
+                    className={`cursor-pointer inline-flex items-center gap-1 bg-transparent border-0 p-0 transition-opacity select-none hover:opacity-80 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink ${isExcluded ? 'opacity-40 grayscale' : ''}`}
                   >
                     <CategoryGlyph
                       icon={g.icon}

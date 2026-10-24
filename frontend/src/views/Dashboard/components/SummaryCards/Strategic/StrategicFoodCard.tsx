@@ -53,7 +53,7 @@ export const StrategicFoodCard = memo(({
         </span>
       }
       overlayBody={(
-        <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
+        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
           {foodTotal === 0 ? (
             <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
               ไม่มีข้อมูลค่าอาหารในช่วงนี้

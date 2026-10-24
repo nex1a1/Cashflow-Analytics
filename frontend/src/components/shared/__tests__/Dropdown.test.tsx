@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -8,7 +10,7 @@ import Dropdown, { DropdownProps } from '../Dropdown';
 const OPTS = [{ value: 'a', label: 'A' }, { value: 'b', label: 'B', color: '#ff0000' }, { value: 'c', label: 'C' }];
 let root: Root;
 let host: HTMLDivElement;
-let onChange: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
 let rect: Partial<DOMRect>;
 
 const render = (p: Partial<DropdownProps> = {}) =>

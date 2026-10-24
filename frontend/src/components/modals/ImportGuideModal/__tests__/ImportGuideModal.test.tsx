@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -320,7 +322,7 @@ describe('ImportGuideModal — copying the headers', () => {
   });
 
   it('says so, and does not claim success, when the browser refuses the clipboard', async () => {
-    (navigator.clipboard.writeText as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('denied'));
+    (navigator.clipboard.writeText as AnyMock).mockRejectedValue(new Error('denied'));
     await mount();
     click(copyBtn());
     await flush();

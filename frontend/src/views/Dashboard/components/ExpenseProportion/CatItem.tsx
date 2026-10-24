@@ -5,18 +5,24 @@ import { CatItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 
 import { tc, readable } from '@/constants/theme';
+import { withAlpha } from '../MainChart/futureZone';
 /**
  * Sub-component for individual category cell (Table-like HUD)
  */
-export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover }) => (
+export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover }) => {
+  const plan = Math.min(cat.planAmount || 0, cat.amount);
+  const pct = Number(cat.percentage) || 0;
+  // the bar is `pct` wide in total; the plan part is the tail of it
+  const planPct = cat.amount > 0 ? pct * (plan / cat.amount) : 0;
+  return (
   <div
     onMouseEnter={() => onHover(idx)}
     onMouseLeave={() => onHover(-1)}
     onFocus={() => onHover(idx)}
     onBlur={() => onHover(-1)}
     tabIndex={0}
-    aria-label={`${cat.name}: ${formatBaht(cat.amount)} (${cat.percentage}%)`}
-    className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
+    aria-label={`${cat.name}: ${formatBaht(cat.amount)} (${cat.percentage}%)${plan > 0 ? ` — แผนที่ยังไม่ถึง ${formatBaht(plan)}` : ''}`}
+    className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
       isHovered
         ? 'bg-surface-elevated/90 border-accent-ink z-10'
         : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
@@ -49,18 +55,32 @@ export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover 
     </div>
 
     <div className="relative mt-auto flex flex-col gap-1">
-      <div className="w-full rounded-none h-[4px] overflow-hidden bg-canvas">
-        <div
-          className="h-full"
-          style={{
-            width: `${cat.percentage}%`,
-            backgroundColor: cat.color,
-            opacity: 0.9
-          }}
-        />
+      <div className="flex items-center gap-1.5">
+        <div className="flex-1 min-w-0 flex rounded-none h-[8px] overflow-hidden bg-canvas">
+          <div
+            className="h-full shrink-0"
+            style={{ width: `${pct - planPct}%`, backgroundColor: cat.color, opacity: 0.9 }}
+          />
+          {planPct > 0 && (
+            <div
+              className="h-full shrink-0"
+              style={{
+                width: `${planPct}%`,
+                backgroundImage: `repeating-linear-gradient(135deg, ${cat.color} 0 2px, transparent 2px 5px)`,
+                backgroundColor: withAlpha(cat.color, 0.2),
+              }}
+            />
+          )}
+        </div>
+        {plan > 0 && (
+          <span className="shrink-0 text-[11px] leading-none tabular-nums text-ink-muted" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
+            แผน {formatMoney(plan)}
+          </span>
+        )}
       </div>
     </div>
   </div>
-));
+  );
+});
 
 CatItem.displayName = 'CatItem';

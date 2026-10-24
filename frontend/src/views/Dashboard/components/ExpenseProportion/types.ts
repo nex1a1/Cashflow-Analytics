@@ -10,6 +10,8 @@ export interface CategoryItemData {
   icon?: string;
   color: string;
   amount: number;
+  /** part of `amount` dated after today (entered ahead) */
+  planAmount?: number;
   percentage: string | number;
   cashflow_group_id?: string;
   order_index?: number;
@@ -28,6 +30,7 @@ export interface AllocationItemData {
   id: string;
   name: string;
   amount: number;
+  planAmount?: number;
   color: string;
   icon: string;
   target: number;
@@ -69,6 +72,7 @@ export interface ExpenseProportionHeaderProps {
   hasNoIncomeData?: boolean;
   evolutionEligible: boolean;
   evolutionLabel: string;
+  hasPlan?: boolean;
 }
 
 export interface ExpenseProportionChartProps {
@@ -80,6 +84,8 @@ export interface ExpenseProportionChartProps {
   isSliceHovered?: boolean;
   hoveredItem?: ProportionItem | null;
   activeItems: ProportionItem[];
+  /** sum of plan (future-dated) amounts across the active items */
+  planTotal?: number;
 }
 
 export interface ExpenseProportionGridProps {

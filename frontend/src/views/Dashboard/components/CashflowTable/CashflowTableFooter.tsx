@@ -175,7 +175,7 @@ export const CashflowTableFooter = React.memo(({
         <td
           onMouseEnter={() => setHoveredCol('trend')}
           onMouseLeave={() => setHoveredCol(null)}
-          className={`px-3 py-2.5 border-l !border-l-line-strong border-b ${thinBorder} text-accent-ink sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
+          className={`px-3 py-2.5 border-l border-l-line-strong! border-b ${thinBorder} text-accent-ink sticky right-[250px] z-30 shadow-[-6px_0_12px_-4px_rgb(0_0_0/calc(0.35*var(--shadow-k)))] transition-colors w-[155px] min-w-[155px] max-w-[155px] ${
             hoveredCol === 'trend' ? 'bg-surface-hover' : 'bg-canvas'
           }`}
         >

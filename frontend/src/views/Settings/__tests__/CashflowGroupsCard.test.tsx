@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -26,7 +28,7 @@ const nameInputs = () => [...container!.querySelectorAll<HTMLInputElement>('inpu
 const btn = (label: string) => container!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 const typeBtns = () => [...container!.querySelectorAll<HTMLButtonElement>('button[aria-label="ประเภทกลุ่ม"]')];
 const options = () => [...document.querySelectorAll<HTMLElement>('[role="option"]')];
-const calls = (fn: unknown) => (fn as ReturnType<typeof vi.fn>).mock.calls;
+const calls = (fn: unknown) => (fn as AnyMock).mock.calls;
 
 const INCOME = grp('g-pay', { name: 'เงินเดือน', type: 'income', allocation_type: null, order_index: 1 });
 const FOOD = grp('g-food', { name: 'ค่ากิน', type: 'expense', allocation_type: 'need', order_index: 2 });

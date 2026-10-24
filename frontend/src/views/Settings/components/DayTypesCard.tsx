@@ -70,7 +70,7 @@ const DayTypesCard = memo(({
                 requiredMessage="ต้องมีชื่อประเภทวัน"
                 value={dt.label}
                 onDebouncedChange={val => handleDayTypeConfigChange(dt.id, 'label', val)}
-                className="flex-1 min-w-0 px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted"
+                className="flex-1 min-w-0 px-2 py-1.5 border outline-hidden font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted"
                 placeholder="ชื่อประเภทวัน"
               />
 

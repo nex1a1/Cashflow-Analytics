@@ -56,7 +56,7 @@ const mount = (props: HarnessProps = {}) => {
 const btn = (text: string) => byText('button', text) as HTMLButtonElement;
 // The count badge is part of the button's text once a category filter is on, so match the start.
 const trigger = () => [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent!.startsWith('ตัวเลือกแสดงผล'))!;
-const panel = () => q('div.z-\\[45\\]');
+const panel = () => q('div.z-45');
 const chips = () => [...document.querySelectorAll<HTMLButtonElement>('div.grid.grid-cols-2 button')];
 const chip = (name: string) => chips().find(c => c.textContent?.trim() === name)!;
 const isOn = (c: HTMLElement) => c.querySelector('span.w-3.h-3 svg') !== null;
@@ -84,7 +84,7 @@ describe('MainChartFilterMenu — opening and closing', () => {
 
   it('the X in the panel closes it', () => {
     mount();
-    click(q('div.z-\\[45\\] div.border-b button'));
+    click(q('div.z-45 div.border-b button'));
     expect(probe.open).toBe(false);
     expect(panel()).toBeNull();
   });

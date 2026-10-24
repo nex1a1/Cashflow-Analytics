@@ -10,7 +10,7 @@ import { AssetSort, AssetSortKey, describePriceAge, plColor, sortAssets } from '
 import { assetColorMap, buildAllocation } from './portfolioCharts';
 import { tc } from '@/constants/theme';
 
-const TH = 'px-3 py-2 text-[11px] font-bold text-ink-muted text-right first:text-left first:sticky first:left-0 first:z-[2] first:bg-canvas';
+const TH = 'px-3 py-2 text-[11px] font-bold text-ink-muted text-right first:text-left first:sticky first:left-0 first:z-2 first:bg-canvas';
 const CELL = 'px-3 py-2.5 text-right font-mono tabular-nums text-[13px]';
 
 /** sort = คอลัมน์ที่เรียงได้ (เฉพาะค่าที่เทียบข้ามสินทรัพย์ได้ — จำนวนหน่วย/ราคาต่อหน่วยคนละหน่วยกัน จึงไม่เรียง) */

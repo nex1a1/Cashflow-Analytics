@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, createRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -193,7 +195,7 @@ describe('AppHeader — tabs', () => {
   it('a click activates the tab', () => {
     render({ filterPeriod: '2026' });
     for (const l of TAB_LABELS) click(tab(l));
-    expect((props.setActiveTab as ReturnType<typeof vi.fn>).mock.calls.map(c => c[0])).toEqual(['insights', 'calendar', 'ledger', 'portfolio', 'tax', 'settings']);
+    expect((props.setActiveTab as AnyMock).mock.calls.map(c => c[0])).toEqual(['insights', 'calendar', 'ledger', 'portfolio', 'tax', 'settings']);
   });
 
   it('only the active tab carries the active look (underline bar, white text)', () => {

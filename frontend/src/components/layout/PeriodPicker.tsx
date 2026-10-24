@@ -417,7 +417,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
-        <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
+        <span className="w-px h-5 bg-surface-elevated shrink-0" />
         <button
           ref={triggerRef}
           onClick={() => setOpen(o => !o)}
@@ -429,7 +429,7 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
           <span key={rawPeriod} className="m-in flex-1 text-left truncate">{getFilterLabel(rawPeriod)}</span>
           <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
-        <span className="w-[1px] h-5 bg-surface-elevated shrink-0" />
+        <span className="w-px h-5 bg-surface-elevated shrink-0" />
         <button
           onClick={() => stepMonth(1)}
           disabled={!isSingleMonth}

@@ -74,7 +74,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
 
   let dayBadgeCls = 'text-ink-display font-black';
   if (isToday) {
-    dayBadgeCls = 'bg-accent text-on-accent font-black shadow-sm';
+    dayBadgeCls = 'bg-accent text-on-accent font-black shadow-xs';
   } else if (isWeekend) {
     dayBadgeCls = 'text-weekend font-black';
   }
@@ -165,7 +165,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
       {/* ส่วนแสดงรายการธุรกรรม — ระหว่างโหลด (เลื่อนไปเดือนข้างหน้า) เป็นแท่ง skeleton แบบเดียวกับ CalendarSkeleton;
           key เปลี่ยนตอนข้อมูลมา → รายการ fade เข้าแทน skeleton */}
       {loading ? (
-        <div key="loading" className="flex flex-col flex-grow gap-1.5 p-2" aria-hidden="true">
+        <div key="loading" className="flex flex-col grow gap-1.5 p-2" aria-hidden="true">
           {dayNum % 3 === 0 && <div className="h-3 w-14 bg-surface-elevated animate-pulse" />}
           {dayNum % 4 === 0 && <div className="h-3 w-16 bg-surface-elevated animate-pulse" />}
           {dayNum % 5 === 0 && <div className="h-3 w-12 bg-surface-elevated animate-pulse" />}
@@ -173,7 +173,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
       ) : (
       <div
         key="rows"
-        className="flex flex-col flex-grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none m-fade-in"
+        className="flex flex-col grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none m-fade-in"
       >
         {(cellData.exp > 0 || cellData.inc > 0 || hiddenExpCount > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-line/20 pb-0.5">
@@ -280,7 +280,7 @@ function MoreButton({ count, tone, open, onOpen, triggerRef }: {
   tone: 'expense' | 'income';
   open: boolean;
   onOpen: () => void;
-  triggerRef?: React.RefObject<HTMLButtonElement>;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <button

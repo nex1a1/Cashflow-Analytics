@@ -24,7 +24,8 @@ const FixedCostPicker = memo(function FixedCostPicker({ rows, range, autoCategor
   autoCategoryIds: ReadonlySet<string>;
   catById: Map<string, Category>;
   choice: FixedChoice;
-  onChange: (next: FixedChoice) => void;
+  /** รับฟังก์ชันจากค่าล่าสุด ไม่ใช่ค่าตอน render — ติ๊กติดกันจะไม่ทับกัน */
+  onChange: (update: (current: FixedChoice) => FixedChoice) => void;
 }) {
   const groups = useMemo(() => {
     const byCat = new Map<string, { id: string; name: string; total: number; items: Map<string, { key: string; label: string; total: number }> }>();
@@ -39,8 +40,21 @@ const FixedCostPicker = memo(function FixedCostPicker({ rows, range, autoCategor
       cat.items.set(key, item);
       byCat.set(t.category_id, cat);
     }
+    // ที่เลือกไว้แต่ช่วงนี้ไม่มีแถว (เช่น บิลเดือนหน้ายังไม่ลง) ต้องยังเห็นและเอาออกได้
+    const ensure = (id: string) => {
+      let cat = byCat.get(id);
+      if (!cat) { cat = { id, name: catById.get(id)?.name ?? '(หมวดที่ไม่พบ)', total: 0, items: new Map() }; byCat.set(id, cat); }
+      return cat;
+    };
+    for (const id of choice.categories) if (!autoCategoryIds.has(id)) ensure(id);
+    for (const key of choice.items) {
+      const id = key.slice(0, key.indexOf('|'));
+      if (!id || autoCategoryIds.has(id)) continue;
+      const cat = ensure(id);
+      if (!cat.items.has(key)) cat.items.set(key, { key, label: key.slice(id.length + 1) || '(ไม่มีชื่อรายการ)', total: 0 });
+    }
     return [...byCat.values()].sort((a, b) => b.total - a.total);
-  }, [rows, range.start, range.end, autoCategoryIds]);
+  }, [rows, range.start, range.end, autoCategoryIds, catById, choice]);
   // หุบทุกหมวดเป็นค่าเริ่มต้น กดชื่อหมวดเพื่อดูรายการ
   const [open, setOpen] = useState<Set<string>>(() => new Set());
 
@@ -63,7 +77,7 @@ const FixedCostPicker = memo(function FixedCostPicker({ rows, range, autoCategor
                   type="checkbox"
                   aria-label={`${g.name} ทั้งหมวด`}
                   checked={whole}
-                  onChange={() => onChange({ ...choice, categories: toggle(choice.categories, g.id) })}
+                  onChange={() => onChange((c) => ({ ...c, categories: toggle(c.categories, g.id) }))}
                 />
                 <button
                   onClick={() => setOpen((prev) => { const next = new Set(prev); if (next.has(g.id)) next.delete(g.id); else next.add(g.id); return next; })}
@@ -89,9 +103,9 @@ const FixedCostPicker = memo(function FixedCostPicker({ rows, range, autoCategor
                         className={`flex items-center gap-2 min-w-0 px-2 py-0.5 text-[11px] cursor-pointer hover:bg-surface-hover ${on ? 'font-bold text-ink-display' : 'text-ink-body'}`}
                         style={on ? { backgroundColor: tint(12) } : undefined}
                       >
-                        <input type="checkbox" checked={on} onChange={() => onChange({ ...choice, items: toggle(choice.items, it.key) })} />
+                        <input type="checkbox" checked={on} onChange={() => onChange((c) => ({ ...c, items: toggle(c.items, it.key) }))} />
                         <span className="min-w-0 truncate" title={it.label}>{it.label}</span>
-                        <span className="ml-auto shrink-0 font-mono tabular-nums">{formatBaht(it.total / 100)}</span>
+                        <span className="ml-auto shrink-0 font-mono tabular-nums">{it.total ? formatBaht(it.total / 100) : 'ไม่มีในช่วงนี้'}</span>
                       </label>
                     </li>
                     );

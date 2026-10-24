@@ -20,7 +20,7 @@ export const upsertAsset = (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const deleteAsset = (req: Request, res: Response, next: NextFunction) => {
+export const deleteAsset = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     assetService.delete(req.params.id);
     res.json({ success: true });
@@ -29,7 +29,7 @@ export const deleteAsset = (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const setManualPrice = (req: Request, res: Response, next: NextFunction) => {
+export const setManualPrice = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     assetService.setManualPrice(req.params.id, manualPriceSchema.parse(req.body).price);
     res.json({ success: true });

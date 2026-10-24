@@ -40,7 +40,7 @@ export interface CalendarBlockProps {
   rowsPending?: boolean;
 }
 
-const BLANK_CELL = 'min-h-[120px] 2xl:min-h-[145px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40';
+const BLANK_CELL = 'min-h-[120px] 2xl:min-h-[145px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-size-[10px_10px] opacity-40';
 
 const CalendarBlock = React.memo(function CalendarBlock({
   dates,
@@ -123,7 +123,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
 
       {/* 2. Calendar Grid */}
       <div className="rounded-none border border-line overflow-hidden flex-1 flex flex-col">
-        <div className="grid grid-cols-7 gap-[1px] bg-line border-b border-line">
+        <div className="grid grid-cols-7 gap-px bg-line border-b border-line">
           {DAY_OF_WEEK_LABELS.map((label, i) => (
             <div
               key={label}
@@ -136,7 +136,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-[1px] bg-line flex-1">
+        <div className="grid grid-cols-7 gap-px bg-line flex-1">
           {prefixBlankKeys.map(blankKey => (
             <div key={blankKey} className={BLANK_CELL} />
           ))}

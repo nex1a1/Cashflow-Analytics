@@ -317,7 +317,7 @@ export default function BatchAddModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3 sm:p-6">
+    <div className="fixed inset-0 bg-black/80 z-100 flex items-center justify-center p-3 sm:p-6">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="สรุปค่าใช้จ่ายประจำวัน" tabIndex={-1} 
         className={`rounded-none shadow-2xl shadow-black/80 flex flex-col w-full max-w-[1460px] h-[82vh] min-h-[540px] max-h-[820px] overflow-hidden border ${tokens.surface}`}
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
@@ -454,7 +454,7 @@ export default function BatchAddModal({
               type="button" 
               onClick={submitBatch} 
               disabled={pendingItems.length === 0 || isProcessing}
-              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-canvas rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-sm transition-all active:scale-95 bg-income hover:bg-income/90 border border-income"
+              className="flex-1 sm:flex-none px-5 py-2 disabled:opacity-50 text-canvas rounded-none font-bold text-xs flex justify-center items-center gap-2 shadow-xs transition-all active:scale-95 bg-income hover:bg-income/90 border border-income"
             >
               {isProcessing ? <Zap className="w-4 h-4 animate-pulse" /> : <CheckCircle className="w-4 h-4" />}
               {isProcessing ? 'กำลังบันทึก...' : 'บันทึกทั้งหมด'}

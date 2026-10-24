@@ -21,7 +21,7 @@ export const upsertCategory = (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const deleteCategory = (req: Request, res: Response, next: NextFunction) => {
+export const deleteCategory = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     categoryService.delete(req.params.id);
     res.json({ success: true });

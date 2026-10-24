@@ -75,11 +75,11 @@ describe('LedgerHeaderActions', () => {
 
   it('shows an amber dot when the filters of the CURRENT view are on, not the other view\'s', () => {
     actions({ viewMode: 'list', isFilterActive: true, isHorizontalFilterActive: false });
-    expect(filterBtn().className).toContain('!border-warn');
+    expect(filterBtn().className).toContain('border-warn!');
     expect(filterBtn().querySelector('.bg-warn')).not.toBeNull();
     act(() => root!.unmount()); container!.remove();
     actions({ viewMode: 'horizontal', isFilterActive: true, isHorizontalFilterActive: false });
-    expect(filterBtn().className).not.toContain('!border-warn');
+    expect(filterBtn().className).not.toContain('border-warn!');
     expect(filterBtn().querySelector('.bg-warn')).toBeNull();
   });
 
@@ -215,10 +215,10 @@ describe('LedgerGroupBreakdownSection', () => {
 
   it('a divider only when both income and savings are shown', () => {
     section(['i1'], ['s1'], []);
-    expect(container!.querySelector('.w-\\[1px\\]')).not.toBeNull();
+    expect(container!.querySelector('.w-px')).not.toBeNull();
     act(() => root!.unmount()); container!.remove();
     section(['i1'], [], ['e1']);
-    expect(container!.querySelector('.w-\\[1px\\]')).toBeNull();
+    expect(container!.querySelector('.w-px')).toBeNull();
   });
 
   it('expense-only still renders', () => {

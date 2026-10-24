@@ -57,7 +57,7 @@ const frontendDist = process.env.PUBLIC_DIR || path.join(__dirname, '../frontend
 if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'))) {
   console.log(`Serving Web Client from: ${frontendDist}`);
   app.use(express.static(frontendDist));
-  app.get('*', (req, res, next) => {
+  app.get('/{*splat}', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(frontendDist, 'index.html'));
   });

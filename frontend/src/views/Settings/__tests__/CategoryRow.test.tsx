@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -91,7 +93,7 @@ describe('CategoryRow ordering', () => {
     mount();
     click(btn('เลื่อน กาแฟ ขึ้น'));
     click(btn('เลื่อน กาแฟ ลง'));
-    expect((props.onMove as ReturnType<typeof vi.fn>).mock.calls).toEqual([['c1', 'UP'], ['c1', 'DOWN']]);
+    expect((props.onMove as AnyMock).mock.calls).toEqual([['c1', 'UP'], ['c1', 'DOWN']]);
   });
 
   it('the first row cannot go up, the last cannot go down', () => {

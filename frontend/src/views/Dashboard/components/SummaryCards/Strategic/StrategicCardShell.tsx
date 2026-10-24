@@ -19,7 +19,7 @@ export const StrategicCardShell = memo(({
   return (
     <div
       className={`group relative overflow-hidden p-3 flex flex-col justify-between h-full min-h-[140px] bg-canvas ${hoverBgClass} transition-none border-l ${borderColorClass} ${
-        isInteractive ? 'cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white' : ''
+        isInteractive ? 'cursor-help focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white' : ''
       }`}
       tabIndex={isInteractive ? 0 : undefined}
       role={isInteractive ? 'button' : undefined}

@@ -238,7 +238,7 @@ export default function DayTypeSelect({
         disabled={disabled}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className={`day-type-badge ${pillDimensions} font-black rounded-pill cursor-pointer outline-none border inline-flex items-center justify-center text-center leading-none select-none transition-all hover:brightness-125 hover:border-opacity-60 active:scale-95 ${className}`}
+        className={`day-type-badge ${pillDimensions} font-black rounded-pill cursor-pointer outline-hidden border inline-flex items-center justify-center text-center leading-none select-none transition-all hover:brightness-125 hover:border-opacity-60 active:scale-95 ${className}`}
         style={{
           backgroundColor: badgeBg,
           borderColor: badgeBorder,
@@ -256,7 +256,7 @@ export default function DayTypeSelect({
             ref={popoverRef}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="fixed z-[9999] bg-surface border border-line shadow-[0_16px_40px_rgb(0_0_0/calc(0.95*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
+            className="fixed z-9999 bg-surface border border-line shadow-[0_16px_40px_rgb(0_0_0/calc(0.95*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -267,7 +267,7 @@ export default function DayTypeSelect({
             }}
           >
             {/* LASER HAIRLINE ACCENT */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-85" />
+            <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-85" />
 
             {/* HEADER: DATE CONTEXT */}
             <div className="px-2.5 py-1.5 border-b border-line bg-canvas flex items-center justify-between shrink-0">
@@ -333,7 +333,7 @@ export default function DayTypeSelect({
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {/* Colored Indicator Bar */}
                       <span
-                        className="w-1.5 h-3.5 rounded-full shrink-0 shadow-sm"
+                        className="w-1.5 h-3.5 rounded-full shrink-0 shadow-xs"
                         style={{ backgroundColor: dtColor }}
                       />
                       {/* Day Type Label */}

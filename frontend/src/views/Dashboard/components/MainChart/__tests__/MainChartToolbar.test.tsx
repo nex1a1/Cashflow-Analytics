@@ -194,7 +194,7 @@ describe('ToolbarAllocationSelector (NEED / WANT)', () => {
     expect([btn('ทั้งหมด'), btn('เฉพาะ WANT'), btn('เฉพาะ NEED')].every(b => b.className.includes('bg-canvas'))).toBe(true);
   });
 
-  it('the coloured border ring is only set on the active filter', () => {
+  it('the coloured border ring-3 is only set on the active filter', () => {
     sel(true, false);
     expect(btn('เฉพาะ WANT').style.getPropertyValue('--tint-border-color')).not.toBe('');
     expect(btn('เฉพาะ NEED').style.getPropertyValue('--tint-border-color')).toBe('');

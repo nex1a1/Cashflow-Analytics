@@ -224,7 +224,7 @@ describe('TopTransactions — row details', () => {
   it('the bar behind each row is relative to the biggest, with a small floor so a tiny row is still visible', () => {
     set({ transactions: [tx('big', 1000, 'c-food'), tx('tiny', 1, 'c-food')] });
     mount();
-    const widths = [...document.querySelectorAll<HTMLElement>('div.bg-gradient-to-r')].map(d => d.style.width);
+    const widths = [...document.querySelectorAll<HTMLElement>('div.bg-linear-to-r')].map(d => d.style.width);
     expect(widths[0]).toBe('100%');
     expect(parseFloat(widths[1])).toBeCloseTo(4.096, 2);
   });

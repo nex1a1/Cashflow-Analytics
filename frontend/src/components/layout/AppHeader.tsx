@@ -27,7 +27,7 @@ export interface AppHeaderProps {
   onClickExport: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClickImportGuide: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const TABS = [
@@ -50,7 +50,7 @@ function DataActions({ isProcessing, onExport, onImport, onGuide }: {
   onGuide: () => void;
 }) {
   return (
-    <div role="group" aria-label="ข้อมูล" className="flex gap-[1px] bg-line border border-line">
+    <div role="group" aria-label="ข้อมูล" className="flex gap-px bg-line border border-line">
       <button type="button" className={DATA_BTN} onClick={onExport} title="ส่งออก CSV / สำรองข้อมูล">
         <Download className="w-3.5 h-3.5 text-ink-muted" />
         <span>ส่งออก</span>
@@ -90,7 +90,7 @@ export default function AppHeader({
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
   return (
-    <div className="flex flex-col relative z-[60]">
+    <div className="flex flex-col relative z-60">
       {/* ── Top Header (Logo & Global Actions - Tactical HUD) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-6 py-4 border-b border-line bg-canvas text-slate-300">
         

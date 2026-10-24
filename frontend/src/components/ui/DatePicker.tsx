@@ -57,7 +57,7 @@ function resolveDayStyle({
     if (hasPrev && hasNext) {
       return { dayStyle: 'bg-accent/35 text-white font-bold border-y border-accent/60 shadow-none', isDimmed: false };
     }
-    return { dayStyle: 'bg-accent text-on-accent font-black shadow-sm ring-1 ring-accent-ink', isDimmed: false };
+    return { dayStyle: 'bg-accent text-on-accent font-black shadow-xs ring-1 ring-accent-ink', isDimmed: false };
   }
   if (value === 'WEEKDAY' && draftDatesSize === 0) {
     return weekend
@@ -262,7 +262,7 @@ function DatePickerTrigger({
       onClick={() => setOpen(!open)}
       className={
         className ||
-        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink'
+        'w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-hidden bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink'
       }
     >
       <span className={`${value && value !== 'ALL' ? textMain : textMuted} whitespace-nowrap truncate`}>
@@ -528,7 +528,7 @@ export default function DatePicker({
     : 'top-[calc(100%+6px)]';
 
   return (
-    <div ref={containerRef} className={`relative ${open ? 'z-[60]' : 'z-20'} w-full`}>
+    <div ref={containerRef} className={`relative ${open ? 'z-60' : 'z-20'} w-full`}>
       {customTrigger ? (
         customTrigger({
           open,
@@ -554,7 +554,7 @@ export default function DatePicker({
         <div
           className={`absolute ${verticalPositionClass} ${
             resolvedAlign === 'right' ? 'right-0' : 'left-0'
-          } z-[999] rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}
+          } z-999 rounded-none border shadow-2xl p-3 w-80 select-none ${surface} ${border}`}
         >
           {allowAll && (
             <div className="flex rounded-none p-0.5 mb-2.5 border bg-surface border-line">
@@ -563,7 +563,7 @@ export default function DatePicker({
                 onClick={() => handleModeSelect('ALL')}
                 className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none ${
                   (value === 'ALL' || !value) && draftDates.size === 0
-                    ? 'bg-surface-elevated text-white font-extrabold shadow-sm'
+                    ? 'bg-surface-elevated text-white font-extrabold shadow-xs'
                     : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
@@ -574,7 +574,7 @@ export default function DatePicker({
                 onClick={() => handleModeSelect('WEEKDAY')}
                 className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
                   value === 'WEEKDAY'
-                    ? 'bg-blue-950/60 border border-blue-500/50 text-blue-400 font-extrabold shadow-sm'
+                    ? 'bg-blue-950/60 border border-blue-500/50 text-blue-400 font-extrabold shadow-xs'
                     : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
@@ -586,7 +586,7 @@ export default function DatePicker({
                 onClick={() => handleModeSelect('WEEKEND')}
                 className={`flex-1 py-1 text-[11px] font-black uppercase transition-all rounded-none flex items-center justify-center gap-1 ${
                   value === 'WEEKEND'
-                    ? 'bg-amber-950/60 border border-amber-500/50 text-amber-400 font-extrabold shadow-sm'
+                    ? 'bg-amber-950/60 border border-amber-500/50 text-amber-400 font-extrabold shadow-xs'
                     : 'text-ink-body hover:text-slate-200 hover:bg-surface-elevated/30'
                 }`}
               >
@@ -781,7 +781,7 @@ export default function DatePicker({
                 type="button"
                 onClick={handleConfirm}
                 disabled={draftDates.size === 0}
-                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent-ink bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-sm font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent"
+                className="flex items-center gap-1 px-3 py-1 text-[11px] font-black uppercase rounded-none border border-accent-ink bg-accent text-on-accent hover:bg-accent-active transition-colors shadow-xs font-mono cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent"
                 title={draftDates.size === 0 ? 'กรุณาเลือกวันที่ก่อนยืนยัน' : undefined}
               >
                 <Check className="w-3 h-3" />

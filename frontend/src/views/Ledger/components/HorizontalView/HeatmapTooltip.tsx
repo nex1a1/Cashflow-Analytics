@@ -39,7 +39,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, pinned = false, o
   return createPortal(
     <div
       ref={panelRef}
-      className={`fixed z-[99999] ${pinned ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={`fixed z-99999 ${pinned ? 'pointer-events-auto' : 'pointer-events-none'}`}
       {...(pinned ? { role: 'dialog', 'aria-label': ` ` } : {})}
       style={{ 
         left: `${tooltip.x}px`,

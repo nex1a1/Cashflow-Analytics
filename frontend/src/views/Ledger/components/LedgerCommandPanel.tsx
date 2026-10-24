@@ -165,7 +165,7 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
 
           {hasBothIncomeAndSavings && (
             <div className="flex items-center justify-center px-2 self-stretch shrink-0">
-              <div className="w-[1px] h-full min-h-[48px] bg-line" />
+              <div className="w-px h-full min-h-[48px] bg-line" />
             </div>
           )}
 

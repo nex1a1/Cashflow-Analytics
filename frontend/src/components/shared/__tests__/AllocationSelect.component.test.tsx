@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -6,8 +8,8 @@ import AllocationSelect, { AllocationSelectProps } from '../AllocationSelect';
 import { click } from '@/test-utils/dom';
 
 let root: Root;
-let onChange: ReturnType<typeof vi.fn>;
-let parentClick: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
+let parentClick: AnyMock;
 
 const render = (p: Partial<AllocationSelectProps> = {}) =>
   act(() => root.render(<div onClick={parentClick}><AllocationSelect onChange={onChange} {...p} /></div>));

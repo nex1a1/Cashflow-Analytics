@@ -209,7 +209,7 @@ export default function HorizontalFilterBar({
       </div>
 
       {/* 3-Column Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_320px_minmax(320px,1.5fr)] gap-[1px] bg-surface-elevated/50 relative z-20">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_320px_minmax(320px,1.5fr)] gap-px bg-surface-elevated/50 relative z-20">
         
         {/* COLUMN 1: SCOPE & DISPLAY OPTIONS */}
         <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
@@ -252,7 +252,7 @@ export default function HorizontalFilterBar({
                 <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
                   includeFixedCosts ? 'bg-warn border-warn text-canvas' : 'border-line-strong bg-canvas'
                 }`}>
-                  {includeFixedCosts && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  {includeFixedCosts && <Check className="w-2.5 h-2.5 stroke-3" />}
                 </div>
               </button>
 
@@ -273,7 +273,7 @@ export default function HorizontalFilterBar({
                 <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
                   hideZeroDays ? 'bg-accent border-accent-ink text-on-accent' : 'border-line-strong bg-canvas'
                 }`}>
-                  {hideZeroDays && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  {hideZeroDays && <Check className="w-2.5 h-2.5 stroke-3" />}
                 </div>
               </button>
             </div>

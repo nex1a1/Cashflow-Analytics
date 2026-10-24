@@ -321,7 +321,7 @@ export default function CategorySelect({
           disabled={disabled}
           onClick={handleOpen}
           onKeyDown={handleKeyDown}
-          className={`category-pill-trigger relative flex items-center justify-between rounded-sm border transition-all h-7 w-full overflow-hidden text-left cursor-pointer outline-none focus:ring-1 focus:ring-accent/50 ${className}`}
+          className={`category-pill-trigger relative flex items-center justify-between rounded-sm border transition-all h-7 w-full overflow-hidden text-left cursor-pointer outline-hidden focus:ring-1 focus:ring-accent/50 ${className}`}
           style={{
             backgroundColor: pillStyles.bg,
             borderColor: pillStyles.border,
@@ -357,7 +357,7 @@ export default function CategorySelect({
           disabled={disabled}
           onClick={handleOpen}
           onKeyDown={handleKeyDown}
-          className={`w-full flex items-center justify-between px-3 rounded-sm border outline-none font-bold text-xs transition-colors cursor-pointer select-none ${
+          className={`w-full flex items-center justify-between px-3 rounded-sm border outline-hidden font-bold text-xs transition-colors cursor-pointer select-none ${
             size === 'sm' ? 'h-8 py-1' : 'h-9 py-2'
           } ${
             error
@@ -402,7 +402,7 @@ export default function CategorySelect({
         createPortal(
           <div
             ref={popoverRef}
-            className="fixed z-[9999] bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-9999 bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
             style={{
               ...(coords.openUpwards
                 ? { bottom: `${coords.bottom}px` }
@@ -413,7 +413,7 @@ export default function CategorySelect({
             }}
           >
             {/* LASER HAIRLINE ACCENT */}
-            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
+            <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
             {/* ZONE 1: SEAMLESS COMMAND SEARCH */}
             <div className="px-2.5 py-1.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
@@ -428,7 +428,7 @@ export default function CategorySelect({
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="พิมพ์ค้นหาหมวดหมู่ หรือ กลุ่ม..."
-                className="w-full bg-transparent border-none p-0 text-xs text-white placeholder-neutral-500 outline-none focus:ring-0 font-medium"
+                className="w-full bg-transparent border-none p-0 text-xs text-white placeholder-neutral-500 outline-hidden focus:ring-0 font-medium"
               />
               {searchQuery && (
                 <button
@@ -519,7 +519,7 @@ export default function CategorySelect({
                               onMouseEnter={() => setActiveIndex(currentFlatIndex)}
                               className={`w-full flex items-center justify-between px-2 py-1 text-left rounded-sm transition-colors cursor-pointer group ${
                                 isActive
-                                  ? 'bg-neutral-800 text-white ring-1 ring-neutral-700/80 shadow-sm'
+                                  ? 'bg-neutral-800 text-white ring-1 ring-neutral-700/80 shadow-xs'
                                   : isSelected
                                   ? 'bg-neutral-800/60 text-white'
                                   : 'hover:bg-neutral-800/40 text-neutral-200'

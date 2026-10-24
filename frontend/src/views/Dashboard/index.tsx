@@ -13,6 +13,7 @@ import ActivityTimeline from './components/ActivityTimeline';
 import CashflowTable from './components/CashflowTable';
 import PortfolioSnapshot from './components/PortfolioSnapshot';
 import BudgetEnvelopes from './components/BudgetEnvelopes';
+import { effectiveChartGroupBy, isDailyChartAllowed } from '@/utils/chartGrouping';
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '../../types';
 
 export interface DashboardViewProps {
@@ -54,10 +55,15 @@ export default function DashboardView(props: DashboardViewProps) {
   const showSkeleton = isLoading && slowLoad;
 
   // Memoize the context value to avoid recreating it on every single render
+  const dailyChartAllowed = isDailyChartAllowed(props.filterPeriod);
   const dashboardContextValue = useMemo(() => ({
     ...props,
+    // a saved "daily" choice waits (monthly shown) while the period is too long for it
+    chartGroupBy: effectiveChartGroupBy(props.chartGroupBy, props.filterPeriod),
+    dailyChartAllowed,
     showSkeleton
   }), [
+    dailyChartAllowed,
     props.transactions,
     props.categories,
     props.cashflowGroups,

@@ -40,7 +40,7 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
       overlayTitle="4 หมวดตามใจที่จ่ายมากสุด"
       overlayBadge={<span className="text-amber-400 font-extrabold text-[11px] border border-amber-500/30 bg-amber-950/40 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">4 อันดับแรก</span>}
       overlayBody={(
-        <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
+        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
           {renderTopItemsOverlay(categoryEntries, 'ไม่มีรายจ่ายตามใจ', Zap, 'text-amber-400', 'รวมรายจ่ายตามใจ', variableTotal)}
         </div>
       )}

@@ -28,6 +28,8 @@ export interface DashboardContextValue {
   setDashboardCategory: (val: any) => void;
   chartGroupBy: string;
   setChartGroupBy: (val: any) => void;
+  /** false when the period is too long for the รายวัน chart (chartGroupBy is then already 'monthly') */
+  dailyChartAllowed?: boolean;
   topXLimit: number;
   setTopXLimit: (val: any) => void;
   analytics: DashboardAnalyticsResult;

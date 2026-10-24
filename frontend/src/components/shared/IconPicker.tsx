@@ -122,7 +122,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className="w-8 h-8 flex items-center justify-center border shrink-0 rounded-sm bg-surface border-line-strong hover:border-accent/50 transition-colors outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+        className="w-8 h-8 flex items-center justify-center border shrink-0 rounded-sm bg-surface border-line-strong hover:border-accent/50 transition-colors outline-hidden focus:border-white focus:ring-1 focus:ring-white/20"
         title="เลือกไอคอน"
         aria-label="เลือกไอคอน"
       >
@@ -132,11 +132,11 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
       {open && createPortal(
         <div
           ref={paletteRef}
-          className="fixed z-[9999] shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-9999 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] border bg-canvas border-neutral-800/90 rounded-md w-[580px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           style={{ top: pos.top, left: pos.left }}
         >
           {/* Laser Hairline Accent */}
-          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
+          <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
           <div className="p-3.5 flex flex-col gap-2.5">
             {/* 1. Search Bar */}
@@ -148,7 +148,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="ค้นหาไอคอน (เช่น กาแฟ, รถ, สบู่, ครอบครัว, อั่งเปา, ช้อปปิ้ง)..."
-                className="w-full bg-transparent text-xs text-white placeholder-neutral-500 outline-none font-medium"
+                className="w-full bg-transparent text-xs text-white placeholder-neutral-500 outline-hidden font-medium"
               />
               {searchTerm && (
                 <button
@@ -177,7 +177,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-3 py-1 text-xs whitespace-nowrap transition-all flex items-center gap-1.5 border shrink-0 rounded-pill cursor-pointer ${
                       isSelected
-                        ? 'bg-neutral-100 text-neutral-950 font-bold border-white shadow-sm'
+                        ? 'bg-neutral-100 text-neutral-950 font-bold border-white shadow-xs'
                         : 'bg-neutral-900/80 text-neutral-400 hover:text-white hover:bg-neutral-800 border-neutral-800/80'
                     }`}
                   >
@@ -224,7 +224,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                       onMouseEnter={() => setHoveredIcon({ key, label, category: selectedCategory, keywords: '', Icon })}
                       onMouseLeave={() => setHoveredIcon(null)}
                       title={label}
-                      className={`aspect-square w-full flex items-center justify-center rounded-none transition-all cursor-pointer relative focus:outline-none ${
+                      className={`aspect-square w-full flex items-center justify-center rounded-none transition-all cursor-pointer relative focus:outline-hidden ${
                         isSelected
                           ? 'bg-accent/20 ring-1 ring-accent-ink z-10 text-white'
                           : 'bg-neutral-900/70 text-neutral-400 hover:text-white hover:bg-neutral-800 hover:scale-105'
@@ -283,7 +283,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-4 py-1.5 bg-neutral-200 hover:bg-white text-neutral-950 text-xs font-bold rounded-sm transition-all cursor-pointer shadow-sm"
+                  className="px-4 py-1.5 bg-neutral-200 hover:bg-white text-neutral-950 text-xs font-bold rounded-sm transition-all cursor-pointer shadow-xs"
                 >
                   ปิด
                 </button>

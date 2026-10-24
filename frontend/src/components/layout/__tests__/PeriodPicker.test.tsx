@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -26,7 +28,7 @@ const EMPTY: GroupedOptions = { yearsMap: {}, sortedYears: [] };
 
 let root: Root;
 let host: HTMLDivElement;
-let setPeriod: ReturnType<typeof vi.fn>;
+let setPeriod: AnyMock;
 
 const render = (p: Partial<PeriodPickerProps> = {}) => {
   const props: PeriodPickerProps = { filterPeriod: '2026-10', setFilterPeriod: setPeriod, groupedOptions: OPTS, ...p };

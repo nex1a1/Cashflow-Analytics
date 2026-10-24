@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -12,8 +14,8 @@ type Rect = { left: number; top: number; width: number; height: number };
 let rect: Rect;
 let root: Root;
 let host: HTMLDivElement;
-let onChange: ReturnType<typeof vi.fn>;
-let windowKey: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
+let windowKey: AnyMock;
 
 const render = (p: Partial<IconPickerProps> = {}) =>
   act(() => root.render(<IconPicker icon={null} onChange={onChange} {...p} />));

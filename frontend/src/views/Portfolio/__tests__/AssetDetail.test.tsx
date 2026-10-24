@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -8,7 +10,7 @@ import { formatThaiDateShort } from '@/utils/formatters';
 import { mkAsset, trade } from './fixtures';
 import type { PortfolioAsset } from '@/types';
 
-let setPrice: ReturnType<typeof vi.fn>;
+let setPrice: AnyMock;
 let root: Root | null = null;
 let container: HTMLElement | null = null;
 const mount = (asset: PortfolioAsset, unit = 'หุ้น') => {

@@ -83,7 +83,7 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
                 aria-describedby={reasonId}
                 tabIndex={tab.id === tabStopId ? 0 : -1}
                 onClick={() => !isDisabled && onChange(tab.id)}
-                className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+                className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
                   isDisabled
                     ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
                     : isActive
@@ -210,7 +210,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
               ภาระคงที่ • พฤติกรรมใช้จ่าย
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-[1px] bg-surface-elevated flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-px bg-surface-elevated flex-1">
             <StrategicRentCard
               rentPercentageNum={rentPercentageNum}
               rentTotal={rentTotal}
@@ -241,7 +241,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
               จังหวะรายวัน
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-[1px] bg-surface-elevated flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-px bg-surface-elevated flex-1">
             <StrategicFoodCard
               foodDailyAvg={foodDailyAvg}
               foodTotal={foodTotal}

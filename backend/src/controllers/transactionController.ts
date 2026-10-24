@@ -43,7 +43,7 @@ export const upsertTransactions = (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const deleteTransaction = (req: Request, res: Response, next: NextFunction) => {
+export const deleteTransaction = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   const { id } = req.params;
   try {
     const result = transactionService.delete(id);
@@ -128,7 +128,7 @@ export const getFrequentItems = (req: Request, res: Response, next: NextFunction
 };
 
 export const predictCategories = (req: Request, res: Response, next: NextFunction) => {
-  const { descriptions } = req.body;
+  const { descriptions } = req.body ?? {};
   if (!Array.isArray(descriptions) || descriptions.some(d => typeof d !== 'string')) {
     return res.status(400).json({ error: 'descriptions must be an array of strings' });
   }

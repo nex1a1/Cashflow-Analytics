@@ -61,10 +61,10 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
   };
   const badCount = allItems.filter(isBadAmount).length;
 
-  const inputCls = "w-full bg-surface outline-none text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
+  const inputCls = "w-full bg-surface outline-hidden text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
 
   return (
-    <div className="fixed inset-0 bg-black/75 z-[100] flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/75 z-100 flex items-center justify-center backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="ตรวจสอบข้อมูลก่อนนำเข้า" tabIndex={-1} className="rounded-none shadow-2xl flex flex-col w-full max-w-3xl border border-line-strong bg-canvas"
         style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
@@ -103,7 +103,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         </div>
 
         {/* Rows */}
-        <div className="flex-grow overflow-y-auto min-h-0 scrollbar-tactical bg-surface">
+        <div className="grow overflow-y-auto min-h-0 scrollbar-tactical bg-surface">
           {pageItems.length === 0 ? (
             <div className="p-8 text-center text-xs font-mono text-slate-500">ไม่มีรายการข้อมูล</div>
           ) : (
@@ -134,7 +134,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
                     <select 
                       value={item.category} 
                       onChange={e => updateItem(item.id, 'category', e.target.value)}
-                      className="text-[11px] font-bold py-1.5 px-1.5 rounded-none border outline-none cursor-pointer w-full bg-surface border-line-strong text-slate-300 focus:border-accent-ink transition-colors"
+                      className="text-[11px] font-bold py-1.5 px-1.5 rounded-none border outline-hidden cursor-pointer w-full bg-surface border-line-strong text-slate-300 focus:border-accent-ink transition-colors"
                     >
                       {allCats.map((c: any) => (
                         <option key={c.id} value={c.name}>

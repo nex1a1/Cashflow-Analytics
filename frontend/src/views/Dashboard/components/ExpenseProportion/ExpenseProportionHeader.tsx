@@ -8,6 +8,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { formatBaht } from '../../../../utils/formatters';
+import { PlanKey } from '@/components/shared/PlanKey';
 import { DisplayMode, ExpenseProportionHeaderProps, SortMode } from './types';
 
 interface ModeSwitcherProps {
@@ -28,7 +29,7 @@ function buildModes(evolutionLabel: string): Array<{ id: DisplayMode; label: str
 function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionLabel }: ModeSwitcherProps) {
   const modes = buildModes(evolutionLabel);
   return (
-    <div className="ml-4 flex items-center gap-[1px] p-[2px] rounded-none border bg-canvas border-line/60">
+    <div className="ml-4 flex items-center gap-px p-[2px] rounded-none border bg-canvas border-line/60">
       {modes.map(m => {
         const isDisabled = m.id === 'evolution' && !evolutionEligible;
         const isActive = displayMode === m.id && !isDisabled;
@@ -40,7 +41,7 @@ function ModeSwitcher({ displayMode, onChangeMode, evolutionEligible, evolutionL
               onClick={() => !isDisabled && onChangeMode(m.id)}
               aria-pressed={isActive}
               aria-disabled={isDisabled}
-              className={`px-2 py-0.5 text-[11px] font-black uppercase tracking-tighter rounded-none transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
+              className={`px-2 py-0.5 text-[11px] font-black uppercase tracking-tighter rounded-none transition-none outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
                   : isActive
@@ -89,12 +90,12 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
   }
 
   return (
-    <div className="ml-2 flex items-center gap-[1px] p-[2px] rounded-none border bg-canvas border-line/60">
+    <div className="ml-2 flex items-center gap-px p-[2px] rounded-none border bg-canvas border-line/60">
       <button
         onClick={() => onToggleSort('amount')}
         title={amountTitle}
         aria-label={amountTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
           isAmount ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
@@ -107,7 +108,7 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
         onClick={() => onToggleSort('order')}
         title={orderTitle}
         aria-label={orderTitle}
-        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
+        className={`px-1.5 py-0.5 rounded-none transition-none flex items-center gap-1 text-[11px] font-bold outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
           isOrder ? 'bg-accent/20 text-accent-ink' : 'text-slate-400 hover:text-slate-200'
         }`}
       >
@@ -135,7 +136,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
       </span>
       <button
         onClick={onReset}
-        className="ml-1 px-1.5 py-0.5 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300"
+        className="ml-1 px-1.5 py-0.5 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold rounded-none flex items-center gap-1 transition-none outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300"
         title="คืนค่าหมวดหมู่ทั้งหมด"
       >
         <RotateCcw className="w-2.5 h-2.5" />
@@ -171,6 +172,7 @@ export function ExpenseProportionHeader({
   hasNoIncomeData,
   evolutionEligible,
   evolutionLabel,
+  hasPlan,
 }: ExpenseProportionHeaderProps) {
   const countLabel = isAllocationMode ? 'ส่วน' : displayMode === 'evolution' ? 'เดือน' : 'หมวดหมู่';
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
@@ -205,9 +207,12 @@ export function ExpenseProportionHeader({
           />
         )}
       </div>
-      <span className="text-[11px] font-black px-1.5 rounded-pill bg-accent/10 text-accent-ink">
-        {countText}
-      </span>
+      <div className="flex items-center gap-3">
+        {hasPlan && !showSkeleton && <PlanKey className="m-fade-in" />}
+        <span className="text-[11px] font-black px-1.5 rounded-pill bg-accent/10 text-accent-ink">
+          {countText}
+        </span>
+      </div>
     </div>
   );
 }

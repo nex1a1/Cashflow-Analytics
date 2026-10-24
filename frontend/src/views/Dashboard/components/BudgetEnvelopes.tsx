@@ -79,7 +79,7 @@ const BudgetEnvelopes = memo(function BudgetEnvelopes() {
                     <span className="absolute top-full mt-0.5 -ml-1 w-2 h-[6px] bg-ink-display [clip-path:polygon(50%_0,100%_100%,0_100%)]" style={{ left: `${pace * 100}%` }} />
                   )}
                   {env.avg != null && env.avg > 0 && (
-                    <span className="absolute top-full mt-0.5 w-1.5 h-1.5 -ml-[3px] rounded-full bg-ink-muted" style={{ left: `${Math.min(100, (env.avg / env.budget) * 100)}%` }} />
+                    <span className="absolute top-full mt-0.5 w-1.5 h-1.5 ml-[-3px] rounded-full bg-ink-muted" style={{ left: `${Math.min(100, (env.avg / env.budget) * 100)}%` }} />
                   )}
                 </span>
               ) : (

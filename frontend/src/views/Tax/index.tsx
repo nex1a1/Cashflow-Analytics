@@ -406,7 +406,7 @@ function DateField({ id, value, onSave }: { id: string; value: string | undefine
           onChange={e => change(e.currentTarget.value || null)}
           aria-invalid={!!error}
           aria-describedby={`${id}-err`}
-          className="w-36 h-7 px-2 text-xs tabular-nums border bg-canvas border-line-strong text-ink-display shrink-0 [color-scheme:dark]"
+          className="w-36 h-7 px-2 text-xs tabular-nums border bg-canvas border-line-strong text-ink-display shrink-0 scheme-dark"
         />
       </div>
       <FieldError id={`${id}-err`} message={error} />

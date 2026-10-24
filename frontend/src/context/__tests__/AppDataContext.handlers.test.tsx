@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, flush, act } from '@/test-utils/renderHook';
@@ -44,7 +46,7 @@ async function mount(calendar: unknown[] = [], dayTypes: unknown[] = DT) {
 }
 
 beforeEach(() => {
-  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as ReturnType<typeof vi.fn>).mockReset()));
+  Object.values(api).forEach(svc => Object.values(svc).forEach(fn => (fn as AnyMock).mockReset()));
   api.transactionService.getAll.mockResolvedValue([]);
   api.transactionService.getCount.mockResolvedValue({ count: 0 });
   api.transactionService.getPeriods.mockResolvedValue([]);

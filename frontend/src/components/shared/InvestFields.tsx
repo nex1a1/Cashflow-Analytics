@@ -25,7 +25,7 @@ export interface InvestFieldsProps {
 }
 
 const NONE = '';
-const FIELD = 'flex-1 min-w-0 px-2 py-1.5 text-xs border bg-canvas border-line-strong text-ink-display text-right font-bold tabular-nums outline-none focus:border-accent-ink';
+const FIELD = 'flex-1 min-w-0 px-2 py-1.5 text-xs border bg-canvas border-line-strong text-ink-display text-right font-bold tabular-nums outline-hidden focus:border-accent-ink';
 const LABEL = 'text-[11px] font-bold text-ink-muted shrink-0 w-[104px]';
 const cleanNum = (v: string) => v.replace(/[^\d.]/g, '');
 

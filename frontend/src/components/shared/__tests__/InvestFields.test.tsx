@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -24,9 +26,9 @@ let host: HTMLDivElement;
 let props: InvestFieldsProps;
 let setUnitsFromOutside: (v: string) => void;
 const calls = () => ({
-  asset: props.onAssetChange as ReturnType<typeof vi.fn>,
-  side: props.onSideChange as ReturnType<typeof vi.fn>,
-  units: props.onUnitsChange as ReturnType<typeof vi.fn>,
+  asset: props.onAssetChange as AnyMock,
+  side: props.onSideChange as AnyMock,
+  units: props.onUnitsChange as AnyMock,
 });
 
 /** A form: it keeps what the field reports (as react-hook-form does) and hands it back; a changed `units` prop is an outside change. */

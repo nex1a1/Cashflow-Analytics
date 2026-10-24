@@ -3,6 +3,8 @@ import React, { useMemo, memo } from 'react';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
 import { formatMoney, formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
+import { localTodayIso } from '@/utils/payCycle';
+import { withAlpha } from './MainChart/futureZone';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
@@ -34,6 +36,8 @@ interface TransactionItemProps {
   index: number;
   catDef?: Category;
   maxAmount: number;
+  /** dated after today: entered ahead, not spent yet */
+  isPlan?: boolean;
 }
 
 const getRankStyle = (rank: number) => {
@@ -46,12 +50,12 @@ const getRankStyle = (rank: number) => {
 
 const getCardBorderClass = (rank: number) => {
   if (rank === 0) return 'border-amber-500/25 hover:border-amber-500/50 bg-amber-950/15 hover:bg-amber-950/25';
-  if (rank === 1) return 'border-slate-400/25 hover:border-slate-400/50 bg-slate-500/[0.05] hover:bg-slate-500/[0.12]';
+  if (rank === 1) return 'border-slate-400/25 hover:border-slate-400/50 bg-slate-500/5 hover:bg-slate-500/12';
   if (rank === 2) return 'border-orange-500/25 hover:border-orange-500/50 bg-orange-950/15 hover:bg-orange-950/25';
   return 'border-line/60 hover:border-line-strong bg-canvas/40 hover:bg-canvas/80';
 };
 
-const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemProps) => {
+const TransactionItem = memo(({ tx, index, catDef, maxAmount, isPlan = false }: TransactionItemProps) => {
   // Use scale-adjusted ratio with a minimum baseline width of 4% for visual balance
   const amountNum = typeof tx.amount === 'string' ? Number.parseFloat(tx.amount) : tx.amount;
   const rawRatio = maxAmount > 0 ? Math.abs(amountNum) / maxAmount : 0;
@@ -59,13 +63,16 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
 
   return (
     <div
-      className={`relative flex items-start gap-3.5 p-3.5 rounded-none border overflow-hidden group shadow-sm ${getCardBorderClass(index)}`}
+      className={`relative flex items-start gap-3.5 p-3.5 rounded-none border overflow-hidden group shadow-xs ${getCardBorderClass(index)} ${isPlan ? 'border-dashed' : ''}`}
     >
       {/* Visual Progress Bar Backdrop (High-contrast Rosso Corsa with sharp tip) */}
       <div className="absolute inset-y-0 left-0 right-0 overflow-hidden pointer-events-none z-0">
-        <div 
-          className="h-full bg-gradient-to-r from-white/[0.02] to-white/[0.06] group-hover:from-white/[0.04] group-hover:to-white/[0.09]"
-          style={{ width: `${relativeWidth}%` }}
+        <div
+          className={`h-full ${isPlan ? '' : 'bg-linear-to-r from-white/3 to-white/9 group-hover:from-white/5 group-hover:to-white/12'}`}
+          style={{
+            width: `${relativeWidth}%`,
+            ...(isPlan && { backgroundImage: 'repeating-linear-gradient(135deg, rgb(255 255 255 / 0.07) 0 2px, transparent 2px 6px)' }),
+          }}
         />
         {/* Flat solid tip for the progress bar */}
         <div 
@@ -108,12 +115,21 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount }: TransactionItemP
               <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
             </span>
           )}
+          {isPlan && (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-pill border shrink-0 text-ink-body border-line"
+              style={{ backgroundImage: `repeating-linear-gradient(135deg, ${withAlpha(tc('ink-muted'), 0.35)} 0 1px, transparent 1px 4px)` }}
+              title="ลงล่วงหน้า ยังไม่ถึงวันที่"
+            >
+              แผน
+            </span>
+          )}
         </div>
       </div>
 
       {/* Price Block */}
       <div className="relative z-10 shrink-0 flex flex-col items-end justify-start min-w-[95px] pt-0.5">
-        <span className="text-sm font-black tabular-nums whitespace-nowrap text-expense">
+        <span className={`text-sm font-black tabular-nums whitespace-nowrap ${isPlan ? 'text-ink-body' : 'text-expense'}`}>
           {formatMoney(Math.abs(amountNum))}
         </span>
       </div>
@@ -137,7 +153,8 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const cardStyles = 'rounded-none border shadow-sm h-full flex flex-col bg-canvas border-line';
+  const todayIso = localTodayIso();
+  const cardStyles = 'rounded-none border shadow-xs h-full flex flex-col bg-canvas border-line';
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
   const { displayTransactions, maxAmount, topSum, allFilteredExpenseSum, topPctOfTotal } = useMemo(() => {
@@ -237,7 +254,7 @@ export default function TopTransactions() {
   return (
     <div className={cardStyles}>
       {/* ─── HEADER (Editorial Style) ─── */}
-      <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line w-full gap-2">
+      <div className="px-4 py-2 border-b flex items-center justify-between flex-wrap bg-surface/80 border-line w-full gap-x-2 gap-y-1.5">
         <div className="flex items-center gap-2">
           <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
           <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
@@ -250,7 +267,7 @@ export default function TopTransactions() {
               aria-label="จำนวนรายการสูงสุดที่แสดง"
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopXLimit(Number(e.target.value))}
               disabled={showSkeleton}
-              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-none cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent-ink focus:border-accent-ink"
+              className="pl-2 pr-6 py-0.5 text-xs font-black rounded-none border outline-hidden cursor-pointer appearance-none transition-colors bg-canvas border-line text-white hover:border-accent-ink focus:border-accent-ink"
             >
               {[5, 7, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
@@ -261,14 +278,14 @@ export default function TopTransactions() {
         {/* Real-time sum & Pareto indicator pill */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
-            className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 shrink-0 bg-surface-elevated border-line text-neutral-300"
+            className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 min-w-0 max-w-full bg-surface-elevated border-line text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (${formatBaht(allFilteredExpenseSum)})`}
           >
-            <span className="text-neutral-400">รวม {displayTransactions.length} รายการนี้</span>
-            <span className="text-expense font-bold tabular-nums">{formatBaht(topSum)}</span>
+            <span className="text-neutral-400 whitespace-nowrap">รวม {displayTransactions.length} รายการ</span>
+            <span className="text-expense font-bold tabular-nums whitespace-nowrap">{formatBaht(topSum)}</span>
             {allFilteredExpenseSum > 0 && (
-              <span className="text-[11px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums">
-                {topPctOfTotal}% ของรายจ่าย
+              <span className="text-[11px] font-bold text-neutral-400 border-l border-neutral-700 pl-1.5 tabular-nums whitespace-nowrap">
+                {topPctOfTotal}%
               </span>
             )}
           </div>
@@ -294,6 +311,7 @@ export default function TopTransactions() {
                     index={idx} 
                     catDef={catDef} 
                     maxAmount={maxAmount}
+                    isPlan={Boolean(tx.date) && tx.date > todayIso}
                   />
                 ))}
               </div>

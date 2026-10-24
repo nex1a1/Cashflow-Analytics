@@ -12,7 +12,7 @@ const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'; // = --m-ease in index.css
  * Remount the list (key) to start over without animating. Reduced motion: no animation.
  * ponytail: positions are only re-read on render, so a window resize between renders makes the next one slide a little.
  */
-export function useFlipList(ref: RefObject<HTMLElement>, { exit = false } = {}) {
+export function useFlipList(ref: RefObject<HTMLElement | null>, { exit = false } = {}) {
   const lastTops = useRef<Map<string, number> | null>(null);
   const lastEls = useRef(new Map<string, { el: HTMLElement; top: number; left: number; width: number }>());
   useLayoutEffect(() => {

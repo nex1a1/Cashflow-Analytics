@@ -92,6 +92,26 @@ describe('BudgetEnvelopes — when it shows', () => {
   });
 });
 
+describe('BudgetEnvelopes — bar colour', () => {
+  it('an in-budget bar wears the group colour', () => {
+    set({
+      cashflowGroups: groups.map((g) => (g.id === 'g-food' ? { ...g, color: '#F97316' } : g)),
+      transactions: [tx('a', '2026-10-05', 'c-food', 1_000)],
+    });
+    mount();
+    const fill = row('ค่ากิน').querySelector('span[aria-hidden="true"] > span') as HTMLElement;
+    expect(fill.className).not.toMatch(/bg-warn|bg-danger/);
+    expect(fill.style.backgroundColor).toMatch(/249,\s*115,\s*22|f97316/i);
+  });
+
+  it('over budget switches to the warn / danger colour', () => {
+    set({ transactions: [tx('a', '2026-10-05', 'c-fun', 2_400), tx('b', '2026-10-06', 'c-food', 7_000)] });
+    mount();
+    expect(row('บันเทิง').querySelector('span[aria-hidden="true"] > span')!.className).toContain('bg-warn'); // 120%
+    expect(row('ค่ากิน').querySelector('span[aria-hidden="true"] > span')!.className).toContain('bg-danger'); // 140%
+  });
+});
+
 describe('BudgetEnvelopes — what is counted', () => {
   it('spent = expense rows of the group dated up to today; rows dated later are a plan, not spending', () => {
     set({ transactions: [

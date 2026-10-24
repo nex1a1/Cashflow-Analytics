@@ -36,7 +36,7 @@ const AssetsModal = memo(function AssetsModal({ onClose }: { onClose: () => void
   const onDeleted = useCallback(() => { setSelected(NEW); setNotice(null); }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/75" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         ref={trapRef}
         role="dialog"

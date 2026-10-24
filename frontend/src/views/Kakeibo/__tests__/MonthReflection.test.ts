@@ -11,4 +11,7 @@ describe('MonthReflection helpers', () => {
     expect(parseReflections([1])).toEqual({});
     expect(parseReflections({ '2026-10': { good: 'x' } })).toEqual({ '2026-10': { good: 'x' } });
   });
+  it('parseReflections drops malformed entries and non-string fields', () => {
+    expect(parseReflections({ '2026-10': 'oops', '2026-09': [1], '2026-08': { good: 5, next: 'ok', extra: 'x' } })).toEqual({ '2026-08': { next: 'ok' } });
+  });
 });

@@ -56,7 +56,7 @@ export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProp
         </p>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-[1px] bg-line border border-line">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-px bg-line border border-line">
         <Tile
           label="ต้นทุนที่ถืออยู่"
           value={held ? formatMoney(asset.cost) : '–'}

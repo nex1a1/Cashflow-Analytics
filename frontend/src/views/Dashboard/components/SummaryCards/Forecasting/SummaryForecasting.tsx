@@ -99,7 +99,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
       />
 
       {/* 3. 3-Column Cockpit Telemetry Pods */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-surface-elevated flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-surface-elevated flex-1">
 
         {/* POD 1: Monthly Outflow Forecast */}
         <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-expense">

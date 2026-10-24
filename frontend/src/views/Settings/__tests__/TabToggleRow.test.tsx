@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -7,7 +9,7 @@ import { click } from '@/test-utils/dom';
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;
-let onChange: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
 const mount = (enabled: boolean) => {
   onChange = vi.fn();
   container = document.createElement('div');

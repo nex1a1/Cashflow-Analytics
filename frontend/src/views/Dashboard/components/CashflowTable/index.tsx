@@ -19,22 +19,23 @@ export default function CashflowTable() {
     useDashboardContext();
   const isCycleMode = isCyclePeriod(filterPeriod);
 
-  // รอบไม่เต็ม (โหมดรอบ): เริ่มก่อนข้อมูลวันแรกของช่วง หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
+  // แถวที่ไม่เต็ม: โหมดรอบ = เริ่มก่อนข้อมูลวันแรกของช่วง หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
+  // โหมดเดือน = เดือนอนาคตที่ยังไม่ถึง
   const partialKeys = useMemo(() => {
-    if (!isCycleMode || !analytics?.sortedCashflow) return EMPTY_SET;
+    if (!analytics?.sortedCashflow) return EMPTY_SET;
+    const today = localTodayIso();
+    const rows = (analytics.sortedCashflow as MonthRow[]).map((r) => r.monthStr);
+    if (!isCycleMode) return new Set<string>(rows.filter((key) => `${key}-01` > today));
     let firstDate = '';
     transactions.forEach((t) => {
       const iso = t.date;
       if (iso && isDateInFilter(iso, filterPeriod) && (!firstDate || iso < firstDate)) firstDate = iso;
     });
-    const today = localTodayIso();
     return new Set<string>(
-      (analytics.sortedCashflow as MonthRow[])
-        .map((r) => r.monthStr)
-        .filter((key) => {
-          const { start } = cycleRange(key);
-          return start < firstDate || start > today;
-        }),
+      rows.filter((key) => {
+        const { start } = cycleRange(key);
+        return start < firstDate || start > today;
+      }),
     );
   }, [isCycleMode, analytics?.sortedCashflow, transactions, filterPeriod]);
 
@@ -216,8 +217,8 @@ export default function CashflowTable() {
 
   const thinBorder = 'border-line/60';
   const boxBorder = 'border-line-strong';
-  const boundaryBorder = 'border-r-2 !border-r-line';
-  const card = 'rounded-none border shadow-sm transition-colors bg-canvas border-line';
+  const boundaryBorder = 'border-r-2 border-r-line!';
+  const card = 'rounded-none border shadow-xs transition-colors bg-canvas border-line';
 
   const totalExcludedCount =
     excludedGroups.size + excludedCategories.size + excludedMonths.size + excludedAllocations.size;

@@ -120,6 +120,17 @@ describe('useSankeyEngine — standard layout (income → total cash → expense
     expect(column['ค่าเช่า (8,000.00)']).toBe(4);
   });
 
+  it('node labels: left-half columns label to the right, the middle column onwards to the left', () => {
+    const at = (mode: string) => {
+      const { nodeLabels, column } = run({ sankeyMode: mode }).datasets[0];
+      const byColumn: Record<number, Set<string>> = {};
+      for (const key of Object.keys(column)) (byColumn[column[key]] ||= new Set()).add(nodeLabels.position({ key }));
+      return Object.fromEntries(Object.entries(byColumn).map(([c, s]) => [c, [...s]]));
+    };
+    expect(at('standard')).toEqual({ 0: ['right'], 1: ['right'], 2: ['left'], 3: ['left'], 4: ['left'] });
+    expect(at('allocation')).toEqual({ 0: ['right'], 1: ['right'], 2: ['left'], 3: ['left'] });
+  });
+
   it('priorities are unique within each column (a clash there would make the layout order arbitrary)', () => {
     for (const mode of ['standard', 'allocation']) {
       const { priority, column } = run({ sankeyMode: mode }).datasets[0];

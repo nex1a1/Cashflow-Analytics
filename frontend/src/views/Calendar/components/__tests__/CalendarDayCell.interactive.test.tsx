@@ -102,7 +102,7 @@ describe('CalendarDayCell heat chip and wash', () => {
 });
 
 describe('CalendarDayCell background and day badge', () => {
-  it('today: ring + accent badge + aria-current', () => {
+  it('today: ring-3 + accent badge + aria-current', () => {
     mount(props({ isToday: true }));
     expect(cell().className).toContain('ring-accent/50');
     expect(dayBtn().className).toContain('bg-accent');

@@ -317,8 +317,8 @@ function QuickSuggest({
   }, [defaultLimit]);
 
   const tokens = {
-    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
-    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-none bg-surface border-line text-slate-200 focus:border-accent-ink cursor-pointer",
+    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
+    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-hidden bg-surface border-line text-slate-200 focus:border-accent-ink cursor-pointer",
     searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
     label: "block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1",
   };
@@ -365,7 +365,7 @@ function QuickSuggest({
             onClick={() => setShowFilterMenu(!showFilterMenu)}
             className={`px-3 py-1.5 flex items-center justify-center gap-1.5 border text-xs font-bold transition-all duration-75 rounded-none select-none cursor-pointer ${
               showFilterMenu 
-                ? 'bg-surface-hover border-accent-ink text-white shadow-sm' 
+                ? 'bg-surface-hover border-accent-ink text-white shadow-xs' 
                 : activeFiltersCount > 0
                   ? 'bg-surface-hover border-accent/70 text-slate-200 hover:bg-surface-elevated'
                   : 'bg-canvas border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white'
@@ -696,7 +696,7 @@ function QuickSuggest({
                               ['--chip-rgb' as any]: rgb,
                             } as React.CSSProperties)}
                             className={`px-2 py-0.5 text-[11px] font-bold border flex items-center gap-1 rounded-pill cursor-pointer active:scale-95 ${
-                              isCatActive ? 'font-black shadow-sm ring-1 ring-white/10 m-pick' : 'cat-chip-btn'
+                              isCatActive ? 'font-black shadow-xs ring-1 ring-white/10 m-pick' : 'cat-chip-btn'
                             }`}
                           >
                             {isCatActive && <Check className="m-pop-in w-2.5 h-2.5 text-white shrink-0" />}
@@ -828,7 +828,7 @@ function QuickSuggest({
               <button
                 type="button"
                 onClick={() => setShowFilterMenu(false)}
-                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent-ink shadow-sm flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
+                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent-ink shadow-xs flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
               >
                 <span>แสดงผลลัพธ์ ({quickSuggestions.length} รายการ)</span>
               </button>

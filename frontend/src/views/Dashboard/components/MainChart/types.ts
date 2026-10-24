@@ -31,6 +31,7 @@ export interface MainChartHeaderProps {
   filterPeriod: string;
   mainChartType?: string;
   isBreakdown: boolean;
+  dailyDisabled?: boolean;
 }
 
 export interface MainChartCategorySelectorProps {
@@ -46,7 +47,7 @@ export interface MainChartFilterMenuProps {
   showSkeleton?: boolean;
   showCatMenu: boolean;
   setShowCatMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
-  filterMenuRef: React.RefObject<HTMLDivElement>;
+  filterMenuRef: React.RefObject<HTMLDivElement | null>;
   dashboardCategory: string | string[];
   setDashboardCategory: (v: string[]) => void;
   categories: Category[];
@@ -102,6 +103,8 @@ export interface MainChartLegendProps {
   setDashboardCategory: (v: string[]) => void;
   categories: Category[];
   categoriesWithData: Set<string>;
+  /** the chart has future (plan) points → show the plan key */
+  hasPlan?: boolean;
 }
 
 export interface ToolbarToggleSwitchProps {
@@ -149,7 +152,7 @@ export interface MainChartToolbarProps {
   setSankeySortMode: (v: string) => void;
   showCatMenu: boolean;
   setShowCatMenu: (v: boolean | ((prev: boolean) => boolean)) => void;
-  filterMenuRef: React.RefObject<HTMLDivElement>;
+  filterMenuRef: React.RefObject<HTMLDivElement | null>;
   dashboardCategory: string | string[];
   setDashboardCategory: (v: string[]) => void;
   categories: Category[];

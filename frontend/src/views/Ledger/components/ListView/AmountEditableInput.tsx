@@ -100,7 +100,7 @@ export default function AmountEditableInput({ initialValue, isInc = false, tone,
           aria-describedby={error ? errorId : undefined}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="amount-input w-full bg-transparent text-right text-xs font-bold tracking-tight tabular-nums outline-none"
+          className="amount-input w-full bg-transparent text-right text-xs font-bold tracking-tight tabular-nums outline-hidden"
           style={fontStyle}
           placeholder="0.00"
           autoFocus

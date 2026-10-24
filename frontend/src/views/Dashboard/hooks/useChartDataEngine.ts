@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isDateInFilter } from '@/utils/dateHelpers';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
+import { applyPlanStyle } from '../components/MainChart/futureZone';
+import { useFutureZone } from './useFutureZone';
 
 import { tc } from '@/constants/theme';
 interface ChartDataEngineProps {
@@ -60,6 +62,8 @@ function processStandardDataset(ds: any, { chartViewType, isSmoothLine, hiddenDa
 
 export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, sankeyData, chartGroupMode, hiddenDatasets }: ChartDataEngineProps) {
   const { transactions, analytics, categories, filterPeriod, dashboardCategory, hideFixedExpenses, hideWantExpenses, chartGroupBy } = useDashboardContext();
+
+  const futureZone = useFutureZone(chartViewType);
 
   const categoriesWithData = useMemo(() => {
     if (!categories) return new Set<string>();
@@ -133,11 +137,11 @@ export function useChartDataEngine({ chartViewType, isBreakdown, isSmoothLine, s
     }
 
     const processedDatasets = analytics.mainChartData.datasets.map((ds: any) =>
-      processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory })
+      applyPlanStyle(processStandardDataset(ds, { chartViewType, isSmoothLine, hiddenDatasets, dashboardCategory }), futureZone)
     );
 
     return { ...analytics.mainChartData, datasets: processedDatasets };
-  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, sankeyData, hiddenDatasets]);
+  }, [analytics, filterPeriod, chartGroupBy, chartViewType, isBreakdown, isSmoothLine, dashboardCategory, categories, categoriesWithData, hideFixedExpenses, hideWantExpenses, sankeyData, hiddenDatasets, futureZone]);
 
   const legendDatasets = useMemo(() => {
     if (!displayChartData?.datasets) return [];

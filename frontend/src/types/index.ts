@@ -211,7 +211,7 @@ export interface AppDataContextValue {
   isCsvProcessing: boolean;
   importPreview: any;
   setImportPreview: (preview: any) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   masterPeriods: string[];
   // CRUD Actions
   refreshData: () => Promise<void>;

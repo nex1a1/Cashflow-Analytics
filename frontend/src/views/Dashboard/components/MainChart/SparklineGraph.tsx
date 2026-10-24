@@ -300,7 +300,7 @@ export const SparklineGraph = memo(() => {
   return (
     <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
       <div
-        className="grid gap-[1px] bg-surface-elevated/60 border border-line/60"
+        className="grid gap-px bg-surface-elevated/60 border border-line/60"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
       >
         {trends.map((t) => (

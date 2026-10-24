@@ -51,7 +51,7 @@ const cells = () => [...document.querySelectorAll<HTMLButtonElement>('button[ari
 const labels = () => cells().map(c => c.getAttribute('aria-label'));
 const toggle = (text: string) => [...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(b => b.textContent?.trim() === text)!;
 const rail = () => q<HTMLElement>('div[class*="lg:w-[220px]"]')!;
-const clone = () => rail().querySelector<HTMLElement>('[aria-hidden="true"]');
+const clone = () => rail().querySelector<HTMLElement>(':scope > [aria-hidden="true"]');
 const liveLegend = () => [...rail().children].filter(c => c.getAttribute('aria-hidden') !== 'true').map(c => c.textContent).join(' ');
 const tip = () => document.body.querySelector<HTMLElement>('.fixed.pointer-events-none');
 const emptyCells = (cls: string) => document.querySelectorAll(`div.${cls}.bg-transparent`).length;
@@ -164,7 +164,7 @@ describe('ActivityTimeline — GitHub layout', () => {
     mount();
     // Jan 1 is a Thursday → Sun–Wed of week 1 are empty; week 2 is full.
     expect(emptyCells('w-4.h-4')).toBe(4);
-    const weeks = [...document.querySelectorAll('div.flex.flex-col.gap-\\[1px\\].shrink-0')].filter(w => w.querySelector('button'));
+    const weeks = [...document.querySelectorAll('div.flex.flex-col.gap-px.shrink-0')].filter(w => w.querySelector('button'));
     expect(weeks.map(w => w.querySelectorAll('button').length)).toEqual([3, 7]);
   });
 
@@ -202,7 +202,7 @@ describe('ActivityTimeline — GitHub layout', () => {
     expect(ringed[0].getAttribute('aria-label')).toContain('จ. 5 ม.ค. 26');
   });
 
-  it('no ring at all when today is outside the period', () => {
+  it('no ring-3 at all when today is outside the period', () => {
     vi.setSystemTime(new Date(2026, 5, 1, 12));
     mount();
     expect(cells().some(c => c.classList.contains('ring-1'))).toBe(false);
@@ -383,7 +383,7 @@ describe('ActivityTimeline — calendar layout', () => {
     expect(card.querySelectorAll('div.opacity-20')).toHaveLength(25);
   });
 
-  it('cells carry the same names, colours and today ring as the GitHub layout', () => {
+  it('cells carry the same names, colours and today ring-3 as the GitHub layout', () => {
     mount();
     const before = labels();
     openCalendar();
@@ -464,7 +464,7 @@ describe('ActivityTimeline — tooltip', () => {
     expect(tip()!.style.top).toBe('10px');
   });
 
-  it('works from the keyboard: focus shows it, blur hides it', () => {
+  it('works from the keyboard: focus shows it, blur-sm hides it', () => {
     rectAt(100, 200);
     mount();
     act(() => cells()[4].focus());

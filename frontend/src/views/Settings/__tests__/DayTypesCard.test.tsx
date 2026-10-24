@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -55,7 +57,7 @@ describe('DayTypesCard ordering', () => {
     mount();
     click(btn('เลื่อน วันหยุด ขึ้น'));
     click(btn('เลื่อน วันหยุด ลง'));
-    expect((props.handleMoveDayType as ReturnType<typeof vi.fn>).mock.calls).toEqual([['off', 'UP'], ['off', 'DOWN']]);
+    expect((props.handleMoveDayType as AnyMock).mock.calls).toEqual([['off', 'UP'], ['off', 'DOWN']]);
   });
 
   it('the first cannot go up and the last cannot go down', () => {

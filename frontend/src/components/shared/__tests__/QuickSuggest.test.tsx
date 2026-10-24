@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -8,7 +10,7 @@ import type { Category, CashflowGroup, FrequentItem } from '@/types';
 
 let root: Root;
 let host: HTMLDivElement;
-let onApply: ReturnType<typeof vi.fn>;
+let onApply: AnyMock;
 
 const cat = (id: string, name: string, type: Category['type'], group: string, color = '#3B82F6'): Category =>
   ({ id, name, type, cashflowGroup: group, color, icon: 'tag' });

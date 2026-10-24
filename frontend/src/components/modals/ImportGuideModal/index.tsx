@@ -118,7 +118,7 @@ const ImportGuideModal = memo(function ImportGuideModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm p-4 select-none">
+    <div className="fixed inset-0 bg-black/80 z-100 flex items-center justify-center backdrop-blur-xs p-4 select-none">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="คู่มือนำเข้าข้อมูล" tabIndex={-1} className="relative rounded-none shadow-2xl flex flex-col w-full max-w-[1240px] h-[86vh] border border-line-strong bg-canvas overflow-hidden">
         {/* Header (Identical to ExportHeader) */}
         <GuideHeader onClose={onClose} />

@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React, { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -241,7 +243,7 @@ describe('FilterBar (list view)', () => {
 describe('HorizontalFilterBar (table view)', () => {
   /** Holds the filters in real state, as the Ledger does, and exposes the latest value. */
   let current: HeatmapEngineOptions;
-  let clearSpy: ReturnType<typeof vi.fn>;
+  let clearSpy: AnyMock;
   function Harness({ initial, monthTransactions, activeCount, isFilterActive = false, cats = categories }: {
     initial?: HeatmapEngineOptions; monthTransactions: TransactionDisplay[]; activeCount?: number; isFilterActive?: boolean; cats?: Category[];
   }) {

@@ -471,6 +471,8 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
       });
     }
 
+    const lastColumn = Math.max(...Object.values(column));
+
     return {
       datasets: [{
         data: flows,
@@ -494,10 +496,14 @@ export function useSankeyEngine({ chartViewType, sankeySortMode, sankeyMode = 's
         },
         colorMode: 'gradient',
         size: 'max',
-        labels: {
+        // Labels of the left-half columns sit right of their node, the middle column and everything
+        // after it sit left. sankey 0.19's 'auto' compares the node's pixel x with the chart centre,
+        // and the middle column lands a hair left of it, so its labels flipped right and ran into
+        // the next column's labels. Decide by column index instead.
+        nodeLabels: {
           color: tc('ink-display'),
           font: { family: "'Inter', 'Bai Jamjuree', sans-serif", size: 11, weight: 'bold' },
-          display: true
+          position: (node: { key: string }) => ((column[node.key] ?? 0) * 2 >= lastColumn ? 'left' : 'right'),
         },
         nodeWidth: 15,
         nodePadding: 22,

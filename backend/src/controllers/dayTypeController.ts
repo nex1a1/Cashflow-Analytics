@@ -22,7 +22,7 @@ export const upsertDayType = (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const deleteDayType = (req: Request, res: Response, next: NextFunction) => {
+export const deleteDayType = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     dayTypeService.delete(req.params.id);
     res.json({ success: true });

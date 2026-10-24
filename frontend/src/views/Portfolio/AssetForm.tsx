@@ -11,7 +11,7 @@ import { ASSET_KIND_LABELS, GRAMS_PER_BAHT_GOLD, defaultUnitLabel, formatUnits, 
 import { KIND_META } from './assetKinds';
 
 const KINDS = Object.keys(KIND_META) as AssetKind[];
-const INPUT = 'w-full px-3 py-2 border outline-none font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted';
+const INPUT = 'w-full px-3 py-2 border outline-hidden font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted';
 const LABEL = 'block mb-1.5 text-[12px] font-bold text-ink-soft';
 const HINT = 'mt-1.5 text-[11px] text-ink-muted';
 
@@ -144,7 +144,7 @@ const AssetForm = memo(function AssetForm({ asset, onSaved, onDeleted, onCancel 
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 flex flex-col gap-6">
         <fieldset>
           <legend className={LABEL}>ประเภทสินทรัพย์</legend>
-          <div className="grid grid-cols-4 gap-[1px] bg-line border border-line">
+          <div className="grid grid-cols-4 gap-px bg-line border border-line">
             {KINDS.map(k => {
               const m = KIND_META[k];
               const on = k === kind;
@@ -233,7 +233,7 @@ const AssetForm = memo(function AssetForm({ asset, onSaved, onDeleted, onCancel 
         )}
 
         {editing && (
-          <dl className="grid grid-cols-3 gap-[1px] bg-line border border-line">
+          <dl className="grid grid-cols-3 gap-px bg-line border border-line">
             {[
               ['ที่ถืออยู่', asset.units > 0 ? `${formatUnits(asset.units)} ${asset.unitLabel || 'หน่วย'}` : '–'],
               ['ต้นทุนรวม', asset.units > 0 ? `${formatBaht(asset.cost)}` : '–'],

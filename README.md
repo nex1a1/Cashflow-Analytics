@@ -77,8 +77,8 @@ Cashflow Shark เป็นแอปจดรายรับรายจ่า�
 
 | ชั้น | เทคโนโลยีและเวอร์ชัน | หมายเหตุ |
 | :--- | :--- | :--- |
-| Frontend | `React v18.2.0`, `TypeScript v5.3.3`, `Vite v5.0.8` | SPA, strict types, HMR |
-| Styling | `Tailwind CSS v3.4.1`, `@fontsource/inter`, `@fontsource/bai-jamjuree` | ธีม Ferrari (`#181818`, `#da291c`), `.tabular-nums` |
+| Frontend | `React v19.3.1`, `TypeScript v5.9.3`, `Vite v8.3.5` | SPA, strict types, HMR |
+| Styling | `Tailwind CSS v4.3.3`, `@fontsource/inter`, `@fontsource/bai-jamjuree` | ธีม Ferrari (`#181818`, `#da291c`), `.tabular-nums` |
 | กราฟ | `Chart.js v4.4.1`, `react-chartjs-2 v5.2.0`, `chartjs-chart-sankey v0.14.0` | Sankey 5 คอลัมน์, กราฟหลายแกน |
 | ฟอร์ม | `react-hook-form v7.75.0`, `zod v4.4.3`, `@hookform/resolvers v5.2.2` | ตรวจค่าฝั่ง client และแปลงเป็นสตางค์ |
 | Backend runtime | `Node.js v20 (LTS)` | |

@@ -195,8 +195,8 @@ function BatchForm({
   };
 
   const tokens = {
-    input: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
-    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-none focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
+    input: "w-full h-9 px-3 text-xs border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
+    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
     label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400"
   };
 
@@ -205,7 +205,7 @@ function BatchForm({
       
       {/* Type Toggle: Expense / Savings & Investment / Income */}
       <div className="relative grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
-        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-sm"
+        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-xs"
           style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
         <button
           type="button"
@@ -279,7 +279,7 @@ function BatchForm({
             onChange={(v) => setValue('date', v, { shouldValidate: true })} 
             dayTypes={dayTypes}
             dayTypeConfig={dayTypeConfig}
-            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-none bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink"
+            className="w-full h-9 px-3 text-xs border rounded-none flex items-center justify-between gap-2 font-bold transition-colors outline-hidden bg-canvas border-line-strong text-white hover:border-accent-ink focus:border-accent-ink"
           />
           <FieldError id="batch-date-err" message={errors.date?.message} />
         </div>
@@ -398,7 +398,7 @@ function BatchForm({
             <button 
               type="submit" 
               disabled={isProcessing}
-              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-amber-500 hover:bg-amber-400 text-canvas border-amber-600 shadow-sm"
+              className="h-full flex-1 px-4 border rounded-none font-bold text-sm flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-50 bg-amber-500 hover:bg-amber-400 text-canvas border-amber-600 shadow-xs"
             >
               <Check className="w-4 h-4" /> บันทึกแก้ไข (Enter)
             </button>

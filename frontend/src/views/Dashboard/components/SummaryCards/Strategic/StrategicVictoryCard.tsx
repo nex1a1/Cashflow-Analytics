@@ -60,7 +60,7 @@ export const StrategicVictoryCard = memo(({
 
       {/* Breakdown behind the verdict — always visible, no hover required to read it */}
       {!showSkeleton && (
-        <div className="relative z-10 flex-1 grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-neutral-800/50">
+        <div className="relative z-10 flex-1 grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800/50">
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
               <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน

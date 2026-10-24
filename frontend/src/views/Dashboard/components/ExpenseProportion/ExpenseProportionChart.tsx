@@ -14,6 +14,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
   isSliceHovered = false,
   hoveredItem = null,
   activeItems,
+  planTotal = 0,
 }) => {
   const formattedAmt = formatMoney(activeTotal);
   const amtLength = formattedAmt.length;
@@ -42,7 +43,7 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
       onMouseLeave={onMouseLeave}
       className="shrink-0 flex flex-col items-center justify-center p-3 border-r border-dashed border-line bg-canvas/20"
     >
-      <div className="relative w-[140px] h-[140px]" aria-hidden="true">
+      <div className="relative w-[176px] h-[176px]" aria-hidden="true">
         <Doughnut data={activeChartData} options={options} />
 
         {/*
@@ -56,18 +57,23 @@ export const ExpenseProportionChart = React.memo<ExpenseProportionChartProps>(({
           }`}
         >
           <span
-            className="text-[11px] font-black uppercase tracking-widest text-slate-400 max-w-[72px] truncate text-center"
+            className="text-[11px] font-black uppercase tracking-widest text-slate-400 max-w-[96px] truncate text-center"
             title={displayLabel}
           >
             {displayLabel}
           </span>
           <span
-            className={`${fontClass} font-black tabular-nums max-w-[76px] truncate text-center tracking-tight`}
+            className={`${fontClass} font-black tabular-nums max-w-[104px] truncate text-center tracking-tight`}
             style={{ color: valueColor }}
             title={`฿${displayValue}`}
           >
             {displayValue}
           </span>
+          {(hoveredItem ? Math.min(hoveredItem.planAmount || 0, hoveredItem.amount) : planTotal) > 0 && (
+            <span className="text-[11px] font-bold tabular-nums text-ink-muted -mt-0.5" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
+              แผน {formatMoney(hoveredItem ? Math.min(hoveredItem.planAmount || 0, hoveredItem.amount) : planTotal)}
+            </span>
+          )}
           {hoveredItem && 'percentage' in hoveredItem && (
             <span className="text-[11px] font-black tabular-nums text-slate-400 -mt-0.5">
               {hoveredItem.percentage}%

@@ -102,7 +102,7 @@ const BudgetsCard = memo(function BudgetsCard({ cashflowGroups }: { cashflowGrou
                         aria-label={`งบของ ${g.name} (บาท)`}
                         aria-invalid={error ? true : undefined}
                         aria-describedby={error ? errId : undefined}
-                        className={`w-[150px] px-2 py-1.5 border outline-none font-semibold text-[13px] rounded-sm tabular-nums text-right bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted ${error ? 'tint-danger' : ''}`}
+                        className={`w-[150px] px-2 py-1.5 border outline-hidden font-semibold text-[13px] rounded-sm tabular-nums text-right bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted ${error ? 'tint-danger' : ''}`}
                       />
                     </label>
                     <button type="button" onClick={() => save(g)} disabled={saving} className={`${BTN} bg-accent text-on-accent hover:opacity-90`}>

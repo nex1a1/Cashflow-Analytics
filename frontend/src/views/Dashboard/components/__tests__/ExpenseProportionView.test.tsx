@@ -72,7 +72,7 @@ afterEach(() => {
 });
 
 describe('ExpenseProportion — by category', () => {
-  it('shows every category with its amount and share, biggest first, and the total in the middle of the ring', () => {
+  it('shows every category with its amount and share, biggest first, and the total in the middle of the ring-3', () => {
     mount();
     expect(catNames()).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
     expect(catCells()[0].getAttribute('aria-label')).toBe('ที่พัก: ฿40,000.00 (50.0%)');
@@ -81,7 +81,7 @@ describe('ExpenseProportion — by category', () => {
     expect(centre()).toContain('80,000.00');
   });
 
-  it('the ring data follows the same order as the cells', () => {
+  it('the ring-3 data follows the same order as the cells', () => {
     mount();
     expect(h.chart!.data.labels).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
     expect(h.chart!.data.datasets[0].data).toEqual([40_000, 30_000, 10_000]);
@@ -114,7 +114,7 @@ describe('ExpenseProportion — by category', () => {
     expect(catNames()).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
   });
 
-  it('hovering (or focusing) a cell puts it in the middle of the ring and dims the other slices', () => {
+  it('hovering (or focusing) a cell puts it in the middle of the ring-3 and dims the other slices', () => {
     mount();
     act(() => catCells()[1].focus()); // ค่ากิน
     expect(centre()).toContain('ค่ากิน');
@@ -130,7 +130,7 @@ describe('ExpenseProportion — by category', () => {
     expect(h.chart!.data.datasets[0].backgroundColor).toEqual(['#38BDF8', '#F97316', '#A855F7']);
   });
 
-  it('hovering a slice of the ring hides the middle text so the tooltip does not collide with it', () => {
+  it('hovering a slice of the ring-3 hides the middle text so the tooltip does not collide with it', () => {
     mount();
     act(() => h.chart!.options.onHover({}, [{ datasetIndex: 0, index: 2 }]));
     expect(q('div.absolute.inset-0.flex')!.className).toContain('opacity-0');
@@ -138,7 +138,7 @@ describe('ExpenseProportion — by category', () => {
     expect(q('div.absolute.inset-0.flex')!.className).toContain('opacity-100');
   });
 
-  it('the ring tooltip reads amount and share', () => {
+  it('the ring-3 tooltip reads amount and share', () => {
     mount();
     const label = h.chart!.options.plugins.tooltip.callbacks.label;
     expect(label({ parsed: 40_000, dataIndex: 0 })).toBe(' ฿40,000.00 (50.0%)');

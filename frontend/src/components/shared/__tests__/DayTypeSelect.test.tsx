@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -13,10 +15,10 @@ type Rect = { left: number; top: number; width: number; height: number };
 let rect: Rect;
 let root: Root;
 let host: HTMLDivElement;
-let onChange: ReturnType<typeof vi.fn>;
-let parentClick: ReturnType<typeof vi.fn>;
-let windowKey: ReturnType<typeof vi.fn>;
-let scrollIntoView: ReturnType<typeof vi.fn>;
+let onChange: AnyMock;
+let parentClick: AnyMock;
+let windowKey: AnyMock;
+let scrollIntoView: AnyMock;
 
 const TYPES: DayType[] = [
   { id: 'dt-work', name: 'workday', label: 'ทำงาน', color: '#3B82F6' },

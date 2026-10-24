@@ -16,6 +16,21 @@ export const fixedMatch = (r: KakeiboRow, rule: FixedRule): 'category' | 'item' 
       : rule.itemKeys.has(recurringKey(r.category_id, r.description)) ? 'item'
         : null;
 
+export type GoalVerdict = 'met' | 'short' | 'deficit';
+export interface GoalResult { verdict: GoalVerdict; /** เงินเหลือ ÷ รายรับ, ปัดเป็น % */ pct: number; /** satang เหนือเป้า (met) หรือต่ำกว่าเป้า (short); deficit = ยอดขาด */ diff: number }
+
+/** ผลเทียบเป้าเงินเหลือ: ถึงเป้า / ต่ำกว่าเป้าแต่ยังเหลือ / ขาดดุล; ไม่มีรายรับ = null (ไม่มีอะไรให้เทียบ) */
+export function goalResult(income: number, left: number, goal: number): GoalResult | null {
+  if (income <= 0) return null;
+  const pct = Math.round((left / income) * 100);
+  if (left < 0) return { verdict: 'deficit', pct, diff: -left };
+  // เทียบ % ปัด 1 ทศนิยม เหมือนเกรดหน้าภาพรวม (analyticsAggregation) ไม่งั้นขาดไม่กี่สตางค์ก็ "ต่ำกว่าเป้า"
+  const pct1 = (x: number) => Number.parseFloat(((x / income) * 100).toFixed(1));
+  return left >= goal || pct1(left) >= pct1(goal)
+    ? { verdict: 'met', pct, diff: Math.max(0, left - goal) }
+    : { verdict: 'short', pct, diff: goal - left };
+}
+
 export interface WeekItem { categoryId: string; name: string; spent: number }
 export interface KakeiboWeek { start: string; end: string; /** รายจ่ายผันแปร (ไม่รวมค่าใช้จ่ายคงที่) */ spent: number; /** รายจ่ายของสัปดาห์แยกตามหมวด มากไปน้อย */ items: WeekItem[] }
 
@@ -91,7 +106,16 @@ export function summarizeKakeibo(rows: KakeiboRow[], period: string, fixed: Fixe
 }
 
 export type PlanSection = 'income' | 'fixed' | 'need' | 'want' | 'invest';
-export interface PlanLine { key: string; name: string; actual: number; /** Fix Cost รายการเดี่ยว: ชื่อรายการ (name ยังเป็นชื่อหมวด) */ detail?: string }
+export interface PlanLine {
+  key: string;
+  name: string;
+  /** ยอดรวมของช่วงนี้ (รวมรายการลงล่วงหน้า) */
+  actual: number;
+  /** ส่วนของ actual ที่ลงล่วงหน้า (วันที่หลัง today) — มีเมื่อส่ง today เข้า planLines */
+  planned?: number;
+  /** Fix Cost รายการเดี่ยว: ชื่อรายการ (name ยังเป็นชื่อหมวด) */
+  detail?: string;
+}
 
 const sectionOf = (r: KakeiboRow, fixed: FixedRule): PlanSection | null =>
   r.group_type === 'income' ? 'income'
@@ -100,9 +124,20 @@ const sectionOf = (r: KakeiboRow, fixed: FixedRule): PlanSection | null =>
         ? (fixedMatch(r, fixed) ? 'fixed' : r.allocation_type === 'need' ? 'need' : 'want')
         : null;
 
+/** แบ่ง 100% ให้ผลรวมลงตัวพอดี (largest remainder) — ปัดทีละตัวแล้วรวมได้ 101% */
+export function roundShares(values: number[]): number[] {
+  const total = values.reduce((n, v) => n + v, 0);
+  if (total <= 0) return values.map(() => 0);
+  const exact = values.map((v) => (v / total) * 100);
+  const out = exact.map(Math.floor);
+  let left = 100 - out.reduce((n, v) => n + v, 0);
+  [...exact.keys()].sort((a, b) => (exact[b] - out[b]) - (exact[a] - out[a]) || a - b).forEach((i) => { if (left-- > 0) out[i]++; });
+  return out;
+}
+
 /** ตารางแบบ budget planner: ยอดต่อหมวดในเดือน/รอบนี้ แยก รายรับ / ค่าใช้จ่ายคงที่ / NEED / WANT / ลงทุน
  *  (Fix Cost ไปกล่องคงที่ — รายการเดี่ยวมี detail = ชื่อรายการ; ที่เหลือแยกตาม allocation ของแต่ละแถว), มากไปน้อย */
-export function planLines(rows: KakeiboRow[], period: string, fixed: FixedRule = NO_FIXED): Record<PlanSection, PlanLine[]> | null {
+export function planLines(rows: KakeiboRow[], period: string, fixed: FixedRule = NO_FIXED, today?: string): Record<PlanSection, PlanLine[]> | null {
   const range = unitRange(period);
   if (!range) return null;
   const map = new Map<string, PlanLine & { section: PlanSection }>();
@@ -112,7 +147,9 @@ export function planLines(rows: KakeiboRow[], period: string, fixed: FixedRule =
     const item = fixedMatch(r, fixed) === 'item';
     const key = `${section}:${r.category_id ?? r.category ?? ''}${item ? `|${(r.description ?? '').trim().toLowerCase()}` : ''}`;
     const line = map.get(key) ?? { key, name: r.category ?? '', actual: 0, section, ...(item && { detail: (r.description ?? '').trim() }) };
-    line.actual += Math.round(r.amount * 100);
+    const satang = Math.round(r.amount * 100);
+    line.actual += satang;
+    if (today) line.planned = (line.planned ?? 0) + (r.date > today ? satang : 0);
     map.set(key, line);
   }
   const out: Record<PlanSection, PlanLine[]> = { income: [], fixed: [], need: [], want: [], invest: [] };

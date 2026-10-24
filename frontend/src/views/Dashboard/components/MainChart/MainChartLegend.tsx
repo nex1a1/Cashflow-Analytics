@@ -1,6 +1,7 @@
 // src/views/Dashboard/components/MainChart/MainChartLegend.tsx
 import { useMemo, useCallback, memo } from 'react';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
+import { PlanKey } from '@/components/shared/PlanKey';
 import { updateActiveCategories, getDatasetIndicatorStyle } from './helpers';
 import {
   BreakdownLegendItemProps,
@@ -53,7 +54,7 @@ export const BreakdownLegend = memo(({ categories, categoriesWithData, dashboard
   if (catsWithDataList.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60">
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60 m-stagger">
       {catsWithDataList.map(c => {
         const isActive = activeCats.includes('ALL') || activeCats.includes(c.name) || activeCats.includes(c.id);
         return (
@@ -103,7 +104,7 @@ export const StandardLegend = memo(({ legendDatasets, hiddenDatasets, setHiddenD
   if (legendDatasets.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60">
+    <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-3 mt-1 border-t border-line/60 m-stagger">
       {legendDatasets.map((ds, i) => (
         <StandardLegendItem
           key={ds.label || i}
@@ -125,7 +126,8 @@ export const MainChartLegend = memo(({
   dashboardCategory,
   setDashboardCategory,
   categories,
-  categoriesWithData
+  categoriesWithData,
+  hasPlan
 }: MainChartLegendProps) => {
   if (isBreakdown) {
     return (
@@ -139,11 +141,15 @@ export const MainChartLegend = memo(({
   }
 
   return (
-    <StandardLegend
-      legendDatasets={legendDatasets}
-      hiddenDatasets={hiddenDatasets}
-      setHiddenDatasets={setHiddenDatasets}
-    />
+    <div className="relative">
+      <StandardLegend
+        legendDatasets={legendDatasets}
+        hiddenDatasets={hiddenDatasets}
+        setHiddenDatasets={setHiddenDatasets}
+      />
+      {hasPlan && legendDatasets.length > 0 && <PlanKey className="absolute right-0 bottom-0 px-1.5 py-0.5" />}
+    </div>
   );
 });
+
 MainChartLegend.displayName = 'MainChartLegend';

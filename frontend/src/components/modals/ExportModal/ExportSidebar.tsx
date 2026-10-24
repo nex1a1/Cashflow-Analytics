@@ -259,7 +259,7 @@ export default function ExportSidebar({
           <span className="text-neutral-500 font-bold uppercase text-[11px]">ขนาดไฟล์โดยประมาณ:</span>
           <span className="text-neutral-200 font-bold tabular-nums">{stats.estKB} KB</span>
         </div>
-        <div className="h-[1px] bg-surface-elevated w-full" />
+        <div className="h-px bg-surface-elevated w-full" />
         <div className="flex justify-between items-center">
           <span className="text-neutral-500 font-bold uppercase text-[11px]">ENCODING:</span>
           <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">

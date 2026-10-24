@@ -288,11 +288,11 @@ describe('LedgerView — table (horizontal) view', () => {
     mount({ transactions: [...data, { ...tx('fun', 'c-food', 40, '2026-01-06'), allocation_type: 'want' } as TransactionDisplay, { ...tx('need', 'c-food', 60, '2026-01-06'), allocation_type: 'need' } as TransactionDisplay] });
     toTable();
     click(filterToggle());
-    expect(filterToggle().className).not.toContain('!border-warn');
+    expect(filterToggle().className).not.toContain('border-warn!');
     click(btn('Need'));
     expect(q('tfoot')!.textContent).toContain('60.00');
     expect(q('tfoot')!.textContent).not.toContain('1,100.00');
-    expect(filterToggle().className).toContain('!border-warn');
+    expect(filterToggle().className).toContain('border-warn!');
     expect(text()).toContain('1 ตัวกรองทำงานอยู่');
     click(byText('button', 'ล้างตัวกรอง'));
     expect(q('tfoot')!.textContent).toContain('1,100.00');
@@ -302,9 +302,9 @@ describe('LedgerView — table (horizontal) view', () => {
     mount();
     toTable();
     click(filterToggle());
-    expect(filterToggle().className).not.toContain('!border-warn');
+    expect(filterToggle().className).not.toContain('border-warn!');
     click(byText('button', 'รวมค่าหอ/น้ำ/ไฟ/เน็ต'));
-    expect(filterToggle().className).toContain('!border-warn');
+    expect(filterToggle().className).toContain('border-warn!');
   });
 
   it('table filters are kept when switching to the list and back', () => {
@@ -314,7 +314,7 @@ describe('LedgerView — table (horizontal) view', () => {
     click(btn('Want'));
     click(document.querySelector('button[title="มุมมองรายการ"]'));
     toTable();
-    expect(filterToggle().className).toContain('!border-warn');
+    expect(filterToggle().className).toContain('border-warn!');
   });
 
   it('an empty table offers to clear the table filter that emptied it', () => {

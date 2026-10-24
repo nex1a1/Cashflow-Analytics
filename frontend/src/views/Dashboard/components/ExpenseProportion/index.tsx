@@ -15,6 +15,8 @@ import {
   sortProportionItems,
   buildDoughnutChartData,
   resolveDoughnutHoverIndex,
+  hasPlanSlices,
+  planOf,
 } from './proportionHelpers';
 import { ExpenseProportionHeader } from './ExpenseProportionHeader';
 import { ExpenseProportionChart } from './ExpenseProportionChart';
@@ -57,7 +59,7 @@ function ExpenseProportionSkeleton() {
         {/* spinner = loading feedback */}
         <div className="w-10 h-10 rounded-full border-4 border-line border-t-accent-ink animate-spin" />
       </div>
-      <div className="flex-1 grid grid-cols-5 gap-[1px] bg-surface-elevated/20">
+      <div className="flex-1 grid grid-cols-5 gap-px bg-surface-elevated/20">
         {SKELETON_KEYS.map((key) => (
           <div key={key} className="p-2 bg-surface-elevated/40">
             <div className="h-2 w-12 mb-2 rounded-none bg-surface-elevated" />
@@ -147,6 +149,10 @@ export function ExpenseProportion() {
     return sortProportionItems(sortedCats, sortMode, false);
   }, [sortedCats, sortMode]);
 
+  // money dated after today (entered ahead): drawn hatched, summed for the centre of the doughnut
+  const hasPlan = useMemo(() => hasPlanSlices(activeItems), [activeItems]);
+  const planTotal = useMemo(() => activeItems.reduce((sum, i) => sum + planOf(i), 0), [activeItems]);
+
   const activeChartData = useMemo(() => {
     return buildDoughnutChartData(activeItems, hoveredIdx);
   }, [activeItems, hoveredIdx]);
@@ -170,11 +176,11 @@ export function ExpenseProportion() {
     const baseOptions = getDoughnutChartOptions();
     return {
       ...baseOptions,
-      cutout: '72%', 
+      cutout: '64%', 
       onHover: (_event: any, elements: any[]) => {
         const hasElements = Boolean(elements && elements.length > 0);
         setIsSliceHovered(hasElements);
-        const hoverIdx = resolveDoughnutHoverIndex(elements);
+        const hoverIdx = resolveDoughnutHoverIndex(elements, hasPlan);
         setHoveredIdx(hoverIdx);
       },
       plugins: {
@@ -195,18 +201,21 @@ export function ExpenseProportion() {
           callbacks: {
             label: (context: any) => {
               const val = context.parsed;
-              const item = activeItems[context.dataIndex];
+              // with plan arcs every item owns two slices (actual, plan)
+              const isPlanArc = hasPlan && context.dataIndex % 2 === 1;
+              const item = activeItems[hasPlan ? Math.floor(context.dataIndex / 2) : context.dataIndex];
               const pct = item?.percentage;
-              if (pct) {
-                return ` ${formatBaht(val)} (${pct}%)`;
+              const tail = isPlanArc ? ' · แผน (ยังไม่ถึง)' : '';
+              if (pct && !hasPlan) {
+                return ` ${formatBaht(val)} (${pct}%)${tail}`;
               }
-              return ` ${formatBaht(val)}`;
+              return ` ${formatBaht(val)}${tail}`;
             }
           }
         }
       }
     };
-  }, [activeItems]);
+  }, [activeItems, hasPlan]);
   
   const cardClass = "rounded-none border flex flex-col w-full bg-canvas border-line relative overflow-visible z-10";
   const isEmpty = !isEvolutionMode && itemCount === 0 && !showSkeleton;
@@ -229,6 +238,7 @@ export function ExpenseProportion() {
         isSliceHovered={isSliceHovered}
         hoveredItem={activeHoveredItem}
         activeItems={activeItems}
+        planTotal={planTotal}
       />
       <ExpenseProportionGrid
         categoryItems={categoryActiveItems}
@@ -265,6 +275,7 @@ export function ExpenseProportion() {
         hasNoIncomeData={hasNoIncomeData}
         evolutionEligible={evolutionData.eligible}
         evolutionLabel={evolutionData.label}
+        hasPlan={hasPlan && !isEvolutionMode}
       />
 
       {showSkeleton ? (

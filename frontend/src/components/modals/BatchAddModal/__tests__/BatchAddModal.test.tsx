@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { Mock } from 'vitest';
+type AnyMock = Mock<(...args: any[]) => any>;
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -1140,7 +1142,7 @@ describe('BatchAddModal — quick suggestions', () => {
     click(items()[0]);
     await flushAll();
     expect(categoryTrigger().textContent).toContain('ค่ากิน');
-    const onSaveBatch = props.onSaveBatch as ReturnType<typeof vi.fn>;
+    const onSaveBatch = props.onSaveBatch as AnyMock;
     click(addBtn());
     await flushAll();
     click(saveBtn());

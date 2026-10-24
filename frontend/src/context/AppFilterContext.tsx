@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { AppFilterContextValue } from '../types';
 import { getFilterLabel } from '../utils/formatters';
+import { effectiveChartGroupBy } from '../utils/chartGrouping';
 import useFilters from '../hooks/useFilters';
 import useAnalytics from '../hooks/useAnalytics';
 import { useAppData } from './AppDataContext';
@@ -95,7 +96,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     hideFixedExpenses,
     hideWantExpenses,
     dashboardCategory,
-    chartGroupBy,
+    chartGroupBy: effectiveChartGroupBy(chartGroupBy, filterPeriod),
     dayTypes,
     dayTypeConfig,
     summaryData,

@@ -43,7 +43,7 @@ const mount = (props: HarnessProps = {}, open = true) => {
   if (open) click(trigger());
 };
 const trigger = () => q<HTMLButtonElement>('button[title="คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย"]')!;
-const popover = () => q('div.z-\\[999\\]');
+const popover = () => q('div.z-999');
 const catChip = (name: string) => q<HTMLButtonElement>(`button[title^="คลิก: เปิด/ปิดหมวดหมู่ \\"${name}\\""]`)!;
 const groupChip = (name: string) => q<HTMLButtonElement>(`button[title="คลิกเพื่อสลับเลือกหมวดหมู่ทั้งหมดในกลุ่ม ${name}"]`)!;
 const isolateGroup = (name: string) => q<HTMLButtonElement>(`button[title="เลือกเฉพาะกลุ่ม ${name}"]`)!;
@@ -211,7 +211,7 @@ describe('CategoryMatrixFilter — the two tiers', () => {
 
   it('categories are shown in their Settings order inside a group', () => {
     mount();
-    const food = [...q('div.z-\\[999\\]')!.querySelectorAll('button[title^="คลิก: เปิด/ปิดหมวดหมู่"]')].map(b => b.textContent!.trim());
+    const food = [...q('div.z-999')!.querySelectorAll('button[title^="คลิก: เปิด/ปิดหมวดหมู่"]')].map(b => b.textContent!.trim());
     expect(food.indexOf('กาแฟ')).toBeLessThan(food.indexOf('มื้อกลางวัน')); // order_index 1 before 2
   });
 

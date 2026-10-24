@@ -22,16 +22,16 @@ const VIEW_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 export const ChartGroupBySwitcher = memo(({ chartGroupBy, setChartGroupBy }: ChartGroupBySwitcherProps) => (
-  <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+  <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
     <button
       onClick={() => setChartGroupBy('monthly')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายเดือน
     </button>
     <button
       onClick={() => setChartGroupBy('daily')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
+      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
     >
       รายวัน
     </button>
@@ -44,7 +44,7 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
   const reasonIdBase = useId();
 
   return (
-    <div role="group" aria-label="ชนิดกราฟ" className="flex items-center p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+    <div role="group" aria-label="ชนิดกราฟ" className="flex items-center p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
       {views.map(v => {
         const Icon = VIEW_ICONS[v.id] || BarChart;
         const isDisabled = Boolean(v.disabled);
@@ -66,7 +66,7 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
                   : isActive
-                  ? 'bg-surface-elevated text-accent-ink shadow-sm'
+                  ? 'bg-surface-elevated text-accent-ink shadow-xs'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
               }`}
             >
@@ -90,12 +90,12 @@ ViewTypeSwitcher.displayName = 'ViewTypeSwitcher';
 
 export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode, showSkeleton }: SankeyControlsProps) => (
   <div className="flex items-center gap-2 flex-wrap">
-    <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+    <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
       <button
         disabled={showSkeleton}
         onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeyMode === 'allocation' ? 'bg-accent text-on-accent shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+          sankeyMode === 'allocation' ? 'bg-accent text-on-accent shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
         title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (ตามใจ) / Save (เงินออม)"
       >
@@ -104,12 +104,12 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
       </button>
     </div>
 
-    <div className="flex p-0.5 rounded-none border shadow-sm bg-canvas border-line/60">
+    <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
       <button
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('value')}
         className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามยอดเงิน
@@ -118,7 +118,7 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
         disabled={showSkeleton}
         onClick={() => setSankeySortMode('index')}
         className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent-ink shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
+          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
         }`}
       >
         เรียงตามลำดับในหน้าตั้งค่า
@@ -132,10 +132,10 @@ export const MainChartHeader = memo(({
   chartViewType, setChartViewType,
   chartGroupBy, setChartGroupBy,
   setIsBreakdown, filterPeriod,
-  mainChartType, isBreakdown
+  mainChartType, isBreakdown, dailyDisabled
 }: MainChartHeaderProps) => {
   const isSingleMonth = isSingleUnitPeriod(filterPeriod);
-  const showGroupBy = chartViewType !== 'sankey' && chartViewType !== 'multiples' && !isSingleMonth;
+  const showGroupBy = chartViewType !== 'sankey' && chartViewType !== 'multiples' && !isSingleMonth && !dailyDisabled; // a period too long for daily has nothing to switch between
   const title = getMainChartTitle(chartViewType, mainChartType, isBreakdown);
 
   return (
@@ -149,7 +149,7 @@ export const MainChartHeader = memo(({
         ) : (
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400" />
         )}
-        <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
+        <h2 key={title} className="m-in text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
           {title}
         </h2>
       </div>

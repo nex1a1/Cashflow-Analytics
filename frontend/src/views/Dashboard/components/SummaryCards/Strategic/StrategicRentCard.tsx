@@ -35,7 +35,7 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
       overlayTitle="รายละเอียดที่พัก"
       overlayBadge={<span className="text-sky-400 font-extrabold text-[11px] border border-sky-500/30 bg-sky-950/40 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">4 หมวด</span>}
       overlayBody={rentSub && (
-        <div className="grid grid-cols-2 gap-[1px] bg-neutral-800/50 mt-1.5 flex-1">
+        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
           {rentSub.rent === 0 && rentSub.electricity === 0 && rentSub.internet === 0 && rentSub.water === 0 ? (
             <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
               ไม่มีข้อมูลที่พักอาศัยในช่วงนี้
