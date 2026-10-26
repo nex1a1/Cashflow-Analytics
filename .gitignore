@@ -54,3 +54,5 @@ PRODUCT.md
 #Sonarqube
 sonar-project.properties
 .scannerwork/
+# TypeScript incremental build info
+*.tsbuildinfo
