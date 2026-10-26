@@ -2,8 +2,7 @@
 import React, { useMemo } from 'react';
 import { EyeOff } from 'lucide-react';
 import { getThaiMonth } from '@/utils/formatters';
-import { cycleLabel, cycleRangeLabel, toCycleKey } from '@/utils/payCycle';
-import { getLocalTodayString } from '../ActivityTimeline';
+import { cycleLabel, cycleRangeLabel } from '@/utils/payCycle';
 import { CashflowTableGroupCells } from './CashflowTableGroupCells';
 import { CashflowTableRowSummaryCells } from './CashflowTableSummaryCells';
 import { calculateAdjustedGroupsTotal, findPreviousActiveMonth } from './helpers';
@@ -16,7 +15,7 @@ export const CashflowTableRow = React.memo(({
   handleMouseEnter, handleMouseLeave,
   hoveredCol, setHoveredCol,
   isRowHovered, setHoveredRow,
-  isExcluded, isPartial, isCycleMode, excludedMonths, toggleMonth,
+  isExcluded, isPartial, isCurrent = false, isCycleMode, excludedMonths, toggleMonth,
   excludedGroups, excludedCategories, categories,
   filteredCatMap = {}, filteredGroupMap = {},
 }: RowProps) => {
@@ -54,6 +53,42 @@ export const CashflowTableRow = React.memo(({
     monthCellBg = 'text-neutral-200 bg-surface-hover/80';
   }
 
+  const groupCells = (groups: typeof activeIncomeGroups, isIncome: boolean) => groups.map((g, idx) => (
+    <CashflowTableGroupCells
+      key={g.id}
+      g={g}
+      idx={idx}
+      isLastGroup={idx === groups.length - 1}
+      isIncome={isIncome}
+      expandedGroups={expandedGroups}
+      getActiveCatsForGroup={getActiveCatsForGroup}
+      row={row}
+      excludedGroups={excludedGroups}
+      excludedCategories={excludedCategories}
+      categories={categories}
+      filteredGroupMap={filteredGroupMap}
+      filteredCatMap={filteredCatMap}
+      analytics={analytics}
+      hoveredCol={hoveredCol}
+      setHoveredCol={setHoveredCol}
+      isRowHovered={isRowHovered}
+      thinBorder={thinBorder}
+      boundaryBorder={boundaryBorder}
+      boxBorder={boxBorder}
+      isExcluded={isExcluded}
+    />
+
+  ));
+
+  const monthLabel = (
+    <span className="inline-flex items-center gap-1">
+      {isCycleMode ? cycleLabel(row.monthStr) : getThaiMonth(row.monthStr)}
+      {isCurrent && (
+        <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title={`${isCycleMode ? 'รอบ' : 'เดือน'}ปัจจุบัน (ยังไม่จบ)`} />
+      )}
+    </span>
+  );
+
   return (
     <tr
       onMouseEnter={() => setHoveredRow(row.monthStr)}
@@ -75,80 +110,18 @@ export const CashflowTableRow = React.memo(({
           title={isExcluded ? 'คลิกเพื่อนำกลับมารวมคำนวณ' : 'คลิกเพื่อนำออกจากการคำนวณ'}
           className="w-full px-3 py-2 flex items-center justify-center gap-1.5 font-bold cursor-pointer select-none"
         >
-          {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-ink-muted" aria-hidden="true" />}
+          {isExcluded && <EyeOff className="w-3 h-3 shrink-0 text-ink-muted" />}
           {isCycleMode ? (
             <div className="flex flex-col items-center leading-tight">
-              <span className="inline-flex items-center gap-1">
-                {cycleLabel(row.monthStr)}
-                {row.monthStr === toCycleKey(getLocalTodayString()) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="รอบปัจจุบัน (ยังไม่จบ)" />
-                )}
-              </span>
+              {monthLabel}
               <span className="text-[11px] font-normal text-neutral-500">{cycleRangeLabel(row.monthStr)}</span>
             </div>
-          ) : (
-            <span className="inline-flex items-center gap-1">
-              {getThaiMonth(row.monthStr)}
-              {row.monthStr === getLocalTodayString().slice(0, 7) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="เดือนปัจจุบัน (ยังไม่จบ)" />
-              )}
-            </span>
-          )}
+          ) : monthLabel}
         </button>
       </td>
 
-      {activeIncomeGroups.map((g, idx) => (
-        <CashflowTableGroupCells
-          key={g.id}
-          g={g}
-          idx={idx}
-          isLastGroup={idx === activeIncomeGroups.length - 1}
-          isIncome={true}
-          expandedGroups={expandedGroups}
-          getActiveCatsForGroup={getActiveCatsForGroup}
-          row={row}
-          excludedGroups={excludedGroups}
-          excludedCategories={excludedCategories}
-          categories={categories}
-          filteredGroupMap={filteredGroupMap}
-          filteredCatMap={filteredCatMap}
-          analytics={analytics}
-          hoveredCol={hoveredCol}
-          setHoveredCol={setHoveredCol}
-          isRowHovered={isRowHovered}
-          thinBorder={thinBorder}
-          boundaryBorder={boundaryBorder}
-          boxBorder={boxBorder}
-          isExcluded={isExcluded}
-        />
-      ))}
-
-      {/* Fix #4: ส่ง idx และ isLastGroup ที่ถูกต้องแทนการ hardcode */}
-      {activeExpenseGroups.map((g, idx) => (
-        <CashflowTableGroupCells
-          key={g.id}
-          g={g}
-          idx={idx}
-          isLastGroup={idx === activeExpenseGroups.length - 1}
-          isIncome={false}
-          expandedGroups={expandedGroups}
-          getActiveCatsForGroup={getActiveCatsForGroup}
-          row={row}
-          excludedGroups={excludedGroups}
-          excludedCategories={excludedCategories}
-          categories={categories}
-          filteredGroupMap={filteredGroupMap}
-          filteredCatMap={filteredCatMap}
-          analytics={analytics}
-          hoveredCol={hoveredCol}
-          setHoveredCol={setHoveredCol}
-          isRowHovered={isRowHovered}
-          thinBorder={thinBorder}
-          boundaryBorder={boundaryBorder}
-          boxBorder={boxBorder}
-          isExcluded={isExcluded}
-        />
-      ))}
+      {groupCells(activeIncomeGroups, true)}
+      {groupCells(activeExpenseGroups, false)}
 
       <CashflowTableRowSummaryCells
         currentAdjustedIncome={currentAdjustedIncome}

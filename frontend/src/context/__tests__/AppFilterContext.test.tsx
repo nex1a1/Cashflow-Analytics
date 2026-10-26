@@ -83,7 +83,6 @@ describe('AppFilterContext', () => {
     ['calendar', 'Calendar'],
     ['ledger', 'Ledger'],
     ['portfolio', 'Portfolio'],
-    ['tax', 'Tax'],
     ['settings', 'Settings'],
   ])('the browser title names the %s tab', async (tab, label) => {
     h.ui.activeTab = tab;

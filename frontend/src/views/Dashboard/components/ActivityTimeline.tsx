@@ -4,10 +4,13 @@ import {
   CalendarClock, CalendarDays, Flame, Info, TableProperties 
 } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
+import useToday from '@/hooks/useToday';
 import { DayType } from '@/types';
 import { THAI_MONTHS_SHORT, formatMoney } from '@/utils/formatters';
 
 import { tc, readable } from '@/constants/theme';
+import { PanelTitle } from './panelParts';
+
 // ─── TYPES & INTERFACES ──────────────────────────────────────────
 export type TimelineViewMode = 'dayType' | 'heatmap';
 export type TimelineLayoutMode = 'github' | 'calendar';
@@ -41,15 +44,6 @@ export const HEATMAP_SHADES = [
   ...[0.2, 0.4, 0.6, 0.8].map((t) => mixHex(tc('surface'), tc('expense'), t)),
   tc('expense'),
 ];
-
-// Helper: คำนวณวันที่วันนี้ตาม Local Timezone (ป้องกัน UTC Off-by-One Bug)
-export const getLocalTodayString = (): string => {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
 
 export const getExpenseLevel = (amount: number, maxThreshold: number): number => {
   if (!amount || amount <= 0) return 0;
@@ -368,7 +362,7 @@ export default function ActivityTimeline() {
   const datesInPeriodSet = useMemo(() => new Set(datesInPeriod), [datesInPeriod]);
 
   // Local Timezone Today String (ป้องกันปัญหา UTC Shift)
-  const todayStr = useMemo(() => getLocalTodayString(), []);
+  const todayStr = useToday();
 
   // O(1) Map สำหรับ DayTypeConfig เพื่อลด Linear Search
   const dayTypeMap = useMemo(() => {
@@ -671,11 +665,7 @@ export default function ActivityTimeline() {
       {/* ─── HEADER (Editorial Style) ─── */}
       <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line w-full gap-4 relative z-20 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-accent shrink-0" />
-          <CalendarClock className="w-3.5 h-3.5 text-neutral-400" />
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-            ปฏิทินการใช้จ่าย
-          </h2>
+          <PanelTitle icon={CalendarClock} title="ปฏิทินการใช้จ่าย" />
           <div className="ml-2">
             <TimelineModeToggle viewMode={viewMode} setViewMode={setViewMode} />
           </div>

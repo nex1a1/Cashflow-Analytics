@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, use, ReactNode } from 'react';
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '@/types';
 
 export interface DashboardAnalyticsResult {
@@ -48,14 +48,14 @@ export interface DashboardProviderProps {
 
 export const DashboardProvider = ({ children, value }: DashboardProviderProps) => {
   return (
-    <DashboardContext.Provider value={value}>
+    <DashboardContext value={value}>
       {children}
-    </DashboardContext.Provider>
+    </DashboardContext>
   );
 };
 
 export const useDashboardContext = () => {
-  const context = useContext(DashboardContext);
+  const context = use(DashboardContext);
   if (!context) {
     throw new Error('useDashboardContext must be used within a DashboardProvider');
   }

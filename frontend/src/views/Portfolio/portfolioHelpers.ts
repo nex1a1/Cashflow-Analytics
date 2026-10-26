@@ -26,8 +26,6 @@ export const defaultUnitLabel = (kind: AssetKind): string => UNIT_LABELS[kind];
 export const signedTradeAmount = (side: 'buy' | 'sell', amount: number): number =>
   side === 'sell' ? -Math.abs(amount) : Math.abs(amount);
 
-export const tradeSideOf = (signedAmount: number): 'buy' | 'sell' => (signedAmount < 0 ? 'sell' : 'buy');
-
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 export interface PriceAge {

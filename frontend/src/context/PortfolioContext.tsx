@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import React, { createContext, use, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { AssetInput, Portfolio } from '../types';
 import { portfolioService } from '../services/api';
 import { latestOnly } from '../utils/latestOnly';
@@ -123,11 +123,11 @@ export const PortfolioProvider: React.FC<{ children: ReactNode }> = ({ children 
   const value: PortfolioContextValue = {
     portfolio, isRefreshing, priceStatus, failedPrices, reload, refreshPrices, saveAsset, deleteAsset, setManualPrice,
   };
-  return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
+  return <PortfolioContext value={value}>{children}</PortfolioContext>;
 };
 
 export const usePortfolio = (): PortfolioContextValue => {
-  const ctx = useContext(PortfolioContext);
+  const ctx = use(PortfolioContext);
   if (!ctx) throw new Error('usePortfolio must be used within PortfolioProvider');
   return ctx;
 };

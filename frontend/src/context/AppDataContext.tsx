@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
+import React, { createContext, use, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { AppDataContextValue, CashflowGroup, DayNote, DayType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
@@ -397,14 +397,14 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
   };
 
   return (
-    <AppDataContext.Provider value={value}>
+    <AppDataContext value={value}>
       {children}
-    </AppDataContext.Provider>
+    </AppDataContext>
   );
 };
 
 export const useAppData = (): AppDataContextValue => {
-  const context = useContext(AppDataContext);
+  const context = use(AppDataContext);
   if (!context) {
     throw new Error('useAppData must be used within an AppDataProvider');
   }

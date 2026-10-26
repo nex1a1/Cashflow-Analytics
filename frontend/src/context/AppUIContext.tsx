@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, use, useState, useEffect, useCallback, ReactNode } from 'react';
 import { AppUIContextValue, QuickAddFormData } from '../types';
 import { STORAGE_KEYS } from '../constants';
 import { localTodayIso } from '../utils/payCycle';
@@ -92,14 +92,14 @@ export const AppUIProvider: React.FC<AppUIProviderProps> = ({ children }) => {
   };
 
   return (
-    <AppUIContext.Provider value={value}>
+    <AppUIContext value={value}>
       {children}
-    </AppUIContext.Provider>
+    </AppUIContext>
   );
 };
 
 export const useAppUI = (): AppUIContextValue => {
-  const context = useContext(AppUIContext);
+  const context = use(AppUIContext);
   if (!context) {
     throw new Error('useAppUI must be used within an AppUIProvider');
   }

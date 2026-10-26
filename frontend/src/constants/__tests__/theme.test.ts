@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readable, contrast, tc, muteColor, visibleFill } from '../theme';
+import { readable, contrast, tc } from '../theme';
 
 describe('readable()', () => {
   it('lifts dark user colors to ≥4.5:1 on surface', () => {
@@ -26,27 +26,3 @@ describe('active theme tokens', () => {
   });
 });
 
-describe('muteColor()', () => {
-  const neon = ['#10B981', '#F2715A', '#E056FD', '#E84393', '#F1C40F', '#FF4D4D', '#3B82F6'];
-  it('changes neon colors and is idempotent (safe to save back)', () => {
-    for (const hex of neon) {
-      const m = muteColor(hex);
-      expect(m).not.toBe(hex);
-      expect(muteColor(m)).toBe(m);
-    }
-  });
-  it('leaves low-chroma and non-hex values alone', () => {
-    expect(muteColor('#64748B')).toBe('#64748B');
-    expect(muteColor('rgb(1, 2, 3)')).toBe('rgb(1, 2, 3)');
-  });
-});
-
-describe('visibleFill()', () => {
-  it('separates near-surface user fills from both extreme surfaces', () => {
-    for (const hex of ['#E8E8E8', '#FFFFFF', '#181818', '#101114']) {
-      const f = visibleFill(hex);
-      expect(contrast(f, tc('canvas'))).toBeGreaterThanOrEqual(1.5);
-      expect(contrast(f, tc('surface-elevated'))).toBeGreaterThanOrEqual(1.5);
-    }
-  });
-});

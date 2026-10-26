@@ -33,22 +33,6 @@ export interface ExportModalProps {
   initialPeriod?: string;
 }
 
-export interface ExportHeaderProps {
-  onClose: () => void;
-  isExporting: boolean;
-}
-
-export interface ExportFormatCardProps {
-  formatKey: ExportFormatKey;
-  activeFormat: ExportFormatKey;
-  onClick: (key: ExportFormatKey) => void;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  subtitle: string;
-  description: string;
-  badge?: string;
-}
-
 export interface ExportSidebarProps {
   exportPeriod: string;
   setExportPeriod: (period: string) => void;

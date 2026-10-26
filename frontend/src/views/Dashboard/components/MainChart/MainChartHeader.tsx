@@ -3,16 +3,13 @@ import React, { memo, useId } from 'react';
 import { Layers, TrendingUp, BarChart, Network, LayoutGrid } from 'lucide-react';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { getMainChartTitle, getAvailableChartViews } from './helpers';
+import { PanelTitle, SEG_GROUP, segBtn, DISABLED_OPTION, DisabledHint } from '../panelParts';
 import {
   ChartGroupBySwitcherProps,
   ViewTypeSwitcherProps,
   SankeyControlsProps,
   MainChartHeaderProps,
 } from './types';
-
-// ==========================================
-// SUBCOMPONENTS: HEADER & SWITCHERS
-// ==========================================
 
 const VIEW_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   line: TrendingUp,
@@ -21,20 +18,14 @@ const VIEW_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   multiples: LayoutGrid,
 };
 
+const GROUP_BY = [['monthly', 'รายเดือน'], ['daily', 'รายวัน']] as const;
+const SANKEY_SORT = [['value', 'เรียงตามยอดเงิน'], ['index', 'เรียงตามลำดับในหน้าตั้งค่า']] as const;
+
 export const ChartGroupBySwitcher = memo(({ chartGroupBy, setChartGroupBy }: ChartGroupBySwitcherProps) => (
-  <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
-    <button
-      onClick={() => setChartGroupBy('monthly')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'monthly' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
-    >
-      รายเดือน
-    </button>
-    <button
-      onClick={() => setChartGroupBy('daily')}
-      className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${chartGroupBy === 'daily' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'}`}
-    >
-      รายวัน
-    </button>
+  <div className={SEG_GROUP}>
+    {GROUP_BY.map(([id, label]) => (
+      <button key={id} onClick={() => setChartGroupBy(id)} className={segBtn(chartGroupBy === id)}>{label}</button>
+    ))}
   </div>
 ));
 ChartGroupBySwitcher.displayName = 'ChartGroupBySwitcher';
@@ -44,14 +35,13 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
   const reasonIdBase = useId();
 
   return (
-    <div role="group" aria-label="ชนิดกราฟ" className="flex items-center p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
+    <div role="group" aria-label="ชนิดกราฟ" className={`items-center ${SEG_GROUP}`}>
       {views.map(v => {
         const Icon = VIEW_ICONS[v.id] || BarChart;
         const isDisabled = Boolean(v.disabled);
-        const isActive = chartViewType === v.id && !isDisabled;
         const reasonId = isDisabled && v.title ? `${reasonIdBase}-${v.id}` : undefined;
         return (
-          <div key={v.id} className="relative group/viewbtn flex items-center">
+          <div key={v.id} className="relative group/hint flex items-center">
             <button
               type="button"
               onClick={() => {
@@ -59,27 +49,14 @@ export const ViewTypeSwitcher = memo(({ chartViewType, setChartViewType, setIsBr
                 setChartViewType(v.id);
                 if (v.id === 'sankey' || v.id === 'multiples') setIsBreakdown(false);
               }}
-              aria-pressed={isActive}
+              aria-pressed={chartViewType === v.id && !isDisabled}
               aria-disabled={isDisabled}
               aria-describedby={reasonId}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${
-                isDisabled
-                  ? 'opacity-40 cursor-not-allowed text-neutral-600 bg-transparent hover:bg-transparent hover:text-neutral-600'
-                  : isActive
-                  ? 'bg-surface-elevated text-accent-ink shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
-              }`}
+              className={`flex items-center gap-1.5 ${isDisabled ? `px-3 py-1.5 text-[11px] font-bold rounded-none transition-all ${DISABLED_OPTION}` : segBtn(chartViewType === v.id)}`}
             >
               <Icon className="w-3.5 h-3.5" /> {v.label}
             </button>
-            {isDisabled && v.title && (
-              <div id={reasonId} role="tooltip" className="absolute top-full right-0 mt-1.5 opacity-0 group-hover/viewbtn:opacity-100 group-focus-within/viewbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/viewbtn:visible group-focus-within/viewbtn:visible whitespace-nowrap">
-                <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                  <span>{v.title}</span>
-                </div>
-              </div>
-            )}
+            {reasonId && <DisabledHint id={reasonId} text={v.title!} align="right" />}
           </div>
         );
       })}
@@ -90,13 +67,11 @@ ViewTypeSwitcher.displayName = 'ViewTypeSwitcher';
 
 export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode, setSankeySortMode, showSkeleton }: SankeyControlsProps) => (
   <div className="flex items-center gap-2 flex-wrap">
-    <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
+    <div className={SEG_GROUP}>
       <button
         disabled={showSkeleton}
         onClick={() => setSankeyMode(sankeyMode === 'allocation' ? 'standard' : 'allocation')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeyMode === 'allocation' ? 'bg-accent text-on-accent shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
-        }`}
+        className={`flex items-center gap-1.5 disabled:opacity-40 ${segBtn(sankeyMode === 'allocation', 'bg-accent text-on-accent shadow-xs')}`}
         title="โหมดจัดสรร: แยกแสดงตาม Need (จำเป็น) / Want (ตามใจ) / Save (เงินออม)"
       >
         <Layers className="w-3 h-3" />
@@ -104,25 +79,12 @@ export const SankeyControls = memo(({ sankeyMode, setSankeyMode, sankeySortMode,
       </button>
     </div>
 
-    <div className="flex p-0.5 rounded-none border shadow-xs bg-canvas border-line/60">
-      <button
-        disabled={showSkeleton}
-        onClick={() => setSankeySortMode('value')}
-        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'value' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
-        }`}
-      >
-        เรียงตามยอดเงิน
-      </button>
-      <button
-        disabled={showSkeleton}
-        onClick={() => setSankeySortMode('index')}
-        className={`px-3 py-1.5 text-[11px] font-bold rounded-none transition-all disabled:opacity-40 ${
-          sankeySortMode === 'index' ? 'bg-surface-elevated text-accent-ink shadow-xs' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'
-        }`}
-      >
-        เรียงตามลำดับในหน้าตั้งค่า
-      </button>
+    <div className={SEG_GROUP}>
+      {SANKEY_SORT.map(([id, label]) => (
+        <button key={id} disabled={showSkeleton} onClick={() => setSankeySortMode(id)} className={`disabled:opacity-40 ${segBtn(sankeySortMode === id)}`}>
+          {label}
+        </button>
+      ))}
     </div>
   </div>
 ));
@@ -137,34 +99,17 @@ export const MainChartHeader = memo(({
   const isSingleMonth = isSingleUnitPeriod(filterPeriod);
   const showGroupBy = chartViewType !== 'sankey' && chartViewType !== 'multiples' && !isSingleMonth && !dailyDisabled; // a period too long for daily has nothing to switch between
   const title = getMainChartTitle(chartViewType, mainChartType, isBreakdown);
+  const TitleIcon = chartViewType === 'sankey' ? Network : chartViewType === 'multiples' ? LayoutGrid : TrendingUp;
 
   return (
     <div className="px-4 py-2 border-b flex items-center justify-between bg-surface/80 border-line flex-wrap relative z-20 w-full gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-[3px] h-3 bg-accent shrink-0" />
-        {chartViewType === 'sankey' ? (
-          <Network className="w-3.5 h-3.5 text-neutral-400" />
-        ) : chartViewType === 'multiples' ? (
-          <LayoutGrid className="w-3.5 h-3.5 text-neutral-400" />
-        ) : (
-          <TrendingUp className="w-3.5 h-3.5 text-neutral-400" />
-        )}
-        <h2 key={title} className="m-in text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-          {title}
-        </h2>
+        <PanelTitle icon={TitleIcon} title={title} titleKey={title} titleClassName="m-in" />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {showGroupBy && (
-          <ChartGroupBySwitcher chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} />
-        )}
-
-        <ViewTypeSwitcher
-          chartViewType={chartViewType}
-          setChartViewType={setChartViewType}
-          setIsBreakdown={setIsBreakdown}
-          isSingleMonth={isSingleMonth}
-        />
+        {showGroupBy && <ChartGroupBySwitcher chartGroupBy={chartGroupBy} setChartGroupBy={setChartGroupBy} />}
+        <ViewTypeSwitcher chartViewType={chartViewType} setChartViewType={setChartViewType} setIsBreakdown={setIsBreakdown} isSingleMonth={isSingleMonth} />
       </div>
     </div>
   );

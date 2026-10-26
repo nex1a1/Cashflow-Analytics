@@ -1,10 +1,11 @@
 import React, { useMemo, useCallback } from 'react';
 import { 
-  Building2, Calendar, EyeOff, RefreshCw, Sparkles, 
+  Building2, Calendar, EyeOff, RefreshCw,
   SlidersHorizontal, Check, Folder, MousePointer2
 } from 'lucide-react';
 import CategoryMatrixFilter from '../common/CategoryMatrixFilter';
 import SegmentGroup from '../common/SegmentGroup';
+import { ActiveFiltersBar, FilterColumn, FilterField } from '../common/filterParts';
 import { EXCLUDED_HEATMAP_CATEGORIES, HeatmapEngineOptions } from '../../hooks/useHeatmapEngine';
 import { Category, CashflowGroup, TransactionDisplay } from '../../../../types';
 
@@ -17,6 +18,36 @@ interface HorizontalFilterBarProps {
   clearFilters: () => void;
   isFilterActive: boolean;
   activeCount?: number;
+}
+
+/** A display option shown as a row with a checkbox at its end. */
+function CheckToggle({ on, onClick, icon: Icon, label, title, onCls, boxOnCls }: {
+  on: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  title: string;
+  onCls: string;
+  boxOnCls: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
+        on ? onCls : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
+      }`}
+      title={title}
+    >
+      <div className="flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" />
+        <span>{label}</span>
+      </div>
+      <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${on ? boxOnCls : 'border-line-strong bg-canvas'}`}>
+        {on && <Check className="w-2.5 h-2.5 stroke-3" />}
+      </div>
+    </button>
+  );
 }
 
 export default function HorizontalFilterBar({
@@ -211,117 +242,56 @@ export default function HorizontalFilterBar({
       {/* 3-Column Grid */}
       <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_320px_minmax(320px,1.5fr)] gap-px bg-surface-elevated/50 relative z-20">
         
-        {/* COLUMN 1: SCOPE & DISPLAY OPTIONS */}
-        <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
-          <div className="flex items-center gap-1.5">
-            <MousePointer2 className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-              การจัดสรรและตัวเลือกแสดงผล
-            </span>
-          </div>
-
-          {/* Allocation */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-              การจัดสรรเงิน (Need / Want)
-            </span>
+        <FilterColumn icon={MousePointer2} title="การจัดสรรและตัวเลือกแสดงผล" note="* ควบคุมการรวมค่าคงที่และการซ่อนแถววันว่างในตารางความถี่">
+          <FilterField label="การจัดสรรเงิน (Need / Want)">
             <SegmentGroup value={allocationFilter} onChange={v => setFilters(prev => ({ ...prev, allocationFilter: v }))} options={[
               { value: 'ALL', label: 'ทั้งหมด' },
               { value: 'need', label: 'Need', colorScheme: 'rose' },
               { value: 'want', label: 'Want', colorScheme: 'amber' },
             ]} />
-          </div>
+          </FilterField>
 
-          {/* Display Toggles */}
           <div className="flex flex-col gap-1.5 pt-1">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <CheckToggle
+                on={includeFixedCosts}
                 onClick={toggleFixedCosts}
-                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
-                  includeFixedCosts
-                    ? 'bg-warn/10 border-warn/60 text-warn'
-                    : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
-                }`}
+                icon={Building2}
+                label="รวมค่าหอ/น้ำ/ไฟ/เน็ต"
                 title="สลับการรวม ค่าเช่า/ค่าหอพัก ค่าน้ำ ค่าไฟ ค่าเน็ต"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>รวมค่าหอ/น้ำ/ไฟ/เน็ต</span>
-                </div>
-                <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
-                  includeFixedCosts ? 'bg-warn border-warn text-canvas' : 'border-line-strong bg-canvas'
-                }`}>
-                  {includeFixedCosts && <Check className="w-2.5 h-2.5 stroke-3" />}
-                </div>
-              </button>
-
-              <button
-                type="button"
+                onCls="bg-warn/10 border-warn/60 text-warn"
+                boxOnCls="bg-warn border-warn text-canvas"
+              />
+              <CheckToggle
+                on={hideZeroDays}
                 onClick={toggleHideZeroDays}
-                className={`flex-1 flex items-center justify-between px-2.5 py-1.5 border rounded-none text-[11px] font-mono font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
-                  hideZeroDays
-                    ? 'bg-accent/20 border-accent/60 text-accent-ink'
-                    : 'bg-surface border-line text-ink-body hover:text-ink-display hover:border-line-strong'
-                }`}
+                icon={EyeOff}
+                label="ซ่อนวันไม่มียอดใช้จ่าย"
                 title="ซ่อนแถววันที่ไม่มียอดใช้จ่ายในเดือนนี้"
-              >
-                <div className="flex items-center gap-1.5">
-                  <EyeOff className="w-3.5 h-3.5" />
-                  <span>ซ่อนวันไม่มียอดใช้จ่าย</span>
-                </div>
-                <div className={`w-3.5 h-3.5 border flex items-center justify-center rounded-none ${
-                  hideZeroDays ? 'bg-accent border-accent-ink text-on-accent' : 'border-line-strong bg-canvas'
-                }`}>
-                  {hideZeroDays && <Check className="w-2.5 h-2.5 stroke-3" />}
-                </div>
-              </button>
+                onCls="bg-accent/20 border-accent/60 text-accent-ink"
+                boxOnCls="bg-accent border-accent-ink text-on-accent"
+              />
             </div>
           </div>
+        </FilterColumn>
 
-          <div className="text-[11px] text-ink-muted font-mono">
-            * ควบคุมการรวมค่าคงที่และการซ่อนแถววันว่างในตารางความถี่
-          </div>
-        </div>
-
-        {/* COLUMN 2: DAY TYPE */}
-        <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-              ตัวกรองประเภทวัน
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-              กรองตามวันทำงาน / วันหยุด
-            </span>
+        <FilterColumn icon={Calendar} title="ตัวกรองประเภทวัน" note="* กรองแถววันที่ในตารางความถี่ตามประเภทวันทำงานหรือวันหยุด" className="relative z-30">
+          <FilterField label="กรองตามวันทำงาน / วันหยุด">
             <SegmentGroup value={dayTypeFilter} onChange={v => setFilters(prev => ({ ...prev, dayTypeFilter: v }))} options={[
               { value: 'ALL', label: 'ทุกวัน' },
               { value: 'WEEKDAY', label: 'วันทำงาน', colorScheme: 'emerald' },
               { value: 'WEEKEND', label: 'วันหยุด', colorScheme: 'amber' },
             ]} />
-          </div>
+          </FilterField>
+        </FilterColumn>
 
-          <div className="text-[11px] text-ink-muted font-mono">
-            * กรองแถววันที่ในตารางความถี่ตามประเภทวันทำงานหรือวันหยุด
-          </div>
-        </div>
-
-        {/* COLUMN 3: CATEGORY MATRIX */}
-        <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
-          <div className="flex items-center gap-1.5">
-            <Folder className="w-3.5 h-3.5 text-ink-muted" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-              จำแนกตามกลุ่ม / หมวดหมู่ในตาราง
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1 relative z-50">
-            <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-              เลือกหมวดหมู่ที่แสดงเป็นคอลัมน์
-            </span>
+        <FilterColumn
+          icon={Folder}
+          title="จำแนกตามกลุ่ม / หมวดหมู่ในตาราง"
+          note="* หมวดหมู่ที่ไม่มีข้อมูลและค่าหอพักจะถูกติ๊กออกตามค่าเริ่มต้น และสามารถติ๊กเลือกเพิ่มได้อิสระ"
+          className="relative z-30"
+        >
+          <FilterField label="เลือกหมวดหมู่ที่แสดงเป็นคอลัมน์" className="relative z-50">
             <CategoryMatrixFilter
               categories={categories}
               cashflowGroups={cashflowGroups}
@@ -330,43 +300,12 @@ export default function HorizontalFilterBar({
               activeCategoryNames={filterActiveCatNames}
               typeFilter="EXPENSE"
             />
-          </div>
-
-          <div className="text-[11px] text-ink-muted font-mono">
-            * หมวดหมู่ที่ไม่มีข้อมูลและค่าหอพักจะถูกติ๊กออกตามค่าเริ่มต้น และสามารถติ๊กเลือกเพิ่มได้อิสระ
-          </div>
-        </div>
+          </FilterField>
+        </FilterColumn>
 
       </div>
 
-      {/* Active summary bottom bar */}
-      {isFilterActive && (
-        <div className="flex items-center justify-between border-t border-line/60 p-2.5 px-3.5 bg-surface/50 relative z-1">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
-              <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                ตัวกรองตารางที่ทำงานอยู่:
-              </span>
-              <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-ink-soft font-mono">
-                {effectiveActiveCount} active
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-pill border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono cursor-pointer"
-          >
-            <RefreshCw className="w-3 h-3" />
-            ล้างการคัดกรองทั้งหมด
-          </button>
-        </div>
-      )}
+      {isFilterActive && <ActiveFiltersBar label="ตัวกรองตารางที่ทำงานอยู่:" count={effectiveActiveCount} onClear={clearFilters} />}
     </div>
   );
 }

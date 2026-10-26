@@ -12,10 +12,6 @@ export interface ImportGuideModalProps {
   dayTypeConfig?: DayType[];
 }
 
-export interface GuideHeaderProps {
-  onClose: () => void;
-}
-
 export interface GuideSidebarProps {
   selectedFormat: GuideFormat;
   onSelectFormat: (fmt: GuideFormat) => void;

@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
-  plugins: [react()],
+  // React Compiler memoises components and hooks at build time (Babel route: the stable 1.0 compiler)
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

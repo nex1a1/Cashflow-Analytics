@@ -3,17 +3,19 @@ import React, { useMemo, memo } from 'react';
 import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
 import { formatMoney, formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
-import { localTodayIso } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 import { withAlpha } from './MainChart/futureZone';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 
 import { tc, readable } from '@/constants/theme';
+import { PanelTitle } from './panelParts';
+
 // --- Helpers ---
-const getSmartDate = (dateStr?: string) => {
+const getSmartDate = (dateStr: string | undefined, todayIso: string) => {
   if (!dateStr) return '';
-  const today = new Date();
+  const today = parseDateStrToObj(todayIso);
   today.setHours(0, 0, 0, 0);
 
   const target = parseDateStrToObj(dateStr);
@@ -38,6 +40,7 @@ interface TransactionItemProps {
   maxAmount: number;
   /** dated after today: entered ahead, not spent yet */
   isPlan?: boolean;
+  todayIso: string;
 }
 
 const getRankStyle = (rank: number) => {
@@ -55,7 +58,7 @@ const getCardBorderClass = (rank: number) => {
   return 'border-line/60 hover:border-line-strong bg-canvas/40 hover:bg-canvas/80';
 };
 
-const TransactionItem = memo(({ tx, index, catDef, maxAmount, isPlan = false }: TransactionItemProps) => {
+const TransactionItem = memo(({ tx, index, catDef, maxAmount, isPlan = false, todayIso }: TransactionItemProps) => {
   // Use scale-adjusted ratio with a minimum baseline width of 4% for visual balance
   const amountNum = typeof tx.amount === 'string' ? Number.parseFloat(tx.amount) : tx.amount;
   const rawRatio = maxAmount > 0 ? Math.abs(amountNum) / maxAmount : 0;
@@ -112,7 +115,7 @@ const TransactionItem = memo(({ tx, index, catDef, maxAmount, isPlan = false }: 
           {/* Date Tag */}
           {tx.date && (
             <span className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-pill border shrink-0 bg-canvas border-line text-slate-400 group-hover:border-line-strong">
-              <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date)}
+              <Calendar className="w-2.5 h-2.5" /> {getSmartDate(tx.date, todayIso)}
             </span>
           )}
           {isPlan && (
@@ -153,7 +156,7 @@ export default function TopTransactions() {
     showSkeleton
   } = useDashboardContext();
   
-  const todayIso = localTodayIso();
+  const todayIso = useToday();
   const cardStyles = 'rounded-none border shadow-xs h-full flex flex-col bg-canvas border-line';
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
@@ -256,11 +259,7 @@ export default function TopTransactions() {
       {/* ─── HEADER (Editorial Style) ─── */}
       <div className="px-4 py-2 border-b flex items-center justify-between flex-wrap bg-surface/80 border-line w-full gap-x-2 gap-y-1.5">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-accent shrink-0" /> {/* Rosso Corsa racing line brand accent */}
-          <TrendingDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200 whitespace-nowrap">
-            รายจ่ายสูงสุด
-          </h2>
+          <PanelTitle icon={TrendingDown} title="รายจ่ายสูงสุด" iconClassName="shrink-0" titleClassName="whitespace-nowrap" />
           <div className="relative group shrink-0">
             <select
               value={topXLimit} 
@@ -312,6 +311,7 @@ export default function TopTransactions() {
                     catDef={catDef} 
                     maxAmount={maxAmount}
                     isPlan={Boolean(tx.date) && tx.date > todayIso}
+                    todayIso={todayIso}
                   />
                 ))}
               </div>

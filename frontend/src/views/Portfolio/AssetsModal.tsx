@@ -48,7 +48,7 @@ const AssetsModal = memo(function AssetsModal({ onClose }: { onClose: () => void
       >
         <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-line bg-surface shrink-0">
           <h3 className="flex items-center gap-2.5 text-[15px] font-black text-ink-display">
-            <Gem className="w-5 h-5 text-accent-ink" aria-hidden="true" /> จัดการสินทรัพย์ลงทุน
+            <Gem className="w-5 h-5 text-accent-ink" /> จัดการสินทรัพย์ลงทุน
           </h3>
           <button type="button" onClick={onClose} aria-label="ปิด" className="p-1.5 text-ink-muted hover:text-ink-display hover:bg-surface-hover">
             <X className="w-5 h-5" />
@@ -66,7 +66,7 @@ const AssetsModal = memo(function AssetsModal({ onClose }: { onClose: () => void
                   selected === NEW ? 'bg-accent text-on-accent border-accent' : 'border-accent/50 bg-accent/10 hover:bg-accent hover:text-on-accent text-accent-ink'
                 }`}
               >
-                <Plus className="w-4 h-4" aria-hidden="true" /> เพิ่มสินทรัพย์ใหม่
+                <Plus className="w-4 h-4" /> เพิ่มสินทรัพย์ใหม่
               </button>
             </div>
             <p className="px-4 pt-3 pb-1.5 text-[11px] font-bold text-ink-muted">สินทรัพย์ของฉัน ({assets.length})</p>
@@ -104,7 +104,7 @@ const AssetsModal = memo(function AssetsModal({ onClose }: { onClose: () => void
               <h4 className="text-[14px] font-bold text-ink-display truncate">{current ? `แก้ไข: ${current.name}` : 'เพิ่มสินทรัพย์ใหม่'}</h4>
               {notice && (
                 <span role="status" className="flex items-center gap-1.5 text-[12px] font-semibold text-income truncate">
-                  <Check className="w-4 h-4 shrink-0" aria-hidden="true" />{notice}
+                  <Check className="w-4 h-4 shrink-0" />{notice}
                 </span>
               )}
             </div>

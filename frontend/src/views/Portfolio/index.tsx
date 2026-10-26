@@ -103,7 +103,7 @@ const PortfolioView = memo(function PortfolioView() {
 
       {portfolio.assets.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-24 border border-line bg-surface text-center">
-          <PiggyBank className="w-12 h-12 text-ink-muted" aria-hidden="true" />
+          <PiggyBank className="w-12 h-12 text-ink-muted" />
           <p className="text-lg font-bold text-ink-display">ยังไม่มีสินทรัพย์ลงทุน</p>
           <p className="text-sm text-ink-body max-w-md">เพิ่มสินทรัพย์ (ทอง หุ้น คริปโต ฯลฯ) แล้วบันทึกซื้อ/ขายที่หน้าฐานข้อมูลบัญชี ในหมวดลงทุน/ออม</p>
           <button
@@ -141,7 +141,7 @@ const PortfolioView = memo(function PortfolioView() {
                           className={`inline-flex items-center gap-1 font-bold hover:text-ink-display ${sort.key === c.sort ? 'text-ink-display' : ''}`}
                         >
                           {c.label}
-                          {sort.key === c.sort && (sort.dir === 'asc' ? <ArrowUp className="w-3 h-3" aria-hidden="true" /> : <ArrowDown className="w-3 h-3" aria-hidden="true" />)}
+                          {sort.key === c.sort && (sort.dir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                         </button>
                       ) : c.label}
                     </th>

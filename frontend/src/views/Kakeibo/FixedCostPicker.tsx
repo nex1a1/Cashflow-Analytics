@@ -85,7 +85,7 @@ const FixedCostPicker = memo(function FixedCostPicker({ rows, range, autoCategor
                   aria-expanded={isOpen}
                   className="flex flex-1 items-center gap-2 min-w-0 text-left text-[13px] text-ink-display disabled:cursor-default"
                 >
-                  <ChevronRight className={`w-3 h-3 shrink-0 text-ink-muted transition-transform ${isOpen ? 'rotate-90' : ''} ${whole ? 'invisible' : ''}`} aria-hidden />
+                  <ChevronRight className={`w-3 h-3 shrink-0 text-ink-muted transition-transform ${isOpen ? 'rotate-90' : ''} ${whole ? 'invisible' : ''}`} />
                   <CategoryGlyph icon={cat?.icon} color={readable(cat?.color ?? tc('ink-body'))} size={12} className="shrink-0" />
                   <span className="min-w-0 truncate font-bold" style={{ color: readable(color) }}>{g.name}</span>
                   <span className={`ml-auto shrink-0 text-[11px] ${whole || picked ? 'font-bold text-ink-display' : 'text-ink-muted'}`}>

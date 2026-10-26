@@ -3,6 +3,7 @@
 // Features: 580px desktop popover, 12-column high-legibility grid, 251 Lucide icons,
 // category pills with Lucide icons (zero emojis), instant bilingual search, and clean footer.
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useAnchoredPopover } from '@/hooks/useAnchoredPopover';
 import { createPortal } from 'react-dom';
 import { Search, X, PackageOpen, Trash2 } from 'lucide-react';
 import {
@@ -21,16 +22,22 @@ export interface IconPickerProps {
 }
 
 export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  // 580 × 510 popover under the button (above it when there is no room), kept 16px inside the window
+  const { open, setOpen, pos, btnRef, popRef: paletteRef, toggle: handleOpen } = useAnchoredPopover((rect) => {
+    const W = 580, H = 510;
+    let left = rect.left;
+    if (left + W > window.innerWidth - 16) left = window.innerWidth - W - 16;
+    if (left < 16) left = 16;
+    let top = rect.bottom + 4;
+    if (top + H > window.innerHeight - 16) top = rect.top - H - 4;
+    if (top < 16) top = 16;
+    return { top, left };
+  }, { stopEsc: true }); // Esc closes only the picker, not the modal around it (DayDetailModal listens on window)
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<IconCategoryKey>('all');
   const [hoveredIcon, setHoveredIcon] = useState<CategoryIconDef | null>(null);
 
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const paletteRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const initialScroll = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
 
   // When opening, autofocus search if open
   useEffect(() => {
@@ -44,52 +51,6 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
     setSelectedCategory('all');
     setHoveredIcon(null);
     return undefined;
-  }, [open]);
-
-  const handleOpen = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      const W = 580, H = 510;
-      let left = rect.left;
-      if (left + W > window.innerWidth - 16) left = window.innerWidth - W - 16;
-      if (left < 16) left = 16;
-      let top = rect.bottom + 4;
-      if (top + H > window.innerHeight - 16) top = rect.top - H - 4;
-      if (top < 16) top = 16;
-
-      setPos({ top, left });
-      initialScroll.current = {
-        top: window.scrollY || document.documentElement.scrollTop,
-        left: window.scrollX || document.documentElement.scrollLeft,
-      };
-    }
-    setOpen((v) => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClose = (e: Event) => {
-      const target = e.target as Node;
-      if (e.type === 'mousedown' && (btnRef.current?.contains(target) || paletteRef.current?.contains(target))) return;
-      if (e.type === 'keydown' && (e as KeyboardEvent).key !== 'Escape') return;
-      if (e.type === 'scroll') {
-        const currentTop = window.scrollY || document.documentElement.scrollTop;
-        const currentLeft = window.scrollX || document.documentElement.scrollLeft;
-        if (Math.abs(currentTop - initialScroll.current.top) < 5 && Math.abs(currentLeft - initialScroll.current.left) < 5) return;
-      }
-      if (e.type === 'keydown') e.stopPropagation(); // Esc ปิดแค่ตัวเลือกไอคอน ไม่ปิดโมดัลที่ครอบอยู่ (DayDetailModal ฟัง Esc ที่ window)
-      setOpen(false);
-    };
-
-    document.addEventListener('mousedown', handleClose);
-    document.addEventListener('keydown', handleClose);
-    window.addEventListener('scroll', handleClose, true);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClose);
-      document.removeEventListener('keydown', handleClose);
-      window.removeEventListener('scroll', handleClose, true);
-    };
   }, [open]);
 
   // Filtered icons

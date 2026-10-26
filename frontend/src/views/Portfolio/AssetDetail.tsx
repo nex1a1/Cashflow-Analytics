@@ -4,7 +4,7 @@ import { PortfolioAsset } from '@/types';
 import FieldError from '@/components/shared/FieldError';
 import { formatMoney, formatThaiDateShort } from '@/utils/formatters';
 import { describeHolding, describePriceAge, formatUnits, plColor, summarizeTrades } from './portfolioHelpers';
-import { localTodayIso } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 
 interface AssetDetailProps {
   asset: PortfolioAsset;
@@ -27,6 +27,7 @@ function Tile({ label, value, sub, valueClass = 'text-ink-display' }: { label: s
 
 export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProps) {
   const [priceInput, setPriceInput] = useState('');
+  const today = useToday();
   const [priceError, setPriceError] = useState<string | null>(null);
   const sum = useMemo(() => summarizeTrades(asset.trades), [asset.trades]);
   const history = useMemo(() => [...sum.rows].reverse(), [sum.rows]);
@@ -86,7 +87,7 @@ export default function AssetDetail({ asset, unit, onSetPrice }: AssetDetailProp
         />
         <Tile
           label="ถือมาแล้ว"
-          value={firstDate ? describeHolding(firstDate, localTodayIso()) : '–'}
+          value={firstDate ? describeHolding(firstDate, today) : '–'}
           sub={firstDate ? `ซื้อครั้งแรก ${formatThaiDateShort(firstDate)}` : undefined}
         />
       </div>

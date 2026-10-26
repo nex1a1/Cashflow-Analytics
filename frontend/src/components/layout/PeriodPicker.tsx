@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, ChevronDown, X, CalendarDays, ListChecks, LayoutGrid, CalendarRange, CalendarCheck, Check, Zap } from 'lucide-react';
 import { getFilterLabel, getThaiMonth, THAI_MONTHS_SHORT } from '../../utils/formatters';
 import { GroupedOptions } from '../../types';
-import { CYCLE_PREFIX, isCyclePeriod, stripCycle, convertPeriodMode, toCycleKey, shiftMonth, localTodayIso, cycleRangeLabel, cycleSpanLabel, CYCLE_PRESETS, cyclePresetRange, matchCyclePreset } from '../../utils/payCycle';
+import { CYCLE_PREFIX, isCyclePeriod, stripCycle, convertPeriodMode, toCycleKey, shiftMonth, cycleRangeLabel, cycleSpanLabel, CYCLE_PRESETS, cyclePresetRange, matchCyclePreset } from '../../utils/payCycle';
+import useToday from '@/hooks/useToday';
 
 export interface PeriodPickerProps {
   filterPeriod: string;
@@ -60,8 +61,8 @@ export default function PeriodPicker({ filterPeriod: rawPeriod, setFilterPeriod:
   const ref = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
+  const today = useToday();
   const { currentMonth, lastMonth, currentYear } = useMemo(() => {
-    const today = localTodayIso();
     const cm = isCycle ? toCycleKey(today) : today.slice(0, 7);
     return { currentMonth: cm, lastMonth: shiftMonth(cm, -1), currentYear: cm.slice(0, 4) };
   }, [isCycle]);

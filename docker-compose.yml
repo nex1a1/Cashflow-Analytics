@@ -30,7 +30,9 @@ services:
       - DB_PATH=/app/data/cashflow.db
       - TZ=Asia/Bangkok
       - CHOKIDAR_USEPOLLING=true
-    command: sh -c "[ -f node_modules/.package-lock.json ] || { apk add --no-cache python3 make g++ && npm install --no-audit --no-fund; }; npm run dev" # better-sqlite3 ไม่มี prebuild สำหรับ alpine จึงต้อง compile
+    # ติดตั้งใหม่เมื่อ package-lock.json ต่างจากสำเนาที่เก็บไว้ตอนติดตั้งครั้งก่อน (volume แคชแพ็กเกจเก่าไว้ ไม่งั้นอัปเกรดแล้วไม่ถึง dev)
+    # better-sqlite3 ไม่มี prebuild สำหรับ alpine จึงต้อง compile
+    command: sh -c "cmp -s package-lock.json node_modules/.installed-lock.json || { apk add --no-cache python3 make g++ && npm install --no-audit --no-fund && cp package-lock.json node_modules/.installed-lock.json; } && npm run dev"
 
   # 3. [DEV] Frontend dev server (HMR, :5172) ส่ง /api ต่อไปที่ backend-dev
   frontend-dev:
@@ -50,7 +52,7 @@ services:
       - TZ=Asia/Bangkok
       - VITE_BACKEND_TARGET=http://backend-dev:3000
       # - VITE_DEMO_MODE=true
-    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install --no-audit --no-fund; npm run dev -- --host --port 5172 --strictPort"
+    command: sh -c "cmp -s package-lock.json node_modules/.installed-lock.json || { npm install --no-audit --no-fund && cp package-lock.json node_modules/.installed-lock.json; } && npm run dev -- --host --port 5172 --strictPort"
 
 volumes:
   backend_node_modules:

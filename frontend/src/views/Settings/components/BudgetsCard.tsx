@@ -106,7 +106,7 @@ const BudgetsCard = memo(function BudgetsCard({ cashflowGroups }: { cashflowGrou
                       />
                     </label>
                     <button type="button" onClick={() => save(g)} disabled={saving} className={`${BTN} bg-accent text-on-accent hover:opacity-90`}>
-                      <Check className="w-4 h-4" aria-hidden="true" /> บันทึก
+                      <Check className="w-4 h-4" /> บันทึก
                     </button>
                     <button type="button" onClick={() => close(g.id)} disabled={saving} className={`${BTN} border border-line bg-canvas text-ink-body hover:bg-surface-hover hover:text-ink-display`}>
                       ยกเลิก
@@ -124,7 +124,7 @@ const BudgetsCard = memo(function BudgetsCard({ cashflowGroups }: { cashflowGrou
                       aria-label={`${current ? 'แก้ไข' : 'ตั้ง'}งบของ ${g.name}`}
                       className={`${BTN} w-[78px] justify-center border border-line bg-canvas text-ink-body hover:bg-surface-hover hover:text-ink-display`}
                     >
-                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" /> {current ? 'แก้ไข' : 'ตั้งงบ'}
+                      <Pencil className="w-3.5 h-3.5" /> {current ? 'แก้ไข' : 'ตั้งงบ'}
                     </button>
                   </>
                 )}

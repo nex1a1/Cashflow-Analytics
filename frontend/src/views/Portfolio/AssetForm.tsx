@@ -61,13 +61,13 @@ const PricePreviewBox = ({ kind, symbol, unit, state }: { kind: AssetKind; symbo
     return <div className={`${box} border-line bg-canvas text-ink-muted`}>พิมพ์สัญลักษณ์ ระบบจะลองดึงราคาล่าสุดมาให้ดูทันที</div>;
   }
   if (state.status === 'loading') {
-    return <div className={`${box} border-line bg-canvas text-ink-body`}><Loader2 className="w-4 h-4 shrink-0 animate-spin" aria-hidden="true" />กำลังดึงราคา{symbol ? ` ${symbol}` : ''}…</div>;
+    return <div className={`${box} border-line bg-canvas text-ink-body`}><Loader2 className="w-4 h-4 shrink-0 animate-spin" />กำลังดึงราคา{symbol ? ` ${symbol}` : ''}…</div>;
   }
   const r = state.result;
   if (r.ok) {
     return (
       <div role="status" className={`${box} tint-border bg-income/5`} style={{ ['--tint-border-color' as string]: tc('income', 0.4) }}>
-        <Check className="w-4 h-4 shrink-0 mt-0.5 text-income" aria-hidden="true" />
+        <Check className="w-4 h-4 shrink-0 mt-0.5 text-income" />
         <div className="min-w-0">
           <p className="font-bold text-ink-display tabular-nums">
             {formatBaht(r.price)} <span className="font-normal text-ink-body">ต่อ{unit}</span>
@@ -80,7 +80,7 @@ const PricePreviewBox = ({ kind, symbol, unit, state }: { kind: AssetKind; symbo
   }
   return (
     <div role="status" className={`${box} tint-border bg-warn/5`} style={{ ['--tint-border-color' as string]: tc('warn', 0.4) }}>
-      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warn" aria-hidden="true" />
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warn" />
       <div className="min-w-0 text-ink-body">
         <p className="font-bold text-warn">ดึงราคาไม่ได้: {r.error}</p>
         <p className="mt-0.5 text-[11px]">ตรวจตัวสะกดสัญลักษณ์ หรือเพิ่มไว้ก่อนได้เลย ระบบจะลองดึงใหม่เองและใช้ราคาที่กรอกเองระหว่างรอ</p>
@@ -271,7 +271,7 @@ const AssetForm = memo(function AssetForm({ asset, onSaved, onDeleted, onCancel 
           </button>
           <button type="submit" disabled={saving}
             className="flex items-center gap-2 px-5 py-2 text-[12px] font-bold bg-accent hover:bg-accent-active text-on-accent disabled:opacity-60">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : editing ? <Check className="w-4 h-4" aria-hidden="true" /> : <Plus className="w-4 h-4" aria-hidden="true" />}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editing ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {editing ? 'บันทึกการแก้ไข' : 'เพิ่มสินทรัพย์'}
           </button>
         </div>

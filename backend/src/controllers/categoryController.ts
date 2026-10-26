@@ -1,31 +1,19 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import categoryService from '../services/categoryService';
 import { categorySchema } from '../validations/categoryValidation';
 
-export const getAllCategories = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const rows = categoryService.getAll();
-    res.json(rows);
-  } catch (err: unknown) {
-    next(err);
-  }
+export const getAllCategories = (req: Request, res: Response) => {
+  const rows = categoryService.getAll();
+  res.json(rows);
 };
 
-export const upsertCategory = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const validatedData = categorySchema.parse(req.body);
-    categoryService.upsert(validatedData as any);
-    res.json({ success: true });
-  } catch (err: unknown) {
-    next(err);
-  }
+export const upsertCategory = (req: Request, res: Response) => {
+  const validatedData = categorySchema.parse(req.body);
+  categoryService.upsert(validatedData as any);
+  res.json({ success: true });
 };
 
-export const deleteCategory = (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
-  try {
-    categoryService.delete(req.params.id);
-    res.json({ success: true });
-  } catch (err: unknown) {
-    next(err);
-  }
+export const deleteCategory = (req: Request<{ id: string }>, res: Response) => {
+  categoryService.delete(req.params.id);
+  res.json({ success: true });
 };

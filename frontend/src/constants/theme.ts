@@ -51,15 +51,6 @@ export const ALLOCATION_COLORS = {
   savings: TOKENS.savings,     // Emerald (+฿ wealth accumulation / savings)
 } as const;
 
-export const getAllocColor = (type?: string | null): string => {
-  if (!type) return ALLOCATION_COLORS.want;
-  const key = type.toLowerCase();
-  if (key === 'need' || key === 'needs') return ALLOCATION_COLORS.need;
-  if (key === 'want' || key === 'wants') return ALLOCATION_COLORS.want;
-  if (key === 'savings' || key === 'save') return ALLOCATION_COLORS.savings;
-  return ALLOCATION_COLORS.want;
-};
-
 // Gray ramp
 const GRAY_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 750, 800, 850, 900, 950] as const;
 const GRAY_DARK = ['#FFFFFF', '#F5F5F5', '#EBEBEB', '#D4D4D4', '#969696', '#737373', '#525252', '#404040', '#353535', '#303030', '#242424', '#121212', '#181818'];
@@ -123,48 +114,6 @@ const luminance = (hex: string) => {
 export const contrast = (a: string, b: string) => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
-};
-
-const toLin = (v: number) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-const toByte = (c: number) => Math.round(255 * Math.min(1, Math.max(0, c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)));
-
-/**
- * User-picked colors come from a neon-leaning picker/DB; cap their OKLCH chroma at the theme's 0.13
- * (lightness + hue kept) so they sit with the tokens. Idempotent, so muted values can be saved back.
- */
-export const muteColor = (hex: string, maxChroma = 0.13): string => {
-  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
-  const [r, g, b] = channels(hex).map(toLin);
-  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
-  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
-  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
-  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
-  let A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
-  let B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
-  const C = Math.hypot(A, B);
-  if (C <= maxChroma + 0.005) return hex; // slack for byte rounding, keeps mute(mute(x)) === mute(x)
-  A *= maxChroma / C; B *= maxChroma / C;
-  const l2 = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
-  const m2 = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
-  const s2 = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
-  return '#' + [
-    4.0767416621 * l2 - 3.3077115913 * m2 + 0.2309699292 * s2,
-    -1.2684380046 * l2 + 2.6097574011 * m2 - 0.3413193965 * s2,
-    -0.0041960771 * l2 - 0.7034186147 * m2 + 1.707614701 * s2,
-  ].map((c) => toByte(c).toString(16).padStart(2, '0')).join('').toUpperCase();
-};
-
-/**
- * A user-picked color used as a *fill* (swatch, heatmap cell) nudged toward ink just enough to
- * separate from both the darkest and lightest surface (e.g. holiday #E8E8E8 vanishes on white).
- */
-export const visibleFill = (hex: string | null | undefined, min = 1.5): string => {
-  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return hex || TOKENS['ink-muted'];
-  const base = hex;
-  const ok = (c: string) => contrast(c, TOKENS.canvas) >= min && contrast(c, TOKENS['surface-elevated']) >= min;
-  let out = base;
-  for (let t = 0.1; !ok(out) && t <= 1; t += 0.1) out = mix(base, TOKENS['ink-display'], t);
-  return out;
 };
 
 /**

@@ -7,7 +7,8 @@ import useBudgets from '@/hooks/useBudgets';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { ALLOCATION_COLORS, readable, tc, type ThemeToken } from '@/constants/theme';
 import { formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { CYCLE_PREFIX, isCyclePeriod, localTodayIso, toCycleKey } from '@/utils/payCycle';
+import { CYCLE_PREFIX, isCyclePeriod, toCycleKey } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 import { planLines, roundShares, summarizeKakeibo, type FixedRule, type PlanLine } from '@/utils/kakeibo';
 import { computeEnvelopes, type BudgetLevel, type EnvelopeRow } from '@/utils/budgetEnvelope';
 import useJsonSetting from '@/hooks/useJsonSetting';
@@ -145,7 +146,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
   const saveFixed = useCallback(async (update: (current: FixedChoice) => FixedChoice) => {
     setFixedError((await updateFixedChoice(update)) ? null : 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
   }, [updateFixedChoice]);
-  const today = localTodayIso();
+  const today = useToday();
   // s = ทั้งเดือน/รอบรวมรายการที่ลงล่วงหน้า (แผน), actual = เฉพาะที่เกิดขึ้นแล้วถึงวันนี้
   const s = useMemo(() => summarizeKakeibo(transactions, filterPeriod, fixedRule), [transactions, filterPeriod, fixedRule]);
   const actual = useMemo(() => summarizeKakeibo(transactions.filter((t) => t.date <= today), filterPeriod, fixedRule), [transactions, filterPeriod, fixedRule, today]);
@@ -174,7 +175,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
     const current = isCyclePeriod(filterPeriod) ? CYCLE_PREFIX + toCycleKey(today) : today.slice(0, 7);
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 border border-line bg-surface text-center">
-        <BookOpen className="w-10 h-10 text-ink-muted" aria-hidden />
+        <BookOpen className="w-10 h-10 text-ink-muted" />
         <p className="text-base font-bold text-ink-display">Kakeibo ดูได้ทีละเดือนหรือทีละรอบ</p>
         <button onClick={() => setFilterPeriod(current)} className="px-4 py-2 text-xs font-bold bg-accent text-on-accent">
           ดู{getFilterLabel(current)}
@@ -345,7 +346,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
                 aria-pressed={breakdown}
                 className={`flex items-center gap-1 px-2 py-0.5 rounded-pill border border-line text-[11px] font-bold ${breakdown ? 'bg-surface-elevated text-ink-display' : 'text-ink-body hover:text-ink-display'}`}
               >
-                <ListTree className="w-3 h-3" aria-hidden />แยกหมวด
+                <ListTree className="w-3 h-3" />แยกหมวด
               </button>
             }
           >

@@ -123,19 +123,6 @@ export function formatRangeLabel(range: string[], sep = ' - '): string {
 export const MIN_YEAR = 2000;
 export const MAX_YEAR = 2050;
 
-export function getDecadeWindow(year: number, windowSize = 12): { start: number; end: number; years: number[] } {
-  const clampedYear = Math.max(MIN_YEAR, Math.min(MAX_YEAR, year));
-  const start = Math.max(MIN_YEAR, Math.floor(clampedYear / windowSize) * windowSize);
-  const years = Array.from({ length: windowSize }, (_, i) => start + i).filter(
-    (y) => y >= MIN_YEAR && y <= MAX_YEAR
-  );
-  return {
-    start,
-    end: years[years.length - 1] || start,
-    years,
-  };
-}
-
 export function stepDate(dateStr: string, stepDays: number): string {
   const [y, m, d] = dateStr.split('-').map(Number);
   if (!y || !m || !d) return dateStr;

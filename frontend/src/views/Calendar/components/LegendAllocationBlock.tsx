@@ -63,29 +63,13 @@ export interface LegendAllocationBlockProps {
   allocationTotals: AllocationTotals;
 }
 
-interface CategoryLegendSectionProps {
-  sortedGroups: LegendGroupItem[];
-  catAmounts: Record<string, number>;
-  excludedCategoryIds: Set<string>;
-  toggleCategory: (catId: string) => void;
-  legendLayoutMode: 'compact' | 'grouped';
-  legendSortMode: 'structure' | 'amount';
-  handleSetLayoutMode: (mode: 'compact' | 'grouped') => void;
-  handleSetSortMode: (mode: 'structure' | 'amount') => void;
-}
+type CategoryLegendSectionProps = Omit<LegendAllocationBlockProps, 'allocationTotals'>;
 
 const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
-  sortedGroups,
-  catAmounts,
-  excludedCategoryIds,
-  toggleCategory,
-  legendLayoutMode,
-  legendSortMode,
-  handleSetLayoutMode,
-  handleSetSortMode,
-  allocationTotals
+  allocationTotals,
+  ...legendProps
 }: LegendAllocationBlockProps): React.ReactElement {
-  if (!sortedGroups || sortedGroups.length === 0) {
+  if (!legendProps.sortedGroups || legendProps.sortedGroups.length === 0) {
     return (
       <div className="bg-surface rounded-none border border-line p-4 text-center select-none">
         <p className="text-xs font-bold text-ink-muted">
@@ -99,22 +83,10 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
     <div className="bg-surface rounded-none border border-line p-3.5 px-4">
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
         {/* Left Side: Category Legend */}
-        <CategoryLegendSection
-          sortedGroups={sortedGroups}
-          catAmounts={catAmounts}
-          excludedCategoryIds={excludedCategoryIds}
-          toggleCategory={toggleCategory}
-          legendLayoutMode={legendLayoutMode}
-          legendSortMode={legendSortMode}
-          handleSetLayoutMode={handleSetLayoutMode}
-          handleSetSortMode={handleSetSortMode}
-        />
+        <CategoryLegendSection {...legendProps} />
 
         {/* Right Side: Allocation Overview */}
-        <AllocationOverviewSection
-          allocationTotals={allocationTotals}
-          legendLayoutMode={legendLayoutMode}
-        />
+        <AllocationOverviewSection allocationTotals={allocationTotals} legendLayoutMode={legendProps.legendLayoutMode} />
       </div>
     </div>
   );
@@ -123,6 +95,65 @@ const LegendAllocationBlock = React.memo(function LegendAllocationBlock({
 export default LegendAllocationBlock;
 
 // ── Sub-sections (Internal to keep LegendAllocationBlock cohesive) ──
+
+/** Icon-only switch: name + state (aria-pressed) so a screen reader knows which one is on. */
+function IconToggleGroup<T extends string>({ label, value, onChange, options }: {
+  label: string;
+  value: T;
+  onChange: (v: T) => void;
+  options: [T, string, React.ComponentType<{ className?: string }>][];
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex items-center gap-1 shrink-0 border border-line bg-surface-elevated p-0.5 rounded-sm" title={label}>
+      {options.map(([v, title, Icon]) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={`p-1 rounded-sm transition-colors cursor-pointer ${
+            value === v ? 'bg-accent text-on-accent font-bold' : 'text-ink-muted hover:text-ink-display bg-transparent'
+          }`}
+          title={title}
+          aria-label={title}
+          aria-pressed={value === v}
+        >
+          <Icon className="w-3.5 h-3.5" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A category with its amount; click hides/shows it. `compact` is the flat list, otherwise the smaller pill inside a group row. */
+function CategoryChip({ cat, amount, excluded, onToggle, compact }: {
+  cat: LegendCategoryItem;
+  amount: number;
+  excluded: boolean;
+  onToggle: (catId: string) => void;
+  compact?: boolean;
+}) {
+  const color = cat.color || tc('ink-body');
+  const rgb = hexToRgb(color);
+  return (
+    <button
+      type="button"
+      aria-pressed={!excluded}
+      onClick={() => onToggle(cat.id)}
+      className={`flex items-center gap-1.5 font-bold border cursor-pointer select-none transition-none bg-transparent ${
+        compact ? 'text-[12px] px-2.5 py-1 rounded-none' : 'text-[11px] px-2 py-0.5 rounded-pill'
+      } ${excluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'}`}
+      style={{
+        backgroundColor: excluded ? 'transparent' : `rgba(${rgb}, 0.08)`,
+        borderColor: excluded ? `rgba(${rgb}, 0.1)` : `rgba(${rgb}, 0.25)`,
+        color: readable(color),
+      }}
+    >
+      <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: excluded ? 0.3 : 1 }} />
+      <span>{cat.name}</span>
+      <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatBaht(amount)}</span>
+    </button>
+  );
+}
 
 function CategoryLegendSection({
   sortedGroups,
@@ -136,12 +167,6 @@ function CategoryLegendSection({
 }: CategoryLegendSectionProps) {
   const hasExclusions = excludedCategoryIds.size > 0;
 
-  // ปุ่มสลับแบบไอคอนล้วน: ชื่อ + สถานะ (aria-pressed) ให้ screen reader รู้ว่าตัวไหนเปิดอยู่
-  const toggleCls = (active: boolean) =>
-    `p-1 rounded-sm transition-colors cursor-pointer ${
-      active ? 'bg-accent text-on-accent font-bold' : 'text-ink-muted hover:text-ink-display bg-transparent'
-    }`;
-
   return (
     <div className="grow flex flex-col min-w-0">
       <div className="flex items-center gap-3 mb-3 flex-wrap sm:flex-nowrap">
@@ -149,53 +174,18 @@ function CategoryLegendSection({
           <span className="w-1.5 h-1.5 rounded-full bg-accent" /> หมวดหมู่
         </span>
 
-        {/* Layout Switcher */}
-        <div role="group" aria-label="รูปแบบการแสดงผล" className="flex items-center gap-1 shrink-0 border border-line bg-surface-elevated p-0.5 rounded-sm" title="รูปแบบการแสดงผล">
-          <button
-            type="button"
-            onClick={() => handleSetLayoutMode('compact')}
-            className={toggleCls(legendLayoutMode === 'compact')}
-            title="แบบย่อ"
-            aria-label="แบบย่อ"
-            aria-pressed={legendLayoutMode === 'compact'}
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetLayoutMode('grouped')}
-            className={toggleCls(legendLayoutMode === 'grouped')}
-            title="แยกกลุ่ม"
-            aria-label="แยกกลุ่ม"
-            aria-pressed={legendLayoutMode === 'grouped'}
-          >
-            <Rows className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Sort Switcher */}
-        <div role="group" aria-label="การจัดเรียง" className="flex items-center gap-1 shrink-0 border border-line bg-surface-elevated p-0.5 rounded-sm" title="การจัดเรียง">
-          <button
-            type="button"
-            onClick={() => handleSetSortMode('structure')}
-            className={toggleCls(legendSortMode === 'structure')}
-            title="เรียงตามโครงสร้าง"
-            aria-label="เรียงตามโครงสร้าง"
-            aria-pressed={legendSortMode === 'structure'}
-          >
-            <Folders className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetSortMode('amount')}
-            className={toggleCls(legendSortMode === 'amount')}
-            title="เรียงตามยอดเงิน"
-            aria-label="เรียงตามยอดเงิน"
-            aria-pressed={legendSortMode === 'amount'}
-          >
-            <Coins className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <IconToggleGroup
+          label="รูปแบบการแสดงผล"
+          value={legendLayoutMode}
+          onChange={handleSetLayoutMode}
+          options={[['compact', 'แบบย่อ', List], ['grouped', 'แยกกลุ่ม', Rows]]}
+        />
+        <IconToggleGroup
+          label="การจัดเรียง"
+          value={legendSortMode}
+          onChange={handleSetSortMode}
+          options={[['structure', 'เรียงตามโครงสร้าง', Folders], ['amount', 'เรียงตามยอดเงิน', Coins]]}
+        />
 
         <div className="h-px bg-line flex-1 min-w-[20px]" />
 
@@ -212,32 +202,9 @@ function CategoryLegendSection({
 
       {legendLayoutMode === 'compact' ? (
         <div className="flex flex-wrap gap-x-2 gap-y-1.5 content-start">
-          {sortedGroups.flatMap(g => g.categories).map(cat => {
-            const color = cat.color || tc('ink-body');
-            const isExcluded = excludedCategoryIds.has(cat.id);
-            const amt = catAmounts[cat.id] || 0;
-            
-            return (
-              <button 
-                key={cat.id} 
-                type="button"
-                aria-pressed={!isExcluded}
-                onClick={() => toggleCategory(cat.id)}
-                className={`flex items-center gap-1.5 text-[12px] font-bold px-2.5 py-1 rounded-none border cursor-pointer select-none transition-none bg-transparent ${
-                  isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
-                }`}
-                style={{
-                  backgroundColor: isExcluded ? 'transparent' : `rgba(${hexToRgb(color)}, 0.08)`,
-                  borderColor: isExcluded ? `rgba(${hexToRgb(color)}, 0.1)` : `rgba(${hexToRgb(color)}, 0.25)`,
-                  color: readable(color),
-                }}
-              >
-                <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
-                <span>{cat.name}</span>
-                <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatBaht(amt)}</span>
-              </button>
-            );
-          })}
+          {sortedGroups.flatMap(g => g.categories).map(cat => (
+            <CategoryChip key={cat.id} cat={cat} amount={catAmounts[cat.id] || 0} excluded={excludedCategoryIds.has(cat.id)} onToggle={toggleCategory} compact />
+          ))}
         </div>
       ) : (
         <div className="flex flex-col grow min-h-0">
@@ -269,32 +236,9 @@ function CategoryLegendSection({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 grow pl-1 py-3">
-                  {groupCats.map(cat => {
-                    const color = cat.color || tc('ink-body');
-                    const isExcluded = excludedCategoryIds.has(cat.id);
-                    const amt = catAmounts[cat.id] || 0;
-                    
-                    return (
-                      <button 
-                        key={cat.id} 
-                        type="button" 
-                        aria-pressed={!isExcluded}
-                        onClick={() => toggleCategory(cat.id)}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-pill border cursor-pointer select-none transition-none bg-transparent ${
-                          isExcluded ? 'opacity-30 hover:opacity-55' : 'hover:brightness-110'
-                        }`}
-                        style={{
-                          backgroundColor: isExcluded ? 'transparent' : `rgba(${hexToRgb(color)}, 0.08)`,
-                          borderColor: isExcluded ? `rgba(${hexToRgb(color)}, 0.1)` : `rgba(${hexToRgb(color)}, 0.25)`,
-                          color: readable(color),
-                        }}
-                      >
-                        <div className="w-2.5 h-2.5 rounded-none shrink-0" style={{ backgroundColor: color, opacity: isExcluded ? 0.3 : 1 }} />
-                        <span>{cat.name}</span>
-                        <span className="text-[11px] font-bold tabular-nums tracking-tight ml-1">{formatBaht(amt)}</span>
-                      </button>
-                    );
-                  })}
+                  {groupCats.map(cat => (
+                    <CategoryChip key={cat.id} cat={cat} amount={catAmounts[cat.id] || 0} excluded={excludedCategoryIds.has(cat.id)} onToggle={toggleCategory} />
+                  ))}
                 </div>
               </div>
             );
@@ -356,18 +300,7 @@ function AllocationOverviewSection({
       {/* Stacked Progress Bar */}
       {allocationTotals.totalExpense > 0 && (
         <div className="h-2 w-full bg-surface border border-line flex rounded-full overflow-hidden mt-1 shrink-0 z-10">
-          <div
-            style={{ width: `${allocationTotals.needPct}%`, backgroundColor: ALLOCATION_COLORS.need }}
-            title={`NEED: ${allocationTotals.needPct}%`}
-          />
-          <div 
-            style={{ width: `${allocationTotals.wantPct}%`, backgroundColor: ALLOCATION_COLORS.want }} 
-            title={`WANT: ${allocationTotals.wantPct}%`}
-          />
-          <div 
-            style={{ width: `${allocationTotals.savingsPct}%`, backgroundColor: ALLOCATION_COLORS.savings }} 
-            title={`SAVE: ${allocationTotals.savingsPct}%`}
-          />
+          {rows.map(row => <div key={row.label} style={{ width: `${row.pct}%`, backgroundColor: row.dot }} title={`${row.label}: ${row.pct}%`} />)}
         </div>
       )}
 

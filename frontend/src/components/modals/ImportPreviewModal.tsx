@@ -72,7 +72,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
         <div className="px-5 py-4 border-b border-line bg-surface flex justify-between items-center shrink-0">
           <div>
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-widest flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-accent-ink" aria-hidden="true" /> ตรวจสอบก่อนนำเข้า <span className="text-ink-muted font-normal">/ Data Import Preview</span>
+              <ClipboardList className="w-4 h-4 text-accent-ink" /> ตรวจสอบก่อนนำเข้า <span className="text-ink-muted font-normal">/ Data Import Preview</span>
             </h3>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-slate-300">

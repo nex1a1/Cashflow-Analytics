@@ -1,27 +1,14 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle, Zap } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Category, CashflowGroup, AllocationType } from '../../../types';
 import CategorySelect from '@/components/shared/CategorySelect';
 import FieldError from '../../shared/FieldError';
 import InvestFields from '@/components/shared/InvestFields';
+import { AmountInput, EMPTY_ENTRY, EntryTypeToggle, NeedWantToggle, entrySchema, submitOnEnter, useEntryForm } from '@/components/shared/entryForm';
 
-const dailyAddSchema = z.object({
-  type: z.enum(['income', 'expense', 'savings']),
-  categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
-  description: z.string().optional(),
-  amount: z.number({ message: "ระบุจำนวนเงิน" }).positive("ต้องมากกว่า 0"),
-  allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
-  assetId: z.string().optional(),
-  side: z.enum(['buy', 'sell']).optional(),
-  units: z.string().optional(),
-}).superRefine((v, ctx) => {
-  if (v.type === 'savings' && v.assetId && !(Number(v.units) > 0)) {
-    ctx.addIssue({ code: 'custom', path: ['units'], message: 'ระบุจำนวนหน่วยที่มากกว่า 0' });
-  }
-});
+const dailyAddSchema = entrySchema({ required: 'ระบุจำนวนเงิน', positive: 'ต้องมากกว่า 0' });
 
 export interface DailyFormValues {
   type: 'income' | 'expense' | 'savings';
@@ -47,6 +34,9 @@ export interface DailyFormProps {
   onTypeChange?: (type: string) => void;
 }
 
+const INPUT = 'px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30';
+const INPUT_ERROR = 'px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full bg-canvas tint-danger text-ink-display focus:ring-danger/30';
+
 export default function DailyForm({
   onSubmitItem,
   categories = [],
@@ -57,70 +47,17 @@ export default function DailyForm({
   externalFormSetter,
   onTypeChange
 }: DailyFormProps) {
-  const { register, handleSubmit, watch, setValue, getValues, formState: { errors }, setFocus } = useForm<DailyFormValues>({
+  const form = useForm<DailyFormValues>({
     resolver: zodResolver(dailyAddSchema) as any,
     defaultValues: {
+      ...EMPTY_ENTRY,
       type: (defaultType as DailyFormValues['type']) || 'expense',
       categoryId: defaultCategoryId || '',
-      description: '',
-      amount: '' as unknown as number,
-      allocation_type: 'want',
-      assetId: '',
-      side: 'buy',
-      units: ''
     }
   });
-
-  const formType = watch('type');
-  const allocationType = watch('allocation_type');
-  const assetId = watch('assetId') || '';
-  const side = watch('side') || 'buy';
-  const units = watch('units') || '';
-  const amountValue = watch('amount');
-
-  const isApplyingSuggestionRef = useRef(false);
-
-  const customSetValue = useCallback((name: any, value: any, options: any) => {
-    // only when the category really changes: the same category never re-runs the effect, so the flag would stick
-    // and swallow the default of the next category the user picks by hand
-    if (name === 'categoryId' && options?.skipAllocationDefault && value !== getValues('categoryId')) {
-      isApplyingSuggestionRef.current = true;
-    }
-    setValue(name, value, options);
-  }, [setValue, getValues]);
-
-  // 1. Expose form methods to parent (for hotkeys & QuickSuggest)
-  useEffect(() => {
-    if (externalFormSetter) {
-      externalFormSetter({ setValue: customSetValue, setFocus, watch });
-    }
-  }, [externalFormSetter, customSetValue, setFocus, watch]);
-
-  // 2. Notify parent of type changes to filter suggestions
-  useEffect(() => {
-    if (onTypeChange) onTypeChange(formType);
-  }, [formType, onTypeChange]);
-
-  // Auto-default allocation type when category changes
-  const selectedCatId = watch('categoryId');
-  useEffect(() => {
-    if (formType === 'income') {
-      setValue('allocation_type', null);
-      return;
-    }
-    if (formType === 'savings') {
-      setValue('allocation_type', 'savings');
-      return;
-    }
-    if (isApplyingSuggestionRef.current) {
-      isApplyingSuggestionRef.current = false;
-      return;
-    }
-    const cat = categories.find(c => c.id === selectedCatId);
-    if (cat?.allocation_type) {
-      setValue('allocation_type', cat.allocation_type);
-    }
-  }, [formType, selectedCatId, setValue, categories]);
+  const { register, handleSubmit, formState: { errors } } = form;
+  const { formType, allocationType, selectedCatId, setValue, setFocus, clearEntry, handleTypeChange, investProps } =
+    useEntryForm({ form, categories, externalFormSetter, onTypeChange });
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const onSubmit = async (data: DailyFormValues) => {
@@ -130,53 +67,20 @@ export default function DailyForm({
       setSubmitError('บันทึกไม่สำเร็จ ข้อมูลที่กรอกยังอยู่ กดบันทึกอีกครั้งได้เลย');
       return;
     }
-    setValue('description', '');
-    setValue('units', '');
-    setValue('amount', '' as unknown as number, { shouldValidate: false });
-    setTimeout(() => setFocus('amount'), 10);
+    clearEntry();
   };
-
-  const handleTypeChange = (newType: DailyFormValues['type']) => {
-    setValue('type', newType);
-    setValue('assetId', '');
-    setValue('units', '');
-    const firstCat = categories.find(c => c.type === newType);
-    setValue('categoryId', firstCat?.id || '');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { 
-    if (e.key === 'Enter') { 
-      e.preventDefault(); 
-      handleSubmit(onSubmit)(); 
-    } 
-  };
-
-  const tokens = {
-    surfaceAlt: 'bg-surface-hover',
-    border: 'border-line',
-    textMuted: 'text-slate-400',
-    input: `px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30'}`,
-    inputError: `px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full ${'bg-canvas tint-danger text-ink-display focus:ring-danger/30'}`
-  };
+  const submit = () => handleSubmit(onSubmit)();
+  const handleKeyDown = submitOnEnter(submit);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={`border-t ${tokens.border} px-4 pt-4 pb-5 space-y-2.5 shrink-0 ${tokens.surfaceAlt}`}>
-      <div className={`relative flex p-0.5 rounded-none border bg-canvas border-line`}>
-        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-xs"
-          style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
-        <button type="button" onClick={() => handleTypeChange('expense')}
-          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'expense' ? 'text-expense' : tokens.textMuted}`}>
-          รายจ่าย
-        </button>
-        <button type="button" onClick={() => handleTypeChange('savings')}
-          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'savings' ? 'text-savings' : tokens.textMuted}`}>
-          ลงทุน/ออม
-        </button>
-        <button type="button" onClick={() => handleTypeChange('income')}
-          className={`relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all ${formType === 'income' ? 'text-emerald-400' : tokens.textMuted}`}>
-          รายรับ
-        </button>
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="border-t border-line px-4 pt-4 pb-5 space-y-2.5 shrink-0 bg-surface-hover">
+      <EntryTypeToggle
+        value={formType}
+        onChange={handleTypeChange}
+        className="relative flex p-0.5 rounded-none border bg-canvas border-line"
+        btnClass="relative flex-1 py-1.5 text-xs font-bold rounded-none transition-all"
+        idleClass="text-slate-400"
+      />
 
       <div className="flex gap-2">
         <div className="flex-3">
@@ -193,68 +97,37 @@ export default function DailyForm({
         </div>
 
         {formType === 'expense' && (
-          <div className="relative grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line">
-            <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] bg-surface-elevated"
-              style={{ translate: allocationType === 'want' ? '100% 0' : '0 0' }} />
-            {[
-              { val: 'need', label: 'NEED', color: 'text-rose-400' },
-              { val: 'want', label: 'WANT', color: 'text-amber-400' },
-            ].map(opt => {
-              const isSelected = allocationType === opt.val;
-              const activeStyle = isSelected ? opt.color : tokens.textMuted;
-              return (
-                <button key={opt.val} type="button" aria-pressed={isSelected} onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                  className={`relative px-2 py-1 text-[11px] font-black rounded-none transition-all ${activeStyle}`}>
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+          <NeedWantToggle
+            value={allocationType}
+            onChange={v => setValue('allocation_type', v)}
+            className="relative grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line"
+            btnClass="relative px-2 py-1 text-[11px] font-black rounded-none transition-all"
+            idleClass="text-slate-400"
+          />
         )}
       </div>
 
-      {formType === 'savings' && (
-        <InvestFields
-          idPrefix="daily"
-          assetId={assetId}
-          side={side}
-          units={units}
-          amount={Number.isFinite(amountValue) ? amountValue : undefined}
-          onAssetChange={v => { setValue('assetId', v); if (!v) setValue('units', ''); }}
-          onSideChange={v => setValue('side', v)}
-          onUnitsChange={v => setValue('units', v, { shouldValidate: !!errors.units })}
-          onEnter={() => handleSubmit(onSubmit)()}
-          unitsError={errors.units?.message}
-        />
-      )}
+      {formType === 'savings' && <InvestFields idPrefix="daily" {...investProps} onEnter={submit} />}
 
       <div className="flex gap-2 items-start">
         <div className="flex-2">
-          <input type="text" {...register('description')} onKeyDown={handleKeyDown} placeholder="รายละเอียด..." className={tokens.input} />
+          <input type="text" {...register('description')} onKeyDown={handleKeyDown} placeholder="รายละเอียด..." className={INPUT} />
         </div>
         <div className="flex-1 min-w-[110px]">
-          <div className="relative flex items-center">
-            <span className="absolute left-2.5 text-xs font-bold select-none text-ink-muted" aria-hidden="true">
-              ฿
-            </span>
-            <input 
-              type="number" 
-              step="any" 
-              {...register('amount', { valueAsNumber: true })} 
-              aria-invalid={!!errors.amount}
-              aria-describedby={errors.amount ? 'daily-amount-err' : undefined}
-              aria-label="จำนวนเงิน"
-              onKeyDown={handleKeyDown} 
-              placeholder="0.00" 
-              className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-bold tabular-nums tracking-tight`} 
-            />
-          </div>
+          <AmountInput
+            {...register('amount', { valueAsNumber: true })}
+            errorId="daily-amount-err"
+            hasError={!!errors.amount}
+            onKeyDown={handleKeyDown}
+            inputClass={errors.amount ? INPUT_ERROR : INPUT}
+            wrapperClass="relative flex items-center"
+          />
           <FieldError id="daily-amount-err" message={errors.amount?.message} />
         </div>
       </div>
 
       <div className="flex gap-2">
-        <button type="button" onClick={() => { setValue('description', ''); setValue('units', ''); setValue('amount', '' as unknown as number, { shouldValidate: false }); setTimeout(() => setFocus('amount'), 10); }} disabled={isProcessing}
+        <button type="button" onClick={clearEntry} disabled={isProcessing}
           className="px-3 py-2.5 rounded-none font-bold text-xs flex items-center justify-center transition-colors disabled:opacity-50 border bg-surface-elevated/60 hover:bg-gray-750 text-slate-300 border-line-strong"
           title="ล้างข้อมูลที่กำลังพิมพ์"
         >
@@ -262,8 +135,8 @@ export default function DailyForm({
         </button>
         <button type="submit" disabled={isProcessing}
           className={`flex-1 py-2.5 rounded-none font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-xs border ${
-            formType === 'expense' 
-              ? 'bg-accent hover:bg-accent-active border-accent-ink text-on-accent' 
+            formType === 'expense'
+              ? 'bg-accent hover:bg-accent-active border-accent-ink text-on-accent'
               : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-600 text-canvas'
           }`}
         >

@@ -1,10 +1,13 @@
 // src/views/Dashboard/components/SummaryCards/GhostPacer/GhostPacerChart.tsx
-import React, { memo, useEffect, useRef, useState } from 'react';
+import { memo, useState } from 'react';
 import { Ghost } from 'lucide-react';
 import { formatBaht, formatBahtShort } from '@/utils/formatters';
-
-import { tc, FONT_MONO } from '@/constants/theme';
+import { tc } from '@/constants/theme';
 import { paceTone, PACE_TONE_STYLE } from '@/utils/ghostPacerHelpers';
+import {
+  useSvgSize, linePath, MonoText, separateLabels, dayAtPointer, tooltipAt, DayGrid, DayAxis, TooltipDay, EdgeBadge, DayFrame,
+} from '@/components/shared/svgChart';
+
 interface GhostPacerChartProps {
   currentDay: number;
   lastDayOfMonth: number;
@@ -18,217 +21,85 @@ interface GhostPacerChartProps {
   prevPeriod: string;
 }
 
+const VIEW_H = 202;
+const PAD_L = 54;
+const PAD_R = 156; // room for the end-of-month badges (BADGE_W + gap)
+const BADGE_W = 146;
+const PAD_T = 20;
+const PAD_B = 26;
+const TIP_W = 210;
+const TIP_H = 68;
+
+/** Value of a cumulative series on `day` (1-based); before the series starts it is 0, after it ends it holds `after`. */
+const at = (series: number[], day: number, after: number) => series.length >= day ? series[day - 1] : after;
+const last = (series: number[]) => series.length > 0 ? series[series.length - 1] : 0;
+const hasSpend = (series: number[]) => series.some(v => v > 0);
+
 export const GhostPacerChart = memo(({
-  currentDay,
-  lastDayOfMonth,
-  currentDailySeries,
-  prevDailySeries,
-  benchmarkDailySeries,
-  projectedExpense,
-  ghostTotalExpense,
-  paceColor,
-  currentPeriod,
-  prevPeriod,
+  currentDay, lastDayOfMonth,
+  currentDailySeries, prevDailySeries, benchmarkDailySeries,
+  projectedExpense, ghostTotalExpense,
+  paceColor, currentPeriod, prevPeriod,
 }: GhostPacerChartProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [viewW, setViewW] = useState(800);
+  const [containerRef, { w: viewW }] = useSvgSize(800);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const w = Math.round(entry.contentRect.width);
-      if (w > 0) setViewW(w);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const viewH = 202;
-  const padL = 54;
-  const padR = 156; // room for the end-of-month badges (BADGE_W + gap)
-  const BADGE_W = 146;
-  const padT = 20;
-  const padB = 26;
-  const plotW = Math.max(10, viewW - padL - padR);
-  const plotH = Math.max(10, viewH - padT - padB);
+  const plotW = Math.max(10, viewW - PAD_L - PAD_R);
+  const plotH = Math.max(10, VIEW_H - PAD_T - PAD_B);
+  const baseY = PAD_T + plotH;
 
   const totalDays = Math.max(1, lastDayOfMonth);
-  const curDayClamped = Math.max(1, Math.min(currentDay, totalDays));
+  const today = Math.max(1, Math.min(currentDay, totalDays));
+  const atToday = (s: number[]) => s.length > 0 ? s[Math.min(today, s.length) - 1] : 0;
 
-  const spentToDate = currentDailySeries.length > 0
-    ? currentDailySeries[Math.min(curDayClamped, currentDailySeries.length) - 1]
-    : 0;
+  const spentToDate = atToday(currentDailySeries);
+  const ghostSpentToDate = atToday(prevDailySeries);
+  const ghostFinal = ghostTotalExpense || last(prevDailySeries);
 
-  const ghostSpentToDate = prevDailySeries.length > 0
-    ? prevDailySeries[Math.min(curDayClamped, prevDailySeries.length) - 1]
-    : 0;
-
-  const ghostFinal = ghostTotalExpense || (prevDailySeries.length > 0
-    ? prevDailySeries[prevDailySeries.length - 1]
-    : 0);
-
-  // Maximum scale across current spend, projected, ghost, and benchmark
-  const maxBenchmark = benchmarkDailySeries.length > 0
-    ? Math.max(...benchmarkDailySeries)
-    : 0;
+  // Scale covers current spend, the projection, last month and the benchmark
+  const maxBenchmark = benchmarkDailySeries.length > 0 ? Math.max(...benchmarkDailySeries) : 0;
   const maxY = Math.max(1, spentToDate, projectedExpense, ghostFinal, maxBenchmark) * 1.12;
 
-  const getX = (dayIndex: number) => padL + Math.max(0, Math.min(1, dayIndex / totalDays)) * plotW;
-  const getY = (val: number) => padT + plotH - Math.max(0, Math.min(1, val / maxY)) * plotH;
+  const getX = (day: number) => PAD_L + Math.max(0, Math.min(1, day / totalDays)) * plotW;
+  const getY = (val: number) => baseY - Math.max(0, Math.min(1, val / maxY)) * plotH;
+  const frame: DayFrame = { viewW, padL: PAD_L, padT: PAD_T, plotW, baseY, totalDays, getX };
+  const seriesPath = (s: number[]) => linePath([[getX(0), getY(0)], ...s.map((v, i) => [getX(i + 1), getY(v)] as const)]);
 
-  // 1. Ghost Path (Previous Month — full month)
-  const ghostPoints: [number, number][] = [[getX(0), getY(0)]];
-  prevDailySeries.forEach((val, idx) => {
-    ghostPoints.push([getX(idx + 1), getY(val)]);
-  });
-  const ghostPath = ghostPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
-
-  // 2. Current Month Path (up to current day)
-  const currentPoints: [number, number][] = [[getX(0), getY(0)]];
-  currentDailySeries.forEach((val, idx) => {
-    currentPoints.push([getX(idx + 1), getY(val)]);
-  });
-  const currentPath = currentPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
-  const xToday = getX(curDayClamped);
+  const currentPath = seriesPath(currentDailySeries);
+  const xToday = getX(today);
   const yToday = getY(spentToDate);
-  const currentArea = `${currentPath} L ${xToday} ${padT + plotH} L ${getX(0)} ${padT + plotH} Z`;
-
-  // 3. Projected Extension to EOM
   const xEOM = getX(totalDays);
   const yEOM = getY(projectedExpense);
-  const projectedPath = `M ${xToday} ${yToday} L ${xEOM} ${yEOM}`;
 
-  // 4. 3-Month Benchmark Path
-  const benchmarkPoints: [number, number][] = [[getX(0), getY(0)]];
-  benchmarkDailySeries.forEach((val, idx) => {
-    benchmarkPoints.push([getX(idx + 1), getY(val)]);
-  });
-  const benchmarkPath = benchmarkPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+  // End-of-month badges: push apart when they would overlap
+  const [ghostEomY, curEomY] = separateLabels(getY(ghostFinal), yEOM, PAD_T + 2, VIEW_H - PAD_B + 2);
 
-  // Ghost Waypoint coordinates on currentDay
-  const xGhostNode = getX(curDayClamped);
-  const yGhostNode = getY(ghostSpentToDate);
-
-  // Right-side badge coordinates (prevent vertical label collision)
-  let ghostEomY = getY(ghostFinal);
-  let curEomY = yEOM;
-  if (Math.abs(ghostEomY - curEomY) < 18) {
-    if (curEomY >= ghostEomY) {
-      curEomY = Math.min(viewH - padB + 2, ghostEomY + 16);
-      ghostEomY = Math.max(padT + 2, curEomY - 16);
-    } else {
-      curEomY = Math.max(padT + 2, ghostEomY - 16);
-      ghostEomY = Math.min(viewH - padB + 2, curEomY + 16);
-    }
-  }
-
-  // Gridlines
-  const dayTicks: number[] = [];
-  const tickStep = totalDays > 20 ? 5 : totalDays > 10 ? 2 : 1;
-  for (let d = tickStep; d < totalDays; d += tickStep) dayTicks.push(d);
-
-  const vGridDays: number[] = [];
-  for (let d = 1; d < totalDays; d++) vGridDays.push(d);
-
-  const hSteps = [0.25, 0.5, 0.75, 1.0];
-
-  // Mouse hover
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const svgX = ((e.clientX - rect.left) / rect.width) * viewW;
-    if (svgX < padL - 6 || svgX > xEOM + 6) {
-      if (hoveredDay !== null) setHoveredDay(null);
-      return;
-    }
-    const ratio = Math.max(0, Math.min(1, (svgX - padL) / plotW));
-    const day = Math.max(1, Math.min(totalDays, Math.round(ratio * totalDays)));
-    if (day !== hoveredDay) {
-      setHoveredDay(day);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hoveredDay !== null) setHoveredDay(null);
-  };
-
-  // Hover Data calculations
-  let hoverData: {
-    day: number;
-    x: number;
-    curY: number;
-    curSpend: number;
-    ghostSpend: number;
-    benchSpend: number;
-    deltaGhost: number;
-    deltaGhostPct: number;
-    isFuture: boolean;
-    isToday: boolean;
-  } | null = null;
-  let hoverColor = paceColor;
-
+  // Hover: past days read the series, future days follow the projection line from today to month end
+  let hover: null | {
+    day: number; x: number; curY: number; curSpend: number; ghostSpend: number; benchSpend: number;
+    isFuture: boolean; isToday: boolean; color: string; deltaLabel: string; tip: { x: number; y: number };
+  } = null;
   if (hoveredDay !== null) {
     const day = hoveredDay;
-    const isToday = day === curDayClamped;
-    const isFuture = day > curDayClamped;
-
-    let curSpend = 0;
-    if (!isFuture) {
-      curSpend = currentDailySeries.length >= day
-        ? currentDailySeries[day - 1]
-        : (day === curDayClamped ? spentToDate : 0);
-    } else {
-      const remainingSpan = Math.max(1, totalDays - curDayClamped);
-      const futureProgress = (day - curDayClamped) / remainingSpan;
-      curSpend = spentToDate + (projectedExpense - spentToDate) * futureProgress;
-    }
-
-    const ghostSpend = prevDailySeries.length >= day
-      ? prevDailySeries[day - 1]
-      : (prevDailySeries.length > 0 ? prevDailySeries[prevDailySeries.length - 1] : 0);
-
-    const benchSpend = benchmarkDailySeries.length >= day
-      ? benchmarkDailySeries[day - 1]
-      : 0;
-
+    const isFuture = day > today;
+    const curSpend = isFuture
+      ? spentToDate + (projectedExpense - spentToDate) * ((day - today) / Math.max(1, totalDays - today))
+      : at(currentDailySeries, day, day === today ? spentToDate : 0);
+    const ghostSpend = at(prevDailySeries, day, last(prevDailySeries));
     const deltaGhost = curSpend - ghostSpend;
-    const deltaGhostPct = ghostSpend > 0 ? (deltaGhost / ghostSpend) * 100 : 0;
-
-    hoverData = {
-      day,
-      x: getX(day),
-      curY: getY(curSpend),
-      curSpend,
-      ghostSpend,
-      benchSpend,
-      deltaGhost,
-      deltaGhostPct,
-      isFuture,
-      isToday,
-    };
-    hoverColor = PACE_TONE_STYLE[paceTone(deltaGhost, ghostSpend)].color;
-  }
-
-  const tipW = 210;
-  const tipH = 68;
-  let tooltipX = 0;
-  let tooltipY = 0;
-  let deltaLabel = '';
-  if (hoverData) {
     // True minus on both numbers; no percentage when last month had nothing yet (it would read +0%).
-    const { deltaGhost, deltaGhostPct, ghostSpend } = hoverData;
     const sign = deltaGhost < 0 ? '−' : '+';
-    deltaLabel = deltaGhost === 0 ? '±฿0'
-      : `${sign}${formatBahtShort(Math.abs(Math.round(deltaGhost)))}${ghostSpend > 0 ? ` (${sign}${Math.abs(deltaGhostPct).toFixed(0)}%)` : ''}`;
-    if (hoverData.x + tipW + 14 > viewW) {
-      tooltipX = hoverData.x - tipW - 12;
-    } else {
-      tooltipX = hoverData.x + 12;
-    }
-    tooltipX = Math.max(padL + 2, Math.min(viewW - tipW - 8, tooltipX));
-    tooltipY = Math.max(padT + 2, Math.min(hoverData.curY - tipH / 2, padT + plotH - tipH - 2));
+    const pct = ghostSpend > 0 ? ` (${sign}${Math.abs((deltaGhost / ghostSpend) * 100).toFixed(0)}%)` : '';
+    const x = getX(day);
+    const curY = getY(curSpend);
+    hover = {
+      day, x, curY, curSpend, ghostSpend, isFuture,
+      benchSpend: at(benchmarkDailySeries, day, 0),
+      isToday: day === today,
+      color: PACE_TONE_STYLE[paceTone(deltaGhost, ghostSpend)].color,
+      deltaLabel: deltaGhost === 0 ? '±฿0' : `${sign}${formatBahtShort(Math.abs(Math.round(deltaGhost)))}${pct}`,
+      tip: tooltipAt(frame, x, curY, TIP_W, TIP_H),
+    };
   }
 
   return (
@@ -237,272 +108,107 @@ export const GhostPacerChart = memo(({
       <div className="flex items-center gap-4 px-3 py-1.5 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: paceColor }} />
-          <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">
-            จังหวะใช้จ่ายเทียบเดือนก่อน
-          </span>
+          <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">จังหวะใช้จ่ายเทียบเดือนก่อน</span>
         </div>
-
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] inline-block" style={{ backgroundColor: paceColor }} />
           <span className="text-neutral-300 font-bold">{currentPeriod} (เดือนนี้)</span>
         </div>
-
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] bg-neutral-400 inline-block" />
           <span className="text-neutral-400 inline-flex items-center gap-1"><Ghost size={11} className="shrink-0" /> Ghost: {prevPeriod} (เดือนก่อน)</span>
         </div>
-
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] border-t border-dashed border-sky-400 inline-block" />
           <span className="text-neutral-400">เฉลี่ย 3 เดือน</span>
         </div>
       </div>
 
-      {/* SVG Chart */}
       <div ref={containerRef} className="w-full h-[202px] relative px-1">
         <svg
-          viewBox={`0 0 ${viewW} ${viewH}`}
+          viewBox={`0 0 ${viewW} ${VIEW_H}`}
           className="w-full h-full overflow-visible cursor-crosshair"
           preserveAspectRatio="none"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          onMouseMove={e => { const d = dayAtPointer(e, frame); if (d !== undefined) setHoveredDay(d); }}
+          onMouseLeave={() => setHoveredDay(null)}
         >
           <defs>
             <linearGradient id="pacerCurrentAreaGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={paceColor} stopOpacity="0.22" />
               <stop offset="100%" stopColor={paceColor} stopOpacity="0.01" />
             </linearGradient>
-
             <filter id="pacerTooltipShadow" x="-10%" y="-10%" width="130%" height="130%">
               <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000000" floodOpacity="0.8" />
             </filter>
           </defs>
 
-          {/* Vertical Gridlines */}
-          {vGridDays.map((d) => (
-            <line
-              key={`vgrid-${d}`}
-              x1={getX(d)}
-              y1={padT}
-              x2={getX(d)}
-              y2={padT + plotH}
-              stroke={tc('line')}
-              strokeWidth="1"
-            />
-          ))}
+          <DayGrid f={frame} />
 
-          {/* Horizontal Gridlines & Y-Axis Labels */}
-          {hSteps.map((f) => {
+          {/* Horizontal gridlines + y labels (top line at 90% of the scale) */}
+          {[0.25, 0.5, 0.75, 1.0].map(f => {
             const val = maxY * (f * 0.9);
             const y = getY(val);
             return (
               <g key={`hgrid-${f}`}>
-                <line x1={padL} y1={y} x2={xEOM} y2={y} stroke={tc('line')} strokeWidth="1" />
-                <line x1={padL - 3} y1={y} x2={padL} y2={y} stroke={tc('line-strong')} strokeWidth="1" />
-                <text
-                  x={padL - 6}
-                  y={y + 3}
-                  fill={tc('ink-muted')}
-                  fontSize="11"
-                  fontFamily={FONT_MONO}
-                  textAnchor="end"
-                >
-                  {formatBahtShort(Math.round(val))}
-                </text>
+                <line x1={PAD_L} y1={y} x2={xEOM} y2={y} stroke={tc('line')} strokeWidth="1" />
+                <line x1={PAD_L - 3} y1={y} x2={PAD_L} y2={y} stroke={tc('line-strong')} strokeWidth="1" />
+                <MonoText x={PAD_L - 6} y={y + 3} fill={tc('ink-muted')} textAnchor="end">{formatBahtShort(Math.round(val))}</MonoText>
               </g>
             );
           })}
 
-          {/* Baseline ฿0 */}
-          <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke={tc('line')} strokeWidth="1" />
-          <text x={padL - 6} y={padT + plotH + 3} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-            ฿0
-          </text>
+          <line x1={PAD_L} y1={baseY} x2={xEOM} y2={baseY} stroke={tc('line')} strokeWidth="1" />
+          <MonoText x={PAD_L - 6} y={baseY + 3} fill={tc('ink-muted')} textAnchor="end">฿0</MonoText>
 
-          {/* 1. Area fill for Current Month */}
-          <path d={currentArea} fill="url(#pacerCurrentAreaGrad)" />
+          <path d={`${currentPath} L ${xToday} ${baseY} L ${getX(0)} ${baseY} Z`} fill="url(#pacerCurrentAreaGrad)" />
 
-          {/* 2. 3-Month Benchmark Line (Dashed Cyan/Sky) */}
-          {benchmarkDailySeries.length > 0 && benchmarkDailySeries.some(v => v > 0) && (
-            <path
-              d={benchmarkPath}
-              fill="none"
-              stroke={tc('info')}
-              strokeWidth="1.2"
-              strokeDasharray="3 3"
-              opacity="0.65"
-            />
+          {hasSpend(benchmarkDailySeries) && (
+            <path d={seriesPath(benchmarkDailySeries)} fill="none" stroke={tc('info')} strokeWidth="1.2" strokeDasharray="3 3" opacity="0.65" />
+          )}
+          {hasSpend(prevDailySeries) && (
+            <path d={seriesPath(prevDailySeries)} fill="none" stroke={tc('ink-body')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
           )}
 
-          {/* 3. Ghost Line (Solid Gray of Last Month) */}
-          {prevDailySeries.length > 0 && prevDailySeries.some(v => v > 0) && (
-            <path
-              d={ghostPath}
-              fill="none"
-              stroke={tc('ink-body')}
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.8"
-            />
-          )}
-
-          {/* Ghost Waypoint Node on currentDay */}
+          {/* Where last month stood on this day */}
           {ghostSpentToDate > 0 && (
             <g>
-              <circle cx={xGhostNode} cy={yGhostNode} r="4" fill="none" stroke={tc('ink-body')} strokeWidth="1.5" />
-              <circle cx={xGhostNode} cy={yGhostNode} r="1.5" fill={tc('ink-body')} />
+              <circle cx={xToday} cy={getY(ghostSpentToDate)} r="4" fill="none" stroke={tc('ink-body')} strokeWidth="1.5" />
+              <circle cx={xToday} cy={getY(ghostSpentToDate)} r="1.5" fill={tc('ink-body')} />
             </g>
           )}
 
-          {/* 4. Current Month Pace Curve */}
-          <path
-            d={currentPath}
-            fill="none"
-            stroke={paceColor}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d={currentPath} fill="none" stroke={paceColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={`M ${xToday} ${yToday} L ${xEOM} ${yEOM}`} fill="none" stroke={paceColor} strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />
 
-          {/* 5. Projected Pace Line to EOM (Dashed) */}
-          <path
-            d={projectedPath}
-            fill="none"
-            stroke={paceColor}
-            strokeWidth="1.8"
-            strokeDasharray="4 3"
-            strokeLinecap="round"
-          />
-
-          {/* 6. Today Marker (Vertical hairline + glowing node) */}
-          <line
-            x1={xToday}
-            y1={padT}
-            x2={xToday}
-            y2={padT + plotH}
-            stroke={tc('ink-muted')}
-            strokeWidth="1"
-            strokeDasharray="2 2"
-          />
+          {/* Today */}
+          <line x1={xToday} y1={PAD_T} x2={xToday} y2={baseY} stroke={tc('ink-muted')} strokeWidth="1" strokeDasharray="2 2" />
           <circle cx={xToday} cy={yToday} r="6" fill={paceColor} fillOpacity="0.3" />
           <circle cx={xToday} cy={yToday} r="2.5" fill={paceColor} />
 
-          {/* 7. Right Badges: EOM Finish Line Comparisons */}
-          {/* Ghost EOM Badge */}
-          {ghostFinal > 0 && (
-            <g transform={`translate(${xEOM + 6}, ${ghostEomY - 7})`}>
-              <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={tc('ink-body')} strokeWidth="0.8" rx="2" />
-              <text x="6" y="11" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                เดือนก่อนจบ {formatBahtShort(Math.round(ghostFinal))}
-              </text>
-            </g>
-          )}
+          {ghostFinal > 0 && <EdgeBadge x={xEOM} y={ghostEomY} w={BADGE_W} stroke={tc('ink-body')}>เดือนก่อนจบ {formatBahtShort(Math.round(ghostFinal))}</EdgeBadge>}
+          {projectedExpense > 0 && <EdgeBadge x={xEOM} y={curEomY} w={BADGE_W} stroke={paceColor}>คาดจบเดือนนี้ {formatBahtShort(Math.round(projectedExpense))}</EdgeBadge>}
 
-          {/* Current Projected EOM Badge */}
-          {projectedExpense > 0 && (
-            <g transform={`translate(${xEOM + 6}, ${curEomY - 7})`}>
-              <rect x="0" y="0" width={BADGE_W} height="15" fill={tc('canvas')} stroke={paceColor} strokeWidth="0.8" rx="2" />
-              <text x="6" y="11" fill={paceColor} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                คาดจบเดือนนี้ {formatBahtShort(Math.round(projectedExpense))}
-              </text>
-            </g>
-          )}
+          <DayAxis f={frame} today={today} />
 
-          {/* 8. Bottom Axis Timeline Ticks */}
-          <line x1={padL} y1={padT + plotH} x2={xEOM} y2={padT + plotH} stroke={tc('line')} strokeWidth="1" />
-          {xToday - padL > 90 && (
-            <text x={padL} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO}>Day 1</text>
-          )}
-          <text x={xToday} y={padT + plotH + 12} fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle" fontWeight="bold">
-            Day {curDayClamped} (วันนี้)
-          </text>
-          {xEOM - xToday > 100 && (
-            <text x={xEOM} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-              Day {totalDays}
-            </text>
-          )}
-
-          {dayTicks.map((d) => {
-            const x = getX(d);
-            if (x < padL + 16 || x > xEOM - 16) return null;
-            if (Math.abs(x - xToday) < 60) return null; // "Day N (วันนี้)" is ~95px wide, centered on today
-            return (
-              <g key={d}>
-                <line x1={x} y1={padT + plotH} x2={x} y2={padT + plotH + 3} stroke={tc('ink-muted')} strokeWidth="1" />
-                <text x={x} y={padT + plotH + 12} fill={tc('ink-muted')} fontSize="11" fontFamily={FONT_MONO} textAnchor="middle">
-                  {d}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* 9. Interactive Hover Crosshair & Dual Telemetry HUD */}
-          {hoverData && (
+          {hover && (
             <g className="pointer-events-none select-none">
-              <line
-                x1={hoverData.x}
-                y1={padT}
-                x2={hoverData.x}
-                y2={padT + plotH}
-                stroke={hoverColor}
-                strokeWidth="1"
-                strokeDasharray="2 2"
-                opacity="0.8"
-              />
+              <line x1={hover.x} y1={PAD_T} x2={hover.x} y2={baseY} stroke={hover.color} strokeWidth="1" strokeDasharray="2 2" opacity="0.8" />
+              <circle cx={hover.x} cy={hover.curY} r="4.5" fill={hover.color} />
+              {hover.ghostSpend > 0 && <circle cx={hover.x} cy={getY(hover.ghostSpend)} r="4" fill={tc('ink-body')} />}
 
-              <circle cx={hoverData.x} cy={hoverData.curY} r="4.5" fill={hoverColor} />
-              {hoverData.ghostSpend > 0 && (
-                <circle cx={hoverData.x} cy={getY(hoverData.ghostSpend)} r="4" fill={tc('ink-body')} />
-              )}
-
-              {/* Tooltip Card */}
-              <g transform={`translate(${tooltipX}, ${tooltipY})`}>
-                <rect
-                  x="0"
-                  y="0"
-                  width={tipW}
-                  height={tipH}
-                  fill={tc('surface-hover')}
-                  stroke={hoverColor}
-                  strokeWidth="1.2"
-                  rx="3"
-                  filter="url(#pacerTooltipShadow)"
-                />
-                <line x1="8" y1="23" x2={tipW - 8} y2="23" stroke={tc('line')} strokeWidth="0.8" />
-
-                {/* Row 1: Header Day */}
-                <text x="8" y="16" fill={tc('ink-display')} fontSize="11" fontFamily={FONT_MONO} fontWeight="bold">
-                  Day {hoverData.day}
-                  <tspan fill={hoverData.isToday ? tc('accent-ink') : hoverData.isFuture ? tc('ink-body') : tc('ink-muted')} fontSize="11" fontWeight="normal">
-                    {hoverData.isToday ? ' (วันนี้)' : hoverData.isFuture ? ' (คาดการณ์)' : ''}
-                  </tspan>
-                </text>
-                <text
-                  x={tipW - 8}
-                  y="16"
-                  fill={hoverColor}
-                  fontSize="11"
-                  fontFamily={FONT_MONO}
-                  fontWeight="bold"
-                  textAnchor="end"
-                >
-                  {deltaLabel}
-                </text>
-
-                {/* Row 2: Current Month Spend */}
-                <text x="8" y="40" fill={hoverColor} fontSize="11" fontFamily={FONT_MONO}>
-                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hoverData.curSpend)}</tspan>
-                </text>
-
-                {/* Row 3: Ghost Month Spend */}
-                <text x="8" y="58" fill={tc('ink-body')} fontSize="11" fontFamily={FONT_MONO}>
-                  เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">{formatBaht(hoverData.ghostSpend)}</tspan>
-                </text>
-                {hoverData.benchSpend > 0 && (
-                  <text x={tipW - 8} y="58" fill={tc('info')} fontSize="11" fontFamily={FONT_MONO} textAnchor="end">
-                    เฉลี่ย {formatBahtShort(Math.round(hoverData.benchSpend))}
-                  </text>
+              <g transform={`translate(${hover.tip.x}, ${hover.tip.y})`}>
+                <rect x="0" y="0" width={TIP_W} height={TIP_H} fill={tc('surface-hover')} stroke={hover.color} strokeWidth="1.2" rx="3" filter="url(#pacerTooltipShadow)" />
+                <line x1="8" y1="23" x2={TIP_W - 8} y2="23" stroke={tc('line')} strokeWidth="0.8" />
+                <TooltipDay y={16} day={hover.day} isToday={hover.isToday} isFuture={hover.isFuture} />
+                <MonoText x={TIP_W - 8} y="16" fill={hover.color} fontWeight="bold" textAnchor="end">{hover.deltaLabel}</MonoText>
+                <MonoText x="8" y="40" fill={hover.color}>
+                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hover.curSpend)}</tspan>
+                </MonoText>
+                <MonoText x="8" y="58" fill={tc('ink-body')}>
+                  เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">{formatBaht(hover.ghostSpend)}</tspan>
+                </MonoText>
+                {hover.benchSpend > 0 && (
+                  <MonoText x={TIP_W - 8} y="58" fill={tc('info')} textAnchor="end">เฉลี่ย {formatBahtShort(Math.round(hover.benchSpend))}</MonoText>
                 )}
               </g>
             </g>

@@ -20,6 +20,8 @@ interface FrequentItem {
   lastDate: string;
 }
 
+type CategoryGroup = { type: string; allocation_type: string | null };
+
 /** Escape LIKE wildcards so user text matches literally (pair with ESCAPE '\'). */
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, '\\$&');
 
@@ -143,42 +145,26 @@ class TransactionService {
    * รายรับไม่มีสัดส่วน, แถวลงทุน/ออม = SAVE เสมอ, รายจ่าย = NEED/WANT เท่านั้น (SAVE หมายถึงลงทุน):
    * ค่าของแถวเองก่อน ไม่มีหรือเป็น SAVE ให้ใช้ของกลุ่ม แล้วค่อย WANT
    */
-  private resolveAllocationType(categoryId?: string, currentAlloc?: string | null): string | null {
+  private resolveAllocationType(categoryId: string | undefined, group: CategoryGroup | undefined, currentAlloc?: string | null): string | null {
     if (!categoryId) return currentAlloc ?? 'want';
-    const group = db.prepare(`
-      SELECT cg.type, cg.allocation_type
-      FROM cashflow_groups cg
-      JOIN categories c ON c.cashflow_group_id = cg.id
-      WHERE c.id = ?
-    `).get(categoryId) as { type: string; allocation_type: string | null } | undefined;
-
     if (group?.type === 'income') return null;
     if (group?.type === 'savings') return 'savings';
     return [currentAlloc, group?.allocation_type].find(a => a === 'need' || a === 'want') ?? 'want';
-  }
-
-  private getGroupType(categoryId?: string): string | undefined {
-    if (!categoryId) return undefined;
-    return (db.prepare(`
-      SELECT cg.type FROM cashflow_groups cg
-      JOIN categories c ON c.cashflow_group_id = cg.id
-      WHERE c.id = ?
-    `).get(categoryId) as { type: string } | undefined)?.type;
   }
 
   /**
    * แถวลงทุน/ออม: จำนวนเงินติดลบ = ขาย (เงินกลับเข้ามา) เก็บค่าสัมบูรณ์ + trade_side='sell'
    * ถ้าผูกสินทรัพย์ (asset_id) ต้องมีจำนวนหน่วย > 0
    */
-  private resolveTrade(tx: any, categoryId?: string): { amountSatang: number; assetId: string | null; units: number | null; side: 'buy' | 'sell' | null } {
+  private resolveTrade(tx: any, group: CategoryGroup | undefined, assetExists: (id: string) => boolean): { amountSatang: number; assetId: string | null; units: number | null; side: 'buy' | 'sell' | null } {
     const amount = Number(tx.amount);
-    const isSavings = this.getGroupType(categoryId) === 'savings';
+    const isSavings = group?.type === 'savings';
     if (amount < 0 && !isSavings) throw new ApiError(400, 'จำนวนเงินติดลบได้เฉพาะหมวดลงทุน/ออม');
 
     const assetId: string | null = isSavings && tx.asset_id ? String(tx.asset_id) : null;
     let units: number | null = null;
     if (assetId) {
-      if (!db.prepare('SELECT 1 FROM assets WHERE id = ?').get(assetId)) throw new ApiError(400, 'ไม่พบสินทรัพย์ที่เลือก');
+      if (!assetExists(assetId)) throw new ApiError(400, 'ไม่พบสินทรัพย์ที่เลือก');
       units = Number(tx.units);
       if (!Number.isFinite(units) || units <= 0) throw new ApiError(400, 'ต้องระบุจำนวนหน่วยที่มากกว่า 0 เมื่อเลือกสินทรัพย์');
     }
@@ -202,13 +188,29 @@ class TransactionService {
         updated_at = CURRENT_TIMESTAMP,
         is_deleted = 0
     `);
+    // Prepared once per batch; a CSV import repeats a few categories over thousands of rows, so groups are memoised too.
+    const groupStmt = db.prepare(`
+      SELECT cg.type, cg.allocation_type
+      FROM cashflow_groups cg
+      JOIN categories c ON c.cashflow_group_id = cg.id
+      WHERE c.id = ?
+    `);
+    const assetStmt = db.prepare('SELECT 1 FROM assets WHERE id = ?');
+    const groups = new Map<string, CategoryGroup | undefined>();
+    const groupOf = (categoryId: string | undefined) => {
+      if (!categoryId) return undefined;
+      if (!groups.has(categoryId)) groups.set(categoryId, groupStmt.get(categoryId) as CategoryGroup | undefined);
+      return groups.get(categoryId);
+    };
+    const assetExists = (id: string) => assetStmt.get(id) !== undefined;
 
     const transactionAction = db.transaction((txs: any[]) => {
       for (const tx of txs) {
         const date = this.normalizeDate(tx.date);
         const categoryId = this.resolveCategoryId(tx);
-        const allocationType = this.resolveAllocationType(categoryId, tx.allocation_type);
-        const trade = this.resolveTrade(tx, categoryId);
+        const group = groupOf(categoryId);
+        const allocationType = this.resolveAllocationType(categoryId, group, tx.allocation_type);
+        const trade = this.resolveTrade(tx, group, assetExists);
 
         stmt.run(
           tx.id || crypto.randomUUID(),

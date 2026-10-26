@@ -4,6 +4,7 @@ import { LucideIcon } from 'lucide-react';
 import { formatBaht } from '@/utils/formatters';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { BreakdownEntry } from './types';
+import { PanelTitle } from '../panelParts';
 
 /**
  * Formats a signed monetary value with the sign BEFORE the ฿ symbol.
@@ -21,11 +22,7 @@ export const Shimmer = ({ className }: { className?: string }) => (
 export const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon; title: string }) => (
   <div className="px-4 py-1.5 flex items-center justify-between border-b border-line bg-surface/80">
     <div className="flex items-center gap-2">
-      <div className="w-[3px] h-3 bg-accent shrink-0" />
-      {Icon && <Icon className="w-3.5 h-3.5 text-neutral-400" />}
-      <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-        {title}
-      </h2>
+      <PanelTitle icon={Icon} title={title} />
     </div>
   </div>
 );

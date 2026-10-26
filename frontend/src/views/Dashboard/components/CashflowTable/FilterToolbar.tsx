@@ -1,6 +1,7 @@
 // src/views/Dashboard/components/CashflowTable/FilterToolbar.tsx
 import { FileSpreadsheet, Eye, EyeOff, Filter, ChevronDown, RotateCcw } from 'lucide-react';
 import { FilterToolbarProps } from './types';
+import { PanelTitle } from '../panelParts';
 
 export function FilterToolbar({
   isFilterBarOpen,
@@ -14,11 +15,7 @@ export function FilterToolbar({
     <div className="px-4 py-2 border-b flex flex-col gap-2 bg-surface/80 border-line">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-3 bg-accent shrink-0" />
-          <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200">
-            ตารางสรุปกระแสเงินสด
-          </h2>
+          <PanelTitle icon={FileSpreadsheet} title="ตารางสรุปกระแสเงินสด" />
         </div>
 
         <div className="flex items-center gap-2">

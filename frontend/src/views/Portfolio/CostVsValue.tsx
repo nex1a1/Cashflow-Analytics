@@ -6,7 +6,7 @@ import { tc } from '@/constants/theme';
 import { formatThaiDateShort, formatBaht } from '@/utils/formatters';
 import { AnalysisTabHeader } from '@/views/Dashboard/components/SummaryCards/Strategic/SummaryStrategic';
 import { buildInvestedSeries, withLivePoint } from './portfolioCharts';
-import { localTodayIso } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 
 const baht = (n: number) => `${formatBaht(n)}`;
 const signedBaht = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatBaht(Math.abs(n))}`;
@@ -104,7 +104,8 @@ const dayIso = (n: number) => new Date(Math.round(n) * 86_400_000).toISOString()
  * แกน X เป็นจำนวนวันจริง (ไม่ใช่ลำดับจุด) วันที่ไม่ได้เปิดแอปจะเป็นช่วงห่างบนแกน ไม่ถูกบีบให้ชิดกัน
  */
 function HistoryChart({ portfolio }: { portfolio: Portfolio }) {
-  const series = useMemo(() => withLivePoint(portfolio.history, portfolio.totals, localTodayIso()), [portfolio.history, portfolio.totals]);
+  const today = useToday();
+  const series = useMemo(() => withLivePoint(portfolio.history, portfolio.totals, today), [portfolio.history, portfolio.totals, today]);
   if (series.length < 2) {
     return (
       <p className="m-auto max-w-sm text-center text-xs text-ink-muted">

@@ -8,7 +8,8 @@ import MonthOnlyNotice from './components/MonthOnlyNotice';
 import { resolveDefaultDayTypeId, THAI_MONTHS } from './utils/calendarPeriodHelpers';
 import { processCalendarTransaction, CalendarDayData, CalendarTotals, CategoryAllocationAmount } from './utils/calendarAggregates';
 import { periodUnitDates, parseDateStrToObj } from '../../utils/dateHelpers';
-import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, localTodayIso, CYCLE_PREFIX, cycleLabel, cycleRangeLabel } from '../../utils/payCycle';
+import { isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey, CYCLE_PREFIX, cycleLabel, cycleRangeLabel } from '../../utils/payCycle';
+import useToday from '@/hooks/useToday';
 import {
   CashflowGroup,
   Category,
@@ -90,11 +91,11 @@ function CalendarView({
   // วันในตาราง: เดือนปฏิทิน (1 → สิ้นเดือน) หรือรอบเงินเดือน (25 → 24 ข้ามสองเดือน).
   // เลขวันไม่ซ้ำกันภายในรอบเดียว (25..สิ้นเดือน, 1..24) จึงใช้เลขวันเป็น key ของ dayData ได้เหมือนเดิม
   const isCycle = isCyclePeriod(filterPeriod);
+  const today = useToday();
   const periodDates = useMemo(() => {
-    const today = localTodayIso();
     const key = isSingleUnitPeriod(filterPeriod) ? stripCycle(filterPeriod) : (isCycle ? toCycleKey(today) : today.slice(0, 7));
     return periodUnitDates(key, isCycle);
-  }, [filterPeriod, isCycle]);
+  }, [filterPeriod, isCycle, today]);
   const periodDateSet = useMemo(() => new Set(periodDates), [periodDates]);
 
   const daysInMonth = periodDates.length;
@@ -368,7 +369,7 @@ function CalendarView({
     };
   }, [categories, cashflowGroups, catAllocAmounts, monthInc, monthExp, monthNeed, monthWant, excludedCategoryIds, legendSortMode]);
 
-  const currentMonthStr = isCycle ? CYCLE_PREFIX + toCycleKey(localTodayIso()) : localTodayIso().slice(0, 7);
+  const currentMonthStr = isCycle ? CYCLE_PREFIX + toCycleKey(today) : today.slice(0, 7);
   const goToCurrentMonth = useCallback(() => setFilterPeriod(currentMonthStr), [setFilterPeriod, currentMonthStr]);
 
   const monthNet = monthInc - monthExp;

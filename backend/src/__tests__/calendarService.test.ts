@@ -18,7 +18,7 @@ const cleanup = () => {
 };
 
 const post = (body: object) =>
-  upsertCalendarDay({ body } as Request, { json: () => {} } as unknown as Response, (err?: unknown) => { throw err; });
+  upsertCalendarDay({ body } as Request, { json: () => {} } as unknown as Response);
 
 describe('calendar day note', () => {
   beforeAll(() => {

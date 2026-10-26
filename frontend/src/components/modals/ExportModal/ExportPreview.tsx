@@ -1,10 +1,12 @@
 // frontend/src/components/modals/ExportModal/ExportPreview.tsx
 import { useMemo } from 'react';
-import { Search, X, Loader2, AlertCircle, Info } from 'lucide-react';
+import { Loader2, AlertCircle, Info } from 'lucide-react';
 import { ExportPreviewProps } from './types';
-import ExportLongTable from './ExportLongTable';
-import ExportWideTable from './ExportWideTable';
 import ExportBackupView from './ExportBackupView';
+import { calculateCategoryTotal } from './exportUtils';
+import { fromISODate } from '../../../utils/dateHelpers';
+import { tc } from '@/constants/theme';
+import { LongTable, PreviewFrame, PreviewTopBar, WideTable, flowStyle } from '../csvPreview';
 
 const PREVIEW_LIMIT = 25;
 
@@ -23,20 +25,15 @@ export default function ExportPreview({
   dayTypeConfig,
 }: ExportPreviewProps) {
   const isBackupJson = exportFormat === 'backup_json';
-  const isWide = exportFormat === 'wide';
 
-  const previewItems = useMemo(() => {
-    return dataToExport.slice(0, PREVIEW_LIMIT);
-  }, [dataToExport]);
+  const previewItems = useMemo(() => dataToExport.slice(0, PREVIEW_LIMIT), [dataToExport]);
 
   const renderContent = () => {
     if (isFetching) {
       return (
         <div className="h-full flex flex-col items-center justify-center space-y-3 font-mono text-xs text-neutral-400">
           <Loader2 className="w-7 h-7 text-accent-ink animate-spin" />
-          <span className="uppercase tracking-widest text-neutral-400">
-            กำลังดึงข้อมูลจากฐานข้อมูล...
-          </span>
+          <span className="uppercase tracking-widest text-neutral-400">กำลังดึงข้อมูลจากฐานข้อมูล...</span>
         </div>
       );
     }
@@ -63,76 +60,62 @@ export default function ExportPreview({
       );
     }
 
-    if (isWide) {
+    if (exportFormat === 'wide') {
+      // only categories that appear in the preview rows get a column
+      const cats = categories.filter((c) => previewItems.some((t) => t.category === c.name || t.category_id === c.id));
+      const dates = Array.from(new Set(previewItems.map((t) => t.date))).sort((a, b) => a.localeCompare(b));
       return (
-        <ExportWideTable
-          data={previewItems}
-          categories={categories}
-          getDayTypeInfo={getDayTypeInfo}
+        <WideTable
+          labels={{ date: 'วันที่', dayType: 'ประเภทวัน', total: 'รวมสุทธิ' }}
+          columns={cats.map((c) => ({ key: c.id, name: c.name, color: c.color || tc('ink-body') }))}
+          rows={dates.map((date) => {
+            const values = cats.map((c) => calculateCategoryTotal(previewItems, date, c.name));
+            return { key: date, date: fromISODate(date), dayType: getDayTypeInfo(date), values, total: values.reduce((s, v) => s + v, 0) };
+          })}
         />
       );
     }
 
+    const groupMap = new Map((cashflowGroups ?? []).map((g) => [g.id, g]));
     return (
-      <ExportLongTable
-        data={previewItems}
-        categories={categories}
-        cashflowGroups={cashflowGroups}
-        getDayTypeInfo={getDayTypeInfo}
-        exportFormat={exportFormat}
+      <LongTable
+        cols={{ dayType: true, type: true, group: exportFormat === 'full_csv' }}
+        labels={{ date: 'วันที่', dayType: 'ประเภทวัน', type: 'ประเภท', group: 'กลุ่มกระแสเงิน', category: 'หมวดหมู่', description: 'รายละเอียด', amount: 'จำนวนเงิน (฿)' }}
+        rows={previewItems.map((t, idx) => {
+          const cat = categories.find((c) => c.name === t.category || c.id === t.category_id);
+          const type = cat?.type || t.group_type || 'expense';
+          const groupId = cat?.cashflowGroup || cat?.cashflow_group_id;
+          const color = cat?.color || tc('ink-body');
+          return {
+            key: t.id || String(idx),
+            date: fromISODate(t.date),
+            dayType: getDayTypeInfo(t.date),
+            type,
+            typeLabel: type.toUpperCase(),
+            // a sell already carries its own minus sign
+            sign: type === 'savings' && t.amount < 0 ? '' : flowStyle(type).sign,
+            group: groupId ? groupMap.get(groupId)?.name : undefined,
+            category: { name: t.category, color, textColor: color, icon: cat?.icon },
+            description: t.description,
+            amount: t.amount,
+          };
+        })}
       />
     );
   };
 
   return (
     <div className="flex-1 flex flex-col p-5 bg-surface overflow-hidden">
-      {/* Preview Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black uppercase tracking-widest text-neutral-300">
-            ตัวอย่างเอกสาร <span className="text-neutral-500 font-mono font-normal">/ PREVIEW</span>
-          </span>
-          {!isBackupJson && dataToExport.length > 0 && (
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-pill bg-surface-hover border border-line text-neutral-400">
-              {dataToExport.length > PREVIEW_LIMIT
-                ? `แสดงตัวอย่าง ${PREVIEW_LIMIT} จาก ${dataToExport.length.toLocaleString()} รายการ`
-                : `แสดงทั้งหมด ${dataToExport.length.toLocaleString()} รายการ`}
-            </span>
-          )}
-        </div>
+      <PreviewTopBar
+        count={!isBackupJson && dataToExport.length > 0 ? (dataToExport.length > PREVIEW_LIMIT
+          ? `แสดงตัวอย่าง ${PREVIEW_LIMIT} จาก ${dataToExport.length.toLocaleString()} รายการ`
+          : `แสดงทั้งหมด ${dataToExport.length.toLocaleString()} รายการ`) : undefined}
+        search={previewSearch}
+        setSearch={isBackupJson ? undefined : setPreviewSearch}
+      />
 
-        {/* Search in preview */}
-        {!isBackupJson && (
-          <div className="relative w-full sm:w-[260px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500" />
-            <input
-              type="text"
-              placeholder="ค้นหาในตัวอย่าง..."
-              value={previewSearch}
-              onChange={(e) => setPreviewSearch(e.target.value)}
-              className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-hidden focus:border-accent-ink rounded-none transition-colors"
-            />
-            {previewSearch && (
-              <button
-                type="button"
-                onClick={() => setPreviewSearch('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      <PreviewFrame>{renderContent()}</PreviewFrame>
 
-      {/* Main Preview Container */}
-      <div className="flex-1 border border-line bg-surface flex flex-col overflow-hidden relative">
-        <div className="flex-1 overflow-auto custom-scrollbar relative">
-          {renderContent()}
-        </div>
-      </div>
-
-      {/* Bottom Hint */}
       <div className="mt-3 flex items-start gap-2 text-[11px] text-neutral-400 shrink-0">
         <Info className="w-3.5 h-3.5 text-accent-ink shrink-0 mt-0.5" />
         <p className="leading-snug">

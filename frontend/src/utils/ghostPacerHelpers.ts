@@ -29,19 +29,6 @@ interface CalculateGhostPacerParams {
   projectedExpense: number;
 }
 
-/**
- * Builds cumulative daily series for a specific year and month (0-indexed month)
- */
-export function buildCumulativeDailySeries(
-  year: number,
-  month: number,
-  globalDailySum: Record<string, number>,
-  cutoffDay?: number
-): { series: number[]; total: number; daysCount: number } {
-  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-  return cumulativeSeries(periodUnitDates(key, false), globalDailySum, cutoffDay);
-}
-
 /** Running total over an ordered date list, optionally cut off after `cutoffDay` days */
 function cumulativeSeries(
   dates: string[],

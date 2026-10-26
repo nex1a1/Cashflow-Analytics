@@ -38,7 +38,7 @@ vi.mock('@/services/api', () => ({
   analyticsService: { getDashboardData: () => Promise.reject(new Error('offline')) }, // the dashboard falls back to its own maths
   calendarService: { getAll: ok([]), save: ok({ success: true }) },
   dayTypeService: { getAll: ok(DATA.dayTypes), save: ok({ success: true }), deleteById: ok({ success: true }) },
-  settingsService: { getAll: ok({ portfolio_enabled: true, tax_enabled: true }), save: ok({ success: true }) },
+  settingsService: { getAll: ok({ portfolio_enabled: true }), save: ok({ success: true }) },
   categoryService: { getAll: ok(DATA.categories), save: ok({ success: true }), deleteById: ok({ success: true }) },
   groupService: { getAll: ok(DATA.groups), save: ok({ success: true }), deleteById: ok({ success: true }) },
   portfolioService: {
@@ -85,7 +85,8 @@ describe('App (smoke)', () => {
       const t = tab(label);
       expect(t, label).toBeTruthy();
       click(t);
-      await flushAll();
+      // tabs other than the dashboard are lazy chunks: the first import of the real view can take a while
+      for (let i = 0; i < 100 && !host.textContent?.includes(text); i++) await flushAll();
       expect(host.textContent, label).toContain(text);
     }
     // nothing threw inside React (an error boundary-less crash would blank the tree and log "The above error occurred")

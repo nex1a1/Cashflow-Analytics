@@ -168,6 +168,8 @@ export interface RowProps extends CommonTableProps {
   setHoveredRow: (monthStr: string | null) => void;
   isExcluded: boolean;
   isPartial: boolean;
+  /** the month / pay cycle today falls in (still running) */
+  isCurrent?: boolean;
 }
 
 export interface FooterProps extends Omit<CommonTableProps, 'toggleMonth' | 'toggleGroupExclusion' | 'toggleCategoryExclusion' | 'handleMouseEnter' | 'handleMouseLeave'> {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, use, useEffect, ReactNode } from 'react';
 import { AppFilterContextValue } from '../types';
 import { getFilterLabel } from '../utils/formatters';
 import { effectiveChartGroupBy } from '../utils/chartGrouping';
@@ -80,7 +80,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
       calendar: 'Calendar',
       ledger: 'Ledger',
       portfolio: 'Portfolio',
-      tax: 'Tax',
       settings: 'Settings'
     };
     const tabLabel = tabLabels[activeTab] || 'Home';
@@ -139,14 +138,14 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   };
 
   return (
-    <AppFilterContext.Provider value={value}>
+    <AppFilterContext value={value}>
       {children}
-    </AppFilterContext.Provider>
+    </AppFilterContext>
   );
 };
 
 export const useAppFilter = (): AppFilterContextValue => {
-  const context = useContext(AppFilterContext);
+  const context = use(AppFilterContext);
   if (!context) {
     throw new Error('useAppFilter must be used within an AppFilterProvider');
   }

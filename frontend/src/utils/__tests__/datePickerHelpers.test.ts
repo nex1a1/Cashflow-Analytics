@@ -6,7 +6,6 @@ import {
   getDatesInRange,
   groupContiguousDates,
   formatDisplay,
-  getDecadeWindow,
   stepDate,
   stepMonth,
   stepYear,
@@ -145,18 +144,6 @@ describe('datePickerHelpers', () => {
       expect(formatRangeLabel(['2026-09-13'])).toBe('13 ก.ย.');
       expect(formatRangeLabel(['2026-09-13', '2026-09-14', '2026-09-15'])).toBe('13 - 15 ก.ย.');
       expect(formatRangeLabel(['2026-01-31', '2026-02-01'])).toBe('31 ม.ค. - 1 ก.พ.');
-    });
-  });
-
-  describe('getDecadeWindow', () => {
-    it('computes 12-year window for a given year', () => {
-      const window = getDecadeWindow(2026, 12);
-      expect(window.start).toBe(2016);
-      expect(window.end).toBe(2027);
-      expect(window.years).toHaveLength(12);
-      expect(window.years).toContain(2026);
-      expect(window.years[0]).toBe(2016);
-      expect(window.years[11]).toBe(2027);
     });
   });
 

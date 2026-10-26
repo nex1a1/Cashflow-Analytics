@@ -3,7 +3,6 @@ import { tc } from '@/constants/theme';
 import {
   getExpenseLevel,
   getHeatmapColor,
-  getLocalTodayString,
   HEATMAP_SHADES
 } from '../ActivityTimeline';
 
@@ -38,20 +37,6 @@ describe('ActivityTimeline helpers and thermal engine', () => {
       expect(getHeatmapColor(3)).toBe(HEATMAP_SHADES[2]);
       expect(getHeatmapColor(6)).toBe(HEATMAP_SHADES[5]);
       expect(getHeatmapColor(6)).toBe(tc('expense'));
-    });
-  });
-
-  describe('getLocalTodayString', () => {
-    it('returns date formatted as YYYY-MM-DD in local time', () => {
-      const today = getLocalTodayString();
-      expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-
-      const now = new Date();
-      const expectedYear = String(now.getFullYear());
-      const expectedMonth = String(now.getMonth() + 1).padStart(2, '0');
-      const expectedDate = String(now.getDate()).padStart(2, '0');
-
-      expect(today).toBe(`${expectedYear}-${expectedMonth}-${expectedDate}`);
     });
   });
 

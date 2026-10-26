@@ -2,7 +2,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { transactionService } from '../../../services/api';
 import { TransactionDisplay } from '../../../types';
-import ExportHeader from './ExportHeader';
 import ExportSidebar from './ExportSidebar';
 import ExportPreview from './ExportPreview';
 import ExportFooter from './ExportFooter';
@@ -26,6 +25,8 @@ import {
 import { convertPeriodMode, localTodayIso } from '../../../utils/payCycle';
 import { tc } from '@/constants/theme';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { FileDown } from 'lucide-react';
+import { ModalTitleBar } from '../csvModalParts';
 
 export default function ExportModal({
   isOpen,
@@ -198,8 +199,15 @@ export default function ExportModal({
         className="relative shadow-2xl flex flex-col w-full max-w-[1400px] h-[86vh] min-h-[540px] max-h-[880px] border border-line-strong bg-canvas overflow-hidden"
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
-        {/* Header */}
-        <ExportHeader onClose={onClose} isExporting={isExporting} />
+        <ModalTitleBar
+          icon={FileDown}
+          title="ส่งออกรายงานและสำรองข้อมูล"
+          en="Statement Export & Backup"
+          subtitle="เลือกรูปแบบและช่วงเวลา แล้วดาวน์โหลดไปเปิดใน Excel หรือ Google Sheets"
+          onClose={onClose}
+          closeTitle="ปิดหน้าต่าง"
+          closeDisabled={isExporting}
+        />
 
         {/* 2-Column Body */}
         <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden bg-canvas">

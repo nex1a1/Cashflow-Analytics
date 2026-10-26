@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useRef, ReactNode } from 'react';
+import React, { createContext, use, useState, useCallback, useMemo, useRef, ReactNode } from 'react';
 
 export interface ToastAction {
   label: string;
@@ -26,7 +26,7 @@ export interface ToastProviderProps {
 }
 
 export const useToast = (): ToastContextValue => {
-  const context = useContext(ToastContext);
+  const context = use(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
@@ -60,8 +60,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   }), [showToast, hideToast, toast]);
 
   return (
-    <ToastContext.Provider value={contextValue}>
+    <ToastContext value={contextValue}>
       {children}
-    </ToastContext.Provider>
+    </ToastContext>
   );
 };

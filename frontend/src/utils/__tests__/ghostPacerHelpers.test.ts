@@ -1,20 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildCumulativeDailySeries, calculateGhostPacerData, paceTone } from '../ghostPacerHelpers';
+import { calculateGhostPacerData, paceTone } from '../ghostPacerHelpers';
 
 describe('ghostPacerHelpers', () => {
-  it('builds cumulative daily series properly', () => {
-    const dailyMap: Record<string, number> = {
-      '2026-09-01': 100,
-      '2026-09-02': 250,
-      '2026-09-03': 50,
-    };
-
-    const result = buildCumulativeDailySeries(2026, 8, dailyMap, 3);
-    expect(result.series).toEqual([100, 350, 400]);
-    expect(result.total).toBe(400);
-    expect(result.daysCount).toBe(30);
-  });
-
   it('calculates ghost pacer comparisons when current spend is ahead (saving more)', () => {
     const dailyMap: Record<string, number> = {
       // Current month (Sept): Day 1: 50, Day 2: 50 -> total 100

@@ -22,7 +22,8 @@ import { ExpenseProportionHeader } from './ExpenseProportionHeader';
 import { ExpenseProportionChart } from './ExpenseProportionChart';
 import { ExpenseProportionGrid } from './ExpenseProportionGrid';
 import { AllocationEvolutionChart } from './AllocationEvolutionChart';
-import { monthKeyOf, localTodayIso } from '@/utils/payCycle';
+import { monthKeyOf } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 import type { AllocationEvolutionData } from '@/utils/allocationEvolutionHelpers';
 
 import { tc } from '@/constants/theme';
@@ -77,6 +78,7 @@ function ExpenseProportionSkeleton() {
  */
 export function ExpenseProportion() {
   const { analytics, showSkeleton, filterPeriod } = useDashboardContext();
+  const today = useToday();
   const [displayMode, setDisplayMode] = useState<DisplayMode>('category');
   const [sortMode, setSortMode] = useState<SortMode>('amount-desc');
   const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
@@ -254,7 +256,7 @@ export function ExpenseProportion() {
   );
 
   const evolutionBody = evolutionData.hasData ? (
-    <AllocationEvolutionChart months={evolutionData.months} currentKey={monthKeyOf(localTodayIso(), filterPeriod)} />
+    <AllocationEvolutionChart months={evolutionData.months} currentKey={monthKeyOf(today, filterPeriod)} />
   ) : (
     <AllocationEvolutionEmpty />
   );

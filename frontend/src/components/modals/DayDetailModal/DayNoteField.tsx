@@ -61,7 +61,7 @@ export default function DayNoteField({ dateStr, note, onSave }: DayNoteFieldProp
         title="เพิ่มโน้ตประจำวัน เช่น วันเกิด วันแรกทำงาน"
         className="flex items-center gap-1 px-2 py-0.5 rounded-pill border border-transparent text-[11px] font-medium text-ink-muted hover:text-ink-display hover:border-line-strong cursor-pointer"
       >
-        <StickyNote className="w-3 h-3" aria-hidden="true" />
+        <StickyNote className="w-3 h-3" />
         <span>+ โน้ต</span>
       </button>
     );
@@ -78,7 +78,7 @@ export default function DayNoteField({ dateStr, note, onSave }: DayNoteFieldProp
       >
         {glyph}
         <span className="truncate">{note.text}</span>
-        <Pencil className="w-3 h-3 shrink-0 text-ink-muted group-hover:text-ink-display" aria-hidden="true" />
+        <Pencil className="w-3 h-3 shrink-0 text-ink-muted group-hover:text-ink-display" />
       </button>
     );
   }
@@ -168,7 +168,7 @@ export default function DayNoteField({ dateStr, note, onSave }: DayNoteFieldProp
           aria-label="เสร็จ บันทึกโน้ตและหุบช่องแก้ไข"
           className="w-8 h-8 shrink-0 flex items-center justify-center rounded-sm border border-line-strong bg-surface text-ink-soft hover:border-accent-ink hover:text-ink-display cursor-pointer"
         >
-          <Check className="w-4 h-4" aria-hidden="true" />
+          <Check className="w-4 h-4" />
         </button>
       </div>
       <FieldError id="day-note-err" message={error} />

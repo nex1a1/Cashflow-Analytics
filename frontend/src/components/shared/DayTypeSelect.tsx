@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { usePortalListbox, popoverPosition, PopoverCoords } from '@/hooks/usePortalListbox';
 import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
 import { DayType } from '@/types';
@@ -27,23 +28,21 @@ export default function DayTypeSelect({
   size = 'xs',
   topOffset = 4
 }: DayTypeSelectProps) {
-  const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number>(-1);
-  const [coords, setCoords] = useState<{
-    top?: number;
-    bottom?: number;
-    left: number;
-    width: number;
-    openUpwards: boolean;
-  }>({
-    left: 0,
-    width: 200,
-    openUpwards: false
-  });
-
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // 205px list under the trigger (right-aligned to it), or above when there is more room there
+  const { open, setOpen, close, activeIndex, setActiveIndex, coords, updatePosition, moveActive, triggerRef, popoverRef, itemRefs } =
+    usePortalListbox((rect): PopoverCoords => {
+      const width = 205;
+      const estimatedHeight = Math.min(360, (dayTypeConfig.length * 36) + 70);
+      let left = rect.right - width;
+      if (left < 12) left = 12;
+      if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
+      const spaceBelow = window.innerHeight - rect.bottom - 12;
+      const spaceAbove = rect.top - 12;
+      const openUpwards = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+      return openUpwards
+        ? { bottom: window.innerHeight - rect.top + 4, left, width, openUpwards }
+        : { top: rect.bottom + topOffset, left, width, openUpwards };
+    }, { left: 0, width: 200, openUpwards: false });
 
   // Find currently active day type configuration
   const currentType = useMemo(() => {
@@ -67,150 +66,46 @@ export default function DayTypeSelect({
     };
   }, [dateStr]);
 
-  // Calculate & update popover position
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 205;
-    const estimatedHeight = Math.min(360, (dayTypeConfig.length * 36) + 70);
+  const openList = () => {
+    updatePosition();
+    setOpen(true);
+    const idx = dayTypeConfig.findIndex(dt => dt.id === value);
+    setActiveIndex(idx >= 0 ? idx : 0);
+  };
 
-    let left = rect.right - popoverWidth;
-    if (left < 12) left = 12;
-    if (left + popoverWidth > window.innerWidth - 12) {
-      left = window.innerWidth - popoverWidth - 12;
-    }
-
-    const spaceBelow = window.innerHeight - rect.bottom - 12;
-    const spaceAbove = rect.top - 12;
-    const openUpwards = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
-
-    let top: number | undefined;
-    let bottom: number | undefined;
-
-    if (openUpwards) {
-      bottom = window.innerHeight - rect.top + 4;
-    } else {
-      top = rect.bottom + topOffset;
-    }
-
-    setCoords({ top, bottom, left, width: popoverWidth, openUpwards });
-  }, [dayTypeConfig.length, topOffset]);
-
-  // Toggle open
-  const handleToggle = useCallback((e: React.MouseEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabled) return;
-    if (open) {
-      setOpen(false);
-    } else {
-      updatePosition();
-      setOpen(true);
-      const idx = dayTypeConfig.findIndex(dt => dt.id === value);
-      setActiveIndex(idx >= 0 ? idx : 0);
-    }
-  }, [disabled, open, updatePosition, dayTypeConfig, value]);
+    if (open) setOpen(false);
+    else openList();
+  };
 
-  const handleClose = useCallback(() => {
-    setOpen(false);
-    setActiveIndex(-1);
-  }, []);
-
-  const handleSelect = useCallback((id: string, e?: React.MouseEvent) => {
+  const handleSelect = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     onChange(id);
-    handleClose();
+    close();
     triggerRef.current?.focus();
-  }, [onChange, handleClose]);
+  };
 
-  // Outside click & scroll listeners
-  useEffect(() => {
-    if (!open) return;
-
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        triggerRef.current?.contains(target) ||
-        popoverRef.current?.contains(target)
-      ) {
-        return;
-      }
-      handleClose();
-    };
-
-    const handleWindowResize = () => {
-      updatePosition();
-    };
-
-    const handleScroll = (e: Event) => {
-      if (popoverRef.current?.contains(e.target as Node)) return;
-      handleClose();
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    window.addEventListener('resize', handleWindowResize);
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      window.removeEventListener('resize', handleWindowResize);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [open, handleClose, updatePosition]);
-
-  // Keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  // Keys never leave the select (it often sits inside a clickable row or a modal)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const take = () => { e.preventDefault(); e.stopPropagation(); };
     if (!open) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
-        updatePosition();
-        setOpen(true);
-        const idx = dayTypeConfig.findIndex(dt => dt.id === value);
-        setActiveIndex(idx >= 0 ? idx : 0);
-      }
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { take(); openList(); }
       return;
     }
-
     if (e.key === 'Escape' || e.key === 'Tab') {
-      e.preventDefault();
-      e.stopPropagation();
-      handleClose();
+      take();
+      close();
       triggerRef.current?.focus();
-      return;
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      take();
+      moveActive(e.key === 'ArrowDown' ? 1 : -1, dayTypeConfig.length);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      take();
+      if (activeIndex >= 0 && activeIndex < dayTypeConfig.length) handleSelect(dayTypeConfig[activeIndex].id);
     }
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (dayTypeConfig.length === 0) return;
-      setActiveIndex(prev => {
-        const next = (prev + 1) % dayTypeConfig.length;
-        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
-      return;
-    }
-
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (dayTypeConfig.length === 0) return;
-      setActiveIndex(prev => {
-        const next = (prev - 1 + dayTypeConfig.length) % dayTypeConfig.length;
-        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
-      return;
-    }
-
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (activeIndex >= 0 && activeIndex < dayTypeConfig.length) {
-        handleSelect(dayTypeConfig[activeIndex].id);
-      }
-    }
-  }, [open, dayTypeConfig, activeIndex, updatePosition, value, handleClose, handleSelect]);
+  };
 
   const pillDimensions = size === 'sm' 
     ? 'h-7 px-4 min-w-[72px] text-xs' 
@@ -257,14 +152,7 @@ export default function DayTypeSelect({
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             className="fixed z-9999 bg-surface border border-line shadow-[0_16px_40px_rgb(0_0_0/calc(0.95*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.06)] rounded-none flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100 select-none"
-            style={{
-              ...(coords.openUpwards
-                ? { bottom: `${coords.bottom}px` }
-                : { top: `${coords.top}px` }),
-              left: `${coords.left}px`,
-              width: `${coords.width}px`,
-              maxHeight: '380px',
-            }}
+            style={{ ...popoverPosition(coords), maxHeight: '380px' }}
           >
             {/* LASER HAIRLINE ACCENT */}
             <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-85" />

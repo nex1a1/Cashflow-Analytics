@@ -125,7 +125,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
               title={`วันที่ ${PAY_DAY} วันเงินเดือนเข้า (เริ่มรอบใหม่)`}
               aria-label={`วันที่ ${PAY_DAY} วันเงินเดือนเข้า`}
             >
-              <Banknote className="w-3.5 h-3.5" aria-hidden="true" />
+              <Banknote className="w-3.5 h-3.5" />
             </span>
           )}
           {handleOpenAddModal && (

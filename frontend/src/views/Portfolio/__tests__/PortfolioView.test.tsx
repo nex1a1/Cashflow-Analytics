@@ -210,10 +210,12 @@ describe('PortfolioView manage-assets modal', () => {
     mount();
     click(topBtn('จัดการสินทรัพย์'));
     const first = h.modalProps[h.modalProps.length - 1].onClose;
+    const before = rowNames();
     click(sortBtn('สินทรัพย์'));
+    expect(rowNames()).not.toEqual(before); // the view really re-rendered
     click(sortBtn('มูลค่า'));
-    expect(h.modalProps.length).toBeGreaterThan(1);
-    expect(h.modalProps[h.modalProps.length - 1].onClose).toBe(first);
+    // React Compiler may skip re-rendering the modal altogether; whenever it does render, it gets the same function
+    expect(h.modalProps.every((p: { onClose: unknown }) => p.onClose === first)).toBe(true);
   });
 });
 

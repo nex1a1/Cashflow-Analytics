@@ -10,7 +10,8 @@ import { GroupTooltip } from './GroupTooltip';
 import { useFilteredMaps } from './useFilteredMaps';
 import { CommonTableProps, HoveredGroupState, MonthRow } from './types';
 import { isDateInFilter } from '@/utils/dateHelpers';
-import { isCyclePeriod, toCycleKey, cycleRange, localTodayIso } from '@/utils/payCycle';
+import { isCyclePeriod, toCycleKey, cycleRange } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 
 const EMPTY_SET: Set<string> = new Set();
 
@@ -18,12 +19,13 @@ export default function CashflowTable() {
   const { analytics, transactions = [], cashflowGroups = [], categories = [], showSkeleton, filterPeriod } =
     useDashboardContext();
   const isCycleMode = isCyclePeriod(filterPeriod);
+  const today = useToday();
+  const currentKey = isCycleMode ? toCycleKey(today) : today.slice(0, 7);
 
   // แถวที่ไม่เต็ม: โหมดรอบ = เริ่มก่อนข้อมูลวันแรกของช่วง หรือยังไม่เริ่ม (มีแค่รายการลงล่วงหน้า)
   // โหมดเดือน = เดือนอนาคตที่ยังไม่ถึง
   const partialKeys = useMemo(() => {
     if (!analytics?.sortedCashflow) return EMPTY_SET;
-    const today = localTodayIso();
     const rows = (analytics.sortedCashflow as MonthRow[]).map((r) => r.monthStr);
     if (!isCycleMode) return new Set<string>(rows.filter((key) => `${key}-01` > today));
     let firstDate = '';
@@ -37,7 +39,7 @@ export default function CashflowTable() {
         return start < firstDate || start > today;
       }),
     );
-  }, [isCycleMode, analytics?.sortedCashflow, transactions, filterPeriod]);
+  }, [isCycleMode, analytics?.sortedCashflow, transactions, filterPeriod, today]);
 
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [hoveredGroup, setHoveredGroup] = useState<HoveredGroupState | null>(null);
@@ -267,6 +269,7 @@ export default function CashflowTable() {
                   setHoveredRow={setHoveredRow}
                   isExcluded={excludedMonths.has(row.monthStr)}
                   isPartial={partialKeys.has(row.monthStr)}
+                  isCurrent={row.monthStr === currentKey}
                   {...segmentProps}
                 />
               ))}

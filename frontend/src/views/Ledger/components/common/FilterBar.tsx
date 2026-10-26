@@ -1,11 +1,12 @@
 import React from 'react';
 import { 
-  Search, X, Hash, CalendarDays, MousePointer2, 
-  Folder, ChevronDown, RefreshCw, Sparkles, SlidersHorizontal
+  Search, X, Hash, CalendarDays, MousePointer2,
+  Folder, ChevronDown, RefreshCw, SlidersHorizontal
 } from 'lucide-react';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CategoryMatrixFilter from './CategoryMatrixFilter';
 import SegmentGroup from './SegmentGroup';
+import { ActiveFiltersBar, FilterColumn, FilterField } from './filterParts';
 import { Category, CashflowGroup, DayType } from '../../../../types';
 
 interface FilterBarProps {
@@ -40,6 +41,8 @@ interface FilterBarProps {
   isExpanded?: boolean;
   setIsExpanded?: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+const AMOUNT_INPUT = 'w-full pl-6 pr-1 py-1 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
 export default function FilterBar({
   searchQuery, setSearchQuery,
@@ -160,72 +163,46 @@ export default function FilterBar({
         <div className="m-reveal border-t border-line/60">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(300px,1fr)_348px_minmax(320px,1.5fr)] gap-px bg-surface-elevated/50 relative z-20">
             
-            {/* COLUMN 1: SCOPE & ALLOCATION */}
-            <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <MousePointer2 className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-                  ช่วงจำนวนเงินและการจัดสรร
-                </span>
-              </div>
-
-              {/* Amount Limits */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                  ช่วงจำนวนเงิน
-                </span>
+            <FilterColumn icon={MousePointer2} title="ช่วงจำนวนเงินและการจัดสรร">
+              <FilterField label="ช่วงจำนวนเงิน">
                 <div className="flex items-center gap-1.5">
                   <div className="relative flex-1">
                     <Hash className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-ink-muted" />
-                    <input 
-                      type="number" 
-                      placeholder="Min" 
+                    <input
+                      type="number"
+                      placeholder="Min"
                       value={minAmount}
                       onChange={e => setMinAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className={AMOUNT_INPUT}
                     />
                   </div>
                   <span className="text-xs font-black text-ink-muted font-mono">—</span>
                   <div className="relative flex-1">
                     <Hash className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-ink-muted" />
-                    <input 
-                      type="number" 
-                      placeholder="Max" 
+                    <input
+                      type="number"
+                      placeholder="Max"
                       value={maxAmount}
                       onChange={e => setMaxAmount(e.target.value)}
-                      className="w-full pl-6 pr-1 py-1 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className={AMOUNT_INPUT}
                     />
                   </div>
                 </div>
-              </div>
+              </FilterField>
 
-              {/* Allocation Toggle */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                  การจัดสรรเงิน
-                </span>
+              <FilterField label="การจัดสรรเงิน">
                 <SegmentGroup value={allocationFilter} onChange={setAllocationFilter} options={[
                   { value: 'ALL', label: 'ทั้งหมด' },
                   { value: 'need', label: 'Need', colorScheme: 'rose' },
                   { value: 'want', label: 'Want', colorScheme: 'amber' },
                   { value: 'savings', label: 'Save', colorScheme: 'indigo' },
                 ]} />
-              </div>
-            </div>
+              </FilterField>
+            </FilterColumn>
 
-            {/* COLUMN 2: DATE PICKER (Exactly fits 320px calendar + 28px padding) */}
-            <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
-              <div className="flex items-center gap-1.5">
-                <CalendarDays className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-                  ตัวกรองวันที่
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 relative z-50">
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                  เลือกวันเฉพาะ หรือช่วงวันที่
-                </span>
+            {/* Date picker column: exactly fits the 320px calendar + 28px padding */}
+            <FilterColumn icon={CalendarDays} title="ตัวกรองวันที่" note="* เลือกวันเพื่อดูรายการ" className="relative z-30">
+              <FilterField label="เลือกวันเฉพาะ หรือช่วงวันที่" className="relative z-50">
                 <DatePicker
                   value={advancedFilterDate !== 'ALL' ? advancedFilterDate : dayTypeFilter}
                   onChange={(val: string) => {
@@ -245,26 +222,11 @@ export default function FilterBar({
                   dayTypes={dayTypes}
                   dayTypeConfig={dayTypeConfig}
                 />
-              </div>
+              </FilterField>
+            </FilterColumn>
 
-              <div className="text-[11px] text-ink-muted font-mono">
-                * เลือกวันเพื่อดูรายการ
-              </div>
-            </div>
-
-            {/* COLUMN 3: CATEGORY MATRIX (Widened to take remaining space) */}
-            <div className="bg-canvas p-3.5 flex flex-col justify-between gap-2.5 relative z-30">
-              <div className="flex items-center gap-1.5">
-                <Folder className="w-3.5 h-3.5 text-ink-muted" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft font-mono">
-                  จำแนกตามกลุ่ม / หมวดหมู่
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 relative z-50">
-                <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                  เลือกหมวดหมู่
-                </span>
+            <FilterColumn icon={Folder} title="จำแนกตามกลุ่ม / หมวดหมู่" note="* คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย" className="relative z-30">
+              <FilterField label="เลือกหมวดหมู่" className="relative z-50">
                 <CategoryMatrixFilter
                   categories={categories}
                   cashflowGroups={cashflowGroups}
@@ -273,42 +235,11 @@ export default function FilterBar({
                   activeCategoryNames={activeCategoryNames as any}
                   typeFilter={typeFilter}
                 />
-              </div>
-
-              <div className="text-[11px] text-ink-muted font-mono">
-                * คลิกเพื่อเลือกกลุ่มและหมวดหมู่ย่อย
-              </div>
-            </div>
-
+              </FilterField>
+            </FilterColumn>
           </div>
 
-          {/* Active summary bottom bar inside expanded panel */}
-          {isFilterActive && (
-            <div className="flex items-center justify-between border-t border-line/60 p-2.5 px-3.5 bg-surface/50 relative z-1">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="relative inline-flex rounded-none h-1.5 w-1.5 bg-accent"></span>
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-accent-ink" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-ink-body font-mono">
-                    ตัวกรองที่ทำงานอยู่:
-                  </span>
-                  <span className="px-2 py-0.5 rounded-pill text-[11px] font-black bg-surface border border-accent/30 text-ink-soft font-mono">
-                    {activeCount} active
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-pill border text-accent-ink bg-accent/5 hover:bg-accent/10 border-accent/30 hover:border-accent-ink font-mono"
-              >
-                <RefreshCw className="w-3 h-3" />
-                ล้างการคัดกรองทั้งหมด
-              </button>
-            </div>
-          )}
+          {isFilterActive && <ActiveFiltersBar label="ตัวกรองที่ทำงานอยู่:" count={activeCount} onClear={clearFilters} />}
         </div>
       )}
 

@@ -71,12 +71,12 @@ const PortfolioSnapshot = memo(function PortfolioSnapshot() {
       />
       <span className={`flex items-center gap-2 px-4 shrink-0 text-[11px] font-semibold ${degraded ? 'bg-warn/10 text-warn' : 'text-ink-body'}`}>
         {degraded
-          ? <WifiOff className="w-4 h-4 shrink-0" aria-hidden="true" />
+          ? <WifiOff className="w-4 h-4 shrink-0" />
           : age && <span className="w-2 h-2 rounded-full bg-income shrink-0" aria-hidden="true" />}
         {age ? `ราคา${age.label.replace('ข้อมูล ', '')}` : 'ยังไม่มีราคา'}
       </span>
       <span className="flex items-center justify-center w-11 shrink-0 bg-accent/10 text-accent-ink group-hover:bg-accent group-hover:text-on-accent">
-        <ChevronRight className="w-5 h-5" aria-hidden="true" />
+        <ChevronRight className="w-5 h-5" />
         <span className="sr-only">ไปที่หน้าพอร์ตลงทุน</span>
       </span>
       {span > 0 && (

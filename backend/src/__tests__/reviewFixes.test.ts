@@ -56,13 +56,13 @@ describe('code review regressions', () => {
   it('round-trips a numeric-looking string setting as a string', () => {
     settingService.upsert(KEY, '123');
     const res = fakeRes();
-    getAllSettings({} as any, res, () => {});
+    getAllSettings({} as any, res);
     expect(res.body[KEY]).toBe('123');
   });
 
   it('answers 400 (not 500) when predict gets non-string descriptions', () => {
     const res = fakeRes();
-    predictCategories({ body: { descriptions: ['ok', 42] } } as any, res, () => {});
+    predictCategories({ body: { descriptions: ['ok', 42] } } as any, res);
     expect(res.statusCode).toBe(400);
   });
 });

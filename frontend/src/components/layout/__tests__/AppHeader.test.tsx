@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 const tabs = () => [...document.querySelectorAll<HTMLButtonElement>('button')].filter(b => TAB_LABELS.some(l => b.textContent!.includes(l)));
-const TAB_LABELS = ['ภาพรวม', 'ปฏิทิน', 'ฐานข้อมูลบัญชี', 'พอร์ตลงทุน', 'ภาษี', 'ตั้งค่าระบบ'];
+const TAB_LABELS = ['ภาพรวม', 'ปฏิทิน', 'ฐานข้อมูลบัญชี', 'พอร์ตลงทุน', 'ตั้งค่าระบบ'];
 const tab = (label: string) => tabs().find(b => b.textContent!.includes(label))!;
 const has = (el: Element, cls: string) => el.classList.contains(cls);
 const statusBadge = () => byText('span', props.dbStatus)!.parentElement!;
@@ -94,13 +94,15 @@ describe('AppHeader — brand and readouts', () => {
   });
 
   it('shows the DEMO MODE badge only in a demo build', () => {
+    // the flag is fixed per build (React Compiler caches it like any constant), so each value gets a fresh header
+    const freshRender = () => { act(() => root.unmount()); root = createRoot(host); render(); };
     render();
     expect(host.textContent).not.toContain('DEMO MODE');
     vi.stubEnv('VITE_DEMO_MODE', 'false');
-    render();
+    freshRender();
     expect(host.textContent).not.toContain('DEMO MODE');
     vi.stubEnv('VITE_DEMO_MODE', 'true');
-    render();
+    freshRender();
     expect(host.textContent).toContain('DEMO MODE');
   });
 });
@@ -195,7 +197,7 @@ describe('AppHeader — tabs', () => {
   it('a click activates the tab', () => {
     render({ filterPeriod: '2026' });
     for (const l of TAB_LABELS) click(tab(l));
-    expect((props.setActiveTab as AnyMock).mock.calls.map(c => c[0])).toEqual(['insights', 'calendar', 'ledger', 'portfolio', 'tax', 'settings']);
+    expect((props.setActiveTab as AnyMock).mock.calls.map(c => c[0])).toEqual(['insights', 'calendar', 'ledger', 'portfolio', 'settings']);
   });
 
   it('only the active tab carries the active look (underline bar, white text)', () => {
@@ -206,53 +208,10 @@ describe('AppHeader — tabs', () => {
       expect(!!tab(l).querySelector('.h-\\[2\\.5px\\]')).toBe(on);
     }
   });
-
-  describe('tax tab (year view only)', () => {
-    const taxTab = () => tab('ภาษี');
-
-    it.each(['2026-10', '2026-03_2026-07', '2026-03,2026-07', 'ALL', '2026-Q1', 'cycle:2026-09', 'cycle:ALL', 'cycle:2026-01_2026-06'])('is locked while the period is "%s"', (p) => {
-      render({ filterPeriod: p, activeTab: 'insights' });
-      expect(taxTab().getAttribute('aria-disabled')).toBe('true');
-      expect(taxTab().title).toBe('เลือกดูทั้งปีจากตัวเลือกช่วงเวลาก่อน (ปีภาษี 1 ม.ค. – 31 ธ.ค.)');
-      expect(taxTab().textContent).toContain('(ดูทั้งปี)');
-      expect(taxTab().querySelector('svg.lucide-lock')).not.toBeNull();
-      click(taxTab());
-      expect(props.setActiveTab).not.toHaveBeenCalled();
-    });
-
-    it.each(['2026', 'cycle:2026-01_2026-12'])('opens when the period is the whole year "%s"', (p) => {
-      render({ filterPeriod: p, activeTab: 'insights' });
-      expect(taxTab().hasAttribute('aria-disabled')).toBe(false);
-      expect(taxTab().title).toBe('');
-      expect(taxTab().textContent).not.toContain('(ดูทั้งปี)');
-      expect(taxTab().querySelector('svg.lucide-lock')).toBeNull();
-      click(taxTab());
-      expect(props.setActiveTab).toHaveBeenCalledWith('tax');
-    });
-
-    it('a locked look: dimmed and not-allowed', () => {
-      render({ filterPeriod: '2026-10' });
-      expect(has(taxTab(), 'cursor-not-allowed')).toBe(true);
-      expect(has(taxTab(), 'opacity-50')).toBe(true);
-    });
-
-    it('the tax tab you are already on is never shown locked (the view itself asks for a year)', () => {
-      render({ filterPeriod: '2026-10', activeTab: 'tax' });
-      expect(taxTab().hasAttribute('aria-disabled')).toBe(false);
-      expect(taxTab().textContent).not.toContain('(ดูทั้งปี)');
-      expect(taxTab().querySelector('svg.lucide-lock')).toBeNull();
-      expect(has(taxTab(), 'text-white')).toBe(true);
-    });
-
-    it('the other tabs are never locked', () => {
-      render({ filterPeriod: '2026-10' });
-      for (const l of TAB_LABELS.filter(x => x !== 'ภาษี')) expect(tab(l).hasAttribute('aria-disabled')).toBe(false);
-    });
-  });
 });
 
 describe('AppHeader — period picker', () => {
-  it.each(['insights', 'calendar', 'ledger', 'tax'])('is shown on %s', (t) => {
+  it.each(['insights', 'calendar', 'ledger'])('is shown on %s', (t) => {
     render({ activeTab: t });
     expect(q('[data-stub="PeriodPicker"]')).not.toBeNull();
   });
@@ -270,37 +229,24 @@ describe('AppHeader — period picker', () => {
 });
 
 describe('AppHeader — tabs that can be switched off in Settings', () => {
-  const labels = () => tabs().map(b => b.textContent!.trim().replace(/\(ดูทั้งปี\)/, '').trim());
+  const labels = () => tabs().map(b => b.textContent!.trim());
 
-  it('both extra tabs are shown unless told otherwise', () => {
+  it('the portfolio tab is shown unless told otherwise', () => {
     render();
     expect(tab('พอร์ตลงทุน')).toBeDefined();
-    expect(tab('ภาษี')).toBeDefined();
-    expect(tabs()).toHaveLength(6);
-  });
-
-  it('the tax tab disappears when tax mode is off - the others stay in the same order', () => {
-    render({ taxEnabled: false });
     expect(tabs()).toHaveLength(5);
-    expect(tabs().some(b => b.textContent!.includes('ภาษี'))).toBe(false);
-    expect(labels().map(l => TAB_LABELS.find(x => l.includes(x)))).toEqual(['ภาพรวม', 'ปฏิทิน', 'ฐานข้อมูลบัญชี', 'พอร์ตลงทุน', 'ตั้งค่าระบบ']);
   });
 
   it('the portfolio tab disappears when the portfolio is off', () => {
     render({ portfolioEnabled: false });
-    expect(tabs()).toHaveLength(5);
+    expect(tabs()).toHaveLength(4);
     expect(tabs().some(b => b.textContent!.includes('พอร์ตลงทุน'))).toBe(false);
-    expect(tab('ภาษี')).toBeDefined();
-  });
-
-  it('both can be off at once, leaving the four everyday tabs', () => {
-    render({ taxEnabled: false, portfolioEnabled: false });
     expect(labels().map(l => TAB_LABELS.find(x => l.includes(x)))).toEqual(['ภาพรวม', 'ปฏิทิน', 'ฐานข้อมูลบัญชี', 'ตั้งค่าระบบ']);
   });
 
-  it('turning one back on brings its tab back', () => {
-    render({ taxEnabled: false });
-    render({ taxEnabled: true });
-    expect(tabs()).toHaveLength(6);
+  it('turning it back on brings its tab back', () => {
+    render({ portfolioEnabled: false });
+    render({ portfolioEnabled: true });
+    expect(tabs()).toHaveLength(5);
   });
 });

@@ -28,6 +28,7 @@ import {
   MAX_YEAR,
 } from '@/utils/datePickerHelpers';
 import { resolveDefaultDayTypeId } from '@/views/Calendar/utils/calendarPeriodHelpers';
+import useToday from '@/hooks/useToday';
 import type { DayType } from '@/types';
 
 interface ResolveDayStyleProps {
@@ -411,7 +412,7 @@ export default function DatePicker({
 
   const y = viewDate.getFullYear();
   const m = viewDate.getMonth();
-  const today = new Date();
+  const [todayY, todayM, todayD] = useToday().split('-').map(Number);
 
   const isAtMinYear = y <= MIN_YEAR;
   const isAtMaxYear = y >= MAX_YEAR;
@@ -421,10 +422,7 @@ export default function DatePicker({
   const blanks = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDay);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  const isToday = (d: number) =>
-    d === today.getDate() &&
-    m === today.getMonth() &&
-    y === today.getFullYear();
+  const isToday = (d: number) => d === todayD && m === todayM - 1 && y === todayY;
 
   const availableSet = useMemo(() => new Set(availableDates || []), [availableDates]);
 
@@ -507,7 +505,6 @@ export default function DatePicker({
   };
 
   const presets = useMemo(() => getPresetDates(viewDate), [viewDate]);
-  const now = getPresetDates(); // every render: a picker left mounted overnight must not keep yesterday's "today"
 
   const isActive = Boolean(value && value !== 'ALL');
 
@@ -736,14 +733,14 @@ export default function DatePicker({
           <div className="mt-2 pt-2 border-t border-line flex items-center gap-1 flex-wrap">
             <button
               type="button"
-              onClick={() => handleApplyPreset(now.today)}
+              onClick={() => handleApplyPreset(getPresetDates().today)} // read at click time: a picker left open overnight must not keep yesterday
               className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               วันนี้
             </button>
             <button
               type="button"
-              onClick={() => handleApplyPreset(now.yesterday)}
+              onClick={() => handleApplyPreset(getPresetDates().yesterday)}
               className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-surface border border-line text-slate-300 hover:text-white hover:bg-surface-elevated hover:border-accent/40 transition-all cursor-pointer"
             >
               เมื่อวาน

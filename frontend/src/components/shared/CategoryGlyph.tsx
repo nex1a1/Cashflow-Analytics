@@ -67,7 +67,7 @@ export default function CategoryGlyph({ icon, color, size = 14, className = '', 
   }
 
   if (Icon) {
-    return <Icon size={size} className={className} style={{ color: color || undefined }} aria-hidden="true" />;
+    return <Icon size={size} className={className} style={{ color: color || undefined }} />;
   }
 
   // If there's an alphanumeric text label (not a pictograph/emoji), render it as text
@@ -75,5 +75,5 @@ export default function CategoryGlyph({ icon, color, size = 14, className = '', 
     return <span className={className}>{key}</span>;
   }
 
-  return <DEFAULT_CATEGORY_ICON size={size} className={className} style={{ color: color || undefined }} aria-hidden="true" />;
+  return <DEFAULT_CATEGORY_ICON size={size} className={className} style={{ color: color || undefined }} />;
 }

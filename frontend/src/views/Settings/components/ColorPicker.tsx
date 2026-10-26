@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useAnchoredPopover } from '@/hooks/useAnchoredPopover';
 import { createPortal } from 'react-dom';
 import { Pipette } from 'lucide-react';
 
@@ -78,63 +79,36 @@ export interface ColorPickerProps {
 }
 
 export default function ColorPicker({ color, onChange }: ColorPickerProps) {
-  const [open, setOpen] = useState<boolean>(false);
   const [tab, setTab] = useState<'spectrum' | 'curated'>('spectrum');
-  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [hexInput, setHexInput] = useState<string>(color);
   
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const paletteRef = useRef<HTMLDivElement | null>(null);
-  const initialScroll = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
+  // 290 × 290 popover under the button, flipped left / up when it would leave the window
+  const { open, setOpen, pos, btnRef, popRef: paletteRef, toggle: handleOpen } = useAnchoredPopover((rect) => {
+    const W = 290, H = 290;
+    let left = rect.left;
+    if (left + W > window.innerWidth - 8) left = rect.right - W;
+    let top = rect.bottom + 4;
+    if (top + H > window.innerHeight - 8) top = rect.top - H - 4;
+    return { top, left };
+  });
 
   useEffect(() => {
     setHexInput(color);
   }, [color]);
 
-  const handleOpen = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      const W = 290, H = 290;
-      let left = rect.left; 
-      if (left + W > window.innerWidth - 8) left = rect.right - W;
-      let top = rect.bottom + 4; 
-      if (top + H > window.innerHeight - 8) top = rect.top - H - 4;
-      
-      setPos({ top, left });
-      initialScroll.current = {
-        top: window.scrollY || document.documentElement.scrollTop,
-        left: window.scrollX || document.documentElement.scrollLeft
-      };
-    }
-    setOpen(v => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClose = (e: Event) => {
-      const target = e.target as Node;
-      if (e.type === 'mousedown' && (btnRef.current?.contains(target) || paletteRef.current?.contains(target))) return;
-      if (e.type === 'keydown' && (e as KeyboardEvent).key !== 'Escape') return;
-      if (e.type === 'scroll') {
-        const currentTop = window.scrollY || document.documentElement.scrollTop;
-        const currentLeft = window.scrollX || document.documentElement.scrollLeft;
-        const diffY = Math.abs(currentTop - initialScroll.current.top);
-        const diffX = Math.abs(currentLeft - initialScroll.current.left);
-        if (diffY < 5 && diffX < 5) return;
-      }
-      setOpen(false);
-    };
-    
-    document.addEventListener('mousedown', handleClose);
-    document.addEventListener('keydown', handleClose);
-    window.addEventListener('scroll', handleClose, true);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClose);
-      document.removeEventListener('keydown', handleClose);
-      window.removeEventListener('scroll', handleClose, true);
-    };
-  }, [open]);
+  const swatch = (c: string) => (
+    <button
+      key={c}
+      type="button"
+      onClick={() => { onChange(c); setOpen(false); }}
+      className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white transition-transform hover:scale-105 ${
+        color?.toLowerCase() === c.toLowerCase() ? 'ring-1 ring-white z-10 scale-105' : ''
+      }`}
+      style={{ backgroundColor: c }}
+      title={c}
+      aria-label={`สี ${c}`}
+    />
+  );
 
   const handleHexInputChange = (val: string) => {
     setHexInput(val);
@@ -202,22 +176,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                 className="grid gap-px bg-line-strong p-px rounded-sm border border-line/50"
                 style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
               >
-                {COLOR_PALETTE.map(c => {
-                  const isSelected = color?.toLowerCase() === c.toLowerCase();
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => { onChange(c); setOpen(false); }}
-                      className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white transition-transform hover:scale-105 ${
-                        isSelected ? 'ring-1 ring-white z-10 scale-105' : ''
-                      }`}
-                      style={{ backgroundColor: c }}
-                      title={c}
-                      aria-label={`สี ${c}`}
-                    />
-                  );
-                })}
+                {COLOR_PALETTE.map(swatch)}
               </div>
             )}
 
@@ -230,22 +189,7 @@ export default function ColorPicker({ color, onChange }: ColorPickerProps) {
                       {grp.name}
                     </span>
                     <div className="grid grid-cols-12 gap-[2px]">
-                      {grp.colors.map(c => {
-                        const isSelected = color?.toLowerCase() === c.toLowerCase();
-                        return (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => { onChange(c); setOpen(false); }}
-                            className={`aspect-square w-full rounded-none cursor-pointer relative hover:z-10 hover:ring-1 hover:ring-white transition-transform hover:scale-105 ${
-                              isSelected ? 'ring-1 ring-white z-10 scale-105' : ''
-                            }`}
-                            style={{ backgroundColor: c }}
-                            title={c}
-                            aria-label={`สี ${c}`}
-                          />
-                        );
-                      })}
+                      {grp.colors.map(swatch)}
                     </div>
                   </div>
                 ))}

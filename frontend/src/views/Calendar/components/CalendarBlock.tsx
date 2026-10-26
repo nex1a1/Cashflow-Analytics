@@ -5,7 +5,7 @@ import { CALENDAR_HEAT_CHIP, CALENDAR_HEAT_STEPS } from '../utils/calendarHeat';
 import { resolveDefaultDayTypeId, DAY_OF_WEEK_LABELS } from '../utils/calendarPeriodHelpers';
 import { hexToRgb, THAI_MONTHS_SHORT, formatBaht } from '../../../utils/formatters';
 import { parseDateStrToObj } from '../../../utils/dateHelpers';
-import { localTodayIso } from '../../../utils/payCycle';
+import useToday from '@/hooks/useToday';
 import { DayNote, DayType, TransactionDisplay } from '../../../types';
 import { readable } from '@/constants/theme';
 
@@ -64,7 +64,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
   maxDailyExpense,
   rowsPending = false
 }: CalendarBlockProps): React.ReactElement {
-  const today = localTodayIso();
+  const today = useToday();
   const [stepMid, stepHigh, stepPeak] = CALENDAR_HEAT_STEPS.map(s => `฿${s.toLocaleString('en-US')}`);
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);

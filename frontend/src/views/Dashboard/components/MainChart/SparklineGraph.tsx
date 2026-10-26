@@ -7,7 +7,8 @@ import { useDashboardContext } from '../../context/DashboardContext';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { buildCategoryTrends, CategoryTrend } from '@/utils/categoryTrendHelpers';
 import { formatAmount, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { isCyclePeriod, localTodayIso, monthKeyOf, stripCycle } from '@/utils/payCycle';
+import { isCyclePeriod, monthKeyOf, stripCycle } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 import { Category } from '@/types';
 
 import { tc } from '@/constants/theme';
@@ -17,6 +18,7 @@ const H = 40;
 const baht = (v: number) => formatAmount(Math.round(v));
 const periodTick = (key: string, cycle: boolean) =>
   `${cycle ? 'รอบ ' : ''}${THAI_MONTHS_SHORT[Number(key.slice(5, 7)) - 1]} ${key.slice(2, 4)}`;
+const unitOf = (cycle: boolean) => (cycle ? 'รอบ' : 'เดือน');
 
 function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean }) {
   const { pctChange, comparisonType, priorAmount, periodAvg, priorKey } = trend;
@@ -31,7 +33,7 @@ function ChangeBadge({ trend, cycle }: { trend: CategoryTrend; cycle: boolean })
     else if (pctChange <= -5) cls = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
     if (comparisonType === 'avg') {
-      title = `เทียบกับค่าเฉลี่ยรวมทั้งช่วง (${baht(periodAvg)} ฿/${cycle ? 'รอบ' : 'เดือน'})`;
+      title = `เทียบกับค่าเฉลี่ยรวมทั้งช่วง (${baht(periodAvg)} ฿/${unitOf(cycle)})`;
     } else if (priorKey) {
       title = `เทียบกับช่วงก่อนหน้า (${periodTick(priorKey, cycle)}: ${baht(priorAmount ?? 0)} ฿)`;
     }
@@ -65,26 +67,14 @@ function MiniLine({ trend, color, hoveredIdx, onHover }: MiniLineProps) {
   const solidEnd = hasPartial ? n - 1 : n;
   const solid = series.slice(0, solidEnd).map((v, i) => `${x(i)},${y(v)}`).join(' ');
 
-  // Closed polygon for the subtle fill under the polyline
-  const fillPoints = solidEnd > 1
-    ? `${x(0)},${H - 2} ${solid} ${x(solidEnd - 1)},${H - 2}`
-    : '';
-
-  // Last completed data point coordinates
-  const lastX = x(solidEnd - 1);
-  const lastY = y(series[solidEnd - 1]);
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     if (rect.width <= 0 || n <= 1) return;
-    const relX = (e.clientX - rect.left) / rect.width;
-    const idx = Math.max(0, Math.min(n - 1, Math.round(relX * (n - 1))));
-    onHover(idx);
+    onHover(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - rect.left) / rect.width) * (n - 1)))));
   };
-
-  const handleMouseLeave = () => {
-    onHover(null);
-  };
+  const scrubbing = hoveredIdx !== null;
+  const NS = { vectorEffect: 'non-scaling-stroke' } as const;
 
   return (
     <div className="relative w-full h-12">
@@ -93,88 +83,44 @@ function MiniLine({ trend, color, hoveredIdx, onHover }: MiniLineProps) {
         preserveAspectRatio="none"
         className="w-full h-full block cursor-crosshair overflow-visible"
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseLeave={() => onHover(null)}
       >
-        {/* Soft area tint under sparkline illuminated on hover */}
+        {/* Soft area tint under the line, lit on hover */}
         {solidEnd > 1 && (
           <polygon
-            points={fillPoints}
+            points={`${x(0)},${H - 2} ${solid} ${x(solidEnd - 1)},${H - 2}`}
             fill={color}
-            className={`pointer-events-none transition-none ${
-              hoveredIdx !== null ? 'opacity-25' : 'opacity-0 group-hover:opacity-15'
-            }`}
+            className={`pointer-events-none transition-none ${scrubbing ? 'opacity-25' : 'opacity-0 group-hover:opacity-15'}`}
           />
         )}
-        <line x1={0} x2={W} y1={H - 2} y2={H - 2} stroke={tc('line')} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <polyline
-          points={solid}
-          fill="none"
-          stroke={color}
-          strokeWidth={1.75}
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-          className="group-hover:stroke-[2.25px]"
-        />
-        {/* Terminal data point dot (when not actively scrubbing) */}
-        {solidEnd > 0 && hoveredIdx === null && (
-          <circle
-            cx={lastX}
-            cy={lastY}
-            r={2.2}
-            fill={color}
-            stroke={tc('canvas')}
-            strokeWidth={0.8}
-            className="opacity-0 group-hover:opacity-100"
-            vectorEffect="non-scaling-stroke"
-          />
+        <line x1={0} x2={W} y1={H - 2} y2={H - 2} stroke={tc('line')} strokeWidth={1} {...NS} />
+        <polyline points={solid} fill="none" stroke={color} strokeWidth={1.75} strokeLinejoin="round" {...NS} className="group-hover:stroke-[2.25px]" />
+        {/* Last complete point (hidden while scrubbing) */}
+        {solidEnd > 0 && !scrubbing && (
+          <circle cx={x(solidEnd - 1)} cy={y(series[solidEnd - 1])} r={2.2} fill={color} stroke={tc('canvas')} strokeWidth={0.8} className="opacity-0 group-hover:opacity-100" {...NS} />
         )}
+        {/* The period still in progress: dashed tail */}
         {hasPartial && n > 1 && (
           <line
             x1={x(n - 2)} y1={y(series[n - 2])} x2={x(n - 1)} y2={y(series[n - 1])}
-            stroke={color} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.6} vectorEffect="non-scaling-stroke"
+            stroke={color} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.6} {...NS}
             className="group-hover:opacity-90"
           />
         )}
-        {hasPartial && n > 1 && hoveredIdx === null && (
-          <circle
-            cx={x(n - 1)}
-            cy={y(series[n - 1])}
-            r={1.8}
-            fill={color}
-            className="opacity-0 group-hover:opacity-75"
-            vectorEffect="non-scaling-stroke"
-          />
+        {hasPartial && n > 1 && !scrubbing && (
+          <circle cx={x(n - 1)} cy={y(series[n - 1])} r={1.8} fill={color} className="opacity-0 group-hover:opacity-75" {...NS} />
         )}
 
-        {/* Active Scrubbed Crosshair & Dot */}
-        {hoveredIdx !== null && (
+        {scrubbing && (
           <g className="pointer-events-none">
-            <line
-              x1={x(hoveredIdx)}
-              y1={0}
-              x2={x(hoveredIdx)}
-              y2={H - 2}
-              stroke={tc('ink-display')}
-              strokeWidth={1}
-              strokeDasharray="2 2"
-              opacity={0.4}
-              vectorEffect="non-scaling-stroke"
-            />
-            <circle
-              cx={x(hoveredIdx)}
-              cy={y(series[hoveredIdx])}
-              r={2.8}
-              fill={color}
-              stroke={tc('ink-display')}
-              strokeWidth={1.2}
-              vectorEffect="non-scaling-stroke"
-            />
+            <line x1={x(hoveredIdx)} y1={0} x2={x(hoveredIdx)} y2={H - 2} stroke={tc('ink-display')} strokeWidth={1} strokeDasharray="2 2" opacity={0.4} {...NS} />
+            <circle cx={x(hoveredIdx)} cy={y(series[hoveredIdx])} r={2.8} fill={color} stroke={tc('ink-display')} strokeWidth={1.2} {...NS} />
           </g>
         )}
       </svg>
 
       {/* Floating Pill Tooltip above active scrubbed point */}
-      {hoveredIdx !== null && (
+      {scrubbing && (
         <div
           className="absolute pointer-events-none z-30 transition-none whitespace-nowrap"
           style={{
@@ -205,14 +151,9 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
   const n = keys.length;
 
   return (
-    <div
-      className="relative bg-canvas hover:bg-surface-hover px-3 pt-2.5 pb-2 flex flex-col gap-1.5 min-w-0 group cursor-default select-none overflow-hidden transition-none"
-    >
-      {/* Razor-sharp top hairline accent in category color */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100"
-        style={{ backgroundColor: color }}
-      />
+    <div className="relative bg-canvas hover:bg-surface-hover px-3 pt-2.5 pb-2 flex flex-col gap-1.5 min-w-0 group cursor-default select-none overflow-hidden transition-none">
+      {/* Top hairline in the category colour on hover */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100" style={{ backgroundColor: color }} />
 
       <div className="flex items-center gap-1.5 min-w-0">
         <CategoryGlyph icon={cat?.icon} color={color} size={13} className="shrink-0" />
@@ -241,13 +182,13 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
           <>
             <span
               className="text-neutral-100 font-bold group-hover:text-white"
-              title={`เฉลี่ยต่อ${cycle ? 'รอบ' : 'เดือน'}ตลอดช่วงที่เลือก (${baht(trend.periodAvg)} ฿)`}
+              title={`เฉลี่ยต่อ${unitOf(cycle)}ตลอดช่วงที่เลือก (${baht(trend.periodAvg)} ฿)`}
             >
-              {baht(trend.periodAvg)} ฿<span className="text-slate-500 font-normal">/{cycle ? 'รอบ' : 'เดือน'}</span>
+              {baht(trend.periodAvg)} ฿<span className="text-slate-500 font-normal">/{unitOf(cycle)}</span>
             </span>
             <span
               className="text-slate-500 group-hover:text-slate-400 cursor-help"
-              title={trend.latestKey ? `ยอด${cycle ? 'รอบ' : 'เดือน'}ล่าสุด (${periodTick(trend.latestKey, cycle)}): ${baht(trend.latestAmount)} ฿` : undefined}
+              title={trend.latestKey ? `ยอด${unitOf(cycle)}ล่าสุด (${periodTick(trend.latestKey, cycle)}): ${baht(trend.latestAmount)} ฿` : undefined}
             >
               ล่าสุด {baht(trend.latestAmount)}
             </span>
@@ -255,12 +196,7 @@ const CategoryTrendCard = memo(({ trend, cat, cycle }: CategoryTrendCardProps) =
         )}
       </div>
 
-      <MiniLine
-        trend={trend}
-        color={color}
-        hoveredIdx={hoveredIdx}
-        onHover={setHoveredIdx}
-      />
+      <MiniLine trend={trend} color={color} hoveredIdx={hoveredIdx} onHover={setHoveredIdx} />
     </div>
   );
 });
@@ -270,15 +206,16 @@ export const SparklineGraph = memo(() => {
   const { analytics, categories, filterPeriod } = useDashboardContext();
   const cycle = isCyclePeriod(filterPeriod);
   const isAll = stripCycle(filterPeriod) === 'ALL';
+  const today = useToday();
 
   const trends = useMemo(
     () => buildCategoryTrends(
       analytics?.sortedMonthsKeys || [],
       analytics?.monthlyCatMap || {},
-      monthKeyOf(localTodayIso(), filterPeriod),
+      monthKeyOf(today, filterPeriod),
       isAll,
     ),
-    [analytics?.sortedMonthsKeys, analytics?.monthlyCatMap, filterPeriod, isAll],
+    [analytics?.sortedMonthsKeys, analytics?.monthlyCatMap, filterPeriod, isAll, today],
   );
   const catById = useMemo(() => {
     const m: Record<string, Category> = {};
@@ -292,7 +229,7 @@ export const SparklineGraph = memo(() => {
   if (trends[0].keys.length < 2) {
     return (
       <div className="h-full flex items-center justify-center text-[12px] text-slate-500">
-        ต้องเลือกช่วงเวลาอย่างน้อย 2 {cycle ? 'รอบ' : 'เดือน'} เพื่อดูแนวโน้ม
+        ต้องเลือกช่วงเวลาอย่างน้อย 2 {unitOf(cycle)} เพื่อดูแนวโน้ม
       </div>
     );
   }
@@ -303,14 +240,7 @@ export const SparklineGraph = memo(() => {
         className="grid gap-px bg-surface-elevated/60 border border-line/60"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
       >
-        {trends.map((t) => (
-          <CategoryTrendCard
-            key={t.catId}
-            trend={t}
-            cat={catById[t.catId]}
-            cycle={cycle}
-          />
-        ))}
+        {trends.map(t => <CategoryTrendCard key={t.catId} trend={t} cat={catById[t.catId]} cycle={cycle} />)}
       </div>
     </div>
   );

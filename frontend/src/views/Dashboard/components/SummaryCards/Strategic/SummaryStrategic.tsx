@@ -8,6 +8,7 @@ import { StrategicVictoryCard } from './StrategicVictoryCard';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
 import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
 import { gradeBudget } from '../helpers';
+import { DisabledHint } from '../../panelParts';
 import type { SummaryAnalytics } from '../types';
 
 export const ANALYSIS_TABS = [
@@ -17,7 +18,6 @@ export const ANALYSIS_TABS = [
 ] as const;
 
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
-export type AnalysisTab = typeof ANALYSIS_TABS[number];
 
 export interface AnalysisTabItem<T extends string = AnalysisTabId> {
   id: T;
@@ -72,7 +72,7 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
           const isActive = activeTab === tab.id && !isDisabled;
           const reasonId = isDisabled && tab.title ? `${base}-reason-${tab.id}` : undefined;
           return (
-            <div key={tab.id} className="relative group/tabbtn flex items-center">
+            <div key={tab.id} className="relative group/hint flex items-center">
               <button
                 type="button"
                 role="tab"
@@ -93,14 +93,7 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
               >
                 {tab.label}
               </button>
-              {reasonId && (
-                <div id={reasonId} role="tooltip" className="absolute top-full left-0 mt-1.5 opacity-0 group-hover/tabbtn:opacity-100 group-focus-within/tabbtn:opacity-100 pointer-events-none transition-opacity z-50 invisible group-hover/tabbtn:visible group-focus-within/tabbtn:visible whitespace-nowrap">
-                  <div className="rounded-none py-1 px-2.5 text-[11px] font-medium shadow-2xl bg-surface text-neutral-300 border border-line-strong flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                    <span>{tab.title}</span>
-                  </div>
-                </div>
-              )}
+              {reasonId && <DisabledHint id={reasonId} text={tab.title!} align="left" />}
             </div>
           );
         })}

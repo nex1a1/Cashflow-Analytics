@@ -95,7 +95,7 @@ export default function DashboardView(props: DashboardViewProps) {
   if (transactions.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-32 border border-line bg-surface text-center">
-        <Inbox className="w-12 h-12 text-ink-muted" aria-hidden="true" />
+        <Inbox className="w-12 h-12 text-ink-muted" />
         <p className="text-lg font-bold text-ink-display">ยังไม่มีข้อมูลสำหรับการวิเคราะห์</p>
         <p className="text-sm text-ink-body">เพิ่มรายการแรกด้วยปุ่ม "เพิ่มข้อมูลด่วน" ด้านบน หรือนำเข้าไฟล์ CSV จากเมนู "ข้อมูล"</p>
       </div>

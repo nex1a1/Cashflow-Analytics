@@ -55,16 +55,15 @@ describe('reset-all', () => {
   it('never wipes when the safety backup fails', async () => {
     vi.spyOn(backupService, 'createPreResetBackup').mockRejectedValue(new Error('disk full'));
     const wipe = vi.spyOn(transactionService, 'deleteAll');
-    const next = vi.fn();
-    await resetAllData({ headers: { 'x-confirm-reset': 'true' } } as any, res(), next);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
+    // The handler rejects; Express 5 passes the rejection to errorHandler.
+    await expect(resetAllData({ headers: { 'x-confirm-reset': 'true' } } as any, res())).rejects.toThrow('disk full');
     expect(wipe).not.toHaveBeenCalled();
   });
 
   it('refuses without the confirmation header', async () => {
     const wipe = vi.spyOn(transactionService, 'deleteAll');
     const r = res();
-    await resetAllData({ headers: {} } as any, r, vi.fn());
+    await resetAllData({ headers: {} } as any, r);
     expect(r.statusCode).toBe(400);
     expect(wipe).not.toHaveBeenCalled();
   });

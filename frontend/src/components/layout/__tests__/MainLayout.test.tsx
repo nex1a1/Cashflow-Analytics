@@ -14,7 +14,7 @@ const h = vi.hoisted(() => {
     data: {} as Record<string, any>,
     filter: {} as Record<string, any>,
     toast: { toast: null as unknown, showToast: null as unknown as (...a: unknown[]) => void },
-    /** the two on/off settings (tax_enabled, portfolio_enabled): current values, the parsers MainLayout gave, and every update it asked for */
+    /** the on/off setting (portfolio_enabled): current values, the parsers MainLayout gave, and every update it asked for */
     flags: {} as Record<string, boolean>,
     parsers: {} as Record<string, (raw: unknown) => unknown>,
     updates: [] as [string, unknown][],
@@ -45,7 +45,6 @@ vi.mock('@/views/Calendar', h.stub('Calendar'));
 vi.mock('@/views/Ledger/index', h.stub('Ledger'));
 vi.mock('@/views/Settings', h.stub('Settings'));
 vi.mock('@/views/Portfolio', h.stub('Portfolio'));
-vi.mock('@/views/Tax', h.stub('Tax'));
 vi.mock('@/components/modals/BatchAddModal/index', h.stub('BatchAddModal'));
 vi.mock('@/components/modals/ExportModal', h.stub('ExportModal'));
 vi.mock('@/components/modals/ImportGuideModal', h.stub('ImportGuideModal'));
@@ -106,11 +105,26 @@ function reset(tab = 'insights') {
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;
-const mount = () => {
+/** Every view but the dashboard, and every modal, is lazy: let those imports and React's retry finish. */
+const settle = () => act(async () => {
+  await Promise.all([
+    import('@/views/Calendar'), import('@/views/Ledger/index'), import('@/views/Settings'), import('@/views/Portfolio'),
+    import('@/components/modals/BatchAddModal/index'), import('@/components/modals/ExportModal'),
+    import('@/components/modals/ImportGuideModal'), import('@/components/modals/ImportPreviewModal'),
+  ]);
+  await new Promise(r => setTimeout(r, 0));
+});
+const mount = async () => {
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => root!.render(<MainLayout />));
+  await settle();
+};
+/** The contexts are plain holders, so a change to them shows after an explicit re-render. */
+const rerender = async () => {
+  act(() => root!.render(<MainLayout />));
+  await settle();
 };
 const shown = () => [...document.querySelectorAll('[data-stub]')].map(e => e.getAttribute('data-stub'));
 
@@ -124,33 +138,33 @@ afterEach(() => {
 
 describe('MainLayout — which view is shown', () => {
   it.each([
-    ['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['tax', 'Tax'], ['settings', 'Settings'],
-  ])('tab "%s" shows only %s (plus the header, the modals and the toast)', (tab, view) => {
+    ['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
+  ])('tab "%s" shows only %s (plus the header and the toast)', async (tab, view) => {
     reset(tab);
-    mount();
-    const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Tax', 'Settings'];
+    await mount();
+    const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
     expect(shown().filter(s => views.includes(s!))).toEqual([view]);
-    expect(shown()).toEqual(expect.arrayContaining(['AppHeader', 'AppToast', 'BatchAddModal', 'ImportPreviewModal', 'ImportGuideModal', 'ExportModal']));
+    expect(shown()).toEqual(expect.arrayContaining(['AppHeader', 'AppToast']));
   });
 
-  it('an unknown tab shows no view at all', () => {
+  it('an unknown tab shows no view at all', async () => {
     reset('nonsense');
-    mount();
-    expect(shown().filter(s => ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Tax', 'Settings'].includes(s!))).toEqual([]);
+    await mount();
+    expect(shown().filter(s => ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'].includes(s!))).toEqual([]);
   });
 });
 
 describe('MainLayout — header', () => {
-  it('is given the connection, count, tab, period, categories and the saving flag', () => {
-    mount();
+  it('is given the connection, count, tab, period, categories and the saving flag', async () => {
+    await mount();
     expect(h.props.AppHeader).toMatchObject({
       dbStatus: 'online', transactionCount: 321, activeTab: 'insights', filterPeriod: '2026-10', groupedOptions, categories, isProcessing: true,
       setActiveTab: h.ui.setActiveTab, setFilterPeriod: h.filter.setFilterPeriod, onFileUpload: h.data.handleFileUpload, fileInputRef: h.data.fileInputRef,
     });
   });
 
-  it('"export", "import guide" open their own modal', () => {
-    mount();
+  it('"export", "import guide" open their own modal', async () => {
+    await mount();
     act(() => h.props.AppHeader.onClickExport());
     expect(h.ui.setShowExportModal).toHaveBeenCalledWith(true);
     act(() => h.props.AppHeader.onClickImportGuide());
@@ -158,10 +172,10 @@ describe('MainLayout — header', () => {
     expect(h.ui.setShowAddModal).not.toHaveBeenCalled();
   });
 
-  it('the quick-add button opens the add modal on an expense dated today, with the first expense category and no asset', () => {
+  it('the quick-add button opens the add modal on an expense dated today, with the first expense category and no asset', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 2, 4, 9, 0));
-    mount();
+    await mount();
     act(() => h.props.AppHeader.onClickAddQuick());
     expect(h.ui.setShowAddModal).toHaveBeenCalledWith(true);
     const updater = h.ui.setAddForm.mock.calls[0][0] as (p: Record<string, unknown>) => Record<string, unknown>;
@@ -171,9 +185,9 @@ describe('MainLayout — header', () => {
     vi.useRealTimers();
   });
 
-  it('quick-add with no expense category leaves the category empty', () => {
+  it('quick-add with no expense category leaves the category empty', async () => {
     h.data.categories = [categories[0]];
-    mount();
+    await mount();
     act(() => h.props.AppHeader.onClickAddQuick());
     const updater = h.ui.setAddForm.mock.calls[0][0] as (p: Record<string, unknown>) => Record<string, unknown>;
     expect(updater({}).category).toBe('');
@@ -181,8 +195,8 @@ describe('MainLayout — header', () => {
 });
 
 describe('MainLayout — what each view is given', () => {
-  it('the dashboard gets the analytics, the period data and its own toggles', () => {
-    mount();
+  it('the dashboard gets the analytics, the period data and its own toggles', async () => {
+    await mount();
     expect(h.props.Dashboard).toMatchObject({
       analytics: h.filter.analytics, transactions, cashflowGroups: groups, filterPeriod: '2026-10', getFilterLabel, categories, dayTypeConfig, dayTypes, isLoading: true,
       hideFixedExpenses: true, hideWantExpenses: false, dashboardCategory: 'c-food', chartGroupBy: 'week', topXLimit: 7,
@@ -191,9 +205,9 @@ describe('MainLayout — what each view is given', () => {
     });
   });
 
-  it('the calendar gets the day data, the handlers, and can switch back to the dashboard', () => {
+  it('the calendar gets the day data, the handlers, and can switch back to the dashboard', async () => {
     reset('calendar');
-    mount();
+    await mount();
     expect(h.props.Calendar).toMatchObject({
       transactions, filterPeriod: '2026-10', setFilterPeriod: h.filter.setFilterPeriod, handleOpenAddModal: h.ui.handleOpenAddModal, categories, cashflowGroups: groups,
       dayTypes, handleDayTypeChange: h.data.handleDayTypeChange, dayNotes: h.data.dayNotes, handleDayNoteChange: h.data.handleDayNoteChange, dayTypeConfig, getFilterLabel,
@@ -204,9 +218,9 @@ describe('MainLayout — what each view is given', () => {
     expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
   });
 
-  it('the ledger gets the filtered rows, every filter with its setter, and the whole period', () => {
+  it('the ledger gets the filtered rows, every filter with its setter, and the whole period', async () => {
     reset('ledger');
-    mount();
+    await mount();
     expect(h.props.Ledger).toMatchObject({
       displayTransactions: h.filter.displayTransactions, isReadOnlyView: true, getFilterLabel, setFilterPeriod: h.filter.setFilterPeriod, rawAvailableMonths: ['2026-10'],
       filterPeriod: '2026-10', searchQuery: 'กาแฟ', setSearchQuery: h.filter.setSearchQuery, handleOpenAddModal: h.ui.handleOpenAddModal,
@@ -219,9 +233,9 @@ describe('MainLayout — what each view is given', () => {
     });
   });
 
-  it('settings gets every category, group and day-type handler, and "delete all" goes straight to the data handler', () => {
+  it('settings gets every category, group and day-type handler, and "delete all" goes straight to the data handler', async () => {
     reset('settings');
-    mount();
+    await mount();
     expect(h.props.Settings).toMatchObject({
       categories, cashflowGroups: groups, setCashflowGroups: h.data.setCashflowGroups, handleAddCategory: h.data.handleAddCategory, handleCategoryChange: h.data.handleCategoryChange,
       handleDeleteCategory: h.data.handleDeleteCategory, handleMoveCategory: h.data.handleMoveCategory, handleAddCashflowGroup: h.data.handleAddCashflowGroup,
@@ -232,16 +246,16 @@ describe('MainLayout — what each view is given', () => {
     expect(h.props.Settings.handleDeleteAllData).toBe(h.data.handleDeleteAllData);
   });
 
-  it('the toast is the one from the toast context', () => {
-    mount();
+  it('the toast is the one from the toast context', async () => {
+    await mount();
     expect(h.props.AppToast).toEqual({ toast: h.toast.toast });
   });
 });
 
 describe('MainLayout — modals', () => {
-  it('the add modal opens on the form the UI context prepared, and closes through the context', () => {
+  it('the add modal opens on the form the UI context prepared, and closes through the context', async () => {
     h.ui.showAddModal = true;
-    mount();
+    await mount();
     expect(h.props.BatchAddModal).toMatchObject({
       isOpen: true, onSaveBatch: h.data.handleSaveBatch, categories, frequentItems: h.data.frequentItems, defaultDate: '2026-10-09', defaultType: 'savings',
       defaultCategory: 'c-food', defaultAssetId: 'a1', defaultSide: 'sell', dayTypes, dayTypeConfig, cashflowGroups: groups,
@@ -250,9 +264,9 @@ describe('MainLayout — modals', () => {
     expect(h.ui.setShowAddModal).toHaveBeenCalledWith(false);
   });
 
-  it('the export modal gets the data it writes into the file — including the groups — and the period it starts on', () => {
+  it('the export modal gets the data it writes into the file — including the groups — and the period it starts on', async () => {
     h.ui.showExportModal = true;
-    mount();
+    await mount();
     expect(h.props.ExportModal).toMatchObject({
       isOpen: true, transactions, categories, cashflowGroups: groups, dayTypes, dayTypeConfig, groupedOptions, getFilterLabel, initialPeriod: '2026-10',
     });
@@ -260,28 +274,56 @@ describe('MainLayout — modals', () => {
     expect(h.ui.setShowExportModal).toHaveBeenCalledWith(false);
   });
 
-  it('the import guide opens from its flag and closes through the context', () => {
+  it('the import guide opens from its flag and closes through the context', async () => {
     h.ui.showImportGuide = true;
-    mount();
+    await mount();
     expect(h.props.ImportGuideModal.isOpen).toBe(true);
     h.props.ImportGuideModal.onClose();
     expect(h.ui.setShowImportGuide).toHaveBeenCalledWith(false);
   });
 
-  it('every modal is closed while its flag is off', () => {
-    mount();
+  it('a modal is not loaded before it first opens', async () => {
+    h.data.importPreview = null;
+    await mount();
+    expect(shown().filter(s => /Modal$/.test(s!))).toEqual([]);
+    expect(h.props.BatchAddModal ?? h.props.ExportModal ?? h.props.ImportGuideModal ?? h.props.ImportPreviewModal).toBeUndefined();
+  });
+
+  it('once opened, a modal stays mounted (and keeps its state) while closed, and is told it is closed', async () => {
+    h.data.importPreview = null;
+    await mount();
+    h.ui.showAddModal = true; h.ui.showExportModal = true; h.ui.showImportGuide = true;
+    await rerender();
+    expect(shown()).toEqual(expect.arrayContaining(['BatchAddModal', 'ExportModal', 'ImportGuideModal']));
+
+    h.ui.showAddModal = false; h.ui.showExportModal = false; h.ui.showImportGuide = false;
+    await rerender();
+    expect(shown()).toEqual(expect.arrayContaining(['BatchAddModal', 'ExportModal', 'ImportGuideModal']));
     expect(h.props.BatchAddModal.isOpen).toBe(false);
     expect(h.props.ExportModal.isOpen).toBe(false);
     expect(h.props.ImportGuideModal.isOpen).toBe(false);
   });
 
-  it('the import preview gets the pending file and the CSV saving flag', () => {
-    mount();
+  it('the import preview loads with the first pending file and stays mounted after it is cleared', async () => {
+    h.data.importPreview = null;
+    await mount();
+    expect(h.props.ImportPreviewModal).toBeUndefined();
+    h.data.importPreview = { rows: [1] };
+    await rerender();
+    expect(h.props.ImportPreviewModal.importPreview).toBe(h.data.importPreview);
+    h.data.importPreview = null;
+    await rerender();
+    expect(shown()).toContain('ImportPreviewModal');
+    expect(h.props.ImportPreviewModal.importPreview).toBeNull();
+  });
+
+  it('the import preview gets the pending file and the CSV saving flag', async () => {
+    await mount();
     expect(h.props.ImportPreviewModal).toMatchObject({ importPreview: h.data.importPreview, setImportPreview: h.data.setImportPreview, isProcessing: true, categories });
   });
 
-  it('confirming an import refreshes, announces success and jumps to the ledger — only once the import succeeded', () => {
-    mount();
+  it('confirming an import refreshes, announces success and jumps to the ledger — only once the import succeeded', async () => {
+    await mount();
     h.props.ImportPreviewModal.confirmImport();
     expect(h.data.confirmImport).toHaveBeenCalledTimes(1);
     expect(h.data.refreshData).not.toHaveBeenCalled(); // nothing yet: the import has not reported success
@@ -296,115 +338,91 @@ describe('MainLayout — modals', () => {
 });
 
 describe('MainLayout — one source of groups', () => {
-  it('everything that draws or writes groups is given the same list', () => {
+  it('everything that draws or writes groups is given the same list', async () => {
     const withGroups: Array<[string, string]> = [['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['settings', 'Settings']];
     for (const [tab, view] of withGroups) {
       reset(tab);
-      mount();
+      await mount();
       expect(h.props[view].cashflowGroups, view).toBe(groups);
       act(() => root!.unmount()); container!.remove(); root = null;
     }
     reset();
     h.ui.showAddModal = true; h.ui.showExportModal = true;
-    mount();
+    await mount();
     expect(h.props.BatchAddModal.cashflowGroups).toBe(groups);
     expect(h.props.ExportModal.cashflowGroups).toBe(groups);
   });
 });
 
-describe('MainLayout — tabs that can be switched off', () => {
-  const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Tax', 'Settings'];
+describe('MainLayout — the portfolio tab can be switched off', () => {
+  const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
   const visibleViews = () => shown().filter(x => views.includes(x!));
 
-  it('both are on by default and the header, dashboard and settings are told so', () => {
-    mount();
-    expect(h.props.AppHeader).toMatchObject({ taxEnabled: true, portfolioEnabled: true });
+  it('on by default and the header, dashboard and settings are told so', async () => {
+    await mount();
+    expect(h.props.AppHeader).toMatchObject({ portfolioEnabled: true });
+    expect(h.props.AppHeader.taxEnabled).toBeUndefined();
     expect(h.props.Dashboard.showPortfolio).toBe(true);
   });
 
-  it('settings gets the current state and a way to change each', () => {
+  it('settings gets the current state and a way to change it (and no tax switch any more)', async () => {
     reset('settings');
-    h.flags = { tax_enabled: false, portfolio_enabled: true };
-    mount();
-    expect(h.props.Settings).toMatchObject({ taxEnabled: false, portfolioEnabled: true });
-    expect(typeof h.props.Settings.onTaxEnabledChange).toBe('function');
+    h.flags = { portfolio_enabled: false };
+    await mount();
+    expect(h.props.Settings).toMatchObject({ portfolioEnabled: false });
     expect(typeof h.props.Settings.onPortfolioEnabledChange).toBe('function');
+    expect(h.props.Settings.onTaxEnabledChange).toBeUndefined();
   });
 
-  it('switching tax off or on stores tax_enabled, and only that', () => {
+  it('switching the portfolio off or on stores portfolio_enabled, and only that', async () => {
     reset('settings');
-    mount();
-    act(() => { h.props.Settings.onTaxEnabledChange(false); });
-    act(() => { h.props.Settings.onTaxEnabledChange(true); });
-    expect(h.updates).toEqual([['tax_enabled', false], ['tax_enabled', true]]);
-  });
-
-  it('switching the portfolio off or on stores portfolio_enabled, and only that', () => {
-    reset('settings');
-    mount();
+    await mount();
     act(() => { h.props.Settings.onPortfolioEnabledChange(false); });
     act(() => { h.props.Settings.onPortfolioEnabledChange(true); });
     expect(h.updates).toEqual([['portfolio_enabled', false], ['portfolio_enabled', true]]);
   });
 
-  it('a saved false (or the text false) means off; anything else, including nothing, means on', () => {
-    mount();
-    const parse = h.parsers.tax_enabled;
+  it('a saved false (or the text false) means off; anything else, including nothing, means on', async () => {
+    await mount();
+    const parse = h.parsers.portfolio_enabled;
     expect([false, 'false'].map(parse)).toEqual([false, false]);
     expect([undefined, null, true, 'true', 0, '', {}].map(parse)).toEqual([true, true, true, true, true, true, true]);
-    expect(h.parsers.portfolio_enabled).toBe(h.parsers.tax_enabled);
   });
 
-  it('portfolio off: the dashboard is told to hide its portfolio summary', () => {
+  it('portfolio off: the dashboard is told to hide its portfolio summary', async () => {
     h.flags = { portfolio_enabled: false };
-    mount();
+    await mount();
     expect(h.props.Dashboard.showPortfolio).toBe(false);
-    expect(h.props.AppHeader).toMatchObject({ taxEnabled: true, portfolioEnabled: false });
+    expect(h.props.AppHeader).toMatchObject({ portfolioEnabled: false });
   });
 
-  it('opening the tax tab while tax mode is off goes back to the overview and shows no tax page', () => {
+  it('a stored tax tab (removed feature) goes back to the overview', async () => {
     reset('tax');
-    h.flags = { tax_enabled: false };
-    mount();
+    await mount();
     expect(visibleViews()).toEqual([]);
     expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
   });
 
-  it('the same for the portfolio tab', () => {
+  it('opening the portfolio tab while it is off goes back to the overview', async () => {
     reset('portfolio');
     h.flags = { portfolio_enabled: false };
-    mount();
+    await mount();
     expect(visibleViews()).toEqual([]);
     expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
   });
 
-  it('a tab that is on is never redirected', () => {
-    reset('tax');
-    mount();
-    expect(visibleViews()).toEqual(['Tax']);
-    expect(h.ui.setActiveTab).not.toHaveBeenCalled();
-    act(() => root!.unmount()); container!.remove(); root = null;
+  it('a tab that is on is never redirected', async () => {
     reset('portfolio');
-    mount();
+    await mount();
     expect(visibleViews()).toEqual(['Portfolio']);
     expect(h.ui.setActiveTab).not.toHaveBeenCalled();
   });
 
-  it('switching tax off does not move you while you are on another tab', () => {
-    for (const tab of ['insights', 'calendar', 'ledger', 'portfolio', 'settings']) {
-      reset(tab);
-      h.flags = { tax_enabled: false };
-      mount();
-      expect(h.ui.setActiveTab, tab).not.toHaveBeenCalled();
-      act(() => root!.unmount()); container!.remove(); root = null;
-    }
-  });
-
-  it('switching the portfolio off does not move you while you are on another tab', () => {
-    for (const tab of ['insights', 'calendar', 'ledger', 'tax', 'settings']) {
+  it('switching the portfolio off does not move you while you are on another tab', async () => {
+    for (const tab of ['insights', 'calendar', 'ledger', 'settings']) {
       reset(tab);
       h.flags = { portfolio_enabled: false };
-      mount();
+      await mount();
       expect(h.ui.setActiveTab, tab).not.toHaveBeenCalled();
       act(() => root!.unmount()); container!.remove(); root = null;
     }

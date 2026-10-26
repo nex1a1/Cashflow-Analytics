@@ -3,7 +3,8 @@ import useBudgets from '@/hooks/useBudgets';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { readable } from '@/constants/theme';
 import { formatBahtShort } from '@/utils/formatters';
-import { isCyclePeriod, isSingleUnitPeriod, localTodayIso } from '@/utils/payCycle';
+import { isCyclePeriod, isSingleUnitPeriod } from '@/utils/payCycle';
+import useToday from '@/hooks/useToday';
 import { AVG_UNITS, computeEnvelopes, periodElapsed, type BudgetLevel, type EnvelopeRow } from '@/utils/budgetEnvelope';
 import { useDashboardContext } from '../context/DashboardContext';
 import { Shimmer } from './SummaryCards/helpers';
@@ -20,7 +21,7 @@ const LEVEL_TEXT: Record<BudgetLevel, string> = { ok: 'text-ink-display', warn: 
 const BudgetEnvelopes = memo(function BudgetEnvelopes() {
   const { transactions, categories, cashflowGroups = [], filterPeriod, getFilterLabel, showSkeleton: isLoading } = useDashboardContext();
   const { budgets } = useBudgets();
-  const today = localTodayIso();
+  const today = useToday();
   const visible = isSingleUnitPeriod(filterPeriod);
 
   const groupOfCategory = useMemo(

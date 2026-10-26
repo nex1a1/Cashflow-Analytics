@@ -17,6 +17,7 @@ const backupDir = path.join(tmp, 'backups');
 const savedEnv = { DB_PATH: process.env.DB_PATH, BACKUP_DIR: process.env.BACKUP_DIR };
 
 let server: Server;
+let db: typeof import('../config/db').default | undefined;
 let base = '';
 let logs: string[] = [];
 
@@ -51,7 +52,7 @@ beforeAll(async () => {
   process.env.BACKUP_DIR = backupDir;
   vi.spyOn(console, 'log').mockImplementation((...a: unknown[]) => { logs.push(a.join(' ')); });
 
-  const db = (await import('../config/db')).default;
+  db = (await import('../config/db')).default;
   // Hard stop: never write anything unless the app really is on the throwaway database.
   if (path.resolve(db.name) !== path.resolve(dbFile)) throw new Error(`HTTP tests would use ${db.name}, expected ${dbFile}`);
 
@@ -90,6 +91,7 @@ afterAll(async () => {
   for (const k of ['DB_PATH', 'BACKUP_DIR'] as const) {
     if (savedEnv[k] === undefined) delete process.env[k]; else process.env[k] = savedEnv[k];
   }
+  db?.close(); // Windows can't delete a file SQLite still holds open
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
@@ -554,6 +556,19 @@ describe('reset-all', () => {
       const r = await del('/api/reset-all', headers);
       expect(r.status).toBe(400);
       expect(r.json.error).toContain('X-Confirm-Reset');
+    }
+    expect((await get('/api/transactions/count')).json.count).toBe(before);
+  });
+
+  it('a failed safety backup reaches errorHandler (async handler, no try/catch) and deletes nothing', async () => {
+    const backupService = (await import('../services/backupService')).default;
+    const before = (await get('/api/transactions/count')).json.count;
+    const fail = vi.spyOn(backupService, 'createPreResetBackup').mockRejectedValue(new Error('disk full'));
+    try {
+      const r = await del('/api/reset-all', { 'x-confirm-reset': 'true' });
+      expect(r.status).toBe(500);
+    } finally {
+      fail.mockRestore();
     }
     expect((await get('/api/transactions/count')).json.count).toBe(before);
   });

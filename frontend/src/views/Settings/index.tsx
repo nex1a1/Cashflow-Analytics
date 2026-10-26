@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
-import { Settings2, Info, Coins, Wallet, PiggyBank, ReceiptText } from 'lucide-react';
+import { Settings2, Info, Coins, Wallet, PiggyBank } from 'lucide-react';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../types';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
@@ -15,7 +15,6 @@ import { countTxByGroup } from './settingsHelpers';
 
 const EXPENSE_ICON = <Wallet className="w-4 h-4" />;
 const INCOME_ICON = <Coins className="w-4 h-4" />;
-const TAX_ICON = <ReceiptText className="w-4 h-4" />;
 const SAVINGS_ICON = <PiggyBank className="w-4 h-4" />;
 
 export interface SettingsViewProps {
@@ -38,8 +37,6 @@ export interface SettingsViewProps {
   handleDeleteAllData: () => void;
   transactions: TransactionDisplay[];
   triggerToast?: (msg: string, type?: string) => void;
-  taxEnabled?: boolean;
-  onTaxEnabledChange?: (on: boolean) => void;
   portfolioEnabled?: boolean;
   onPortfolioEnabledChange?: (on: boolean) => void;
 }
@@ -51,7 +48,7 @@ const SettingsView = memo(function SettingsView({
   handleAddCashflowGroup, handleUpdateCashflowGroup, handleDeleteCashflowGroup, handleMoveCashflowGroup,
   transactions = [],
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
-  triggerToast, taxEnabled = true, onTaxEnabledChange,
+  triggerToast,
   portfolioEnabled = true, onPortfolioEnabledChange
 }: SettingsViewProps) {
   const [newCatId, setNewCatId] = useState<string | null>(null);
@@ -254,10 +251,6 @@ const SettingsView = memo(function SettingsView({
 
           <BudgetsCard cashflowGroups={cashflowGroups} />
 
-          {onTaxEnabledChange && (
-            <TabToggleRow icon={TAX_ICON} title="โหมดภาษี" enabled={taxEnabled} onChange={onTaxEnabledChange}
-              onText='แสดงแท็บ "ภาษี" อยู่' offText="ซ่อนแท็บไว้ ข้อมูลที่กรอกไว้ยังอยู่ครบ" />
-          )}
           {onPortfolioEnabledChange && (
             <TabToggleRow icon={SAVINGS_ICON} title="พอร์ตลงทุน" enabled={portfolioEnabled} onChange={onPortfolioEnabledChange}
               onText='แสดงแท็บ "พอร์ตลงทุน" และสรุปพอร์ตในหน้าภาพรวม' offText="ซ่อนไว้ ข้อมูลสินทรัพย์และรายการซื้อขายยังอยู่ครบ" />

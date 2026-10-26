@@ -65,12 +65,12 @@ function RecurringSection({ targetDate, localRows, catMap, onApply, onFillMissin
         aria-controls={panelId}
         className={`w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold border ${menu.open ? 'border-accent-ink text-ink-display bg-surface-elevated' : 'border-line text-ink-body hover:text-ink-display hover:border-line-strong'}`}
       >
-        <Repeat className="w-3.5 h-3.5 text-accent-ink" aria-hidden />
+        <Repeat className="w-3.5 h-3.5 text-accent-ink" />
         รายการประจำ
         {missing.length > 0
           ? <span className="text-accent-ink tabular-nums">ขาด {missing.length}</span>
           : items.length > 0 && <span className="text-ink-muted tabular-nums">ครบ {items.length}</span>}
-        <ChevronDown className={`ml-auto w-3.5 h-3.5 ${menu.open ? 'rotate-180' : ''}`} aria-hidden />
+        <ChevronDown className={`ml-auto w-3.5 h-3.5 ${menu.open ? 'rotate-180' : ''}`} />
       </button>
 
       {menu.open && (
@@ -136,7 +136,7 @@ function RecurringSection({ targetDate, localRows, catMap, onApply, onFillMissin
                   onClick={() => onFillMissing(missing)}
                   className="px-2.5 py-1 text-[11px] font-bold bg-accent text-on-accent hover:bg-accent/90 flex items-center gap-1"
                 >
-                  <Plus className="w-3.5 h-3.5" aria-hidden /> เติม {missing.length} รายการที่ยังขาด
+                  <Plus className="w-3.5 h-3.5" /> เติม {missing.length} รายการที่ยังขาด
                 </button>
               )}
               {hiddenCount > 0 && (

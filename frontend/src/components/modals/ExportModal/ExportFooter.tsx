@@ -2,6 +2,7 @@
 import { Download, Loader2 } from 'lucide-react';
 import { ExportFooterProps, ExportFormatKey } from './types';
 import FieldError from '../../shared/FieldError';
+import { CANCEL_BTN, FOOTER_BAR, PRIMARY_BTN, SummaryChip } from '../csvModalParts';
 
 const FORMAT_LABELS: Record<ExportFormatKey, string> = {
   long: 'Long Ledger CSV',
@@ -25,65 +26,27 @@ export default function ExportFooter({
   const isBackupJson = exportFormat === 'backup_json';
   const periodLabel = getFilterLabel ? getFilterLabel(exportPeriod) : exportPeriod;
 
-
-  const isDownloadDisabled = (!stats.hasData && !isBackupJson) || isExporting;
-
   return (
-    <div className="px-6 py-3.5 border-t border-line bg-surface flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
-      {/* Parameters Summary */}
+    <div className={FOOTER_BAR}>
       <div className="flex items-center gap-4 text-xs font-mono select-none flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <span className="text-neutral-500 font-bold uppercase text-[11px]">รูปแบบ:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 rounded-pill bg-surface-hover border border-line">
-            {FORMAT_LABELS[exportFormat]}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-neutral-500 font-bold uppercase text-[11px]">ช่วงเวลา:</span>
-          <span className="text-neutral-200 font-bold px-1.5 py-0.5 rounded-pill bg-surface-hover border border-line max-w-[160px] truncate" title={periodLabel}>
-            {periodLabel}
-          </span>
-        </div>
-
+        <SummaryChip label="รูปแบบ" pill>{FORMAT_LABELS[exportFormat]}</SummaryChip>
+        <SummaryChip label="ช่วงเวลา" pill className="max-w-[160px] truncate" title={periodLabel}>{periodLabel}</SummaryChip>
         {!isBackupJson && (
           <>
-            <div className="flex items-center gap-1.5 hidden md:flex">
-              <span className="text-neutral-500 font-bold uppercase text-[11px]">คั่น:</span>
-              <span className="text-neutral-300 font-bold">
-                {delimiter === ',' ? 'Comma (,)' : 'Semicolon (;)'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 hidden md:flex">
-              <span className="text-neutral-500 font-bold uppercase text-[11px]">หัวตาราง:</span>
-              <span className="text-neutral-300 font-bold">
-                {headerLang === 'th' ? 'ไทย' : 'English (EN)'}
-              </span>
-            </div>
+            <SummaryChip label="คั่น">{delimiter === ',' ? 'Comma (,)' : 'Semicolon (;)'}</SummaryChip>
+            <SummaryChip label="หัวตาราง">{headerLang === 'th' ? 'ไทย' : 'English (EN)'}</SummaryChip>
           </>
         )}
       </div>
 
       <FieldError id="export-err" message={error} />
 
-      {/* Buttons */}
       <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isExporting}
-          className="px-4 py-2 text-xs font-bold text-neutral-300 hover:text-white hover:bg-surface-hover border border-transparent transition-colors rounded-none disabled:opacity-30"
-        >
+        <button type="button" onClick={onClose} disabled={isExporting} className={CANCEL_BTN}>
           ยกเลิก
         </button>
 
-        <button
-          type="button"
-          onClick={executeExport}
-          disabled={isDownloadDisabled}
-          className="px-5 py-2 text-xs font-black uppercase tracking-wider bg-accent hover:bg-accent-active text-on-accent transition-colors flex items-center gap-2 rounded-none disabled:opacity-30 disabled:hover:bg-accent"
-        >
+        <button type="button" onClick={executeExport} disabled={(!stats.hasData && !isBackupJson) || isExporting} className={PRIMARY_BTN}>
           {isExporting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />

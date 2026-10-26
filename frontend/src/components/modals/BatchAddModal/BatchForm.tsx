@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { PlusCircle, Check, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useForm, UseFormSetValue, UseFormSetFocus, UseFormWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { PendingBatchItem } from './index';
 import CategorySelect from '@/components/shared/CategorySelect';
 import FieldError from '../../shared/FieldError';
 import InvestFields from '@/components/shared/InvestFields';
+import { AmountInput, EMPTY_ENTRY, EntryTypeToggle, NeedWantToggle, entrySchema, submitOnEnter, useEntryForm } from '@/components/shared/entryForm';
 
 const getLocalDateString = (dateObj = new Date()) => {
   const year = dateObj.getFullYear();
@@ -18,21 +19,10 @@ const getLocalDateString = (dateObj = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-const batchAddSchema = z.object({
-  type: z.enum(['income', 'expense', 'savings']),
-  date: z.string().min(1, "กรุณาเลือกวันที่"),
-  categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
-  description: z.string().optional(),
-  amount: z.number({ message: "กรุณาระบุจำนวนเงิน" }).positive("จำนวนเงินต้องมากกว่า 0"),
-  allocation_type: z.enum(['need', 'want', 'savings']).nullable().optional(),
-  assetId: z.string().optional(),
-  side: z.enum(['buy', 'sell']).optional(),
-  units: z.string().optional(),
-}).superRefine((v, ctx) => {
-  if (v.type === 'savings' && v.assetId && !(Number(v.units) > 0)) {
-    ctx.addIssue({ code: 'custom', path: ['units'], message: 'ระบุจำนวนหน่วยที่มากกว่า 0' });
-  }
-});
+const batchAddSchema = entrySchema(
+  { required: 'กรุณาระบุจำนวนเงิน', positive: 'จำนวนเงินต้องมากกว่า 0' },
+  { date: z.string().min(1, 'กรุณาเลือกวันที่') },
+);
 
 export interface BatchFormValues {
   type: 'income' | 'expense' | 'savings';
@@ -86,30 +76,19 @@ function BatchForm({
   editingItem,
   onCancelEdit
 }: BatchFormProps) {
-  const { register, handleSubmit, watch, setValue, getValues, formState: { errors }, setFocus } = useForm<BatchFormValues>({
+  const form = useForm<BatchFormValues>({
     resolver: zodResolver(batchAddSchema),
     defaultValues: {
+      ...EMPTY_ENTRY,
       type: (defaultType as BatchFormValues['type']) || 'expense',
       date: defaultDate || getLocalDateString(),
       categoryId: defaultCategoryId || '',
-      description: '',
-      amount: '' as unknown as number,
-      allocation_type: 'want',
-      assetId: '',
-      side: 'buy',
-      units: ''
     }
   });
-
-  const formType = watch('type');
+  const { register, handleSubmit, watch, setValue, setFocus, formState: { errors } } = form;
   const formDate = watch('date');
-  const allocationType = watch('allocation_type');
-  const assetId = watch('assetId') || '';
-  const side = watch('side') || 'buy';
-  const units = watch('units') || '';
-  const amountValue = watch('amount');
 
-  // Load editing item data into form
+  // Load editing item data into form (before the shared logic, so its allocation default sees the edit)
   useEffect(() => {
     if (editingItem) {
       setValue('type', editingItem._isInc ? 'income' : editingItem._isSavings ? 'savings' : 'expense');
@@ -125,46 +104,8 @@ function BatchForm({
     }
   }, [editingItem, setValue, setFocus]);
 
-  const isApplyingSuggestionRef = useRef(false);
-
-  const customSetValue: UseFormSetValue<BatchFormValues> = useCallback((name: any, value: any, options?: any) => {
-    // only when the category really changes (see DailyForm): a stuck flag swallows the next category's default
-    if (name === 'categoryId' && options?.skipAllocationDefault && value !== getValues('categoryId')) {
-      isApplyingSuggestionRef.current = true;
-    }
-    setValue(name, value, options);
-  }, [setValue, getValues]);
-
-  const selectedCatId = watch('categoryId');
-  useEffect(() => {
-    if (formType === 'income') {
-      setValue('allocation_type', null);
-      return;
-    }
-    if (formType === 'savings') {
-      setValue('allocation_type', 'savings');
-      return;
-    }
-    if (isApplyingSuggestionRef.current) {
-      isApplyingSuggestionRef.current = false;
-      return;
-    }
-    if (editingItem) return; // Do not overwrite allocation when in edit mode
-    const cat = categories.find(c => c.id === selectedCatId);
-    if (cat?.allocation_type) {
-      setValue('allocation_type', cat.allocation_type);
-    }
-  }, [formType, selectedCatId, setValue, categories, editingItem]);
-
-  useEffect(() => {
-    if (externalFormSetter) {
-      externalFormSetter({ setValue: customSetValue, setFocus, watch });
-    }
-  }, [externalFormSetter, customSetValue, setFocus, watch]);
-
-  useEffect(() => {
-    if (onTypeChange) onTypeChange(formType);
-  }, [formType, onTypeChange]);
+  const { formType, allocationType, selectedCatId, clearEntry, handleTypeChange, investProps } =
+    useEntryForm({ form, categories, externalFormSetter, onTypeChange, isEditing: !!editingItem });
 
   useEffect(() => {
     if (onDateChange) onDateChange(formDate);
@@ -173,26 +114,10 @@ function BatchForm({
   const onSubmit = (data: BatchFormValues) => {
     if (isProcessing) return; // the cart is being saved and then emptied: an item added now would vanish unseen
     onSubmitItem(data);
-    setValue('description', '');
-    setValue('units', '');
-    setValue('amount', '' as unknown as number, { shouldValidate: false });
-    setTimeout(() => setFocus('amount'), 10);
+    clearEntry();
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { 
-    if (e.key === 'Enter') { 
-      e.preventDefault(); 
-      handleSubmit(onSubmit)(); 
-    } 
-  };
-
-  const handleTypeChange = (newType: BatchFormValues['type']) => {
-    setValue('type', newType);
-    setValue('assetId', '');
-    setValue('units', '');
-    const firstCat = categories.find(c => c.type === newType);
-    setValue('categoryId', firstCat?.id || '');
-  };
+  const submit = () => handleSubmit(onSubmit)();
+  const handleKeyDown = submitOnEnter(submit);
 
   const tokens = {
     input: "w-full h-9 px-3 text-xs border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
@@ -203,44 +128,13 @@ function BatchForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full lg:w-[33%] p-5 border-b lg:border-b-0 lg:border-r flex flex-col lg:overflow-y-auto bg-surface-hover border-line">
       
-      {/* Type Toggle: Expense / Savings & Investment / Income */}
-      <div className="relative grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9">
-        <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/3)] bg-surface-elevated shadow-xs"
-          style={{ translate: `${['expense', 'savings', 'income'].indexOf(formType) * 100}% 0` }} />
-        <button
-          type="button"
-          onClick={() => handleTypeChange('expense')}
-          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
-            formType === 'expense'
-              ? 'text-expense'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          รายจ่าย
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTypeChange('savings')}
-          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
-            formType === 'savings'
-              ? 'text-savings'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          ลงทุน/ออม
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTypeChange('income')}
-          className={`relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center ${
-            formType === 'income'
-              ? 'text-emerald-400'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          รายรับ
-        </button>
-      </div>
+      <EntryTypeToggle
+        value={formType}
+        onChange={handleTypeChange}
+        className="relative grid grid-cols-3 p-0.5 mb-4 rounded-none border bg-canvas border-line h-9"
+        btnClass="relative h-full font-bold text-xs rounded-none transition-all flex items-center justify-center"
+        idleClass="text-slate-400 hover:text-slate-200"
+      />
 
       {/* Date & Amount Row */}
       <div className="flex gap-3 mb-4">
@@ -285,23 +179,15 @@ function BatchForm({
         </div>
         <div className="flex-1 min-w-0">
           <label htmlFor="batch-amount" className={tokens.label}>จำนวนเงิน ฿</label>
-          <div className="relative flex items-center h-9">
-            <span className="absolute left-2.5 text-xs font-bold select-none text-ink-muted" aria-hidden="true">
-              ฿
-            </span>
-            <input 
-              id="batch-amount"
-              type="number" 
-              step="any" 
-              {...register('amount', { valueAsNumber: true })} 
-              aria-invalid={!!errors.amount}
-              aria-describedby={errors.amount ? 'batch-amount-err' : undefined}
-              aria-label="จำนวนเงิน"
-              onKeyDown={handleKeyDown} 
-              placeholder="0.00" 
-              className={`${errors.amount ? tokens.inputError : tokens.input} pl-6 text-right font-bold tabular-nums tracking-tight`} 
-            />
-          </div>
+          <AmountInput
+            id="batch-amount"
+            {...register('amount', { valueAsNumber: true })}
+            errorId="batch-amount-err"
+            hasError={!!errors.amount}
+            onKeyDown={handleKeyDown}
+            inputClass={errors.amount ? tokens.inputError : tokens.input}
+            wrapperClass="relative flex items-center h-9"
+          />
           <FieldError id="batch-amount-err" message={errors.amount?.message} />
         </div>
       </div>
@@ -324,29 +210,13 @@ function BatchForm({
           </div>
           
           {formType === 'expense' && (
-            <div className="relative h-9 grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line">
-              <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] bg-surface-elevated"
-                style={{ translate: allocationType === 'want' ? '100% 0' : '0 0' }} />
-              {[
-                { val: 'need', label: 'NEED', color: 'text-rose-400' },
-                { val: 'want', label: 'WANT', color: 'text-amber-400' },
-              ].map(opt => {
-                const isSelected = allocationType === opt.val;
-                return (
-                  <button 
-                    key={opt.val} 
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => setValue('allocation_type', opt.val as AllocationType)}
-                    className={`relative h-full px-2.5 text-[11px] font-black rounded-none transition-all flex items-center justify-center ${
-                      isSelected ? opt.color : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
+            <NeedWantToggle
+              value={allocationType}
+              onChange={v => setValue('allocation_type', v)}
+              className="relative h-9 grid grid-cols-2 p-0.5 rounded-none border shrink-0 bg-canvas border-line"
+              btnClass="relative h-full px-2.5 text-[11px] font-black rounded-none transition-all flex items-center justify-center"
+              idleClass="text-slate-500 hover:text-slate-300"
+            />
           )}
         </div>
         <FieldError id="batch-categoryId-err" message={errors.categoryId?.message} />
@@ -354,18 +224,7 @@ function BatchForm({
 
       {formType === 'savings' && (
         <div className="mb-4">
-          <InvestFields
-            idPrefix="batch"
-            assetId={assetId}
-            side={side}
-            units={units}
-            amount={Number.isFinite(amountValue) ? amountValue : undefined}
-            onAssetChange={v => { setValue('assetId', v); if (!v) setValue('units', ''); }}
-            onSideChange={v => setValue('side', v)}
-            onUnitsChange={v => setValue('units', v, { shouldValidate: !!errors.units })}
-            onEnter={() => handleSubmit(onSubmit)()}
-            unitsError={errors.units?.message}
-          />
+          <InvestFields idPrefix="batch" {...investProps} onEnter={submit} />
         </div>
       )}
 
@@ -407,12 +266,7 @@ function BatchForm({
           <>
             <button 
               type="button" 
-              onClick={() => { 
-                setValue('description', '');
-                setValue('units', '');
-                setValue('amount', '' as unknown as number, { shouldValidate: false });
-                setTimeout(() => setFocus('amount'), 10);
-              }}  
+              onClick={clearEntry}
               disabled={isProcessing}
               className="h-full px-3 border rounded-none font-bold text-xs flex justify-center items-center transition-all active:scale-95 disabled:opacity-50 bg-surface-elevated/60 hover:bg-surface-elevated text-slate-300 border-line"
               title="ล้างข้อมูลที่กำลังพิมพ์"

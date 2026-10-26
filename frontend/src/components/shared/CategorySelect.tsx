@@ -1,6 +1,7 @@
 // frontend/src/components/shared/CategorySelect.tsx
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { usePortalListbox, popoverPosition, PopoverCoords } from '@/hooks/usePortalListbox';
 import { Search, X, ChevronDown, Check, Zap } from 'lucide-react';
 import { Category, CashflowGroup, GroupType, TransactionDisplay, FrequentItem } from '@/types';
 import CategoryGlyph from './CategoryGlyph';
@@ -47,27 +48,24 @@ export default function CategorySelect({
   frequentItems = [],
   id
 }: CategorySelectProps) {
-  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState<number>(-1);
-  const [coords, setCoords] = useState<{
-    top?: number;
-    bottom?: number;
-    left: number;
-    width: number;
-    maxHeight: number;
-    openUpwards: boolean;
-  }>({
-    left: 0,
-    width: 320,
-    maxHeight: 360,
-    openUpwards: false
-  });
-
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // List under the trigger (up to 360px tall, 300–340px wide, kept 16px inside the window), or above when there is more room there
+  const { open, setOpen, close: handleClose, activeIndex, setActiveIndex, coords, updatePosition, moveActive, triggerRef, popoverRef, itemRefs } =
+    usePortalListbox((rect): PopoverCoords & { maxHeight: number } => {
+      const width = Math.min(variant === 'default' ? Math.max(300, Math.min(rect.width, 340)) : 320, window.innerWidth - 32);
+      const estimatedHeight = 360;
+      let left = rect.left;
+      if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
+      if (left < 16) left = 16;
+      const spaceBelow = window.innerHeight - rect.bottom - 16;
+      const spaceAbove = rect.top - 16;
+      const openUpwards = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+      return openUpwards
+        ? { bottom: window.innerHeight - rect.top + 4, left, width, maxHeight: Math.min(estimatedHeight, Math.max(200, spaceAbove)), openUpwards }
+        : { top: rect.bottom + 4, left, width, maxHeight: Math.min(estimatedHeight, Math.max(200, spaceBelow)), openUpwards };
+    }, { left: 0, width: 320, maxHeight: 360, openUpwards: false }, { onClose: () => setSearchQuery(''), refocus: true });
 
   // Fast Category Lookup Map
   const categoryMap = useMemo(() => {
@@ -132,43 +130,6 @@ export default function CategorySelect({
     return groupedCategories.flatMap(g => g.categories);
   }, [groupedCategories]);
 
-  // Calculate & update popover position
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const rawWidth = variant === 'default'
-      ? Math.max(300, Math.min(rect.width, 340))
-      : 320;
-    const popoverWidth = Math.min(rawWidth, window.innerWidth - 32);
-    const estimatedHeight = 360;
-
-    let left = rect.left;
-    if (left + popoverWidth > window.innerWidth - 16) {
-      left = window.innerWidth - popoverWidth - 16;
-    }
-    if (left < 16) left = 16;
-
-    const spaceBelow = window.innerHeight - rect.bottom - 16;
-    const spaceAbove = rect.top - 16;
-
-    // Flip upwards if space below cannot accommodate the desired height AND space above is larger than space below
-    const openUpwards = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
-
-    let maxHeight = estimatedHeight;
-    let top: number | undefined;
-    let bottom: number | undefined;
-
-    if (openUpwards) {
-      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceAbove));
-      bottom = window.innerHeight - rect.top + 4;
-    } else {
-      maxHeight = Math.min(estimatedHeight, Math.max(200, spaceBelow));
-      top = rect.bottom + 4;
-    }
-
-    setCoords({ top, bottom, left, width: popoverWidth, maxHeight, openUpwards });
-  }, [variant]);
-
   // Toggle open
   const handleOpen = useCallback(() => {
     if (disabled) return;
@@ -177,14 +138,6 @@ export default function CategorySelect({
     setSearchQuery('');
     setActiveIndex(-1);
   }, [disabled, updatePosition]);
-
-  // Close and clean up
-  const handleClose = useCallback(() => {
-    setOpen(false);
-    setSearchQuery('');
-    setActiveIndex(-1);
-    triggerRef.current?.focus();
-  }, []);
 
   // Selection handler
   const handleSelect = useCallback((categoryId: string) => {
@@ -209,42 +162,6 @@ export default function CategorySelect({
     return undefined;
   }, [open]);
 
-  // Outside click & scroll listeners
-  useEffect(() => {
-    if (!open) return;
-
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        triggerRef.current?.contains(target) ||
-        popoverRef.current?.contains(target)
-      ) {
-        return;
-      }
-      handleClose();
-    };
-
-    const handleWindowResize = () => {
-      updatePosition();
-    };
-
-    const handleScroll = (e: Event) => {
-      // Don't close if scrolling inside popover
-      if (popoverRef.current?.contains(e.target as Node)) return;
-      handleClose();
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    window.addEventListener('resize', handleWindowResize);
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      window.removeEventListener('resize', handleWindowResize);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [open, handleClose, updatePosition]);
-
   // Keyboard navigation inside popover
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!open) {
@@ -262,25 +179,9 @@ export default function CategorySelect({
       return;
     }
 
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      if (flatCategories.length === 0) return;
-      setActiveIndex(prev => {
-        const next = (prev + 1) % flatCategories.length;
-        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
-      return;
-    }
-
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (flatCategories.length === 0) return;
-      setActiveIndex(prev => {
-        const next = (prev - 1 + flatCategories.length) % flatCategories.length;
-        itemRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
+      moveActive(e.key === 'ArrowDown' ? 1 : -1, flatCategories.length);
       return;
     }
 
@@ -292,7 +193,7 @@ export default function CategorySelect({
         handleSelect(flatCategories[0].id);
       }
     }
-  }, [open, flatCategories, activeIndex, handleOpen, handleClose, handleSelect]);
+  }, [open, flatCategories, activeIndex, handleOpen, handleClose, handleSelect, moveActive]);
 
   // Pill variant styles for table cell; text goes through readable() for legibility
   const pillColor = selectedCategory?.color || (type === 'income' ? tc('income') : tc('expense'));
@@ -403,14 +304,7 @@ export default function CategorySelect({
           <div
             ref={popoverRef}
             className="fixed z-9999 bg-surface border border-neutral-800/90 shadow-[0_24px_50px_rgb(0_0_0/calc(0.92*var(--shadow-k))),0_0_1px_1px_rgb(var(--overlay)/0.05)] rounded-md flex flex-col overflow-hidden text-slate-200 animate-in fade-in zoom-in-95 duration-100"
-            style={{
-              ...(coords.openUpwards
-                ? { bottom: `${coords.bottom}px` }
-                : { top: `${coords.top}px` }),
-              left: `${coords.left}px`,
-              width: `${coords.width}px`,
-              maxHeight: `${coords.maxHeight}px`,
-            }}
+            style={{ ...popoverPosition(coords), maxHeight: `${coords.maxHeight}px` }}
           >
             {/* LASER HAIRLINE ACCENT */}
             <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />

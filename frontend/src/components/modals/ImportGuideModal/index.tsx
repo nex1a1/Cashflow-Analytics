@@ -2,7 +2,6 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useToast } from '../../../context/ToastContext';
 import { useAppData } from '../../../context/AppDataContext';
-import GuideHeader from './GuideHeader';
 import GuideSidebar from './GuideSidebar';
 import GuidePreviewArea from './GuidePreviewArea';
 import GuideFooter from './GuideFooter';
@@ -22,6 +21,8 @@ import {
   LongVariation,
 } from './guideUtils';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { FileSpreadsheet } from 'lucide-react';
+import { ModalTitleBar } from '../csvModalParts';
 
 const DEFAULT_CATEGORIES = [
   'อาหาร',
@@ -120,13 +121,18 @@ const ImportGuideModal = memo(function ImportGuideModal({
   return (
     <div className="fixed inset-0 bg-black/80 z-100 flex items-center justify-center backdrop-blur-xs p-4 select-none">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="คู่มือนำเข้าข้อมูล" tabIndex={-1} className="relative rounded-none shadow-2xl flex flex-col w-full max-w-[1240px] h-[86vh] border border-line-strong bg-canvas overflow-hidden">
-        {/* Header (Identical to ExportHeader) */}
-        <GuideHeader onClose={onClose} />
+        <ModalTitleBar
+          icon={FileSpreadsheet}
+          title="คู่มือนำเข้าข้อมูลและเทมเพลต"
+          en="CSV Import Specification & Templates"
+          subtitle="ดูรูปแบบไฟล์ที่นำเข้าได้ กติกาการอ่านไฟล์ และดาวน์โหลดเทมเพลต"
+          onClose={onClose}
+          closeTitle="ปิดหน้าต่าง (Esc)"
+        />
 
         {/* Content Body */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar (Identical to ExportSidebar) */}
-          <GuideSidebar
+            <GuideSidebar
             selectedFormat={selectedFormat}
             onSelectFormat={setSelectedFormat}
             longVariation={longVariation}
@@ -140,7 +146,6 @@ const ImportGuideModal = memo(function ImportGuideModal({
             setHeaderLang={setHeaderLang}
           />
 
-          {/* Preview Area (Identical to ExportPreview) */}
           <GuidePreviewArea
             selectedFormat={selectedFormat}
             longVariation={longVariation}
@@ -154,7 +159,6 @@ const ImportGuideModal = memo(function ImportGuideModal({
           />
         </div>
 
-        {/* Footer (Identical to ExportFooter) */}
         <GuideFooter
           selectedFormat={selectedFormat}
           longVariation={longVariation}

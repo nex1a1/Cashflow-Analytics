@@ -1,8 +1,7 @@
 // frontend/src/components/modals/ImportGuideModal/GuidePreviewArea.tsx
 import { useState, useMemo, memo } from 'react';
-import { Search, X, Info, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { Category } from '../../../types';
-import { formatMoney } from '../../../utils/formatters';
 import { GuidePreviewAreaProps } from './types';
 import {
   getLongHeaders,
@@ -11,7 +10,7 @@ import {
   getWideSampleRows,
   resolveDayTypeVisual,
 } from './guideUtils';
-import CategoryGlyph from '../../shared/CategoryGlyph';
+import { LongTable, PreviewFrame, PreviewTopBar, WideTable, flowStyle } from '../csvPreview';
 
 import { tc, readable } from '@/constants/theme';
 const CATEGORY_COLORS: Record<string, { color: string; icon: string }> = {
@@ -40,6 +39,21 @@ function resolveCategoryVisual(catName: string, categories: Category[]) {
   if (fallback) return fallback;
   return { color: tc('ink-body'), icon: '📌' };
 }
+
+// The file-reading rules shown under "ดูกติกาการอ่านไฟล์": [title, explanation]
+const NEW_CATEGORY_SPEC = ['สร้างหมวดหมู่ใหม่ให้', 'ถ้าเจอชื่อหมวดหมู่ที่ยังไม่มีในระบบ จะสร้างหมวดหมู่ใหม่ให้เอง'] as const;
+const LONG_SPECS = [
+  ['อัปเดตปฏิทินตามชนิดวัน', 'ค่าในคอลัมน์ "ชนิดวัน" จะถูกบันทึกเป็นประเภทวันในหน้าปฏิทินให้เลย'],
+  ['รองรับรายรับ รายจ่าย และเงินออม', 'คอลัมน์ "ประเภท" ใส่ได้ทั้ง รายรับ รายจ่าย และเงินออม ในไฟล์เดียว'],
+  NEW_CATEGORY_SPEC,
+  ['เก็บยอดเป็นสตางค์', 'ยอดเงินถูกคูณ 100 เก็บเป็นสตางค์แบบจำนวนเต็ม ทศนิยมจึงไม่คลาดเคลื่อน'],
+] as const;
+const WIDE_SPECS = [
+  ['จับคู่หัวคอลัมน์แนวนอนอัตโนมัติ', 'ชื่อคอลัมน์จะถูกจับคู่กับชื่อหมวดหมู่ที่คุณตั้งไว้'],
+  ['ข้ามคอลัมน์ผลรวม', 'คอลัมน์ "รวม (Total)", "Date", "Notes" จะไม่ถูกนำไปคิดเป็นยอดเงิน ยอดจึงไม่นับซ้ำ'],
+  NEW_CATEGORY_SPEC,
+  ['ช่องว่างนับเป็น 0', 'ช่องว่าง หรือสัญลักษณ์ "฿ -" จะนับเป็น 0 และนำเข้าต่อได้ตามปกติ'],
+] as const;
 
 const GuidePreviewArea = memo(function GuidePreviewArea({
   selectedFormat,
@@ -81,254 +95,60 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
   const longHeaders = getLongHeaders(longVariation, headerLang);
   const wideHeaders = getWideHeaders(effectiveCategories, headerLang);
   const wideDataCats = wideHeaders.slice(1, wideHeaders.length - 2);
+  const en = headerLang === 'en';
 
   return (
     <div className="flex-1 flex flex-col p-5 bg-surface overflow-hidden select-none">
-      {/* Top Preview Controls (Matching ExportPreview) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black uppercase tracking-widest text-neutral-300">
-            ตัวอย่างเอกสาร <span className="text-neutral-500 font-mono font-normal">/ PREVIEW</span>
-          </span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-pill bg-surface-hover border border-line text-neutral-400">
-            {isLong
-              ? `แสดงตัวอย่าง ${filteredLongRows.length} จาก ${allLongRows.length} รายการ (${longHeaders.length} คอลัมน์)`
-              : `แสดงตัวอย่าง ${filteredWideRows.length} วัน (${effectiveCategories.length} หมวดหมู่)`}
-          </span>
-        </div>
+      <PreviewTopBar
+        count={isLong
+          ? `แสดงตัวอย่าง ${filteredLongRows.length} จาก ${allLongRows.length} รายการ (${longHeaders.length} คอลัมน์)`
+          : `แสดงตัวอย่าง ${filteredWideRows.length} วัน (${effectiveCategories.length} หมวดหมู่)`}
+        search={previewSearch}
+        setSearch={setPreviewSearch}
+      />
 
-        {/* Search in preview */}
-        <div className="relative w-full sm:w-[260px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500" />
-          <input
-            type="text"
-            placeholder="ค้นหาในตัวอย่าง..."
-            value={previewSearch}
-            onChange={e => setPreviewSearch(e.target.value)}
-            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-hidden focus:border-accent-ink rounded-none transition-colors"
+      <PreviewFrame>
+        {isLong ? (
+          <LongTable
+            cols={{ dayType: longVariation === 'full', type: longVariation !== 'minimal', group: false }}
+            labels={en
+              ? { date: 'Date', dayType: 'DayType', type: 'Type', category: 'Category', description: 'Description', amount: 'Amount (฿)' }
+              : { date: 'วันที่', dayType: 'ประเภทวัน', type: 'ประเภท', category: 'หมวดหมู่', description: 'รายละเอียด', amount: 'จำนวนเงิน (฿)' }}
+            rows={filteredLongRows.map((t, idx) => {
+              const dt = resolveDayTypeVisual(t.date, dayTypeConfig);
+              const type = t.type === 'income' || t.type === 'savings' ? t.type : 'expense';
+              const vis = resolveCategoryVisual(t.category, categories);
+              return {
+                key: t.id || String(idx),
+                date: t.date,
+                dayType: { label: t.dayType || dt.label, color: dt.color },
+                type,
+                typeLabel: type.toUpperCase(),
+                sign: flowStyle(type).sign,
+                category: { name: t.category, color: vis.color, textColor: readable(vis.color), icon: vis.icon },
+                description: t.description,
+                amount: t.amount,
+              };
+            })}
           />
-          {previewSearch && (
-            <button
-              type="button"
-              onClick={() => setPreviewSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
+        ) : (
+          <WideTable
+            labels={en
+              ? { date: 'Date', dayType: 'DayType', total: 'Total', notes: 'Notes' }
+              : { date: 'วันที่ (Date)', dayType: 'ประเภทวัน', total: 'รวมสุทธิ (Total)', notes: 'Notes' }}
+            columns={wideDataCats.map(cat => ({ key: cat, name: cat, color: resolveCategoryVisual(cat, categories).color }))}
+            rows={filteredWideRows.map(row => ({
+              key: row.id,
+              date: row.date,
+              dayType: resolveDayTypeVisual(row.date, dayTypeConfig),
+              values: wideDataCats.map(cat => row.categoryAmounts[cat]),
+              total: row.total,
+              note: row.note,
+            }))}
+          />
+        )}
+      </PreviewFrame>
 
-      {/* Main Preview Container (Matching ExportLongTable & ExportWideTable) */}
-      <div className="flex-1 border border-line bg-surface flex flex-col overflow-hidden relative">
-        <div className="flex-1 overflow-auto custom-scrollbar relative">
-          {isLong ? (
-            <div className="w-full overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs leading-normal border-collapse min-w-[700px]">
-                <thead className="sticky top-0 bg-surface-hover text-neutral-300 z-10 select-none border-b border-line">
-                  <tr>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                      {headerLang === 'en' ? 'Date' : 'วันที่'}
-                    </th>
-                    {longVariation === 'full' && (
-                      <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                        {headerLang === 'en' ? 'DayType' : 'ประเภทวัน'}
-                      </th>
-                    )}
-                    {(longVariation === 'full' || longVariation === 'standard') && (
-                      <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                        {headerLang === 'en' ? 'Type' : 'ประเภท'}
-                      </th>
-                    )}
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                      {headerLang === 'en' ? 'Category' : 'หมวดหมู่'}
-                    </th>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                      {headerLang === 'en' ? 'Description' : 'รายละเอียด'}
-                    </th>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 text-right">
-                      {headerLang === 'en' ? 'Amount (฿)' : 'จำนวนเงิน (฿)'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {filteredLongRows.map((t, idx) => {
-                    const dt = resolveDayTypeVisual(t.date, dayTypeConfig);
-                    const isIncome = t.type === 'income';
-                    const isSavings = t.type === 'savings';
-
-                    let typeBadgeClass = 'text-expense bg-expense/5 border-expense/20';
-                    let amountColor = 'text-expense';
-                    let amountPrefix = '−';
-                    let typeDisplay = headerLang === 'en' ? 'EXPENSE' : 'EXPENSE';
-
-                    if (isIncome) {
-                      typeBadgeClass = 'text-emerald-400 bg-emerald-950/30 border-emerald-900/40';
-                      amountColor = 'text-emerald-400';
-                      amountPrefix = '+';
-                      typeDisplay = 'INCOME';
-                    } else if (isSavings) {
-                      typeBadgeClass = 'text-cyan-400 bg-cyan-950/30 border-cyan-900/40';
-                      amountColor = 'text-cyan-400';
-                      amountPrefix = '±';
-                      typeDisplay = 'SAVINGS';
-                    }
-
-                    const catVis = resolveCategoryVisual(t.category, categories);
-
-                    return (
-                      <tr key={t.id || idx} className="hover:bg-canvas transition-colors group">
-                        {/* Date */}
-                        <td className="py-2 px-3 text-neutral-300 font-mono text-[11px] whitespace-nowrap">
-                          {t.date}
-                        </td>
-
-                        {/* Day Type Badge */}
-                        {longVariation === 'full' && (
-                          <td className="py-2 px-3 whitespace-nowrap">
-                            <span
-                              className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
-                              style={{
-                                color: readable(dt.color),
-                                borderColor: `${dt.color}40`,
-                                backgroundColor: `${dt.color}15`,
-                              }}
-                            >
-                              {t.dayType || dt.label}
-                            </span>
-                          </td>
-                        )}
-
-                        {/* Type */}
-                        {(longVariation === 'full' || longVariation === 'standard') && (
-                          <td className="py-2 px-3 whitespace-nowrap">
-                            <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-pill border ${typeBadgeClass}`}>
-                              {typeDisplay}
-                            </span>
-                          </td>
-                        )}
-
-                        {/* Category */}
-                        <td className="py-2 px-3 whitespace-nowrap">
-                          <span
-                            className="text-[11px] font-medium px-2 py-0.5 rounded-pill border inline-flex items-center gap-1.5"
-                            style={{
-                              color: readable(catVis.color),
-                              borderColor: `${catVis.color}35`,
-                              backgroundColor: `${catVis.color}12`,
-                            }}
-                          >
-                            {catVis.icon && <CategoryGlyph icon={catVis.icon} color={catVis.color} size={11} />}
-                            <span>{t.category}</span>
-                          </span>
-                        </td>
-
-                        {/* Description */}
-                        <td className="py-2 px-3 text-neutral-200 text-xs max-w-[240px] truncate" title={t.description}>
-                          {t.description || '—'}
-                        </td>
-
-                        {/* Amount */}
-                        <td className={`py-2 px-3 text-right font-mono font-bold text-xs tabular-nums ${amountColor}`}>
-                          {amountPrefix}
-                          {formatMoney(t.amount)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs leading-normal border-collapse min-w-[800px]">
-                <thead className="sticky top-0 bg-surface-hover text-neutral-300 z-10 select-none border-b border-line">
-                  <tr>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 sticky left-0 bg-surface-hover z-20">
-                      {headerLang === 'en' ? 'Date' : 'วันที่ (Date)'}
-                    </th>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400">
-                      {headerLang === 'en' ? 'DayType' : 'ประเภทวัน'}
-                    </th>
-                    {wideDataCats.map(cat => {
-                      const vis = resolveCategoryVisual(cat, categories);
-                      return (
-                        <th
-                          key={cat}
-                          className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right whitespace-nowrap"
-                          style={{ color: readable(vis.color) }}
-                        >
-                          {cat}
-                        </th>
-                      );
-                    })}
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-right text-accent-ink sticky right-0 bg-surface-hover z-20">
-                      {headerLang === 'en' ? 'Total' : 'รวมสุทธิ (Total)'}
-                    </th>
-                    <th className="py-2.5 px-3 font-mono font-bold uppercase tracking-wider text-[11px] text-neutral-400 whitespace-nowrap">
-                      {headerLang === 'en' ? 'Notes' : 'Notes'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {filteredWideRows.map(row => {
-                    const dt = resolveDayTypeVisual(row.date, dayTypeConfig);
-                    return (
-                      <tr key={row.id} className="hover:bg-canvas transition-colors group">
-                        {/* Date (sticky left) */}
-                        <td className="py-2 px-3 text-neutral-300 font-mono text-[11px] whitespace-nowrap sticky left-0 bg-surface group-hover:bg-canvas z-10 border-r border-line">
-                          {row.date}
-                        </td>
-
-                        {/* Day Type Badge */}
-                        <td className="py-2 px-3 whitespace-nowrap">
-                          <span
-                            className="text-[11px] font-bold px-2 py-0.5 rounded-pill border inline-block select-none font-mono"
-                            style={{
-                              color: readable(dt.color),
-                              borderColor: `${dt.color}40`,
-                              backgroundColor: `${dt.color}15`,
-                            }}
-                          >
-                            {dt.label}
-                          </span>
-                        </td>
-
-                        {/* Category Columns */}
-                        {wideDataCats.map(cat => {
-                          const val = row.categoryAmounts[cat];
-                          return (
-                            <td
-                              key={cat}
-                              className={`py-2 px-3 text-right font-mono text-xs tabular-nums whitespace-nowrap ${
-                                val ? 'text-neutral-200 font-medium' : 'text-neutral-600'
-                              }`}
-                            >
-                              {val ? formatMoney(val) : '—'}
-                            </td>
-                          );
-                        })}
-
-                        {/* Total (sticky right) */}
-                        <td className="py-2 px-3 text-right font-mono font-bold text-xs tabular-nums text-white sticky right-0 bg-surface group-hover:bg-canvas z-10 border-l border-line">
-                          {formatMoney(row.total)}
-                        </td>
-
-                        {/* Notes */}
-                        <td className="py-2 px-3 text-neutral-300 text-xs whitespace-nowrap">
-                          {row.note || <span className="text-neutral-600 font-mono">—</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom Hint (Matching ExportPreview) */}
       <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-neutral-400 shrink-0">
         <div className="flex items-start gap-2">
           <Info className="w-3.5 h-3.5 text-accent-ink shrink-0 mt-0.5" />
@@ -349,63 +169,18 @@ const GuidePreviewArea = memo(function GuidePreviewArea({
         </button>
       </div>
 
-      {/* Accordion / Collapsible Decoding Specifications Grid */}
       {showSpecs && (
         <div className="mt-2.5 border border-line p-3.5 rounded-none bg-surface shrink-0 space-y-2 text-xs">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="flex gap-2.5 items-start">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
-              <div>
-                <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'อัปเดตปฏิทินตามชนิดวัน' : 'จับคู่หัวคอลัมน์แนวนอนอัตโนมัติ'}
-                </span>
-                <p className="text-[11px] text-neutral-400 leading-snug">
-                  {isLong
-                    ? 'ค่าในคอลัมน์ "ชนิดวัน" จะถูกบันทึกเป็นประเภทวันในหน้าปฏิทินให้เลย'
-                    : 'ชื่อคอลัมน์จะถูกจับคู่กับชื่อหมวดหมู่ที่คุณตั้งไว้'}
-                </p>
+            {(isLong ? LONG_SPECS : WIDE_SPECS).map(([title, text]) => (
+              <div key={title} className="flex gap-2.5 items-start">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
+                <div>
+                  <span className="font-bold text-neutral-200 text-[11px]">{title}</span>
+                  <p className="text-[11px] text-neutral-400 leading-snug">{text}</p>
+                </div>
               </div>
-            </div>
-
-            <div className="flex gap-2.5 items-start">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
-              <div>
-                <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'รองรับรายรับ รายจ่าย และเงินออม' : 'ข้ามคอลัมน์ผลรวม'}
-                </span>
-                <p className="text-[11px] text-neutral-400 leading-snug">
-                  {isLong
-                    ? 'คอลัมน์ "ประเภท" ใส่ได้ทั้ง รายรับ รายจ่าย และเงินออม ในไฟล์เดียว'
-                    : 'คอลัมน์ "รวม (Total)", "Date", "Notes" จะไม่ถูกนำไปคิดเป็นยอดเงิน ยอดจึงไม่นับซ้ำ'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2.5 items-start">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
-              <div>
-                <span className="font-bold text-neutral-200 text-[11px]">
-                  สร้างหมวดหมู่ใหม่ให้
-                </span>
-                <p className="text-[11px] text-neutral-400 leading-snug">
-                  ถ้าเจอชื่อหมวดหมู่ที่ยังไม่มีในระบบ จะสร้างหมวดหมู่ใหม่ให้เอง
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2.5 items-start">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
-              <div>
-                <span className="font-bold text-neutral-200 text-[11px]">
-                  {isLong ? 'เก็บยอดเป็นสตางค์' : 'ช่องว่างนับเป็น 0'}
-                </span>
-                <p className="text-[11px] text-neutral-400 leading-snug">
-                  {isLong
-                    ? 'ยอดเงินถูกคูณ 100 เก็บเป็นสตางค์แบบจำนวนเต็ม ทศนิยมจึงไม่คลาดเคลื่อน'
-                    : 'ช่องว่าง หรือสัญลักษณ์ "฿ -" จะนับเป็น 0 และนำเข้าต่อได้ตามปกติ'}
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}

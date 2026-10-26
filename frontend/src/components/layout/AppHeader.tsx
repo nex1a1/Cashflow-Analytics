@@ -2,10 +2,9 @@ import React from 'react';
 import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
-  Calendar as CalendarIcon, HelpCircle, PiggyBank, ReceiptText, Lock,
+  Calendar as CalendarIcon, HelpCircle, PiggyBank,
   BookOpen,
 } from 'lucide-react';
-import { taxYearOf } from '@/utils/taxDeduction';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import PeriodPicker from './PeriodPicker';
 
@@ -16,7 +15,6 @@ export interface AppHeaderProps {
   transactionCount: number;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  taxEnabled?: boolean;
   portfolioEnabled?: boolean;
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
@@ -36,7 +34,6 @@ const TABS = [
   { id: 'calendar', label: 'ปฏิทิน',           icon: CalendarIcon },
   { id: 'ledger',   label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'portfolio', label: 'พอร์ตลงทุน',       icon: PiggyBank },
-  { id: 'tax',      label: 'ภาษี',             icon: ReceiptText },
   { id: 'settings', label: 'ตั้งค่าระบบ',       icon: Settings },
 ];
 
@@ -71,7 +68,7 @@ function DataActions({ isProcessing, onExport, onImport, onGuide }: {
 export default function AppHeader({
   dbStatus, transactionCount,
   activeTab, setActiveTab,
-  taxEnabled = true, portfolioEnabled = true,
+  portfolioEnabled = true,
   filterPeriod, setFilterPeriod,
   groupedOptions,
   isProcessing,
@@ -81,9 +78,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }: AppHeaderProps) {
-  const showPeriodPicker = ['insights', 'kakeibo', 'calendar', 'ledger', 'tax'].includes(activeTab);
-  // ปีภาษี = ทั้งปี: แท็บภาษีกดได้เฉพาะตอนเลือกดูทั้งปี (ถ้าอยู่ในแท็บแล้วเปลี่ยนช่วง หน้านั้นบอกให้เลือกปีเอง)
-  const taxLocked = !taxYearOf(filterPeriod);
+  const showPeriodPicker = ['insights', 'kakeibo', 'calendar', 'ledger'].includes(activeTab);
 
   // ── Logic: Snappy Processing Indicator ───────────────────
   const showProcessing = isProcessing;
@@ -175,28 +170,20 @@ export default function AppHeader({
       {/* ── Sub Header (Tab Navigation & Context Actions - Folder/Terminal Tabs) ── */}
       <div className="sticky top-0 z-30 flex flex-col md:flex-row justify-between items-stretch px-4 md:px-6 border-b border-line bg-surface-hover shadow-lg">
         <div className="flex w-full md:w-auto overflow-x-auto items-stretch" style={{ scrollbarWidth: 'none' }}>
-          {TABS.filter(t => (taxEnabled || t.id !== 'tax') && (portfolioEnabled || t.id !== 'portfolio')).map(({ id, label, icon: Icon }) => {
+          {TABS.filter(t => portfolioEnabled || t.id !== 'portfolio').map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
-            const locked = id === 'tax' && taxLocked && !isActive;
             return (
               <React.Fragment key={id}>
                 <button
-                  onClick={() => { if (!locked) setActiveTab(id); }}
-                  aria-disabled={locked || undefined}
-                  title={locked ? 'เลือกดูทั้งปีจากตัวเลือกช่วงเวลาก่อน (ปีภาษี 1 ม.ค. – 31 ธ.ค.)' : undefined}
+                  onClick={() => setActiveTab(id)}
                   className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                     isActive
                       ? 'bg-canvas text-white border-t-accent-ink border-r-line font-black'
-                      : locked
-                        ? 'text-ink-muted opacity-50 cursor-not-allowed border-t-transparent border-r-line/50'
-                        : 'text-ink-body hover:text-ink-display hover:bg-surface-hover border-t-transparent border-r-line/50'
+                      : 'text-ink-body hover:text-ink-display hover:bg-surface-hover border-t-transparent border-r-line/50'
                   }`}
                 >
-                  {locked
-                    ? <Lock className="w-4 h-4" aria-hidden />
-                    : <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-105 text-accent-ink' : 'group-hover:scale-105'}`} />}
+                  <Icon className={`w-4 h-4 transition-transform duration-150 ${isActive ? 'scale-105 text-accent-ink' : 'group-hover:scale-105'}`} />
                   <span>{label}</span>
-                  {locked && <span className="text-[11px] font-medium normal-case tracking-normal">(ดูทั้งปี)</span>}
 
                   {/* Active Indicator Underline - Bold & Sharp Static line matching performance rules */}
                   {isActive && (

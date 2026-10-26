@@ -1,14 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { pricePerDisplayUnit, signedTradeAmount, tradeSideOf, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades, xirr, portfolioAnnualReturn, sortAssets, plColor } from '../portfolioHelpers';
+import { pricePerDisplayUnit, signedTradeAmount, describePriceAge, defaultUnitLabel, formatUnits, toBaseUnits, fromBaseUnits, isGoldKind, trimNum, checkPriceSanity, describeHolding, summarizeTrades, xirr, portfolioAnnualReturn, sortAssets, plColor } from '../portfolioHelpers';
 import type { PortfolioAsset } from '@/types';
 
 describe('portfolioHelpers', () => {
-  it('ขาย = ยอดติดลบ ซื้อ = บวก และย้อนกลับได้', () => {
+  it('ขาย = ยอดติดลบ ซื้อ = บวก', () => {
     expect(signedTradeAmount('sell', 480)).toBe(-480);
     expect(signedTradeAmount('buy', 500)).toBe(500);
     expect(signedTradeAmount('sell', -480)).toBe(-480);
-    expect(tradeSideOf(-480)).toBe('sell');
-    expect(tradeSideOf(500)).toBe('buy');
   });
 
   it('ราคาเก่ากว่า 24 ชม. ถูกทำเครื่องหมาย stale พร้อมป้ายกำกับ', () => {
@@ -105,10 +103,9 @@ describe('portfolioHelpers boundaries', () => {
     price: null, priceAt: null, priceSource: null, marketValue: null, unrealized: null, unrealizedPct: null, realized: 0, oversold: false, trades: [], ...over,
   });
 
-  it('a buy is always positive, even if the number arrives negative; zero counts as a buy', () => {
+  it('a buy is always positive, even if the number arrives negative', () => {
     expect(signedTradeAmount('buy', -480)).toBe(480);
     expect(signedTradeAmount('sell', 480)).toBe(-480);
-    expect(tradeSideOf(0)).toBe('buy');
   });
 
   it('a price is stale only after more than 24 hours', () => {

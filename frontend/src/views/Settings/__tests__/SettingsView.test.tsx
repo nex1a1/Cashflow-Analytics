@@ -292,52 +292,31 @@ describe('SettingsView tab switches', () => {
   const row = (title: string) => container!.querySelector<HTMLElement>(`[role="group"][aria-label="${title}"]`);
   const sw = (label: string) => container!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 
-  it('no switch rows unless the page is given something to call', () => {
+  it('no switch row unless the page is given something to call', () => {
     mount();
-    expect(row('โหมดภาษี')).toBeNull();
     expect(row('พอร์ตลงทุน')).toBeNull();
-  });
-
-  it('the tax row appears with its handler, and defaults to on', () => {
-    mount({ onTaxEnabledChange: vi.fn() });
-    expect(row('โหมดภาษี')).not.toBeNull();
-    expect(row('พอร์ตลงทุน')).toBeNull();
-    expect(sw('เปิดโหมดภาษี').getAttribute('aria-checked')).toBe('true');
-    expect(container!.textContent).toContain('แสดงแท็บ "ภาษี" อยู่');
   });
 
   it('the portfolio row appears with its handler, and defaults to on', () => {
     mount({ onPortfolioEnabledChange: vi.fn() });
     expect(row('พอร์ตลงทุน')).not.toBeNull();
-    expect(row('โหมดภาษี')).toBeNull();
     expect(sw('เปิดพอร์ตลงทุน').getAttribute('aria-checked')).toBe('true');
     expect(container!.textContent).toContain('แสดงแท็บ "พอร์ตลงทุน" และสรุปพอร์ตในหน้าภาพรวม');
   });
 
-  it('switching off reports false for the right tab, switching on reports true', () => {
-    const tax = vi.fn(); const pf = vi.fn();
-    mount({ onTaxEnabledChange: tax, onPortfolioEnabledChange: pf });
-    click(sw('ปิดโหมดภาษี'));
-    expect(tax).toHaveBeenCalledWith(false);
-    expect(pf).not.toHaveBeenCalled();
+  it('switching off reports false, switching on reports true', () => {
+    const pf = vi.fn();
+    mount({ onPortfolioEnabledChange: pf });
     click(sw('ปิดพอร์ตลงทุน'));
     expect(pf).toHaveBeenCalledWith(false);
     click(sw('เปิดพอร์ตลงทุน'));
     expect(pf).toHaveBeenLastCalledWith(true);
   });
 
-  it('shows each row as off when told so, and says the data is kept', () => {
-    mount({ taxEnabled: false, portfolioEnabled: false, onTaxEnabledChange: vi.fn(), onPortfolioEnabledChange: vi.fn() });
-    expect(sw('ปิดโหมดภาษี').getAttribute('aria-checked')).toBe('true');
+  it('shows the row as off when told so, and says the data is kept', () => {
+    mount({ portfolioEnabled: false, onPortfolioEnabledChange: vi.fn() });
     expect(sw('ปิดพอร์ตลงทุน').getAttribute('aria-checked')).toBe('true');
-    expect(container!.textContent).toContain('ข้อมูลที่กรอกไว้ยังอยู่ครบ');
     expect(container!.textContent).toContain('ข้อมูลสินทรัพย์และรายการซื้อขายยังอยู่ครบ');
-  });
-
-  it('the two rows are independent of each other', () => {
-    mount({ taxEnabled: false, portfolioEnabled: true, onTaxEnabledChange: vi.fn(), onPortfolioEnabledChange: vi.fn() });
-    expect(sw('ปิดโหมดภาษี').getAttribute('aria-checked')).toBe('true');
-    expect(sw('เปิดพอร์ตลงทุน').getAttribute('aria-checked')).toBe('true');
   });
 });
 

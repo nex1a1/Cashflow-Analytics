@@ -57,7 +57,7 @@ const KakeiboHeader = memo(function KakeiboHeader({ periodLabel, summary: s, act
         <span className="text-[11px] text-ink-body">{incomeSources} แหล่ง</span>
       </div>
       <div className="flex flex-col gap-0.5 px-4 py-3 bg-surface">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-ink-muted"><Target className="w-3 h-3 text-savings" aria-hidden />เป้าเงินเหลือ {BUDGET_RULES.surplus.min}%</span>
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-ink-muted"><Target className="w-3 h-3 text-savings" />เป้าเงินเหลือ {BUDGET_RULES.surplus.min}%</span>
         <span className="text-xl font-black font-mono tabular-nums text-ink-display">{baht(s.goal)}</span>
         <span className="text-[11px] text-ink-body">ของรายรับ</span>
       </div>
