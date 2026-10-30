@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateSimulatedAllocation,
   sortProportionItems,
-  buildDoughnutChartData,
-  resolveDoughnutHoverIndex,
 } from '../ExpenseProportion/proportionHelpers';
 import { AllocationItemData, CategoryItemData } from '../ExpenseProportion/types';
-import { tc } from '@/constants/theme';
 
 describe('ExpenseProportion helpers', () => {
   describe('calculateSimulatedAllocation', () => {
@@ -112,42 +109,6 @@ describe('ExpenseProportion helpers', () => {
     it('preserves order when isAllocationMode is true', () => {
       const sorted = sortProportionItems(mockItems, 'amount-desc', true);
       expect(sorted.map(i => i.id)).toEqual(['cat-1', 'cat-2', 'cat-3']);
-    });
-  });
-
-  describe('resolveDoughnutHoverIndex', () => {
-    it('returns -1 for empty elements', () => {
-      expect(resolveDoughnutHoverIndex([])).toBe(-1);
-    });
-
-    it('returns direct element index for selected element', () => {
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 2 }])).toBe(2);
-      expect(resolveDoughnutHoverIndex([{ datasetIndex: 0, index: 0 }])).toBe(0);
-    });
-  });
-
-  describe('buildDoughnutChartData', () => {
-    it('creates single dataset for category mode with highlighting for hovered index', () => {
-      const mockCats: CategoryItemData[] = [
-        { id: 'c-1', name: 'C1', amount: 200, color: '#f00', percentage: '40' },
-        { id: 'c-2', name: 'C2', amount: 300, color: '#0f0', percentage: '60' },
-      ];
-
-      const chartData = buildDoughnutChartData(mockCats, 1);
-      expect(chartData.datasets).toHaveLength(1);
-      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('accent-ink')]);
-      expect(chartData.datasets[0].data).toEqual([200, 300]);
-    });
-
-    it('creates chart data with default borders when no index is hovered', () => {
-      const mockCats: CategoryItemData[] = [
-        { id: 'c-1', name: 'C1', amount: 200, color: '#f00', percentage: '40' },
-        { id: 'c-2', name: 'C2', amount: 300, color: '#0f0', percentage: '60' },
-      ];
-
-      const chartData = buildDoughnutChartData(mockCats, -1);
-      expect(chartData.datasets).toHaveLength(1);
-      expect(chartData.datasets[0].borderColor).toEqual([tc('line'), tc('line')]);
     });
   });
 });

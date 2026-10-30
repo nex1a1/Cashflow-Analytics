@@ -34,8 +34,10 @@ export interface DailyFormProps {
   onTypeChange?: (type: string) => void;
 }
 
-const INPUT = 'px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30';
-const INPUT_ERROR = 'px-3 py-2 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium transition-colors w-full bg-canvas tint-danger text-ink-display focus:ring-danger/30';
+// Chromium clips an input's text to its content box; Thai stacked marks (นี้, ที่) need ~28px at
+// text-sm, so the line box is 28px and the padding 4px — same 38px height as py-2 + 20px.
+const INPUT = 'px-3 py-1 rounded-sm border outline-hidden focus:ring-1 text-sm leading-[28px] font-medium transition-colors w-full bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30';
+const INPUT_ERROR = 'px-3 py-1 rounded-sm border outline-hidden focus:ring-1 text-sm leading-[28px] font-medium transition-colors w-full bg-canvas tint-danger text-ink-display focus:ring-danger/30';
 
 export default function DailyForm({
   onSubmitItem,

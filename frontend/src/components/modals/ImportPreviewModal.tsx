@@ -61,7 +61,7 @@ export default function ImportPreviewModal({ importPreview, setImportPreview, co
   };
   const badCount = allItems.filter(isBadAmount).length;
 
-  const inputCls = "w-full bg-surface outline-hidden text-xs px-2 py-1.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
+  const inputCls = "w-full bg-surface outline-hidden text-xs leading-6 px-2 py-0.5 rounded-none border border-line-strong text-slate-300 focus:border-accent-ink transition-colors";
 
   return (
     <div className="fixed inset-0 bg-black/75 z-100 flex items-center justify-center backdrop-blur-xs p-4 animate-in fade-in duration-200">

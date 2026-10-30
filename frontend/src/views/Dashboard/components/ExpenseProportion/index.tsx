@@ -1,8 +1,6 @@
 // src/views/Dashboard/components/ExpenseProportion/index.tsx
 import { useMemo, useState, useCallback } from 'react';
 import { Inbox, TrendingUp } from 'lucide-react';
-import { formatBaht } from '@/utils/formatters';
-import { getDoughnutChartOptions } from '@/utils/chartOptions';
 import { useDashboardContext } from '../../context/DashboardContext';
 import {
   DisplayMode,
@@ -13,20 +11,15 @@ import {
 import {
   calculateSimulatedAllocation,
   sortProportionItems,
-  buildDoughnutChartData,
-  resolveDoughnutHoverIndex,
-  hasPlanSlices,
   planOf,
 } from './proportionHelpers';
 import { ExpenseProportionHeader } from './ExpenseProportionHeader';
-import { ExpenseProportionChart } from './ExpenseProportionChart';
 import { ExpenseProportionGrid } from './ExpenseProportionGrid';
 import { AllocationEvolutionChart } from './AllocationEvolutionChart';
 import { monthKeyOf } from '@/utils/payCycle';
 import useToday from '@/hooks/useToday';
 import type { AllocationEvolutionData } from '@/utils/allocationEvolutionHelpers';
 
-import { tc } from '@/constants/theme';
 function ExpenseProportionEmpty() {
   return (
     <div className="flex flex-col w-full h-full items-center justify-center text-center text-ink-body p-10">
@@ -51,21 +44,18 @@ function AllocationEvolutionEmpty() {
   );
 }
 
-const SKELETON_KEYS = ['prop-skel-0', 'prop-skel-1', 'prop-skel-2', 'prop-skel-3', 'prop-skel-4'];
+const SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => `prop-skel-${i}`);
 
+/** Same shape as the category view: the strip, then rows in four columns. */
 function ExpenseProportionSkeleton() {
   return (
-    <div className="flex flex-row items-stretch h-32">
-      <div className="shrink-0 w-[133px] flex items-center justify-center border-r border-dashed border-line/40 bg-surface-elevated/30">
-        {/* spinner = loading feedback */}
-        <div className="w-10 h-10 rounded-full border-4 border-line border-t-accent-ink animate-spin" />
-      </div>
-      <div className="flex-1 grid grid-cols-5 gap-px bg-surface-elevated/20">
+    <div className="flex flex-col gap-3 p-3 animate-pulse">
+      <div className="h-3 bg-surface-elevated" />
+      <div className="grid grid-cols-4 gap-px bg-line">
         {SKELETON_KEYS.map((key) => (
-          <div key={key} className="p-2 bg-surface-elevated/40">
-            <div className="h-2 w-12 mb-2 rounded-none bg-surface-elevated" />
-            <div className="h-4 w-16 mb-2 rounded-none bg-surface-elevated" />
-            <div className="h-1 w-full rounded-none bg-surface-elevated" />
+          <div key={key} className="h-8 px-2.5 flex items-center gap-2 bg-surface">
+            <div className="h-2 flex-1 max-w-24 bg-surface-elevated" />
+            <div className="h-2 w-10 ml-auto bg-surface-elevated" />
           </div>
         ))}
       </div>
@@ -82,7 +72,6 @@ export function ExpenseProportion() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('category');
   const [sortMode, setSortMode] = useState<SortMode>('amount-desc');
   const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
-  const [isSliceHovered, setIsSliceHovered] = useState<boolean>(false);
   const [excludedGroupIds, setExcludedGroupIds] = useState<string[]>([]);
 
   const {
@@ -117,7 +106,6 @@ export function ExpenseProportion() {
   const changeDisplayMode = useCallback((mode: DisplayMode) => {
     setDisplayMode(mode);
     setHoveredIdx(-1);
-    setIsSliceHovered(false);
     setExcludedGroupIds([]);
   }, []);
 
@@ -151,13 +139,8 @@ export function ExpenseProportion() {
     return sortProportionItems(sortedCats, sortMode, false);
   }, [sortedCats, sortMode]);
 
-  // money dated after today (entered ahead): drawn hatched, summed for the centre of the doughnut
-  const hasPlan = useMemo(() => hasPlanSlices(activeItems), [activeItems]);
+  // money dated after today (entered ahead): drawn hatched in the cells, summed in the header
   const planTotal = useMemo(() => activeItems.reduce((sum, i) => sum + planOf(i), 0), [activeItems]);
-
-  const activeChartData = useMemo(() => {
-    return buildDoughnutChartData(activeItems, hoveredIdx);
-  }, [activeItems, hoveredIdx]);
 
   const allocationTotal = useMemo(() => {
     return totalIncome || (totalExpense + Math.max(0, netCashflow || 0));
@@ -169,79 +152,14 @@ export function ExpenseProportion() {
     ? evolutionData.months.filter(m => m.total > 0).length
     : activeItems.length;
 
-  const handleChartMouseLeave = useCallback(() => {
-    setIsSliceHovered(false);
-    setHoveredIdx(-1);
-  }, []);
-
-  const options = useMemo(() => {
-    const baseOptions = getDoughnutChartOptions();
-    return {
-      ...baseOptions,
-      cutout: '64%', 
-      onHover: (_event: any, elements: any[]) => {
-        const hasElements = Boolean(elements && elements.length > 0);
-        setIsSliceHovered(hasElements);
-        const hoverIdx = resolveDoughnutHoverIndex(elements, hasPlan);
-        setHoveredIdx(hoverIdx);
-      },
-      plugins: {
-        ...baseOptions.plugins,
-        tooltip: {
-          enabled: true,
-          backgroundColor: tc('surface'),
-          borderColor: tc('line'),
-          borderWidth: 1,
-          cornerRadius: 0, // Sharp Ferrari border
-          titleColor: tc('ink-display'),
-          titleFont: { family: 'Inter', size: 11, weight: 'bold' as const },
-          bodyColor: tc('gray-300'),
-          bodyFont: { family: 'Inter', size: 11 },
-          padding: 8,
-          boxPadding: 4,
-          usePointStyle: true,
-          callbacks: {
-            label: (context: any) => {
-              const val = context.parsed;
-              // with plan arcs every item owns two slices (actual, plan)
-              const isPlanArc = hasPlan && context.dataIndex % 2 === 1;
-              const item = activeItems[hasPlan ? Math.floor(context.dataIndex / 2) : context.dataIndex];
-              const pct = item?.percentage;
-              const tail = isPlanArc ? ' · แผน (ยังไม่ถึง)' : '';
-              if (pct && !hasPlan) {
-                return ` ${formatBaht(val)} (${pct}%)${tail}`;
-              }
-              return ` ${formatBaht(val)}${tail}`;
-            }
-          }
-        }
-      }
-    };
-  }, [activeItems, hasPlan]);
-  
   const cardClass = "rounded-none border flex flex-col w-full bg-canvas border-line relative overflow-visible z-10";
   const isEmpty = !isEvolutionMode && itemCount === 0 && !showSkeleton;
   const hasNoIncomeData = isAllocationMode && totalIncome <= 0;
 
-  const activeHoveredItem = (!isSliceHovered && hoveredIdx >= 0 && hoveredIdx < activeItems.length)
-    ? activeItems[hoveredIdx]
-    : null;
-
   const categoryAllocationBody = isEmpty ? (
     <ExpenseProportionEmpty />
   ) : (
-    <div className="flex flex-row items-stretch h-full min-h-[196px]">
-      <ExpenseProportionChart
-        activeChartData={activeChartData}
-        options={options}
-        isAllocationMode={isAllocationMode}
-        activeTotal={activeTotal}
-        onMouseLeave={handleChartMouseLeave}
-        isSliceHovered={isSliceHovered}
-        hoveredItem={activeHoveredItem}
-        activeItems={activeItems}
-        planTotal={planTotal}
-      />
+    <div className="flex flex-row items-stretch h-full">
       <ExpenseProportionGrid
         categoryItems={categoryActiveItems}
         allocationItems={simulatedAllocation}
@@ -277,7 +195,9 @@ export function ExpenseProportion() {
         hasNoIncomeData={hasNoIncomeData}
         evolutionEligible={evolutionData.eligible}
         evolutionLabel={evolutionData.label}
-        hasPlan={hasPlan && !isEvolutionMode}
+        hasPlan={planTotal > 0 && !isEvolutionMode}
+        total={isEvolutionMode || isEmpty ? undefined : activeTotal}
+        planTotal={planTotal}
       />
 
       {showSkeleton ? (

@@ -101,7 +101,7 @@ export const MainChartCategorySelector = memo(({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="ค้นหาหมวดหมู่..."
-          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-sm border outline-hidden font-medium transition-colors bg-surface border-line text-slate-200 focus:border-slate-400 placeholder-slate-600"
+          className="w-full pl-8 pr-7 py-0.5 text-xs leading-6 rounded-sm border outline-hidden font-medium transition-colors bg-surface border-line text-slate-200 focus:border-slate-400 placeholder-slate-600"
         />
         {searchQuery && (
           <button

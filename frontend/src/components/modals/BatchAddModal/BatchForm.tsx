@@ -120,8 +120,8 @@ function BatchForm({
   const handleKeyDown = submitOnEnter(submit);
 
   const tokens = {
-    input: "w-full h-9 px-3 text-xs border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
-    inputError: "w-full h-9 px-3 text-xs border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
+    input: "w-full py-[5px] px-3 text-xs leading-6 border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
+    inputError: "w-full py-[5px] px-3 text-xs leading-6 border rounded-none outline-hidden focus:ring-1 transition-colors bg-canvas tint-danger text-ink-display focus:ring-danger/30",
     label: "block text-[11px] font-bold uppercase mb-1.5 text-slate-400"
   };
 

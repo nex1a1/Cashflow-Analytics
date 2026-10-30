@@ -2,11 +2,14 @@ import db from '../config/db';
 import { CashflowGroup } from '../types';
 import { ApiError } from '../middleware/ApiError';
 import transactionService from './transactionService';
+import { log } from '../utils/logger';
 
 interface GroupResponse extends Omit<CashflowGroup, 'highlight_bg'> {
   highlightBg: boolean;
   highlight_bg: number;
 }
+
+const GROUP_TYPE_LABEL: Record<string, string> = { income: 'รายรับ', expense: 'รายจ่าย', savings: 'ลงทุน/ออม' };
 
 class GroupService {
   getAll(): GroupResponse[] {
@@ -35,7 +38,7 @@ class GroupService {
         icon = excluded.icon,
         highlight_bg = excluded.highlight_bg
     `);
-    return stmt.run(
+    const result = stmt.run(
       group.id,
       group.name,
       group.type,
@@ -46,12 +49,17 @@ class GroupService {
       group.icon || null,
       group.highlightBg ? 1 : 0
     );
+    log.info('db', `กลุ่ม "${group.name}" (${GROUP_TYPE_LABEL[group.type] ?? group.type})`);
+    return result;
   }
 
   delete(id: string) {
     const n = (db.prepare('SELECT COUNT(*) AS c FROM categories WHERE cashflow_group_id = ?').get(id) as { c: number }).c;
     if (n > 0) throw new ApiError(409, `ลบกลุ่มไม่ได้: ยังมี ${n} หมวดหมู่ในกลุ่มนี้ ย้ายหรือลบหมวดหมู่ก่อน`);
-    return db.prepare('DELETE FROM cashflow_groups WHERE id = ?').run(id);
+    const row = db.prepare('SELECT name FROM cashflow_groups WHERE id = ?').get(id) as { name: string } | undefined;
+    const result = db.prepare('DELETE FROM cashflow_groups WHERE id = ?').run(id);
+    if (result.changes > 0) log.info('db', `ลบกลุ่ม "${row?.name ?? id}"`);
+    return result;
   }
 }
 

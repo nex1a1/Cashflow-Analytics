@@ -26,12 +26,6 @@ export interface DayType {
   order_index: number;
 }
 
-export interface CalendarDay {
-  date: string; // YYYY-MM-DD
-  day_type_id: string;
-  note?: string | null;
-}
-
 export interface Transaction {
   id: string;
   date: string; // YYYY-MM-DD

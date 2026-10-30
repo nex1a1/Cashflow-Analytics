@@ -101,7 +101,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
 
           <div className="p-3.5 flex flex-col gap-2.5">
             {/* 1. Search Bar */}
-            <div className="flex items-center gap-2.5 bg-neutral-900/90 border border-neutral-800/90 px-3 py-2 rounded-md focus-within:border-neutral-600 transition-colors">
+            <div className="flex items-center gap-2.5 bg-neutral-900/90 border border-neutral-800/90 px-3 py-1 rounded-md focus-within:border-neutral-600 transition-colors">
               <Search size={15} className="text-neutral-400 shrink-0" />
               <input
                 ref={searchInputRef}
@@ -109,7 +109,7 @@ export default function IconPicker({ icon, color, onChange }: IconPickerProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="ค้นหาไอคอน (เช่น กาแฟ, รถ, สบู่, ครอบครัว, อั่งเปา, ช้อปปิ้ง)..."
-                className="w-full bg-transparent text-xs text-white placeholder-neutral-500 outline-hidden font-medium"
+                className="w-full bg-transparent text-xs leading-6 text-white placeholder-neutral-500 outline-hidden font-medium"
               />
               {searchTerm && (
                 <button

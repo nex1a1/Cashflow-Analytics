@@ -1,10 +1,7 @@
 // src/views/Calendar/utils/calendarPeriodHelpers.ts
 import { DayType } from '../../../types';
 
-export const THAI_MONTHS = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
+export { THAI_MONTHS } from '@/utils/formatters';
 
 export const DAY_OF_WEEK_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 

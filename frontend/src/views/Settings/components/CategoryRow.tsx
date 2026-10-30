@@ -45,7 +45,7 @@ const CategoryRow = memo(({
 
   const currentGroupValid = !cat.cashflowGroup || filteredGroups.some(g => g.id === cat.cashflowGroup);
 
-  const inputCls = `px-2 py-1.5 border outline-hidden font-semibold text-[13px] flex-1 min-w-0 rounded-sm bg-canvas border-line ${accentFocus} text-ink-display placeholder-ink-muted`;
+  const inputCls = `px-2 py-[3px] border outline-hidden font-semibold text-[13px] leading-[27px] flex-1 min-w-0 rounded-sm bg-canvas border-line ${accentFocus} text-ink-display placeholder-ink-muted`;
 
   const selectTheme = !currentGroupValid
     ? 'border-warn/50 bg-warn/10 text-warn focus:border-warn'

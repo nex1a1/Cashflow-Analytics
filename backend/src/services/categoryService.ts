@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { Category } from '../types';
 import { ApiError } from '../middleware/ApiError';
 import transactionService from './transactionService';
+import { log } from '../utils/logger';
 
 interface CategoryWithDetails extends Category {
   group_type: 'income' | 'expense' | 'savings';
@@ -37,7 +38,7 @@ class CategoryService {
         order_index = excluded.order_index,
         cashflow_group_id = excluded.cashflow_group_id
     `);
-    return stmt.run(
+    const result = stmt.run(
       id,
       category.name,
       category.icon || null,
@@ -45,6 +46,9 @@ class CategoryService {
       category.order_index || 0,
       category.cashflow_group_id
     );
+    const group = db.prepare('SELECT name FROM cashflow_groups WHERE id = ?').get(category.cashflow_group_id) as { name: string } | undefined;
+    log.info('db', `หมวดหมู่ "${category.name}" ในกลุ่ม "${group?.name ?? category.cashflow_group_id}"`);
+    return result;
   }
 
   getById(id: string): { id: string; name: string } | undefined {
@@ -58,12 +62,15 @@ class CategoryService {
     // the UI only knows the rows of the period it has loaded, so the real guard has to live here
     const live = (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE category_id = ? AND is_deleted = 0').get(id) as { c: number }).c;
     if (live > 0) throw new ApiError(409, `ลบไม่ได้: หมวดนี้ยังมี ${live} รายการ ลบหรือย้ายรายการเหล่านั้นไปหมวดอื่นก่อน`);
+    const name = this.getById(id)?.name ?? id;
     return db.transaction(() => {
       // แถวที่ถูกลบแบบ soft (is_deleted = 1) ยังอ้างอิงหมวดนี้อยู่ ต้องลบทิ้งก่อนไม่งั้นติด FOREIGN KEY
       db.prepare('DELETE FROM transactions WHERE category_id = ?').run(id);
       
       // จากนั้นค่อยลบหมวดหมู่
-      return db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+      const result = db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+      if (result.changes > 0) log.info('db', `ลบหมวดหมู่ "${name}"`);
+      return result;
     })();
   }
 }

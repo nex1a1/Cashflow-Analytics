@@ -458,3 +458,153 @@ describe('LedgerTable — typing a page number', () => {
     expect(pageInput().value).toBe('2');
   });
 });
+
+describe('LedgerTable — moving rows to another day', () => {
+  const move = vi.fn();
+  const trigger = (r: HTMLElement) => r.querySelector<HTMLButtonElement>('[data-date-trigger]')!;
+  const editor = () => q<HTMLInputElement>('[role="dialog"] input')!;
+  const modClick = (el: Element, mods: MouseEventInit) => act(() => { el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...mods })); });
+  const three = () => [row('a', { date: '2026-01-05' }), row('b', { date: '2026-01-06' }), row('c', { date: '2026-01-31' })];
+  beforeEach(() => move.mockReset().mockResolvedValue(true));
+
+  it('every row, first of its day or not, has a date button that opens the editor', () => {
+    mount({ currentData: [row('a'), row('b')], handleMoveTransactions: move });
+    expect(rows().every(r => trigger(r))).toBe(true);
+    click(trigger(rows()[1]));
+    expect(editor().value).toBe('2026-01-05');
+    expect(q('[role="dialog"]')!.textContent).toContain('ย้ายไปวันที่');
+  });
+
+  it('Enter moves just that row; Esc cancels without saving', async () => {
+    mount({ currentData: three(), handleMoveTransactions: move });
+    click(trigger(rows()[0]));
+    type(editor(), '2026-02-01');
+    expect(q('[role="dialog"]')!.textContent).toContain('1 ก.พ. 26');
+    key(editor(), 'Enter');
+    await flush();
+    expect(move).toHaveBeenCalledWith([{ id: 'a', date: '2026-02-01' }]);
+    expect(q('[role="dialog"]')).toBeNull();
+
+    click(trigger(rows()[1]));
+    key(editor(), 'Escape');
+    expect(q('[role="dialog"]')).toBeNull();
+    expect(move).toHaveBeenCalledTimes(1);
+  });
+
+  it('arrow keys step the date; an invalid entry shows the hint and does not save', () => {
+    mount({ currentData: three(), handleMoveTransactions: move });
+    click(trigger(rows()[0]));
+    key(editor(), 'ArrowUp');
+    expect(editor().value).toBe('2026-01-06');
+    type(editor(), 'xx');
+    expect(editor().getAttribute('aria-invalid')).toBe('true');
+    key(editor(), 'Enter');
+    expect(move).not.toHaveBeenCalled();
+  });
+
+  it('Ctrl+click picks rows, Shift+click a range; the date editor then moves them all', async () => {
+    mount({ currentData: three(), handleMoveTransactions: move });
+    modClick(cell(rows()[0], 3), { ctrlKey: true });
+    modClick(cell(rows()[2], 3), { shiftKey: true });
+    expect(rows().map(r => r.getAttribute('aria-selected'))).toEqual(['true', 'true', 'true']);
+    expect(footer()).toContain('เลือก 3');
+
+    click(trigger(rows()[1]));
+    expect(q('[role="dialog"]')!.textContent).toContain('ย้าย 3 รายการ');
+    type(editor(), '+1m');
+    expect(q('[role="dialog"]')!.textContent).toContain('เลื่อน +1 เดือน');
+    key(editor(), 'Enter');
+    await flush();
+    expect(move).toHaveBeenCalledWith([
+      { id: 'a', date: '2026-02-05' }, { id: 'b', date: '2026-02-06' }, { id: 'c', date: '2026-02-28' },
+    ]);
+    expect(rows().some(r => r.getAttribute('aria-selected') === 'true')).toBe(false);
+  });
+
+  it('Ctrl+click again unpicks; a plain click or Esc clears the selection', () => {
+    mount({ currentData: three(), handleMoveTransactions: move });
+    modClick(cell(rows()[0], 3), { ctrlKey: true });
+    modClick(cell(rows()[1], 3), { ctrlKey: true });
+    modClick(cell(rows()[0], 3), { ctrlKey: true });
+    expect(rows().map(r => r.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    click(cell(rows()[2], 3));
+    expect(rows()[1].getAttribute('aria-selected')).toBeNull();
+
+    modClick(cell(rows()[0], 3), { ctrlKey: true });
+    key(document.body, 'Escape');
+    expect(rows()[0].getAttribute('aria-selected')).toBeNull();
+  });
+
+  it('a row outside the selection moves alone', async () => {
+    mount({ currentData: three(), handleMoveTransactions: move });
+    modClick(cell(rows()[0], 3), { ctrlKey: true });
+    click(trigger(rows()[2]));
+    type(editor(), '25');
+    key(editor(), 'Enter');
+    await flush();
+    expect(move).toHaveBeenCalledWith([{ id: 'c', date: '2026-01-25' }]);
+  });
+});
+
+describe('LedgerTable — move calendar', () => {
+  const move = vi.fn();
+  const open = () => { click(container!.querySelector('[data-date-trigger]')); };
+  const dialog = () => q('[role="dialog"]')!;
+  beforeEach(() => move.mockReset().mockResolvedValue(true));
+
+  it('shows the row month with the old day marked; clicking a day moves there at once', async () => {
+    mount({ currentData: [row('a', { date: '2026-01-05' })], handleMoveTransactions: move });
+    open();
+    expect(dialog().textContent).toContain('มกราคม 2026');
+    expect(q('[data-day="2026-01-05"]')!.getAttribute('title')).toBe('วันเดิม');
+    click(q('[data-day="2026-01-20"]'));
+    await flush();
+    expect(move).toHaveBeenCalledWith([{ id: 'a', date: '2026-01-20' }]);
+    expect(q('[role="dialog"]')).toBeNull();
+  });
+
+  it('the month title opens a 12-month grid with year arrows for long jumps', async () => {
+    mount({ currentData: [row('a', { date: '2026-01-05' })], handleMoveTransactions: move });
+    open();
+    click(byText('[role="dialog"] button', 'มกราคม 2026'));
+    click(q('[aria-label="ปีถัดไป"]'));
+    click(byText('[role="dialog"] button', 'มิ.ย.'));
+    expect(dialog().textContent).toContain('มิถุนายน 2027');
+    click(q('[data-day="2027-06-25"]'));
+    await flush();
+    expect(move).toHaveBeenCalledWith([{ id: 'a', date: '2027-06-25' }]);
+  });
+
+  it('typing a date moves the calendar to its month', () => {
+    mount({ currentData: [row('a', { date: '2026-01-05' })], handleMoveTransactions: move });
+    open();
+    type(q('[role="dialog"] input'), '3/11/2569');
+    expect(dialog().textContent).toContain('พฤศจิกายน 2026');
+    expect(q('[data-day="2026-11-03"]')!.className).toContain('bg-accent');
+  });
+
+  it('with several rows picked, a clicked day sends them all to that date', async () => {
+    mount({ currentData: [row('a', { date: '2026-01-05' }), row('b', { date: '2026-01-09' })], handleMoveTransactions: move });
+    const tr = rows();
+    act(() => { cell(tr[0], 3).dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true })); });
+    act(() => { cell(tr[1], 3).dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true })); });
+    click(tr[1].querySelector('[data-date-trigger]'));
+    click(q('[data-day="2026-01-30"]'));
+    await flush();
+    expect(move).toHaveBeenCalledWith([{ id: 'a', date: '2026-01-30' }, { id: 'b', date: '2026-01-30' }]);
+  });
+});
+
+describe('LedgerTable — date hover colour', () => {
+  it('the date button carries its day-of-week colour, the same one as the day badge', async () => {
+    const { readable } = await import('@/constants/theme');
+    const { getThaiDayInfo } = await import('@/utils/formatters');
+    mount({ currentData: [row('a', { date: '2026-01-04' }), row('b', { date: '2026-01-04' }), row('c', { date: '2026-01-05' })], handleMoveTransactions: vi.fn() });
+    const ink = (r: HTMLElement) => r.querySelector<HTMLElement>('[data-date-trigger]')!.style.getPropertyValue('--day-ink');
+    const [sun, sunAgain, mon] = rows();
+    expect(ink(sun)).toBe(readable(getThaiDayInfo('2026-01-04')!.color));
+    expect(ink(sunAgain)).toBe(ink(sun)); // the ↳ row too
+    expect(ink(mon)).toBe(readable(getThaiDayInfo('2026-01-05')!.color));
+    expect(ink(mon)).not.toBe(ink(sun));
+  });
+});

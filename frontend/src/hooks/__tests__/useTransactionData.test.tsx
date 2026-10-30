@@ -539,3 +539,57 @@ describe('handleDeleteAllData', () => {
     timer.mockRestore();
   });
 });
+
+describe('handleMoveTransactions', () => {
+  async function withRows() {
+    api.transactionService.getAll.mockResolvedValue([row('a', '2026-10-01', { description: 'ค่าไฟ' }), row('b', '2026-10-02'), row('c', '2026-10-03')]);
+    const hook = mount();
+    await act(async () => { await hook.result.current.d.loadData('2026-10-01', '2026-10-31'); });
+    return hook;
+  }
+
+  it('saves every moved row in one call and offers undo with the old dates', async () => {
+    const { result } = await withRows();
+    api.transactionService.save.mockClear();
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.d.handleMoveTransactions([{ id: 'a', date: '2026-10-25' }, { id: 'b', date: '2026-10-25' }]); });
+    expect(ok).toBe(true);
+    expect(api.transactionService.save).toHaveBeenCalledTimes(1);
+    expect(api.transactionService.save.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ id: 'a', date: '2026-10-25' }),
+      expect.objectContaining({ id: 'b', date: '2026-10-25' }),
+    ]);
+    expect(result.current.toast).toMatchObject({ type: 'info', message: 'ย้าย 2 รายการ ไป 25 ต.ค. 26 แล้ว' });
+
+    api.transactionService.save.mockClear();
+    await act(async () => { await result.current.toast.action!.onClick(); });
+    expect(api.transactionService.save.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ id: 'a', date: '2026-10-01' }),
+      expect.objectContaining({ id: 'b', date: '2026-10-02' }),
+    ]);
+  });
+
+  it('one row is named by its description; rows already on that date are skipped', async () => {
+    const { result } = await withRows();
+    api.transactionService.save.mockClear();
+    await act(async () => { await result.current.d.handleMoveTransactions([{ id: 'a', date: '2026-11-01' }, { id: 'c', date: '2026-10-03' }]); });
+    expect(api.transactionService.save.mock.calls[0][0]).toEqual([expect.objectContaining({ id: 'a' })]);
+    expect(result.current.toast.message).toMatch(/^ย้าย "ค่าไฟ" ไป /);
+  });
+
+  it('nothing to move: no save', async () => {
+    const { result } = await withRows();
+    api.transactionService.save.mockClear();
+    await act(async () => { await result.current.d.handleMoveTransactions([{ id: 'a', date: '2026-10-01' }]); });
+    expect(api.transactionService.save).not.toHaveBeenCalled();
+  });
+
+  it('a failed save puts the old dates back', async () => {
+    const { result } = await withRows();
+    api.transactionService.save.mockRejectedValueOnce(new Error('x'));
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.d.handleMoveTransactions([{ id: 'a', date: '2026-10-09' }]); });
+    expect(ok).toBe(false);
+    expect(result.current.d.transactions.map(t => `${t.id}:${t.date}`)).toEqual(['a:2026-10-01', 'b:2026-10-02', 'c:2026-10-03']);
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getComboChartOptions, getBarChartOptions, getLineChartOptions, getDoughnutChartOptions } from '../chartOptions';
+import { getComboChartOptions, getBarChartOptions, getLineChartOptions } from '../chartOptions';
 import { tc } from '@/constants/theme';
 
 const tick = (opts: any, axis: 'y' | 'y1' = 'y') => (v: unknown) => opts.scales[axis].ticks.callback(v);
@@ -87,10 +87,6 @@ describe('tooltips', () => {
     }
   });
 
-  it('the doughnut uses the slice label and its raw value', () => {
-    expect((getDoughnutChartOptions() as any).plugins.tooltip.callbacks.label(ctx)).toBe(' อาหาร: 1,234.50 ฿');
-  });
-
   it('a flat tooltip with the theme colours and sharp corners', () => {
     const t = (getLineChartOptions() as any).plugins.tooltip;
     expect(t.backgroundColor).toBe(tc('surface'));
@@ -99,13 +95,9 @@ describe('tooltips', () => {
   });
 
   it('the legend is off (the page draws its own) and animation follows the global default', () => {
-    for (const o of [getComboChartOptions(), getLineChartOptions(), getDoughnutChartOptions()] as any[]) {
+    for (const o of [getComboChartOptions(), getLineChartOptions()] as any[]) {
       expect(o.plugins.legend.display).toBe(false);
       expect(o.animation).toBeUndefined(); // inherits the global short animation (main.tsx)
     }
-  });
-
-  it('the doughnut keeps a thin ring-3', () => {
-    expect((getDoughnutChartOptions() as any).cutout).toBe('70%');
   });
 });

@@ -513,7 +513,7 @@ export default function CategoryMatrixFilter({
                 placeholder="ค้นหา..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-24 sm:w-28 pl-6 pr-5 py-0.5 border rounded-none outline-hidden text-[11px] font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted"
+                className="w-24 sm:w-28 pl-6 pr-5 py-0 border rounded-none outline-hidden text-[11px] leading-[22px] font-semibold bg-surface border-line text-ink-soft focus:border-accent-ink placeholder-ink-muted"
               />
               {searchTerm && (
                 <button 

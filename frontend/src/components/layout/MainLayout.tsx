@@ -69,7 +69,7 @@ export default function MainLayout() {
     dbStatus, isProcessing, isCsvProcessing,
     importPreview, setImportPreview, fileInputRef,
     rowsRange, refreshData, handleSaveTransaction, handleUpdateTransaction,
-    handleDeleteTransaction, handleDeleteAllData,
+    handleDeleteTransaction, handleMoveTransactions, handleDeleteAllData,
     handleSaveBatch, handleFileUpload, confirmImport,
     handleCategoryChange, handleDeleteCategory, handleAddCategory, handleMoveCategory,
     handleDayTypeChange, dayNotes, handleDayNoteChange, handleDayTypeConfigChange, handleAddDayType,
@@ -229,6 +229,7 @@ export default function MainLayout() {
                   handleOpenAddModal={handleOpenAddModal}
                   handleUpdateTransaction={handleUpdateTransaction}
                   handleDeleteTransaction={handleDeleteTransaction}
+                  handleMoveTransactions={handleMoveTransactions}
                   cashflowGroups={cashflowGroups}
                   categories={categories}
                   advancedFilterCategory={advancedFilterCategory}

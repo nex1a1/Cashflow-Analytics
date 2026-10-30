@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import db from '../config/db';
+import { log } from '../utils/logger';
 import crypto from 'node:crypto';
 import { recreateViews, recreateTriggersAndIndexes } from './views';
 
@@ -23,7 +24,7 @@ export const migrateTablesToStrict = (): void => {
     return;
   }
 
-  console.log(`เริ่มต้นกระบวนการยกระดับความปลอดภัย SQLite STRICT Mode (${tablesToMigrate.join(', ')})...`);
+  log.info('schema', `เริ่มต้นกระบวนการยกระดับความปลอดภัย SQLite STRICT Mode (${tablesToMigrate.join(', ')})...`);
 
   db.pragma('foreign_keys = OFF');
 
@@ -182,14 +183,14 @@ export const migrateTablesToStrict = (): void => {
   db.pragma('foreign_keys = ON');
   recreateViews();
   recreateTriggersAndIndexes();
-  console.log('ทุกตารางถูกยกระดับเป็น SQLite STRICT Mode สำเร็จ 100% (ไร้การสูญหายของข้อมูล)');
+  log.info('schema', 'ทุกตารางถูกยกระดับเป็น SQLite STRICT Mode สำเร็จ 100% (ไร้การสูญหายของข้อมูล)');
 };
 
 /** รายรับไม่ใช้ NEED/WANT — ล้างค่า default 'want' ที่ค้างอยู่ในกลุ่มรายรับ (idempotent) */
 export const clearIncomeAllocation = (): void => {
   try {
     const r = db.prepare("UPDATE cashflow_groups SET allocation_type = NULL WHERE type = 'income' AND allocation_type IS NOT NULL").run();
-    if (r.changes > 0) console.log(`ล้าง allocation_type ของกลุ่มรายรับ ${r.changes} กลุ่ม`);
+    if (r.changes > 0) log.info('schema', `ล้าง allocation_type ของกลุ่มรายรับ ${r.changes} กลุ่ม`);
   } catch {
     // ครั้งแรกที่ยังไม่มีตาราง — จะถูกเรียกอีกครั้งหลัง seed
   }
@@ -205,7 +206,7 @@ export const promoteSavingsGroups = (): void => {
     if (done) return;
     const r = db.prepare("UPDATE cashflow_groups SET type = 'savings' WHERE type = 'expense' AND allocation_type = 'savings'").run();
     db.prepare("INSERT INTO settings (key, value) VALUES ('savings_groups_promoted', 'true')").run();
-    if (r.changes > 0) console.log(`ย้ายกลุ่มลงทุน/ออม ${r.changes} กลุ่ม ออกจากรายจ่ายเป็นชนิด savings`);
+    if (r.changes > 0) log.info('schema', `ย้ายกลุ่มลงทุน/ออม ${r.changes} กลุ่ม ออกจากรายจ่ายเป็นชนิด savings`);
   } catch {
     // ตาราง cashflow_groups ยังไม่มี (DB ใหม่) — ไม่มีอะไรต้องย้าย
   }
@@ -220,7 +221,7 @@ export const ensureCalendarNoteIcon = (database: Database.Database = db): void =
   const cols = (database.prepare('PRAGMA table_info(calendar_days)').all() as { name: string }[]).map(c => c.name);
   if (cols.length > 0 && !cols.includes('note_icon')) {
     database.exec('ALTER TABLE calendar_days ADD COLUMN note_icon TEXT');
-    console.log('เพิ่มคอลัมน์ note_icon ในตารางบันทึกปฏิทินวัน (Calendar Days) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ note_icon ในตารางบันทึกปฏิทินวัน (Calendar Days) เรียบร้อย');
   }
 };
 
@@ -291,10 +292,10 @@ export const ensureInvestmentSchema = (): void => {
       db.exec('DROP VIEW IF EXISTS v_monthly_summary; DROP VIEW IF EXISTS v_daily_burn; DROP VIEW IF EXISTS v_category_monthly;');
       recreateViews();
       db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('signed_savings_views', 'true')").run();
-      console.log('เพิ่มโครงสร้างระบบลงทุน (assets, price_cache, คอลัมน์ซื้อขาย) และสร้าง view ใหม่');
+      log.info('schema', 'เพิ่มโครงสร้างระบบลงทุน (assets, price_cache, คอลัมน์ซื้อขาย) และสร้าง view ใหม่');
     }
   } catch (e: any) {
-    console.warn('[WARN] ไม่สามารถเตรียมโครงสร้างระบบลงทุนได้:', e.message);
+    log.warn('schema', 'ไม่สามารถเตรียมโครงสร้างระบบลงทุนได้:', e.message);
   }
 };
 
@@ -304,19 +305,19 @@ const verifyTransactionColumns = (): void => {
 
   if (!txCols.has('is_deleted')) {
     db.exec("ALTER TABLE transactions ADD COLUMN is_deleted INTEGER DEFAULT 0");
-    console.log('เพิ่มคอลัมน์ is_deleted ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ is_deleted ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
   }
   if (!txCols.has('category_id')) {
     try {
       db.exec("ALTER TABLE transactions ADD COLUMN category_id TEXT DEFAULT '1'");
-      console.log('เพิ่มคอลัมน์ category_id ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
+      log.info('schema', 'เพิ่มคอลัมน์ category_id ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
     } catch (_e: unknown) {
       // Ignored: category_id column may already exist in certain SQLite environments
     }
   }
   if (!txCols.has('allocation_type')) {
     db.exec("ALTER TABLE transactions ADD COLUMN allocation_type TEXT DEFAULT 'want'");
-    console.log('เพิ่มคอลัมน์ allocation_type ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ allocation_type ในตารางรายการธุรกรรม (Transactions) เรียบร้อย');
     
     // ย้ายค่า allocation_type จากกลุ่มมาใส่ที่รายการธุรกรรม
     try {
@@ -330,9 +331,9 @@ const verifyTransactionColumns = (): void => {
         )
         WHERE allocation_type = 'want'
       `);
-      console.log('ย้ายการตั้งค่าสัดส่วน (allocation_type) จากกลุ่มมาไว้ที่แต่ละรายการธุรกรรมเรียบร้อย');
+      log.info('schema', 'ย้ายการตั้งค่าสัดส่วน (allocation_type) จากกลุ่มมาไว้ที่แต่ละรายการธุรกรรมเรียบร้อย');
     } catch (e: any) {
-      console.warn('[WARN] เกิดข้อผิดพลาดขณะย้ายข้อมูลสัดส่วนธุรกรรม:', e.message);
+      log.warn('schema', 'เกิดข้อผิดพลาดขณะย้ายข้อมูลสัดส่วนธุรกรรม:', e.message);
     }
   }
 
@@ -348,9 +349,9 @@ const verifyTransactionColumns = (): void => {
         WHERE cg.type = 'income'
       )
     `);
-    console.log('เคลียร์ค่าสัดส่วนในรายการรายได้ให้เป็นค่าว่าง (NULL) เรียบร้อย');
+    log.info('schema', 'เคลียร์ค่าสัดส่วนในรายการรายได้ให้เป็นค่าว่าง (NULL) เรียบร้อย');
   } catch (e: any) {
-    console.warn('[WARN] เกิดข้อผิดพลาดขณะเคลียร์สัดส่วนรายได้:', e.message);
+    log.warn('schema', 'เกิดข้อผิดพลาดขณะเคลียร์สัดส่วนรายได้:', e.message);
   }
 };
 
@@ -359,14 +360,14 @@ const verifyCategoryColumns = (): void => {
   const catCols = catInfo.map(c => c.name);
   if (catCols.length > 0 && !catCols.includes('order_index')) {
     db.exec("ALTER TABLE categories ADD COLUMN order_index INTEGER DEFAULT 0");
-    console.log('เพิ่มคอลัมน์ order_index ในตารางหมวดหมู่ย่อย (Categories) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ order_index ในตารางหมวดหมู่ย่อย (Categories) เรียบร้อย');
   }
   if (catCols.includes('is_fixed')) {
     try {
       db.exec("ALTER TABLE categories DROP COLUMN is_fixed");
-      console.log('ลบคอลัมน์ is_fixed ออกจากตารางหมวดหมู่ย่อย (Categories) เรียบร้อย');
+      log.info('schema', 'ลบคอลัมน์ is_fixed ออกจากตารางหมวดหมู่ย่อย (Categories) เรียบร้อย');
     } catch (e: any) {
-      console.warn('[WARN] ไม่สามารถลบคอลัมน์ is_fixed ได้:', e.message);
+      log.warn('schema', 'ไม่สามารถลบคอลัมน์ is_fixed ได้:', e.message);
     }
   }
 };
@@ -376,15 +377,15 @@ const verifyGroupColumns = (): void => {
   const groupCols = groupInfo.map(c => c.name);
   if (groupCols.length > 0 && !groupCols.includes('order_index')) {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN order_index INTEGER DEFAULT 0");
-    console.log('เพิ่มคอลัมน์ order_index ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ order_index ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
   }
   if (groupCols.length > 0 && !groupCols.includes('highlight_bg')) {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN highlight_bg INTEGER DEFAULT 0");
-    console.log('เพิ่มคอลัมน์ highlight_bg ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ highlight_bg ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
   }
   if (groupCols.length > 0 && !groupCols.includes('allocation_type')) {
     db.exec("ALTER TABLE cashflow_groups ADD COLUMN allocation_type TEXT DEFAULT 'want'");
-    console.log('เพิ่มคอลัมน์ allocation_type ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ allocation_type ในตารางกลุ่มรายจ่าย (Cashflow Groups) เรียบร้อย');
   }
 };
 
@@ -393,11 +394,11 @@ const verifyDayTypeColumns = (): void => {
   const dayTypeCols = dayTypeInfo.map(c => c.name);
   if (dayTypeCols.length > 0 && !dayTypeCols.includes('name')) {
     db.exec("ALTER TABLE day_types ADD COLUMN name TEXT DEFAULT ''");
-    console.log('เพิ่มคอลัมน์ name ในตารางประเภทวัน (Day Types) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ name ในตารางประเภทวัน (Day Types) เรียบร้อย');
   }
   if (dayTypeCols.length > 0 && !dayTypeCols.includes('order_index')) {
     db.exec("ALTER TABLE day_types ADD COLUMN order_index INTEGER DEFAULT 0");
-    console.log('เพิ่มคอลัมน์ order_index ในตารางประเภทวัน (Day Types) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ order_index ในตารางประเภทวัน (Day Types) เรียบร้อย');
   }
 };
 
@@ -406,7 +407,7 @@ const verifyCalendarDayColumns = (): void => {
   const calCols = calInfo.map(c => c.name);
   if (calCols.length > 0 && !calCols.includes('note')) {
     db.exec("ALTER TABLE calendar_days ADD COLUMN note TEXT");
-    console.log('เพิ่มคอลัมน์ note ในตารางบันทึกปฏิทินวัน (Calendar Days) เรียบร้อย');
+    log.info('schema', 'เพิ่มคอลัมน์ note ในตารางบันทึกปฏิทินวัน (Calendar Days) เรียบร้อย');
   }
 };
 
@@ -430,17 +431,17 @@ function ensureSubscriptionGroup(): string {
     db.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
       .run('บริการรายเดือน', '🔄', '#8B5CF6', group2.id);
     groupId = group2.id;
-    console.log('เปลี่ยนชื่อกลุ่ม "รายเดือน" เป็น "บริการรายเดือน" เรียบร้อย');
+    log.info('schema', 'เปลี่ยนชื่อกลุ่ม "รายเดือน" เป็น "บริการรายเดือน" เรียบร้อย');
   } else if (group3) {
     db.prepare("UPDATE cashflow_groups SET name = ?, icon = ?, color = ? WHERE id = ?")
       .run('บริการรายเดือน', '🔄', '#8B5CF6', group3.id);
     groupId = group3.id;
-    console.log('เปลี่ยนชื่อกลุ่ม "รายเดือน/หนี้" เป็น "บริการรายเดือน" เรียบร้อย');
+    log.info('schema', 'เปลี่ยนชื่อกลุ่ม "รายเดือน/หนี้" เป็น "บริการรายเดือน" เรียบร้อย');
   } else {
     groupId = crypto.randomUUID();
     db.prepare("INSERT INTO cashflow_groups (id, name, type, order_index, color, icon, allocation_type) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .run(groupId, 'บริการรายเดือน', 'expense', 4, '#8B5CF6', '🔄', 'want');
-    console.log('สร้างกลุ่มใหม่ "บริการรายเดือน" เรียบร้อย');
+    log.info('schema', 'สร้างกลุ่มใหม่ "บริการรายเดือน" เรียบร้อย');
   }
 
   // ย้ายหมวดหมู่และลบกลุ่มที่ซ้ำซ้อน
@@ -449,11 +450,11 @@ function ensureSubscriptionGroup(): string {
     const updateCats = db.prepare("UPDATE categories SET cashflow_group_id = ? WHERE cashflow_group_id = ?")
       .run(groupId, rg.id);
     if (updateCats.changes > 0) {
-      console.log(`รวมหมวดหมู่ ${updateCats.changes} รายการจากกลุ่มที่ซ้ำซ้อนเข้าสู่กลุ่ม "บริการรายเดือน" เรียบร้อย`);
+      log.info('schema', `รวมหมวดหมู่ ${updateCats.changes} รายการจากกลุ่มที่ซ้ำซ้อนเข้าสู่กลุ่ม "บริการรายเดือน" เรียบร้อย`);
     }
     
     db.prepare("DELETE FROM cashflow_groups WHERE id = ?").run(rg.id);
-    console.log(`ลบกลุ่มรายจ่ายที่ไม่ได้ใช้แล้วออกเรียบร้อย: ${rg.id}`);
+    log.info('schema', `ลบกลุ่มรายจ่ายที่ไม่ได้ใช้แล้วออกเรียบร้อย: ${rg.id}`);
   });
 
   return groupId;
@@ -464,7 +465,7 @@ function ensureSoftwareCategory(groupId: string): string {
   if (oldCat) {
     db.prepare("UPDATE categories SET name = ?, icon = ?, color = ? WHERE id = ?")
       .run('ซอฟต์แวร์ & AI', '🤖', '#3B82F6', oldCat.id);
-    console.log('เปลี่ยนชื่อหมวดหมู่ "บริการรายเดือน" เป็น "ซอฟต์แวร์ & AI" เรียบร้อย');
+    log.info('schema', 'เปลี่ยนชื่อหมวดหมู่ "บริการรายเดือน" เป็น "ซอฟต์แวร์ & AI" เรียบร้อย');
     return oldCat.id;
   }
 
@@ -476,7 +477,7 @@ function ensureSoftwareCategory(groupId: string): string {
   const softwareCatId = crypto.randomUUID();
   db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
     .run(softwareCatId, 'ซอฟต์แวร์ & AI', '🤖', '#3B82F6', 1, groupId);
-  console.log('สร้างหมวดหมู่ย่อยใหม่ "ซอฟต์แวร์ & AI" เรียบร้อย');
+  log.info('schema', 'สร้างหมวดหมู่ย่อยใหม่ "ซอฟต์แวร์ & AI" เรียบร้อย');
   return softwareCatId;
 }
 
@@ -487,7 +488,7 @@ function ensureShoppingCategory(groupId: string): string {
   if (catLong && catShort) {
     db.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(catShort.id, catLong.id);
     db.prepare("DELETE FROM categories WHERE id = ?").run(catLong.id);
-    console.log('รวมหมวดหมู่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เข้ากับหมวดหมู่ "สมาชิกช้อปปิ้ง" เรียบร้อย');
+    log.info('schema', 'รวมหมวดหมู่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เข้ากับหมวดหมู่ "สมาชิกช้อปปิ้ง" เรียบร้อย');
     return catShort.id;
   }
   if (catShort) return catShort.id;
@@ -496,7 +497,7 @@ function ensureShoppingCategory(groupId: string): string {
   const shoppingCatId = crypto.randomUUID();
   db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
     .run(shoppingCatId, 'สมาชิกช้อปปิ้ง & ส่งอาหาร', '🛍️', '#EC4899', 2, groupId);
-  console.log('สร้างหมวดหมู่ย่อยใหม่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เรียบร้อย');
+  log.info('schema', 'สร้างหมวดหมู่ย่อยใหม่ "สมาชิกช้อปปิ้ง & ส่งอาหาร" เรียบร้อย');
   return shoppingCatId;
 }
 
@@ -507,7 +508,7 @@ function ensureEntertainmentCategory(groupId: string): string {
   if (entLong && entShort) {
     db.prepare("UPDATE transactions SET category_id = ? WHERE category_id = ?").run(entShort.id, entLong.id);
     db.prepare("DELETE FROM categories WHERE id = ?").run(entLong.id);
-    console.log('รวมหมวดหมู่ "ความบันเทิง & สตรีมมิ่ง" เข้ากับหมวดหมู่ "ความบันเทิง" เรียบร้อย');
+    log.info('schema', 'รวมหมวดหมู่ "ความบันเทิง & สตรีมมิ่ง" เข้ากับหมวดหมู่ "ความบันเทิง" เรียบร้อย');
     return entShort.id;
   }
   if (entShort) return entShort.id;
@@ -516,7 +517,7 @@ function ensureEntertainmentCategory(groupId: string): string {
   const entertainmentCatId = crypto.randomUUID();
   db.prepare("INSERT INTO categories (id, name, icon, color, order_index, cashflow_group_id) VALUES (?, ?, ?, ?, ?, ?)")
     .run(entertainmentCatId, 'ความบันเทิง & สตรีมมิ่ง', '🍿', '#EF4444', 3, groupId);
-  console.log('สร้างหมวดหมู่ย่อยใหม่ "ความบันเทิง & สตรีมมิ่ง" เรียบร้อย');
+  log.info('schema', 'สร้างหมวดหมู่ย่อยใหม่ "ความบันเทิง & สตรีมมิ่ง" เรียบร้อย');
   return entertainmentCatId;
 }
 
@@ -544,7 +545,7 @@ function reclassifySubscriptionTransactions(softwareCatId: string, shoppingCatId
   });
 
   if (shoppingCount > 0 || entertainmentCount > 0) {
-    console.log(`จัดหมวดหมู่ธุรกรรมอัตโนมัติ: ย้ายไปที่ สมาชิกช้อปปิ้ง ${shoppingCount} รายการ และ ความบันเทิง & สตรีมมิ่ง ${entertainmentCount} รายการ`);
+    log.info('schema', `จัดหมวดหมู่ธุรกรรมอัตโนมัติ: ย้ายไปที่ สมาชิกช้อปปิ้ง ${shoppingCount} รายการ และ ความบันเทิง & สตรีมมิ่ง ${entertainmentCount} รายการ`);
   }
 }
 
@@ -556,6 +557,6 @@ export const runSubscriptionMigration = (): void => {
     const entertainmentCatId = ensureEntertainmentCategory(groupId);
     reclassifySubscriptionTransactions(softwareCatId, shoppingCatId, entertainmentCatId);
   } catch (err: any) {
-    console.error('[WARN] เกิดข้อผิดพลาดขณะรัน Migration ของหมวดหมู่รายเดือน:', err.message);
+    log.warn('schema', 'เกิดข้อผิดพลาดขณะรัน Migration ของหมวดหมู่รายเดือน:', err.message);
   }
 };

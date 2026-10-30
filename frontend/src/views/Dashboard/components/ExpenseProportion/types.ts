@@ -46,6 +46,8 @@ export interface CatItemProps {
   idx: number;
   isHovered: boolean;
   onHover: (idx: number) => void;
+  /** the biggest category's amount: the row's wash is measured against it */
+  maxAmount: number;
 }
 
 export interface AllocationItemProps {
@@ -73,17 +75,8 @@ export interface ExpenseProportionHeaderProps {
   evolutionEligible: boolean;
   evolutionLabel: string;
   hasPlan?: boolean;
-}
-
-export interface ExpenseProportionChartProps {
-  activeChartData: any;
-  options: any;
-  isAllocationMode: boolean;
-  activeTotal: number;
-  onMouseLeave: () => void;
-  isSliceHovered?: boolean;
-  hoveredItem?: ProportionItem | null;
-  activeItems: ProportionItem[];
+  /** income (50/30/20) or expense total (category); omitted for evolution / empty */
+  total?: number;
   /** sum of plan (future-dated) amounts across the active items */
   planTotal?: number;
 }

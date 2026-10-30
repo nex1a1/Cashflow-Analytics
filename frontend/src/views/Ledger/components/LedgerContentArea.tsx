@@ -28,6 +28,7 @@ export interface LedgerContentAreaProps {
   isDateSorted: boolean;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
+  handleMoveTransactions?: (moves: { id: string; date: string }[]) => Promise<boolean> | void;
   handleOpenAddModal: (date: string, type: string) => void;
   pageInc: number;
   pageExp: number;
@@ -59,6 +60,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
   isDateSorted,
   handleUpdateTransaction,
   handleDeleteTransaction,
+  handleMoveTransactions,
   handleOpenAddModal,
   pageInc,
   pageExp,
@@ -93,6 +95,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
         isDateSorted={isDateSorted}
         handleUpdateTransaction={handleUpdateTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
+        handleMoveTransactions={handleMoveTransactions}
         handleOpenAddModal={handleOpenAddModal}
         pageInc={pageInc}
         pageExp={pageExp}

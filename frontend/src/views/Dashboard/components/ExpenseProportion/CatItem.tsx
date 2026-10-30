@@ -3,83 +3,60 @@ import React from 'react';
 import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { CatItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
+import { readable } from '@/constants/theme';
+import { planOf } from './proportionHelpers';
 
-import { tc, readable } from '@/constants/theme';
-import { withAlpha } from '../MainChart/futureZone';
+/** hatched look of future-dated money, same as the plan tail everywhere else */
+const PLAN_HATCH = 'repeating-linear-gradient(135deg, rgb(255 255 255 / 0.09) 0 2px, transparent 2px 6px)';
+
 /**
- * Sub-component for individual category cell (Table-like HUD)
+ * One category as a dense ranked row. The neutral wash behind it is its amount
+ * against the biggest category (the Top Transactions idiom), ending in a 2px tip
+ * of the category colour so the row links to its segment in the strip above.
  */
-export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover }) => {
-  const plan = Math.min(cat.planAmount || 0, cat.amount);
-  const pct = Number(cat.percentage) || 0;
-  // the bar is `pct` wide in total; the plan part is the tail of it
-  const planPct = cat.amount > 0 ? pct * (plan / cat.amount) : 0;
+export const CatItem = React.memo<CatItemProps>(({ cat, idx, isHovered, onHover, maxAmount }) => {
+  const plan = planOf(cat);
+  const washPct = maxAmount > 0 ? (cat.amount / maxAmount) * 100 : 0;
+  const planPct = maxAmount > 0 ? (plan / maxAmount) * 100 : 0;
   return (
-  <div
-    onMouseEnter={() => onHover(idx)}
-    onMouseLeave={() => onHover(-1)}
-    onFocus={() => onHover(idx)}
-    onBlur={() => onHover(-1)}
-    tabIndex={0}
-    aria-label={`${cat.name}: ${formatBaht(cat.amount)} (${cat.percentage}%)${plan > 0 ? ` — แผนที่ยังไม่ถึง ${formatBaht(plan)}` : ''}`}
-    className={`relative overflow-hidden flex flex-col min-w-0 p-2 group cursor-default h-full border-l-2 outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
-      isHovered
-        ? 'bg-surface-elevated/90 border-accent-ink z-10'
-        : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
-    }`}
-    style={{ borderLeftColor: isHovered ? undefined : cat.color }}
-  >
-    {/* Large watermark glyph fills the cell's leftover vertical space now that rows are taller. */}
-    <CategoryGlyph
-      icon={cat.icon}
-      color={cat.color}
-      size={48}
-      className="absolute right-1 top-1/2 -translate-y-1/2 opacity-[0.1] group-hover:opacity-[0.18] pointer-events-none"
-    />
-
-    <div className="relative flex justify-between items-start gap-1 mb-1">
-      <span
-        className="text-[12px] font-black truncate flex items-center gap-1.5 min-w-0"
-        style={{ color: tc('ink-body') }}
-        title={cat.name}
-      >
-        <CategoryGlyph icon={cat.icon} color={cat.color} size={16} className="shrink-0 leading-none" />
-        <span className="truncate group-hover:text-accent-ink uppercase tracking-tight">{cat.name}</span>
-      </span>
-      <div className="flex flex-col items-end shrink-0 leading-none">
-        <span className="text-[11px] font-bold tabular-nums mb-0.5" style={{ color: tc('ink-body') }}>
-          {formatMoney(cat.amount)}
-        </span>
-        <span className="text-xs font-black tabular-nums" style={{ color: readable(cat.color) }}>{cat.percentage}%</span>
-      </div>
-    </div>
-
-    <div className="relative mt-auto flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
-        <div className="flex-1 min-w-0 flex rounded-none h-[8px] overflow-hidden bg-canvas">
-          <div
-            className="h-full shrink-0"
-            style={{ width: `${pct - planPct}%`, backgroundColor: cat.color, opacity: 0.9 }}
-          />
-          {planPct > 0 && (
-            <div
-              className="h-full shrink-0"
-              style={{
-                width: `${planPct}%`,
-                backgroundImage: `repeating-linear-gradient(135deg, ${cat.color} 0 2px, transparent 2px 5px)`,
-                backgroundColor: withAlpha(cat.color, 0.2),
-              }}
-            />
-          )}
+    <div
+      onMouseEnter={() => onHover(idx)}
+      onMouseLeave={() => onHover(-1)}
+      onFocus={() => onHover(idx)}
+      onBlur={() => onHover(-1)}
+      tabIndex={0}
+      aria-label={`${cat.name}: ${formatBaht(cat.amount)} (${cat.percentage}%)${plan > 0 ? ` — แผนที่ยังไม่ถึง ${formatBaht(plan)}` : ''}`}
+      className={`relative flex items-center gap-2 min-h-8 px-2.5 min-w-0 cursor-default outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
+        isHovered ? 'bg-surface-hover' : 'bg-surface'
+      }`}
+    >
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-y-0 left-0 flex" style={{ width: `${washPct}%` }}>
+          <div className={`h-full flex-1 ${isHovered ? 'bg-white/8' : 'bg-white/4'}`} />
+          {planPct > 0 && <div className="h-full shrink-0" style={{ width: `${(planPct / washPct) * 100}%`, backgroundImage: PLAN_HATCH }} />}
         </div>
-        {plan > 0 && (
-          <span className="shrink-0 text-[11px] leading-none tabular-nums text-ink-muted" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
-            แผน {formatMoney(plan)}
-          </span>
+        {washPct > 0 && (
+          <div className="absolute inset-y-0 w-[2px]" style={{ left: `calc(${washPct}% - 2px)`, backgroundColor: cat.color }} />
         )}
       </div>
+
+      <CategoryGlyph icon={cat.icon} color={cat.color} size={14} className="relative shrink-0" />
+      <span
+        className={`relative flex-1 min-w-0 truncate text-[12px] font-bold ${isHovered ? 'text-ink-display' : 'text-ink-soft'}`}
+        title={cat.name}
+      >
+        {cat.name}
+      </span>
+      {plan > 0 && (
+        <span className="relative shrink-0 text-[11px] tabular-nums text-ink-muted" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
+          แผน {formatMoney(plan)}
+        </span>
+      )}
+      <span className="relative shrink-0 text-[11px] font-bold tabular-nums text-ink-body">{formatMoney(cat.amount)}</span>
+      <span className="relative shrink-0 w-[46px] text-right text-[12px] font-black tabular-nums" style={{ color: readable(cat.color) }}>
+        {cat.percentage}%
+      </span>
     </div>
-  </div>
   );
 });
 

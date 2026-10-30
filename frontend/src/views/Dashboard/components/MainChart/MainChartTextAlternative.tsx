@@ -12,7 +12,7 @@ interface Props {
   data: ChartDataLike | null | undefined;
 }
 
-/** ตารางสำหรับ screen reader: <canvas> ไม่เปิดข้อมูลของกราฟให้ assistive tech (เหมือนโดนัทใน ExpenseProportionChart) */
+/** ตารางสำหรับ screen reader: <canvas> ไม่เปิดข้อมูลของกราฟให้ assistive tech */
 export const MainChartTextAlternative = memo(({ caption, isSankey, data }: Props) => {
   const datasets = data?.datasets;
   if (!datasets?.length) return null;

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { ApiError } from '../middleware/ApiError';
 import { computePosition, marketValueSatang, pickQuote, PriceQuote, Trade } from './portfolioMath';
 import { AUTO_PRICE_KINDS, AssetKind, fetchPrice } from './priceProviders';
+import { log, bahtFromSatang } from '../utils/logger';
 
 interface AssetRow {
   id: string;
@@ -112,6 +113,7 @@ class AssetService {
         db.prepare('UPDATE assets SET manual_price = NULL, manual_price_at = NULL WHERE id = ?').run(id);
       }
     })();
+    log.info('db', `สินทรัพย์ "${input.name}" (${input.kind}${symbol ? ` ${symbol}` : ''})`);
     return id;
   }
 
@@ -119,15 +121,19 @@ class AssetService {
     // นับเฉพาะรายการที่ผู้ใช้ยังเห็น; แถวที่ซอฟต์ลบไปแล้วไม่มีทางลบทิ้งอื่น จึงลบไปพร้อมสินทรัพย์ (FK จะได้ไม่ค้าง)
     const used = (db.prepare('SELECT COUNT(*) AS c FROM transactions WHERE asset_id = ? AND is_deleted = 0').get(id) as { c: number }).c;
     if (used > 0) throw new ApiError(409, `ลบไม่ได้: มี ${used} รายการซื้อขายอ้างอิงสินทรัพย์นี้อยู่`);
+    const name = (db.prepare('SELECT name FROM assets WHERE id = ?').get(id) as { name: string } | undefined)?.name;
     db.transaction(() => {
       db.prepare('DELETE FROM transactions WHERE asset_id = ?').run(id);
       db.prepare('DELETE FROM assets WHERE id = ?').run(id);
     })();
+    if (name) log.info('db', `ลบสินทรัพย์ "${name}"`);
   }
 
   setManualPrice(id: string, price: number): void {
     const r = db.prepare('UPDATE assets SET manual_price = ?, manual_price_at = ? WHERE id = ?').run(price, new Date().toISOString(), id);
     if (r.changes === 0) throw new ApiError(404, 'ไม่พบสินทรัพย์');
+    const name = (db.prepare('SELECT name FROM assets WHERE id = ?').get(id) as { name: string }).name;
+    log.info('price', `กรอกราคาเอง "${name}" ฿${price.toLocaleString('en-US', { maximumFractionDigits: 4 })}/หน่วย`);
     this.recordSnapshot();
   }
 
@@ -143,6 +149,7 @@ class AssetService {
       INSERT INTO portfolio_snapshots (date, market_value, cost, recorded_at) VALUES (?, ?, ?, ?)
       ON CONFLICT(date) DO UPDATE SET market_value = excluded.market_value, cost = excluded.cost, recorded_at = excluded.recorded_at
     `).run(localIsoDate(), Math.round(totals.marketValue * 100), Math.round(totals.cost * 100), new Date().toISOString());
+    log.info('price', `มูลค่าพอร์ตวันนี้ ${bahtFromSatang(Math.round(totals.marketValue * 100))} · ทุน ${bahtFromSatang(Math.round(totals.cost * 100))}`);
   }
 
   /** ดึงราคาทุกสินทรัพย์ที่มีแหล่งอัตโนมัติ; ตัวที่ล้มเหลวคงราคาเดิมในแคชไว้ */
@@ -162,6 +169,10 @@ class AssetService {
         return { assetId: a.id, ok: false, message: e instanceof Error ? e.message : String(e) };
       }
     }));
+    const failed = results.filter(r => !r.ok);
+    const nameOf = (id: string) => targets.find(a => a.id === id)?.name ?? id;
+    if (failed.length === 0) log.info('price', `ดึงราคาใหม่ ${results.length} ตัว สำเร็จทั้งหมด`);
+    else log.warn('price', `ดึงราคาใหม่ ${results.length} ตัว ไม่สำเร็จ ${failed.length}: ${failed.map(f => `${nameOf(f.assetId)} (${f.message})`).join(', ')} — ใช้ราคาเดิมในแคช`);
     this.recordSnapshot();
     return results;
   }

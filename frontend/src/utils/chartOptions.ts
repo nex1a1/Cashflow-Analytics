@@ -120,18 +120,3 @@ export const getLineChartOptions = (yType = 'linear', autoSkip = true) => ({
   },
   scales: getScaleOptions(true, yType, autoSkip),
 });
-
-export const getDoughnutChartOptions = () => ({
-  maintainAspectRatio: false,
-  cutout: '70%',
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      ...getTooltipOptions(),
-      cornerRadius: 0,
-      callbacks: {
-        label: (ctx: any) => ` ${ctx.label}: ${formatMoney(ctx.raw)} ฿`,
-      },
-    },
-  },
-});

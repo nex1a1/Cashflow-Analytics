@@ -1,5 +1,6 @@
 import db from '../config/db';
 import { Setting } from '../types';
+import { log, clip } from '../utils/logger';
 
 class SettingService {
   getAll(): Setting[] {
@@ -14,7 +15,9 @@ class SettingService {
       VALUES (?, ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
     `);
-    return stmt.run(key, valueStr);
+    const result = stmt.run(key, valueStr);
+    log.info('db', `ตั้งค่า ${key} = ${clip(value)}`);
+    return result;
   }
 }
 

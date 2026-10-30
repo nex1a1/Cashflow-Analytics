@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ApiError } from './ApiError';
+import { log } from '../utils/logger';
 
 /** Zod v4 has no `.errors` (it was removed) — `.issues` is the list. */
 const isZodError = (err: unknown): err is { issues: unknown[] } =>
@@ -25,6 +26,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return res.status(status).json({ error: status === 413 ? 'ข้อมูลที่ส่งมาใหญ่เกินไป' : 'รูปแบบข้อมูลที่ส่งมาไม่ถูกต้อง' });
   }
 
-  console.error('[API Error]', err);
+  // The api line after this one carries method/path/status; this one keeps the stack for debugging.
+  log.error('api', err instanceof Error ? (err.stack ?? err.message) : err);
   res.status(500).json({ error: 'Internal Server Error' });
 }

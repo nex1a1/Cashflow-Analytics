@@ -50,7 +50,7 @@ const tx = (id: string, date: string, category_id: string, amount: number, descr
 beforeAll(async () => {
   process.env.DB_PATH = dbFile;
   process.env.BACKUP_DIR = backupDir;
-  vi.spyOn(console, 'log').mockImplementation((...a: unknown[]) => { logs.push(a.join(' ')); });
+  for (const m of ['log', 'warn', 'error'] as const) vi.spyOn(console, m).mockImplementation((...a: unknown[]) => { logs.push(a.join(' ')); });
 
   db = (await import('../config/db')).default;
   // Hard stop: never write anything unless the app really is on the throwaway database.
@@ -118,13 +118,26 @@ describe('error pipeline (body parser → errorHandler)', () => {
 });
 
 describe('audit logger', () => {
-  it('writes one [AUDIT] line for a mutation and [AUDIT ERROR] for a failed request', async () => {
+  it('writes a db line then one api line for a mutation, and a WARN api line with the reason for a failed request', async () => {
     logs = [];
     await post('/api/settings', { key: 'audit-probe', value: 1 });
     await post('/api/settings', {});
     await new Promise(r => setTimeout(r, 20)); // 'finish' fires after the response is flushed
-    expect(logs.some(l => /^\[AUDIT\] .*POST \/api\/settings - HTTP 200 .*\[คำสั่งตั้งค่า\] อัปเดตการตั้งค่า audit-probe/.test(l))).toBe(true);
-    expect(logs.some(l => /^\[AUDIT ERROR\] .*POST \/api\/settings - HTTP 400/.test(l))).toBe(true);
+    const ts = String.raw`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  `;
+    const dbAt = logs.findIndex(l => new RegExp(`${ts}INFO   db      ตั้งค่า audit-probe = 1$`).test(l));
+    const apiAt = logs.findIndex(l => new RegExp(String.raw`${ts}INFO   api     POST /api/settings → 200 · \d+ms$`).test(l));
+    expect(dbAt).toBeGreaterThanOrEqual(0);
+    expect(apiAt).toBeGreaterThan(dbAt);
+    expect(logs.some(l => new RegExp(String.raw`${ts}WARN   api     POST /api/settings → 400 · \d+ms · Validation Error \(key: `).test(l))).toBe(true);
+  });
+
+  it('logs a saved transaction with its category and full Thai description', async () => {
+    logs = [];
+    const desc = 'ข้าวมันไก่ร้านประจำหน้าออฟฟิศ (พิเศษ)'; // > 32 bytes: SQLite's own trace cut these off
+    await post('/api/transactions', [tx('http-log-1', '2097-01-02', C.food, 45.5, desc)]);
+    await new Promise(r => setTimeout(r, 20));
+    expect(logs.some(l => l.endsWith(`db      บันทึก 2097-01-02 · http-food · "${desc}" · ฿45.50 · NEED`))).toBe(true);
+    expect(logs.some(l => /api     POST \/api\/transactions → 200 · \d+ms · บันทึกธุรกรรม 1 รายการ$/.test(l))).toBe(true);
   });
 
   it('stays silent for successful reads', async () => {

@@ -29,6 +29,7 @@ export interface LedgerViewProps {
   handleOpenAddModal: (date: string, type: string) => void;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
+  handleMoveTransactions?: (moves: { id: string; date: string }[]) => Promise<boolean> | void;
   categories: Category[];
   advancedFilterCategory: string | string[];
   setAdvancedFilterCategory: (cats: string | string[]) => void;
@@ -64,7 +65,7 @@ export interface LedgerViewProps {
 function LedgerView({
   displayTransactions, isReadOnlyView, getFilterLabel, filterPeriod,
   searchQuery, setSearchQuery, handleOpenAddModal,
-  handleUpdateTransaction, handleDeleteTransaction,
+  handleUpdateTransaction, handleDeleteTransaction, handleMoveTransactions,
   categories, advancedFilterCategory, setAdvancedFilterCategory,
   advancedFilterGroup, setAdvancedFilterGroup,
   advancedFilterDate, setAdvancedFilterDate,
@@ -297,6 +298,7 @@ function LedgerView({
         isDateSorted={isDateSorted}
         handleUpdateTransaction={handleUpdateTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
+        handleMoveTransactions={handleMoveTransactions}
         handleOpenAddModal={handleOpenAddModal}
         pageInc={pageInc}
         pageExp={pageExp}

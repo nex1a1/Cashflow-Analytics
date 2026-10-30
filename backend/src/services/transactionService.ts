@@ -2,6 +2,7 @@ import db from '../config/db';
 import crypto from 'node:crypto';
 import { Transaction } from '../types';
 import { ApiError } from '../middleware/ApiError';
+import { log, bahtFromSatang } from '../utils/logger';
 
 interface TransactionWithDetails extends Transaction {
   category: string;
@@ -20,7 +21,21 @@ interface FrequentItem {
   lastDate: string;
 }
 
-type CategoryGroup = { type: string; allocation_type: string | null };
+type CategoryGroup = { type: string; allocation_type: string | null; category_name?: string };
+
+/** Rows written per request that get their own log line; a CSV import of thousands ends with one "… อีก N รายการ" line. */
+const LOG_ROWS_MAX = 10;
+
+const ALLOC_LABEL: Record<string, string> = { need: 'NEED', want: 'WANT', savings: 'ลงทุน/ออม' };
+
+function describeRow(r: { date: string; description: string; amount: number; category?: string; allocation_type?: string | null; units?: number | null; trade_side?: string | null }): string {
+  const parts = [r.date];
+  if (r.category) parts.push(r.category);
+  parts.push(`"${r.description || '-'}"`, bahtFromSatang(r.amount));
+  if (r.trade_side) parts.push(`${r.trade_side === 'sell' ? 'ขาย' : 'ซื้อ'}${r.units != null ? ` ${r.units} หน่วย` : ''}`);
+  else if (r.allocation_type) parts.push(ALLOC_LABEL[r.allocation_type] ?? r.allocation_type);
+  return parts.join(' · ');
+}
 
 /** Escape LIKE wildcards so user text matches literally (pair with ESCAPE '\'). */
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, '\\$&');
@@ -190,7 +205,7 @@ class TransactionService {
     `);
     // Prepared once per batch; a CSV import repeats a few categories over thousands of rows, so groups are memoised too.
     const groupStmt = db.prepare(`
-      SELECT cg.type, cg.allocation_type
+      SELECT cg.type, cg.allocation_type, c.name AS category_name
       FROM cashflow_groups cg
       JOIN categories c ON c.cashflow_group_id = cg.id
       WHERE c.id = ?
@@ -204,6 +219,7 @@ class TransactionService {
     };
     const assetExists = (id: string) => assetStmt.get(id) !== undefined;
 
+    const lines: string[] = [];
     const transactionAction = db.transaction((txs: any[]) => {
       for (const tx of txs) {
         const date = this.normalizeDate(tx.date);
@@ -223,16 +239,30 @@ class TransactionService {
           trade.units,
           trade.side
         );
+        if (lines.length < LOG_ROWS_MAX) {
+          lines.push(describeRow({
+            date, description: tx.description || '', amount: trade.amountSatang, category: group?.category_name,
+            allocation_type: allocationType, units: trade.units, trade_side: trade.side,
+          }));
+        }
       }
     });
 
     transactionAction(transactions);
-    // Per-row detail already logged by db.ts's verbose mutation hook — avoid double-printing here.
+    // Logged only after the batch committed, so a rejected batch prints nothing but its API error line.
+    for (const line of lines) log.info('db', `บันทึก ${line}`);
+    if (transactions.length > lines.length) log.info('db', `บันทึก … อีก ${transactions.length - lines.length} รายการ (รวม ${transactions.length})`);
   }
 
   delete(id: string) {
-    // Row detail is logged by db.ts's verbose mutation hook.
-    return db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    const row = db.prepare(`
+      SELECT t.date, t.description, t.amount, t.allocation_type, t.units, t.trade_side, c.name AS category
+      FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
+      WHERE t.id = ? AND t.is_deleted = 0
+    `).get(id) as Parameters<typeof describeRow>[0] | undefined;
+    const result = db.prepare('UPDATE transactions SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+    if (row) log.info('db', `ลบ ${describeRow(row)}`);
+    return result;
   }
 
   deleteByMonth(isoMonth: string) {
@@ -248,7 +278,7 @@ class TransactionService {
       .run(startDate, endDate);
 
     // One line (architecture rule 28); the rows can be undone from the frontend's snapshot.
-    console.log(`[Service: Delete Month] ลบข้อมูลทั้งเดือน ${isoMonth} (${startDate} ถึง ${endDate}): ${result.changes} รายการ`);
+    log.info('db', `ลบทั้งเดือน ${isoMonth}: ${result.changes} รายการ`);
     return result;
   }
 
@@ -260,7 +290,7 @@ class TransactionService {
       const calResult = db.prepare('DELETE FROM calendar_days').run();
       // ประวัติมูลค่าพอร์ตคำนวณจาก ledger ที่เพิ่งถูกล้าง — เก็บไว้กราฟจะโชว์เส้นของข้อมูลที่ไม่มีแล้ว (นิยามสินทรัพย์ยังอยู่)
       db.prepare('DELETE FROM portfolio_snapshots').run();
-      console.log(`[Service: Reset All] ดำเนินการล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes} รายการ (จากทั้งหมด ${txCount}), ปฏิทิน ${calResult.changes} รายการ (จากทั้งหมด ${calCount})`);
+      log.info('db', `ล้างข้อมูลทั้งหมด: ธุรกรรม ${txResult.changes}/${txCount} รายการ · ปฏิทิน ${calResult.changes}/${calCount} วัน · ประวัติพอร์ต`);
     })();
   }
 
@@ -293,7 +323,7 @@ class TransactionService {
     const txCount = (db.prepare("SELECT COUNT(*) as count FROM transactions WHERE is_deleted = 0").get() as { count: number }).count;
     
     if (ftsCount === 0 && txCount > 0) {
-      console.log('Rebuilding Search Index (FTS5)...');
+      log.info('db', 'สร้างดัชนีค้นหา (FTS5) ใหม่');
       db.exec("INSERT INTO transactions_fts(rowid, id, description) SELECT rowid, id, description FROM transactions WHERE is_deleted = 0");
     }
 
@@ -325,7 +355,7 @@ class TransactionService {
       // "ไก่" never finds "ข้าวมันไก่". An empty FTS answer therefore falls through to a substring search.
       return rows.length > 0 ? rows : this.searchLike(raw);
     } catch (ftsErr: any) {
-      console.warn('[WARN] FTS5 search query error, falling back to LIKE:', ftsErr.message);
+      log.warn('db', `ค้นหา FTS5 ไม่สำเร็จ ใช้ LIKE แทน: ${ftsErr.message}`);
       return this.searchLike(raw);
     }
   }

@@ -1,4 +1,5 @@
 import db from '../config/db';
+import { log, clip } from '../utils/logger';
 
 interface CalendarDayWithDetails {
   date: string;
@@ -26,7 +27,7 @@ class CalendarService {
         LEFT JOIN day_types dt ON cd.day_type_id = dt.id
       `).all() as CalendarDayWithDetails[];
     } catch (err: any) {
-      console.error('Database Error in CalendarService.getAll:', err.message);
+      log.error('db', `อ่านปฏิทินไม่สำเร็จ: ${err.message}`);
       throw err;
     }
   }
@@ -51,7 +52,11 @@ class CalendarService {
         note = COALESCE(excluded.note, calendar_days.note),
         note_icon = CASE WHEN excluded.note = '' THEN '' ELSE COALESCE(excluded.note_icon, calendar_days.note_icon) END
     `);
-    return stmt.run(formattedDate, day_type_id, note?.trim() ?? null, note_icon?.trim() ?? null);
+    const result = stmt.run(formattedDate, day_type_id, note?.trim() ?? null, note_icon?.trim() ?? null);
+    const dayType = db.prepare('SELECT label FROM day_types WHERE id = ?').get(day_type_id) as { label: string } | undefined;
+    const noteText = note == null ? '' : note.trim() === '' ? ' · ลบโน้ต' : ` · โน้ต "${clip(note.trim(), 60)}"`;
+    log.info('db', `ปฏิทิน ${formattedDate} · ${dayType?.label ?? day_type_id}${noteText}`);
+    return result;
   }
 }
 

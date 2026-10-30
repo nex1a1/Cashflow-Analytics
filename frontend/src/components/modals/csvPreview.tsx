@@ -31,7 +31,7 @@ export function PreviewTopBar({ count, search, setSearch }: {
             placeholder="ค้นหาในตัวอย่าง..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-hidden focus:border-accent-ink rounded-none transition-colors"
+            className="w-full bg-surface border border-line-strong pl-8 pr-7 py-0.5 text-xs leading-6 text-neutral-200 placeholder:text-neutral-600 focus:outline-hidden focus:border-accent-ink rounded-none transition-colors"
           />
           {search && (
             <button type="button" onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white cursor-pointer">

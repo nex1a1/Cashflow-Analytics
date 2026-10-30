@@ -101,7 +101,7 @@ export default function FilterBar({
             placeholder="ค้นหารายละเอียด หรือหมวดหมู่..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 border rounded-none outline-hidden text-xs font-semibold bg-surface border-line focus:border-accent-ink text-ink-soft placeholder-ink-muted"
+            className="w-full pl-8 pr-8 py-0.5 border rounded-none outline-hidden text-xs leading-6 font-semibold bg-surface border-line focus:border-accent-ink text-ink-soft placeholder-ink-muted"
           />
           {searchQuery && (
             <button 

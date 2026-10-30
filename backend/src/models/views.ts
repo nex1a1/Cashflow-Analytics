@@ -1,4 +1,5 @@
 import db from '../config/db';
+import { log } from '../utils/logger';
 
 // ยอดเงินแบบมีเครื่องหมาย: แถว "ขาย" (เงินกลับจากการลงทุน) เป็นลบ — ทำให้ออมสุทธิ = ซื้อ − ขาย
 const SIGNED_AMOUNT = "CASE WHEN t.trade_side = 'sell' THEN -t.amount ELSE t.amount END";
@@ -54,7 +55,7 @@ export const recreateViews = (): void => {
   try {
     db.exec(VIEWS_SQL);
   } catch (e: any) {
-    console.warn('[WARN] Error creating views:', e.message);
+    log.warn('schema', 'Error creating views:', e.message);
   }
 };
 
@@ -86,6 +87,6 @@ export const recreateTriggersAndIndexes = (): void => {
       CREATE INDEX IF NOT EXISTS idx_calendar_days_day_type ON calendar_days(day_type_id);
     `);
   } catch (e: any) {
-    console.warn('[WARN] Error creating triggers/indexes:', e.message);
+    log.warn('schema', 'Error creating triggers/indexes:', e.message);
   }
 };

@@ -1,12 +1,82 @@
 import React from 'react';
-import { EyeOff, MapPin, AlertCircle, AlertTriangle, Waves } from 'lucide-react';
+import { EyeOff, Waves } from 'lucide-react';
 import { formatMoney, formatBaht } from '../../../../utils/formatters';
 import { AllocationGroupItemData, AllocationItemProps } from './types';
 import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
+import { readable } from '@/constants/theme';
 
-import { tc, readable } from '@/constants/theme';
 /**
- * Sub-component for Allocation Ratio cell (50/30/20 Special UX - Scrollbar-Free)
+ * Verdict of one part against its target. NEED / WANT are ceilings (spending
+ * less is good), the third part is a floor (money left over should reach it).
+ */
+export function allocationVerdict(amount: number, percentage: number, target: number, base: number, isSavings: boolean) {
+  const targetAmount = base * (target / 100);
+  const diff = isSavings ? amount - targetAmount : targetAmount - amount;
+  const points = Math.abs(percentage - target).toFixed(1);
+  if (diff >= 0) {
+    return {
+      tone: 'good' as const,
+      text: isSavings ? `+${formatBaht(diff)} เกินเป้า` : `+${formatBaht(diff)} ในโควตา`,
+      points: null,
+      targetAmount,
+    };
+  }
+  return {
+    tone: isSavings ? ('short' as const) : ('over' as const),
+    text: isSavings ? `ขาดอีก ${formatBaht(-diff)}` : `−${formatBaht(-diff)} เกินโควตา`,
+    points: isSavings ? `ขาด ${points}%` : `เกิน +${points}%`,
+    targetAmount,
+  };
+}
+
+const VERDICT_CLS = {
+  good: 'bg-emerald-500/15 text-emerald-300',
+  over: 'bg-danger/20 text-red-300',
+  short: 'bg-amber-500/20 text-amber-300',
+};
+
+interface GroupRowProps {
+  group: AllocationGroupItemData;
+  partAmount: number;
+  maxAmount: number;
+  fallbackColor: string;
+  isExcluded: boolean;
+  onToggle?: (groupId: string) => void;
+}
+
+/** One group inside a part: the same ranked-row look as the category list, clickable for the what-if. */
+function GroupRow({ group, partAmount, maxAmount, fallbackColor, isExcluded, onToggle }: GroupRowProps) {
+  const color = group.color || fallbackColor;
+  const share = partAmount > 0 && !isExcluded ? Math.round((group.amount / partAmount) * 100) : 0;
+  const washPct = maxAmount > 0 && !isExcluded ? (group.amount / maxAmount) * 100 : 0;
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle?.(group.id)}
+      title={isExcluded ? 'คลิกเพื่อเปิดหมวดหมู่นี้กลับมา' : 'คลิกเพื่อทดลองปิดหมวดหมู่นี้'}
+      className="relative w-full flex items-center gap-2 min-h-8 px-2.5 min-w-0 text-left bg-surface hover:bg-surface-hover cursor-pointer select-none outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink group/row"
+    >
+      <span className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <span className="absolute inset-y-0 left-0 bg-white/4 group-hover/row:bg-white/8" style={{ width: `${washPct}%` }} />
+        {washPct > 0 && <span className="absolute inset-y-0 w-[2px]" style={{ left: `calc(${washPct}% - 2px)`, backgroundColor: color }} />}
+      </span>
+      <CategoryGlyph icon={group.icon} color={isExcluded ? undefined : color} size={14} className={`relative shrink-0 ${isExcluded ? 'opacity-40' : ''}`} />
+      <span className={`relative flex-1 min-w-0 truncate text-[12px] font-bold ${isExcluded ? 'line-through text-ink-muted' : 'text-ink-soft group-hover/row:text-ink-display'}`}>
+        {group.name}
+      </span>
+      <span className={`relative shrink-0 text-[11px] font-bold tabular-nums ${isExcluded ? 'line-through text-ink-muted' : 'text-ink-body'}`}>
+        {formatMoney(group.amount)}
+      </span>
+      <span className="relative shrink-0 w-10 text-right text-[12px] font-black tabular-nums text-ink-soft">
+        {isExcluded ? <EyeOff className="w-3.5 h-3.5 text-ink-muted inline" aria-label="ยกเว้นจากการคำนวณ" /> : `${share}%`}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * One part of 50/30/20 (NEED / WANT / SAVE): a header that answers "am I inside the
+ * target?" and the groups that make the part up. The bars live in the strip above.
  */
 export const AllocationItem = React.memo<AllocationItemProps>(({
   item,
@@ -20,64 +90,15 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
   const percentage = typeof item.percentage === 'number'
     ? item.percentage
     : Number.parseFloat(String(item.percentage)) || 0;
-  const targetAmount = activeTotal * (item.target / 100);
-  
   const isSavings = item.id === 'savings';
-  const isNeedsOrWants = !isSavings;
-
-  // Quota / Variance calculation in Baht
-  let varianceAmount = 0;
-  let isGood = false;
-  let isOver = false;
-  let isUnder = false;
-
-  if (isNeedsOrWants) {
-    varianceAmount = targetAmount - item.amount;
-    isOver = varianceAmount < 0;
-    isGood = !isOver;
-  } else {
-    varianceAmount = item.amount - targetAmount;
-    isUnder = varianceAmount < 0;
-    isGood = !isUnder;
-  }
+  const verdict = allocationVerdict(item.amount, percentage, item.target, activeTotal, isSavings);
+  const ink = readable(item.color);
 
   const groups = item.groups || [];
-  const activeGroups = groups.filter((g: AllocationGroupItemData) => !excludedGroupIds.includes(g.id));
-
-  let varianceBadgeCls = 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40';
-  if (!isGood) {
-    if (isOver) {
-      varianceBadgeCls = 'bg-danger/20 text-red-300 border border-danger/50';
-    } else {
-      varianceBadgeCls = 'bg-amber-500/20 text-amber-300 border border-amber-500/50';
-    }
-  }
-
-  let varianceText = '';
-  if (isNeedsOrWants) {
-    varianceText = varianceAmount >= 0 
-      ? `+${formatBaht(varianceAmount)} ในโควตา` 
-      : `−${formatBaht(Math.abs(varianceAmount))} เกินโควตา`;
-  } else {
-    varianceText = varianceAmount >= 0 
-      ? `+${formatBaht(varianceAmount)} เกินเป้า` 
-      : `ขาดอีก ${formatBaht(Math.abs(varianceAmount))}`;
-  }
-
-  // Track is a fixed, honest 0-100% linear scale — fill width always equals the real percentage.
-  // (Previously rescaled against a synthetic max so the bar looked "fuller" than reality; that
-  // misrepresented actual spend, so the pin is clamped only for label legibility, not the track itself.)
-  const clampedPct = Math.min(100, percentage);
-  const actualSpentPos = clampedPct;
-
-  const isOverBudget = isNeedsOrWants && percentage > item.target;
-  const isUnderSavings = isSavings && percentage < item.target;
-
-  const withinBudgetPct = isOverBudget ? Math.min(item.target, 100) : actualSpentPos;
-  const overBudgetPct = isOverBudget ? (actualSpentPos - Math.min(item.target, 100)) : 0;
-  const savingsDeficitPct = isUnderSavings ? (Math.min(item.target, 100) - actualSpentPos) : 0;
-
-  let cumulativePct = 0;
+  const activeGroups = groups.filter(g => !excludedGroupIds.includes(g.id));
+  const maxGroup = activeGroups.reduce((max, g) => Math.max(max, g.amount), 0);
+  const plan = Math.min(item.planAmount || 0, item.amount);
+  const surplus = isSavings ? item.amount - activeGroups.reduce((sum, g) => sum + g.amount, 0) : 0;
 
   return (
     <div
@@ -86,266 +107,71 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
       onFocus={() => onHover(idx)}
       onBlur={() => onHover(-1)} // focus moving inside the part re-highlights it at once via onFocus
       role="group"
-      aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${varianceText}`}
-      className={`flex flex-col min-w-0 p-3 group cursor-default h-full border-l-2 ${
-        isHovered
-          ? 'bg-surface-elevated/90 border-accent-ink z-10'
-          : 'bg-canvas/45 hover:bg-surface-elevated/90 border-line'
-      }`}
-      style={{ borderLeftColor: isHovered ? undefined : item.color }}
+      aria-label={`${item.name}: ${item.percentage}% (เป้า ${item.target}%) — ${verdict.text}`}
+      className={`relative flex flex-col min-w-0 h-full cursor-default ${isHovered ? 'bg-surface-hover' : 'bg-surface'}`}
     >
-      {/* ─── HEADER ─── */}
-      <div className="flex justify-between items-start gap-2 mb-2">
-        <div className="flex flex-col min-w-0 gap-1">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[15px] font-black uppercase tracking-wider flex items-center gap-1.5 truncate" style={{ color: readable(item.color) }}>
-              <CategoryGlyph icon={item.icon} color={item.color} size={17} className="shrink-0 opacity-80" />
-              <span className="truncate">{item.name}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-bold tracking-wide uppercase text-slate-300">
-              เป้า {item.target}% ({formatBaht(targetAmount)})
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col items-end shrink-0 gap-0.5">
-          <div className="flex items-baseline gap-0.5">
-            <span className="text-xl font-black tabular-nums leading-none tracking-tight" style={{ color: readable(item.color) }}>
-              {item.percentage}
-            </span>
-            <span className="text-xs font-black" style={{ color: readable(item.color) }}>%</span>
-          </div>
-          <span className="text-[11px] font-bold tabular-nums text-slate-300">
-            ฿ {formatMoney(item.amount)}
+      {/* the part's colour as a 2px bar on top (a coloured border would lose to the border lock) */}
+      <div className="absolute inset-x-0 top-0 h-[2px]" style={{ backgroundColor: item.color }} aria-hidden="true" />
+
+      <div className="flex flex-col gap-1.5 px-3 pt-3 pb-2.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="flex items-center gap-1.5 min-w-0 text-[14px] font-black tracking-wide truncate" style={{ color: ink }}>
+            <CategoryGlyph icon={item.icon} color={item.color} size={16} className="shrink-0" />
+            <span className="truncate">{item.name}</span>
           </span>
-          {(item.planAmount || 0) > 0 && (
-            <span className="text-[11px] font-bold tabular-nums text-ink-muted" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
-              ในนี้แผน ฿ {formatMoney(Math.min(item.planAmount || 0, item.amount))}
+          <span className="shrink-0 text-[22px] leading-none font-black tabular-nums tracking-tight" style={{ color: ink }}>
+            {item.percentage}<span className="text-[13px]">%</span>
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between gap-2 text-[11px] font-bold tabular-nums">
+          <span className="text-ink-body truncate">เป้า {item.target}% ({formatBaht(verdict.targetAmount)})</span>
+          <span className="shrink-0 text-ink-soft">{formatBaht(item.amount)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2 min-h-5">
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill text-[11px] font-black tabular-nums whitespace-nowrap ${VERDICT_CLS[verdict.tone]}`}>
+            {verdict.text}
+            {verdict.points && <span className="font-bold opacity-80">· {verdict.points}</span>}
+          </span>
+          {plan > 0 && (
+            <span className="text-[11px] font-bold tabular-nums text-ink-muted whitespace-nowrap" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
+              ในนี้แผน {formatBaht(plan)}
             </span>
           )}
         </div>
       </div>
 
-      {/* ─── QUOTA VARIANCE BADGE ─── */}
-      <div className="mb-2">
-        <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-pill uppercase tracking-wider ${varianceBadgeCls}`}>
-          {varianceText}
-        </span>
-      </div>
-      
-      {/* ─── MULTI-SEGMENT STACKED PROGRESS BAR + LABELED TARGET PIN ABOVE BAR ─── */}
-      <div className="mb-2.5">
-        {activeGroups.length > 0 ? (
-          <div className="flex flex-col w-full relative">
-            {/* ─── DEDICATED PIN TRACK (ABOVE BAR - z-10) ─── */}
-            <div className="h-5 relative w-full pointer-events-none mb-0.5 z-10">
-              <div 
-                className="absolute bottom-0 flex flex-col z-10 -translate-x-1/2 items-center"
-                style={{ left: `${item.target}%` }}
-              >
-                <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
-                  isOverBudget
-                    ? 'bg-danger-active text-on-accent border border-on-accent'
-                    : 'bg-canvas text-amber-300 border border-amber-400/80'
-                }`}>
-                  <MapPin size={11} className="shrink-0" />
-                  <span>{isOverBudget ? `เพดาน ${item.target}%` : `เป้า ${item.target}%`}</span>
-                </span>
-                <div className="w-full flex justify-center">
-                  <span 
-                    className={`text-[11px] leading-none -mt-0.5 font-bold ${
-                      isOverBudget ? 'text-danger' : 'text-amber-400'
-                    }`}
-                  >
-                    ▼
-                  </span>
-                </div>
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col gap-px bg-line border-t border-line">
+        {groups.map(g => (
+          <GroupRow
+            key={g.id}
+            group={g}
+            partAmount={item.amount}
+            maxAmount={maxGroup}
+            fallbackColor={item.color}
+            isExcluded={excludedGroupIds.includes(g.id)}
+            onToggle={onToggleGroup}
+          />
+        ))}
 
-            {/* ─── CLEAN PROGRESS BAR ─── */}
-            <div className="w-full rounded-none h-[10px] flex gap-px bg-canvas p-px border border-line/60 relative z-30">
-              {/* WITHIN-BUDGET GROUP SEGMENTS */}
-              <div className="h-full flex gap-px min-w-0" style={{ width: `${withinBudgetPct}%` }}>
-                {activeGroups.map((g: AllocationGroupItemData, gIdx: number) => {
-                  const relPct = item.amount > 0 ? (g.amount / item.amount) * 100 : 0;
-                  if (relPct <= 0) return null;
-                  const startPct = cumulativePct;
-                  cumulativePct += relPct;
-
-                  let alignClass = "left-1/2 -translate-x-1/2";
-                  if (startPct > 65 || gIdx === activeGroups.length - 1) {
-                    alignClass = "right-0 translate-x-0";
-                  } else if (startPct < 20 || gIdx === 0) {
-                    alignClass = "left-0 translate-x-0";
-                  }
-
-                  return (
-                    <div 
-                      key={g.id} 
-                      className="h-full relative group/seg transition-all duration-150 hover:brightness-125 cursor-pointer" 
-                      style={{ 
-                        width: `${relPct}%`, 
-                        backgroundColor: g.color || item.color 
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-linear-to-r from-transparent to-white/15" />
-                      
-                      {/* Segment Hover Tooltip */}
-                      <div className={`absolute bottom-full ${alignClass} mb-2 hidden group-hover/seg:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-line rounded-none z-50 text-[11px] pointer-events-none`}>
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color || item.color }} />
-                          <span className="font-bold text-slate-200 flex items-center gap-1"><CategoryGlyph icon={g.icon} color={g.color} size={14} /> {g.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px]">
-                          <span className="text-slate-400">{formatBaht(g.amount)}</span>
-                          <span className="font-black text-danger">
-                            {relPct.toFixed(0)}% ของส่วนนี้
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* OVER-BUDGET RED ALERT ZONE */}
-              {overBudgetPct > 0 && (
-                <div
-                  className="h-full bg-linear-to-r from-danger to-danger relative group/over cursor-pointer"
-                  style={{ width: `${overBudgetPct}%` }}
-                >
-                  <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_6px)]" />
-
-                  {/* Over-budget Hover Tooltip */}
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/over:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-accent-ink rounded-none z-50 text-[11px] pointer-events-none">
-                    <div className="flex items-center gap-1 text-danger font-black">
-                      <AlertCircle size={13} className="shrink-0" />
-                      <span>เกินโควตา +{(percentage - item.target).toFixed(1)}%</span>
-                    </div>
-                    <div className="text-[11px] text-slate-300 mt-0.5">
-                      ส่วนที่เกิน: {formatBaht(Math.abs(varianceAmount))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SAVINGS DEFICIT BUFFER */}
-              {savingsDeficitPct > 0 && (
-                <div 
-                  className="h-full bg-amber-500/10 border-r border-dashed border-amber-500/40 relative group/under cursor-pointer"
-                  style={{ width: `${savingsDeficitPct}%` }}
-                >
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover/under:flex flex-col whitespace-nowrap px-2.5 py-1.5 bg-surface border border-amber-500/50 rounded-none z-50 text-[11px] pointer-events-none">
-                    <div className="flex items-center gap-1 text-amber-400 font-black">
-                      <AlertTriangle size={13} className="shrink-0" />
-                      <span>ขาดอีก {(item.target - percentage).toFixed(1)}%</span>
-                    </div>
-                    <div className="text-[11px] text-slate-300 mt-0.5">
-                      เงินเหลือที่ขาด: {formatBaht(Math.abs(varianceAmount))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* VERTICAL TICK LINE AT TARGET PIN POSITION */}
-              <div 
-                className="absolute top-0 bottom-0 w-[2px] z-30 pointer-events-none" 
-                style={{
-                  left: `${item.target}%`,
-                  backgroundColor: isOverBudget ? tc('danger') : tc('warn')
-                }}
-              />
-            </div>
+        {isSavings && surplus > 10 && (
+          <div className="flex items-center gap-2 min-h-8 px-2.5 bg-surface text-emerald-400">
+            <Waves size={14} className="shrink-0" aria-hidden="true" />
+            <span className="flex-1 text-[12px] font-bold">เหลือสุทธิ</span>
+            <span className="text-[11px] font-bold tabular-nums">{formatMoney(surplus)}</span>
+            <span className="w-10 text-right text-[12px] font-black tabular-nums">
+              {item.amount > 0 ? Math.round((surplus / item.amount) * 100) : 0}%
+            </span>
           </div>
-        ) : (
-          <div className="w-full rounded-none h-[10px] opacity-30" style={{ backgroundColor: item.color }} />
         )}
-      </div>
-
-      {/* ─── CONSTITUENT GROUPS ─── */}
-      <div className="flex-1 flex flex-col min-w-0 pt-1.5 border-t border-dashed border-line/60 gap-0.5 justify-start">
-        {groups.map((g: AllocationGroupItemData) => {
-          const isExcluded = excludedGroupIds.includes(g.id);
-          const relPct = item.amount > 0 && !isExcluded ? ((g.amount / item.amount) * 100).toFixed(0) : 0;
-
-          return (
-            <button 
-              type="button"
-              key={g.id} 
-              onClick={() => onToggleGroup?.(g.id)}
-              className={`w-full flex items-center justify-between gap-2 py-1 px-1.5 min-w-0 group/item cursor-pointer select-none transition-none rounded-none text-left bg-transparent border-0 font-normal outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink ${
-                isExcluded 
-                  ? 'bg-neutral-900/60 opacity-40 hover:opacity-75' 
-                  : 'hover:bg-surface-elevated'
-              }`}
-              title={isExcluded ? 'คลิกเพื่อเปิดหมวดหมู่นี้กลับมา' : 'คลิกเพื่อทดลองปิดหมวดหมู่นี้'}
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full shrink-0" 
-                  style={{ backgroundColor: isExcluded ? tc('ink-muted') : (g.color || item.color) }} 
-                />
-                <CategoryGlyph icon={g.icon} color={g.color} size={12} className="shrink-0 opacity-70" />
-                <span className={`text-[11px] font-bold truncate ${
-                  isExcluded ? 'line-through text-slate-500' : 'text-slate-300 group-hover/item:text-slate-100'
-                }`}>
-                  {g.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[11px] font-bold tabular-nums ${
-                  isExcluded ? 'line-through text-slate-600' : 'text-slate-400 group-hover/item:text-slate-300'
-                }`}>
-                  {formatMoney(g.amount)}
-                </span>
-                <span className="text-[11px] font-black tabular-nums w-8 text-right">
-                  {isExcluded ? (
-                    <EyeOff className="w-3 h-3 text-ink-muted inline" aria-label="ยกเว้นจากการคำนวณ" />
-                  ) : (
-                    <span className="text-slate-200 group-hover/item:text-white">{relPct}%</span>
-                  )}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-
-        {/* ─── NET SURPLUS (Remainder) ─── */}
-        {isSavings && (() => {
-          const sumGroups = activeGroups.reduce((acc: number, g: AllocationGroupItemData) => acc + g.amount, 0);
-          const surplus = item.amount - sumGroups;
-          if (surplus <= 10) return null;
-
-          const surplusPercent = item.amount > 0 ? ((surplus / item.amount) * 100).toFixed(0) : 0;
-
-          return (
-            <div className="flex items-center justify-between gap-2 py-1 px-1.5 mt-1 border-t border-dotted border-line/50 min-w-0 group/item">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Waves size={13} className="shrink-0 opacity-80 text-emerald-400" />
-                <span className="text-[11px] font-bold truncate text-emerald-400 group-hover/item:text-emerald-300">
-                  เหลือสุทธิ
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[11px] font-bold tabular-nums text-emerald-400 group-hover/item:text-emerald-300">
-                  {formatMoney(surplus)}
-                </span>
-                <span className="text-[11px] font-black tabular-nums w-8 text-right text-emerald-400 group-hover/item:text-emerald-300">
-                  {surplusPercent}%
-                </span>
-              </div>
-            </div>
-          );
-        })()}
 
         {groups.length === 0 && !isSavings && (
-          <div className="flex-1 flex items-center justify-center py-1">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600">ไม่มีข้อมูล</span>
+          <div className="flex items-center justify-center min-h-8 bg-surface">
+            <span className="text-[11px] font-bold text-ink-muted">ไม่มีข้อมูล</span>
           </div>
         )}
+
+        {/* fills the rest of the column so the hairline background never shows as a grey block */}
+        <div className="flex-1 bg-surface" />
       </div>
     </div>
   );

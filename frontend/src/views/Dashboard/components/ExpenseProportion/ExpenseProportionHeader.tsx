@@ -144,6 +144,8 @@ export function ExpenseProportionHeader({
   evolutionEligible,
   evolutionLabel,
   hasPlan,
+  total,
+  planTotal = 0,
 }: ExpenseProportionHeaderProps) {
   const countLabel = isAllocationMode ? 'ส่วน' : displayMode === 'evolution' ? 'เดือน' : 'หมวดหมู่';
   const countText = showSkeleton ? '...' : `${itemCount} ${countLabel}`;
@@ -175,6 +177,17 @@ export function ExpenseProportionHeader({
         )}
       </div>
       <div className="flex items-center gap-3">
+        {total !== undefined && !showSkeleton && (
+          <span className="flex items-baseline gap-1.5 text-[11px] tabular-nums whitespace-nowrap">
+            <span className="font-bold text-ink-muted">{isAllocationMode ? 'รายรับ' : 'รวม'}</span>
+            <span className="text-[12px] font-black text-ink-display">{formatBaht(total)}</span>
+            {planTotal > 0 && (
+              <span className="font-bold text-ink-muted" title="ส่วนที่ลงล่วงหน้า ยังไม่ถึงวันที่">
+                · แผน {formatBaht(planTotal)}
+              </span>
+            )}
+          </span>
+        )}
         {hasPlan && !showSkeleton && <PlanKey className="m-fade-in" />}
         <span className="text-[11px] font-black px-1.5 rounded-pill bg-accent/10 text-accent-ink">
           {countText}

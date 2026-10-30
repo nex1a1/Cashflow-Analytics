@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 import { parseDateStrToObj } from '../utils/dateHelpers';
 import { latestOnly } from '../utils/latestOnly';
 import { shiftMonth } from '../utils/payCycle';
-import { getThaiMonth } from '../utils/formatters';
+import { getThaiMonth, formatThaiDateShort } from '../utils/formatters';
 import {
   calendarService,
   categoryService,
@@ -324,6 +324,34 @@ export default function useTransactionData({
     [transactions, refreshData, showToast, offerUndo]
   );
 
+  // Ledger "move to another day": one save for every row, undo = save the old dates back
+  const handleMoveTransactions = useCallback(
+    async (moves: { id: string; date: string }[]): Promise<boolean> => {
+      const target = new Map(moves.map(m => [m.id, m.date]));
+      const snapshot = transactions.filter(t => target.has(t.id) && target.get(t.id) !== t.date);
+      if (snapshot.length === 0) return true;
+      const moved = snapshot.map(t => ({ ...t, date: target.get(t.id)! }));
+      setTransactions(prev => sortTransactions(prev.map(t => (target.has(t.id) ? { ...t, date: target.get(t.id)! } : t))));
+      try {
+        await saveToDb(moved);
+        await refreshData();
+        const dates = [...new Set(moved.map(t => t.date))];
+        const where = dates.length === 1 ? formatThaiDateShort(dates[0]) : 'วันใหม่';
+        const what = snapshot.length === 1 ? `"${snapshot[0].description || snapshot[0].category || 'รายการ'}"` : `${snapshot.length} รายการ`;
+        offerUndo(`ย้าย ${what} ไป ${where} แล้ว`, snapshot);
+        return true;
+      } catch (err) {
+        console.error('Move failed:', err);
+        // put back only rows still holding this move's date (a newer edit stays)
+        const before = new Map(snapshot.map(t => [t.id, t.date]));
+        setTransactions(prev => sortTransactions(prev.map(t =>
+          before.has(t.id) && t.date === target.get(t.id) ? { ...t, date: before.get(t.id)! } : t)));
+        return false;
+      }
+    },
+    [transactions, saveToDb, refreshData, offerUndo]
+  );
+
   const handleDeleteMonth = useCallback(
     async (isoMonth: string): Promise<boolean> => {
       if (!isoMonth.match(/^\d{4}-\d{2}$/)) return false;
@@ -383,6 +411,7 @@ export default function useTransactionData({
     handleSaveTransaction,
     handleUpdateTransaction,
     handleDeleteTransaction,
+    handleMoveTransactions,
     handleDeleteMonth,
     handleDeleteAllData,
     refreshData

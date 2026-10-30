@@ -317,7 +317,7 @@ function QuickSuggest({
   }, [defaultLimit]);
 
   const tokens = {
-    input: "w-full px-3 py-1.5 text-xs border rounded-sm outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
+    input: "w-full px-3 py-0.5 text-xs leading-6 border rounded-sm outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
     select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-hidden bg-surface border-line text-slate-200 focus:border-accent-ink cursor-pointer",
     searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
     label: "block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1",

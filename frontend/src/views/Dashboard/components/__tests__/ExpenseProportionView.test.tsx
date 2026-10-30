@@ -5,14 +5,9 @@ import { createRoot, Root } from 'react-dom/client';
 import ExpenseProportion from '../ExpenseProportion';
 import { click, q, byText } from '@/test-utils/dom';
 
-// Real component tree (header, grid, cells, what-if maths). Replaced: the dashboard context and the two Chart.js canvases.
-// The doughnut mock keeps its last props in `h.chart` so a test can read the chart data or fire its hover callback.
-const h = vi.hoisted(() => ({ ctx: {} as Record<string, unknown>, chart: null as null | { data: any; options: any }, evolution: null as any }));
+// Real component tree (header, grid, cells, what-if maths). Replaced: the dashboard context and the evolution chart.
+const h = vi.hoisted(() => ({ ctx: {} as Record<string, unknown>, evolution: null as any }));
 vi.mock('@/views/Dashboard/context/DashboardContext', () => ({ useDashboardContext: () => h.ctx }));
-vi.mock('react-chartjs-2', async () => {
-  const React = await import('react');
-  return { Doughnut: (props: any) => { h.chart = props; return React.createElement('canvas', { 'data-testid': 'doughnut' }); } };
-});
 vi.mock('@/views/Dashboard/components/ExpenseProportion/AllocationEvolutionChart', async () => {
   const React = await import('react');
   return { AllocationEvolutionChart: (props: any) => { h.evolution = props; return React.createElement('div', { 'data-testid': 'evolution' }); } };
@@ -57,13 +52,14 @@ const mount = () => {
 const text = () => container!.textContent ?? '';
 const mode = (label: string) => byText('button', label)!;
 /** Category cells in the visible grid, in order. */
-const catCells = () => [...container!.querySelectorAll<HTMLElement>('div.grid-cols-5 [aria-label]')];
+const catCells = () => [...container!.querySelectorAll<HTMLElement>('div.grid-flow-col [aria-label]')];
 const catNames = () => catCells().map(c => c.getAttribute('aria-label')!.split(':')[0]);
 const allocCells = () => [...container!.querySelectorAll<HTMLElement>('[role="group"][aria-label]')].filter(g => !g.getAttribute('aria-label')!.startsWith('ซื้อ'));
 const alloc = (name: string) => allocCells().find(c => c.getAttribute('aria-label')!.startsWith(name))!;
-const centre = () => q('div.absolute.inset-0.flex')!.textContent;
+/** The total at the right end of the header (รวม / รายรับ + แผน). */
+const headerTotal = () => q('div.border-b > div:last-child')!.textContent;
 
-beforeEach(() => { set(); h.chart = null; h.evolution = null; });
+beforeEach(() => { set(); h.evolution = null; });
 afterEach(() => {
   if (root) act(() => root!.unmount());
   container?.remove();
@@ -72,26 +68,13 @@ afterEach(() => {
 });
 
 describe('ExpenseProportion — by category', () => {
-  it('shows every category with its amount and share, biggest first, and the total in the middle of the ring-3', () => {
+  it('shows every category with its amount and share, biggest first, and the total in the header', () => {
     mount();
     expect(catNames()).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
     expect(catCells()[0].getAttribute('aria-label')).toBe('ที่พัก: ฿40,000.00 (50.0%)');
     expect(text()).toContain('3 หมวดหมู่');
-    expect(centre()).toContain('รวม');
-    expect(centre()).toContain('80,000.00');
-  });
-
-  it('the ring-3 data follows the same order as the cells', () => {
-    mount();
-    expect(h.chart!.data.labels).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
-    expect(h.chart!.data.datasets[0].data).toEqual([40_000, 30_000, 10_000]);
-  });
-
-  it('exposes the same numbers to screen readers as a table (the canvas has none)', () => {
-    mount();
-    const rows = [...container!.querySelectorAll('.sr-only tbody tr')].map(r => r.textContent);
-    expect(rows).toEqual(['ที่พัก฿40,000.00' + '50.0%', 'ค่ากิน฿30,000.00' + '37.5%', 'บันเทิง฿10,000.00' + '12.5%']);
-    expect(container!.querySelector('.sr-only caption')!.textContent).toContain('ตามหมวดหมู่ รวม ฿80,000.00');
+    expect(headerTotal()).toContain('รวม');
+    expect(headerTotal()).toContain('80,000.00');
   });
 
   it('sort buttons flip between amount ↓/↑ and category order ↑/↓', () => {
@@ -114,36 +97,6 @@ describe('ExpenseProportion — by category', () => {
     expect(catNames()).toEqual(['ที่พัก', 'ค่ากิน', 'บันเทิง']);
   });
 
-  it('hovering (or focusing) a cell puts it in the middle of the ring-3 and dims the other slices', () => {
-    mount();
-    act(() => catCells()[1].focus()); // ค่ากิน
-    expect(centre()).toContain('ค่ากิน');
-    expect(centre()).toContain('30,000.00');
-    expect(centre()).toContain('37.5%');
-    const colours = h.chart!.data.datasets[0].backgroundColor as string[];
-    expect(colours[1]).toBe('#F97316');
-    expect(colours[0]).toBe('#38BDF840');
-    expect(colours[2]).toBe('#A855F740');
-
-    act(() => catCells()[1].blur());
-    expect(centre()).toContain('รวม');
-    expect(h.chart!.data.datasets[0].backgroundColor).toEqual(['#38BDF8', '#F97316', '#A855F7']);
-  });
-
-  it('hovering a slice of the ring-3 hides the middle text so the tooltip does not collide with it', () => {
-    mount();
-    act(() => h.chart!.options.onHover({}, [{ datasetIndex: 0, index: 2 }]));
-    expect(q('div.absolute.inset-0.flex')!.className).toContain('opacity-0');
-    act(() => h.chart!.options.onHover({}, []));
-    expect(q('div.absolute.inset-0.flex')!.className).toContain('opacity-100');
-  });
-
-  it('the ring-3 tooltip reads amount and share', () => {
-    mount();
-    const label = h.chart!.options.plugins.tooltip.callbacks.label;
-    expect(label({ parsed: 40_000, dataIndex: 0 })).toBe(' ฿40,000.00 (50.0%)');
-  });
-
   it('no expenses: says so, offers no cells, counts 0', () => {
     set({ sortedCats: [], chartTotal: 0, totalExpense: 0 });
     mount();
@@ -152,10 +105,11 @@ describe('ExpenseProportion — by category', () => {
     expect(catCells()).toHaveLength(0);
   });
 
-  it('skeleton: a spinner and "..." instead of the count, no cells', () => {
+  it('skeleton: pulsing placeholders and "..." instead of the count, no cells, no total', () => {
     set({}, { showSkeleton: true });
     mount();
-    expect(q('.animate-spin')).not.toBeNull();
+    expect(q('.animate-pulse')).not.toBeNull();
+    expect(text()).not.toContain('80,000.00');
     expect(text()).toContain('...');
     expect(catCells()).toHaveLength(0);
   });
@@ -168,8 +122,8 @@ describe('ExpenseProportion — 50/30/20', () => {
     mount();
     toAllocation();
     expect(text()).toContain('3 ส่วน');
-    expect(centre()).toContain('รายรับ');
-    expect(centre()).toContain('100,000.00');
+    expect(headerTotal()).toContain('รายรับ');
+    expect(headerTotal()).toContain('100,000.00');
 
     expect(alloc('จำเป็น').textContent).toContain('เป้า 50% (฿50,000.00)');
     expect(alloc('จำเป็น').textContent).toContain('+฿5,000.00 ในโควตา');
@@ -186,10 +140,26 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(alloc('จำเป็น').querySelector('.bg-emerald-500\\/15')).not.toBeNull();
     expect(alloc('ออม/เหลือ').textContent).toContain('ขาดอีก ฿5,000.00');
     expect(alloc('ออม/เหลือ').querySelector('.bg-amber-500\\/20')).not.toBeNull();
-    expect(alloc('ออม/เหลือ').textContent).toContain('เงินเหลือที่ขาด: ฿5,000.00');
-    // the over-quota pin speaks Thai
-    expect(alloc('ตามใจ').textContent).toContain('เพดาน 30%');
+    // the gap is also given in percentage points
+    expect(alloc('ออม/เหลือ').textContent).toContain('ขาด 5.0%');
+    expect(alloc('ตามใจ').textContent).toContain('เกิน +5.0%');
     expect(text()).not.toContain('LIMIT');
+  });
+
+  it('nothing in the stacked views transitions every property (visibility would lag and leave bars over the other view)', () => {
+    mount();
+    toAllocation();
+    expect(container!.querySelectorAll('.transition-all')).toHaveLength(0);
+  });
+
+  it('two strips put the actual split of income over the 50/30/20 target', () => {
+    mount();
+    toAllocation();
+    const strips = [...container!.querySelectorAll('[aria-hidden="true"] > .flex.items-center')].filter(r => /^(จริง|เป้า)/.test(r.textContent!));
+    expect(strips.map(r => r.textContent)).toEqual([
+      'จริงจำเป็น 45.0%ตามใจ 35.0%ออม/เหลือ 20.0%',
+      'เป้าจำเป็น 50%ตามใจ 30%ออม/เหลือ 20%',
+    ]);
   });
 
   it('the cell label spells the whole verdict for assistive tech', () => {
@@ -203,8 +173,7 @@ describe('ExpenseProportion — 50/30/20', () => {
     mount();
     toAllocation();
     expect(alloc('จำเป็น').getAttribute('aria-label')).toBe('จำเป็น: 60% (เป้า 50%) — −฿10,000.00 เกินโควตา');
-    expect(alloc('จำเป็น').textContent).toContain('เกินโควตา +10.0%');
-    expect(alloc('จำเป็น').textContent).toContain('เพดาน 50%');
+    expect(alloc('จำเป็น').textContent).toContain('เกิน +10.0%');
     expect(alloc('ตามใจ').textContent).toContain('ไม่มีข้อมูล');
   });
 
@@ -213,11 +182,11 @@ describe('ExpenseProportion — 50/30/20', () => {
     toAllocation();
     const [first, second] = alloc('ตามใจ').querySelectorAll<HTMLButtonElement>('button');
     act(() => first.focus());
-    expect(alloc('ตามใจ').className).toContain('border-accent-ink');
+    expect(alloc('ตามใจ').className).toContain('bg-surface-hover');
     act(() => second.focus()); // moving within the part keeps it highlighted
-    expect(alloc('ตามใจ').className).toContain('border-accent-ink');
+    expect(alloc('ตามใจ').className).toContain('bg-surface-hover');
     act(() => second.blur());
-    expect(alloc('ตามใจ').className).not.toContain('border-accent-ink');
+    expect(alloc('ตามใจ').className).not.toContain('bg-surface-hover');
   });
 
   it('lists the groups of each part with their share of it, and the unassigned remainder of savings', () => {
@@ -235,9 +204,9 @@ describe('ExpenseProportion — 50/30/20', () => {
     toAllocation();
     click([...alloc('ตามใจ').querySelectorAll('button')].find(b => b.textContent!.includes('บันเทิง')));
     expect(text()).toContain('จำลองลด 1 หมวด (−฿20,000.00)');
-    expect(alloc('ตามใจ').textContent).toContain('฿ 15,000.00'); // 35,000 − 20,000
+    expect(alloc('ตามใจ').textContent).toContain('฿15,000.00'); // 35,000 − 20,000
     expect(alloc('ตามใจ').textContent).toContain('+฿15,000.00 ในโควตา');
-    expect(alloc('ออม/เหลือ').textContent).toContain('฿ 40,000.00'); // income 100,000 − (45,000 + 15,000)
+    expect(alloc('ออม/เหลือ').textContent).toContain('฿40,000.00'); // income 100,000 − (45,000 + 15,000)
     expect(alloc('ออม/เหลือ').textContent).toContain('40.0');
   });
 
@@ -256,7 +225,7 @@ describe('ExpenseProportion — 50/30/20', () => {
 
     click(byText('button', 'คืนค่า'));
     expect(text()).not.toContain('จำลองลด');
-    expect(alloc('ตามใจ').textContent).toContain('฿ 35,000.00');
+    expect(alloc('ตามใจ').textContent).toContain('฿35,000.00');
   });
 
   it('leaving 50/30/20 forgets the simulation', () => {
@@ -267,7 +236,7 @@ describe('ExpenseProportion — 50/30/20', () => {
     click(mode('รายหมวดหมู่'));
     toAllocation();
     expect(text()).not.toContain('จำลองลด');
-    expect(alloc('ตามใจ').textContent).toContain('฿ 35,000.00');
+    expect(alloc('ตามใจ').textContent).toContain('฿35,000.00');
   });
 
   it('with no income: warns, and measures the parts against income + surplus instead (no division by zero)', () => {
@@ -275,7 +244,7 @@ describe('ExpenseProportion — 50/30/20', () => {
     mount();
     toAllocation();
     expect(text()).toContain('ไม่มีรายรับ');
-    expect(centre()).toContain('80,000.00');
+    expect(headerTotal()).toContain('80,000.00');
     expect(text()).not.toMatch(/NaN|Infinity/);
   });
 
@@ -315,7 +284,7 @@ describe('ExpenseProportion — trend', () => {
     expect(text()).toContain('2 เดือน'); // the third month has total 0
     expect(h.evolution.months).toHaveLength(3);
     expect(h.evolution.currentKey).toMatch(/^\d{4}-\d{2}$/);
-    const hidden = [...container!.querySelectorAll('[aria-hidden="true"]')].find(el => el.querySelector('div.grid-cols-5'));
+    const hidden = [...container!.querySelectorAll('[aria-hidden="true"]')].find(el => el.querySelector('div.grid-flow-col'));
     expect(hidden).toBeTruthy();
   });
 

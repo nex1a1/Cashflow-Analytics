@@ -310,7 +310,7 @@ export default function CategorySelect({
             <div className="h-[2px] w-full bg-linear-to-r from-transparent via-accent to-transparent shrink-0 opacity-80" />
 
             {/* ZONE 1: SEAMLESS COMMAND SEARCH */}
-            <div className="px-2.5 py-1.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
+            <div className="px-2.5 py-0.5 border-b border-neutral-800/80 bg-canvas/90 shrink-0 flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-neutral-400 shrink-0 pointer-events-none" />
               <input
                 ref={searchInputRef}
@@ -322,7 +322,7 @@ export default function CategorySelect({
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="พิมพ์ค้นหาหมวดหมู่ หรือ กลุ่ม..."
-                className="w-full bg-transparent border-none p-0 text-xs text-white placeholder-neutral-500 outline-hidden focus:ring-0 font-medium"
+                className="w-full bg-transparent border-none p-0 text-xs leading-6 text-white placeholder-neutral-500 outline-hidden focus:ring-0 font-medium"
               />
               {searchQuery && (
                 <button

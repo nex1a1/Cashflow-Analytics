@@ -10,6 +10,11 @@ import AllocationSelect, { SegmentedToggle } from '@/components/shared/Allocatio
 import { usePortfolio } from '@/context/PortfolioContext';
 import { readable, TOKENS } from '@/constants/theme';
 import { useFlipList } from '@/hooks/useFlipList';
+import { applyDateMove, DateMove } from '@/utils/moveDate';
+import MoveDateEditor from './MoveDateEditor';
+
+// Clicks on these belong to the control, not to row selection
+const INTERACTIVE = 'input, button, select, textarea, a, [role="listbox"], [role="option"], [role="dialog"], [role="menu"]';
 
 // Income and investing share the same green, so the icon carries the meaning: + เข้า, − ออก, กราฟ = ลงทุน.
 const ADD_BUTTONS = [
@@ -81,6 +86,7 @@ interface LedgerTableProps {
   isDateSorted: boolean;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean> | void;
   handleDeleteTransaction: (id: string) => void;
+  handleMoveTransactions?: (moves: { id: string; date: string }[]) => Promise<boolean> | void;
   handleOpenAddModal: (date: string, type: string) => void;
   pageInc: number;
   pageExp: number;
@@ -93,7 +99,7 @@ interface LedgerTableProps {
 export default function LedgerTable({
   currentData, sortedTransactions, categories, cashflowGroups = [],
   sortConfig, handleSort, isDateSorted,
-  handleUpdateTransaction, handleDeleteTransaction, handleOpenAddModal,
+  handleUpdateTransaction, handleDeleteTransaction, handleMoveTransactions, handleOpenAddModal,
   pageInc, pageExp, formatMoney,
   currentPage, totalPages, setCurrentPage
 }: LedgerTableProps) {
@@ -110,6 +116,72 @@ export default function LedgerTable({
   useEffect(() => {
     setPageInput(String(currentPage));
   }, [currentPage]);
+
+  // ── Move to another day: click the date; Ctrl/Shift+click rows to move several together ──
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
+  const [anchorId, setAnchorId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // rows filtered away or moved out of the period drop out of the selection by themselves
+  const selected = useMemo(
+    () => new Set(sortedTransactions.filter(t => picked.has(t.id)).map(t => t.id)),
+    [sortedTransactions, picked],
+  );
+  const clearSelection = () => { setPicked(new Set()); setAnchorId(null); };
+
+  useEffect(() => {
+    if (selected.size === 0 || editingId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) { setPicked(new Set()); setAnchorId(null); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [selected.size, editingId]);
+
+  const handleRowClick = (e: React.MouseEvent, id: string) => {
+    const modifier = e.ctrlKey || e.metaKey || e.shiftKey;
+    if ((e.target as HTMLElement).closest(INTERACTIVE) && !(modifier && (e.target as HTMLElement).closest('[data-date-trigger]'))) return;
+    if (e.shiftKey && anchorId) {
+      const ids = sortedTransactions.map(t => t.id);
+      const [a, b] = [ids.indexOf(anchorId), ids.indexOf(id)].sort((x, y) => x - y);
+      if (a < 0) return;
+      setPicked(prev => new Set([...prev, ...ids.slice(a, b + 1)]));
+    } else if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      setPicked(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+      setAnchorId(id);
+    } else if (selected.size > 0) {
+      clearSelection();
+    }
+  };
+
+  const submitMove = async (move: DateMove, row: TransactionDisplay) => {
+    const rows = selected.has(row.id) ? sortedTransactions.filter(t => selected.has(t.id)) : [row];
+    setEditingId(null);
+    const ok = await handleMoveTransactions?.(rows.map(t => ({ id: t.id, date: applyDateMove(move, t.date) })));
+    if (ok !== false && rows.length > 1) clearSelection();
+  };
+
+  const dateTrigger = (item: TransactionDisplay, children: React.ReactNode) => !handleMoveTransactions ? (
+    <span title={item.date}>{children}</span>
+  ) : (
+    <button
+      type="button"
+      data-date-trigger
+      onClick={e => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) return; // selection, handled by the row
+        setEditingId(item.id);
+      }}
+      title={`${item.date} · คลิกเพื่อย้ายวันที่ (Ctrl/Shift+คลิกแถวเพื่อเลือกหลายรายการ)`}
+      // hover takes the day-of-week colour, same as the day badge beside it
+      style={{ '--day-ink': readable(getThaiDayInfo(item.date)?.color ?? TOKENS['accent-ink']) } as React.CSSProperties}
+      className="group/date rounded-none hover:underline decoration-dotted decoration-(--day-ink) underline-offset-2"
+    >
+      {children}
+    </button>
+  );
 
   const handlePageSubmit = () => {
     let p = Number.parseInt(pageInput, 10);
@@ -310,17 +382,31 @@ export default function LedgerTable({
               const dayInfo = isNewDate ? getThaiDayInfo(item.date) : null;
               
               const aType = item.allocation_type || (isInc ? 'savings' : 'want');
+              const isPicked = selected.has(item.id);
+              const isEditing = editingId === item.id;
 
               return (
                 <tr
                   key={item.id}
                   data-flip-id={item.id}
-                  className={`group border-b border-line/30 hover:bg-surface-elevated/10 ${
+                  aria-selected={selected.size > 0 ? isPicked : undefined}
+                  onMouseDown={e => { if ((e.shiftKey || e.ctrlKey || e.metaKey) && !(e.target as HTMLElement).closest('input, textarea')) e.preventDefault(); }}
+                  onClick={e => handleRowClick(e, item.id)}
+                  className={`group border-b border-line/30 ${isPicked ? 'bg-accent/10' : 'hover:bg-surface-elevated/10'} ${
                     isDateBoundary ? 'border-t border-t-line-strong' : ''
                   }`}
                 >
                   {/* Sticky Date Column */}
-                  <td className={`sticky left-0 z-10 border-r border-line/40 align-middle shadow-[2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-3 py-1 group-hover:bg-surface-hover bg-canvas`}>
+                  <td className={`sticky left-0 ${isEditing ? 'z-30' : 'z-10'} border-r border-line/40 align-middle shadow-[2px_0_5px_rgb(0_0_0/calc(0.12*var(--shadow-k)))] px-3 py-1 ${isPicked ? 'bg-surface-elevated' : 'group-hover:bg-surface-hover bg-canvas'}`}>
+                    {isPicked && <span className="absolute left-0 inset-y-0 w-0.5 bg-accent" aria-hidden="true" />}
+                    {isEditing && (
+                      <MoveDateEditor
+                        fromDate={item.date}
+                        count={isPicked ? selected.size : 1}
+                        onSubmit={move => submitMove(move, item)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    )}
                     {isNewDate ? (
                       <div className="flex items-center justify-between gap-1.5 w-full">
                         <div className="flex items-center gap-2 min-w-0">
@@ -340,9 +426,11 @@ export default function LedgerTable({
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-black tabular-nums text-ink-display font-mono tracking-tight" title={item.date}>
-                            {formatThaiDateShort(item.date)}
-                          </span>
+                          {dateTrigger(item,
+                            <span className="text-xs font-black tabular-nums text-ink-display group-hover/date:text-(--day-ink) font-mono tracking-tight">
+                              {formatThaiDateShort(item.date)}
+                            </span>
+                          )}
                         </div>
                         <AddRowButtons date={item.date} onAdd={handleOpenAddModal} />
                       </div>
@@ -350,9 +438,11 @@ export default function LedgerTable({
                       <div className="flex items-center justify-between gap-1.5 w-full">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-7 h-5 flex items-center justify-center shrink-0">
-                            <span className="text-ink-muted text-xs font-mono select-none font-bold" title={item.date}>
-                              ↳
-                            </span>
+                            {dateTrigger(item,
+                              <span className="text-ink-muted group-hover/date:text-(--day-ink) text-xs font-mono select-none font-bold px-1">
+                                ↳
+                              </span>
+                            )}
                           </div>
                         </div>
                         <AddRowButtons date={item.date} onAdd={handleOpenAddModal} />
@@ -426,6 +516,9 @@ export default function LedgerTable({
         {/* Left: Record Count */}
         <div className="text-[11px] font-black uppercase tracking-widest text-ink-body font-mono">
           หน้า {currentPage} • แสดง {currentData.length} จาก {sortedTransactions.length} รายการ
+          {selected.size > 0 && (
+            <span className="text-accent-ink"> • เลือก {selected.size} · คลิกวันที่เพื่อย้าย · Esc ยกเลิก</span>
+          )}
         </div>
 
         {pager}

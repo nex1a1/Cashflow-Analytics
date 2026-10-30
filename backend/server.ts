@@ -10,6 +10,7 @@ import db from './src/config/db';
 import { auditLogger } from './src/middleware/auditLogger';
 import { ApiError } from './src/middleware/ApiError';
 import { errorHandler } from './src/middleware/errorHandler';
+import { log } from './src/utils/logger';
 
 const app = express();
 
@@ -44,9 +45,8 @@ app.use(auditLogger);
 initSchema();
 
 // Auto-backup on startup
-console.log('Initializing auto-backup...');
 backupService.createBackup().catch(err => {
-  console.warn('[WARN] Startup auto-backup failed:', err.message);
+  log.warn('backup', `สำรองข้อมูลตอนเริ่มระบบไม่สำเร็จ: ${err.message}`);
 });
 
 // Routes
@@ -55,7 +55,7 @@ app.use('/api', apiRoutes);
 // Static Frontend Asset Serving (Production Build)
 const frontendDist = process.env.PUBLIC_DIR || path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDist) && fs.existsSync(path.join(frontendDist, 'index.html'))) {
-  console.log(`Serving Web Client from: ${frontendDist}`);
+  log.info('app', `เสิร์ฟหน้าเว็บจาก ${frontendDist}`);
   app.use(express.static(frontendDist));
   app.get('/{*splat}', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
@@ -71,13 +71,9 @@ const PORT = process.env.PORT || 3000;
 const serverUrl = `http://localhost:${PORT}`;
 
 const server = app.listen(PORT, () => {
-  console.log('\n====================================================================');
-  console.log('CASHFLOW SHARK - ELITE FINANCIAL INTELLIGENCE');
-  console.log('====================================================================');
-  console.log(`[STATUS] Server Active  : ${serverUrl}`);
-  console.log('--------------------------------------------------------------------');
-  console.log('  Shortcuts: [B] Manual Backup  |  [Q] Exit');
-  console.log('====================================================================\n');
+  log.info('app', `Cashflow Shark พร้อมใช้งานที่ ${serverUrl}`);
+  // ปุ่มลัดใช้ได้เฉพาะตอนรันในเทอร์มินัลจริง (ใน Docker ไม่มี TTY)
+  if (process.stdin.isTTY) log.info('app', 'ปุ่มลัด: [B] สำรองข้อมูล · [Q] ปิดระบบ');
 });
 
 // Graceful Shutdown Handler
@@ -85,30 +81,25 @@ let isShuttingDown = false;
 const gracefulShutdown = (signal: string) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`\n[${signal}] Initiating graceful shutdown...`);
+  log.info('app', `ได้รับ ${signal} กำลังปิดระบบ…`);
 
   // Force exit fallback timeout (5s)
   const forceExitTimeout = setTimeout(() => {
-    console.error('[WARN] Forcing process exit after shutdown timeout.');
+    log.warn('app', 'ปิดไม่ทันใน 5 วินาที บังคับปิด');
     process.exit(1);
   }, 5000);
   forceExitTimeout.unref();
 
   server.close((err) => {
-    if (err) {
-      console.error('[ERROR] Error closing HTTP server:', err);
-    } else {
-      console.log('HTTP server closed.');
-    }
+    if (err) log.error('app', 'ปิด HTTP server ไม่สำเร็จ:', err);
 
     try {
       db.close();
-      console.log('SQLite database connection closed.');
     } catch (dbErr: any) {
-      console.error('[ERROR] Error closing SQLite database:', dbErr?.message || dbErr);
+      log.error('db', 'ปิดฐานข้อมูลไม่สำเร็จ:', dbErr?.message || dbErr);
     }
 
-    console.log('Cashflow Shark shutdown complete. Goodbye!\n');
+    log.info('app', 'ปิดระบบเรียบร้อย');
     process.exit(0);
   });
 };
@@ -125,10 +116,8 @@ if (process.stdin.isTTY) {
     process.stdin.on('data', (key: string) => {
       const k = key.toLowerCase();
       if (k === 'b') {
-        console.log('\nTriggering manual database backup...');
         backupService.createBackup()
-          .then(data => console.log('Backup result:', data))
-          .catch(err => console.error('[ERROR] Backup failed:', err.message));
+          .catch(err => log.error('backup', `สำรองข้อมูลไม่สำเร็จ: ${err.message}`));
       } else if (k === 'q' || key === '\u0003') { // q or Ctrl+C
         gracefulShutdown('KEYBOARD_QUIT');
       }

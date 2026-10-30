@@ -11,7 +11,7 @@ import { ASSET_KIND_LABELS, GRAMS_PER_BAHT_GOLD, defaultUnitLabel, formatUnits, 
 import { KIND_META } from './assetKinds';
 
 const KINDS = Object.keys(KIND_META) as AssetKind[];
-const INPUT = 'w-full px-3 py-2 border outline-hidden font-semibold text-[13px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted';
+const INPUT = 'w-full px-3 py-[5px] border outline-hidden font-semibold text-[13px] leading-[27px] rounded-sm bg-canvas border-line text-ink-display focus:border-accent-ink placeholder-ink-muted';
 const LABEL = 'block mb-1.5 text-[12px] font-bold text-ink-soft';
 const HINT = 'mt-1.5 text-[11px] text-ink-muted';
 

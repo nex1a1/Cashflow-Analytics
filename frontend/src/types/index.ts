@@ -221,6 +221,7 @@ export interface AppDataContextValue {
   handleSaveTransaction: (tx: any) => Promise<any>;
   handleUpdateTransaction: (id: string, field: string, value: any) => Promise<boolean>;
   handleDeleteTransaction: (id: string) => Promise<any>;
+  handleMoveTransactions: (moves: { id: string; date: string }[]) => Promise<boolean>;
   handleDeleteMonth: (month: string) => Promise<boolean>;
   handleDeleteAllData: () => Promise<void>;
   handleSaveBatch: (items: any[]) => Promise<void>;

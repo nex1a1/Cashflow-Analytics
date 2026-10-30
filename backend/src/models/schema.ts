@@ -1,4 +1,5 @@
 import db from '../config/db';
+import { log } from '../utils/logger';
 import crypto from 'node:crypto';
 import { VIEWS_SQL } from './views';
 import {
@@ -46,11 +47,11 @@ export const initSchema = (): void => {
       schemaVerified = true;
     }
   } catch (e: any) {
-    console.warn('[WARN] ไม่สามารถอ่านข้อมูลความสมบูรณ์ของโครงสร้างได้:', e.message);
+    log.warn('schema', 'ไม่สามารถอ่านข้อมูลความสมบูรณ์ของโครงสร้างได้:', e.message);
   }
 
   if (schemaVerified) {
-    console.log('ระบบฐานข้อมูลและข้อมูลตั้งต้นพร้อมใช้งานแล้ว (ข้ามการเช็คโครงสร้างย้อนหลัง)');
+    log.info('schema', 'โครงสร้างฐานข้อมูลพร้อมใช้งาน (ตรวจครบแล้วตั้งแต่ครั้งก่อน)');
     return;
   }
 
@@ -152,7 +153,7 @@ export const initSchema = (): void => {
       CREATE INDEX IF NOT EXISTS idx_calendar_days_day_type ON calendar_days(day_type_id);
     `);
   } catch (e: any) {
-    console.warn('[WARN] ไม่สามารถสร้างดัชนีการค้นหาได้:', e.message);
+    log.warn('schema', 'ไม่สามารถสร้างดัชนีการค้นหาได้:', e.message);
   }
 
   // 3.1 ฐานข้อมูลใหม่: ensureInvestmentSchema ด้านบนข้ามไปเพราะยังไม่มีตาราง transactions — ทำซ้ำตอนนี้ (trigger/index ของระบบลงทุน)
@@ -169,12 +170,12 @@ export const initSchema = (): void => {
   try {
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
       .run('schema_verified', 'true');
-    console.log('บันทึกสถานะการตั้งค่าโครงสร้างเรียบร้อยแล้ว');
+    log.info('schema', 'บันทึกสถานะการตั้งค่าโครงสร้างเรียบร้อยแล้ว');
   } catch (e: any) {
-    console.warn('[WARN] ไม่สามารถบันทึกสถานะตรวจสอบโครงสร้างได้:', e.message);
+    log.warn('schema', 'ไม่สามารถบันทึกสถานะตรวจสอบโครงสร้างได้:', e.message);
   }
 
-  console.log('ตั้งค่าโครงสร้างระบบฐานข้อมูล Cashflow Shark เรียบร้อยแล้ว!');
+  log.info('schema', 'ตั้งค่าโครงสร้างระบบฐานข้อมูล Cashflow Shark เรียบร้อยแล้ว!');
 };
 
 const seedInitialData = (): void => {
@@ -198,7 +199,7 @@ const seedInitialData = (): void => {
     const exists = db.prepare("SELECT id FROM day_types WHERE label = ?").get(dt.label);
     if (!exists) {
       insertDayType.run(crypto.randomUUID(), dt.name, dt.label, dt.color, idx + 1);
-      console.log(`เพิ่มประเภทวันใหม่เรียบร้อย: ${dt.label}`);
+      log.info('schema', `เพิ่มประเภทวันใหม่เรียบร้อย: ${dt.label}`);
     }
   });
 
@@ -209,6 +210,6 @@ const seedInitialData = (): void => {
     insertGroup.run(crypto.randomUUID(), 'รายได้หลัก', 'income', 1, '#10B981', '💰');
     insertGroup.run(crypto.randomUUID(), 'รายจ่ายคงที่', 'expense', 2, '#6366F1', '🏠');
     insertGroup.run(crypto.randomUUID(), 'รายจ่ายผันแปร', 'expense', 3, '#F59E0B', '🛒');
-    console.log('เพิ่มกลุ่มรายจ่ายเริ่มต้นเรียบร้อย');
+    log.info('schema', 'เพิ่มกลุ่มรายจ่ายเริ่มต้นเรียบร้อย');
   }
 };

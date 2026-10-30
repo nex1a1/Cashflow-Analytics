@@ -101,7 +101,7 @@ const CashflowGroupsCard = memo(({
                   requiredMessage="ต้องมีชื่อกลุ่ม"
                   value={group.name}
                   onDebouncedChange={val => handleChangeCashflowGroup(group.id, 'name', val)}
-                  className={`flex-1 min-w-0 px-2 py-1.5 border outline-hidden font-semibold text-[13px] rounded-sm ${
+                  className={`flex-1 min-w-0 px-2 py-[3px] border outline-hidden font-semibold text-[13px] leading-[27px] rounded-sm ${
                     'bg-canvas border-line text-ink-display focus:border-accent-ink focus:shadow-none placeholder-ink-muted'
                   }`}
                   placeholder="ชื่อกลุ่ม"

@@ -155,7 +155,7 @@ export default function DayNoteField({ dateStr, note, onSave }: DayNoteFieldProp
           aria-describedby={error ? 'day-note-err' : undefined}
           onBlur={e => void commit(e.currentTarget, !!wrapRef.current?.contains(e.relatedTarget as Node | null))}
           onKeyDown={handleKeyDown}
-          className={`h-8 flex-1 min-w-0 px-2.5 rounded-sm border outline-hidden focus:ring-1 text-sm font-medium ${
+          className={`flex-1 min-w-0 px-2.5 py-px rounded-sm border outline-hidden focus:ring-1 text-sm leading-7 font-medium ${
             error ? 'bg-canvas tint-danger text-ink-display focus:ring-danger/30' : 'bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30'
           }`}
         />

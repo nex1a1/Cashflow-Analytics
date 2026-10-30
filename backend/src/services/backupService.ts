@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import db from '../config/db';
+import { log } from '../utils/logger';
 
 export interface BackupResult {
   success: boolean;
@@ -40,7 +41,7 @@ class BackupService {
       const match = /^backup-(\d{4}-\d{2}-\d{2})\.db$/.exec(file);
       if (match && match[1] < cutoffStr) {
         fs.unlinkSync(path.join(backupDir, file));
-        console.log(`Pruned old backup (>${RETENTION_DAYS}d): ${file}`);
+        log.info('backup', `ลบไฟล์สำรองเก่ากว่า ${RETENTION_DAYS} วัน: ${file}`);
       }
     }
   }
@@ -70,7 +71,7 @@ class BackupService {
     if (!fs.existsSync(monthlyPath)) {
       await db.backup(monthlyPath);
       masterCreated = true;
-      console.log(`Monthly backup created for ${monthStr}`);
+      log.info('backup', `สร้างไฟล์สำรองประจำเดือน ${monthlyFileName}`);
     }
 
     // Master snapshot: no date, always overwritten with the latest state
@@ -78,7 +79,7 @@ class BackupService {
 
     this.pruneOldBackups(backupDir, now);
 
-    console.log(`Backup successful: ${backupFileName}`);
+    log.info('backup', `สำรองข้อมูลแล้ว ${backupFileName}`);
 
     return {
       success: true,
@@ -96,7 +97,7 @@ class BackupService {
     const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
     const filename = `pre-reset-${this.getLocalDateStr(now)}-${time}.db`;
     await db.backup(path.join(backupDir, filename));
-    console.log(`Pre-reset backup: ${filename}`);
+    log.info('backup', `สำรองก่อนล้างข้อมูล ${filename}`);
     return filename;
   }
 
