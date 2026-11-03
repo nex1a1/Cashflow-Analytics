@@ -24,6 +24,8 @@ const PAD_T = 16;
 const PAD_B = 26;
 const TIP_W = 196;
 const TIP_H = 100;
+/** Highest the Y axis grows for overspent months; a month above it is clipped and labelled with its real % */
+const Y_CAP = 150;
 
 const monthName = (ym: string) => {
   const [y, m] = ym.split('-');
@@ -49,13 +51,19 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
   const baseY = PAD_T + plotH;
   const xEnd = PAD_L + plotW;
 
+  // Stack top: 100% = income; an overspent month rises above it. The axis grows (in 10% steps, up to Y_CAP) only when needed.
+  const stackTop = months.map(m => (m.total > 0 ? m.needPct + m.wantPct + m.savingsPct : 0));
+  const yMax = Math.min(Y_CAP, Math.max(100, Math.ceil(Math.max(0, ...stackTop) / 10) * 10));
+
   const lastIdx = Math.max(1, months.length - 1);
   const getX = (idx: number) => PAD_L + (idx / lastIdx) * plotW;
-  const getY = (pct: number) => baseY - (Math.max(0, Math.min(100, pct)) / 100) * plotH;
+  const getY = (pct: number) => baseY - (Math.max(0, Math.min(yMax, pct)) / yMax) * plotH;
   const pts = (vals: number[]) => vals.map((v, i) => [getX(i), getY(v)] as const);
 
   const needBoundary = months.map(m => m.needPct);
   const wantBoundary = months.map(m => m.needPct + m.wantPct);
+  const incomeLine = months.map(() => 100);
+  const hasOver = months.some(m => m.overPct > 0);
   // Band between two boundaries: along the top, back along the bottom
   const band = (lower: number[], upper: number[]) =>
     `${linePath(pts(upper))} ${pts(lower).reverse().map(([x, y]) => `L ${x} ${y}`).join(' ')} Z`;
@@ -77,6 +85,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
   const withData = months.filter(m => m.ym <= currentKey && m.total > 0);
   const latest = withData.length > 0 ? withData[withData.length - 1] : months[months.length - 1];
   const breaches = !latest || latest.total === 0 ? [] : [
+    latest.overPct > 0 && 'ใช้เกินรายรับ',
     latest.needPct > 50 && 'รายจ่ายจำเป็นเกินเป้า',
     latest.wantPct > 30 && 'รายจ่ายตามใจเกินเพดาน',
     latest.savingsPct < 20 && 'เงินเหลือต่ำกว่าเป้า',
@@ -109,9 +118,12 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
             <filter id="evolutionTooltipShadow" x="-10%" y="-10%" width="130%" height="130%">
               <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000000" floodOpacity="0.8" />
             </filter>
+            <pattern id="evolutionOverHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="6" stroke={tc('danger')} strokeWidth="2" strokeOpacity="0.7" />
+            </pattern>
           </defs>
 
-          {[0, 50, 80, 100].map(pct => {
+          {[0, 50, 80, 100, ...(yMax > 100 ? [yMax] : [])].map(pct => {
             const target = pct === 50 || pct === 80;
             return (
               <g key={`hgrid-${pct}`}>
@@ -126,14 +138,45 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
             );
           })}
 
-          {/* Stacked 100% bands; a month with no data collapses to a notch instead of a fabricated 100% savings fill */}
+          {/* Stacked bands up to each month's stack top (100% = income); a month with no data collapses to a notch instead of a fabricated 100% savings fill */}
           <path d={band(months.map(() => 0), needBoundary)} fill={NEED_COLOR} fillOpacity="0.85" />
           <path d={band(needBoundary, wantBoundary)} fill={WANT_COLOR} fillOpacity="0.8" />
-          <path d={band(wantBoundary, months.map(m => (m.total > 0 ? 100 : 0)))} fill={SAVINGS_COLOR} fillOpacity="0.55" />
+          <path d={band(wantBoundary, stackTop)} fill={SAVINGS_COLOR} fillOpacity="0.55" />
+
+          {/* Overspend: hatch whatever stacks above the income line */}
+          {hasOver && (() => {
+            const d = band(incomeLine, stackTop.map(v => Math.max(100, v)));
+            return (
+              <g data-overspend>
+                <path d={d} fill={tc('danger')} fillOpacity="0.35" />
+                <path d={d} fill="url(#evolutionOverHatch)" />
+              </g>
+            );
+          })()}
 
           {[needBoundary, wantBoundary].map((b, i) => (
             <path key={i} d={linePath(pts(b))} fill="none" stroke={tc('canvas')} strokeWidth="1" opacity="0.6" />
           ))}
+
+          {/* Income ceiling drawn on top once anything crosses it */}
+          {hasOver && (
+            <>
+              <line x1={PAD_L} y1={getY(100)} x2={xEnd} y2={getY(100)} stroke={tc('danger')} strokeWidth={1.5} />
+              <MonoText x={xEnd} y={getY(100) - 5} fill={tc('danger')} textAnchor="end" fontWeight="bold">100% = รายรับ</MonoText>
+            </>
+          )}
+
+          {/* A month above the axis cap is clipped: print its real height at the top */}
+          {months.map((m, i) => {
+            const top = stackTop[i];
+            if (top <= yMax) return null;
+            const anchor = i === 0 ? 'start' : i === months.length - 1 ? 'end' : 'middle';
+            return (
+              <MonoText key={`clip-${m.ym}`} x={getX(i)} y={PAD_T - 4} fill={tc('danger')} textAnchor={anchor} fontWeight="bold">
+                {top.toFixed(0)}%
+              </MonoText>
+            );
+          })}
 
           {/* 50% / 80% guides again on top of the bands */}
           {[50, 80].map(pct => (
@@ -180,21 +223,22 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
               {/* Dots pin the tooltip's numbers to their band boundary */}
               {hovered.total > 0 && (
                 <>
-                  {[[needBoundary[hoveredIdx], NEED_COLOR], [wantBoundary[hoveredIdx], WANT_COLOR], [100, SAVINGS_COLOR]].map(([pct, color]) => (
+                  {[[needBoundary[hoveredIdx], NEED_COLOR], [wantBoundary[hoveredIdx], WANT_COLOR], [stackTop[hoveredIdx], SAVINGS_COLOR]].map(([pct, color]) => (
                     <circle key={color} cx={hoverX} cy={getY(pct as number)} r="4" fill={color as string} stroke={tc('canvas')} strokeWidth="1.5" />
                   ))}
                 </>
               )}
 
               <g transform={`translate(${tipX}, ${PAD_T + 4})`}>
-                <rect x="0" y="0" width={TIP_W} height={TIP_H} fill={tc('surface-hover')} stroke={tc('line-strong')} strokeWidth="1.2" rx="3" filter="url(#evolutionTooltipShadow)" />
+                <rect x="0" y="0" width={TIP_W} height={TIP_H + (hovered.overPct > 0 || hovered.noIncome ? 20 : 0)} fill={tc('surface-hover')} stroke={tc('line-strong')} strokeWidth="1.2" rx="3" filter="url(#evolutionTooltipShadow)" />
                 <MonoText x="10" y="17" fill={tc('ink-display')} fontSize="11.5" fontWeight="bold">{monthFull(hovered.ym)}</MonoText>
                 {hovered.total === 0 ? (
                   <MonoText x="10" y="36" fill={tc('ink-body')}>ไม่มีข้อมูล</MonoText>
                 ) : ([
                   [NEED_COLOR, 'จำเป็น', hovered.needAmt, hovered.needPct, hovered.needPct > 50],
                   [WANT_COLOR, 'ตามใจ', hovered.wantAmt, hovered.wantPct, hovered.wantPct > 30],
-                  [SAVINGS_COLOR, 'เหลือ', hovered.savingsAmt, hovered.savingsPct, hovered.savingsPct < 20],
+                  // Overspent: nothing was left over, so the band is only what went to investing
+                  [SAVINGS_COLOR, hovered.overPct > 0 ? 'ลงทุน' : 'เหลือ', hovered.savingsAmt, hovered.savingsPct, hovered.savingsPct < 20],
                 ] as const).map(([color, label, amt, pct, off], i) => (
                   <MonoText key={label} x="10" y={38 + i * 20}>
                     <tspan fill={color} fontWeight="bold">■</tspan>
@@ -202,6 +246,14 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
                     <tspan fill={off ? tc('danger') : tc('ink-soft')} fontWeight="bold" dx="4">({pct.toFixed(0)}%)</tspan>
                   </MonoText>
                 ))}
+                {hovered.overPct > 0 && (
+                  <MonoText x="10" y={98} fill={tc('danger')} fontWeight="bold">
+                    เกินรายรับ {formatBaht(hovered.overAmt)} (+{hovered.overPct.toFixed(0)}%)
+                  </MonoText>
+                )}
+                {hovered.noIncome && (
+                  <MonoText x="10" y={98} fill={tc('ink-soft')}>ไม่มีรายรับ: % เทียบยอดใช้จ่าย</MonoText>
+                )}
               </g>
             </g>
           )}

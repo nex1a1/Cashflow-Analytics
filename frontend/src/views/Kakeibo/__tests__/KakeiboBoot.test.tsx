@@ -14,6 +14,7 @@ vi.mock('@/context/AppDataContext', () => ({
     transactions: [{ id: 't1', date: '2026-10-05', category_id: 'c-inc', category: 'c-inc', description: '', amount: 1000, group_type: 'income', allocation_type: null }],
     categories: [{ id: 'c-inc', name: 'เงินเดือน', type: 'income', order_index: 1, cashflow_group_id: 'g-inc' }],
     cashflowGroups: [{ id: 'g-inc', name: 'เงินเดือน', type: 'income', allocation_type: null, order_index: 1 }],
+    dayTypes: {}, dayTypeConfig: [],
   }),
 }));
 vi.mock('@/context/AppFilterContext', () => ({ useAppFilter: () => ({ filterPeriod: '2026-10', setFilterPeriod: () => {}, getFilterLabel: (p: string) => p }) }));

@@ -1,6 +1,7 @@
 // src/views/Dashboard/components/MainChart/index.tsx
 import { useState, useRef, useEffect } from 'react';
 import { Chart } from 'react-chartjs-2';
+import '@/utils/chartSetup';
 
 import { useDashboardContext } from '../../context/DashboardContext';
 import { useSankeyEngine } from '../../hooks/useSankeyEngine';

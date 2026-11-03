@@ -168,11 +168,18 @@ describe('ActivityTimeline — GitHub layout', () => {
     expect(weeks.map(w => w.querySelectorAll('button').length)).toEqual([3, 7]);
   });
 
-  it('pads the last partial week too, and labels the weeks where a month starts', () => {
+  it('pads the last partial week too; a stub month whose label would overlap the next one is dropped', () => {
     set({ datesInPeriod: CROSS, dayTypeCounts: { 'dt-work': 3, 'dt-hol': 2 } });
     mount();
     expect(cells()).toHaveLength(5);
     expect(emptyCells('w-4.h-4')).toBe(5 + 4); // Fri+Sat week (5 empty) and Sun–Tue week (4 empty)
+    const monthLabels = [...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent);
+    expect(monthLabels).toEqual(['ก.พ. 26']);
+  });
+
+  it('pay-cycle period: labels each month where it starts when they are ≥ 3 weeks apart', () => {
+    set({ datesInPeriod: range('2026-01-05', '2026-02-10'), dayTypeCounts: { 'dt-work': 27, 'dt-hol': 10 } });
+    mount();
     const monthLabels = [...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent);
     expect(monthLabels).toEqual(['ม.ค. 26', 'ก.พ. 26']);
   });

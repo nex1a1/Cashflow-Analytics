@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 import { Bar as BarChart, Line } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
+import '@/utils/chartSetup';
 import { Portfolio } from '@/types';
 import { tc } from '@/constants/theme';
 import { formatThaiDateShort, formatBaht } from '@/utils/formatters';

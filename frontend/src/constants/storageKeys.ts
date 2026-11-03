@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   CALENDAR_LEGEND_SORT: 'shark_calendar_legend_sort',
   CALENDAR_LEGEND_LAYOUT: 'shark_calendar_legend_layout',
   PERIOD_MODE: 'shark_period_mode',
+  RANGE_ORDER: 'shark_range_order', // ตารางหลายเดือน: 'newest' (ล่าสุดบน) | 'oldest' (ล่าสุดล่าง)
 } as const;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { goalResult, summarizeKakeibo, unitRange } from '../kakeibo';
+import { findRentGroupId, goalResult, lineTotals, rangeTrend, reflectionHints, splitSmallLines, summarizeKakeibo, unitRange, unitTrend } from '../kakeibo';
 
 describe('kakeibo', () => {
   it('October 2026 starts on a Thursday: Thu–Sat, then full weeks, ending Sat 31', () => {
@@ -54,7 +54,7 @@ describe('kakeibo', () => {
   });
 });
 
-import { planLines, roundShares } from '../kakeibo';
+import { planLines } from '../kakeibo';
 
 describe('planLines', () => {
   it('groups this period by section + category (row allocation decides NEED/WANT), largest first', () => {
@@ -134,10 +134,89 @@ describe('planLines: planned part', () => {
   });
 });
 
-describe('roundShares', () => {
-  it('always adds up to 100 (rounding each share alone gave 50 + 28 + 23 = 101)', () => {
-    expect(roundShares([12_535.44, 6_966.6, 5_677.96]).reduce((n, v) => n + v, 0)).toBe(100);
-    expect(roundShares([1, 1, 1]).reduce((n, v) => n + v, 0)).toBe(100);
+describe('lineTotals / reflectionHints', () => {
+  const r = (date: string, category_id: string, amount: number, allocation_type: string, group_type = 'expense') =>
+    ({ date, category_id, category: category_id, amount, group_type, allocation_type });
+  const sep = [r('2026-09-02', 'food', 1_000, 'need'), r('2026-09-03', 'game', 200, 'want'), r('2026-09-04', 'rent', 4_500, 'need')];
+  const oct = [r('2026-10-02', 'food', 600, 'need'), r('2026-10-03', 'game', 900, 'want'), r('2026-10-04', 'book', 300, 'want'), r('2026-10-04', 'rent', 4_500, 'need')];
+  const fixed = { categoryIds: new Set(['rent']), itemKeys: new Set<string>() };
+
+  it('lineTotals: satang per planLines key, null when the period has no rows', () => {
+    expect(lineTotals(planLines(sep, '2026-09', fixed))).toEqual(new Map([['fixed:rent', 450_000], ['need:food', 100_000], ['want:game', 20_000]]));
+    expect(lineTotals(planLines([], '2026-08'))).toBeNull();
+    expect(lineTotals(null)).toBeNull();
   });
-  it('is all zeros when there is nothing to share', () => expect(roundShares([0, 0])).toEqual([0, 0]));
+
+  it('lists over-budget envelopes first, then WANT total and the biggest rise / fall (Fix Cost left out)', () => {
+    const hints = reflectionHints(planLines(oct, '2026-10', fixed)!, lineTotals(planLines(sep, '2026-09', fixed)), [
+      { name: 'จิปาถะ', over: 5_000, pct: 3 }, { name: 'ค่ากิน', over: 19_820, pct: 7 },
+    ], 'เดือน');
+    expect(hints).toEqual([
+      'ค่ากิน เกินงบ ฿198.20 (7%)',
+      'จิปาถะ เกินงบ ฿50.00 (3%)',
+      'WANT รวมเพิ่มขึ้น ฿1,000.00 จากเดือนก่อน',
+      'game เพิ่มขึ้นมากที่สุด ฿700.00 จากเดือนก่อน',
+      'food ลดลงมากที่สุด ฿400.00 จากเดือนก่อน',
+    ]);
+  });
+
+  it('NEED and WANT rows of one category count together; a category new this period says so; small changes are skipped', () => {
+    const prev = lineTotals(planLines([r('2026-09-02', 'food', 1_000, 'need'), r('2026-09-03', 'food', 950, 'want')], '2026-09'));
+    const now = planLines([r('2026-10-02', 'food', 1_500, 'need'), r('2026-10-03', 'food', 500, 'want'), r('2026-10-05', 'book', 300, 'want')], '2026-10')!;
+    expect(reflectionHints(now, prev, [], 'รอบ')).toEqual(['WANT รวมลดลง ฿150.00 จากรอบก่อน', 'book ฿300.00 (รอบก่อนไม่มี)']);
+  });
+
+  it('without a previous period only the over-budget lines remain', () => {
+    expect(reflectionHints(planLines(oct, '2026-10')!, null, [], 'เดือน')).toEqual([]);
+  });
+});
+
+describe('unitTrend / splitSmallLines / plannedDate', () => {
+  const r = (date: string, amount: number, group_type: string, allocation_type: string | null = null) => ({ date, amount, group_type, allocation_type, category_id: 'x', category: 'x' });
+
+  it('unitTrend: oldest first, crosses the year, skips empty months', () => {
+    const rows = [r('2025-11-03', 100, 'income'), r('2025-11-04', 30, 'expense', 'need'), r('2026-01-02', 200, 'income'), r('2026-01-05', 50, 'expense', 'want')];
+    expect(unitTrend(rows, '2026-01', 4)).toEqual([
+      { period: '2025-11', income: 10_000, need: 3_000, want: 0, left: 7_000 },
+      { period: '2026-01', income: 20_000, need: 0, want: 5_000, left: 15_000 },
+    ]);
+    expect(unitTrend(rows, 'cycle:2026-01', 2).map((p) => p.period)).toEqual(['cycle:2025-12']); // 25 Dec – 24 Jan holds the January rows; cycle Jan (from 25 Jan) is empty
+  });
+
+  it('unitTrend: nothing for multi-month periods', () => expect(unitTrend([], '2026', 4)).toEqual([]));
+
+  it('rangeTrend: one row per month inside the period, oldest first, investing kept apart from expense', () => {
+    const rows = [
+      r('2026-06-30', 999, 'income'), // before the range: ignored
+      r('2026-07-01', 100, 'income'), r('2026-07-02', 30, 'expense', 'need'), r('2026-07-03', 10, 'savings'),
+      r('2026-09-10', 200, 'income'), r('2026-09-11', 50, 'expense', 'want'), r('2026-09-12', 20, 'expense'), // no allocation = WANT
+    ];
+    expect(rangeTrend(rows, '2026-07_2026-09')).toEqual([
+      { period: '2026-07', income: 10_000, need: 3_000, want: 0, left: 7_000, invested: 1_000 },
+      { period: '2026-09', income: 20_000, need: 0, want: 7_000, left: 13_000, invested: 0 },
+    ]);
+    expect(rangeTrend(rows, 'ALL').map((p) => p.period)).toEqual(['2026-06', '2026-07', '2026-09']);
+  });
+
+  it('rangeTrend: cycle periods bucket by pay cycle and keep the cycle prefix', () => {
+    const rows = [r('2026-07-24', 100, 'income'), r('2026-07-25', 200, 'income')];
+    expect(rangeTrend(rows, 'cycle:2026-06_2026-07').map((p) => [p.period, p.income])).toEqual([['cycle:2026-06', 10_000], ['cycle:2026-07', 20_000]]);
+  });
+
+  it('findRentGroupId matches the housing group by name', () => {
+    expect(findRentGroupId([{ id: 'a', name: 'ค่ากิน' }, { id: 'b', name: 'ค่าหอ/ที่พัก' }])).toBe('b');
+    expect(findRentGroupId([{ id: 'a', name: 'ค่ากิน' }])).toBeUndefined();
+  });
+
+  it('splitSmallLines folds rows under the line only when there are enough of them', () => {
+    const line = (key: string, actual: number) => ({ key, name: key, actual });
+    const lines = [line('a', 50_000), line('b', 19_999), line('c', 10_000), line('d', 100)];
+    expect(splitSmallLines(lines, 20_000).small.map((l) => l.key)).toEqual(['b', 'c', 'd']);
+    expect(splitSmallLines(lines.slice(0, 3), 20_000)).toEqual({ main: lines.slice(0, 3), small: [] });
+  });
+
+  it('planLines: plannedDate is the first date still ahead', () => {
+    const lines = planLines([r('2026-10-31', 10, 'expense', 'need'), r('2026-10-20', 10, 'expense', 'need'), r('2026-10-05', 10, 'expense', 'need')], '2026-10', undefined, '2026-10-10')!;
+    expect(lines.need[0]).toMatchObject({ actual: 3_000, planned: 2_000, plannedDate: '2026-10-20' });
+  });
 });

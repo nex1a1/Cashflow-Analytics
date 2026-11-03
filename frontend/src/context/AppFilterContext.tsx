@@ -1,9 +1,7 @@
 import React, { createContext, use, useEffect, ReactNode } from 'react';
 import { AppFilterContextValue } from '../types';
 import { getFilterLabel } from '../utils/formatters';
-import { effectiveChartGroupBy } from '../utils/chartGrouping';
 import useFilters from '../hooks/useFilters';
-import useAnalytics from '../hooks/useAnalytics';
 import { useAppData } from './AppDataContext';
 import { useAppUI } from './AppUIContext';
 
@@ -17,21 +15,11 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   const {
     transactions,
     categories,
-    cashflowGroups,
     masterPeriods,
-    summaryData,
-    dayTypes,
-    dayTypeConfig,
     loadPeriodData,
   } = useAppData();
 
-  const {
-    activeTab,
-    hideFixedExpenses,
-    hideWantExpenses,
-    dashboardCategory,
-    chartGroupBy,
-  } = useAppUI();
+  const { activeTab } = useAppUI();
 
   // Filters Hook
   const {
@@ -75,7 +63,7 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
   // Document Title Synchronization
   useEffect(() => {
     const tabLabels: Record<string, string> = {
-      insights: 'Dashboard',
+      insights: 'Overview', // the Dashboard, or Kakeibo in Lite mode
       kakeibo: 'Kakeibo',
       calendar: 'Calendar',
       ledger: 'Ledger',
@@ -86,20 +74,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     const periodLabel = getFilterLabel(filterPeriod);
     document.title = `SHARK | ${tabLabel} [${periodLabel}]`;
   }, [activeTab, filterPeriod]);
-
-  const analytics = useAnalytics({
-    transactions,
-    categories,
-    filterPeriod,
-    cashflowGroups,
-    hideFixedExpenses,
-    hideWantExpenses,
-    dashboardCategory,
-    chartGroupBy: effectiveChartGroupBy(chartGroupBy, filterPeriod),
-    dayTypes,
-    dayTypeConfig,
-    summaryData,
-  });
 
   const value: AppFilterContextValue = {
     filterPeriod,
@@ -113,7 +87,6 @@ export const AppFilterProvider: React.FC<AppFilterProviderProps> = ({ children }
     isFilterActive,
     clearFilters,
     displayTransactions,
-    analytics,
     allDatesInPeriod,
     availableDatesInPeriod,
     advancedFilterCategory,

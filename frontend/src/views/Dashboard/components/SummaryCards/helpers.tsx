@@ -5,6 +5,7 @@ import { formatBaht } from '@/utils/formatters';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
 import { BreakdownEntry } from './types';
 import { PanelTitle } from '../panelParts';
+import { BUDGET_RULES, WARN_AT } from '@/constants/budgetRules';
 
 /**
  * Formats a signed monetary value with the sign BEFORE the ฿ symbol.
@@ -27,22 +28,8 @@ export const SectionHeader = ({ icon: Icon, title }: { icon?: LucideIcon; title:
   </div>
 );
 
-/**
- * The only place the dashboard's budget thresholds live. Card labels ("เกณฑ์แนะนำ < X%"),
- * card colours and the strategic grade all read these, so a red card is always a counted breach.
- * Percentages; `min` rules breach below, `max` rules breach above.
- */
-export const BUDGET_RULES = {
-  rent:            { max: 30 }, // % of income
-  subscription:    { max: 5 },  // % of income
-  subscriptionExp: { max: 8 },  // % of expense — fallback when the period has no income
-  lifestyle:       { max: 30 }, // % of income
-  food:            { max: 25 }, // % of expense
-  surplus:         { min: 20 }, // (income − expense) % of income — same 20% as SAVE in 50/30/20 (Kakeibo goal)
-} as const;
-
-/** Past this share of a `max` the card warns (amber) before it breaches (red). */
-export const WARN_AT = 0.8;
+// Budget thresholds live in constants/budgetRules; re-exported so the summary cards keep one import.
+export { BUDGET_RULES, WARN_AT };
 
 export interface BudgetInputs {
   rentPct: number;

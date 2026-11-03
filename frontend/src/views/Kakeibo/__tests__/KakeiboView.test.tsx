@@ -11,14 +11,15 @@ import type { CashflowGroup, Category } from '@/types';
 // the API layer (settings = an in-memory store) and the doughnut canvas.
 const h = vi.hoisted(() => ({
   period: 'cycle:2026-09',
+  setPeriod: vi.fn(),
   transactions: [] as unknown[],
   groups: [] as CashflowGroup[],
   categories: [] as Category[],
   store: {} as Record<string, unknown>,
   save: vi.fn(),
 }));
-vi.mock('@/context/AppDataContext', () => ({ useAppData: () => ({ transactions: h.transactions, categories: h.categories, cashflowGroups: h.groups }) }));
-vi.mock('@/context/AppFilterContext', () => ({ useAppFilter: () => ({ filterPeriod: h.period, setFilterPeriod: () => {}, getFilterLabel: (p: string) => p }) }));
+vi.mock('@/context/AppDataContext', () => ({ useAppData: () => ({ transactions: h.transactions, categories: h.categories, cashflowGroups: h.groups, dayTypes: {}, dayTypeConfig: [] }) }));
+vi.mock('@/context/AppFilterContext', () => ({ useAppFilter: () => ({ filterPeriod: h.period, setFilterPeriod: h.setPeriod, getFilterLabel: (p: string) => p }) }));
 vi.mock('@/services/api', () => ({
   settingsService: { getAll: () => Promise.resolve({ ...h.store }), save: (...a: unknown[]) => h.save(...a) },
 }));
@@ -111,8 +112,10 @@ describe('KakeiboView', () => {
       const fills = (name: string) => [...li(name).querySelectorAll<HTMLElement>('span[aria-hidden="true"][class*="h-2.5"] > span')].map((e) => e.style.backgroundColor).filter(Boolean).join('|');
       expect(fills('ค่ากิน')).toMatch(/249,\s*115,\s*22|f97316/i); // in budget: the group's own orange
       expect(li('ค่าใช้จ่ายจิปาถะ').querySelector('.text-warn')).not.toBeNull(); // 110%: status colour on the text
-      // the legend says which colour means what
-      const legend = section('งบซอง').textContent!;
+      // the legend says which colour means what — folded behind the header button so it doesn't sit under every glance
+      expect(section('งบซอง').querySelector('[data-legend]')).toBeNull();
+      act(() => [...section('งบซอง').querySelectorAll('button')].find((b) => b.textContent === 'คำอธิบาย')!.click());
+      const legend = section('งบซอง').querySelector('[data-legend]')!.textContent!;
       expect(legend).toContain('สีกลุ่ม = ในงบ');
       expect(legend).toContain('เกินงบ');
       expect(legend).toContain('เกิน > 20%');
@@ -129,10 +132,61 @@ describe('KakeiboView', () => {
     expect(food.textContent).toContain('หลังแผน เกิน ฿500.00'); // budget 3,000 − 1,000 − 2,500
   });
 
-  it('the doughnut shares add up to exactly 100%', async () => {
-    await mount(<KakeiboView />);
-    const pct = [...section('สรุปการใช้เงิน').querySelectorAll('li')].map((li) => Number(li.textContent!.match(/(\d+)%/)![1]));
-    expect(pct.reduce((n, v) => n + v, 0)).toBe(100);
+  it('the split panel shows each loaded cycle oldest first, the current one marked, with its NEED / WANT / เงินเหลือ underneath', async () => {
+    const tx = h.transactions;
+    // previous cycle: income 20,000, food 15,000 NEED → 25% left (meets the goal); two cycles back has nothing → skipped
+    h.transactions = [...tx, row('2026-08-25', 'c-sal', 20_000), row('2026-09-01', 'c-food', 15_000, 'need')];
+    try {
+      await mount(<KakeiboView />);
+      const panel = section('สัดส่วนรายรับ');
+      const rows = [...panel.querySelectorAll('li[data-trend]')];
+      expect(rows.map((li) => li.textContent)).toEqual(['ส.ค.เหลือ 25%', 'ก.ย.เหลือ 12%']);
+      expect(rows[1].getAttribute('aria-current')).toBe('true');
+      expect(rows[0].querySelector('.text-income')).not.toBeNull(); // met the 20% goal
+      expect(rows[1].querySelector('[role="img"]')!.getAttribute('aria-label')).toBe('NEED ฿8,000.00 · WANT ฿14,100.00 · เงินเหลือ ฿2,900.00');
+      // investing lives off-app, so the third part is เงินเหลือ, not a permanent "ลงทุน/ออม 0%"
+      expect(panel.textContent).toContain('NEED฿8,000.00WANT฿14,100.00เงินเหลือ฿2,900.00');
+    } finally {
+      h.transactions = tx;
+    }
+  });
+
+  it('a row that is all plan shows its date instead of repeating the amount; the invest box points at the leftover', async () => {
+    const tx = h.transactions, cats = h.categories;
+    h.categories = [...cats, { id: 'c-net', name: 'ค่าเน็ต', type: 'expense', order_index: 5, cashflow_group_id: 'g-rent' } as Category];
+    GROUP_TYPE['c-net'] = 'expense';
+    h.transactions = [...tx, row('2026-10-22', 'c-net', 600, 'need'), row('2026-10-23', 'c-net', 0, 'need')];
+    try {
+      await mount(<KakeiboView />);
+      const net = [...section('ค่าใช้จ่ายคงที่ (Fix Cost)').querySelectorAll('li')].find((li) => li.textContent!.includes('c-net'))!;
+      expect(net.querySelector('[data-pending]')!.textContent).toBe('รอจ่าย · 22 ต.ค.'); // the first date still ahead
+      expect(net.textContent).not.toContain('แผน');
+      // food: 1,000 done + 2,500 plan → a partial row keeps "แผน ฿X"
+      expect(section('ค่าใช้จ่ายจำเป็น (NEED)').querySelector('[data-pending]')).toBeNull();
+      expect(section('ลงทุน/ออม (ซื้อ − ขาย)').textContent).toContain('ยังไม่ได้บันทึกการลงทุน · เงินเหลือ ฿2,300.00');
+    } finally {
+      h.transactions = tx; h.categories = cats; delete GROUP_TYPE['c-net'];
+    }
+  });
+
+  it('WANT can fold three or more rows under ฿200 into one "อื่นๆ" row (open by default)', async () => {
+    const tx = h.transactions;
+    for (const id of ['c-a', 'c-b', 'c-c']) GROUP_TYPE[id] = 'expense';
+    h.transactions = [...tx, row('2026-10-02', 'c-a', 50, 'want'), row('2026-10-02', 'c-b', 120, 'want'), row('2026-10-02', 'c-c', 199, 'want')];
+    try {
+      await mount(<KakeiboView />);
+      const want = () => section('ค่าใช้จ่ายตามใจ (WANT)');
+      const toggle = want().querySelector<HTMLButtonElement>('button[aria-expanded]')!;
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(toggle.textContent).toBe('ย่อรายการเล็ก');
+      expect(want().textContent).toContain('c-a');
+      act(() => toggle.click());
+      expect(toggle.textContent).toBe('อื่นๆ 3 รายการ (ต่ำกว่า ฿200.00)฿369.00');
+      expect(want().textContent).not.toContain('c-a');
+    } finally {
+      h.transactions = tx;
+      for (const id of ['c-a', 'c-b', 'c-c']) delete GROUP_TYPE[id];
+    }
   });
 
   it('tables have no repeated column header rows and the stacks are balanced by role', async () => {
@@ -142,16 +196,8 @@ describe('KakeiboView', () => {
     const cols = [...document.querySelectorAll('.tab-stage .grid-cols-3 > div, .grid-cols-3.items-start > div')];
     const titles = cols.map((c) => [...c.querySelectorAll(':scope > section, :scope > div > section')].map((p) => p.getAttribute('aria-label')));
     expect(titles[0]).toEqual(['รายรับ', 'ค่าใช้จ่ายคงที่ (Fix Cost)', 'ค่าใช้จ่ายจำเป็น (NEED)', 'ลงทุน/ออม (ซื้อ − ขาย)']);
-    expect(titles[1]).toEqual(['งบซอง', 'ค่าใช้จ่ายตามใจ (WANT)']);
-    expect(titles[2]).toEqual(['สรุปการใช้เงิน', 'รายจ่ายรายสัปดาห์', 'ภาพรวมรอบ']);
-  });
-
-  it('doughnut splits income into NEED / WANT / เงินเหลือ (investing lives off-app, so no permanent "ลงทุน/ออม 0%")', async () => {
-    await mount(<KakeiboView />);
-    const panel = section('สรุปการใช้เงิน');
-    const items = [...panel.querySelectorAll('li')].map((li) => li.textContent);
-    // need 8,000 · want 14,100 · left 2,900 of 25,000 income
-    expect(items).toEqual(['NEED32%฿8,000.00', 'WANT56%฿14,100.00', 'เงินเหลือ12%฿2,900.00']);
+    expect(titles[1]).toEqual(['งบซอง', 'ค่าใช้จ่ายตามใจ (WANT)', 'ปฏิทินการใช้จ่าย']);
+    expect(titles[2]).toEqual(['สัดส่วนรายรับ', 'รายจ่ายรายสัปดาห์', 'ภาพรวมรอบ']);
   });
 
   it('shows a skeleton while the first load has no transactions, but keeps old numbers on screen during later loads', async () => {
@@ -167,7 +213,7 @@ describe('KakeiboView', () => {
     expect(section('Kakeibo')).not.toBeNull();
   });
 
-  it('envelopes colour from actuals only and show the plan apart, like the Dashboard', async () => {
+  it('envelopes colour from actuals only and show the plan apart', async () => {
     await mount(<KakeiboView />);
     const rows = [...section('งบซอง').querySelectorAll('li')];
     const food = rows.find((li) => li.textContent?.includes('ค่ากิน'))!;
@@ -218,6 +264,31 @@ describe('KakeiboView', () => {
     }
   });
 
+  it('rows carry no previous-cycle column; the reflection card still compares with the previous cycle', async () => {
+    const tx = h.transactions;
+    // previous cycle 25 Aug – 24 Sep: food 1,500 NEED, shop 1,100 WANT, no salary row
+    h.transactions = [...tx, row('2026-09-01', 'c-food', 1_500, 'need'), row('2026-09-10', 'c-shop', 1_100, 'want')];
+    try {
+      await mount(<KakeiboView />);
+      expect(q('[data-prev-delta]')).toBeNull();
+      expect(document.body.textContent).not.toContain('เท่าเดิม');
+      // mid-cycle: only the over-budget envelope; comparing a half-done cycle with a whole one would read as "spent less"
+      expect([...q('[data-hints]')!.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['ค่าใช้จ่ายจิปาถะ เกินงบ ฿100.00 (10%)']);
+      act(() => root!.unmount());
+      container!.remove();
+      vi.setSystemTime(new Date(2026, 9, 22, 12)); // last week of the cycle (18–24 Oct): the comparison joins in
+      await mount(<KakeiboView />);
+      expect([...q('[data-hints]')!.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
+        'ค่าใช้จ่ายจิปาถะ เกินงบ ฿13,100.00 (1310%)',
+        'ค่ากิน เกินงบ ฿500.00 (17%)',
+        'WANT รวมเพิ่มขึ้น ฿13,000.00 จากรอบก่อน',
+        'c-shop เพิ่มขึ้นมากที่สุด ฿13,000.00 จากรอบก่อน',
+      ]);
+    } finally {
+      h.transactions = tx;
+    }
+  });
+
   it('two ticks in a row both land (each builds on the latest value, not the one from render)', async () => {
     await mount(<KakeiboView />);
     act(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'เลือกรายการ')!.click());
@@ -225,6 +296,101 @@ describe('KakeiboView', () => {
     act(() => { box.click(); box.click(); }); // same render, second click sees the old props
     await flush();
     expect(h.save).toHaveBeenLastCalledWith('kakeibo_fixed', { categories: [], items: [] }); // on, then off — not "on" twice
+  });
+});
+
+describe('KakeiboView — several months', () => {
+  afterEach(() => { h.period = 'cycle:2026-09'; h.setPeriod.mockReset(); });
+
+  it('a multi-cycle period lists each cycle newest first with a total row; a row opens that cycle', async () => {
+    h.period = 'cycle:2026-08_2026-09';
+    h.transactions = [...h.transactions, row('2026-08-26', 'c-sal', 20_000), row('2026-09-01', 'c-food', 2_000, 'need')];
+    await mount(<KakeiboView />);
+    const rows = [...document.querySelectorAll('[data-range-row]')];
+    expect(rows.map((r) => r.textContent!.slice(0, 13))).toEqual(['cycle:2026-09', 'cycle:2026-08']);
+    expect(rows[1].textContent).toContain('฿20,000.00');
+    expect(rows[1].textContent).toContain('90%'); // 18,000 left of 20,000
+    expect(section('สรุปช่วงเวลา').textContent).toContain('฿45,000.00'); // 25,000 + 20,000 income
+    act(() => rows[1].querySelector('button')!.click());
+    expect(h.setPeriod).toHaveBeenCalledWith('cycle:2026-08');
+    h.transactions = h.transactions.slice(0, -2);
+  });
+
+  it('"แยกกลุ่ม" swaps NEED/WANT for one column per expense group; a group header unfolds its categories', async () => {
+    h.period = 'cycle:2026-09_2026-09';
+    await mount(<KakeiboView />);
+    const head = () => [...document.querySelectorAll('thead th')].map((t) => t.textContent);
+    expect(head()).toEqual(['ช่วงล่าสุดบน', 'รายรับ', 'สัดส่วนรายรับ', 'NEED', 'WANT', 'รวมรายจ่าย', 'เงินเหลือ', '%เหลือ']);
+    act(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'แยกกลุ่ม')!.click());
+    expect(head()).toEqual(['ช่วงล่าสุดบน', 'รายรับ', 'ค่าหอ/ที่พัก', 'ค่ากิน', 'ค่าใช้จ่ายจิปาถะ', 'รวมรายจ่าย', 'เงินเหลือ', '%เหลือ']);
+    const row = document.querySelector('[data-range-row]')!;
+    expect([...row.querySelectorAll('td')].map((c) => c.textContent).slice(1, 4)).toEqual(['฿4,500.00', '฿3,500.00', '฿14,100.00']);
+    // group numbers wear the group colour, with a bar sized against the column's highest month (one month here: full)
+    const groupCell = row.querySelector<HTMLElement>('[data-group-cell]')!;
+    expect(groupCell.style.color).not.toBe('');
+    expect(groupCell.querySelector<HTMLElement>('[data-col-bar]')!.style.width).toBe('100%');
+    expect(document.querySelector('tfoot [data-col-bar]')).toBeNull(); // total / average rows: colour only
+    const food = [...document.querySelectorAll('thead button')].find((b) => b.textContent === 'ค่ากิน')!;
+    act(() => (food as HTMLButtonElement).click());
+    expect(food.getAttribute('aria-expanded')).toBe('true');
+    expect([...document.querySelectorAll('[data-cat-col]')].map((t) => t.textContent)).toEqual(['อาหาร']);
+    // a category column wears its category colour, numbers included (fixture has no colour: the neutral ink)
+    const cell = document.querySelector<HTMLElement>('[data-range-row] [data-cat-cell]')!;
+    expect(cell.textContent).toBe('฿3,500.00');
+    expect(cell.style.color).not.toBe('');
+    expect(cell.style.color).toBe(document.querySelector<HTMLElement>('[data-cat-col]')!.style.color);
+  });
+
+  it('the period column flips the order (newest last) and the choice is remembered', async () => {
+    h.period = 'cycle:2026-08_2026-09';
+    h.transactions = [...h.transactions, row('2026-08-26', 'c-sal', 20_000)];
+    const order = () => [...document.querySelectorAll('[data-range-row] th button > span')].map((t) => t.firstChild!.textContent);
+    await mount(<KakeiboView />);
+    expect(order()).toEqual(['cycle:2026-09', 'cycle:2026-08']);
+    const toggle = document.querySelector<HTMLButtonElement>('[data-order-toggle]')!;
+    act(() => toggle.click());
+    expect(order()).toEqual(['cycle:2026-08', 'cycle:2026-09']);
+    expect(toggle.closest('th')!.getAttribute('aria-sort')).toBe('ascending');
+    expect(toggle.textContent).toBe('ช่วงล่าสุดล่าง');
+    // a fresh mount keeps it
+    act(() => root!.unmount()); container!.remove();
+    await mount(<KakeiboView />);
+    expect(order()).toEqual(['cycle:2026-08', 'cycle:2026-09']);
+    localStorage.removeItem('shark_range_order');
+    h.transactions = h.transactions.slice(0, -1);
+  });
+
+  it('a cycle that has not started yet is striped, badged and left out of the totals; the current one is marked', async () => {
+    h.period = 'cycle:2026-09_2026-10';
+    // cycle Oct starts 25 Oct (today is 14 Oct): only planned rows
+    h.transactions = [...h.transactions, row('2026-10-26', 'c-sal', 25_000), row('2026-10-27', 'c-rent', 4_500, 'need')];
+    try {
+      await mount(<KakeiboView />);
+      const rows = [...document.querySelectorAll<HTMLElement>('[data-range-row]')];
+      const future = rows.find((r) => r.textContent!.startsWith('cycle:2026-10'))!;
+      const now = rows.find((r) => r.textContent!.startsWith('cycle:2026-09'))!;
+      expect(future.hasAttribute('data-future')).toBe(true);
+      expect(future.querySelector('[data-future-badge]')!.textContent).toBe('ล่วงหน้า');
+      expect(future.style.backgroundImage).toContain('repeating-linear-gradient');
+      expect(now.getAttribute('aria-current')).toBe('date');
+      expect(now.textContent).toContain('ตอนนี้');
+      // income stays the started cycle's 25,000: the planned salary of the future cycle is not added
+      expect(section('สรุปช่วงเวลา').textContent).toContain('฿25,000.00');
+      expect(section('สรุปช่วงเวลา').textContent).toContain('ไม่นับ 1 รอบที่ยังไม่ถึง');
+      const totalRow = document.querySelector('tfoot tr')!;
+      expect(totalRow.querySelectorAll('td')[0].textContent).toBe('฿25,000.00');
+    } finally {
+      h.transactions = h.transactions.slice(0, -2);
+    }
+  });
+
+  it('a period with no rows offers the current cycle', async () => {
+    h.period = 'cycle:2025-01_2025-02';
+    await mount(<KakeiboView />);
+    const button = [...document.querySelectorAll('button')].find((b) => b.textContent === 'ดูcycle:2026-09');
+    expect(button).toBeTruthy();
+    act(() => button!.click());
+    expect(h.setPeriod).toHaveBeenCalledWith('cycle:2026-09');
   });
 });
 

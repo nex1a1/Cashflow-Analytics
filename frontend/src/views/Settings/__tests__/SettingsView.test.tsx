@@ -320,6 +320,20 @@ describe('SettingsView tab switches', () => {
   });
 });
 
+describe('SettingsView Lite overview switch', () => {
+  const sw = (label: string) => container!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
+  it('only shows when the layout gives a handler, and reports on / off', () => {
+    mount({});
+    expect(container!.textContent).not.toContain('หน้าภาพรวมแบบ Lite');
+    act(() => root!.unmount()); container!.remove();
+    const lite = vi.fn();
+    mount({ liteOverview: false, onLiteOverviewChange: lite });
+    expect(sw('ปิดหน้าภาพรวมแบบ Lite').getAttribute('aria-checked')).toBe('true');
+    click(sw('เปิดหน้าภาพรวมแบบ Lite'));
+    expect(lite).toHaveBeenCalledWith(true);
+  });
+});
+
 describe('SettingsView following new data', () => {
   it('transaction counts are recomputed when the transactions change', () => {
     const categories = [cat('c1', { name: 'ข้าว', cashflowGroup: 'g-food' })];
