@@ -6,7 +6,7 @@ import LedgerHeaderActions from '../LedgerHeaderActions';
 import LedgerCommandPanel, { LedgerGroupBreakdownSection, getSavingsRateStyle } from '../LedgerCommandPanel';
 import SegmentGroup from '../common/SegmentGroup';
 import { byText, click } from '@/test-utils/dom';
-import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
+import { BUDGET_RULES } from '@/constants/budgetRules';
 
 let root: Root | null = null;
 let container: HTMLElement | null = null;

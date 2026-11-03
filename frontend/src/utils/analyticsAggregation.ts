@@ -3,7 +3,8 @@ import { TransactionDisplay, Category, CashflowGroup, DayType } from '../types';
 import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj } from './dateHelpers';
 import { createCategoryMap, calculateDayTypeCounts, CashflowMonthData } from './analyticsHelpers';
 import { calculateGhostPacerData } from './ghostPacerHelpers';
-import { BUDGET_RULES, WARN_AT } from '../views/Dashboard/components/SummaryCards/helpers';
+import { BUDGET_RULES, WARN_AT } from '../constants/budgetRules';
+import { RENT_KEYWORDS } from './kakeibo';
 import { calculateAllocationEvolution } from './allocationEvolutionHelpers';
 import { isCyclePeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso } from './payCycle';
 import { tc, ALLOCATION_COLORS } from '@/constants/theme';
@@ -335,7 +336,7 @@ function isFoodCategory(cGroupId: GroupId, foodGroupId: string | undefined, grou
 
 function isRentCategory(cGroupId: GroupId, rentGroupId: string | undefined, groupName: string) {
   if (cGroupId && cGroupId === rentGroupId) return true;
-  return groupName.includes('หอ') || groupName.includes('ที่พัก') || groupName.includes('rent') || groupName.includes('เช่า');
+  return RENT_KEYWORDS.some(k => groupName.includes(k));
 }
 
 function isSubscriptionCategory(cGroupId: GroupId, subscriptionGroupId: string | undefined, groupName: string, catName: string = '') {
@@ -643,7 +644,6 @@ export function resolveCashflowGroups(cashflowGroups: CashflowGroup[]) {
   const fallbackExpId = groups.find(g => g.type === 'expense')?.id || 'cg_variable';
 
   const foodKeywords = ['อาหาร', 'food', 'กิน'];
-  const rentKeywords = ['หอ', 'ที่พัก', 'rent', 'เช่า'];
   const subscriptionKeywords = ['บริการรายเดือน', 'รายเดือน', 'subscription'];
 
   const matchesKeyword = (name: string, keywords: string[]) => {
@@ -652,7 +652,7 @@ export function resolveCashflowGroups(cashflowGroups: CashflowGroup[]) {
   };
 
   const foodGroup = groups.find(g => matchesKeyword(g.name, foodKeywords));
-  const rentGroup = groups.find(g => matchesKeyword(g.name, rentKeywords));
+  const rentGroup = groups.find(g => matchesKeyword(g.name, RENT_KEYWORDS));
   const subscriptionGroup = groups.find(g => matchesKeyword(g.name, subscriptionKeywords));
 
   return {

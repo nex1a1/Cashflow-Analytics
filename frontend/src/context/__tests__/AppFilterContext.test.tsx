@@ -70,16 +70,14 @@ describe('AppFilterContext', () => {
     expect(result.current.getFilterLabel('2026')).not.toBe(result.current.getFilterLabel());
   });
 
-  it('analytics sees every loaded row of the period', () => {
+  it('exposes the master period list', () => {
     const { result } = renderHook(() => useAppFilter(), wrapper);
-    expect(result.current.analytics.totalIncome).toBe(1000);
-    expect(result.current.analytics.totalExpense).toBe(300);
     expect(result.current.masterPeriods).toEqual(['2026-10']);
   });
 
   // แท็บภาพรวมมี id "insights" — ชื่อแท็บของเบราว์เซอร์ต้องไม่ตกเป็น "Home"
   it.each([
-    ['insights', 'Dashboard'],
+    ['insights', 'Overview'],
     ['calendar', 'Calendar'],
     ['ledger', 'Ledger'],
     ['portfolio', 'Portfolio'],

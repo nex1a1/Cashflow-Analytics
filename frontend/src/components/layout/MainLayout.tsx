@@ -11,10 +11,11 @@ import { localTodayIso } from '../../utils/payCycle';
 import { periodRowsLoaded } from '../../utils/dateHelpers';
 import useJsonSetting from '../../hooks/useJsonSetting';
 
-// View Components: the dashboard is the start tab and stays in the main bundle; every other tab and modal is its own
-// chunk, so the first paint only parses what it shows. The chunks are fetched in the background once the app is idle.
-import DashboardView from '../../views/Dashboard/index';
+// View Components: every tab and modal is its own chunk, so the first paint only parses what it shows. The chunks are
+// fetched in the background once the app is idle — except tabs that are off (the Dashboard in Lite mode, the Portfolio when
+// switched off), so neither pulls in Chart.js.
 const loaders = {
+  dashboard: () => import('../../views/Dashboard/DashboardTab'),
   calendar: () => import('../../views/Calendar'),
   ledger: () => import('../../views/Ledger/index'),
   settings: () => import('../../views/Settings'),
@@ -25,6 +26,7 @@ const loaders = {
   importGuide: () => import('../modals/ImportGuideModal'),
   importPreview: () => import('../modals/ImportPreviewModal'),
 };
+const DashboardTab = lazy(loaders.dashboard);
 const CalendarView = lazy(loaders.calendar);
 const LedgerView = lazy(loaders.ledger);
 const SettingsView = lazy(loaders.settings);
@@ -37,6 +39,8 @@ const ImportPreviewModal = lazy(loaders.importPreview);
 
 // ค่าเริ่มต้น = เปิด (ผู้ใช้เดิมไม่เสียแท็บ); ปิดเมื่อบันทึกเป็น false เท่านั้น
 const parseEnabled = (raw: unknown) => raw !== false && raw !== 'false';
+/** หน้าภาพรวม: 'full' (Dashboard + แท็บ Kakeibo, ค่าเริ่มต้น) หรือ 'lite' (Kakeibo เป็นหน้าภาพรวม) */
+const parseOverviewMode = (raw: unknown): 'full' | 'lite' => (raw === 'lite' ? 'lite' : 'full');
 
 /** True from the first time `open` is true: a lazy modal loads on first use, then stays mounted (it keeps its state while closed, as before). */
 function useOpenedOnce(open: boolean) {
@@ -48,6 +52,8 @@ function useOpenedOnce(open: boolean) {
 export default function MainLayout() {
   const { toast, showToast: triggerToast } = useToast();
   const [portfolioEnabled, updatePortfolioEnabled] = useJsonSetting('portfolio_enabled', parseEnabled);
+  const [overviewMode, updateOverviewMode, overviewModeReady] = useJsonSetting('overview_mode', parseOverviewMode);
+  const lite = overviewMode === 'lite';
 
   const {
     activeTab, setActiveTab,
@@ -56,11 +62,6 @@ export default function MainLayout() {
     showImportGuide, setShowImportGuide,
     addForm, setAddForm,
     handleOpenAddModal,
-    hideFixedExpenses, setHideFixedExpenses,
-    hideWantExpenses, setHideWantExpenses,
-    dashboardCategory, setDashboardCategory,
-    chartGroupBy, setChartGroupBy,
-    topXLimit, setTopXLimit,
   } = useAppUI();
 
   const {
@@ -84,7 +85,6 @@ export default function MainLayout() {
     searchQuery, setSearchQuery,
     isFilterActive, clearFilters,
     displayTransactions,
-    analytics,
     allDatesInPeriod, availableDatesInPeriod,
     advancedFilterCategory, setAdvancedFilterCategory,
     advancedFilterGroup, setAdvancedFilterGroup,
@@ -101,17 +101,23 @@ export default function MainLayout() {
   // ปิดพอร์ตขณะเปิดแท็บพอร์ตค้างอยู่ (หรือแท็บภาษีที่ถูกตัดออกค้างใน storage) → กลับไปหน้าภาพรวม
   useEffect(() => {
     if (activeTab === 'tax' || (!portfolioEnabled && activeTab === 'portfolio')) setActiveTab('insights');
-  }, [portfolioEnabled, activeTab, setActiveTab]);
+    // โหมด Lite: แท็บภาพรวมคือ Kakeibo แล้ว แท็บ Kakeibo แยกไม่มี
+    if (lite && activeTab === 'kakeibo') setActiveTab('insights');
+  }, [portfolioEnabled, lite, activeTab, setActiveTab]);
 
   useEffect(() => {
-    const prefetch = () => Object.values(loaders).forEach(load => { void load().catch(() => {}); });
+    if (!overviewModeReady) return; // wait for the saved mode: Lite must not pull the Dashboard chunk
+    const prefetch = () => Object.entries(loaders).forEach(([name, load]) => {
+      if ((lite && name === 'dashboard') || (!portfolioEnabled && name === 'portfolio')) return; // tabs that are off
+      void load().catch(() => {});
+    });
     if (typeof requestIdleCallback === 'function') {
       const id = requestIdleCallback(prefetch, { timeout: 3000 });
       return () => cancelIdleCallback(id);
     }
     const id = setTimeout(prefetch, 1000);
     return () => clearTimeout(id);
-  }, []);
+  }, [overviewModeReady, lite, portfolioEnabled]);
 
   const addOpened = useOpenedOnce(showAddModal);
   const exportOpened = useOpenedOnce(showExportModal);
@@ -137,6 +143,7 @@ export default function MainLayout() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           portfolioEnabled={portfolioEnabled}
+          liteOverview={lite}
           filterPeriod={filterPeriod}
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
@@ -164,28 +171,10 @@ export default function MainLayout() {
           <Suspense fallback={null}>
             {activeTab === 'insights' && (
               <div key="insights">
-                <DashboardView
-                  analytics={analytics}
-                  transactions={transactions}
-                  cashflowGroups={cashflowGroups}
-                  filterPeriod={filterPeriod}
-                  getFilterLabel={getFilterLabel}
-                  hideFixedExpenses={hideFixedExpenses}
-                  setHideFixedExpenses={setHideFixedExpenses}
-                  hideWantExpenses={hideWantExpenses}
-                  setHideWantExpenses={setHideWantExpenses}
-                  dashboardCategory={dashboardCategory}
-                  setDashboardCategory={setDashboardCategory}
-                  chartGroupBy={chartGroupBy}
-                  setChartGroupBy={setChartGroupBy}
-                  topXLimit={topXLimit}
-                  setTopXLimit={setTopXLimit}
-                  categories={categories}
-                  dayTypeConfig={dayTypeConfig}
-                  dayTypes={dayTypes}
-                  showPortfolio={portfolioEnabled}
-                  isLoading={isProcessing}
-                />
+                {/* รอโหมดที่บันทึกไว้ก่อน: ไม่งั้นผู้ใช้ Lite เห็น (และโหลด) Dashboard แวบหนึ่ง */}
+                {overviewModeReady && (lite
+                  ? <KakeiboView isLoading={isProcessing} />
+                  : <DashboardTab showPortfolio={portfolioEnabled} isLoading={isProcessing} />)}
               </div>
             )}
 
@@ -262,7 +251,7 @@ export default function MainLayout() {
               </div>
             )}
 
-            {activeTab === 'kakeibo' && (
+            {activeTab === 'kakeibo' && !lite && (
               <div key="kakeibo">
                 <KakeiboView isLoading={isProcessing} />
               </div>
@@ -298,6 +287,8 @@ export default function MainLayout() {
                   triggerToast={triggerToast}
                   portfolioEnabled={portfolioEnabled}
                   onPortfolioEnabledChange={(on) => { void updatePortfolioEnabled(() => on); }}
+                  liteOverview={lite}
+                  onLiteOverviewChange={(on) => { void updateOverviewMode(() => (on ? 'lite' : 'full')); }}
                 />
               </div>
             )}

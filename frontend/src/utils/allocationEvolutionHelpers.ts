@@ -6,10 +6,16 @@ export interface AllocationEvolutionMonth {
   needAmt: number;
   wantAmt: number;
   savingsAmt: number;
+  /** Denominator of the percentages: the month's income, or its outflow when there was no income */
   total: number;
   needPct: number;
   wantPct: number;
   savingsPct: number;
+  /** Outflow above income (0 when within income); the stack then rises past 100% by overPct */
+  overAmt: number;
+  overPct: number;
+  /** Money went out but none came in, so the percentages fall back to shares of the outflow */
+  noIncome: boolean;
 }
 
 export interface AllocationEvolutionData {
@@ -67,9 +73,13 @@ export function calculateAllocationEvolution(
     const inc = monthlyIncomeMap ? (monthlyIncomeMap[ym] || 0) : 0;
 
     // Unspent cashflow surplus from monthly income
-    const surplus = Math.max(0, inc - (needAmt + wantAmt + explicitSav));
+    const outflow = needAmt + wantAmt + explicitSav;
+    const surplus = Math.max(0, inc - outflow);
     const savingsAmt = explicitSav + surplus;
-    const total = Math.max(inc, needAmt + wantAmt + savingsAmt);
+    // 50/30/20 is a share of income, so income is the 100% line and overspending stacks above it.
+    // With no income there is no line to measure against: fall back to shares of the outflow.
+    const total = inc > 0 ? inc : outflow;
+    const overAmt = inc > 0 ? Math.max(0, outflow - inc) : 0;
 
     return {
       ym,
@@ -80,6 +90,9 @@ export function calculateAllocationEvolution(
       needPct: total > 0 ? (needAmt / total) * 100 : 0,
       wantPct: total > 0 ? (wantAmt / total) * 100 : 0,
       savingsPct: total > 0 ? (savingsAmt / total) * 100 : 0,
+      overAmt,
+      overPct: inc > 0 ? (overAmt / inc) * 100 : 0,
+      noIncome: inc <= 0 && outflow > 0,
     };
   });
 

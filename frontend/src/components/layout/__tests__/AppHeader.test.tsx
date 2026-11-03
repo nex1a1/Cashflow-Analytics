@@ -244,6 +244,15 @@ describe('AppHeader — tabs that can be switched off in Settings', () => {
     expect(labels().map(l => TAB_LABELS.find(x => l.includes(x)))).toEqual(['ภาพรวม', 'ปฏิทิน', 'ฐานข้อมูลบัญชี', 'ตั้งค่าระบบ']);
   });
 
+  it('Lite overview hides the separate Kakeibo tab (the overview is Kakeibo)', () => {
+    const kakeibo = () => [...document.querySelectorAll('button')].some(b => b.textContent!.trim() === 'Kakeibo');
+    render({});
+    expect(kakeibo()).toBe(true);
+    render({ liteOverview: true });
+    expect(kakeibo()).toBe(false);
+    expect(tabs()).toHaveLength(5); // every other tab stays
+  });
+
   it('turning it back on brings its tab back', () => {
     render({ portfolioEnabled: false });
     render({ portfolioEnabled: true });

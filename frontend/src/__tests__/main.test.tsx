@@ -9,7 +9,7 @@ vi.mock('../App', async () => {
 });
 
 describe('main.tsx (entry)', () => {
-  it('registers the chart types the views draw, sets chart defaults and the theme, then renders the app into #root', async () => {
+  it('sets the theme and renders the app into #root without loading Chart.js', async () => {
     localStorage.setItem('shark_theme', 'old');
     localStorage.setItem('cashflow_shark_theme_v2', 'old');
     const root = document.createElement('div');
@@ -18,14 +18,9 @@ describe('main.tsx (entry)', () => {
 
     await act(async () => { await import('../main'); });
 
-    const { Chart, defaults } = await import('chart.js');
-    const { tc } = await import('@/constants/theme');
-    for (const id of ['bar', 'line', 'sankey']) expect(Chart.registry.getController(id)).toBeTruthy();
-    for (const id of ['arc', 'flow']) expect(Chart.registry.getElement(id)).toBeTruthy();
-    expect(Chart.registry.getScale('logarithmic')).toBeTruthy();
-    expect(defaults.font.family).toBe("'Inter', 'Bai Jamjuree', sans-serif");
-    expect(defaults.color).toBe(tc('ink-body'));
-    expect(defaults.borderColor).toBe(tc('line'));
+    // Chart.js belongs to the Dashboard / Portfolio chunks (utils/chartSetup.ts), not the entry
+    const { Chart } = await import('chart.js');
+    expect(() => Chart.registry.getController('bar')).toThrow();
 
     // applyTheme: RGB channels on :root for Tailwind, dark scheme, legacy theme keys gone
     const css = document.documentElement.style;

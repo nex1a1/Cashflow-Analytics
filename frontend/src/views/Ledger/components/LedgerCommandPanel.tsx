@@ -1,5 +1,5 @@
 import React from 'react';
-import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
+import { BUDGET_RULES } from '@/constants/budgetRules';
 import { formatBaht } from '@/utils/formatters';
 import { Activity, TrendingUp, TrendingDown, Wallet, ChevronDown } from 'lucide-react';
 

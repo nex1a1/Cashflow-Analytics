@@ -1,9 +1,8 @@
 // src/utils/analyticsHelpers.ts
-import { parseDateStrToObj } from './dateHelpers';
 import { getThaiMonth, hexToRgb } from './formatters';
 import { Category, DayType } from '../types';
 import { isSingleUnitPeriod } from './payCycle';
-import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
+import { dayTypeOfDate } from '../views/Calendar/utils/calendarPeriodHelpers';
 
 import { tc } from '@/constants/theme';
 /**
@@ -311,9 +310,8 @@ export const calculateDayTypeCounts = (
   dayTypeConfig.forEach(dt => { dayTypeCounts[dt.id] = 0; });
   
   datesInPeriod.forEach(dateStr => { // YYYY-MM-DD (generateDatesForPeriod)
-    const dayOfWeek = parseDateStrToObj(dateStr).getDay();
     // same rule as the calendar / day modal (by name code, so re-ordering day types in Settings can't flip it)
-    const currentType = dayTypes[dateStr] || resolveDefaultDayTypeId(dayTypeConfig, dayOfWeek === 0 || dayOfWeek === 6);
+    const currentType = dayTypeOfDate(dateStr, dayTypes, dayTypeConfig);
     if (currentType) dayTypeCounts[currentType] = (dayTypeCounts[currentType] || 0) + 1;
   });
 

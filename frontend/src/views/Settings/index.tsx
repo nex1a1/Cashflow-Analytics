@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
-import { Settings2, Info, Coins, Wallet, PiggyBank } from 'lucide-react';
+import { Settings2, Info, Coins, Wallet, PiggyBank, Feather } from 'lucide-react';
 import { Category, CashflowGroup, DayType, TransactionDisplay } from '../../types';
 
 import OrphanWarningBanner from './components/OrphanWarningBanner';
@@ -39,6 +39,9 @@ export interface SettingsViewProps {
   triggerToast?: (msg: string, type?: string) => void;
   portfolioEnabled?: boolean;
   onPortfolioEnabledChange?: (on: boolean) => void;
+  /** หน้าภาพรวมแบบ Lite (Kakeibo เป็นหน้าแรก, ไม่มี Dashboard) */
+  liteOverview?: boolean;
+  onLiteOverviewChange?: (on: boolean) => void;
 }
 
 const SettingsView = memo(function SettingsView({
@@ -49,7 +52,8 @@ const SettingsView = memo(function SettingsView({
   transactions = [],
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
   triggerToast,
-  portfolioEnabled = true, onPortfolioEnabledChange
+  portfolioEnabled = true, onPortfolioEnabledChange,
+  liteOverview = false, onLiteOverviewChange
 }: SettingsViewProps) {
   const [newCatId, setNewCatId] = useState<string | null>(null);
   
@@ -254,6 +258,11 @@ const SettingsView = memo(function SettingsView({
           {onPortfolioEnabledChange && (
             <TabToggleRow icon={SAVINGS_ICON} title="พอร์ตลงทุน" enabled={portfolioEnabled} onChange={onPortfolioEnabledChange}
               onText='แสดงแท็บ "พอร์ตลงทุน" และสรุปพอร์ตในหน้าภาพรวม' offText="ซ่อนไว้ ข้อมูลสินทรัพย์และรายการซื้อขายยังอยู่ครบ" />
+          )}
+
+          {onLiteOverviewChange && (
+            <TabToggleRow icon={<Feather className="w-4 h-4" />} title="หน้าภาพรวมแบบ Lite" enabled={liteOverview} onChange={onLiteOverviewChange}
+              onText='หน้าภาพรวมเป็น Kakeibo (โหลดเบา) และซ่อนแท็บ "Kakeibo" ที่ซ้ำ' offText='ภาพรวมแบบเต็ม: Dashboard กราฟครบ + แท็บ "Kakeibo"' />
           )}
 
           <DayTypesCard

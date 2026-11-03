@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import type { ChartOptions } from 'chart.js';
+import '@/utils/chartSetup';
 import { Portfolio } from '@/types';
 import { tc, type ThemeToken } from '@/constants/theme';
 import { formatBaht } from '@/utils/formatters';

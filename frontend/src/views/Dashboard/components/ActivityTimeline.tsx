@@ -34,6 +34,8 @@ export interface DayDetails {
 // ─── CONSTANTS & PALETTE (Ferrari Editorial) ───────────────────
 const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'] as const;
 const THAI_DAYS_MINI = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] as const;
+// GitHub layout: week columns a month label needs before the next one (16px cell + 1px gap each)
+const MONTH_LABEL_MIN_WEEKS = 3;
 
 // Ferrari Editorial Thermal Scale: near-black -> deep zinc -> bronze -> racing orange -> Rosso Corsa
 // Spend-intensity ramp: surface → expense in 5 equal steps (level 1 = barely any spend).
@@ -397,6 +399,12 @@ export default function ActivityTimeline() {
       currentWeek[dayOfWeek] = dateStr;
 
       if (dayOfWeek === 6 || index === datesInPeriod.length - 1) {
+        if (monthLabel) {
+          // A label is ~3 columns wide: drop the earlier (stub-month) label if this one would overlap it
+          for (let i = result.length - 1; i >= 0 && result.length - i < MONTH_LABEL_MIN_WEEKS; i--) {
+            result[i].monthLabel = null;
+          }
+        }
         result.push({ days: [...currentWeek], monthLabel });
         currentWeek = new Array(7).fill(null);
         monthLabel = null;

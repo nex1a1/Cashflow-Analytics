@@ -19,10 +19,14 @@ const PAD_L = 38, PLOT_W = 746;
 const yOf = (pct: number) => 184 - (pct / 100) * 168;
 const xOf = (i: number, n: number) => PAD_L + (i / Math.max(1, n - 1)) * PLOT_W;
 
-/** Percentages of a ฿10,000 month (0/0/0 = a month with nothing recorded). */
+/** Percentages of a ฿10,000 income (0/0/0 = a month with nothing recorded); above 100 in sum = overspent. */
 const m = (ym: string, need: number, want: number, sav: number): AllocationEvolutionMonth => {
   const total = need + want + sav ? 10000 : 0;
-  return { ym, needAmt: need * 100, wantAmt: want * 100, savingsAmt: sav * 100, total, needPct: need, wantPct: want, savingsPct: sav };
+  const overPct = Math.max(0, need + want + sav - 100);
+  return {
+    ym, needAmt: need * 100, wantAmt: want * 100, savingsAmt: sav * 100, total, needPct: need, wantPct: want, savingsPct: sav,
+    overAmt: overPct * 100, overPct, noIncome: false,
+  };
 };
 const MONTHS = [m('2026-06', 40, 20, 40), m('2026-07', 55, 35, 10), m('2026-08', 0, 0, 0), m('2026-09', 30, 10, 60)];
 const run = (n: number) => Array.from({ length: n }, (_, i) => m(`20${24 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`, 50, 30, 20));
@@ -75,6 +79,40 @@ describe('AllocationEvolutionChart', () => {
     expect(leftover).toContain(`L ${xOf(1, 4)} ${yOf(100)}`);
     expect(leftover).toContain(`L ${xOf(2, 4)} ${yOf(0)}`);
     expect(leftover).not.toContain(`L ${xOf(2, 4)} ${yOf(100)}`);
+  });
+
+  it('keeps a 0–100% axis with no overspend marks while every month is within income', () => {
+    mount();
+    expect(container.querySelector('[data-overspend]')).toBeNull();
+    expect(container.textContent).not.toContain('100% = รายรับ');
+    expect(container.textContent).not.toContain('110%');
+  });
+
+  it('grows the axis for an overspent month, hatches the part above income, and clips past 150% with its real %', () => {
+    // 120% → axis 0–120%: the 100% line sits at 100/120 of the plot height
+    mount([m('2026-06', 40, 20, 40), m('2026-07', 60, 50, 10)]);
+    const y120 = (pct: number) => 184 - (pct / 120) * 168;
+    expect(container.textContent).toContain('120%');
+    expect(container.textContent).toContain('100% = รายรับ');
+    const over = container.querySelector('[data-overspend] path')!.getAttribute('d')!;
+    expect(over).toContain(`L ${xOf(1, 2)} ${y120(120)}`);
+    expect(over).toContain(`L ${xOf(0, 2)} ${y120(100)}`); // June sits on the line: nothing above it
+
+    // 210% is clipped at the 150% cap and labelled
+    remount([m('2026-06', 40, 20, 40), m('2025-10', 90, 110, 10)]);
+    expect(container.textContent).toContain('150%');
+    expect(container.textContent).toContain('210%');
+    const leftover = [...container.querySelectorAll('path[fill-opacity]')][2].getAttribute('d')!;
+    expect(leftover).toContain(`L ${xOf(1, 2)} 16`);
+  });
+
+  it('shows how much went over income in the tooltip and calls it out', () => {
+    mount([m('2026-06', 40, 20, 40), m('2026-07', 60, 50, 10)], '2026-07');
+    hover(xOf(1, 2));
+    expect(tip()!.textContent).toContain('เกินรายรับ ฿2,000.00 (+20%)');
+    expect(tip()!.textContent).toContain('ลงทุน ฿1,000.00'); // nothing left over: the band is investing only
+    expect(tip()!.textContent).not.toContain('เหลือ');
+    expect(callout()!.textContent).toContain('ใช้เกินรายรับ');
   });
 
   it('labels every month up to 12, then every 2nd / 3rd with the last one pinned and no crowded neighbour', () => {

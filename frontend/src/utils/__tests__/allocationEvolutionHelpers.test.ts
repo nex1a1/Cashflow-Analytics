@@ -110,7 +110,7 @@ describe('allocationEvolutionHelpers', () => {
     expect(jul.savingsPct).toBeCloseTo(30);
   });
 
-  it('properly pulls explicit investment transactions (like October 2025 scenario)', () => {
+  it('measures an overspent month against income so the stack rises past 100% (like October 2025)', () => {
     const map = {
       need: { '2025-10': 9578 },
       want: { '2025-10': 12886 },
@@ -120,15 +120,38 @@ describe('allocationEvolutionHelpers', () => {
     const result = calculateAllocationEvolution(map, 'ALL', ['2025-09', '2025-10'], incomeMap);
     const oct = result.months.find(m => m.ym === '2025-10')!;
 
-    // Total outflow + investment = 9578 + 12886 + 2200 = 24664
-    expect(oct.total).toBe(24664);
+    // Outflow 9578 + 12886 + 2200 = 24664 against 23340 income
+    expect(oct.total).toBe(23340);
     expect(oct.needAmt).toBe(9578);
     expect(oct.wantAmt).toBe(12886);
     expect(oct.savingsAmt).toBe(2200);
-    expect(oct.needPct).toBeCloseTo(38.83, 1);
-    expect(oct.wantPct).toBeCloseTo(52.25, 1);
-    expect(oct.savingsPct).toBeCloseTo(8.92, 1);
-    expect(oct.needPct + oct.wantPct + oct.savingsPct).toBeCloseTo(100, 1);
+    expect(oct.needPct).toBeCloseTo(41.04, 1);
+    expect(oct.wantPct).toBeCloseTo(55.21, 1);
+    expect(oct.savingsPct).toBeCloseTo(9.43, 1);
+    expect(oct.overAmt).toBe(1324);
+    expect(oct.overPct).toBeCloseTo(5.67, 1);
+    expect(oct.needPct + oct.wantPct + oct.savingsPct).toBeCloseTo(100 + oct.overPct, 6);
+    expect(oct.noIncome).toBe(false);
+  });
+
+  it('keeps a month within income at exactly 100% with nothing over', () => {
+    const map = { need: { '2026-07': 10000 }, want: { '2026-07': 7500 }, savings: {} };
+    const jul = calculateAllocationEvolution(map, '2026-Q3', ['2026-07', '2026-08'], { '2026-07': 25000 }).months[0];
+
+    expect(jul.overAmt).toBe(0);
+    expect(jul.overPct).toBe(0);
+    expect(jul.needPct + jul.wantPct + jul.savingsPct).toBeCloseTo(100);
+  });
+
+  it('falls back to shares of the outflow for a month with spending but no income, and flags it', () => {
+    const map = { need: { '2025-05': 6000 }, want: { '2025-05': 2000 }, savings: {} };
+    const may = calculateAllocationEvolution(map, 'ALL', ['2025-05', '2025-06'], { '2025-06': 10000 }).months[0];
+
+    expect(may.noIncome).toBe(true);
+    expect(may.total).toBe(8000);
+    expect(may.needPct).toBeCloseTo(75);
+    expect(may.wantPct).toBeCloseTo(25);
+    expect(may.overPct).toBe(0);
   });
 
   it('combines explicit investment with surplus when income exceeds total outflow', () => {

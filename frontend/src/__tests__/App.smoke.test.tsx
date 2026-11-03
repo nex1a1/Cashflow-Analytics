@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { flushAll, click } from '@/test-utils/dom';
@@ -57,11 +57,15 @@ let root: Root | null = null;
 let host: HTMLDivElement | null = null;
 
 beforeAll(() => {
+  // the mocked rows are in October: open the app on a day of that month (both overviews show the current month)
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 15, 9, 0));
   Element.prototype.scrollIntoView = vi.fn();
   window.matchMedia ??= ((query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as any;
   globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as any;
   HTMLCanvasElement.prototype.getContext = (() => null) as any;
 });
+afterAll(() => { vi.useRealTimers(); });
 afterEach(() => { act(() => root?.unmount()); host?.remove(); localStorage.clear(); });
 
 const tab = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => b.querySelector(':scope > span')?.textContent === label);
@@ -79,7 +83,7 @@ describe('App (smoke)', () => {
     expect(document.body.textContent).toContain('ทั้งหมด');
     // what each tab must show from the mocked database
     const expected: Record<string, string> = {
-      'ภาพรวม': '30,000.00', 'ปฏิทิน': 'ตุลาคม', 'ฐานข้อมูลบัญชี': '+฿30,000.00', 'พอร์ตลงทุน': 'พอร์ต', 'ตั้งค่าระบบ': 'ค่ากิน',
+      'ภาพรวม': '30,000.00', 'Kakeibo': 'Fix Cost', 'ปฏิทิน': 'ตุลาคม', 'ฐานข้อมูลบัญชี': '+฿30,000.00', 'พอร์ตลงทุน': 'พอร์ต', 'ตั้งค่าระบบ': 'ค่ากิน',
     };
     for (const [label, text] of Object.entries(expected)) {
       const t = tab(label);

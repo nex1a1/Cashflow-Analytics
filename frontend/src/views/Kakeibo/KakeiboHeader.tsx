@@ -1,13 +1,12 @@
 import { memo } from 'react';
 import { Target } from 'lucide-react';
-import { BUDGET_RULES } from '@/views/Dashboard/components/SummaryCards/helpers';
-import { formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
+import { BUDGET_RULES } from '@/constants/budgetRules';
+import { formatBaht, formatThaiDayMonth as day } from '@/utils/formatters';
 import { goalResult, type GoalVerdict, type KakeiboSummary } from '@/utils/kakeibo';
 
 const baht = (satang: number) => formatBaht(satang / 100);
-const day = (iso: string) => `${Number(iso.slice(8))} ${THAI_MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`;
 
-// แดงเฉพาะขาดดุล; ต่ำกว่าเป้าแต่ยังเหลือเป็นส้ม (เหมือนหน้าภาพรวม)
+// แดงเฉพาะขาดดุล; ต่ำกว่าเป้าแต่ยังเหลือเป็นส้ม
 const VERDICT: Record<GoalVerdict, { label: string; sign: string; tone: string }> = {
   met: { label: 'ถึงเป้า', sign: 'เกินเป้า', tone: 'text-income' },
   short: { label: 'ต่ำกว่าเป้า', sign: 'ขาดอีก', tone: 'text-warn' },

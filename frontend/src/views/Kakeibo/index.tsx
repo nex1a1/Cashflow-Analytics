@@ -1,70 +1,65 @@
-import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import { BookOpen, Wallet, Home, ShoppingBag, Landmark, Mail, PieChart, CalendarDays, ListTree, Receipt } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { BookOpen, Wallet, Home, ShoppingBag, Landmark, Mail, BarChart3, CalendarDays, ListTree, Receipt, ChevronDown, Info } from 'lucide-react';
 import { useAppData } from '@/context/AppDataContext';
 import { useAppFilter } from '@/context/AppFilterContext';
 import useBudgets from '@/hooks/useBudgets';
 import CategoryGlyph from '@/components/shared/CategoryGlyph';
-import { ALLOCATION_COLORS, readable, tc, type ThemeToken } from '@/constants/theme';
-import { formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
-import { CYCLE_PREFIX, isCyclePeriod, toCycleKey } from '@/utils/payCycle';
+import { readable, tc, type ThemeToken } from '@/constants/theme';
+import { formatBaht, formatThaiDayMonth as day, THAI_MONTHS_SHORT } from '@/utils/formatters';
+import { CYCLE_PREFIX, isCyclePeriod, isSingleUnitPeriod, stripCycle, toCycleKey } from '@/utils/payCycle';
 import useToday from '@/hooks/useToday';
-import { planLines, roundShares, summarizeKakeibo, type FixedRule, type PlanLine } from '@/utils/kakeibo';
-import { computeEnvelopes, type BudgetLevel, type EnvelopeRow } from '@/utils/budgetEnvelope';
+import { findRentGroupId, groupIdOf, lineTotals, planLines, reflectionHints, splitSmallLines, summarizeKakeibo, unitTrend, type FixedRule, type PlanLine } from '@/utils/kakeibo';
+import { AVG_UNITS, computeEnvelopes, type BudgetLevel, type EnvelopeRow } from '@/utils/budgetEnvelope';
+import { BUDGET_RULES } from '@/constants/budgetRules';
 import useJsonSetting from '@/hooks/useJsonSetting';
 import { useMenu } from '@/hooks/useMenu';
 import FieldError from '@/components/shared/FieldError';
 import FixedCostPicker, { FIXED_SETTING_KEY, parseFixedChoice, type FixedChoice } from './FixedCostPicker';
-import { resolveCashflowGroups } from '@/utils/analyticsAggregation';
 import type { Category } from '@/types';
-import MonthReflection from './MonthReflection';
+import MonthReflection, { previousPeriod } from './MonthReflection';
 import KakeiboHeader from './KakeiboHeader';
+import Panel, { stripes, toggleCls } from './Panel';
+import { IncomeSplitBar, leftTone, pctLeft, pctText, SPLIT } from './split';
+import RangeOverview from './RangeOverview';
+import SpendingCalendar from './SpendingCalendar';
 
 const baht = (satang: number) => formatBaht(satang / 100);
-const day = (iso: string) => `${Number(iso.slice(8))} ${THAI_MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`;
-const groupIdOf = (c?: Category) => c?.cashflowGroup ?? c?.cashflow_group_id ?? '';
 const DAY_MS = 86_400_000;
 const daysIn = (w: { start: string; end: string }) => (Date.parse(w.end) - Date.parse(w.start)) / DAY_MS + 1;
 
-// งบซองใช้สีเดียวกับแผงงบในหน้าภาพรวม: ในงบ = สีกลุ่ม, เกิน = ส้ม, เกิน 20% = แดง (เกินสิบกว่าบาทไม่ควรดูเป็นสัญญาณอันตราย)
+// งบซอง: ในงบ = สีกลุ่ม, เกิน = ส้ม, เกิน 20% = แดง (เกินสิบกว่าบาทไม่ควรดูเป็นสัญญาณอันตราย)
 const LEVEL_TOKEN: Record<BudgetLevel, ThemeToken | null> = { ok: null, warn: 'warn', over: 'danger' };
 const LEVEL_TEXT: Record<BudgetLevel, string> = { ok: 'text-ink-body', warn: 'text-warn', over: 'text-danger' };
 const overPct = (ratio: number) => Math.max(1, Math.round((ratio - 1) * 100));
-/** รายการที่ลงล่วงหน้า (แผน) = ลายขีดเฉียง แยกจากส่วนจางของ WANT */
-const planStripes = (color: string) => `repeating-linear-gradient(135deg, color-mix(in srgb, ${color} 45%, transparent) 0 2px, transparent 2px 5px)`;
-
-function Panel({ title, icon: Icon, children, footer, action, overlay }: { title: string; icon: typeof Wallet; children: ReactNode; footer?: ReactNode; action?: ReactNode; /** ลอยทับใต้หัวแผงพอดี (ไม่ดันเนื้อหา) */ overlay?: ReactNode }) {
-  return (
-    <section aria-label={title} className="flex flex-col border border-line bg-surface">
-      <h2 className="flex items-center gap-2 px-4 py-2 border-b border-line text-[11px] font-black text-ink-muted">
-        <Icon className="w-3.5 h-3.5 text-accent-ink" aria-hidden />{title}
-        {action && <span className="ml-auto">{action}</span>}
-      </h2>
-      {overlay && <div className="relative h-0">{overlay}</div>}
-      <div className="flex-1">{children}</div>
-      {footer && <div className="flex justify-between gap-3 px-4 py-2 border-t border-line bg-surface-elevated text-[13px] font-black text-ink-display">{footer}</div>}
-    </section>
-  );
-}
 
 const COLS = 'grid grid-cols-[1fr_auto] gap-3 items-center px-4';
 
+/** แถวที่ต่ำกว่านี้ (satang) ยุบรวมเป็น "อื่นๆ" ในตารางที่ยาว */
+const SMALL_LINE = 20_000;
+
 /** ตารางหมวด: ชื่อ · ยอดของช่วงนี้ (ชื่อแผงบอกอยู่แล้วว่าคืออะไร จึงไม่มีแถวหัวตาราง) */
-function PlanTable({ lines, catById, showPlan }: { lines: PlanLine[]; catById: Map<string, Category>; /** แสดง "แผน ฿X" ในแถวที่มีส่วนลงล่วงหน้า */ showPlan: boolean }) {
-  if (lines.length === 0) return <p className="px-4 py-3 text-[11px] text-ink-muted">ยังไม่มีรายการ</p>;
+function PlanTable({ lines, catById, showPlan, pending = 'รอจ่าย', empty = 'ยังไม่มีรายการ', collapseSmall = false }: {
+  lines: PlanLine[]; catById: Map<string, Category>; /** แสดงส่วนที่ลงล่วงหน้าในแถว */ showPlan: boolean;
+  /** ป้ายแถวที่ทั้งแถวยังไม่ถึงวันที่ (รายรับ = "รอเข้า") */ pending?: string; empty?: string;
+  /** ยุบแถวเล็ก (< SMALL_LINE) เป็นแถว "อื่นๆ" กดขยายได้ */ collapseSmall?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(true); // กางไว้ก่อน: ยุบเมื่อผู้ใช้อยากเห็นแค่ตัวใหญ่
+  if (lines.length === 0) return <p className="px-4 py-3 text-[11px] text-ink-muted">{empty}</p>;
+  const { main, small } = collapseSmall ? splitSmallLines(lines, SMALL_LINE) : { main: lines, small: [] };
+  const shown = expanded ? lines : main;
   return (
     <ul className="divide-y divide-line">
-      {lines.map((l) => {
+      {shown.map((l) => {
         const cat = catById.get(l.key.slice(l.key.indexOf(':') + 1).split('|')[0]);
         return (
           <li key={l.key} className={`${COLS} py-1.5 text-[13px]`}>
             <span className="flex items-center gap-2 min-w-0 text-ink-display">
               <CategoryGlyph icon={cat?.icon} color={readable(cat?.color ?? tc('ink-body'))} size={13} className="shrink-0" />
-              <span className={l.detail ? 'shrink-0 text-ink-body' : 'truncate'}>{l.name || 'ไม่ระบุหมวด'}</span>
+              <span title={l.name} className={l.detail ? 'min-w-0 truncate text-ink-body' : 'truncate'}>{l.name || 'ไม่ระบุหมวด'}</span>
               {l.detail && (
                 <span
                   title="เฉพาะรายการนี้ในหมวด"
-                  className="truncate px-1.5 py-px rounded-pill border tint-border text-[11px] font-bold"
+                  className="shrink-0 max-w-36 truncate px-1.5 py-px rounded-pill border tint-border text-[11px] font-bold"
                   style={{
                     color: readable(cat?.color ?? tc('ink-body')),
                     backgroundColor: `color-mix(in srgb, ${cat?.color ?? tc('ink-body')} 8%, transparent)`,
@@ -74,12 +69,30 @@ function PlanTable({ lines, catById, showPlan }: { lines: PlanLine[]; catById: M
               )}
             </span>
             <span className="flex items-baseline justify-end gap-2 text-right">
-              {showPlan && !!l.planned && <span title="ลงล่วงหน้า ยังไม่ถึงวันที่" className="text-[11px] text-ink-muted">แผน {baht(l.planned)}</span>}
+              {showPlan && !!l.planned && (l.planned === l.actual && l.plannedDate
+                // ทั้งแถวยังไม่ถึงวันที่: บอกวันแทนการพิมพ์ยอดเดิมซ้ำ
+                ? <span data-pending title="ลงล่วงหน้า ยังไม่ถึงวันที่" className="px-1.5 py-px rounded-pill border border-line text-[11px] text-ink-body">{pending} · {day(l.plannedDate)}</span>
+                : <span title="ลงล่วงหน้า ยังไม่ถึงวันที่" className="text-[11px] text-ink-muted">แผน {baht(l.planned)}</span>)}
               <span className="font-mono tabular-nums text-ink-display">{baht(l.actual)}</span>
             </span>
           </li>
         );
       })}
+      {small.length > 0 && (
+        <li>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className={`${COLS} w-full py-1.5 text-[13px] text-left hover:bg-surface-elevated`}
+          >
+            <span className="flex items-center gap-2 min-w-0 text-ink-body">
+              <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              {expanded ? 'ย่อรายการเล็ก' : `อื่นๆ ${small.length} รายการ (ต่ำกว่า ${baht(SMALL_LINE)})`}
+            </span>
+            {!expanded && <span className="font-mono tabular-nums text-ink-display">{baht(sum(small))}</span>}
+          </button>
+        </li>
+      )}
     </ul>
   );
 }
@@ -123,12 +136,12 @@ function KakeiboSkeleton() {
 
 /** Kakeibo (家計簿) — budget planner ของเดือน/รอบเดียว สร้างจากหมวดและรายการที่มีอยู่ (ไม่มีอะไรให้กรอกนอกจากการทบทวน) */
 const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading?: boolean }) {
-  const { transactions, categories, cashflowGroups } = useAppData();
+  const { transactions, categories, cashflowGroups, dayTypes, dayTypeConfig } = useAppData();
   const { filterPeriod, setFilterPeriod, getFilterLabel } = useAppFilter();
   const { budgets, ready: budgetsReady } = useBudgets();
-  // ค่าใช้จ่ายคงที่ = กลุ่มที่พัก (ตัวเดียวกับที่ Dashboard ใช้หาการ์ด "ที่พัก")
+  // ค่าใช้จ่ายคงที่ = กลุ่มที่พัก (หาจากชื่อกลุ่ม)
   const fixedGroups = useMemo(() => {
-    const { rentGroupId } = resolveCashflowGroups(cashflowGroups);
+    const rentGroupId = findRentGroupId(cashflowGroups);
     return cashflowGroups.filter((g) => g.id === rentGroupId);
   }, [cashflowGroups]);
   const autoCategoryIds = useMemo(() => {
@@ -149,12 +162,17 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
   const today = useToday();
   // s = ทั้งเดือน/รอบรวมรายการที่ลงล่วงหน้า (แผน), actual = เฉพาะที่เกิดขึ้นแล้วถึงวันนี้
   const s = useMemo(() => summarizeKakeibo(transactions, filterPeriod, fixedRule), [transactions, filterPeriod, fixedRule]);
-  const actual = useMemo(() => summarizeKakeibo(transactions.filter((t) => t.date <= today), filterPeriod, fixedRule), [transactions, filterPeriod, fixedRule, today]);
+  const actual = useMemo(() => isSingleUnitPeriod(filterPeriod) ? summarizeKakeibo(transactions.filter((t) => t.date <= today), filterPeriod, fixedRule) : null, [transactions, filterPeriod, fixedRule, today]);
   const plan = useMemo(() => planLines(transactions, filterPeriod, fixedRule, today), [transactions, filterPeriod, fixedRule, today]);
+  // เดือน/รอบก่อนทั้งช่วง — AppData โหลดย้อนหลังไว้ 3 ช่วงอยู่แล้ว (getPeriodDateRange → fetchStartDate)
+  const prevTotals = useMemo(() => isSingleUnitPeriod(filterPeriod) ? lineTotals(planLines(transactions, previousPeriod(filterPeriod), fixedRule)) : null, [transactions, filterPeriod, fixedRule]);
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const [breakdown, setBreakdown] = useState(false);
+  const [legend, setLegend] = useState(false);
+  // ช่วงนี้ + ย้อนหลังเท่าที่ AppData โหลดไว้ (AVG_UNITS ช่วง)
+  const trend = useMemo(() => unitTrend(transactions, filterPeriod, AVG_UNITS + 1), [transactions, filterPeriod]);
 
-  // งบซอง = งบกลุ่มที่ตั้งไว้ใน ตั้งค่าระบบ → งบประมาณ; สีมาจากยอดใช้จริงเท่านั้น รายการล่วงหน้าเป็นแผน (computeEnvelopes ตัวเดียวกับหน้าภาพรวม)
+  // งบซอง = งบกลุ่มที่ตั้งไว้ใน ตั้งค่าระบบ → งบประมาณ; สีมาจากยอดใช้จริงเท่านั้น รายการล่วงหน้าเป็นแผน
   const envelopes = useMemo(() => {
     if (!s) return [];
     const rows: EnvelopeRow[] = [];
@@ -166,40 +184,33 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
     return [...cashflowGroups].sort((a, b) => a.order_index - b.order_index)
       .flatMap((g) => { const env = byGroup.get(g.id); return env && budgets[g.id] > 0 ? [{ group: g, env }] : []; });
   }, [s, transactions, catById, cashflowGroups, budgets, filterPeriod, today]);
+  const unit = isCyclePeriod(filterPeriod) ? 'รอบ' : 'เดือน';
+  // เทียบกับช่วงก่อนทั้งช่วงได้ตั้งแต่สัปดาห์สุดท้าย — ต้นเดือนทุกหมวด "ลดลง" แค่เพราะยังไม่ได้ใช้ (แถวยังโชว์ส่วนต่างตลอด tooltip บอกยอดช่วงก่อน)
+  const late = !!s && today >= s.weeks[s.weeks.length - 1].start;
+  const hints = useMemo(() => !plan ? [] : reflectionHints(plan, late ? prevTotals : null, envelopes
+    .filter(({ env }) => env.spent > env.budget)
+    .map(({ group, env }) => ({ name: group.name, over: env.spent - env.budget, pct: overPct(env.spent / env.budget) })), unit),
+  [plan, prevTotals, late, envelopes, unit]);
 
   // ตอนบูต: รอธุรกรรม + Fix Cost + งบซองให้ครบก่อนวาด ไม่งั้นแถวที่เลือกเป็น Fix Cost เด้งย้ายตาราง และแผงงบผุดทีหลัง
-  // เปลี่ยนช่วงเวลาให้ค้างตัวเลขเดิมไว้ ไม่สลับเป็นโครงแล้วกลับ (เหมือน Dashboard)
+  // เปลี่ยนช่วงเวลาให้ค้างตัวเลขเดิมไว้ ไม่สลับเป็นโครงแล้วกลับ
   if ((isLoading && transactions.length === 0) || !fixedReady || !budgetsReady) return <KakeiboSkeleton />;
 
   if (!s || !actual || !plan) {
+    // หลายเดือน/รอบ: สรุปทีละเดือน กดแถวเพื่อเปิดเดือนนั้นแบบเต็ม
     const current = isCyclePeriod(filterPeriod) ? CYCLE_PREFIX + toCycleKey(today) : today.slice(0, 7);
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 border border-line bg-surface text-center">
-        <BookOpen className="w-10 h-10 text-ink-muted" />
-        <p className="text-base font-bold text-ink-display">Kakeibo ดูได้ทีละเดือนหรือทีละรอบ</p>
-        <button onClick={() => setFilterPeriod(current)} className="px-4 py-2 text-xs font-bold bg-accent text-on-accent">
-          ดู{getFilterLabel(current)}
-        </button>
-      </div>
+      <RangeOverview rows={transactions} period={filterPeriod} categories={categories} groups={cashflowGroups} getFilterLabel={getFilterLabel} onOpenUnit={setFilterPeriod} current={current}>
+        <SpendingCalendar rows={transactions} period={filterPeriod} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig} categories={categories} />
+      </RangeOverview>
     );
   }
 
-  const unit = isCyclePeriod(filterPeriod) ? 'รอบ' : 'เดือน';
   const showPlan = today >= s.start; // ช่วงที่ยังไม่เริ่มเป็นแผนทั้งช่วง ไม่ต้องติดป้ายทุกแถว
   const plannedExpense = s.expense - actual.expense;
-  const leftTone = s.left < 0 ? 'text-danger' : s.left < s.goal ? 'text-ink-display' : 'text-income';
   const totalDays = s.weeks.reduce((n, w) => n + daysIn(w), 0);
   // งบใช้จ่ายต่อสัปดาห์ = (รายรับ − ค่าใช้จ่ายคงที่ − เป้าเงินเหลือ) เฉลี่ยตามจำนวนวันของสัปดาห์นั้น (สัปดาห์สุดท้ายมักสั้นกว่า)
   const allowanceOf = (w: { start: string; end: string }) => ((s.income - s.fixed - s.goal) * daysIn(w)) / totalDays;
-
-  // ส่วนที่สาม = เงินเหลือ (ลงทุนอยู่ในนี้) ไม่ใช่ ลงทุน/ออม — เงินออมส่วนใหญ่อยู่นอกแอป ตัวเลขลงทุนในแอปจึงเป็น 0% แทบทุกรอบ
-  const split = [
-    { label: 'NEED', value: s.need, color: ALLOCATION_COLORS.need },
-    { label: 'WANT', value: s.want, color: ALLOCATION_COLORS.want },
-    { label: 'เงินเหลือ', value: Math.max(0, s.left), color: ALLOCATION_COLORS.savings },
-  ];
-  const splitTotal = split.reduce((n, x) => n + x.value, 0);
-  const splitShares = roundShares(split.map((x) => x.value)); // ปัดให้รวมได้ 100% พอดี
 
   return (
     <div className="flex flex-col gap-4 pb-10">
@@ -209,7 +220,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
         {/* คอลัมน์ 1: เงินเข้า → ค่าใช้จ่ายคงที่ → จำเป็น → ลงทุน */}
         <div className="flex flex-col gap-4">
           <Panel title="รายรับ" icon={Wallet} footer={<><span>รวมรายรับ<PlanNote lines={plan.income} show={showPlan} /></span><span className="font-mono tabular-nums text-income">{baht(s.income)}</span></>}>
-            <PlanTable lines={plan.income} catById={catById} showPlan={showPlan} />
+            <PlanTable lines={plan.income} catById={catById} showPlan={showPlan} pending="รอเข้า" />
           </Panel>
           {/* ตัวเลือก Fix Cost ลอยทับตาราง (ไม่ดันเนื้อหาลง); กดนอกกล่อง / Esc / เสร็จ = ปิด */}
           <div ref={fixedMenu.rootRef} className="relative">
@@ -222,7 +233,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
                   onClick={() => fixedMenu.setOpen((v) => !v)}
                   aria-expanded={fixedMenu.open}
                   aria-haspopup="dialog"
-                  className={`px-2 py-0.5 rounded-pill border border-line text-[11px] font-bold ${fixedMenu.open ? 'bg-surface-elevated text-ink-display' : 'text-ink-body hover:text-ink-display'}`}
+                  className={toggleCls(fixedMenu.open)}
                 >
                   {fixedMenu.open ? 'เสร็จ' : 'เลือกรายการ'}
                 </button>
@@ -245,13 +256,28 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
             <PlanTable lines={plan.need} catById={catById} showPlan={showPlan} />
           </Panel>
           <Panel title="ลงทุน/ออม (ซื้อ − ขาย)" icon={Landmark} footer={<><span>รวมลงทุนสุทธิ<PlanNote lines={plan.invest} show={showPlan} /></span><span className="font-mono tabular-nums text-savings">{baht(s.invested)}</span></>}>
-            <PlanTable lines={plan.invest} catById={catById} showPlan={showPlan} />
+            <PlanTable
+              lines={plan.invest} catById={catById} showPlan={showPlan} pending="ลงล่วงหน้า"
+              empty={s.left > 0 ? `ยังไม่ได้บันทึกการลงทุน · เงินเหลือ ${baht(s.left)}` : 'ยังไม่มีรายการ'}
+            />
           </Panel>
         </div>
 
-        {/* คอลัมน์ 2: งบซอง (ติดตามบ่อย) · ตามใจ */}
+        {/* คอลัมน์ 2: งบซอง (ติดตามบ่อย) · ตามใจ · ปฏิทินการใช้จ่าย */}
         <div className="flex flex-col gap-4">
-          <Panel title="งบซอง" icon={Mail}>
+          <Panel
+            title="งบซอง"
+            icon={Mail}
+            action={envelopes.length > 0 && (
+              <button
+                onClick={() => setLegend((v) => !v)}
+                aria-expanded={legend}
+                className={toggleCls(legend)}
+              >
+                <Info className="w-3 h-3" />คำอธิบาย
+              </button>
+            )}
+          >
             {envelopes.length === 0 ? (
               <p className="px-4 py-3 text-[11px] text-ink-muted">ยังไม่ได้ตั้งงบ — ตั้งได้ที่ ตั้งค่าระบบ → งบประมาณ</p>
             ) : (
@@ -276,7 +302,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
                       </span>
                       <span aria-hidden="true" className="flex h-2.5 bg-surface-elevated">
                         {parts.map((p) => <span key={p.label} style={{ width: `${(Math.max(0, p.value) / scale) * 100}%`, backgroundColor: p.bg }} />)}
-                        {planned > 0 && <span style={{ width: `${(planned / scale) * 100}%`, backgroundImage: planStripes(color) }} />}
+                        {planned > 0 && <span style={{ width: `${(planned / scale) * 100}%`, backgroundImage: stripes(color) }} />}
                       </span>
                       <span className="flex flex-wrap items-center gap-x-2 text-[11px]">
                         <span className={LEVEL_TEXT[level]}>{spent > budget ? `เกิน ${baht(spent - budget)} (${overPct(spent / budget)}%)` : `เหลือ ${baht(budget - spent)}`}</span>
@@ -296,8 +322,8 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
                 })}
               </ul>
             )}
-            {envelopes.length > 0 && (
-              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 border-t border-line text-[11px] text-ink-muted">
+            {legend && envelopes.length > 0 && (
+              <p data-legend className="m-reveal flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 border-t border-line text-[11px] text-ink-muted">
                 <span>ทึบ = NEED · จาง = WANT · ลายขีด = ลงล่วงหน้า</span>
                 <span>สีกลุ่ม = ในงบ</span>
                 {([['เกินงบ', 'warn'], ['เกิน > 20%', 'danger']] as const).map(([label, token]) => (
@@ -308,34 +334,38 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
             )}
           </Panel>
           <Panel title="ค่าใช้จ่ายตามใจ (WANT)" icon={ShoppingBag} footer={<><span>รวม WANT<PlanNote lines={plan.want} show={showPlan} /></span><span className="font-mono tabular-nums">{baht(sum(plan.want))}</span></>}>
-            <PlanTable lines={plan.want} catById={catById} showPlan={showPlan} />
+            <PlanTable lines={plan.want} catById={catById} showPlan={showPlan} collapseSmall />
           </Panel>
+          <SpendingCalendar rows={transactions} period={filterPeriod} dayTypes={dayTypes} dayTypeConfig={dayTypeConfig} categories={categories} />
         </div>
 
         {/* คอลัมน์ 3: สัดส่วน · จังหวะรายสัปดาห์ · สมการสรุป */}
         <div className="flex flex-col gap-4">
-          <Panel title="สรุปการใช้เงิน" icon={PieChart} footer={<><span>รวม</span><span className="font-mono tabular-nums">{baht(splitTotal)}</span></>}>
-            <div className="grid grid-cols-[120px_1fr] gap-4 items-center px-4 py-3">
-              <div className="relative h-[120px]">
-                {splitTotal > 0 && (
-                  <Doughnut
-                    data={{ labels: split.map((x) => x.label), datasets: [{ data: split.map((x) => x.value / 100), backgroundColor: split.map((x) => x.color), borderColor: tc('surface'), borderWidth: 2 }] }}
-                    options={{ cutout: '62%', maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatBaht(c.parsed)}` } } } }}
-                  />
-                )}
-              </div>
-              <ul className="flex flex-col gap-2 text-[13px]">
-                {split.map((x, i) => (
-                  <li key={x.label} className="grid grid-cols-[auto_1fr_auto] gap-2 items-center">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: x.color }} aria-hidden />
-                    <span className="text-ink-display">{x.label}</span>
-                    <span className="font-mono tabular-nums text-ink-body">{splitShares[i]}%</span>
-                    <span />
-                    <span className="col-span-2 -mt-1.5 text-[11px] font-mono tabular-nums text-ink-muted">{baht(x.value)}</span>
+          {/* แต่ละแถว = รายรับของช่วงนั้นเต็มหลอด แบ่งเป็น NEED / WANT / เงินเหลือ; ขีดขาว = เป้าเงินเหลือ (ข้างขวาขีดคือเงินเหลือที่ควรมี) */}
+          <Panel title="สัดส่วนรายรับ" icon={BarChart3}>
+            <ul className="divide-y divide-line">
+              {trend.map((p) => {
+                const pct = pctLeft(p);
+                const isNow = p.period === filterPeriod;
+                return (
+                  <li key={p.period} data-trend aria-current={isNow ? 'true' : undefined} className={`grid grid-cols-[3.5rem_1fr_auto] gap-3 items-center px-4 py-1.5 text-[13px] ${isNow ? 'bg-surface-elevated' : ''}`}>
+                    <span className={isNow ? 'font-bold text-ink-display' : 'text-ink-body'}>{THAI_MONTHS_SHORT[Number(stripCycle(p.period).slice(5, 7)) - 1]}</span>
+                    <IncomeSplitBar point={p} track={isNow ? 'bg-canvas' : 'bg-surface-elevated'} />
+                    <span className={`w-20 text-right font-mono tabular-nums ${leftTone(p)}`}>{pct === null ? '—' : `เหลือ ${pctText(pct)}`}</span>
                   </li>
-                ))}
-              </ul>
-            </div>
+                );
+              })}
+            </ul>
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-2 border-t border-line text-[11px] text-ink-muted">
+              {SPLIT.map((x, i) => (
+                <li key={x.label} className="flex items-center gap-1.5">
+                  <span aria-hidden className="w-2 h-2 rounded-full" style={{ backgroundColor: x.color }} />
+                  <span className="text-ink-body">{x.label}</span>
+                  <span className="font-mono tabular-nums">{baht([s.need, s.want, s.left][i])}</span>
+                </li>
+              ))}
+              <li>ขีดขาว = เป้าเงินเหลือ {BUDGET_RULES.surplus.min}%</li>
+            </ul>
           </Panel>
           <Panel
             title="รายจ่ายรายสัปดาห์"
@@ -344,7 +374,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
               <button
                 onClick={() => setBreakdown((v) => !v)}
                 aria-pressed={breakdown}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-pill border border-line text-[11px] font-bold ${breakdown ? 'bg-surface-elevated text-ink-display' : 'text-ink-body hover:text-ink-display'}`}
+                className={toggleCls(breakdown)}
               >
                 <ListTree className="w-3 h-3" />แยกหมวด
               </button>
@@ -391,7 +421,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
                       ) : (
                         <>
                           <span style={{ width: `${(done / scale) * 100}%`, backgroundColor: ink }} />
-                          <span style={{ width: `${(Math.max(0, w.spent - done) / scale) * 100}%`, backgroundImage: planStripes(ink) }} />
+                          <span style={{ width: `${(Math.max(0, w.spent - done) / scale) * 100}%`, backgroundImage: stripes(ink) }} />
                         </>
                       )}
                       {/* ใช้เกินงบของสัปดาห์: ทั้งหลอดคือยอดที่ใช้ ขีดขาวคือเส้นงบ */}
@@ -427,7 +457,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
             icon={BookOpen}
             footer={<>
               <span>= เงินเหลือ{s.invested !== 0 && <span className="ml-2 text-[11px] font-normal text-ink-muted">ในนี้ลงทุน/ออม {baht(s.invested)}</span>}</span>
-              <span className={`font-mono tabular-nums ${leftTone}`}>{baht(s.left)}</span>
+              <span className={`font-mono tabular-nums ${leftTone(s)}`}>{baht(s.left)}</span>
             </>}
           >
             <dl className="divide-y divide-line text-[13px]">
@@ -447,7 +477,7 @@ const KakeiboView = memo(function KakeiboView({ isLoading = false }: { isLoading
         </div>
       </div>
 
-      <MonthReflection />
+      <MonthReflection hints={hints} />
     </div>
   );
 });

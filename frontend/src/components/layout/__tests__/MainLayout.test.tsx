@@ -14,8 +14,8 @@ const h = vi.hoisted(() => {
     data: {} as Record<string, any>,
     filter: {} as Record<string, any>,
     toast: { toast: null as unknown, showToast: null as unknown as (...a: unknown[]) => void },
-    /** the on/off setting (portfolio_enabled): current values, the parsers MainLayout gave, and every update it asked for */
-    flags: {} as Record<string, boolean>,
+    /** the stored settings (portfolio_enabled, overview_mode): current values, the parsers MainLayout gave, and every update it asked for */
+    flags: {} as Record<string, unknown>,
     parsers: {} as Record<string, (raw: unknown) => unknown>,
     updates: [] as [string, unknown][],
   };
@@ -35,12 +35,13 @@ vi.mock('@/context/AppFilterContext', () => ({ useAppFilter: () => h.filter }));
 vi.mock('@/hooks/useJsonSetting', () => ({
   default: (key: string, parse: (raw: unknown) => unknown) => {
     h.parsers[key] = parse;
-    return [key in h.flags ? h.flags[key] : parse(undefined), (change: (cur: unknown) => unknown) => { h.updates.push([key, change(key in h.flags ? h.flags[key] : true)]); return Promise.resolve(true); }];
+    return [key in h.flags ? h.flags[key] : parse(undefined), (change: (cur: unknown) => unknown) => { h.updates.push([key, change(key in h.flags ? h.flags[key] : true)]); return Promise.resolve(true); }, true];
   },
 }));
 vi.mock('@/components/layout/AppHeader', h.stub('AppHeader'));
 vi.mock('@/components/shared/AppToast', h.stub('AppToast'));
-vi.mock('@/views/Dashboard/index', h.stub('Dashboard'));
+vi.mock('@/views/Dashboard/DashboardTab', h.stub('Dashboard'));
+vi.mock('@/views/Kakeibo', h.stub('Kakeibo'));
 vi.mock('@/views/Calendar', h.stub('Calendar'));
 vi.mock('@/views/Ledger/index', h.stub('Ledger'));
 vi.mock('@/views/Settings', h.stub('Settings'));
@@ -96,7 +97,7 @@ function reset(tab = 'insights') {
   };
   h.filter = {
     filterPeriod: '2026-10', groupedOptions, rawAvailableMonths: ['2026-10'], isReadOnlyView: true, searchQuery: 'กาแฟ', isFilterActive: true,
-    displayTransactions: [{ id: 'd1' }], analytics: { total: 1 }, allDatesInPeriod: ['2026-10-07'], availableDatesInPeriod: ['2026-10-07'],
+    displayTransactions: [{ id: 'd1' }], allDatesInPeriod: ['2026-10-07'], availableDatesInPeriod: ['2026-10-07'],
     advancedFilterCategory: 'ALL', advancedFilterGroup: 'g1', advancedFilterDate: 'ALL', typeFilter: 'expense', allocationFilter: 'need',
     minAmount: '1', maxAmount: '9', dayTypeFilter: 'WEEKEND', activeCashflowGroupIds: ['g1'], activeCategoryNames: ['ค่ากิน'], getFilterLabel,
     ...Object.fromEntries(filterFns.map(k => [k, fn()])),
@@ -108,7 +109,7 @@ let container: HTMLElement | null = null;
 /** Every view but the dashboard, and every modal, is lazy: let those imports and React's retry finish. */
 const settle = () => act(async () => {
   await Promise.all([
-    import('@/views/Calendar'), import('@/views/Ledger/index'), import('@/views/Settings'), import('@/views/Portfolio'),
+    import('@/views/Dashboard/DashboardTab'), import('@/views/Kakeibo'), import('@/views/Calendar'), import('@/views/Ledger/index'), import('@/views/Settings'), import('@/views/Portfolio'),
     import('@/components/modals/BatchAddModal/index'), import('@/components/modals/ExportModal'),
     import('@/components/modals/ImportGuideModal'), import('@/components/modals/ImportPreviewModal'),
   ]);
@@ -138,11 +139,11 @@ afterEach(() => {
 
 describe('MainLayout — which view is shown', () => {
   it.each([
-    ['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
+    ['insights', 'Dashboard'], ['kakeibo', 'Kakeibo'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
   ])('tab "%s" shows only %s (plus the header and the toast)', async (tab, view) => {
     reset(tab);
     await mount();
-    const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
+    const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
     expect(shown().filter(s => views.includes(s!))).toEqual([view]);
     expect(shown()).toEqual(expect.arrayContaining(['AppHeader', 'AppToast']));
   });
@@ -150,7 +151,7 @@ describe('MainLayout — which view is shown', () => {
   it('an unknown tab shows no view at all', async () => {
     reset('nonsense');
     await mount();
-    expect(shown().filter(s => ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'].includes(s!))).toEqual([]);
+    expect(shown().filter(s => ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'].includes(s!))).toEqual([]);
   });
 });
 
@@ -195,14 +196,9 @@ describe('MainLayout — header', () => {
 });
 
 describe('MainLayout — what each view is given', () => {
-  it('the dashboard gets the analytics, the period data and its own toggles', async () => {
+  it('the dashboard tab reads its data from the contexts itself: it is only told the portfolio switch and the loading flag', async () => {
     await mount();
-    expect(h.props.Dashboard).toMatchObject({
-      analytics: h.filter.analytics, transactions, cashflowGroups: groups, filterPeriod: '2026-10', getFilterLabel, categories, dayTypeConfig, dayTypes, isLoading: true,
-      hideFixedExpenses: true, hideWantExpenses: false, dashboardCategory: 'c-food', chartGroupBy: 'week', topXLimit: 7,
-      setHideFixedExpenses: h.ui.setHideFixedExpenses, setHideWantExpenses: h.ui.setHideWantExpenses, setDashboardCategory: h.ui.setDashboardCategory,
-      setChartGroupBy: h.ui.setChartGroupBy, setTopXLimit: h.ui.setTopXLimit,
-    });
+    expect(h.props.Dashboard).toEqual({ showPortfolio: true, isLoading: true });
   });
 
   it('the calendar gets the day data, the handlers, and can switch back to the dashboard', async () => {
@@ -339,7 +335,7 @@ describe('MainLayout — modals', () => {
 
 describe('MainLayout — one source of groups', () => {
   it('everything that draws or writes groups is given the same list', async () => {
-    const withGroups: Array<[string, string]> = [['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['settings', 'Settings']];
+    const withGroups: Array<[string, string]> = [['calendar', 'Calendar'], ['ledger', 'Ledger'], ['settings', 'Settings']];
     for (const [tab, view] of withGroups) {
       reset(tab);
       await mount();
@@ -355,7 +351,7 @@ describe('MainLayout — one source of groups', () => {
 });
 
 describe('MainLayout — the portfolio tab can be switched off', () => {
-  const views = ['Dashboard', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
+  const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
   const visibleViews = () => shown().filter(x => views.includes(x!));
 
   it('on by default and the header, dashboard and settings are told so', async () => {
@@ -426,5 +422,51 @@ describe('MainLayout — the portfolio tab can be switched off', () => {
       expect(h.ui.setActiveTab, tab).not.toHaveBeenCalled();
       act(() => root!.unmount()); container!.remove(); root = null;
     }
+  });
+});
+
+describe('MainLayout — Lite overview mode', () => {
+  const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
+  const visibleViews = () => shown().filter(x => views.includes(x!));
+
+  it('full by default: the overview is the Dashboard and the header keeps the Kakeibo tab', async () => {
+    await mount();
+    expect(visibleViews()).toEqual(['Dashboard']);
+    expect(h.props.AppHeader.liteOverview).toBe(false);
+    expect(['lite', 'full', undefined, null, 'x'].map(h.parsers.overview_mode)).toEqual(['lite', 'full', 'full', 'full', 'full']);
+  });
+
+  it('lite: the overview is Kakeibo (no Dashboard), and the header hides the separate Kakeibo tab', async () => {
+    h.flags = { overview_mode: 'lite' };
+    await mount();
+    expect(visibleViews()).toEqual(['Kakeibo']);
+    expect(h.props.Kakeibo).toEqual({ isLoading: true });
+    expect(h.props.Dashboard).toBeUndefined();
+    expect(h.props.AppHeader.liteOverview).toBe(true);
+  });
+
+  it('lite: a stored Kakeibo tab goes back to the overview', async () => {
+    reset('kakeibo');
+    h.flags = { overview_mode: 'lite' };
+    await mount();
+    expect(visibleViews()).toEqual([]);
+    expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
+  });
+
+  it('full: the Kakeibo tab stays where it is', async () => {
+    reset('kakeibo');
+    await mount();
+    expect(visibleViews()).toEqual(['Kakeibo']);
+    expect(h.ui.setActiveTab).not.toHaveBeenCalled();
+  });
+
+  it('settings gets the mode and a switch that stores overview_mode', async () => {
+    reset('settings');
+    h.flags = { overview_mode: 'lite' };
+    await mount();
+    expect(h.props.Settings.liteOverview).toBe(true);
+    act(() => { h.props.Settings.onLiteOverviewChange(false); });
+    act(() => { h.props.Settings.onLiteOverviewChange(true); });
+    expect(h.updates).toEqual([['overview_mode', 'full'], ['overview_mode', 'lite']]);
   });
 });

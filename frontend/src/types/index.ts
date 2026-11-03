@@ -257,7 +257,6 @@ export interface AppFilterContextValue {
   isFilterActive: boolean;
   clearFilters: () => void;
   displayTransactions: TransactionDisplay[];
-  analytics: any;
   allDatesInPeriod: string[];
   availableDatesInPeriod: string[];
   advancedFilterCategory: string | string[];

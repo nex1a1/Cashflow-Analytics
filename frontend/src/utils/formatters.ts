@@ -18,6 +18,9 @@ export const formatThaiDateShort = (iso: string): string => {
   return `${Number(d)} ${THAI_MONTHS_SHORT[Number(m) - 1]} ${y.slice(2)}`;
 };
 
+/** "3 พ.ย." — day and short month, no year (Kakeibo tables, calendar card). */
+export const formatThaiDayMonth = (iso: string): string => `${Number(iso.slice(8, 10))} ${THAI_MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`;
+
 /** Negative amounts are written with a true minus sign, never a hyphen: "−฿500.00". */
 export const MINUS = '−';
 /** Locale output "-1,234.50" -> "−1,234.50"; a value that rounds to zero ("-0.00") shows no sign at all. */
