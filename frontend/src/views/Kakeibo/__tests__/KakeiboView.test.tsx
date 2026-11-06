@@ -272,12 +272,14 @@ describe('KakeiboView', () => {
       await mount(<KakeiboView />);
       expect(q('[data-prev-delta]')).toBeNull();
       expect(document.body.textContent).not.toContain('เท่าเดิม');
+      act(() => q<HTMLButtonElement>('[data-reflection-toggle]')!.click());
       // mid-cycle: only the over-budget envelope; comparing a half-done cycle with a whole one would read as "spent less"
       expect([...q('[data-hints]')!.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['ค่าใช้จ่ายจิปาถะ เกินงบ ฿100.00 (10%)']);
       act(() => root!.unmount());
       container!.remove();
       vi.setSystemTime(new Date(2026, 9, 22, 12)); // last week of the cycle (18–24 Oct): the comparison joins in
       await mount(<KakeiboView />);
+      act(() => q<HTMLButtonElement>('[data-reflection-toggle]')!.click());
       expect([...q('[data-hints]')!.querySelectorAll('li')].map((li) => li.textContent)).toEqual([
         'ค่าใช้จ่ายจิปาถะ เกินงบ ฿13,100.00 (1310%)',
         'ค่ากิน เกินงบ ฿500.00 (17%)',
@@ -400,6 +402,22 @@ describe('MonthReflection', () => {
     act(() => { el.focus(); setter.call(el, value); el.dispatchEvent(new Event('input', { bubbles: true })); });
   };
   const blur = async (el: HTMLTextAreaElement) => { act(() => el.blur()); await flush(); await flush(); };
+  const toggle = () => q<HTMLButtonElement>('[data-reflection-toggle]')!;
+  const mountOpen = async () => { await mount(<MonthReflection />); act(() => toggle().click()); };
+
+  it('starts folded: no boxes until the header is clicked; it counts what is already written', async () => {
+    h.store = { ...h.store, month_reflections: { 'cycle:2026-09': { good: 'จดทุกวัน' } } };
+    await mount(<MonthReflection hints={['ค่ากิน เกินงบ']} />);
+    expect(q('textarea')).toBeNull();
+    expect(q('[data-hints]')).toBeNull();
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(toggle().textContent).toContain('เขียนแล้ว 1/3');
+    act(() => toggle().click());
+    expect(document.querySelectorAll('textarea')).toHaveLength(3);
+    expect(q('[data-hints]')).not.toBeNull();
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    h.store = { group_budgets: { 'g-food': 300_000, 'g-misc': 100_000 } };
+  });
 
   it('shows the previous period intent above the boxes (the goal verdict lives in the header)', async () => {
     h.store = { ...h.store, month_reflections: { 'cycle:2026-08': { focus: 'ลดค่ากินนอกบ้าน', next: 'จดทุกวัน' } } };
@@ -418,7 +436,7 @@ describe('MonthReflection', () => {
   });
 
   it('a failed save keeps what the user typed (the error says so)', async () => {
-    await mount(<MonthReflection />);
+    await mountOpen();
     // a real request fails later: the optimistic value renders first, then the rollback does
     let fail = () => {};
     h.save.mockImplementationOnce(() => new Promise((_, reject) => { fail = () => reject(new Error('offline')); }));
@@ -429,10 +447,12 @@ describe('MonthReflection', () => {
     await flush();
     expect(q('[role="alert"], #reflection-error')?.textContent).toContain('ข้อความยังอยู่ในช่อง');
     expect(q<HTMLTextAreaElement>('textarea')!.value).toBe('ค่ากินใช้น้อยดี');
+    act(() => toggle().click()); // cannot fold away a failed save
+    expect(q<HTMLTextAreaElement>('textarea')!.value).toBe('ค่ากินใช้น้อยดี');
   });
 
   it('a successful save says "บันทึกแล้ว" until the user types again', async () => {
-    await mount(<MonthReflection />);
+    await mountOpen();
     const box = q<HTMLTextAreaElement>('textarea')!;
     setText(box, 'จดทุกวัน');
     await blur(box);
@@ -442,7 +462,7 @@ describe('MonthReflection', () => {
   });
 
   it('a successful save stores the trimmed text under the period and keeps showing it', async () => {
-    await mount(<MonthReflection />);
+    await mountOpen();
     const box = q<HTMLTextAreaElement>('textarea')!;
     setText(box, '  ค่ากินใช้น้อยดี  ');
     await blur(box);

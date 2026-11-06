@@ -262,7 +262,7 @@ const SettingsView = memo(function SettingsView({
 
           {onLiteOverviewChange && (
             <TabToggleRow icon={<Feather className="w-4 h-4" />} title="หน้าภาพรวมแบบ Lite" enabled={liteOverview} onChange={onLiteOverviewChange}
-              onText='หน้าภาพรวมเป็น Kakeibo (โหลดเบา) และซ่อนแท็บ "Kakeibo" ที่ซ้ำ' offText='ภาพรวมแบบเต็ม: Dashboard กราฟครบ + แท็บ "Kakeibo"' />
+              onText="หน้าภาพรวมเป็น Kakeibo (โหลดเบา)" offText="ภาพรวมแบบเต็ม: Dashboard กราฟครบ (ไม่มี Kakeibo)" />
           )}
 
           <DayTypesCard

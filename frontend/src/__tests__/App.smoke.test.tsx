@@ -81,9 +81,9 @@ describe('App (smoke)', () => {
     await flushAll();
 
     expect(document.body.textContent).toContain('ทั้งหมด');
-    // what each tab must show from the mocked database
+    // what each tab must show from the mocked database (full mode has no Kakeibo tab: Kakeibo is the Lite overview)
     const expected: Record<string, string> = {
-      'ภาพรวม': '30,000.00', 'Kakeibo': 'Fix Cost', 'ปฏิทิน': 'ตุลาคม', 'ฐานข้อมูลบัญชี': '+฿30,000.00', 'พอร์ตลงทุน': 'พอร์ต', 'ตั้งค่าระบบ': 'ค่ากิน',
+      'ภาพรวม': '30,000.00', 'ปฏิทิน': 'ตุลาคม', 'ฐานข้อมูลบัญชี': '+฿30,000.00', 'พอร์ตลงทุน': 'พอร์ต', 'ตั้งค่าระบบ': 'ค่ากิน',
     };
     for (const [label, text] of Object.entries(expected)) {
       const t = tab(label);

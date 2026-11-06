@@ -3,7 +3,6 @@ import {
   BarChart3, ClipboardList, Download,
   FileSpreadsheet, Settings, CalendarPlus, Zap,
   Calendar as CalendarIcon, HelpCircle, PiggyBank,
-  BookOpen,
 } from 'lucide-react';
 import sharkWhite from '../../assets/images/shark-white.svg';
 import PeriodPicker from './PeriodPicker';
@@ -16,8 +15,6 @@ export interface AppHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   portfolioEnabled?: boolean;
-  /** โหมด Lite: แท็บภาพรวมคือ Kakeibo จึงไม่มีแท็บ Kakeibo แยก */
-  liteOverview?: boolean;
   filterPeriod: string;
   setFilterPeriod: (period: string) => void;
   groupedOptions: GroupedOptions;
@@ -32,7 +29,6 @@ export interface AppHeaderProps {
 
 const TABS = [
   { id: 'insights', label: 'ภาพรวม',          icon: BarChart3 },
-  { id: 'kakeibo',  label: 'Kakeibo',        icon: BookOpen },
   { id: 'calendar', label: 'ปฏิทิน',           icon: CalendarIcon },
   { id: 'ledger',   label: 'ฐานข้อมูลบัญชี',    icon: ClipboardList },
   { id: 'portfolio', label: 'พอร์ตลงทุน',       icon: PiggyBank },
@@ -71,7 +67,6 @@ export default function AppHeader({
   dbStatus, transactionCount,
   activeTab, setActiveTab,
   portfolioEnabled = true,
-  liteOverview = false,
   filterPeriod, setFilterPeriod,
   groupedOptions,
   isProcessing,
@@ -81,7 +76,7 @@ export default function AppHeader({
   onClickImportGuide,
   fileInputRef,
 }: AppHeaderProps) {
-  const showPeriodPicker = ['insights', 'kakeibo', 'calendar', 'ledger'].includes(activeTab);
+  const showPeriodPicker = ['insights', 'calendar', 'ledger'].includes(activeTab);
 
   // ── Logic: Snappy Processing Indicator ───────────────────
   const showProcessing = isProcessing;
@@ -173,7 +168,7 @@ export default function AppHeader({
       {/* ── Sub Header (Tab Navigation & Context Actions - Folder/Terminal Tabs) ── */}
       <div className="sticky top-0 z-30 flex flex-col md:flex-row justify-between items-stretch px-4 md:px-6 border-b border-line bg-surface-hover shadow-lg">
         <div className="flex w-full md:w-auto overflow-x-auto items-stretch" style={{ scrollbarWidth: 'none' }}>
-          {TABS.filter(t => (portfolioEnabled || t.id !== 'portfolio') && !(liteOverview && t.id === 'kakeibo')).map(({ id, label, icon: Icon }) => {
+          {TABS.filter(t => portfolioEnabled || t.id !== 'portfolio').map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
             return (
               <React.Fragment key={id}>

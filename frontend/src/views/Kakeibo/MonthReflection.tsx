@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import useJsonSetting from '@/hooks/useJsonSetting';
 import FieldError from '@/components/shared/FieldError';
 import { CYCLE_PREFIX, isCyclePeriod, isSingleUnitPeriod, shiftMonth, stripCycle } from '@/utils/payCycle';
@@ -40,6 +41,8 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
   const [saved, setSaved] = useState<Record<string, true>>({});
   // ข้อความที่พิมพ์แต่ยังไม่ได้บันทึก (หรือบันทึกพลาด) ต่อ "ช่วงเวลา:ช่อง" — ค่าที่โหลดมาหรือ rollback จึงไม่ทับสิ่งที่ผู้ใช้พิมพ์
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  // หุบช่องเขียนไว้ก่อน กดหัวการ์ดเมื่อจะเขียน (สิ่งที่ตั้งใจไว้รอบก่อนยังโชว์ตลอด)
+  const [open, setOpen] = useState(false);
   if (!isSingleUnitPeriod(filterPeriod)) return null;
 
   const current = all[filterPeriod] ?? {};
@@ -47,6 +50,9 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
   const prevIntent = ([['โฟกัส', prev?.focus], ['ปรับ', prev?.next]] as const).filter(([, text]) => !!text);
   const hasError = Object.keys(failed).some((k) => k.startsWith(`${filterPeriod}:`));
   const unit = isCyclePeriod(filterPeriod) ? 'รอบ' : 'เดือน';
+  // บันทึกพลาด: เปิดค้างไว้ ข้อความที่พิมพ์และคำเตือนต้องไม่หายไปจากตา (กดซ่อนแล้วช่องจะ blur → บันทึกก่อนหุบ)
+  const expanded = open || hasError;
+  const filled = FIELDS.filter(({ key }) => !!current[key]).length;
   // ทิ้ง draft เมื่อบันทึกแล้ว — เฉพาะถ้ายังเป็นข้อความเดิม (ระหว่างรอ ผู้ใช้อาจกลับมาพิมพ์ต่อ)
   const dropDraft = (id: string, text: string) => setDrafts((d) => {
     if (d[id] !== text) return d;
@@ -73,7 +79,22 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
 
   return (
     <section aria-label={`ทบทวน${unit}`} className="border border-line bg-surface">
-      <h2 className="px-4 py-1.5 border-b border-line text-[11px] font-black text-ink-muted">ทบทวน · {getFilterLabel(filterPeriod)}</h2>
+      <h2 className="border-b border-line text-[11px] font-black text-ink-muted">
+        <button
+          type="button"
+          data-reflection-toggle
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={expanded}
+          disabled={hasError}
+          className="flex w-full items-center gap-2 px-4 py-1.5 text-left hover:bg-surface-elevated disabled:cursor-default"
+        >
+          <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <span>ทบทวน · {getFilterLabel(filterPeriod)}</span>
+          <span className="ml-auto font-bold">
+            {expanded ? 'ซ่อน' : filled > 0 ? `เขียนแล้ว ${filled}/${FIELDS.length} · เปิดเขียน` : 'เปิดเขียน'}
+          </span>
+        </button>
+      </h2>
       {prevIntent.length > 0 && (
         // แถบสีเป็น span แยก: border-left สีอื่นถูก border lock (darkMode.css) ทับเป็นสี line
         <div data-prev-intent className="flex border-b border-line bg-surface-elevated">
@@ -88,7 +109,7 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
           </div>
         </div>
       )}
-      {hints.length > 0 && (
+      {expanded && hints.length > 0 && (
         <div data-hints className="flex flex-col gap-0.5 px-4 py-2 border-b border-line">
           <span className="text-[11px] font-black text-ink-muted">ข้อสังเกตจากตัวเลข</span>
           <ul className="flex flex-wrap gap-x-5 gap-y-0.5 text-[13px] leading-snug text-ink-body">
@@ -96,7 +117,7 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
           </ul>
         </div>
       )}
-      <div className="grid grid-cols-3 gap-4 px-4 py-3">
+      {expanded && <div className="grid grid-cols-3 gap-4 px-4 py-3">
         {FIELDS.map(({ key, label }) => {
           const id = `${filterPeriod}:${key}`;
           return (
@@ -122,7 +143,7 @@ const MonthReflection = memo(function MonthReflection({ hints = [] }: { /** ข�
           </label>
           );
         })}
-      </div>
+      </div>}
       {hasError && <div className="px-4 pb-3"><FieldError id="reflection-error" message="บันทึกไม่สำเร็จ ข้อความยังอยู่ในช่อง ลองอีกครั้ง" /></div>}
     </section>
   );

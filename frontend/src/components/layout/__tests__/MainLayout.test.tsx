@@ -139,7 +139,7 @@ afterEach(() => {
 
 describe('MainLayout — which view is shown', () => {
   it.each([
-    ['insights', 'Dashboard'], ['kakeibo', 'Kakeibo'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
+    ['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
   ])('tab "%s" shows only %s (plus the header and the toast)', async (tab, view) => {
     reset(tab);
     await mount();
@@ -429,35 +429,26 @@ describe('MainLayout — Lite overview mode', () => {
   const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
   const visibleViews = () => shown().filter(x => views.includes(x!));
 
-  it('full by default: the overview is the Dashboard and the header keeps the Kakeibo tab', async () => {
+  it('full by default: the overview is the Dashboard', async () => {
     await mount();
     expect(visibleViews()).toEqual(['Dashboard']);
-    expect(h.props.AppHeader.liteOverview).toBe(false);
     expect(['lite', 'full', undefined, null, 'x'].map(h.parsers.overview_mode)).toEqual(['lite', 'full', 'full', 'full', 'full']);
   });
 
-  it('lite: the overview is Kakeibo (no Dashboard), and the header hides the separate Kakeibo tab', async () => {
+  it('lite: the overview is Kakeibo (no Dashboard)', async () => {
     h.flags = { overview_mode: 'lite' };
     await mount();
     expect(visibleViews()).toEqual(['Kakeibo']);
     expect(h.props.Kakeibo).toEqual({ isLoading: true });
     expect(h.props.Dashboard).toBeUndefined();
-    expect(h.props.AppHeader.liteOverview).toBe(true);
   });
 
-  it('lite: a stored Kakeibo tab goes back to the overview', async () => {
+  it.each(['lite', 'full'])('%s: a stored Kakeibo tab (no longer a tab) goes back to the overview', async (mode) => {
     reset('kakeibo');
-    h.flags = { overview_mode: 'lite' };
+    h.flags = { overview_mode: mode };
     await mount();
     expect(visibleViews()).toEqual([]);
     expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
-  });
-
-  it('full: the Kakeibo tab stays where it is', async () => {
-    reset('kakeibo');
-    await mount();
-    expect(visibleViews()).toEqual(['Kakeibo']);
-    expect(h.ui.setActiveTab).not.toHaveBeenCalled();
   });
 
   it('settings gets the mode and a switch that stores overview_mode', async () => {

@@ -12,8 +12,8 @@ import { periodRowsLoaded } from '../../utils/dateHelpers';
 import useJsonSetting from '../../hooks/useJsonSetting';
 
 // View Components: every tab and modal is its own chunk, so the first paint only parses what it shows. The chunks are
-// fetched in the background once the app is idle — except tabs that are off (the Dashboard in Lite mode, the Portfolio when
-// switched off), so neither pulls in Chart.js.
+// fetched in the background once the app is idle — except views that are off (the Dashboard in Lite mode, Kakeibo in full
+// mode, the Portfolio when switched off), so Lite never pulls in Chart.js.
 const loaders = {
   dashboard: () => import('../../views/Dashboard/DashboardTab'),
   calendar: () => import('../../views/Calendar'),
@@ -39,7 +39,7 @@ const ImportPreviewModal = lazy(loaders.importPreview);
 
 // ค่าเริ่มต้น = เปิด (ผู้ใช้เดิมไม่เสียแท็บ); ปิดเมื่อบันทึกเป็น false เท่านั้น
 const parseEnabled = (raw: unknown) => raw !== false && raw !== 'false';
-/** หน้าภาพรวม: 'full' (Dashboard + แท็บ Kakeibo, ค่าเริ่มต้น) หรือ 'lite' (Kakeibo เป็นหน้าภาพรวม) */
+/** หน้าภาพรวม: 'full' (Dashboard, ค่าเริ่มต้น) หรือ 'lite' (Kakeibo เป็นหน้าภาพรวม — Kakeibo มีเฉพาะโหมดนี้) */
 const parseOverviewMode = (raw: unknown): 'full' | 'lite' => (raw === 'lite' ? 'lite' : 'full');
 
 /** True from the first time `open` is true: a lazy modal loads on first use, then stays mounted (it keeps its state while closed, as before). */
@@ -98,17 +98,15 @@ export default function MainLayout() {
     getFilterLabel
   } = useAppFilter();
 
-  // ปิดพอร์ตขณะเปิดแท็บพอร์ตค้างอยู่ (หรือแท็บภาษีที่ถูกตัดออกค้างใน storage) → กลับไปหน้าภาพรวม
+  // แท็บที่ไม่มีแล้วค้างใน storage (ภาษี, Kakeibo แยก — ตอนนี้ Kakeibo คือหน้าภาพรวมโหมด Lite) หรือปิดพอร์ตขณะเปิดอยู่ → กลับไปหน้าภาพรวม
   useEffect(() => {
-    if (activeTab === 'tax' || (!portfolioEnabled && activeTab === 'portfolio')) setActiveTab('insights');
-    // โหมด Lite: แท็บภาพรวมคือ Kakeibo แล้ว แท็บ Kakeibo แยกไม่มี
-    if (lite && activeTab === 'kakeibo') setActiveTab('insights');
-  }, [portfolioEnabled, lite, activeTab, setActiveTab]);
+    if (activeTab === 'tax' || activeTab === 'kakeibo' || (!portfolioEnabled && activeTab === 'portfolio')) setActiveTab('insights');
+  }, [portfolioEnabled, activeTab, setActiveTab]);
 
   useEffect(() => {
     if (!overviewModeReady) return; // wait for the saved mode: Lite must not pull the Dashboard chunk
     const prefetch = () => Object.entries(loaders).forEach(([name, load]) => {
-      if ((lite && name === 'dashboard') || (!portfolioEnabled && name === 'portfolio')) return; // tabs that are off
+      if (name === (lite ? 'dashboard' : 'kakeibo') || (!portfolioEnabled && name === 'portfolio')) return; // views that are off
       void load().catch(() => {});
     });
     if (typeof requestIdleCallback === 'function') {
@@ -143,7 +141,6 @@ export default function MainLayout() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           portfolioEnabled={portfolioEnabled}
-          liteOverview={lite}
           filterPeriod={filterPeriod}
           setFilterPeriod={setFilterPeriod}
           groupedOptions={groupedOptions}
@@ -248,12 +245,6 @@ export default function MainLayout() {
                   isLoading={isProcessing}
                   transactions={transactions}
                 />
-              </div>
-            )}
-
-            {activeTab === 'kakeibo' && !lite && (
-              <div key="kakeibo">
-                <KakeiboView isLoading={isProcessing} />
               </div>
             )}
 
