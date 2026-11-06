@@ -243,6 +243,11 @@ export interface AppDataContextValue {
   handleAddCashflowGroup: () => Promise<void>;
   handleDeleteCashflowGroup: (id: string) => Promise<void>;
   handleMoveCashflowGroup: (id: string, direction: 'UP' | 'DOWN') => Promise<void>;
+  /** 0–100: how far a group's category shades spread (0 = every category is the group colour) */
+  categoryShadeStrength: number;
+  /** live value while the Settings slider is dragged (not saved) */
+  previewCategoryShade: (n: number) => void;
+  saveCategoryShade: (n: number) => Promise<boolean>;
 }
 
 export interface AppFilterContextValue {

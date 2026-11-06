@@ -4,6 +4,8 @@ import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
 import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';
 import { latestOnly } from '../utils/latestOnly';
+import { parseShadeStrength, withGroupColors } from '../utils/categoryColors';
+import useJsonSetting from '../hooks/useJsonSetting';
 import { CYCLE_PREFIX, isCyclePeriod, isSingleUnitPeriod, shiftMonth, stripCycle } from '../utils/payCycle';
 import { resolveDefaultDayTypeId } from '../views/Calendar/utils/calendarPeriodHelpers';
 import useCategories from '../hooks/useCategories';
@@ -349,9 +351,29 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
 
   const isProcessing = isTxProcessing || isCsvProcessing || isFetchingPeriod || isBootstrapping;
 
+  // How far a group's category shades spread (Settings slider). While the slider is dragged the draft drives the
+  // colours live; letting go saves it.
+  const [savedShade, updateShade] = useJsonSetting('category_shade_strength', parseShadeStrength);
+  const [draftShade, setDraftShade] = useState<number | null>(null);
+  const categoryShadeStrength = draftShade ?? savedShade;
+  const previewCategoryShade = useCallback((n: number) => setDraftShade(parseShadeStrength(n)), []);
+  const saveCategoryShade = useCallback(async (n: number) => {
+    const next = parseShadeStrength(n);
+    const ok = await updateShade(() => next);
+    setDraftShade(null);
+    if (!ok) triggerToast('บันทึกความต่างของสีไม่สำเร็จ', 'error');
+    return ok;
+  }, [updateShade, triggerToast]);
+
+  // Views see each category in its group's shade; the hooks above keep (and save) the stored colour untouched.
+  const displayCategories = useMemo(
+    () => withGroupColors(categories, cashflowGroups, categoryShadeStrength),
+    [categories, cashflowGroups, categoryShadeStrength],
+  );
+
   const value: AppDataContextValue = {
     transactions,
-    categories,
+    categories: displayCategories,
     setCategories,
     cashflowGroups,
     setCashflowGroups,
@@ -396,6 +418,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
     handleAddCashflowGroup,
     handleDeleteCashflowGroup,
     handleMoveCashflowGroup,
+    categoryShadeStrength,
+    previewCategoryShade,
+    saveCategoryShade,
   };
 
   return (

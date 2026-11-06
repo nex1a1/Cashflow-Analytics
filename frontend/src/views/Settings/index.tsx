@@ -11,6 +11,8 @@ import BudgetsCard from './components/BudgetsCard';
 import TabToggleRow from './components/TabToggleRow';
 import DayTypesCard from './components/DayTypesCard';
 import DangerZone from './components/DangerZone';
+import CategoryShadeRow from './components/CategoryShadeRow';
+import { DEFAULT_SHADE_STRENGTH } from '@/utils/categoryColors';
 import { countTxByGroup } from './settingsHelpers';
 
 const EXPENSE_ICON = <Wallet className="w-4 h-4" />;
@@ -42,6 +44,10 @@ export interface SettingsViewProps {
   /** หน้าภาพรวมแบบ Lite (Kakeibo เป็นหน้าแรก, ไม่มี Dashboard) */
   liteOverview?: boolean;
   onLiteOverviewChange?: (on: boolean) => void;
+  /** 0–100 spread of category shades inside a group */
+  shadeStrength?: number;
+  onShadePreview?: (n: number) => void;
+  onShadeSave?: (n: number) => unknown;
 }
 
 const SettingsView = memo(function SettingsView({
@@ -53,7 +59,8 @@ const SettingsView = memo(function SettingsView({
   handleAddDayType, handleDeleteDayType, handleMoveDayType,
   triggerToast,
   portfolioEnabled = true, onPortfolioEnabledChange,
-  liteOverview = false, onLiteOverviewChange
+  liteOverview = false, onLiteOverviewChange,
+  shadeStrength = DEFAULT_SHADE_STRENGTH, onShadePreview, onShadeSave,
 }: SettingsViewProps) {
   const [newCatId, setNewCatId] = useState<string | null>(null);
   
@@ -159,7 +166,7 @@ const SettingsView = memo(function SettingsView({
         </h1>
         <div className="flex items-center gap-2 px-3 py-1.5 border text-[11px] font-semibold rounded-pill bg-surface border-line text-ink-soft">
           <Info className="w-4 h-4 shrink-0 text-accent-ink" />
-          <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน</span>
+          <span><b>NEED/WANT/SAVE</b> = รูปแบบการจัดสรรเงิน · สีหมวดหมู่ไล่เฉดจากสีกลุ่ม</span>
         </div>
       </div>
 
@@ -252,6 +259,11 @@ const SettingsView = memo(function SettingsView({
             txCountByGroup={txCountByGroup}
             categories={categories}
           />
+
+          {onShadePreview && onShadeSave && (
+            <CategoryShadeRow value={shadeStrength} onPreview={onShadePreview} onSave={onShadeSave}
+              categories={categories} cashflowGroups={cashflowGroups} />
+          )}
 
           <BudgetsCard cashflowGroups={cashflowGroups} />
 

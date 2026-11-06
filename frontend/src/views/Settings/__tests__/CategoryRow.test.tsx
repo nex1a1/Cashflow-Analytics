@@ -136,12 +136,9 @@ describe('CategoryRow editing', () => {
     expect(document.activeElement).toBe(name());
   });
 
-  it('colour picks go through onChange', () => {
+  it('has no colour picker: the colour follows the group', () => {
     mount();
-    click(btn('เลือกสี'));
-    const swatch = document.querySelector<HTMLButtonElement>('button[aria-label="สี #F90606"]')!;
-    click(swatch);
-    expect(props.onChange).toHaveBeenCalledWith('c1', 'color', '#F90606');
+    expect(document.querySelector('button[aria-label="เลือกสี"]')).toBeNull();
   });
 
   it('icon picks go through onChange', () => {
@@ -152,13 +149,6 @@ describe('CategoryRow editing', () => {
     expect(props.onChange).toHaveBeenCalledWith('c1', 'icon', first.key);
   });
 
-  it('the colour picker is given the category colour (or the neutral default)', () => {
-    mount();
-    expect(btn('เลือกสี').style.backgroundColor).toBe('rgb(68, 85, 102)');
-    act(() => root!.unmount()); container!.remove();
-    mount({ cat: cat('c1', { color: null }) });
-    expect(btn('เลือกสี').style.backgroundColor).toBe('rgb(100, 116, 139)');
-  });
 });
 
 describe('CategoryRow group', () => {

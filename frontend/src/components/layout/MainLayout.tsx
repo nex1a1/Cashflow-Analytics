@@ -76,7 +76,8 @@ export default function MainLayout() {
     handleDayTypeChange, dayNotes, handleDayNoteChange, handleDayTypeConfigChange, handleAddDayType,
     handleDeleteDayType, handleMoveDayType,
     handleUpdateCashflowGroup, handleAddCashflowGroup,
-    handleDeleteCashflowGroup, handleMoveCashflowGroup
+    handleDeleteCashflowGroup, handleMoveCashflowGroup,
+    categoryShadeStrength, previewCategoryShade, saveCategoryShade,
   } = useAppData();
 
   const {
@@ -280,6 +281,9 @@ export default function MainLayout() {
                   onPortfolioEnabledChange={(on) => { void updatePortfolioEnabled(() => on); }}
                   liteOverview={lite}
                   onLiteOverviewChange={(on) => { void updateOverviewMode(() => (on ? 'lite' : 'full')); }}
+                  shadeStrength={categoryShadeStrength}
+                  onShadePreview={previewCategoryShade}
+                  onShadeSave={saveCategoryShade}
                 />
               </div>
             )}

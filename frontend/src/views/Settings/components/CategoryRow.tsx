@@ -2,7 +2,6 @@ import { memo, useMemo } from 'react';
 import Dropdown from '@/components/shared/Dropdown';
 import { ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
 import ConfirmDeleteButton from '@/components/shared/ConfirmDeleteButton';
-import ColorPicker from './ColorPicker';
 import DebouncedInput from './DebouncedInput';
 import IconPicker from '@/components/shared/IconPicker';
 import { Category, CashflowGroup } from '../../../types';
@@ -108,8 +107,7 @@ const CategoryRow = memo(({
         )}
       </div>
 
-      <ColorPicker color={cat.color || '#64748B'} onChange={c => onChange(cat.id, 'color', c)} />
-
+      {/* no colour picker: a category's colour is a shade of its group's (utils/categoryColors.ts) */}
       <ConfirmDeleteButton onConfirm={() => onDelete(cat.id)} tooltip="ลบหมวดหมู่" itemLabel={cat.name} />
     </div>
   );
