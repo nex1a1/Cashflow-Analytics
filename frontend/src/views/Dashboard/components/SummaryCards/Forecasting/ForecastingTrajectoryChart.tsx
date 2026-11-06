@@ -107,7 +107,7 @@ export const ForecastingTrajectoryChart = memo(({
       <div className="flex items-center gap-4 px-3 py-1.5 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">เส้นทางยอดใช้จ่าย</span>
+          <span className="text-[11px] font-black uppercase text-neutral-200">เส้นทางยอดใช้จ่าย</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] bg-expense inline-block" />

@@ -36,7 +36,7 @@ export const StrategicVictoryCard = memo(({
       <div className="relative z-10 flex flex-col justify-center gap-1.5 p-4 md:min-w-[280px] md:border-r border-line">
         <div className="flex items-center gap-2">
           <Award size={15} className={isPositive ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
-          <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-400">
+          <span className="text-[11px] font-black uppercase text-neutral-400">
             เงินเหลือเฉลี่ยต่อวัน
           </span>
         </div>
@@ -62,25 +62,25 @@ export const StrategicVictoryCard = memo(({
       {!showSkeleton && (
         <div className="relative z-10 flex-1 grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800/50">
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5 leading-none">
               <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน
             </span>
             <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailyIncome)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Lock size={13} className="shrink-0 text-neutral-400" /> จำเป็น/วัน
             </span>
             <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyFixed)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Target size={13} className="shrink-0 text-neutral-400" /> ตามใจ/วัน
             </span>
             <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyVariable)}</span>
           </div>
           <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5 leading-none">
               <PiggyBank size={13} className="shrink-0 text-emerald-400" /> ออม/วัน
             </span>
             <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailySavings)}</span>

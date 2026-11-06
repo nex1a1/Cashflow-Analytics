@@ -96,7 +96,7 @@ export const AllocationEvolutionChart = memo(({ months, currentKey }: Allocation
       <div className="flex items-center gap-4 px-3 py-2 bg-surface border-b border-line text-[11px] font-mono select-none flex-wrap">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-          <span className="text-[11px] font-black uppercase tracking-wider text-neutral-200">แนวโน้ม 50/30/20</span>
+          <span className="text-[11px] font-black uppercase text-neutral-200">แนวโน้ม 50/30/20</span>
         </div>
         {LEGEND.map(([color, label]) => (
           <div key={label} className="flex items-center gap-1.5">

@@ -28,7 +28,7 @@ export const MainChartToolbar = memo(({
   if (chartViewType === 'multiples') {
     return (
       <div className="flex items-center gap-2.5 relative z-10 flex-wrap w-full text-[11px] select-none">
-        <span className="uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 text-slate-500">
+        <span className="uppercase font-black flex items-center gap-1.5 shrink-0 text-slate-500">
           <Activity className="w-3 h-3 text-accent-ink" /> CATEGORY TRENDS
         </span>
         <span className="w-px h-4 shrink-0 bg-surface-elevated" />
@@ -46,7 +46,7 @@ export const MainChartToolbar = memo(({
     return (
       <div className="flex items-center justify-between gap-3 relative z-10 flex-wrap w-full">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-[11px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
+          <span className="text-[11px] uppercase font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
             <Activity className="w-3 h-3 text-ink-muted" /> แผนภาพกระแสเงิน
           </span>
 
@@ -67,7 +67,7 @@ export const MainChartToolbar = memo(({
   return (
     <div className="flex items-center justify-between gap-3 relative z-10 flex-wrap w-full">
       <div className="flex items-center gap-2.5 flex-wrap">
-        <span className="text-[11px] uppercase tracking-widest font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
+        <span className="text-[11px] uppercase font-black flex items-center gap-1.5 shrink-0 select-none text-slate-500">
           <Activity className="w-3 h-3 text-ink-muted" /> มุมมอง
         </span>
 

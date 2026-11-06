@@ -83,7 +83,7 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
                 aria-describedby={reasonId}
                 tabIndex={tab.id === tabStopId ? 0 : -1}
                 onClick={() => !isDisabled && onChange(tab.id)}
-                className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 -mb-px transition-none focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+                className={`px-3 py-1.5 text-[11px] font-black uppercase border-b-2 -mb-px transition-none focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
                   isDisabled
                     ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
                     : isActive
@@ -199,7 +199,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
           {/* Row 1: Fixed Burdens & Wants (3 cards) */}
           <div className="px-3 py-1 bg-surface border-b border-line flex items-center gap-1.5 shrink-0">
             <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
-            <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
+            <span className="text-[11px] font-black uppercase text-neutral-500">
               ภาระคงที่ • พฤติกรรมใช้จ่าย
             </span>
           </div>
@@ -230,7 +230,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
           {/* Row 2: Daily Velocity (2 cards) */}
           <div className="px-3 py-1 bg-surface border-y border-line flex items-center gap-1.5 shrink-0">
             <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
-            <span className="text-[11px] font-black uppercase tracking-[0.16em] text-neutral-500">
+            <span className="text-[11px] font-black uppercase text-neutral-500">
               จังหวะรายวัน
             </span>
           </div>

@@ -30,12 +30,26 @@ interface CategoryGridProps {
  * lights its row below and the reverse. Rows carry the numbers, so the strip is
  * hidden from screen readers.
  */
+/**
+ * Strip order: whole groups side by side (biggest group first), biggest category first inside each, so the
+ * group-shaded colours read as blocks. Each entry keeps its row index for the shared hover.
+ */
+export function stripOrder(items: CategoryItemData[]): Array<{ cat: CategoryItemData; idx: number }> {
+  const groupTotal = new Map<string, number>();
+  const keyOf = (c: CategoryItemData) => c.cashflow_group_id || `cat:${c.id || c.name}`;
+  for (const c of items) groupTotal.set(keyOf(c), (groupTotal.get(keyOf(c)) ?? 0) + c.amount);
+  const groupRank = new Map([...groupTotal.entries()].sort((a, b) => b[1] - a[1]).map(([k], i) => [k, i]));
+  return items
+    .map((cat, idx) => ({ cat, idx }))
+    .sort((a, b) => groupRank.get(keyOf(a.cat))! - groupRank.get(keyOf(b.cat))! || b.cat.amount - a.cat.amount);
+}
+
 const ProportionStrip = React.memo<CategoryGridProps>(({ items, hoveredIdx, onHover, isActive }) => {
   const total = items.reduce((sum, c) => sum + c.amount, 0);
   if (total <= 0) return null;
   return (
     <div className="flex h-3 gap-px bg-canvas" aria-hidden="true" onMouseLeave={() => onHover(-1)}>
-      {items.map((cat, idx) => {
+      {stripOrder(items).map(({ cat, idx }) => {
         const plan = planOf(cat);
         const dim = isActive && hoveredIdx !== -1 && hoveredIdx !== idx;
         return (

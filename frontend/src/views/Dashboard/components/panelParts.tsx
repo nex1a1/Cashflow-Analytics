@@ -14,7 +14,7 @@ export const PanelTitle = ({ icon: Icon, title, iconClassName = '', titleClassNa
   <>
     <div className="w-[3px] h-3 bg-accent shrink-0" />
     {Icon && <Icon className={`w-3.5 h-3.5 text-neutral-400 ${iconClassName}`} />}
-    <h2 key={titleKey} className={`text-[11px] font-black uppercase tracking-[0.2em] text-neutral-200 ${titleClassName}`}>{title}</h2>
+    <h2 key={titleKey} className={`text-[11px] font-black uppercase text-neutral-200 ${titleClassName}`}>{title}</h2>
   </>
 );
 

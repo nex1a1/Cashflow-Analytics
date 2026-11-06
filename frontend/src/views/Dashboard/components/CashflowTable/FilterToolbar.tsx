@@ -54,7 +54,7 @@ export function FilterToolbar({
       {/* Expandable Filter Bar */}
       {isFilterBarOpen && (
         <div className="flex flex-wrap items-center justify-end gap-2 pt-1.5 border-t border-line/80 text-[11px]">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mr-auto">
+          <span className="text-[11px] font-bold uppercase text-neutral-400 mr-auto">
             ซ่อนรายการตามการจัดสรร:
           </span>
 

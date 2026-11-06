@@ -47,7 +47,7 @@ const getRankStyle = (rank: number) => {
   // Gold / silver / bronze from theme roles, so the medal reads the same in light and dark.
   if (rank === 0) return 'bg-gold text-on-gold border-gold';
   if (rank === 1) return 'bg-line-strong text-ink-display border-line-strong';
-  if (rank === 2) return 'bg-expense text-canvas border-expense'; // copper = bronze
+  if (rank === 2) return 'bg-orange-700 text-ink-display border-orange-700'; // bronze (not the expense red)
   return 'bg-surface-elevated text-ink-muted border-line';
 };
 
@@ -277,7 +277,7 @@ export default function TopTransactions() {
         {/* Real-time sum & Pareto indicator pill */}
         {!showSkeleton && displayTransactions.length > 0 && (
           <div 
-            className="px-2 py-0.5 rounded-pill border text-[11px] font-black tracking-wider flex items-center gap-1.5 min-w-0 max-w-full bg-surface-elevated border-line text-neutral-300"
+            className="px-2 py-0.5 rounded-pill border text-[11px] font-black flex items-center gap-1.5 min-w-0 max-w-full bg-surface-elevated border-line text-neutral-300"
             title={`คิดเป็น ${topPctOfTotal}% ของรายจ่ายทั้งหมดตามเงื่อนไข (${formatBaht(allFilteredExpenseSum)})`}
           >
             <span className="text-neutral-400 whitespace-nowrap">รวม {displayTransactions.length} รายการ</span>

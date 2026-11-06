@@ -35,7 +35,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
               >
                 <CategoryGlyph icon={category.icon} color={catColor} size={15} fallbackEmoji="📁" />
               </div>
-              <span className="font-black text-[12px] text-white tracking-wide truncate">
+              <span className="font-black text-[12px] text-white truncate">
                 {category.name}
               </span>
             </div>
@@ -112,7 +112,7 @@ export const GroupTooltip = ({ hoveredGroup }: { hoveredGroup: HoveredGroupState
               >
                 <CategoryGlyph icon={group.icon} color={groupColor} size={15} fallbackEmoji={isIncome ? '💰' : '📦'} />
               </div>
-              <span className="font-black text-[12px] text-white tracking-wide truncate">
+              <span className="font-black text-[12px] text-white truncate">
                 {group.name}
               </span>
             </div>

@@ -198,7 +198,7 @@ const TimelineTooltip: React.FC<TimelineTooltipProps> = ({
     >
       <div className="flex flex-col items-center">
         <div className="flex flex-col items-center text-center rounded-none py-2 px-3 text-[11px] font-bold shadow-2xl border min-w-[120px] bg-surface border-line-strong text-white">
-          <div className="text-slate-400 font-medium text-[11px] mb-1 uppercase tracking-wider">{dateDisplay}</div>
+          <div className="text-slate-400 font-medium text-[11px] mb-1 uppercase">{dateDisplay}</div>
           {viewMode === 'dayType' ? (
             <div className="flex items-center justify-center gap-1.5" style={{ color: readable(dayType?.color || tc('gray-300')) }}>
               <div className="w-2 h-2 rounded-none shrink-0" style={{ backgroundColor: dayType?.color || tc('gray-300') }} />
@@ -287,6 +287,13 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
 });
 
 TimelineDayCell.displayName = 'TimelineDayCell';
+
+/** GitHub layout cell + weekday-rail row sizes (the rail rows must match the cells) */
+const GITHUB_SIZES = {
+  lg: { cell: "w-7 h-7", row: "h-7" },
+  md: { cell: "w-5 h-5", row: "h-5" },
+  sm: { cell: "w-4 h-4", row: "h-4" },
+} as const;
 
 // ─── SUB-COMPONENT: TimelineLayoutToggle ───────────────────────
 interface TimelineLayoutToggleProps {
@@ -523,7 +530,7 @@ export default function ActivityTimeline() {
             {calendarMonths.map(month => (
               <div key={month.key} className="border border-line bg-canvas px-2 pt-2 pb-2.5 flex flex-col items-center w-[162px] shrink-0 select-none shadow-xs">
                 {/* Month Title */}
-                <div className="text-[11.5px] font-black text-slate-200 tracking-wider uppercase mb-1.5 border-b border-line pb-1 w-full text-center flex items-center justify-center gap-1.5">
+                <div className="text-[11.5px] font-black text-slate-200 uppercase mb-1.5 border-b border-line pb-1 w-full text-center flex items-center justify-center gap-1.5">
                   <div className="w-[3.5px] h-[3.5px] bg-accent rounded-none shrink-0" />
                   <span>{THAI_MONTHS_SHORT[month.monthIdx]} {month.year.toString().slice(-2)}</span>
                 </div>
@@ -576,6 +583,9 @@ export default function ActivityTimeline() {
       );
     }
 
+    // fewer weeks → bigger cells, so a single month fills the panel instead of sitting small in a corner
+    const size = weeks.length <= 6 ? GITHUB_SIZES.lg : weeks.length <= 14 ? GITHUB_SIZES.md : GITHUB_SIZES.sm;
+
     return (
       <div className="w-full flex justify-[safe_center] overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex w-max gap-x-px pr-3">
@@ -585,9 +595,10 @@ export default function ActivityTimeline() {
           >
             <div className="h-4" />
             {THAI_DAYS.map((day, i) => (
-              <div 
-                key={day} 
-                className={`h-4 flex items-center justify-end text-[11px] font-black ${
+              <div
+                key={day}
+                data-day-label
+                className={`${size.row} flex items-center justify-end text-[11px] font-black ${
                   i === 0 || i === 6 ? 'text-weekend' : 'text-slate-500'
                 }`}
               >
@@ -616,7 +627,7 @@ export default function ActivityTimeline() {
                 {/* Days in Week */}
                 {week.days.map((dateStr, dayIndex) => {
                   if (!dateStr) {
-                    return <div key={`empty-${weekKey}-${dayIndex}`} className="w-4 h-4 bg-transparent" />;
+                    return <div key={`empty-${weekKey}-${dayIndex}`} data-empty-cell className={`${size.cell} bg-transparent`} />;
                   }
                   
                   const isToday = dateStr === todayStr;
@@ -633,7 +644,7 @@ export default function ActivityTimeline() {
                       globalMaxThreshold={globalMaxThreshold}
                       onHover={handleMouseEnter}
                       onLeave={handleMouseLeave}
-                      className="w-4 h-4"
+                      className={size.cell}
                     />
                   );
                 })}
@@ -651,7 +662,7 @@ export default function ActivityTimeline() {
     }
     return (
       <>
-        <span className="text-[11px] font-black uppercase tracking-[0.15em] text-neutral-500">
+        <span className="text-[11px] font-black uppercase text-neutral-500">
           {mode === 'dayType' ? 'สรุปประเภทวัน' : 'ระดับความเข้ม'}
         </span>
         {mode === 'dayType' ? (

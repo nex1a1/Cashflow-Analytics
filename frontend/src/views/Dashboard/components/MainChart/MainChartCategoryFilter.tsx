@@ -161,7 +161,7 @@ export const MainChartCategorySelector = memo(({
         {!isAllActive && (
           <button
             onClick={() => setDashboardCategory(['ALL'])}
-            className="text-[11px] font-bold uppercase tracking-wide text-accent-ink hover:text-white"
+            className="text-[11px] font-bold uppercase text-accent-ink hover:text-white"
           >
             ล้างตัวกรอง
           </button>
@@ -221,7 +221,7 @@ export const MainChartFilterMenu = memo(({
           <div className="px-3.5 py-2.5 border-b flex items-center justify-between border-line text-slate-200">
             <div className="flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-accent-ink" />
-              <span className="text-[11px] font-extrabold uppercase tracking-wider">ตัวเลือกกราฟ</span>
+              <span className="text-[11px] font-extrabold uppercase">ตัวเลือกกราฟ</span>
             </div>
             <button
               onClick={() => setShowCatMenu(false)}
@@ -235,7 +235,7 @@ export const MainChartFilterMenu = memo(({
           <div className="p-3.5 flex flex-col gap-3">
             {/* Y-axis scale */}
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">แกน Y แบบลอการิทึม</span>
+              <span className="text-[11px] font-black uppercase text-slate-500">แกน Y แบบลอการิทึม</span>
               <button
                 disabled={showSkeleton}
                 onClick={() => setIsLogScale(prev => !prev)}
@@ -251,7 +251,7 @@ export const MainChartFilterMenu = memo(({
 
             {/* Allocation filter */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">แสดงเฉพาะ</span>
+              <span className="text-[11px] font-black uppercase text-slate-500">แสดงเฉพาะ</span>
               <ToolbarAllocationSelector
                 showSkeleton={showSkeleton}
                 hideFixedExpenses={hideFixedExpenses}
@@ -262,7 +262,7 @@ export const MainChartFilterMenu = memo(({
             </div>
 
             <div className="border-t border-line/60 pt-3 flex flex-col gap-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">เลือกหมวดหมู่ย่อย</span>
+              <span className="text-[11px] font-black uppercase text-slate-500">เลือกหมวดหมู่ย่อย</span>
               <MainChartCategorySelector
                 dashboardCategory={dashboardCategory}
                 setDashboardCategory={setDashboardCategory}

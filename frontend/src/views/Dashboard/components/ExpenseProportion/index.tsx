@@ -24,7 +24,7 @@ function ExpenseProportionEmpty() {
   return (
     <div className="flex flex-col w-full h-full items-center justify-center text-center text-ink-body p-10">
       <Inbox className="w-10 h-10 mb-2 opacity-20" />
-      <p className="text-sm font-bold uppercase tracking-widest">ไม่มีข้อมูลรายจ่าย</p>
+      <p className="text-sm font-bold uppercase">ไม่มีข้อมูลรายจ่าย</p>
       <p className="text-[11px] font-medium normal-case tracking-normal mt-1">
         ลองเปลี่ยนเดือน หรือเพิ่มรายการรายจ่ายใหม่
       </p>
@@ -36,7 +36,7 @@ function AllocationEvolutionEmpty() {
   return (
     <div className="flex flex-col w-full h-full items-center justify-center text-center text-ink-body p-10">
       <TrendingUp className="w-10 h-10 mb-2 opacity-20" />
-      <p className="text-sm font-bold uppercase tracking-widest">ยังไม่มีข้อมูลย้อนหลังพอ</p>
+      <p className="text-sm font-bold uppercase">ยังไม่มีข้อมูลย้อนหลังพอ</p>
       <p className="text-[11px] font-medium normal-case tracking-normal mt-1">
         บันทึกรายการต่อเนื่องอย่างน้อย 2 เดือนเพื่อดูแนวโน้ม 50/30/20
       </p>

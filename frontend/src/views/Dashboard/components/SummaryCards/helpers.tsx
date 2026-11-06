@@ -95,7 +95,7 @@ export function renderTopItemsOverlay(
 
   const cell = (wide: boolean, key: React.Key, icon: React.ReactNode, label: string, amount: number, pctLabel?: string) => (
     <div key={key} className={`bg-canvas p-2 flex text-left min-w-0 ${wide ? 'col-span-2 items-center justify-between' : 'flex-col justify-center'}`}>
-      <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide truncate flex items-center gap-1.5 leading-none">
+      <span className="text-[11px] font-bold text-neutral-400 uppercase truncate flex items-center gap-1.5 leading-none">
         {icon} {label}
       </span>
       <div className={`flex items-baseline gap-1 leading-tight ${wide ? '' : 'mt-1'}`}>

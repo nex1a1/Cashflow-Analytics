@@ -157,7 +157,7 @@ export default function AppHeader({
           {/* Primary Action Button (Quick Add) - Upgraded to elegant tactical badge */}
           <button
             onClick={onClickAddQuick}
-            className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 rounded-none border border-accent/50 bg-accent/10 hover:bg-accent hover:border-accent-ink hover:text-on-accent text-accent-ink transition-all shrink-0 cursor-pointer"
+            className="text-xs font-black uppercase flex items-center gap-2 px-4 py-2.5 rounded-none border border-accent/50 bg-accent/10 hover:bg-accent hover:border-accent-ink hover:text-on-accent text-accent-ink transition-all shrink-0 cursor-pointer"
           >
             <CalendarPlus className="w-4 h-4" />
             <span>เพิ่มข้อมูลด่วน</span>
@@ -174,7 +174,7 @@ export default function AppHeader({
               <React.Fragment key={id}>
                 <button
                   onClick={() => setActiveTab(id)}
-                  className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold tracking-wider uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
+                  className={`relative px-5 py-3.5 flex justify-center items-center gap-2.5 transition-all duration-150 text-xs font-bold uppercase whitespace-nowrap group rounded-none border-r border-t-2 ${
                     isActive
                       ? 'bg-canvas text-white border-t-accent-ink border-r-line font-black'
                       : 'text-ink-body hover:text-ink-display hover:bg-surface-hover border-t-transparent border-r-line/50'

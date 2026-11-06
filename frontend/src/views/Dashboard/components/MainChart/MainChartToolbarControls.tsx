@@ -34,7 +34,7 @@ export const ToolbarViewModes = memo(({
       disabled={showSkeleton}
       onClick={() => setIsBreakdown(prev => !prev)}
       title="แจกแจงแยกตามหมวดหมู่ค่าใช้จ่าย"
-      className={`group px-3 py-1.5 rounded-none text-[11px] font-bold tracking-wide select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`group px-3 py-1.5 rounded-none text-[11px] font-bold select-none flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
         isBreakdown
           ? 'm-pick bg-accent/25 text-accent-ink shadow-xs'
           : 'bg-canvas text-slate-400 hover:text-slate-200 hover:bg-surface-elevated/50'

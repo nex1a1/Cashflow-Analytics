@@ -54,7 +54,7 @@ const rail = () => q<HTMLElement>('div[class*="lg:w-[220px]"]')!;
 const clone = () => rail().querySelector<HTMLElement>(':scope > [aria-hidden="true"]');
 const liveLegend = () => [...rail().children].filter(c => c.getAttribute('aria-hidden') !== 'true').map(c => c.textContent).join(' ');
 const tip = () => document.body.querySelector<HTMLElement>('.fixed.pointer-events-none');
-const emptyCells = (cls: string) => document.querySelectorAll(`div.${cls}.bg-transparent`).length;
+const emptyCells = () => document.querySelectorAll("[data-empty-cell]").length;
 
 const hover = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: null })); });
 const leave = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: null })); });
@@ -163,7 +163,7 @@ describe('ActivityTimeline — GitHub layout', () => {
   it('lays out Sun–Sat rows by week, padding the partial first week', () => {
     mount();
     // Jan 1 is a Thursday → Sun–Wed of week 1 are empty; week 2 is full.
-    expect(emptyCells('w-4.h-4')).toBe(4);
+    expect(emptyCells()).toBe(4);
     const weeks = [...document.querySelectorAll('div.flex.flex-col.gap-px.shrink-0')].filter(w => w.querySelector('button'));
     expect(weeks.map(w => w.querySelectorAll('button').length)).toEqual([3, 7]);
   });
@@ -172,7 +172,7 @@ describe('ActivityTimeline — GitHub layout', () => {
     set({ datesInPeriod: CROSS, dayTypeCounts: { 'dt-work': 3, 'dt-hol': 2 } });
     mount();
     expect(cells()).toHaveLength(5);
-    expect(emptyCells('w-4.h-4')).toBe(5 + 4); // Fri+Sat week (5 empty) and Sun–Tue week (4 empty)
+    expect(emptyCells()).toBe(5 + 4); // Fri+Sat week (5 empty) and Sun–Tue week (4 empty)
     const monthLabels = [...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent);
     expect(monthLabels).toEqual(['ก.พ. 26']);
   });
@@ -195,9 +195,21 @@ describe('ActivityTimeline — GitHub layout', () => {
     expect([...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent)).toEqual(['ม.ค. 26']);
   });
 
+  it('cells grow when there are few weeks, and the weekday rail keeps their height', () => {
+    const sizeOf = () => [cells()[0].className.match(/\bw-(\d+)\b/)?.[1], document.querySelector('[data-day-label]')!.className.match(/\bh-(\d+)\b/)?.[1]];
+    mount(); // 2 weeks
+    expect(sizeOf()).toEqual(['7', '7']);
+    set({ datesInPeriod: range('2026-01-01', '2026-03-31'), dayTypeCounts: { 'dt-work': 60, 'dt-hol': 30 } }); // 14 weeks
+    remount();
+    expect(sizeOf()).toEqual(['5', '5']);
+    set({ datesInPeriod: range('2026-01-01', '2026-12-31'), dayTypeCounts: { 'dt-work': 250, 'dt-hol': 115 } });
+    remount();
+    expect(sizeOf()).toEqual(['4', '4']);
+  });
+
   it('weekday rail: seven labels, weekends marked', () => {
     mount();
-    const rows = [...document.querySelectorAll<HTMLElement>('div.h-4.flex.items-center.justify-end')];
+    const rows = [...document.querySelectorAll<HTMLElement>("[data-day-label]")];
     expect(rows.map(r => r.textContent)).toEqual(['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']);
     expect(rows.map(r => r.className.includes('text-weekend'))).toEqual([true, false, false, false, false, false, true]);
   });

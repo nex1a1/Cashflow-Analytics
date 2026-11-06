@@ -22,7 +22,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-canvas h-full border-t border-line">
         <History className="w-10 h-10 text-neutral-600 mb-3" />
-        <p className="text-sm font-black uppercase tracking-wider text-neutral-300">
+        <p className="text-sm font-black uppercase text-neutral-300">
           การเทียบกับเดือนก่อนใช้ได้ในมุมมองรายเดือน
         </p>
         <p className="text-xs text-neutral-500 mt-1 max-w-md">
@@ -73,7 +73,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5">
             <Gauge className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">จังหวะ:</span>
+            <span className="text-[11px] font-mono font-bold uppercase text-neutral-400">จังหวะ:</span>
             <span
               className={`text-[11px] font-mono font-black uppercase px-1.5 py-0.5 rounded-pill border ${paceStatus.bg} ${paceStatus.border}`}
               style={{ color: paceStatus.color }}
@@ -124,7 +124,7 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
         {/* POD 1: Head-to-Head with Ghost */}
         <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+            <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
               <History size={13} className={`${ghost.text} shrink-0`} />
               เทียบเดือนก่อน (วันที่ {currentDay})
             </span>
@@ -188,11 +188,11 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
         {/* POD 2: 3-Month Benchmark */}
         <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+            <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
               <Compass size={13} className="text-sky-400 shrink-0" />
               เกณฑ์เฉลี่ย 3 เดือน
             </span>
-            <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider font-bold">
+            <span className="text-[11px] font-mono text-sky-400 uppercase font-bold">
               เดือนก่อน
             </span>
           </div>
@@ -234,11 +234,11 @@ export const SummaryGhostPacer = memo(({ analytics, showSkeleton }: SummaryGhost
         {/* POD 3: Finish Line Forecast */}
         <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-line">
           <div className="flex items-center justify-between gap-1.5 leading-none mb-1">
-            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-neutral-400 truncate flex items-center gap-1.5">
+            <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
               <Flag size={13} className="text-emerald-400 shrink-0" />
               คาดการณ์ยอดสิ้นเดือน
             </span>
-            <span className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider font-bold">
+            <span className="text-[11px] font-mono text-neutral-400 uppercase font-bold">
               เป้าสิ้นเดือน
             </span>
           </div>

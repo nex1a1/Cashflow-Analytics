@@ -82,7 +82,7 @@ function SortSwitcher({ sortMode, onToggleSort }: SortSwitcherProps) {
             }`}
           >
             <Icon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-100 ${sortMode === flipped ? 'rotate-180' : ''}`} />
-            <span className="text-[11px] font-black uppercase tracking-wider">{label}</span>
+            <span className="text-[11px] font-black uppercase">{label}</span>
             {active && <span className="text-[11px] font-black">{sortMode.endsWith('asc') ? '↑' : '↓'}</span>}
           </button>
         );
@@ -102,7 +102,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
   return (
     <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 rounded-pill text-[11px]">
       <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-      <span className="font-black text-amber-300 uppercase tracking-wider">
+      <span className="font-black text-amber-300 uppercase">
         จำลองลด {excludedCount} หมวด (−{formatBaht(totalReduced)})
       </span>
       <button
@@ -120,7 +120,7 @@ function SimulationBadge({ excludedCount, totalReduced, onReset }: SimulationBad
 function NoIncomeWarning() {
   return (
     <span
-      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-pill text-[11px] font-black text-accent-ink uppercase tracking-wider"
+      className="ml-2 flex items-center gap-1 px-2 py-0.5 bg-accent/10 border border-accent/40 rounded-pill text-[11px] font-black text-accent-ink uppercase"
       title="เดือนนี้ไม่มีรายรับ สัดส่วนจึงคิดจากยอดรายจ่ายแทน"
     >
       <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -189,7 +189,7 @@ export function ExpenseProportionHeader({
           </span>
         )}
         {hasPlan && !showSkeleton && <PlanKey className="m-fade-in" />}
-        <span className="text-[11px] font-black px-1.5 rounded-pill bg-accent/10 text-accent-ink">
+        <span className="text-[11px] font-black px-1.5 rounded-pill bg-surface-elevated text-ink-soft">
           {countText}
         </span>
       </div>

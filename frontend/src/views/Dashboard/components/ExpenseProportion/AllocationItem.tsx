@@ -115,7 +115,7 @@ export const AllocationItem = React.memo<AllocationItemProps>(({
 
       <div className="flex flex-col gap-1.5 px-3 pt-3 pb-2.5">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="flex items-center gap-1.5 min-w-0 text-[14px] font-black tracking-wide truncate" style={{ color: ink }}>
+          <span className="flex items-center gap-1.5 min-w-0 text-[14px] font-black truncate" style={{ color: ink }}>
             <CategoryGlyph icon={item.icon} color={item.color} size={16} className="shrink-0" />
             <span className="truncate">{item.name}</span>
           </span>

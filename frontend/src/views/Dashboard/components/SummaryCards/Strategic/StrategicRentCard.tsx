@@ -43,25 +43,25 @@ export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, 
           ) : (
           <>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Building2 size={13} className="shrink-0 text-sky-400" /> ค่าเช่า
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.rent)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Zap size={13} className="shrink-0 text-amber-400" /> ค่าไฟ
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.electricity)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Globe size={13} className="shrink-0 text-indigo-400" /> ค่าเน็ต
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.internet)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Droplets size={13} className="shrink-0 text-cyan-400" /> ค่าน้ำ
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.water)}</span>

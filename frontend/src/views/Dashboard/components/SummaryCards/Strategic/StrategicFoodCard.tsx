@@ -61,13 +61,13 @@ export const StrategicFoodCard = memo(({
           ) : (
           <>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <UtensilsCrossed size={13} className="shrink-0 text-orange-400" /> รวมค่าอาหาร
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(foodTotal)}</span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนค่าอาหาร
             </span>
             <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">
@@ -75,7 +75,7 @@ export const StrategicFoodCard = memo(({
             </span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Briefcase size={13} className="shrink-0 text-neutral-400" /> วันทำงาน vs หยุด
             </span>
             <span className="text-[12px] font-black text-neutral-200 tabular-nums leading-tight mt-1">
@@ -83,7 +83,7 @@ export const StrategicFoodCard = memo(({
             </span>
           </div>
           <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wide flex items-center gap-1.5 leading-none">
+            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
               <Trophy size={13} className="shrink-0 text-amber-400" /> พีคสูงสุดใน 1 วัน
             </span>
             <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">{formatBaht(maxFoodDayAmount)}</span>
