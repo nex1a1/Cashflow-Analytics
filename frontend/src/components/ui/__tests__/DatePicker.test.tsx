@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { act } from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { click, byText } from '@/test-utils/dom';
 import DatePicker, { DatePickerProps } from '../DatePicker';
 
@@ -372,6 +372,8 @@ describe('single date', () => {
 });
 
 describe('several dates (allowAll)', () => {
+  // 'ALL' opens on today's month: pin it to October, where these days are
+  beforeEach(() => pin('2026-10-09T10:00:00'));
   const props = { allowAll: true, placeholder: 'วันที่' };
 
   it('opens with the value already selected', () => {
@@ -515,6 +517,7 @@ describe('several dates (allowAll)', () => {
 });
 
 describe('weekday / weekend modes', () => {
+  beforeEach(() => pin('2026-10-09T10:00:00')); // opens on today's month (see above)
   const props = { allowAll: true, placeholder: 'วันที่', availableDates: ['2026-10-09', '2026-10-10'] };
   const mode = (label: string) => [...popover()!.querySelectorAll<HTMLButtonElement>('div.mb-2\\.5 > button')].find(b => b.textContent === label)!;
 
