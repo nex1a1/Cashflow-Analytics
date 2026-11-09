@@ -19,6 +19,8 @@ interface GhostPacerChartProps {
   paceColor: string;
   currentPeriod: string;
   prevPeriod: string;
+  /** Off for a finished month: projectedExpense is its real total and there is no today or forecast line. */
+  isCurrentMonth?: boolean;
 }
 
 const VIEW_H = 202;
@@ -39,8 +41,9 @@ export const GhostPacerChart = memo(({
   currentDay, lastDayOfMonth,
   currentDailySeries, prevDailySeries, benchmarkDailySeries,
   projectedExpense, ghostTotalExpense,
-  paceColor, currentPeriod, prevPeriod,
+  paceColor, currentPeriod, prevPeriod, isCurrentMonth = true,
 }: GhostPacerChartProps) => {
+  const thisMonthLabel = isCurrentMonth ? 'เดือนนี้' : 'เดือนที่ดู';
   const [containerRef, { w: viewW }] = useSvgSize(800);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
@@ -95,7 +98,7 @@ export const GhostPacerChart = memo(({
     hover = {
       day, x, curY, curSpend, ghostSpend, isFuture,
       benchSpend: at(benchmarkDailySeries, day, 0),
-      isToday: day === today,
+      isToday: isCurrentMonth && day === today,
       color: PACE_TONE_STYLE[paceTone(deltaGhost, ghostSpend)].color,
       deltaLabel: deltaGhost === 0 ? '±฿0' : `${sign}${formatBahtShort(Math.abs(Math.round(deltaGhost)))}${pct}`,
       tip: tooltipAt(frame, x, curY, TIP_W, TIP_H),
@@ -112,7 +115,7 @@ export const GhostPacerChart = memo(({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] inline-block" style={{ backgroundColor: paceColor }} />
-          <span className="text-neutral-300 font-bold">{currentPeriod} (เดือนนี้)</span>
+          <span className="text-neutral-300 font-bold">{currentPeriod} ({thisMonthLabel})</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-[2px] bg-neutral-400 inline-block" />
@@ -178,7 +181,7 @@ export const GhostPacerChart = memo(({
           )}
 
           <path d={currentPath} fill="none" stroke={paceColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d={`M ${xToday} ${yToday} L ${xEOM} ${yEOM}`} fill="none" stroke={paceColor} strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />
+          {isCurrentMonth && <path d={`M ${xToday} ${yToday} L ${xEOM} ${yEOM}`} fill="none" stroke={paceColor} strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />}
 
           {/* Today */}
           <line x1={xToday} y1={PAD_T} x2={xToday} y2={baseY} stroke={tc('ink-muted')} strokeWidth="1" strokeDasharray="2 2" />
@@ -186,9 +189,9 @@ export const GhostPacerChart = memo(({
           <circle cx={xToday} cy={yToday} r="2.5" fill={paceColor} />
 
           {ghostFinal > 0 && <EdgeBadge x={xEOM} y={ghostEomY} w={BADGE_W} stroke={tc('ink-body')}>เดือนก่อนจบ {formatBahtShort(Math.round(ghostFinal))}</EdgeBadge>}
-          {projectedExpense > 0 && <EdgeBadge x={xEOM} y={curEomY} w={BADGE_W} stroke={paceColor}>คาดจบเดือนนี้ {formatBahtShort(Math.round(projectedExpense))}</EdgeBadge>}
+          {projectedExpense > 0 && <EdgeBadge x={xEOM} y={curEomY} w={BADGE_W} stroke={paceColor}>{isCurrentMonth ? 'คาดจบเดือนนี้' : 'จบจริง'} {formatBahtShort(Math.round(projectedExpense))}</EdgeBadge>}
 
-          <DayAxis f={frame} today={today} />
+          <DayAxis f={frame} today={today} live={isCurrentMonth} />
 
           {hover && (
             <g className="pointer-events-none select-none">
@@ -202,7 +205,7 @@ export const GhostPacerChart = memo(({
                 <TooltipDay y={16} day={hover.day} isToday={hover.isToday} isFuture={hover.isFuture} />
                 <MonoText x={TIP_W - 8} y="16" fill={hover.color} fontWeight="bold" textAnchor="end">{hover.deltaLabel}</MonoText>
                 <MonoText x="8" y="40" fill={hover.color}>
-                  เดือนนี้: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hover.curSpend)}</tspan>
+                  {thisMonthLabel}: <tspan fill={tc('ink-display')} fontWeight="bold">{formatBaht(hover.curSpend)}</tspan>
                 </MonoText>
                 <MonoText x="8" y="58" fill={tc('ink-body')}>
                   เดือนก่อน: <tspan fill={tc('ink-soft')} fontWeight="bold">{formatBaht(hover.ghostSpend)}</tspan>

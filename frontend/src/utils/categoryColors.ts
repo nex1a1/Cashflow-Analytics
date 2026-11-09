@@ -52,9 +52,9 @@ function hslToHex({ h, s, l }: Hsl): string {
 
 /** How far a group's shades spread, in percent of the full ramp (0 = every category is the group colour). */
 export const DEFAULT_SHADE_STRENGTH = 40;
-export const SHADE_STRENGTH_STEP = 10;
+export const SHADE_STRENGTH_STEP = 1;
 
-/** Stored setting → 0–100 in steps of 10; anything else falls back to the default. */
+/** Stored setting → a whole number 0–100; anything else falls back to the default. */
 export function parseShadeStrength(raw: unknown): number {
   const n = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
   if (!Number.isFinite(n)) return DEFAULT_SHADE_STRENGTH;

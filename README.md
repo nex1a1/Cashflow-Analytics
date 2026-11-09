@@ -189,7 +189,17 @@ docker-compose logs -f
 docker-compose down
 ```
 
-- Frontend: [http://localhost:5173](http://localhost:5173)
+- ทั้งหน้าเว็บและ API: [http://localhost:5173](http://localhost:5173)
+
+สำหรับพัฒนาต่อ (hot reload) ใช้ container `expense_dev` ซึ่งรัน Backend และ Frontend ด้วยกัน และใช้ฐานข้อมูลเดียวกับด้านบน
+
+```bash
+docker compose up -d dev
+docker logs -f expense_dev
+docker compose stop dev
+```
+
+- Frontend: [http://localhost:5172](http://localhost:5172)
 - Backend API: [http://localhost:3000](http://localhost:3000)
 
 ## เทสต์

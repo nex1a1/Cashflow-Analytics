@@ -1,85 +1,85 @@
 import { memo } from 'react';
-import { TrendingDown, Briefcase, Palmtree, Lock, Target } from 'lucide-react';
+import { TrendingDown, Briefcase, Palmtree } from 'lucide-react';
 import { formatBaht } from '@/utils/formatters';
-import { Shimmer, formatSignedMoney } from '../helpers';
+import { Shimmer } from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
 interface DailyExpenseCardProps {
+  /** All expense per day, rent included. */
   dailyAvg: number;
-  totalExpense: number;
+  /** Expense per day without the rent group: the headline. */
+  livingDailyAvg: number;
+  /** Rent-free like the headline. */
   dailyWorkdayAvg: number;
   dailyHolidayAvg: number;
-  dailyFixed: number;
-  dailyVariable: number;
+  /** The period has rent rows, so the rent-inclusive figure differs and gets its own line. */
+  hasRent: boolean;
+  elapsedDays: number;
   showSkeleton?: boolean;
 }
 
+/**
+ * How spending moves through the week. Rent is a fixed lump that says nothing about the days,
+ * so the headline and the work / day-off split leave it out; the rent-inclusive figure stays as a quiet line.
+ * The total and the NEED / WANT split live elsewhere (Vitals, verdict row).
+ */
 export const StrategicDailyExpenseCard = memo(({
   dailyAvg,
-  totalExpense,
+  livingDailyAvg,
   dailyWorkdayAvg,
   dailyHolidayAvg,
-  dailyFixed,
-  dailyVariable,
+  hasRent,
+  elapsedDays,
   showSkeleton
-}: DailyExpenseCardProps) => (
-  <StrategicCardShell
-    icon={TrendingDown}
-    borderColorClass="border-l-expense"
-    hoverBgClass="hover:bg-surface-hover"
-    label="รายจ่ายเฉลี่ย/วัน"
-    thresholdRow={!showSkeleton && (
-      <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-        <span>ยอดจ่ายรวมทั้งช่วง</span>
-        <span className="text-white font-bold tabular-nums">{formatBaht(totalExpense)}</span>
-      </div>
-    )}
-    showOverlay={!showSkeleton}
-    overlayTitle="อัตราจ่ายรายวัน"
-    overlayBadge={<span className="text-ink-soft font-extrabold text-[11px] border border-line bg-surface-elevated px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">ทำงาน vs หยุด</span>}
-    overlayBody={(
-      <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
-        <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-          <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-            <Briefcase size={13} className="shrink-0 text-ink-muted" /> วันทำงาน
-          </span>
-          <span className="text-[13px] font-black text-ink-display tabular-nums leading-tight mt-1">{formatBaht(dailyWorkdayAvg)}</span>
+}: DailyExpenseCardProps) => {
+  const diff = dailyHolidayAvg - dailyWorkdayAvg;
+  const heavier = Math.abs(diff) < 0.005 ? null : diff > 0 ? 'วันหยุด' : 'วันทำงาน';
+
+  return (
+    <StrategicCardShell
+      icon={TrendingDown}
+      label="รายจ่ายเฉลี่ย/วัน"
+      thresholdRow={!showSkeleton && (
+        <div className="flex flex-col gap-1.5 text-[11px] text-ink-muted leading-none">
+          <div className="flex items-center justify-between">
+            <span>{heavier ? `${heavier}จ่ายมากกว่า` : 'สองแบบใกล้กัน'}</span>
+            {heavier && <span className="text-ink-soft font-semibold tabular-nums">{formatBaht(Math.abs(diff))}/วัน</span>}
+          </div>
+          {hasRent && (
+            <div className="flex items-center justify-between">
+              <span>รวมค่าที่พักแล้ว</span>
+              <span className="tabular-nums">{formatBaht(dailyAvg)}/วัน</span>
+            </div>
+          )}
         </div>
-        <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-          <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-            <Palmtree size={13} className="shrink-0 text-ink-muted" /> วันหยุด
-          </span>
-          <span className="text-[13px] font-black text-ink-display tabular-nums leading-tight mt-1">{formatBaht(dailyHolidayAvg)}</span>
+      )}
+    >
+      {showSkeleton ? (
+        <Shimmer className="h-8 w-28 my-1" />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none text-ink-display">
+              {formatBaht(hasRent ? livingDailyAvg : dailyAvg)}
+            </div>
+            <div className="text-[11px] text-ink-muted tabular-nums text-right">
+              เฉลี่ยจาก {elapsedDays} วัน{hasRent && <><br />ไม่รวมค่าที่พัก</>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-px bg-line">
+            <div className="bg-canvas py-1 flex items-center gap-1.5 text-[11px] text-ink-muted">
+              <Briefcase size={13} className="shrink-0" /> ทำงาน
+              <span className="ml-auto pr-2 text-ink-soft font-semibold tabular-nums">{formatBaht(dailyWorkdayAvg)}</span>
+            </div>
+            <div className="bg-canvas py-1 pl-2 flex items-center gap-1.5 text-[11px] text-ink-muted">
+              <Palmtree size={13} className="shrink-0" /> หยุด
+              <span className="ml-auto text-ink-soft font-semibold tabular-nums">{formatBaht(dailyHolidayAvg)}</span>
+            </div>
+          </div>
         </div>
-        <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-          <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-            <Lock size={13} className="shrink-0 text-sky-400" /> จำเป็น/วัน
-          </span>
-          <span className="text-[13px] font-black text-neutral-300 tabular-nums leading-tight mt-1">{formatBaht(dailyFixed)}</span>
-        </div>
-        <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-          <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-            <Target size={13} className="shrink-0 text-amber-400" /> ตามใจ/วัน
-          </span>
-          <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">{formatBaht(dailyVariable)}</span>
-        </div>
-      </div>
-    )}
-  >
-    {showSkeleton ? (
-      <Shimmer className="h-8 w-28 my-1" />
-    ) : (
-      <div className="flex flex-col gap-1.5">
-        <div className="text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none text-ink-display">
-          {formatSignedMoney(dailyAvg)}
-        </div>
-        <div className="text-[11px] font-mono text-neutral-400 leading-none flex items-center justify-between">
-          <span>เฉลี่ยรวมทุกวัน</span>
-          <span className="text-neutral-500">ทำงาน {formatBaht(dailyWorkdayAvg)}</span>
-        </div>
-      </div>
-    )}
-  </StrategicCardShell>
-));
+      )}
+    </StrategicCardShell>
+  );
+});
 
 StrategicDailyExpenseCard.displayName = 'StrategicDailyExpenseCard';

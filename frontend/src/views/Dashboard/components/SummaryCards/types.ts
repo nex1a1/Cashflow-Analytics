@@ -58,6 +58,21 @@ export interface ForecastingDetails {
   actualDailySeries: number[];
   paceStatus: PaceStatus;
   eomStatus: EomStatus;
+  /** Monthly bills seen in earlier months with no row yet this month: already inside fixedTotal. */
+  pendingFixed: number;
+  pendingFixedItems: { name: string; amount: number }[];
+  /** Monthly income with no row yet this month: already inside maxAllowedExpense. */
+  estimatedIncome: number;
+  /** Spent on unusually big days, left out of the pace carried over the remaining days (still counted as spent). */
+  oneOffExcluded: number;
+  /** Expense that leaves the leftover target (BUDGET_RULES.surplus.min) of income. */
+  targetExpense: number;
+  /** How far the forecast is above targetExpense. */
+  targetShortfall: number;
+  /** Per-day spending that still reaches targetExpense. */
+  safeToSpendForTarget: number;
+  /** Month end if the remaining days cost what they did in the units before, or what they cost now; null without enough history. Not a probability. */
+  projectedRange: { low: number; high: number } | null;
 }
 
 export interface GhostPacerStatus {
@@ -68,8 +83,21 @@ export interface GhostPacerStatus {
   border: string;
 }
 
+/** One category's share of the gap with last month, up to the same day. */
+export interface GapDriver {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  current: number;
+  previous: number;
+  delta: number;
+}
+
 export interface GhostPacerDetails {
   hasData: boolean;
+  /** False for a finished month: projectedExpense is then its real total. */
+  isCurrentMonth: boolean;
   currentPeriod: string;
   prevPeriod: string;
   currentDay: number;
@@ -87,6 +115,14 @@ export interface GhostPacerDetails {
   projectedExpense: number;
   ghostTotalExpense: number;
   deltaEom: number;
+  /** The biggest changes, either way; empty without a last month to compare with. */
+  gapDrivers: GapDriver[];
+  /** Every other category's change: with gapDrivers it adds up to deltaVsGhost. */
+  gapOthers: number;
+  /** Per-day spending that still ends under last month; null when there is nothing left to steer (finished month, last day, no last month). */
+  beatGhostDaily: number | null;
+  /** The pace the forecast carries over the remaining days. */
+  dailyPace: number;
   paceStatus: GhostPacerStatus;
 }
 
@@ -98,10 +134,15 @@ export interface SummaryAnalytics {
   savingsRate: number;
   totalSavings: number;
   datesInPeriod?: string[];
+  /** Days of the period up to today (the whole period once it is over): the divisor of every per-day average. */
+  elapsedDays?: number;
   prevTotals?: PrevTotals;
   periodLabel?: string;
   // Strategic
+  /** All expense per day, rent included. */
   dailyAvg: number;
+  /** Expense per day without the rent group: what the days themselves cost. */
+  livingDailyAvg: number;
   foodPercentage: number | string;
   foodTotal: number;
   foodDailyAvg: number;
@@ -111,8 +152,10 @@ export interface SummaryAnalytics {
   dailyWorkdayAvg: number;
   dailyHolidayAvg: number;
   maxFoodDayAmount: number;
-  variableTotal: number;
-  fixedTotal: number;
+  /** WANT spending in the period. */
+  wantTotal: number;
+  /** NEED spending in the period. */
+  needTotal: number;
   topWantCategories?: WantCategory[];
   rentPercentage: number | string;
   rentTotal: number;
@@ -130,6 +173,8 @@ export interface SummaryAnalytics {
   projectedSurplus: number;
   forecastingDetails?: ForecastingDetails;
   ghostPacerDetails?: GhostPacerDetails;
+  /** The same comparison without the rent group, whose pay day would otherwise swing the gap by the whole bill. */
+  ghostPacerDetailsNoRent?: GhostPacerDetails;
   isSingleMonthView?: boolean;
 }
 
@@ -144,11 +189,15 @@ export interface BreakdownEntry {
 
 export interface StrategicCardShellProps {
   icon: LucideIcon;
-  borderColorClass: string;
-  hoverBgClass?: string;
+  /**
+   * `bg-*` of a left edge bar, only when the card is in trouble (a bar, not a border: the global border lock greys
+   * every border). Omitted, the card has no coloured edge — the hero number already carries its colour.
+   */
+  edgeClass?: string;
   label: string;
   badge?: React.ReactNode;
   thresholdRow?: React.ReactNode;
+  /** Title of the detail view that covers the card on hover / keyboard focus. */
   overlayTitle?: string;
   overlayBadge?: React.ReactNode;
   overlayBody?: React.ReactNode;

@@ -1,90 +1,74 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { Award, ArrowDownToLine, Lock, Target, PiggyBank } from 'lucide-react';
 import { formatBaht } from '@/utils/formatters';
-import { Shimmer, formatSignedMoney } from '../helpers';
+import { Shimmer } from '../helpers';
 
 interface VictoryCardProps {
-  dailyVictory: number;
-  periodDays: number;
+  dailyLeft: number;
+  elapsedDays: number;
   dailyIncome: number;
-  dailyFixed: number;
-  dailyVariable: number;
+  dailyNeed: number;
+  dailyWant: number;
   dailySavings: number;
   showSkeleton?: boolean;
 }
 
+const Term = ({ icon, label, value, cls }: { icon: React.ReactNode; label: string; value: string; cls: string }) => (
+  <div className="bg-canvas p-3 flex flex-col justify-center text-left min-w-0">
+    <span className="text-[11px] font-medium text-ink-muted flex items-center gap-1.5 leading-tight">{icon}{label}</span>
+    <span className={`text-[15px] font-bold tabular-nums leading-tight mt-1 ${cls}`}>{value}</span>
+  </div>
+);
+
+/**
+ * The bottom line per day, written as the sum it is: income − NEED − WANT = left.
+ * Investing (SAVE) is not subtracted: it is part of what is left, so it is shown inside the result.
+ */
 export const StrategicVictoryCard = memo(({
-  dailyVictory,
-  periodDays,
+  dailyLeft,
+  elapsedDays,
   dailyIncome,
-  dailyFixed,
-  dailyVariable,
+  dailyNeed,
+  dailyWant,
   dailySavings,
   showSkeleton
 }: VictoryCardProps) => {
-  const isPositive = dailyVictory >= 0;
+  const isPositive = dailyLeft >= 0;
 
   return (
-    <div className={`relative flex flex-col md:flex-row items-stretch overflow-hidden bg-surface border-t border-line shrink-0 ${
-      isPositive ? 'border-t-emerald-500' : 'border-t-danger'
-    }`}>
-      <div className="absolute -right-4 -bottom-4 opacity-[0.04] pointer-events-none text-neutral-700">
-        <Award size={96} />
-      </div>
-
-      {/* Verdict: label + hero number — the bottom-line answer, not another equal-weight card */}
-      <div className="relative z-10 flex flex-col justify-center gap-1.5 p-4 md:min-w-[280px] md:border-r border-line">
+    <div className="relative flex flex-col md:flex-row items-stretch bg-surface border-t border-line shrink-0">
+      {!isPositive && <span aria-hidden="true" data-edge className="absolute inset-x-0 top-0 h-0.5 bg-danger" />}
+      <div className="flex flex-col justify-center gap-1.5 p-4 md:min-w-[260px] md:border-r border-line">
         <div className="flex items-center gap-2">
-          <Award size={15} className={isPositive ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
-          <span className="text-[11px] font-black uppercase text-neutral-400">
-            เงินเหลือเฉลี่ยต่อวัน
-          </span>
+          <Award size={15} className={`shrink-0 ${isPositive ? 'text-income' : 'text-danger'}`} />
+          <span className="text-[11px] font-semibold text-ink-muted">เงินเหลือเฉลี่ยต่อวัน</span>
         </div>
 
         {showSkeleton ? (
           <Shimmer className="h-10 w-40 my-1" />
         ) : (
-          <div className={`text-3xl xl:text-4xl font-black tabular-nums tracking-tight leading-none ${
-            isPositive ? 'text-emerald-400' : 'text-danger'
-          }`}>
-            {formatSignedMoney(dailyVictory)}
+          <div className={`text-3xl xl:text-4xl font-black tabular-nums tracking-tight leading-none ${isPositive ? 'text-income' : 'text-danger'}`}>
+            {formatBaht(dailyLeft)}
           </div>
         )}
 
         {!showSkeleton && (
-          <div className="text-[11px] font-mono text-neutral-400 leading-none">
-            {isPositive ? 'เหลือสุทธิ/วัน' : 'ติดลบสุทธิ/วัน'} · เฉลี่ยจาก {periodDays} วัน
+          <div className="text-[11px] text-ink-muted leading-tight">
+            {isPositive ? 'เหลือสุทธิ/วัน' : 'ติดลบสุทธิ/วัน'} · เฉลี่ยจาก {elapsedDays} วัน
+            {dailySavings > 0 && (
+              <span className="flex items-center gap-1 mt-1 text-savings">
+                <PiggyBank size={12} className="shrink-0" /> ในนั้นลงทุน {formatBaht(dailySavings)}/วัน
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Breakdown behind the verdict — always visible, no hover required to read it */}
       {!showSkeleton && (
-        <div className="relative z-10 flex-1 grid grid-cols-2 md:grid-cols-4 gap-px bg-neutral-800/50">
-          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5 leading-none">
-              <ArrowDownToLine size={13} className="shrink-0 text-emerald-400" /> รับ/วัน
-            </span>
-            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailyIncome)}</span>
-          </div>
-          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Lock size={13} className="shrink-0 text-neutral-400" /> จำเป็น/วัน
-            </span>
-            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyFixed)}</span>
-          </div>
-          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Target size={13} className="shrink-0 text-neutral-400" /> ตามใจ/วัน
-            </span>
-            <span className="text-[15px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(dailyVariable)}</span>
-          </div>
-          <div className="bg-canvas p-3 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5 leading-none">
-              <PiggyBank size={13} className="shrink-0 text-emerald-400" /> ออม/วัน
-            </span>
-            <span className="text-[15px] font-black text-emerald-400 tabular-nums leading-tight mt-1">{formatBaht(dailySavings)}</span>
-          </div>
+        <div className="flex-1 grid grid-cols-3 gap-px bg-line" aria-label="ที่มาของเงินเหลือต่อวัน">
+          <Term icon={<ArrowDownToLine size={13} className="shrink-0 text-income" />} label="รับ/วัน" value={formatBaht(dailyIncome)} cls="text-income" />
+          <Term icon={<Lock size={13} className="shrink-0" />} label="หัก จำเป็น/วัน" value={formatBaht(-dailyNeed)} cls="text-ink-display" />
+          <Term icon={<Target size={13} className="shrink-0" />} label="หัก ตามใจ/วัน" value={formatBaht(-dailyWant)} cls="text-ink-display" />
         </div>
       )}
     </div>

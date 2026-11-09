@@ -1,7 +1,10 @@
 import { memo } from 'react';
 import { UtensilsCrossed, TrendingDown, Briefcase, Trophy } from 'lucide-react';
 import { formatBaht } from '@/utils/formatters';
-import { Shimmer, getFoodStatus, BUDGET_RULES, OverBadge } from '../helpers';
+import {
+  Shimmer, getFoodStatus, BUDGET_RULES, LevelBadge, ruleEdge, CARD_TONES, RuleHero, RuleFooter,
+  StatCell, EmptyCell, PILL,
+} from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 
 interface FoodCardProps {
@@ -15,6 +18,8 @@ interface FoodCardProps {
   showSkeleton?: boolean;
 }
 
+const tone = CARD_TONES.food;
+
 export const StrategicFoodCard = memo(({
   foodDailyAvg,
   foodTotal,
@@ -25,70 +30,33 @@ export const StrategicFoodCard = memo(({
   maxFoodDayAmount,
   showSkeleton
 }: FoodCardProps) => {
+  const { max } = BUDGET_RULES.food;
   const pctOfExpense = Number.parseFloat(String(foodPercentage)) || 0;
   const pctOfIncome  = Number.parseFloat(String(foodPctOfIncome)) || 0;
-  const foodStatus   = getFoodStatus(pctOfExpense);
-  const isOver       = pctOfExpense > BUDGET_RULES.food.max;
-
-  const barWidth = Math.min(100, (pctOfExpense / BUDGET_RULES.food.max) * 100);
+  const status = getFoodStatus(pctOfExpense);
 
   return (
     <StrategicCardShell
       icon={UtensilsCrossed}
-      borderColorClass={isOver ? 'border-l-danger' : 'border-l-orange-500'}
-      hoverBgClass="hover:bg-surface-hover"
-      label="ค่าอาหาร & สัดส่วน"
-      badge={!showSkeleton && isOver && <OverBadge />}
-      thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-          <span>เกณฑ์สัดส่วน</span>
-          <span className="text-white font-bold">&lt; {BUDGET_RULES.food.max}% ของรายจ่าย</span>
-        </div>
-      )}
+      edgeClass={ruleEdge(status.level)}
+      label="ค่าอาหาร"
+      badge={!showSkeleton && <LevelBadge level={status.level} />}
+      thresholdRow={!showSkeleton && <RuleFooter max={max} base="ของรายจ่าย" />}
       showOverlay={!showSkeleton}
-      overlayTitle="เจาะลึกพฤติกรรมอาหาร"
-      overlayBadge={
-        <span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0 ${foodStatus.cls}`}>
-          {foodStatus.label}
-        </span>
-      }
+      overlayTitle="เจาะลึกค่าอาหาร"
+      overlayBadge={<span className={`${PILL} ${status.cls}`}>{status.label}</span>}
       overlayBody={(
-        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
+        <div className="grid grid-cols-2 gap-px bg-line mt-1.5 flex-1">
           {foodTotal === 0 ? (
-            <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
-              ไม่มีข้อมูลค่าอาหารในช่วงนี้
-            </div>
+            <EmptyCell text="ไม่มีข้อมูลค่าอาหารในช่วงนี้" />
           ) : (
-          <>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <UtensilsCrossed size={13} className="shrink-0 text-orange-400" /> รวมค่าอาหาร
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(foodTotal)}</span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <TrendingDown size={13} className="shrink-0 text-orange-400" /> สัดส่วนค่าอาหาร
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">
-              {pctOfExpense.toFixed(1)}% <span className="text-[11px] text-neutral-400 font-normal">ของรายจ่าย · {pctOfIncome.toFixed(1)}% ของรายรับ</span>
-            </span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Briefcase size={13} className="shrink-0 text-neutral-400" /> วันทำงาน vs หยุด
-            </span>
-            <span className="text-[12px] font-black text-neutral-200 tabular-nums leading-tight mt-1">
-              {formatBaht(foodWorkdayAvg)} <span className="text-neutral-500 font-normal">/</span> {formatBaht(foodHolidayAvg)}
-            </span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Trophy size={13} className="shrink-0 text-amber-400" /> พีคสูงสุดใน 1 วัน
-            </span>
-            <span className="text-[13px] font-black text-amber-400 tabular-nums leading-tight mt-1">{formatBaht(maxFoodDayAmount)}</span>
-          </div>
-          </>
+            <>
+              <StatCell icon={<UtensilsCrossed size={13} className={`shrink-0 ${tone.text}`} />} label="เฉลี่ยต่อวัน" value={formatBaht(foodDailyAvg)} />
+              <StatCell icon={<TrendingDown size={13} className={`shrink-0 ${tone.text}`} />} label="เทียบรายรับ" value={`${pctOfIncome.toFixed(1)}%`} sub="ของรายรับ" />
+              <StatCell icon={<Briefcase size={13} className="shrink-0 text-ink-muted" />} label="วันทำงาน / วันหยุด"
+                value={<>{formatBaht(foodWorkdayAvg)} <span className="text-ink-muted font-normal">/</span> {formatBaht(foodHolidayAvg)}</>} />
+              <StatCell icon={<Trophy size={13} className="shrink-0 text-warn" />} label="วันที่จ่ายมากสุด" value={formatBaht(maxFoodDayAmount)} valueClassName="text-warn" />
+            </>
           )}
         </div>
       )}
@@ -96,27 +64,12 @@ export const StrategicFoodCard = memo(({
       {showSkeleton ? (
         <Shimmer className="h-8 w-28 my-1" />
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-orange-400'}`}>
-              {formatBaht(foodDailyAvg)}
-              <span className="text-xs text-neutral-400 font-normal ml-1">/วัน</span>
-            </div>
-            <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              {formatBaht(foodTotal)}
-            </div>
+        <RuleHero pct={pctOfExpense} base="ของรายจ่าย" amount={foodTotal} max={max} level={status.level} tone={tone}>
+          <div className="flex items-center justify-between gap-2 text-[11px] text-ink-muted tabular-nums leading-none">
+            <span>เฉลี่ย <span className="text-ink-soft font-semibold">{formatBaht(foodDailyAvg)}</span>/วัน</span>
+            <span>ทำงาน {formatBaht(foodWorkdayAvg)} · หยุด {formatBaht(foodHolidayAvg)}</span>
           </div>
-          <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-            <div
-              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-danger' : 'bg-orange-400'}`}
-              style={{ width: `${barWidth}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-            <span>ทำงาน {formatBaht(foodWorkdayAvg)}</span>
-            <span className="text-neutral-500">หยุด {formatBaht(foodHolidayAvg)}</span>
-          </div>
-        </div>
+        </RuleHero>
       )}
     </StrategicCardShell>
   );

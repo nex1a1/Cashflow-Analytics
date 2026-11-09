@@ -1,6 +1,7 @@
 import { memo, useState } from 'react';
 import { formatBaht, formatBahtShort } from '@/utils/formatters';
 import { tc } from '@/constants/theme';
+import { BUDGET_RULES } from '@/constants/budgetRules';
 import {
   useSvgSize, linePath, MonoText, separateLabels, dayAtPointer, tooltipAt, DayGrid, DayAxis, TooltipDay, EdgeBadge, DayFrame,
 } from '@/components/shared/svgChart';
@@ -14,6 +15,10 @@ interface TrajectoryChartProps {
   projectedExpense: number;
   projectedSurplus: number;
   actualDailySeries: number[];
+  /** Expense that leaves the leftover target; 0 = no line (no income to take a share of). */
+  targetExpense?: number;
+  /** Month end if the remaining days cost what they did in the months before. */
+  projectedRange?: { low: number; high: number } | null;
 }
 
 const VIEW_H = 202;
@@ -28,7 +33,7 @@ const TIP_H = 52;
 
 export const ForecastingTrajectoryChart = memo(({
   currentDay, lastDayOfMonth, maxAllowedExpense, fixedTotal, variableUpToToday,
-  projectedExpense, projectedSurplus, actualDailySeries,
+  projectedExpense, projectedSurplus, actualDailySeries, targetExpense = 0, projectedRange = null,
 }: TrajectoryChartProps) => {
   const spentToDate = actualDailySeries.length > 0
     ? actualDailySeries[actualDailySeries.length - 1]
@@ -44,7 +49,7 @@ export const ForecastingTrajectoryChart = memo(({
   const plotW = viewW - PAD_L - PAD_R;
   const plotH = VIEW_H - PAD_T - PAD_B;
   const baseY = PAD_T + plotH;
-  const maxY = Math.max(ceiling, projectedExpense, spentToDate, 1) * 1.12;
+  const maxY = Math.max(ceiling, projectedExpense, spentToDate, projectedRange?.high ?? 0, 1) * 1.12;
 
   // Day 0 is the start of the month (฿0 spent).
   const getX = (day: number) => PAD_L + Math.max(0, Math.min(1, day / totalDays)) * plotW;
@@ -121,6 +126,18 @@ export const ForecastingTrajectoryChart = memo(({
           <span className="w-2.5 h-[2px] border-t border-dashed border-neutral-400 inline-block" />
           <span className="text-neutral-400">เพดานงบ</span>
         </div>
+        {projectedRange && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2 bg-neutral-500/40 inline-block" />
+            <span className="text-neutral-400">ช่วงจาก 3 เดือนก่อน</span>
+          </div>
+        )}
+        {targetExpense > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-[2px] border-t border-dashed border-sky-400 inline-block" />
+            <span className="text-neutral-400">เส้นเป้าเหลือ {BUDGET_RULES.surplus.min}%</span>
+          </div>
+        )}
       </div>
 
       <div ref={containerRef} className="w-full h-[202px] relative px-1">
@@ -176,8 +193,24 @@ export const ForecastingTrajectoryChart = memo(({
           <path d={`M ${xToday} ${yToday} L ${xEOM} ${yEOM} L ${xEOM} ${yCeil} L ${xToday} ${yCeil} Z`} fill="url(#forecastSurplusGrad)" />
           <path d={`${actualPath} L ${xToday} ${baseY} L ${getX(0)} ${baseY} Z`} fill="url(#forecastActualAreaGrad)" />
 
+          {projectedRange && (
+            <path
+              data-range
+              d={`M ${xToday} ${yToday} L ${xEOM} ${getY(projectedRange.high)} L ${xEOM} ${getY(projectedRange.low)} Z`}
+              fill={tc('ink-muted')}
+              fillOpacity="0.16"
+            />
+          )}
+
           <line x1={PAD_L} y1={yCeil} x2={xEOM} y2={yCeil} stroke={tc('ink-muted')} strokeWidth="1.2" strokeDasharray="4 3" />
           <EdgeBadge x={xEOM} y={ceilLabelY} w={124} stroke={tc('ink-muted')} fill={tc('ink-body')}>เพดาน {formatBaht(ceiling)}</EdgeBadge>
+
+          {targetExpense > 0 && (
+            <g>
+              <line data-target x1={PAD_L} y1={getY(targetExpense)} x2={xEOM} y2={getY(targetExpense)} stroke={tc('info')} strokeWidth="1.2" strokeDasharray="4 3" />
+              <MonoText x={PAD_L + 6} y={getY(targetExpense) - 4} fill={tc('info')}>เป้าเหลือ {BUDGET_RULES.surplus.min}% {formatBaht(targetExpense)}</MonoText>
+            </g>
+          )}
 
           <path d={actualPath} fill="none" stroke={tc('expense')} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           <path d={`M ${xToday} ${yToday} L ${xEOM} ${yEOM}`} fill="none" stroke={trendColor} strokeWidth="2" strokeDasharray="4 3" strokeLinecap="round" />

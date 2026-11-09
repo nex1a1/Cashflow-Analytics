@@ -202,9 +202,12 @@ describe('ActivityTimeline — GitHub layout', () => {
     set({ datesInPeriod: range('2026-01-01', '2026-03-31'), dayTypeCounts: { 'dt-work': 60, 'dt-hol': 30 } }); // 14 weeks
     remount();
     expect(sizeOf()).toEqual(['5', '5']);
-    set({ datesInPeriod: range('2026-01-01', '2026-12-31'), dayTypeCounts: { 'dt-work': 250, 'dt-hol': 115 } });
+    set({ datesInPeriod: range('2026-01-01', '2026-06-30'), dayTypeCounts: { 'dt-work': 120, 'dt-hol': 61 } }); // 27 weeks, one strip
     remount();
     expect(sizeOf()).toEqual(['4', '4']);
+    set({ datesInPeriod: range('2026-01-01', '2026-12-31'), dayTypeCounts: { 'dt-work': 250, 'dt-hol': 115 } }); // split in two
+    remount();
+    expect(sizeOf()).toEqual(['5', '5']);
   });
 
   it('weekday rail: seven labels, weekends marked', () => {
@@ -322,36 +325,66 @@ describe('ActivityTimeline — legend rail', () => {
     expect(swatches[3].style.borderColor).toBe('transparent');
   });
 
-  it('GitHub layout keeps a hidden copy of the OTHER mode so the rail never changes height', () => {
+  it('keeps a hidden copy of BOTH modes so the rail never changes height', () => {
     mount();
     expect(clone()!.textContent).toContain('ระดับความเข้ม');
-    expect(clone()!.className).toContain('invisible');
-    click(toggle('ระดับการจ่าย'));
     expect(clone()!.textContent).toContain('สรุปประเภทวัน');
+    expect(clone()!.className).toContain('invisible');
+    click(toggle('ปฏิทินทั่วไป'));
+    expect(clone()).not.toBeNull();
   });
 
-  it('the rail is as tall as the taller of the two modes (GitHub layout only)', () => {
+  it('the rail and the grid keep the same height in both layouts', () => {
     const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
       configurable: true,
       get(this: HTMLElement) { return this.getAttribute('aria-hidden') === 'true' ? 300 : 120; },
     });
+    const grid = () => q<HTMLElement>('[data-live-grid]')!.parentElement!;
     try {
       mount();
       expect(rail().style.minHeight).toBe('300px');
+      expect(grid().style.minHeight).toBe('300px'); // the hidden calendar copy is the taller
       click(toggle('ปฏิทินทั่วไป'));
-      expect(rail().style.minHeight).toBe(''); // calendar layout sizes itself
-      expect(clone()).toBeNull();
-      click(toggle('GitHub แนวนอน'));
       expect(rail().style.minHeight).toBe('300px');
+      expect(grid().style.minHeight).toBe('300px');
+      click(toggle('GitHub แนวนอน'));
+      expect(grid().style.minHeight).toBe('300px');
     } finally {
       Object.defineProperty(HTMLElement.prototype, 'offsetHeight', desc);
     }
   });
 
+  it('a year splits into two strips at the month start nearest the middle (Jan–Jun / Jul–Dec)', () => {
+    set({ datesInPeriod: range('2026-01-01', '2026-12-31') });
+    mount();
+    const strips = [...document.querySelectorAll<HTMLElement>('[data-live-grid] [data-github-strip]')];
+    expect(strips).toHaveLength(2);
+    const monthLabels = (s: HTMLElement) => [...s.querySelectorAll('span')].map(x => x.textContent);
+    expect(monthLabels(strips[0])[0]).toBe('ม.ค. 26');
+    expect(monthLabels(strips[0]).at(-1)).toBe('มิ.ย. 26');
+    expect(monthLabels(strips[1])[0]).toBe('ก.ค. 26');
+    expect(cells()).toHaveLength(365);
+    expect(strips[0].querySelector('button')!.className).toContain('w-5');
+  });
+
+  it('a few months stay one strip', () => {
+    set({ datesInPeriod: range('2026-01-01', '2026-06-30') });
+    mount();
+    expect(document.querySelectorAll('[data-live-grid] [data-github-strip]')).toHaveLength(1);
+  });
+
+  it('the hidden copy of the other layout has no day buttons', () => {
+    mount();
+    expect(cells()).toHaveLength(10);
+    click(toggle('ปฏิทินทั่วไป'));
+    expect(cells()).toHaveLength(10);
+  });
+
   it('does not pin a height when nothing can be measured', () => {
     mount();
     expect(rail().style.minHeight).toBe('');
+    expect(q<HTMLElement>('[data-live-grid]')!.parentElement!.style.minHeight).toBe('');
   });
 });
 

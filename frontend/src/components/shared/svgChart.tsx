@@ -80,8 +80,8 @@ export const DayGrid = ({ f }: { f: DayFrame }) => (
   </>
 );
 
-/** Bottom axis: Day 1 · Day N (วันนี้) · Day last, plus 5/10/15… ticks kept clear of the edges and of today's label. */
-export function DayAxis({ f, today }: { f: DayFrame; today: number }) {
+/** Bottom axis: Day 1 · Day N (วันนี้) · Day last, plus 5/10/15… ticks kept clear of the edges and of today's label. `live` off: a finished period has no today. */
+export function DayAxis({ f, today, live = true }: { f: DayFrame; today: number; live?: boolean }) {
   const { padL, baseY, totalDays, getX } = f;
   const xToday = getX(today);
   const xEnd = getX(totalDays);
@@ -92,7 +92,7 @@ export function DayAxis({ f, today }: { f: DayFrame; today: number }) {
     <>
       <line x1={padL} y1={baseY} x2={xEnd} y2={baseY} stroke={tc('line')} strokeWidth="1" />
       {xToday - padL > 90 && <MonoText x={padL} y={baseY + 12} fill={tc('ink-muted')}>Day 1</MonoText>}
-      <MonoText x={xToday} y={baseY + 12} fill={tc('ink-body')} textAnchor="middle" fontWeight="bold">Day {today} (วันนี้)</MonoText>
+      <MonoText x={xToday} y={baseY + 12} fill={tc('ink-body')} textAnchor="middle" fontWeight="bold">Day {today}{live && ' (วันนี้)'}</MonoText>
       {xEnd - xToday > 100 && <MonoText x={xEnd} y={baseY + 12} fill={tc('ink-muted')} textAnchor="end">Day {totalDays}</MonoText>}
       {ticks.map(d => {
         const x = getX(d);

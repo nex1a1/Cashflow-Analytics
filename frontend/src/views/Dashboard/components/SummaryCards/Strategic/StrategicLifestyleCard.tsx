@@ -1,21 +1,26 @@
 import { memo } from 'react';
 import { Zap } from 'lucide-react';
-import { formatBaht } from '@/utils/formatters';
-import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, OverBadge } from '../helpers';
+import {
+  Shimmer, renderTopItemsOverlay, BUDGET_RULES, LevelBadge, ruleLevel, ruleEdge, CARD_TONES,
+  RuleHero, RuleFooter, PILL, NEUTRAL_PILL,
+} from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { WantCategory, BreakdownEntry } from '../types';
 
 interface LifestyleCardProps {
   lifestyleRatio: number;
-  variableTotal: number;
+  wantTotal: number;
   topWantCategories?: WantCategory[];
+  hasIncome: boolean;
   showSkeleton?: boolean;
 }
 
-export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, topWantCategories, showSkeleton }: LifestyleCardProps) => {
-  const isOver = lifestyleRatio > BUDGET_RULES.lifestyle.max;
-  const categories = (topWantCategories ?? []).slice(0, 4);
-  const categoryEntries: BreakdownEntry[] = categories.map(cat => ({
+const tone = CARD_TONES.want;
+
+export const StrategicLifestyleCard = memo(({ lifestyleRatio, wantTotal, topWantCategories, hasIncome, showSkeleton }: LifestyleCardProps) => {
+  const { max } = BUDGET_RULES.lifestyle;
+  const level = hasIncome ? ruleLevel(lifestyleRatio, max) : 'ok';
+  const categoryEntries: BreakdownEntry[] = (topWantCategories ?? []).slice(0, 4).map(cat => ({
     key: cat.id,
     icon: cat.icon,
     iconColor: cat.color,
@@ -27,44 +32,23 @@ export const StrategicLifestyleCard = memo(({ lifestyleRatio, variableTotal, top
   return (
     <StrategicCardShell
       icon={Zap}
-      borderColorClass={isOver ? 'border-l-danger' : 'border-l-amber-500'}
+      edgeClass={ruleEdge(level)}
       label="รายจ่ายตามใจ"
-      badge={!showSkeleton && isOver && <OverBadge />}
-      thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-          <span>เกณฑ์แนะนำ</span>
-          <span className="text-white font-bold">&lt; {BUDGET_RULES.lifestyle.max}% ของรายรับ</span>
-        </div>
-      )}
+      badge={!showSkeleton && <LevelBadge level={level} />}
+      thresholdRow={!showSkeleton && <RuleFooter max={max} base="ของรายรับ" />}
       showOverlay={!showSkeleton}
-      overlayTitle="4 หมวดตามใจที่จ่ายมากสุด"
-      overlayBadge={<span className="text-amber-400 font-extrabold text-[11px] border border-amber-500/30 bg-amber-950/40 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">4 อันดับแรก</span>}
+      overlayTitle="หมวดตามใจที่จ่ายมากสุด"
+      overlayBadge={categoryEntries.length > 0 && <span className={`${PILL} ${NEUTRAL_PILL}`}>{categoryEntries.length} อันดับแรก</span>}
       overlayBody={(
-        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
-          {renderTopItemsOverlay(categoryEntries, 'ไม่มีรายจ่ายตามใจ', Zap, 'text-amber-400', 'รวมรายจ่ายตามใจ', variableTotal)}
+        <div className="grid grid-cols-2 gap-px bg-line mt-1.5 flex-1">
+          {renderTopItemsOverlay(categoryEntries, 'ไม่มีรายจ่ายตามใจ', Zap, tone.text, 'รวมรายจ่ายตามใจ', wantTotal)}
         </div>
       )}
     >
       {showSkeleton ? (
         <Shimmer className="h-8 w-28 my-1" />
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-amber-400'}`}>
-              {lifestyleRatio.toFixed(1)}%
-              <span className="text-xs text-neutral-400 font-normal ml-1">ของรายรับ</span>
-            </div>
-            <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              {formatBaht(variableTotal)}
-            </div>
-          </div>
-          <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-            <div
-              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : isOver ? 'bg-danger' : 'bg-amber-400'}`}
-              style={{ width: showSkeleton ? '50%' : `${Math.min(100, lifestyleRatio)}%` }}
-            />
-          </div>
-        </div>
+        <RuleHero pct={lifestyleRatio} base="ของรายรับ" amount={wantTotal} max={max} level={level} tone={tone} hasBase={hasIncome} />
       )}
     </StrategicCardShell>
   );

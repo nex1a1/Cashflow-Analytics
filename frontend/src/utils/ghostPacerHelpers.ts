@@ -1,5 +1,5 @@
 // src/utils/ghostPacerHelpers.ts
-import { GhostPacerDetails, GhostPacerStatus } from '../views/Dashboard/components/SummaryCards/types';
+import { GapDriver, GhostPacerDetails, GhostPacerStatus } from '../views/Dashboard/components/SummaryCards/types';
 import { periodUnitDates } from './dateHelpers';
 import { isCyclePeriod, stripCycle, shiftMonth, localTodayIso } from './payCycle';
 
@@ -22,11 +22,46 @@ export const PACE_TONE_STYLE: Record<PaceTone, { color: string; text: string; bg
   TRAIL: { color: tc('danger'), text: 'text-danger', bg: 'bg-danger/10', border: 'border-danger', bar: 'bg-danger' },
 };
 
+/** How many categories the card has room to name. */
+const GAP_DRIVER_COUNT = 3;
+/** Under a satang: floating-point dust, not a change. */
+const MONEY_DUST = 0.005;
+
+type CategoryInfo = (id: string) => Pick<GapDriver, 'name' | 'icon' | 'color'>;
+
 interface CalculateGhostPacerParams {
   globalDailySum: Record<string, number>;
   filterPeriod: string;
   isCurrentMonth: boolean;
   projectedExpense: number;
+  /** Category id → date → spent. */
+  categoryDailySum?: Record<string, Record<string, number>>;
+  categoryInfo?: CategoryInfo;
+  /** Spent so far plus what is already bound to come this month (rows dated ahead, monthly bills not logged yet). */
+  committedExpense?: number;
+  dailyPace?: number;
+}
+
+/** Which categories make the gap between the two date ranges: biggest change first, whichever way it goes. */
+function calculateGapDrivers(
+  categoryDailySum: Record<string, Record<string, number>>,
+  categoryInfo: CategoryInfo,
+  currentDates: string[],
+  prevDates: string[],
+) {
+  const sumOver = (dates: string[], byDay: Record<string, number>) => dates.reduce((sum, d) => sum + (byDay[d] || 0), 0);
+  const changes = Object.entries(categoryDailySum)
+    .map(([id, byDay]) => {
+      const current = sumOver(currentDates, byDay);
+      const previous = sumOver(prevDates, byDay);
+      return { id, ...categoryInfo(id), current, previous, delta: current - previous };
+    })
+    .filter(c => Math.abs(c.delta) >= MONEY_DUST)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.id.localeCompare(b.id));
+  return {
+    gapDrivers: changes.slice(0, GAP_DRIVER_COUNT),
+    gapOthers: changes.slice(GAP_DRIVER_COUNT).reduce((sum, c) => sum + c.delta, 0),
+  };
 }
 
 /** Running total over an ordered date list, optionally cut off after `cutoffDay` days */
@@ -53,6 +88,10 @@ export function calculateGhostPacerData({
   filterPeriod,
   isCurrentMonth,
   projectedExpense,
+  categoryDailySum = {},
+  categoryInfo = id => ({ name: id }),
+  committedExpense = 0,
+  dailyPace = 0,
 }: CalculateGhostPacerParams): GhostPacerDetails {
   // Works on a calendar month or a pay cycle ("cycle:YYYY-MM") — day N = N-th day of that unit
   const cycle = isCyclePeriod(filterPeriod);
@@ -71,6 +110,7 @@ export function calculateGhostPacerData({
   if (!isSingleMonth) {
     return {
       hasData: false,
+      isCurrentMonth: false,
       currentPeriod: filterPeriod || '',
       prevPeriod: '',
       currentDay: 1,
@@ -88,6 +128,10 @@ export function calculateGhostPacerData({
       projectedExpense: 0,
       ghostTotalExpense: 0,
       deltaEom: 0,
+      gapDrivers: [],
+      gapOthers: 0,
+      beatGhostDaily: null,
+      dailyPace: 0,
       paceStatus: emptyStatus,
     };
   }
@@ -134,7 +178,19 @@ export function calculateGhostPacerData({
   const deltaVsBenchmark = currentSpendToDate - benchmarkSpendToDate;
   const deltaVsBenchmarkPct = benchmarkSpendToDate > 0 ? (deltaVsBenchmark / benchmarkSpendToDate) * 100 : 0;
 
-  const deltaEom = projectedExpense - ghostTotalExpense;
+  // A finished month has no forecast: its end of month is what was really spent.
+  const finalExpense = isCurrentMonth ? projectedExpense : currentSpendToDate;
+  const deltaEom = finalExpense - ghostTotalExpense;
+
+  // Without last month's spending every category would just read as "new": there is no cause to claim.
+  const { gapDrivers, gapOthers } = ghostSpendToDate > 0
+    ? calculateGapDrivers(categoryDailySum, categoryInfo, currentDates.slice(0, currentDay), unitDates(-1).slice(0, currentDay))
+    : { gapDrivers: [], gapOthers: 0 };
+
+  const daysLeft = lastDayOfMonth - currentDay;
+  const beatGhostDaily = daysLeft > 0 && ghostTotalExpense > 0 // a finished month stands on its last day: no days left
+    ? Math.max(0, ghostTotalExpense - committedExpense) / daysLeft
+    : null;
 
   const hasData = (prevDailySeries.length > 0 && prevDailySeries.some(v => v > 0)) ||
                   (currentDailySeries.length > 0 && currentDailySeries.some(v => v > 0));
@@ -158,6 +214,7 @@ export function calculateGhostPacerData({
 
   return {
     hasData,
+    isCurrentMonth,
     currentPeriod,
     prevPeriod,
     currentDay,
@@ -172,9 +229,13 @@ export function calculateGhostPacerData({
     deltaVsGhostPct,
     deltaVsBenchmark,
     deltaVsBenchmarkPct,
-    projectedExpense,
+    projectedExpense: finalExpense,
     ghostTotalExpense,
     deltaEom,
+    gapDrivers,
+    gapOthers,
+    beatGhostDaily,
+    dailyPace,
     paceStatus,
   };
 }

@@ -41,12 +41,17 @@ afterEach(() => {
 });
 
 describe('CategoryShadeRow', () => {
-  it('shows the value and a labelled 0–100 slider in steps of 10', () => {
+  it('shows the value and a labelled 0–100 slider in steps of 1', () => {
     mount(40);
     expect(slider().value).toBe('40');
-    expect(slider().step).toBe('10');
+    expect(slider().step).toBe('1');
     expect(container!.querySelector('label')!.htmlFor).toBe(slider().id);
     expect(container!.textContent).toContain('40%');
+  });
+
+  it('the filled part of the track follows the value', () => {
+    mount(40);
+    expect(slider().style.getPropertyValue('--range-fill')).toBe('0.4');
   });
 
   it('0 says every category uses the group colour', () => {

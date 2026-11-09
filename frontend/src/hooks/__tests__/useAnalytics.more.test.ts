@@ -156,8 +156,8 @@ describe('want categories', () => {
       tx('3', '2026-09-01', 'c_bar', 200), tx('4', '2026-09-01', 'c_book', 50),
       tx('5', '2026-09-01', 'c_toy', 50), tx('n', '2026-09-01', 'c_food', 999),
     ]);
-    expect(a.variableTotal).toBe(1000);
-    expect(a.fixedTotal).toBe(999);
+    expect(a.wantTotal).toBe(1000);
+    expect(a.needTotal).toBe(999);
     expect(a.topWantCategories.map((c: any) => [c.name, c.pctOfWant])).toEqual([
       ['หนัง', '40'], ['เกม', '30'], ['บาร์', '20'], ['หนังสือ', '5'],
     ]);
@@ -278,6 +278,372 @@ describe('forecast status', () => {
     const a = month([tx('e', '2026-09-05', 'c_movie', 1000)]);
     expect(a.showForecasting).toBe(false);
     expect(a.forecastingDetails).toBeNull();
+  });
+});
+
+describe('forecast: fixed bills, missing rows and one-off days', () => {
+  const allGroups = [...groups, { id: 'g_bonus', name: 'พิเศษ/โบนัส', type: 'income', allocation_type: null, order_index: 7 }];
+  const allCats = [...cats, { id: 'c_bonus', name: 'โบนัส', type: 'income', cashflowGroup: 'g_bonus' }];
+  const income = tx('i', '2026-09-01', 'c_inc', 30000);
+  const forecast = (rows: any[], day = 5) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, day, 12));
+    return month(rows, { categories: allCats, cashflowGroups: allGroups }).forecastingDetails!;
+  };
+
+  it('a subscription is paid once: it counts as fixed and is not multiplied by the remaining days', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), tx('s', '2026-09-05', 'c_soft', 1000)]);
+    expect(f.fixedTotal).toBe(1000);
+    expect(f.variableUpToToday).toBe(500);
+    expect(f.projectedExpense).toBe(4000); // 1000 + 500 + 100/day * 25
+  });
+
+  it('a subscription dated ahead is fixed already, once', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), tx('s', '2026-09-20', 'c_soft', 1000)]);
+    expect(f.fixedTotal).toBe(1000);
+    expect(f.projectedExpense).toBe(4000);
+  });
+
+  const billHistory = [
+    tx('r7', '2026-07-31', 'c_rent', 4500), tx('r8', '2026-08-31', 'c_rent', 4500),
+    tx('e7', '2026-07-31', 'c_elec', 1400), tx('e8', '2026-08-31', 'c_elec', 1500),
+  ];
+
+  it('a monthly bill not logged yet is expected at its latest amount', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), ...billHistory]);
+    expect(f.pendingFixed).toBe(6000);
+    expect(f.pendingFixedItems).toEqual(expect.arrayContaining([{ name: 'ค่าเช่า/ค่าหอพัก', amount: 4500 }, { name: 'ค่าไฟ', amount: 1500 }]));
+    expect(f.fixedTotal).toBe(6000);
+    expect(f.projectedExpense).toBe(9000); // 6000 + 500 + 100/day * 25
+    expect(f.safeToSpend).toBe(940); // (30000 - 6000 - 500) / 25
+  });
+
+  it('a bill already entered, even ahead of its date, is not expected again', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), ...billHistory, tx('r9', '2026-09-30', 'c_rent', 4600)]);
+    expect(f.pendingFixed).toBe(1500);
+    expect(f.pendingFixedItems).toEqual([{ name: 'ค่าไฟ', amount: 1500 }]);
+    expect(f.fixedTotal).toBe(6100);
+  });
+
+  it('a bill seen in only one earlier month is not treated as monthly', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), tx('r8', '2026-08-31', 'c_rent', 4500)]);
+    expect(f.pendingFixed).toBe(0);
+    expect(f.pendingFixedItems).toEqual([]);
+  });
+
+  it('a service that skipped last month has stopped: it is not expected again', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), tx('g6', '2026-06-02', 'c_soft', 750, { description: 'Gemini Pro' }), tx('g7', '2026-07-02', 'c_soft', 750, { description: 'Gemini Pro' })]);
+    expect(f.pendingFixed).toBe(0);
+  });
+
+  it('a salary that skipped last month is not expected either', () => {
+    const f = forecast([tx('m', '2026-09-03', 'c_movie', 500), tx('p6', '2026-06-25', 'c_inc', 25000), tx('p7', '2026-07-25', 'c_inc', 25000)]);
+    expect(f.estimatedIncome).toBe(0);
+  });
+
+  const salaryHistory = [tx('p7', '2026-07-25', 'c_inc', 25000), tx('p8', '2026-08-25', 'c_inc', 25000)];
+
+  it('a salary not logged yet is estimated for the ceiling; a one-time bonus is not', () => {
+    const f = forecast([tx('m', '2026-09-03', 'c_movie', 500), tx('b', '2026-09-02', 'c_bonus', 24), tx('b8', '2026-08-02', 'c_bonus', 9000), ...salaryHistory]);
+    expect(f.estimatedIncome).toBe(25000);
+    expect(f.maxAllowedExpense).toBe(25024);
+    expect(f.projectedSurplus).toBe(25024 - 3000);
+  });
+
+  it('a salary already entered ahead needs no estimate', () => {
+    const f = forecast([tx('m', '2026-09-03', 'c_movie', 500), tx('p9', '2026-09-25', 'c_inc', 25500), ...salaryHistory]);
+    expect(f.estimatedIncome).toBe(0);
+    expect(f.maxAllowedExpense).toBe(25500);
+  });
+
+  it('pay-cycle view looks for the missing bills in earlier cycles', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 1, 12)); // day 8 of the 25 Aug – 24 Sep cycle
+    const a = run({
+      transactions: [tx('p6', '2026-06-25', 'c_inc', 25000), tx('p7', '2026-07-25', 'c_inc', 25000), tx('r6', '2026-07-20', 'c_rent', 4500), tx('r7', '2026-08-20', 'c_rent', 4500)],
+      categories: allCats, cashflowGroups: allGroups, filterPeriod: 'cycle:2026-08',
+    });
+    expect(a.forecastingDetails!.estimatedIncome).toBe(25000);
+    expect(a.forecastingDetails!.pendingFixed).toBe(4500);
+  });
+
+  const normalAugust = Array.from({ length: 25 }, (_, i) => tx(`a${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_movie', 100));
+  const septemberWithBigBuy = [100, 5000, 100, 100, 100].map((amt, i) => tx(`d${i}`, `2026-09-0${i + 1}`, 'c_movie', amt));
+
+  it('a big day counts as spent, but early in the month only the usual part of it carries on', () => {
+    const f = forecast([income, ...normalAugust, ...septemberWithBigBuy]);
+    const pace = 100 * (25 / 30) + 1080 * (5 / 30); // capped pace fading into the real one as the month passes
+    expect(f.variableUpToToday).toBe(5400);
+    expect(f.actualDailyVariableAvg).toBeCloseTo(pace);
+    expect(f.oneOffExcluded).toBeCloseTo(5400 - pace * 5);
+    expect(f.projectedExpense).toBeCloseTo(5400 + pace * 25);
+  });
+
+  it('on the last day the real pace is the whole story', () => {
+    const f = forecast([income, ...normalAugust, ...septemberWithBigBuy], 30);
+    expect(f.actualDailyVariableAvg).toBeCloseTo(5400 / 30);
+    expect(f.oneOffExcluded).toBeCloseTo(0);
+  });
+
+  it('rent days do not raise the limit of a usual day', () => {
+    const rentDays = Array.from({ length: 5 }, (_, i) => tx(`r${i}`, `2026-08-${26 + i}`, 'c_rent', 9000));
+    const f = forecast([income, ...normalAugust, ...rentDays, ...septemberWithBigBuy]);
+    expect(f.actualDailyVariableAvg).toBeCloseTo(100 * (25 / 30) + 1080 * (5 / 30));
+  });
+
+  it('with too little history every day counts in full', () => {
+    const f = forecast([income, ...normalAugust.slice(0, 19), ...septemberWithBigBuy]);
+    expect(f.actualDailyVariableAvg).toBe(1080);
+    expect(f.oneOffExcluded).toBe(0);
+    expect(f.projectedExpense).toBe(5400 + 1080 * 25);
+  });
+
+  it('reports the spending that still reaches the 20% leftover target', () => {
+    const f = forecast([income, tx('m', '2026-09-05', 'c_movie', 8200)], 10);
+    expect(f.projectedExpense).toBe(24600);
+    expect(f.targetExpense).toBe(24000); // 80% of income
+    expect(f.targetShortfall).toBe(600);
+    expect(f.safeToSpendForTarget).toBe(790); // (24000 - 8200) / 20
+    expect(f.safeToSpend).toBe(1090); // (30000 - 8200) / 20
+  });
+
+  it('once the target is out of reach the daily amount for it is zero, not negative', () => {
+    const f = forecast([income, tx('m', '2026-09-05', 'c_movie', 25000)], 10);
+    expect(f.safeToSpendForTarget).toBe(0);
+  });
+
+  it('on or under the target nothing is short', () => {
+    expect(forecast([income, tx('m', '2026-09-05', 'c_movie', 8000)], 10).targetShortfall).toBe(0);
+    expect(forecast([income, tx('m', '2026-09-05', 'c_movie', 7000)], 10).targetShortfall).toBe(0);
+  });
+
+  describe('range from the months before', () => {
+    const today = tx('m', '2026-09-03', 'c_movie', 500); // pace 100/day, 25 days left
+    const august = tx('a', '2026-08-20', 'c_movie', 1300); // 26 days after day 5: 50/day
+    const july = tx('j', '2026-07-20', 'c_movie', 7800); // 26 days after day 5: 300/day
+    const june = tx('n', '2026-06-20', 'c_movie', 5000); // 25 days after day 5: 200/day
+
+    it('spans the lowest and highest rest-of-month pace, on top of what is committed', () => {
+      const f = forecast([income, today, august, july, june, tx('r', '2026-09-30', 'c_rent', 1000)]);
+      expect(f.projectedRange).toEqual({ low: 1000 + 500 + 50 * 25, high: 1000 + 500 + 300 * 25 });
+    });
+
+    it('a monthly bill not logged yet is inside both ends', () => {
+      const bills = [tx('r7', '2026-07-31', 'c_rent', 4000), tx('r8', '2026-08-31', 'c_rent', 4000)];
+      const f = forecast([income, today, august, july, ...bills]);
+      expect(f.projectedRange).toEqual({ low: 4000 + 500 + 50 * 25, high: 4000 + 500 + 300 * 25 });
+    });
+
+    it('only the days after today count from those months', () => {
+      const f = forecast([income, today, august, july, tx('early', '2026-08-02', 'c_movie', 99999)]);
+      expect(f.projectedRange).toEqual({ low: 500 + 50 * 25, high: 500 + 300 * 25 });
+    });
+
+    it('rent and subscriptions in those months are not daily pace', () => {
+      const f = forecast([income, today, august, july, tx('r', '2026-08-31', 'c_rent', 99999), tx('s', '2026-08-30', 'c_soft', 99999)]);
+      expect(f.projectedRange!.high).toBe(500 + 300 * 25);
+    });
+
+    it('always contains the forecast: today can be the lowest or the highest', () => {
+      const quiet = tx('q', '2026-08-20', 'c_movie', 260); // 10/day
+      const quieter = tx('w', '2026-07-20', 'c_movie', 520); // 20/day
+      const high = forecast([income, today, quiet, quieter]);
+      expect(high.projectedRange).toEqual({ low: 500 + 10 * 25, high: high.projectedExpense });
+      const low = forecast([income, tx('m', '2026-09-03', 'c_movie', 50), august, july]);
+      expect(low.projectedRange!.low).toBe(low.projectedExpense);
+    });
+
+    it('a month that stopped early counts as a quiet rest of month', () => {
+      const f = forecast([income, today, tx('a', '2026-08-02', 'c_movie', 100), july]);
+      expect(f.projectedRange!.low).toBe(500);
+    });
+
+    it('needs two months of spending to say anything', () => {
+      expect(forecast([income, today, august]).projectedRange).toBeNull();
+      expect(forecast([income, today, august, tx('r', '2026-07-31', 'c_rent', 4000)]).projectedRange).toBeNull(); // a rent-only month is no pace
+    });
+
+    it('nothing left to project on the last day', () => {
+      expect(forecast([income, today, august, july], 30).projectedRange).toBeNull();
+    });
+
+    it('pay-cycle view compares cycle days', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 7, 29, 12)); // day 5 of the 25 Aug – 24 Sep cycle, 26 days left
+      const a = run({
+        transactions: [
+          tx('t', '2026-08-26', 'c_movie', 500),
+          tx('p', '2026-08-10', 'c_movie', 2600), // cycle 25 Jul – 24 Aug: 26 days after day 5, 100/day
+          tx('q', '2026-07-10', 'c_movie', 5200), // cycle 25 Jun – 24 Jul: 25 days after day 5, 208/day
+        ],
+        categories: allCats, cashflowGroups: allGroups, filterPeriod: 'cycle:2026-08',
+      });
+      expect(a.forecastingDetails!.projectedRange).toEqual({ low: 500 + 100 * 26, high: 500 + 208 * 26 });
+    });
+  });
+
+  it('a monthly row outside rent and subscriptions stays in the daily pace, it is never "expected"', () => {
+    const f = forecast([income, tx('g7', '2026-07-10', 'c_movie', 900, { description: 'ตั๋วรายเดือน' }), tx('g8', '2026-08-10', 'c_movie', 900, { description: 'ตั๋วรายเดือน' })]);
+    expect(f.pendingFixed).toBe(0);
+    expect(f.pendingFixedItems).toEqual([]);
+  });
+
+  it('a usual day is set by the 90th percentile of the spending days before', () => {
+    const history = Array.from({ length: 25 }, (_, i) => tx(`h${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_movie', i < 19 ? 100 : 300));
+    const f = forecast([income, ...history, ...septemberWithBigBuy]); // 22nd of the 25 sorted days = 300, so 4700 of the big day is excess
+    expect(f.actualDailyVariableAvg).toBeCloseTo(1080 - (4700 / 5) * (25 / 30));
+  });
+
+  it('a big subscription day is fixed already: it is not a big living day too', () => {
+    const f = forecast([income, ...normalAugust, ...[100, 100, 100, 100, 100].map((amt, i) => tx(`d${i}`, `2026-09-0${i + 1}`, 'c_movie', amt)), tx('s', '2026-09-02', 'c_soft', 5000)]);
+    expect(f.actualDailyVariableAvg).toBe(100);
+    expect(f.oneOffExcluded).toBe(0);
+  });
+
+  it('a daily-spend row dated ahead has not been spent yet', () => {
+    const f = forecast([income, tx('m', '2026-09-03', 'c_movie', 500), tx('later', '2026-09-20', 'c_movie', 900)]);
+    expect(f.variableUpToToday).toBe(500);
+  });
+});
+
+describe('ghost pacer from the real aggregation', () => {
+  const at = (y: number, m: number, d: number, rows: any[]) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(y, m - 1, d, 12));
+    return month(rows);
+  };
+
+  it('a finished month compares its real total: no ฿0 forecast and no fake win', () => {
+    const a = at(2026, 11, 10, [tx('c', '2026-09-05', 'c_movie', 3000), tx('p', '2026-08-05', 'c_movie', 2000)]);
+    expect(a.ghostPacerDetails!.isCurrentMonth).toBe(false);
+    expect(a.ghostPacerDetails!.projectedExpense).toBe(3000);
+    expect(a.ghostPacerDetails!.deltaEom).toBe(1000);
+    expect(a.ghostPacerDetailsNoRent!.projectedExpense).toBe(3000);
+  });
+
+  it('the current month keeps the forecast', () => {
+    const a = at(2026, 9, 15, [tx('c', '2026-09-05', 'c_movie', 3000)]);
+    expect(a.ghostPacerDetails!.isCurrentMonth).toBe(true);
+    expect(a.ghostPacerDetails!.projectedExpense).toBe(a.forecastingDetails!.projectedExpense);
+  });
+
+  it('rent paid three days later does not read as spending less once rent is left out', () => {
+    const a = at(2026, 9, 5, [
+      tx('c', '2026-09-02', 'c_movie', 1000), tx('p', '2026-08-02', 'c_movie', 1000),
+      tx('r8', '2026-08-03', 'c_rent', 4500), tx('r9', '2026-09-06', 'c_rent', 4500),
+    ]);
+    expect(a.ghostPacerDetails!.ghostSpendToDate).toBe(5500);
+    expect(a.ghostPacerDetails!.paceStatus.code).toBe('LEAD');
+    const noRent = a.ghostPacerDetailsNoRent!;
+    expect(noRent.ghostSpendToDate).toBe(1000);
+    expect(noRent.currentSpendToDate).toBe(1000);
+    expect(noRent.paceStatus.code).toBe('TIED');
+    expect(noRent.ghostTotalExpense).toBe(1000);
+    expect(a.ghostPacerDetails!.projectedExpense).toBe(10500); // 4500 + 1000 + 200/day * 25
+    expect(noRent.projectedExpense).toBe(6000);
+  });
+
+  it('a rent bill still expected leaves the no-rent forecast too; a missing subscription does not', () => {
+    const a = at(2026, 9, 5, [
+      tx('c', '2026-09-02', 'c_movie', 1000),
+      tx('r7', '2026-07-03', 'c_rent', 4500), tx('r8', '2026-08-03', 'c_rent', 4500),
+      tx('s7', '2026-07-03', 'c_soft', 700), tx('s8', '2026-08-03', 'c_soft', 700),
+    ]);
+    expect(a.ghostPacerDetails!.projectedExpense).toBe(4500 + 700 + 1000 + 200 * 25);
+    expect(a.ghostPacerDetailsNoRent!.projectedExpense).toBe(700 + 1000 + 200 * 25);
+  });
+
+  it('rent as the only spending still has something to compare', () => {
+    const a = at(2026, 9, 5, [tx('r8', '2026-08-03', 'c_rent', 4500)]);
+    expect(a.ghostPacerDetails!.hasData).toBe(true);
+    expect(a.ghostPacerDetailsNoRent!.hasData).toBe(true);
+  });
+
+  describe('daily amount that still ends under last month', () => {
+    const movie = (id: string, date: string, amt: number) => tx(id, date, 'c_movie', amt);
+
+    it('counts rent entered ahead as already committed, in each comparison on its own terms', () => {
+      const a = at(2026, 9, 5, [movie('c', '2026-09-02', 1000), movie('p', '2026-08-02', 2000), tx('r8', '2026-08-03', 'c_rent', 5000), tx('r9', '2026-09-30', 'c_rent', 4500)]);
+      expect(a.ghostPacerDetails!.beatGhostDaily).toBe(60); // (7000 - 4500 - 1000) / 25
+      expect(a.ghostPacerDetailsNoRent!.beatGhostDaily).toBe(40); // (2000 - 1000) / 25
+      expect(a.ghostPacerDetails!.dailyPace).toBe(200);
+      expect(a.ghostPacerDetailsNoRent!.dailyPace).toBe(200);
+    });
+
+    it('counts a monthly bill not logged yet as committed too', () => {
+      const a = at(2026, 9, 5, [movie('c', '2026-09-02', 1000), movie('p', '2026-08-02', 2000), tx('r7', '2026-07-03', 'c_rent', 4500), tx('r8', '2026-08-03', 'c_rent', 4500)]);
+      expect(a.ghostPacerDetails!.beatGhostDaily).toBe(40); // (6500 - 4500 - 1000) / 25
+      expect(a.ghostPacerDetailsNoRent!.beatGhostDaily).toBe(40); // (2000 - 1000) / 25: the expected rent is not its concern
+    });
+
+    it('counts a subscription as committed in both comparisons', () => {
+      const a = at(2026, 9, 5, [movie('c', '2026-09-02', 1000), movie('p', '2026-08-02', 2000), tx('s', '2026-09-20', 'c_soft', 500)]);
+      expect(a.ghostPacerDetailsNoRent!.beatGhostDaily).toBe(20); // (2000 - 500 - 1000) / 25
+    });
+
+    it('agrees with the forecast: under the allowance is exactly when the month ends lower', () => {
+      const g = at(2026, 9, 5, [movie('c', '2026-09-02', 1000), movie('p', '2026-08-02', 2000)]).ghostPacerDetails!;
+      expect(g.dailyPace > g.beatGhostDaily!).toBe(g.deltaEom > 0);
+      expect(g.projectedExpense).toBe(6000);
+    });
+
+    it('already past last month: zero, never negative', () => {
+      const g = at(2026, 9, 5, [movie('c', '2026-09-02', 3000), movie('p', '2026-08-02', 1000)]).ghostPacerDetails!;
+      expect(g.beatGhostDaily).toBe(0);
+    });
+
+    it('nothing to say on the last day, in a finished month, or without a last month', () => {
+      const rows = [movie('c', '2026-09-02', 1000), movie('p', '2026-08-02', 2000)];
+      expect(at(2026, 9, 30, rows).ghostPacerDetails!.beatGhostDaily).toBeNull();
+      expect(at(2026, 11, 10, rows).ghostPacerDetails!.beatGhostDaily).toBeNull();
+      expect(at(2026, 9, 5, [movie('c', '2026-09-02', 1000)]).ghostPacerDetails!.beatGhostDaily).toBeNull();
+    });
+  });
+
+  describe('which categories make the gap', () => {
+    const gapRows = [
+      tx('c1', '2026-09-02', 'c_food', 1000), tx('p1', '2026-08-02', 'c_food', 400),
+      tx('c2', '2026-09-03', 'c_movie', 300), tx('p2', '2026-08-03', 'c_movie', 1000),
+      tx('c3', '2026-09-01', 'c_game', 300), tx('p3', '2026-08-01', 'c_game', 100),
+      tx('c4', '2026-09-01', 'c_bar', 20),
+      tx('c5', '2026-09-01', 'c_book', 10),
+    ];
+
+    it('names the biggest changes first, in either direction, up to the same day of last month', () => {
+      const later = [tx('c9', '2026-09-20', 'c_toy', 9000), tx('p9', '2026-08-20', 'c_toy', 7000)];
+      const g = at(2026, 9, 5, [...gapRows, ...later]).ghostPacerDetails!;
+      expect(g.gapDrivers).toEqual([
+        { id: 'c_movie', name: 'หนัง', icon: 'film', color: undefined, current: 300, previous: 1000, delta: -700 },
+        { id: 'c_food', name: 'ข้าว', icon: 'utensils', color: undefined, current: 1000, previous: 400, delta: 600 },
+        expect.objectContaining({ id: 'c_game', delta: 200 }),
+      ]);
+    });
+
+    it('the rest is summed, so the lines add up to the headline gap', () => {
+      const g = at(2026, 9, 5, gapRows).ghostPacerDetails!;
+      expect(g.gapOthers).toBe(30);
+      expect(g.gapDrivers.reduce((s, d) => s + d.delta, g.gapOthers)).toBe(g.deltaVsGhost);
+    });
+
+    it('rent is a driver only in the with-rent comparison', () => {
+      const rows = [...gapRows, tx('r9', '2026-09-04', 'c_rent', 5000)];
+      const a = at(2026, 9, 5, rows);
+      expect(a.ghostPacerDetails!.gapDrivers[0]).toMatchObject({ id: 'c_rent', delta: 5000 });
+      expect(a.ghostPacerDetailsNoRent!.gapDrivers.map(d => d.id)).toEqual(['c_movie', 'c_food', 'c_game']);
+      expect(a.ghostPacerDetailsNoRent!.gapOthers).toBe(30);
+    });
+
+    it('a category that no longer exists still has a label', () => {
+      const g = at(2026, 9, 5, [tx('c', '2026-09-02', 'gone', 500), tx('p', '2026-08-02', 'c_food', 100)]).ghostPacerDetails!;
+      expect(g.gapDrivers[0]).toMatchObject({ id: 'gone', name: 'ไม่ระบุหมวด', delta: 500 });
+    });
+  });
+
+  it('other periods have no comparison in either variant', () => {
+    const a = at(2026, 9, 5, [tx('r8', '2026-08-03', 'c_rent', 4500)]);
+    const year = run({ transactions: [tx('r8', '2026-08-03', 'c_rent', 4500)], categories: cats, cashflowGroups: groups, filterPeriod: '2026' });
+    expect(a.ghostPacerDetailsNoRent).toBeDefined();
+    expect(year.ghostPacerDetailsNoRent!.hasData).toBe(false);
   });
 });
 

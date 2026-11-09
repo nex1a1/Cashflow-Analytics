@@ -669,3 +669,73 @@ h1, h2, h3, h4, h5, h6 {
 :root .heatmap-cell:focus-visible:not([tabindex="-1"]):not([class*="focus:ring"]):not([class*="focus-visible:ring"]) {
   outline-offset: -2px;
 }
+
+/* Range slider: a sharp thumb on a thin track, instead of the browser's round thumb and white track.
+   `--range-fill` (0–1, set inline) fills the track up to the thumb's centre. */
+.range-slider {
+  --thumb-w: 8px;
+  --thumb-h: 18px;
+  --track-h: 4px;
+  --range-rest: rgb(var(--line-strong));
+  --range-stop: calc(var(--thumb-w) / 2 + (100% - var(--thumb-w)) * var(--range-fill, 0));
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.range-slider:hover { --range-rest: rgb(var(--ink-muted) / 0.6); }
+
+.range-slider::-webkit-slider-runnable-track {
+  height: var(--track-h);
+  background: linear-gradient(to right, rgb(var(--accent)) var(--range-stop), var(--range-rest) var(--range-stop));
+}
+.range-slider::-moz-range-track { height: var(--track-h); background: var(--range-rest); }
+.range-slider::-moz-range-progress { height: var(--track-h); background: rgb(var(--accent)); }
+
+.range-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--thumb-w);
+  height: var(--thumb-h);
+  margin-top: calc((var(--track-h) - var(--thumb-h)) / 2);
+  border: 0;
+  border-radius: 0;
+  background: rgb(var(--ink-soft));
+  transition: background-color 120ms ease-out;
+}
+.range-slider::-moz-range-thumb {
+  width: var(--thumb-w);
+  height: var(--thumb-h);
+  border: 0;
+  border-radius: 0;
+  background: rgb(var(--ink-soft));
+  transition: background-color 120ms ease-out;
+}
+.range-slider:hover::-webkit-slider-thumb { background: rgb(var(--ink-display)); }
+.range-slider:hover::-moz-range-thumb { background: rgb(var(--ink-display)); }
+.range-slider:active::-webkit-slider-thumb { background: rgb(var(--accent-ink)); }
+.range-slider:active::-moz-range-thumb { background: rgb(var(--accent-ink)); }
+
+/* The focus ring goes on the thumb, not around the whole row. */
+:root .range-slider:focus-visible:not([class*="focus-visible:ring"]):not([class*="focus:ring"]):not([tabindex="-1"]) {
+  outline: none;
+}
+.range-slider:focus-visible::-webkit-slider-thumb { outline: 2px solid rgb(var(--accent-ink)); outline-offset: 1px; }
+.range-slider:focus-visible::-moz-range-thumb { outline: 2px solid rgb(var(--accent-ink)); outline-offset: 1px; }
+
+/* Scale under a range slider: `--tick` (0–1) uses the slider's own thumb-centre travel, so a tick lines up with the
+   thumb at that value. The end labels sit flush with the slider's edges. */
+.range-scale { --thumb-w: 8px; position: relative; height: 18px; }
+.range-tick {
+  position: absolute;
+  top: 0;
+  left: calc(var(--thumb-w) / 2 + (100% - var(--thumb-w)) * var(--tick));
+  width: 1px;
+  height: 4px;
+  background: rgb(var(--line-strong));
+}
+.range-tick > span { position: absolute; top: 5px; left: 0; translate: -50% 0; line-height: 1.2; }
+.range-tick:first-child > span { left: calc(var(--thumb-w) / -2); translate: 0 0; }
+.range-tick:last-child > span { left: auto; right: calc(var(--thumb-w) / -2 + 1px); translate: 0 0; }

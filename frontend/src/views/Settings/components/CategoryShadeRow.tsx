@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef, type CSSProperties } from 'react';
 import { Palette } from 'lucide-react';
 import { Category, CashflowGroup } from '../../../types';
 import { SHADE_STRENGTH_STEP } from '@/utils/categoryColors';
@@ -14,6 +14,7 @@ interface Props {
 }
 
 const COMMIT_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+const SCALE_TICKS = [0, 25, 50, 75, 100];
 
 /**
  * How far a group's category colours spread. Dragging recolours the whole app live (and the swatches here);
@@ -55,20 +56,28 @@ const CategoryShadeRow = memo(function CategoryShadeRow({ value, onPreview, onSa
         </div>
         <span className="shrink-0 text-[11px] font-bold tabular-nums text-ink-soft" aria-hidden>{label}</span>
       </div>
-      <input
-        id="category-shade"
-        type="range"
-        min={0}
-        max={100}
-        step={SHADE_STRENGTH_STEP}
-        value={value}
-        aria-valuetext={label}
-        onChange={e => { pending.current = Number(e.target.value); onPreview(pending.current); }}
-        onPointerUp={commit}
-        onKeyUp={e => { if (COMMIT_KEYS.has(e.key)) commit(); }}
-        onBlur={commit}
-        className="w-full accent-accent cursor-pointer"
-      />
+      <div>
+        <input
+          id="category-shade"
+          type="range"
+          min={0}
+          max={100}
+          step={SHADE_STRENGTH_STEP}
+          value={value}
+          aria-valuetext={label}
+          onChange={e => { pending.current = Number(e.target.value); onPreview(pending.current); }}
+          onPointerUp={commit}
+          onKeyUp={e => { if (COMMIT_KEYS.has(e.key)) commit(); }}
+          onBlur={commit}
+          className="range-slider"
+          style={{ '--range-fill': value / 100 } as CSSProperties}
+        />
+        <div className="range-scale text-[11px] font-mono tabular-nums text-ink-muted" aria-hidden>
+          {SCALE_TICKS.map(t => (
+            <span key={t} className="range-tick" style={{ '--tick': t / 100 } as CSSProperties}><span>{t}</span></span>
+          ))}
+        </div>
+      </div>
       {strips.length > 0 && (
         <div className="grid grid-cols-2 gap-x-4 gap-y-1" aria-hidden>
           {strips.map(({ g, cats }) => (

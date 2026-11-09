@@ -22,6 +22,7 @@ export interface RecurringItem {
   categoryId: string;
   description: string;
   amount: number; // ยอดครั้งล่าสุด
+  lastDate: string; // วันที่ครั้งล่าสุดก่อนหน่วยเป้าหมาย
   /** ยอดไม่เท่ากันทุกครั้ง (เช่นค่าไฟ) — ต้องแก้ยอดก่อนบันทึก */
   variable: boolean;
   allocation_type: string | null;
@@ -92,6 +93,7 @@ export function findRecurring(rows: RecurringRow[], targetIso: string, cycle: bo
       categoryId: latest.category_id as string,
       description: (latest.description ?? '').trim(),
       amount: Number(latest.amount),
+      lastDate: latest.date,
       variable: new Set(pastRows.map(r => Number(r.amount))).size > 1,
       allocation_type: latest.allocation_type ?? null,
       suggestedDate: sameSpotIn(target, latest.date, cycle),

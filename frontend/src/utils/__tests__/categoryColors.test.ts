@@ -56,9 +56,10 @@ describe('shade strength', () => {
     expect(withGroupColors(cats, [grp('g', '#F97316')], 0).map(c => c.color)).toEqual(['#F97316', '#F97316']);
   });
 
-  it('parseShadeStrength: numbers and numeric strings snap to 10s inside 0–100, the rest is the default', () => {
+  it('parseShadeStrength: numbers and numeric strings round to whole numbers inside 0–100, the rest is the default', () => {
     expect(parseShadeStrength(40)).toBe(40);
-    expect(parseShadeStrength('73')).toBe(70);
+    expect(parseShadeStrength('73')).toBe(73);
+    expect(parseShadeStrength(73.6)).toBe(74);
     expect(parseShadeStrength(250)).toBe(100);
     expect(parseShadeStrength(-5)).toBe(0);
     expect(parseShadeStrength(undefined)).toBe(DEFAULT_SHADE_STRENGTH);

@@ -1,7 +1,10 @@
 import { memo } from 'react';
 import { Home, Building2, Zap, Globe, Droplets } from 'lucide-react';
 import { formatBaht } from '@/utils/formatters';
-import { Shimmer, BUDGET_RULES, OverBadge } from '../helpers';
+import {
+  Shimmer, BUDGET_RULES, LevelBadge, ruleLevel, ruleEdge, CARD_TONES, RuleHero, RuleFooter,
+  StatCell, EmptyCell, PILL, NEUTRAL_PILL,
+} from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { RentSub } from '../types';
 
@@ -9,88 +12,47 @@ interface RentCardProps {
   rentPercentageNum: number;
   rentTotal: number;
   rentSub?: RentSub;
+  hasIncome: boolean;
   showSkeleton?: boolean;
 }
 
-export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, showSkeleton }: RentCardProps) => {
-  const isOver = rentPercentageNum > BUDGET_RULES.rent.max;
-  let rentBarBg = 'bg-sky-400';
-  if (showSkeleton)   rentBarBg = 'bg-slate-700 animate-pulse';
-  else if (isOver)    rentBarBg = 'bg-danger';
+const tone = CARD_TONES.rent;
+const ITEMS = [
+  { key: 'rent',        label: 'ค่าเช่า', Icon: Building2, cls: 'text-info' },
+  { key: 'electricity', label: 'ค่าไฟ',   Icon: Zap,       cls: 'text-warn' },
+  { key: 'internet',    label: 'ค่าเน็ต',  Icon: Globe,     cls: 'text-purple-400' },
+  { key: 'water',       label: 'ค่าน้ำ',   Icon: Droplets,  cls: 'text-info' },
+] as const;
+
+export const StrategicRentCard = memo(({ rentPercentageNum, rentTotal, rentSub, hasIncome, showSkeleton }: RentCardProps) => {
+  const { max } = BUDGET_RULES.rent;
+  const level = hasIncome ? ruleLevel(rentPercentageNum, max) : 'ok';
+  const filled = rentSub ? ITEMS.filter(i => rentSub[i.key] > 0).length : 0;
 
   return (
     <StrategicCardShell
       icon={Home}
-      borderColorClass={isOver ? 'border-l-danger' : 'border-l-sky-500'}
-      hoverBgClass="hover:bg-surface-hover"
+      edgeClass={ruleEdge(level)}
       label="ภาระที่พักอาศัย"
-      badge={!showSkeleton && isOver && <OverBadge />}
-      thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-          <span>เกณฑ์แนะนำ</span>
-          <span className="text-white font-bold">&lt; {BUDGET_RULES.rent.max}% ของรายรับ</span>
-        </div>
-      )}
+      badge={!showSkeleton && <LevelBadge level={level} />}
+      thresholdRow={!showSkeleton && <RuleFooter max={max} base="ของรายรับ" />}
       showOverlay={!showSkeleton}
       overlayTitle="รายละเอียดที่พัก"
-      overlayBadge={<span className="text-sky-400 font-extrabold text-[11px] border border-sky-500/30 bg-sky-950/40 px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0">4 หมวด</span>}
+      overlayBadge={filled > 0 && <span className={`${PILL} ${NEUTRAL_PILL}`}>{filled} รายการ</span>}
       overlayBody={rentSub && (
-        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
-          {rentSub.rent === 0 && rentSub.electricity === 0 && rentSub.internet === 0 && rentSub.water === 0 ? (
-            <div className="col-span-2 bg-canvas p-2 text-center text-[11px] text-neutral-400 flex items-center justify-center">
-              ไม่มีข้อมูลที่พักอาศัยในช่วงนี้
-            </div>
-          ) : (
-          <>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Building2 size={13} className="shrink-0 text-sky-400" /> ค่าเช่า
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.rent)}</span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Zap size={13} className="shrink-0 text-amber-400" /> ค่าไฟ
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.electricity)}</span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Globe size={13} className="shrink-0 text-indigo-400" /> ค่าเน็ต
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.internet)}</span>
-          </div>
-          <div className="bg-canvas p-2 flex flex-col justify-center text-left">
-            <span className="text-[11px] font-bold text-neutral-400 uppercase flex items-center gap-1.5 leading-none">
-              <Droplets size={13} className="shrink-0 text-cyan-400" /> ค่าน้ำ
-            </span>
-            <span className="text-[13px] font-black text-white tabular-nums leading-tight mt-1">{formatBaht(rentSub.water)}</span>
-          </div>
-          </>
-          )}
+        <div className="grid grid-cols-2 gap-px bg-line mt-1.5 flex-1">
+          {filled === 0 ? (
+            <EmptyCell text="ไม่มีข้อมูลที่พักอาศัยในช่วงนี้" />
+          ) : ITEMS.map(({ key, label, Icon, cls }) => (
+            <StatCell key={key} icon={<Icon size={13} className={`shrink-0 ${cls}`} />} label={label} value={formatBaht(rentSub[key])} />
+          ))}
         </div>
       )}
     >
       {showSkeleton ? (
         <Shimmer className="h-8 w-28 my-1" />
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${isOver ? 'text-danger' : 'text-sky-400'}`}>
-              {rentPercentageNum.toFixed(1)}%
-              <span className="text-xs text-neutral-400 font-normal ml-1">ของรายรับ</span>
-            </div>
-            <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              {formatBaht(rentTotal)}
-            </div>
-          </div>
-          <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-            <div
-              className={`h-full absolute left-0 top-0 transition-none ${rentBarBg}`}
-              style={{ width: `${Math.min(100, rentPercentageNum)}%` }}
-            />
-          </div>
-        </div>
+        <RuleHero pct={rentPercentageNum} base="ของรายรับ" amount={rentTotal} max={max} level={level} tone={tone} hasBase={hasIncome} />
       )}
     </StrategicCardShell>
   );

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import {
   TrendingDown, Gauge, ShieldCheck, Home, Wallet, Navigation,
-  Zap, Award, AlertTriangle, CheckCircle2
+  Zap, Award, AlertTriangle, CheckCircle2, Target, ShoppingBag, MoveVertical
 } from 'lucide-react';
 import { formatBaht, formatMoney } from '@/utils/formatters';
 import { Shimmer } from '../helpers';
@@ -9,6 +9,7 @@ import { ForecastingTrajectoryChart } from './ForecastingTrajectoryChart';
 import type { SummaryAnalytics, ForecastingDetails } from '../types';
 
 import { tc } from '@/constants/theme';
+import { BUDGET_RULES } from '@/constants/budgetRules';
 interface SummaryForecastingProps {
   analytics: SummaryAnalytics;
   showSkeleton?: boolean;
@@ -33,12 +34,27 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
   const requiredReduction        = details.requiredReduction       || 0;
   const requiredDailyReduction   = details.requiredDailyReduction  || 0;
   const actualDailySeries        = details.actualDailySeries        || [];
+  const pendingFixed             = details.pendingFixed             || 0;
+  const pendingFixedItems        = details.pendingFixedItems        || [];
+  const estimatedIncome          = details.estimatedIncome          || 0;
+  const oneOffExcluded           = details.oneOffExcluded           || 0;
+  const targetExpense            = details.targetExpense            || 0;
+  const targetShortfall          = details.targetShortfall          || 0;
+  const safeToSpendForTarget     = details.safeToSpendForTarget     || 0;
+  const projectedRange           = details.projectedRange           ?? null;
   const paceStatus  = details.paceStatus  || { label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
   const eomStatus   = details.eomStatus   || { label: 'โซนปลอดภัยสูง', color: tc('income'), bg: 'bg-emerald-950/40', border: 'border-emerald-500' };
 
   const headroom            = safeToSpend - actualDailyVariableAvg;
   const actualSafePaceRatio = safeToSpend > 0 ? (actualDailyVariableAvg / safeToSpend) * 100 : 100;
   const safePaceBarWidth    = Math.min(100, Math.max(0, actualSafePaceRatio));
+  const hasOneOff           = oneOffExcluded >= 1;
+
+  // Same verdict as the status bar: under the leftover target is not "safe", it just is not a deficit yet.
+  const leftoverTarget = BUDGET_RULES.surplus.min;
+  const isDeficit      = projectedSurplus < 0;
+  const isUnderTarget  = !isDeficit && projectedSurplusPct < leftoverTarget;
+  const surplusText    = isDeficit ? 'text-danger' : isUnderTarget ? 'text-warn' : 'text-emerald-400';
 
   // Stacked proportions
   const totalProj  = Math.max(1, projectedExpense);
@@ -96,13 +112,16 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
         projectedExpense={projectedExpense}
         projectedSurplus={projectedSurplus}
         actualDailySeries={actualDailySeries}
+        targetExpense={targetExpense}
+        projectedRange={projectedRange}
       />
 
       {/* 3. 3-Column Cockpit Telemetry Pods */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-surface-elevated flex-1">
 
         {/* POD 1: Monthly Outflow Forecast */}
-        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l border-l-expense">
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none">
+
           <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
               <TrendingDown size={13} className="text-expense shrink-0" />
@@ -138,14 +157,23 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
             </div>
           </div>
 
-          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex flex-col gap-1 text-[11px] font-mono">
+          <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex flex-col text-[11px] font-mono">
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 <Home size={12} className="text-sky-400 shrink-0" />
-                ภาระคงที่ / ที่พัก:
+                ที่พัก + บริการรายเดือน:
               </span>
               <span className="text-sky-400 font-bold tabular-nums">{formatBaht(fixedTotal)}</span>
             </div>
+            {pendingFixed > 0 && (
+              <div
+                className="flex justify-between items-center py-0.5 pl-[18px]"
+                title={pendingFixedItems.map(i => `${i.name} ${formatBaht(i.amount)}`).join(', ')}
+              >
+                <span className="text-neutral-400">รวมที่ยังไม่ลง:</span>
+                <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(pendingFixed)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
                 <Wallet size={12} className="text-expense shrink-0" />
@@ -160,13 +188,24 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
               </span>
               <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(projectedVariableRemaining)}</span>
             </div>
+            {projectedRange && (
+              <div
+                className="flex justify-between items-center py-0.5"
+                title="ถ้าวันที่เหลือใช้เท่าเดือนที่น้อยที่สุดหรือมากที่สุดใน 3 เดือนก่อน หรือเท่าตอนนี้"
+              >
+                <span className="text-neutral-400 flex items-center gap-1.5">
+                  <MoveVertical size={12} className="text-neutral-400 shrink-0" />
+                  ช่วงจาก 3 เดือนก่อน:
+                </span>
+                <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(projectedRange.low)} – {formatBaht(projectedRange.high)}</span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* POD 2: Safe Daily Living Ceiling */}
-        <div className={`relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l ${
-          headroom >= 0 ? 'border-l-emerald-500' : 'border-l-danger'
-        }`}>
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none">
+          {headroom < 0 && <span aria-hidden="true" data-edge className="absolute left-0 inset-y-0 w-0.5 bg-danger" />}
           <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
               <Zap size={13} className={headroom >= 0 ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
@@ -186,7 +225,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                   <span className="text-xs text-neutral-400 ml-1 font-normal">/วัน</span>
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-                  ใช้จริง {formatBaht(actualDailyVariableAvg)}/ว
+                  {hasOneOff ? 'ใช้ปกติ' : 'ใช้จริง'} {formatBaht(actualDailyVariableAvg)}/ว
                 </div>
               </div>
             )}
@@ -217,16 +256,33 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
                 <span className="text-danger font-black tabular-nums">−{formatBaht(requiredDailyReduction)}/วัน</span>
               )}
             </div>
+            <div className="flex justify-between items-center py-0.5">
+              <span className="text-neutral-400 flex items-center gap-1.5">
+                <Target size={12} className="text-sky-400 shrink-0" />
+                เพื่อเหลือตามเป้า {leftoverTarget}%:
+              </span>
+              <span className={`font-bold tabular-nums ${actualDailyVariableAvg <= safeToSpendForTarget ? 'text-emerald-400' : 'text-warn'}`}>
+                {formatBaht(safeToSpendForTarget)}/วัน
+              </span>
+            </div>
+            {hasOneOff && (
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-neutral-400 flex items-center gap-1.5">
+                  <ShoppingBag size={12} className="text-neutral-400 shrink-0" />
+                  ของชิ้นใหญ่ไม่คูณต่อ:
+                </span>
+                <span className="text-neutral-300 font-bold tabular-nums">{formatBaht(oneOffExcluded)}</span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* POD 3: Projected EOM Surplus */}
-        <div className={`relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none border-l ${
-          projectedSurplus >= 0 ? 'border-l-emerald-500' : 'border-l-danger'
-        }`}>
+        <div className="relative p-4 flex flex-col justify-between bg-canvas hover:bg-surface-hover transition-none">
+          {projectedSurplus < 0 && <span aria-hidden="true" data-edge className="absolute left-0 inset-y-0 w-0.5 bg-danger" />}
           <div className="flex items-center gap-1.5 leading-none mb-1">
             <span className="text-[11px] font-black uppercase text-neutral-400 truncate flex items-center gap-1.5">
-              <Award size={13} className={projectedSurplus >= 0 ? 'text-emerald-400 shrink-0' : 'text-danger shrink-0'} />
+              <Award size={13} className={`${surplusText} shrink-0`} />
               เงินเหลือสุทธิคาดการณ์
             </span>
           </div>
@@ -236,9 +292,7 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
               <Shimmer className="h-8 w-32 my-1" />
             ) : (
               <div className="flex items-baseline justify-between gap-2">
-                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${
-                  projectedSurplus >= 0 ? 'text-emerald-400' : 'text-danger'
-                }`}>
+                <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${surplusText}`}>
                   {projectedSurplus >= 0 ? `+${formatBaht(projectedSurplus)}` : `−${formatBaht(Math.abs(projectedSurplus))}`}
                 </div>
                 <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
@@ -250,14 +304,14 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
             <div className="space-y-1">
               <div className="h-1.5 w-full bg-neutral-900 overflow-hidden relative border border-neutral-800">
                 <div
-                  className={`h-full ${projectedSurplus >= 0 ? 'bg-emerald-500' : 'bg-danger'}`}
+                  className={`h-full ${isDeficit ? 'bg-danger' : isUnderTarget ? 'bg-warn' : 'bg-emerald-500'}`}
                   style={{ width: `${Math.min(100, Math.max(0, projectedSurplusPct))}%` }}
                 />
               </div>
               <div className="flex justify-between text-[11px] font-mono text-neutral-400">
                 <span>เงินเหลือ: {projectedSurplusPct}% ของรายรับ</span>
-                <span className={projectedSurplus >= 0 ? 'text-emerald-400' : 'text-danger'}>
-                  {projectedSurplus >= 0 ? 'ปลอดภัย' : 'เฝ้าระวัง'}
+                <span className={surplusText}>
+                  {isDeficit ? 'เฝ้าระวัง' : isUnderTarget ? `ต่ำกว่าเป้า ${leftoverTarget}%` : 'ปลอดภัย'}
                 </span>
               </div>
             </div>
@@ -266,19 +320,20 @@ export const SummaryForecasting = memo(({ analytics, showSkeleton }: SummaryFore
           <div className="mt-auto pt-1.5 border-t border-neutral-800/80 flex flex-col gap-1 text-[11px] font-mono">
             <div className="flex justify-between items-center py-0.5">
               <span className="text-neutral-400 flex items-center gap-1.5">
-                {requiredReduction > 0 ? (
-                  <AlertTriangle size={12} className="text-danger shrink-0" />
+                {isDeficit || isUnderTarget ? (
+                  <AlertTriangle size={12} className={`${surplusText} shrink-0`} />
                 ) : (
                   <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
                 )}
                 สถานะงบ:
               </span>
-              {requiredReduction > 0 ? (
-                <span className="text-danger font-bold">ต้องลดอีก {formatBaht(requiredReduction)}</span>
-              ) : (
-                <span className="text-emerald-400 font-bold">คุมงบได้ตามเป้า</span>
-              )}
+              {isDeficit && <span className="text-danger font-bold">ต้องลดอีก {formatBaht(requiredReduction)}</span>}
+              {isUnderTarget && <span className="text-warn font-bold">ต้องลดอีก {formatBaht(targetShortfall)} ถึงเป้า</span>}
+              {!isDeficit && !isUnderTarget && <span className="text-emerald-400 font-bold">คุมงบได้ตามเป้า</span>}
             </div>
+            {estimatedIncome > 0 && (
+              <div className="py-0.5 text-neutral-400">รวมรายรับที่ยังไม่ลง {formatBaht(estimatedIncome)} จากประวัติ</div>
+            )}
           </div>
         </div>
 

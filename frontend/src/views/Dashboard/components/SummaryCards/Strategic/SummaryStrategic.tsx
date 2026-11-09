@@ -7,7 +7,7 @@ import { StrategicDailyExpenseCard } from './StrategicDailyExpenseCard';
 import { StrategicVictoryCard } from './StrategicVictoryCard';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
 import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
-import { gradeBudget } from '../helpers';
+import { gradeBudget, PILL } from '../helpers';
 import { DisabledHint } from '../../panelParts';
 import type { SummaryAnalytics } from '../types';
 
@@ -83,7 +83,7 @@ export const AnalysisTabHeader = <T extends string = AnalysisTabId>({
                 aria-describedby={reasonId}
                 tabIndex={tab.id === tabStopId ? 0 : -1}
                 onClick={() => !isDisabled && onChange(tab.id)}
-                className={`px-3 py-1.5 text-[11px] font-black uppercase border-b-2 -mb-px transition-none focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
+                className={`px-3 py-1.5 text-[11px] font-semibold border-b-2 -mb-px transition-none focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white ${
                   isDisabled
                     ? 'opacity-40 cursor-not-allowed text-neutral-600 border-b-transparent hover:text-neutral-600'
                     : isActive
@@ -108,6 +108,14 @@ interface SummaryStrategicProps {
   showSkeleton?: boolean;
 }
 
+/** Thin caption above a row of cards. */
+const RowCaption = ({ children }: { children: React.ReactNode }) => (
+  <div className="px-3 py-1 bg-surface border-y border-line flex items-center gap-1.5 shrink-0">
+    <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" aria-hidden="true" />
+    <span className="text-[11px] font-semibold text-ink-muted">{children}</span>
+  </div>
+);
+
 export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrategicProps) => {
   const [activeTab, setActiveTab] = useState<AnalysisTabId>('strategic');
   const tabsId = useId();
@@ -115,45 +123,41 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
     role: 'tabpanel' as const,
     id: `${tabsId}-panel-${id}`,
     'aria-labelledby': `${tabsId}-tab-${id}`,
-    'aria-hidden': effectiveTab !== id,
   });
 
   const {
     totalIncome, totalSavings, netCashflow, savingsRate, showForecasting,
-    dailyAvg, foodPercentage, foodTotal, foodDailyAvg, foodPctOfIncome,
+    dailyAvg, livingDailyAvg, foodPercentage, foodTotal, foodDailyAvg, foodPctOfIncome,
     foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
-    variableTotal, fixedTotal, topWantCategories,
-    rentPercentage, rentTotal, rentSub, datesInPeriod,
+    wantTotal, needTotal, topWantCategories,
+    rentPercentage, rentTotal, rentSub, datesInPeriod, elapsedDays,
     subscriptionTotal, subscriptionPctOfIncome, subscriptionPercentage,
     subscriptionCount, topSubscriptionServices
   } = analytics;
 
-  const periodDays  = Math.max(1, datesInPeriod?.length || 1);
-  const totalExpense = fixedTotal + variableTotal;
-  const dailyVictory  = netCashflow / periodDays;
-  const dailyIncome   = totalIncome / periodDays;
-  const dailyFixed    = fixedTotal / periodDays;
-  const dailyVariable = variableTotal / periodDays;
-  const dailySavings  = totalSavings / periodDays;
+  // Every per-day figure divides by the days that have passed (the whole period once it is over).
+  const days = Math.max(1, elapsedDays ?? datesInPeriod?.length ?? 1);
+  const hasIncome = totalIncome > 0;
 
   const rentPercentageNum = Number.parseFloat(String(rentPercentage)) || 0;
-  const lifestyleRatio    = totalIncome > 0 ? ((variableTotal / totalIncome) * 100) : 0;
+  const lifestyleRatio    = hasIncome ? (wantTotal / totalIncome) * 100 : 0;
 
   // The dashboard's only grade — thresholds come from BUDGET_RULES, the same ones the cards colour by.
   const { breaches, grade } = gradeBudget({
     rentPct: rentPercentageNum,
-    subscriptionPct: Number.parseFloat(String(totalIncome > 0 ? subscriptionPctOfIncome : subscriptionPercentage)) || 0,
-    hasIncome: totalIncome > 0,
+    subscriptionPct: Number.parseFloat(String(hasIncome ? subscriptionPctOfIncome : subscriptionPercentage)) || 0,
+    hasIncome,
     lifestylePct: lifestyleRatio,
     foodPctOfExpense: Number.parseFloat(String(foodPercentage)) || 0,
     surplusPct: savingsRate,
     netCashflow,
   });
+  // Shown on every tab: it is the verdict for the period, not a detail of the overview.
   const gradePill = !showSkeleton && (
     <span className="flex items-center gap-2 pr-2 text-[11px] text-ink-muted">
       {breaches.length > 0 && <span className="hidden md:inline">เกินเกณฑ์ [ {breaches.join(' · ')} ]</span>}
       <span
-        className={`px-2 py-0.5 rounded-pill border font-black ${grade.cls}`}
+        className={`${PILL} px-2 font-bold ${grade.cls}`}
         title={breaches.length ? `เกินเกณฑ์ ${breaches.length} ด้าน` : 'ทุกด้านอยู่ในเกณฑ์'}
       >
         เกรด {grade.g} · {grade.label}
@@ -163,11 +167,7 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
 
   const isSingleMonthView = Boolean(analytics.isSingleMonthView);
   const tabItems: AnalysisTabItem[] = [
-    {
-      id: 'strategic',
-      label: 'ภาพรวมการใช้จ่าย',
-      disabled: false,
-    },
+    { id: 'strategic', label: 'ภาพรวมการใช้จ่าย' },
     {
       id: 'forecast',
       label: 'พยากรณ์สิ้นเดือน',
@@ -186,103 +186,83 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
 
   return (
     <div className="flex flex-col h-full">
-      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} aside={effectiveTab === 'strategic' && gradePill} idBase={tabsId} label="มุมมองสรุปรายจ่าย" />
+      <AnalysisTabHeader activeTab={effectiveTab} tabs={tabItems} onChange={setActiveTab} aside={gradePill} idBase={tabsId} label="มุมมองสรุปรายจ่าย" />
 
-      {/* All tabs' bodies mount concurrently, stacked in the same CSS grid cell
-          ([grid-area:1/1]) like ExpenseProportionGrid, so the container maintains
-          an identical 502px height across all 3 modes with zero layout shift on switch. */}
-      <div className="flex-1 grid">
-        <div
-          className={`[grid-area:1/1] flex flex-col ${effectiveTab === 'strategic' ? '' : 'invisible pointer-events-none'}`}
-          {...panelProps('strategic')}
-        >
-          {/* Row 1: Fixed Burdens & Wants (3 cards) */}
-          <div className="px-3 py-1 bg-surface border-b border-line flex items-center gap-1.5 shrink-0">
-            <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
-            <span className="text-[11px] font-black uppercase text-neutral-500">
-              ภาระคงที่ • พฤติกรรมใช้จ่าย
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-px bg-surface-elevated flex-1">
-            <StrategicRentCard
-              rentPercentageNum={rentPercentageNum}
-              rentTotal={rentTotal}
-              rentSub={rentSub}
-              showSkeleton={showSkeleton}
-            />
-            <StrategicSubscriptionCard
-              subscriptionTotal={subscriptionTotal}
-              subscriptionPctOfIncome={subscriptionPctOfIncome}
-              subscriptionPercentage={subscriptionPercentage}
-              subscriptionCount={subscriptionCount}
-              topSubscriptionServices={topSubscriptionServices}
-              totalIncome={totalIncome}
-              showSkeleton={showSkeleton}
-            />
-            <StrategicLifestyleCard
-              lifestyleRatio={lifestyleRatio}
-              variableTotal={variableTotal}
-              topWantCategories={topWantCategories}
-              showSkeleton={showSkeleton}
-            />
-          </div>
+      {/* Only the open tab is mounted, so hidden charts cost nothing; the panel's minimum height
+          (PANEL_FRAME in SummaryCards) keeps a tab switch from moving the page. */}
+      <div className="flex-1 flex flex-col">
+        {effectiveTab === 'strategic' && (
+          <div className="flex-1 flex flex-col" {...panelProps('strategic')}>
+            <RowCaption>สัดส่วนเทียบเกณฑ์งบ</RowCaption>
+            <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-px bg-line flex-1">
+              <StrategicRentCard
+                rentPercentageNum={rentPercentageNum}
+                rentTotal={rentTotal}
+                rentSub={rentSub}
+                hasIncome={hasIncome}
+                showSkeleton={showSkeleton}
+              />
+              <StrategicSubscriptionCard
+                subscriptionTotal={subscriptionTotal}
+                subscriptionPctOfIncome={subscriptionPctOfIncome}
+                subscriptionPercentage={subscriptionPercentage}
+                subscriptionCount={subscriptionCount}
+                topSubscriptionServices={topSubscriptionServices}
+                totalIncome={totalIncome}
+                showSkeleton={showSkeleton}
+              />
+              <StrategicLifestyleCard
+                lifestyleRatio={lifestyleRatio}
+                wantTotal={wantTotal}
+                topWantCategories={topWantCategories}
+                hasIncome={hasIncome}
+                showSkeleton={showSkeleton}
+              />
+            </div>
 
-          {/* Row 2: Daily Velocity (2 cards) */}
-          <div className="px-3 py-1 bg-surface border-y border-line flex items-center gap-1.5 shrink-0">
-            <span className="w-[3px] h-2.5 bg-neutral-600 shrink-0" />
-            <span className="text-[11px] font-black uppercase text-neutral-500">
-              จังหวะรายวัน
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-px bg-surface-elevated flex-1">
-            <StrategicFoodCard
-              foodDailyAvg={foodDailyAvg}
-              foodTotal={foodTotal}
-              foodPercentage={foodPercentage}
-              foodPctOfIncome={foodPctOfIncome}
-              foodWorkdayAvg={foodWorkdayAvg}
-              foodHolidayAvg={foodHolidayAvg}
-              maxFoodDayAmount={maxFoodDayAmount}
-              showSkeleton={showSkeleton}
-            />
-            <StrategicDailyExpenseCard
-              dailyAvg={dailyAvg}
-              totalExpense={totalExpense}
-              dailyWorkdayAvg={dailyWorkdayAvg}
-              dailyHolidayAvg={dailyHolidayAvg}
-              dailyFixed={dailyFixed}
-              dailyVariable={dailyVariable}
-              showSkeleton={showSkeleton}
-            />
-          </div>
+            <RowCaption>ค่าอาหารและจังหวะรายวัน</RowCaption>
+            <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-px bg-line flex-1">
+              <StrategicFoodCard
+                foodDailyAvg={foodDailyAvg}
+                foodTotal={foodTotal}
+                foodPercentage={foodPercentage}
+                foodPctOfIncome={foodPctOfIncome}
+                foodWorkdayAvg={foodWorkdayAvg}
+                foodHolidayAvg={foodHolidayAvg}
+                maxFoodDayAmount={maxFoodDayAmount}
+                showSkeleton={showSkeleton}
+              />
+              <StrategicDailyExpenseCard
+                dailyAvg={dailyAvg}
+                livingDailyAvg={livingDailyAvg}
+                hasRent={rentTotal > 0}
+                dailyWorkdayAvg={dailyWorkdayAvg}
+                dailyHolidayAvg={dailyHolidayAvg}
+                elapsedDays={days}
+                showSkeleton={showSkeleton}
+              />
+            </div>
 
-          {/* Verdict: the bottom-line answer, given distinct full-width weight instead of co-equal card treatment */}
-          <div className="shrink-0">
+            {/* Verdict: the bottom-line answer, given distinct full-width weight instead of co-equal card treatment */}
             <StrategicVictoryCard
-              dailyVictory={dailyVictory}
-              periodDays={periodDays}
-              dailyIncome={dailyIncome}
-              dailyFixed={dailyFixed}
-              dailyVariable={dailyVariable}
-              dailySavings={dailySavings}
+              dailyLeft={netCashflow / days}
+              elapsedDays={days}
+              dailyIncome={totalIncome / days}
+              dailyNeed={needTotal / days}
+              dailyWant={wantTotal / days}
+              dailySavings={totalSavings / days}
               showSkeleton={showSkeleton}
             />
           </div>
-        </div>
+        )}
 
-        {showForecasting && (
-          <div
-            className={`[grid-area:1/1] ${effectiveTab === 'forecast' ? '' : 'invisible pointer-events-none'}`}
-            {...panelProps('forecast')}
-          >
+        {showForecasting && effectiveTab === 'forecast' && (
+          <div className="flex-1" {...panelProps('forecast')}>
             <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
           </div>
         )}
-        {isSingleMonthView && (
-          <div
-            className={`[grid-area:1/1] ${effectiveTab === 'ghost' ? '' : 'invisible pointer-events-none'}`}
-            {...panelProps('ghost')}
-          >
+        {isSingleMonthView && effectiveTab === 'ghost' && (
+          <div className="flex-1" {...panelProps('ghost')}>
             <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
           </div>
         )}

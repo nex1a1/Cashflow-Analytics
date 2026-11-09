@@ -73,6 +73,86 @@ describe('ghostPacerHelpers', () => {
   });
 });
 
+describe('gap drivers', () => {
+  const info = (id: string) => ({ name: id.toUpperCase() });
+  const pacer = (categoryDailySum: Record<string, Record<string, number>>, filterPeriod = '2026-09', globalDailySum: Record<string, number> = {}) =>
+    calculateGhostPacerData({ globalDailySum, filterPeriod, isCurrentMonth: false, projectedExpense: 0, categoryDailySum, categoryInfo: info });
+
+  it('nothing to compare with: no causes to claim', () => {
+    const g = pacer({ a: { '2026-09-02': 100 } }, '2026-09', { '2026-09-02': 100 });
+    expect(g.gapDrivers).toEqual([]);
+    expect(g.gapOthers).toBe(0);
+  });
+
+  it('a category that did not change is not a cause', () => {
+    const g = pacer(
+      { a: { '2026-09-02': 100, '2026-08-02': 100 }, b: { '2026-09-02': 50 } },
+      '2026-09', { '2026-09-02': 150, '2026-08-02': 100 },
+    );
+    expect(g.gapDrivers.map(d => d.id)).toEqual(['b']);
+  });
+
+  it('a shorter last month counts all of its days', () => {
+    const g = pacer(
+      { a: { '2026-03-31': 100, '2026-02-28': 40 } },
+      '2026-03', { '2026-03-31': 100, '2026-02-28': 40 },
+    );
+    expect(g.gapDrivers[0]).toMatchObject({ current: 100, previous: 40, delta: 60 });
+  });
+
+  it('pay cycles compare cycle against cycle', () => {
+    const g = pacer(
+      { a: { '2026-08-25': 300, '2026-07-25': 200, '2026-07-24': 999 } },
+      'cycle:2026-08', { '2026-08-25': 300, '2026-07-25': 200, '2026-07-24': 999 },
+    );
+    expect(g.gapDrivers[0]).toMatchObject({ current: 300, previous: 200 });
+  });
+
+  it('equal swings keep a stable order', () => {
+    const g = pacer(
+      { b: { '2026-09-02': 100 }, a: { '2026-08-02': 100 }, c: { '2026-09-03': 10 } },
+      '2026-09', { '2026-09-02': 100, '2026-09-03': 10, '2026-08-02': 100 },
+    );
+    expect(g.gapDrivers.map(d => d.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('floating-point dust is neither a cause nor a remainder', () => {
+    const g = pacer(
+      { a: { '2026-09-02': 0.1 + 0.2, '2026-08-02': 0.3 } },
+      '2026-09', { '2026-09-02': 0.1 + 0.2, '2026-08-02': 0.3 },
+    );
+    expect(g.gapDrivers).toEqual([]);
+    expect(g.gapOthers).toBe(0);
+  });
+
+  it('without category data the comparison still works', () => {
+    const g = calculateGhostPacerData({ globalDailySum: { '2026-08-02': 100 }, filterPeriod: '2026-09', isCurrentMonth: false, projectedExpense: 0 });
+    expect(g.gapDrivers).toEqual([]);
+  });
+});
+
+describe('finished months', () => {
+  it('use the real total instead of a forecast', () => {
+    const pacer = calculateGhostPacerData({
+      globalDailySum: { '2026-09-05': 3000, '2026-08-05': 2000 },
+      filterPeriod: '2026-09', isCurrentMonth: false, projectedExpense: 0,
+    });
+    expect(pacer.isCurrentMonth).toBe(false);
+    expect(pacer.projectedExpense).toBe(3000);
+    expect(pacer.deltaEom).toBe(1000);
+  });
+
+  it('the current month passes its forecast through', () => {
+    const pacer = calculateGhostPacerData({
+      globalDailySum: { '2026-09-05': 3000, '2026-08-05': 2000 },
+      filterPeriod: '2026-09', isCurrentMonth: true, projectedExpense: 9000,
+    });
+    expect(pacer.isCurrentMonth).toBe(true);
+    expect(pacer.projectedExpense).toBe(9000);
+    expect(pacer.deltaEom).toBe(7000);
+  });
+});
+
 describe('paceTone', () => {
   it('green when clearly lower, yellow within ±5%, red when clearly higher', () => {
     expect(paceTone(-100, 1000)).toBe('LEAD');

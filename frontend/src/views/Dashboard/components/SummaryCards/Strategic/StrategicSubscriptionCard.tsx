@@ -1,7 +1,9 @@
 import { memo } from 'react';
 import { Repeat } from 'lucide-react';
-import { formatBaht } from '@/utils/formatters';
-import { Shimmer, renderTopItemsOverlay, BUDGET_RULES, WARN_AT, OverBadge } from '../helpers';
+import {
+  Shimmer, renderTopItemsOverlay, BUDGET_RULES, LevelBadge, ruleLevel, ruleEdge, CARD_TONES,
+  RuleHero, RuleFooter, PILL, NEUTRAL_PILL,
+} from '../helpers';
 import { StrategicCardShell } from './StrategicCardShell';
 import type { SubscriptionService, BreakdownEntry } from '../types';
 
@@ -15,6 +17,8 @@ interface SubscriptionCardProps {
   showSkeleton?: boolean;
 }
 
+const tone = CARD_TONES.subscription;
+
 export const StrategicSubscriptionCard = memo(({
   subscriptionTotal = 0,
   subscriptionPctOfIncome = 0,
@@ -24,35 +28,14 @@ export const StrategicSubscriptionCard = memo(({
   totalIncome = 0,
   showSkeleton
 }: SubscriptionCardProps) => {
-  const subPctNum    = Number.parseFloat(String(subscriptionPctOfIncome)) || 0;
-  const subExpPctNum = Number.parseFloat(String(subscriptionPercentage)) || 0;
+  // With no income the share falls back to expense, against its own (looser) rule.
   const isIncomeBased = totalIncome > 0;
-  const displayPct    = isIncomeBased ? subPctNum : subExpPctNum;
+  const displayPct = Number.parseFloat(String(isIncomeBased ? subscriptionPctOfIncome : subscriptionPercentage)) || 0;
+  const max = isIncomeBased ? BUDGET_RULES.subscription.max : BUDGET_RULES.subscriptionExp.max;
+  const base = isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย';
+  const level = ruleLevel(displayPct, max);
 
-  const maxPct     = isIncomeBased ? BUDGET_RULES.subscription.max : BUDGET_RULES.subscriptionExp.max;
-  const isLeak     = displayPct > maxPct;
-  const isModerate = displayPct > maxPct * WARN_AT;
-
-  let statusBadge = {
-    label: 'ปลอดภัย',    cls: 'text-purple-400 border-purple-500/30 bg-purple-950/40',
-    borderLeft: 'border-l-purple-500', barBg: 'bg-purple-500', colorText: 'text-purple-400'
-  };
-  if (isLeak) {
-    statusBadge = {
-      label: 'สูงไป', cls: 'text-danger border-danger/30 bg-danger/10',
-      borderLeft: 'border-l-danger', barBg: 'bg-danger', colorText: 'text-danger'
-    };
-  } else if (isModerate) {
-    statusBadge = {
-      label: 'ปานกลาง',   cls: 'text-amber-400 border-amber-400/30 bg-amber-950/40',
-      borderLeft: 'border-l-amber-500', barBg: 'bg-amber-500', colorText: 'text-amber-400'
-    };
-  }
-
-  const barWidth = Math.min(100, Math.max(displayPct > 0 ? 5 : 0, (displayPct / maxPct) * 100));
-
-  const services = [...(topSubscriptionServices ?? [])].slice(0, 4);
-  const serviceEntries: BreakdownEntry[] = services.map((s, idx) => ({
+  const serviceEntries: BreakdownEntry[] = topSubscriptionServices.slice(0, 4).map((s, idx) => ({
     key: idx,
     icon: s.icon,
     label: s.name,
@@ -63,47 +46,23 @@ export const StrategicSubscriptionCard = memo(({
   return (
     <StrategicCardShell
       icon={Repeat}
-      borderColorClass={statusBadge.borderLeft}
-      hoverBgClass="hover:bg-surface-hover"
+      edgeClass={ruleEdge(level)}
       label="บริการรายเดือน"
-      badge={!showSkeleton && isLeak && <OverBadge />}
-      thresholdRow={!showSkeleton && (
-        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 leading-none">
-          <span>เกณฑ์แนะนำ</span>
-          <span className="text-white font-bold">
-            &lt; {maxPct}% {isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย'}
-          </span>
-        </div>
-      )}
+      badge={!showSkeleton && <LevelBadge level={level} />}
+      thresholdRow={!showSkeleton && <RuleFooter max={max} base={base} />}
       showOverlay={!showSkeleton}
-      overlayTitle="เจาะลึกรายเดือน"
-      overlayBadge={<span className={`font-extrabold text-[11px] border px-1.5 py-0.5 rounded-pill leading-none whitespace-nowrap shrink-0 ${statusBadge.cls}`}>{statusBadge.label} · {subscriptionCount} รายการ</span>}
+      overlayTitle="บริการที่จ่ายมากสุด"
+      overlayBadge={subscriptionCount > 0 && <span className={`${PILL} ${NEUTRAL_PILL}`}>{subscriptionCount} รายการ</span>}
       overlayBody={(
-        <div className="grid grid-cols-2 gap-px bg-neutral-800/50 mt-1.5 flex-1">
-          {renderTopItemsOverlay(serviceEntries, 'ไม่มีข้อมูลรายเดือน', Repeat, 'text-purple-400', 'ยอดรวมทั้งหมด', subscriptionTotal)}
+        <div className="grid grid-cols-2 gap-px bg-line mt-1.5 flex-1">
+          {renderTopItemsOverlay(serviceEntries, 'ไม่มีข้อมูลรายเดือน', Repeat, tone.text, 'ยอดรวมทั้งหมด', subscriptionTotal)}
         </div>
       )}
     >
       {showSkeleton ? (
         <Shimmer className="h-8 w-28 my-1" />
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className={`text-2xl xl:text-3xl font-black tabular-nums tracking-tight leading-none ${statusBadge.colorText}`}>
-              {displayPct.toFixed(1)}%
-              <span className="text-xs text-neutral-400 font-normal ml-1">{isIncomeBased ? 'ของรายรับ' : 'ของรายจ่าย'}</span>
-            </div>
-            <div className="text-xs font-mono font-bold text-neutral-400 tabular-nums">
-              {formatBaht(subscriptionTotal)}
-            </div>
-          </div>
-          <div className="w-full h-1 rounded-none bg-neutral-900 border border-neutral-800/80 overflow-hidden relative">
-            <div
-              className={`h-full absolute left-0 top-0 transition-none ${showSkeleton ? 'bg-slate-700 animate-pulse' : statusBadge.barBg}`}
-              style={{ width: `${barWidth}%` }}
-            />
-          </div>
-        </div>
+        <RuleHero pct={displayPct} base={base} amount={subscriptionTotal} max={max} level={level} tone={tone} />
       )}
     </StrategicCardShell>
   );

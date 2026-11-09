@@ -1,6 +1,7 @@
 // Pure dashboard aggregation: one pass over the transactions → every total, map and breakdown useAnalytics returns.
 import { TransactionDisplay, Category, CashflowGroup, DayType } from '../types';
-import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj } from './dateHelpers';
+import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj, periodUnitDates } from './dateHelpers';
+import { findRecurring, unitKeyOf } from './recurring';
 import { createCategoryMap, calculateDayTypeCounts, CashflowMonthData } from './analyticsHelpers';
 import { calculateGhostPacerData } from './ghostPacerHelpers';
 import { BUDGET_RULES, WARN_AT } from '../constants/budgetRules';
@@ -41,6 +42,18 @@ type AnalyticsState = ReturnType<typeof createInitialAnalyticsState>;
 type Totals = AnalyticsState['totals'];
 type StateRef = AnalyticsState['stateRef'];
 type GroupMeta = ReturnType<typeof resolveCashflowGroups>;
+type TxKinds = ReturnType<typeof classifyTx>;
+
+/**
+ * Forecast pace: a day above this share of the spending days of the 3 units before is "big", and early in the month only
+ * its usual part carries over the remaining days. Chosen by backtest on real months (day-5 error 67% → 21%, later days no worse).
+ */
+const USUAL_DAY_PERCENTILE = 0.9;
+/** Fewer spending days than this say nothing about a usual day: every day then counts in full. */
+const USUAL_DAY_MIN_HISTORY = 20;
+const HISTORY_UNITS = 3;
+/** One earlier month is a data point, not a range. */
+const RANGE_MIN_UNITS = 2;
 
 interface AggregationOptions {
   filterPeriod: string;
@@ -178,10 +191,12 @@ function accumulateSavingsItem(amt: number, isoDate: string, ym: string, cGroup:
   }
 }
 
-function accumulateDayOfWeekStats(amt: number, isoDate: string, isFood: boolean, totals: Totals) {
+/** Rent is a lump on the day it is paid, so it stays out of the work-day / day-off split (it would just mark that weekday as heavier). */
+function accumulateDayOfWeekStats(amt: number, isoDate: string, isFood: boolean, isRent: boolean, totals: Totals) {
   const dateObj = parseDateStrToObj(isoDate);
   const dow = dateObj.getDay();
   totals.dayOfWeekMap[dow] += amt;
+  if (isRent) return;
   if (dow === 0 || dow === 6) {
     totals.weekend += amt;
     if (isFood) totals.foodWeekend += amt;
@@ -194,35 +209,93 @@ function accumulateDayOfWeekStats(amt: number, isoDate: string, isFood: boolean,
   }
 }
 
+/** Rows that come every month (utils/recurring) but have none yet in the unit holding today: bills that fix the forecast, income that fixes the ceiling. */
+function findExpectedRows(transactions: TransactionDisplay[], catMapLookup: CatLookup, opts: Pick<AggregationOptions, 'filterPeriod' | 'cashflowGroups' | 'groupMeta'>) {
+  const expected = { fixed: 0, rent: 0, income: 0, fixedItems: [] as { name: string; amount: number }[] };
+  const today = localTodayIso();
+  const cycle = isCyclePeriod(opts.filterPeriod);
+  const lastUnit = shiftMonth(unitKeyOf(today, cycle), -1);
+  for (const item of findRecurring(transactions, today, cycle)) {
+    if (unitKeyOf(item.lastDate, cycle) !== lastUnit) continue; // skipped last month: it has stopped, not gone unlogged
+    if (item.recordedOn) continue;
+    const ctx = resolveTransactionContext({ category_id: item.categoryId, amount: item.amount } as TransactionDisplay, catMapLookup, opts.cashflowGroups, opts.groupMeta.fallbackExpId);
+    const { isRent, isSubscription } = classifyTx(ctx, opts.groupMeta);
+    if (ctx.isInc) {
+      expected.income += item.amount;
+    } else if (ctx.isExp && (isRent || isSubscription)) {
+      expected.fixed += item.amount;
+      if (isRent) expected.rent += item.amount;
+      expected.fixedItems.push({ name: ctx.catObj.name || 'อื่นๆ', amount: item.amount });
+    }
+  }
+  return expected;
+}
+
+/** The dates of each month / pay cycle before this one, nearest first. */
+function earlierUnits(filterPeriod: string) {
+  const key = stripCycle(filterPeriod);
+  const cycle = isCyclePeriod(filterPeriod);
+  return Array.from({ length: HISTORY_UNITS }, (_, i) => periodUnitDates(shiftMonth(key, -(i + 1)), cycle));
+}
+
+/** Per-day living spend after day `currentDay` of each earlier unit that had any living spend at all. */
+function restOfUnitPaces(livingDailySum: Record<string, number>, filterPeriod: string, currentDay: number) {
+  return earlierUnits(filterPeriod)
+    .filter(dates => dates.some(d => (livingDailySum[d] || 0) > 0))
+    .map(dates => dates.slice(currentDay))
+    .filter(rest => rest.length > 0)
+    .map(rest => rest.reduce((sum, d) => sum + (livingDailySum[d] || 0), 0) / rest.length);
+}
+
+/** The most a usual day costs, from the units before this one; Infinity without enough history. */
+function usualDayLimit(livingDailySum: Record<string, number>, filterPeriod: string) {
+  const spends = earlierUnits(filterPeriod)
+    .flat()
+    .map(d => livingDailySum[d] || 0)
+    .filter(v => v > 0)
+    .sort((a, b) => a - b);
+  return spends.length < USUAL_DAY_MIN_HISTORY ? Infinity : spends[Math.floor(spends.length * USUAL_DAY_PERCENTILE)];
+}
+
 function calculateForecastingDetails({
   isCurrentMonth,
   datesInPeriod,
   totals,
-  expenseUpToToday,
-  rentUpToToday,
+  filterPeriod,
+  forecastRef,
+  expected,
   dailySumMap,
+  livingDailySum,
 }: {
   isCurrentMonth: boolean;
   datesInPeriod: string[];
   totals: Totals;
-  expenseUpToToday: number;
-  rentUpToToday: number;
+  filterPeriod: string;
+  forecastRef: AnalyticsState['forecastRef'];
+  expected: ReturnType<typeof findExpectedRows>;
   dailySumMap: Record<string, number>;
+  livingDailySum: Record<string, number>;
 }) {
   if (!isCurrentMonth || datesInPeriod.length === 0) {
-    return { showForecasting: false, effectiveDays: datesInPeriod.length || 1, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
+    return { showForecasting: false, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0, committedExpense: 0, dailyPace: 0 };
   }
 
   // day N = N-th day of the month / pay cycle (datesInPeriod is the full unit for single-month views)
   const lastDayOfMonth = datesInPeriod.length;
   const currentDay = Math.max(1, datesInPeriod.indexOf(localTodayIso()) + 1);
   const remainingDays = Math.max(0, lastDayOfMonth - currentDay); // 0 on the last day: today is already counted in the run rate
-  const effectiveDays = datesInPeriod.length || 1;
   const monthProgressPct = (currentDay / lastDayOfMonth) * 100;
 
-  const fixedCommitment = totals.rent;
-  const dailyLivingUpToToday = Math.max(0, expenseUpToToday - rentUpToToday);
-  const dailyLivingRunRate = dailyLivingUpToToday / currentDay;
+  const income = totals.income + expected.income;
+  const fixedCommitment = forecastRef.fixedTotal + expected.fixed;
+  const dailyLivingUpToToday = Math.max(0, forecastRef.expenseUpToToday - forecastRef.fixedUpToToday);
+
+  // Pace carried over the remaining days: the big-day part fades in as the month shows whether such days keep coming.
+  const limit = usualDayLimit(livingDailySum, filterPeriod);
+  const bigDayExcess = datesInPeriod.slice(0, currentDay).reduce((sum, d) => sum + Math.max(0, (livingDailySum[d] || 0) - limit), 0);
+  const realPace = dailyLivingUpToToday / currentDay;
+  const dailyLivingRunRate = realPace - (bigDayExcess / currentDay) * (1 - currentDay / lastDayOfMonth);
+  const oneOffExcluded = dailyLivingUpToToday - dailyLivingRunRate * currentDay;
   const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
 
   // Real per-day cumulative spend (day 1 -> today), sourced from actual transactions rather
@@ -234,16 +307,19 @@ function calculateForecastingDetails({
     actualDailySeries.push(runningSpend);
   }
   const projectedExpense = fixedCommitment + dailyLivingUpToToday + projectedLivingRemaining;
-  const projectedSurplus = totals.income - projectedExpense;
-  const projectedSurplusPct = totals.income > 0 ? (projectedSurplus / totals.income) * 100 : 0;
+  const projectedSurplus = income - projectedExpense;
+  const projectedSurplusPct = income > 0 ? (projectedSurplus / income) * 100 : 0;
 
-  const remainingBudget = totals.income - fixedCommitment - dailyLivingUpToToday;
+  const remainingBudget = income - fixedCommitment - dailyLivingUpToToday;
   const daysToBudget = Math.max(1, remainingDays); // never divide by 0
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
   // Warn before the deficit: at this pace, does the month still end with the leftover target (BUDGET_RULES, same as the grade)?
   // ("rate > safe-to-spend" is the same condition as "projected deficit", so it could never warn early.)
   const target = BUDGET_RULES.surplus.min;
+  const targetExpense = income - (income * target) / 100;
+  const targetShortfall = Math.max(0, projectedExpense - targetExpense);
+  const safeToSpendForTarget = Math.max(0, targetExpense - fixedCommitment - dailyLivingUpToToday) / daysToBudget;
   let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
   if (projectedSurplus < 0) {
     paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
@@ -262,8 +338,14 @@ function calculateForecastingDetails({
     eomStatus = { code: 'STABLE', label: 'พอดีตัว', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
-  const maxAllowedExpense = totals.income;
-  const requiredReduction = projectedExpense > totals.income ? projectedExpense - totals.income : 0;
+  const committedExpense = fixedCommitment + dailyLivingUpToToday;
+  const paces = [dailyLivingRunRate, ...restOfUnitPaces(livingDailySum, filterPeriod, currentDay)];
+  const projectedRange = remainingDays > 0 && paces.length > RANGE_MIN_UNITS
+    ? { low: committedExpense + Math.min(...paces) * remainingDays, high: committedExpense + Math.max(...paces) * remainingDays }
+    : null;
+
+  const maxAllowedExpense = income;
+  const requiredReduction = projectedExpense > income ? projectedExpense - income : 0;
   const requiredDailyReduction = dailyLivingRunRate > safeToSpend ? dailyLivingRunRate - safeToSpend : 0;
 
   const forecastingDetails = {
@@ -285,17 +367,34 @@ function calculateForecastingDetails({
     requiredDailyReduction,
     actualDailySeries,
     paceStatus,
-    eomStatus
+    eomStatus,
+    pendingFixed: expected.fixed,
+    pendingFixedItems: expected.fixedItems,
+    estimatedIncome: expected.income,
+    oneOffExcluded,
+    targetExpense,
+    targetShortfall,
+    safeToSpendForTarget,
+    projectedRange,
   };
 
-  return { showForecasting: true, effectiveDays, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus };
+  return {
+    showForecasting: true, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus,
+    committedExpense,
+    dailyPace: dailyLivingRunRate,
+  };
 }
 
-function trackTrendAndGlobal(isoDate: string, txContext: TxContext, startPrev: string | null, endPrev: string | null, state: AnalyticsState) {
-  const { amt, isExp, isInc } = txContext;
-  const { globalDailySum, prevTotals } = state;
+function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKinds, startPrev: string | null, endPrev: string | null, state: AnalyticsState) {
+  const { amt, catId, isExp, isInc } = txContext;
+  const { globalDailySum, globalNoRentDailySum, globalLivingDailySum, globalCatDailySum, rentCatIds, prevTotals } = state;
   if (isExp) {
     globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
+    const catDays = (globalCatDailySum[catId] ??= {});
+    catDays[isoDate] = (catDays[isoDate] || 0) + amt;
+    if (kinds.isRent) rentCatIds.add(catId);
+    if (!kinds.isRent) globalNoRentDailySum[isoDate] = (globalNoRentDailySum[isoDate] || 0) + amt;
+    if (!kinds.isRent && !kinds.isSubscription) globalLivingDailySum[isoDate] = (globalLivingDailySum[isoDate] || 0) + amt;
   }
   if (startPrev && endPrev && isoDate >= startPrev && isoDate <= endPrev) {
     prevTotals.txCount = (prevTotals.txCount || 0) + 1;
@@ -304,16 +403,18 @@ function trackTrendAndGlobal(isoDate: string, txContext: TxContext, startPrev: s
   }
 }
 
-function trackForecastingUpToToday(
-  isoDate: string, txContext: TxContext, isRent: boolean, isFood: boolean,
+/** Rent and subscriptions are paid once however many days are left: fixed for the whole unit, rows dated ahead included. */
+function trackForecasting(
+  isoDate: string, txContext: TxContext, kinds: TxKinds,
   isCurrentMonth: boolean, todayStr: string, forecastRef: AnalyticsState['forecastRef'],
 ) {
-  const { amt, isExp, isNeed } = txContext;
-  if (isCurrentMonth && isoDate <= todayStr && isExp) {
+  const { amt, isExp } = txContext;
+  if (!isCurrentMonth || !isExp) return;
+  const isFixed = kinds.isRent || kinds.isSubscription;
+  if (isFixed) forecastRef.fixedTotal += amt;
+  if (isoDate <= todayStr) {
     forecastRef.expenseUpToToday += amt;
-    if (!isNeed) forecastRef.variableUpToToday += amt;
-    if (isRent) forecastRef.rentUpToToday += amt;
-    if (isFood) forecastRef.foodUpToToday += amt;
+    if (isFixed) forecastRef.fixedUpToToday += amt;
   }
 }
 
@@ -346,6 +447,14 @@ function isSubscriptionCategory(cGroupId: GroupId, subscriptionGroupId: string |
   if (lowerGroupName.includes('บริการรายเดือน') || lowerGroupName.includes('subscription') || lowerGroupName.includes('รายเดือน')) return true;
   if (lowerCatName.includes('ซอฟต์แวร์') || lowerCatName.includes('สมาชิกช้อปปิ้ง') || lowerCatName.includes('สตรีมมิ่ง') || lowerCatName.includes('subscription')) return true;
   return false;
+}
+
+function classifyTx({ cGroupId, groupName, catObj }: TxContext, groupMeta: GroupMeta) {
+  return {
+    isFood: isFoodCategory(cGroupId, groupMeta.foodGroupId, groupName),
+    isRent: isRentCategory(cGroupId, groupMeta.rentGroupId, groupName),
+    isSubscription: isSubscriptionCategory(cGroupId, groupMeta.subscriptionGroupId, groupName, catObj?.name),
+  };
 }
 
 function resolveFallbackGroupId(cGroupId: GroupId, isInc: boolean, isSav: boolean, groupMeta: GroupMeta) {
@@ -388,11 +497,12 @@ function accumulateExpenseItem(
   }
 }
 
-function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: TxContext, opts: AggregationOptions, state: AnalyticsState) {
-  if (!isDateInFilter(isoDate, opts.filterPeriod)) return null;
+function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: TxContext, kinds: TxKinds, opts: AggregationOptions, state: AnalyticsState) {
+  if (!isDateInFilter(isoDate, opts.filterPeriod)) return false;
 
-  const { amt, catObj, cGroupId, groupObj, groupName, isInc, isSav, isExp } = txContext;
+  const { amt, cGroupId, groupObj, isInc, isSav, isExp } = txContext;
   const { groupMeta } = opts;
+  const { isFood, isRent } = kinds;
   const { totals, cashflowMap, dayIncomeMap } = state;
   const ym = monthKeyOf(isoDate, opts.filterPeriod);
   state.uniqueMonthsSet.add(ym);
@@ -404,10 +514,6 @@ function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: T
     cashflowMap[ym].groups[cGroup] += amt;
   }
 
-  const isFood = isFoodCategory(cGroupId, groupMeta.foodGroupId, groupName);
-  const isRent = isRentCategory(cGroupId, groupMeta.rentGroupId, groupName);
-  const isSubscription = isSubscriptionCategory(cGroupId, groupMeta.subscriptionGroupId, groupName, catObj?.name);
-
   if (isInc) {
     totals.income += amt;
     cashflowMap[ym].income += amt;
@@ -415,14 +521,14 @@ function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: T
   } else if (isSav) {
     accumulateSavingsItem(amt, isoDate, ym, cGroup, groupObj, state.stateRef);
   } else {
-    accumulateExpenseItem(t, txContext, ym, isoDate, cGroup, { isFood, isRent, isSubscription }, opts, state);
+    accumulateExpenseItem(t, txContext, ym, isoDate, cGroup, kinds, opts, state);
   }
 
   if (isExp) {
-    accumulateDayOfWeekStats(amt, isoDate, isFood, totals);
+    accumulateDayOfWeekStats(amt, isoDate, isFood, isRent, totals);
   }
 
-  return { isFood, isRent, isSubscription };
+  return true;
 }
 
 // catMapData already holds only rows that passed the dashboard filter; rows of a deleted category are left out
@@ -551,6 +657,12 @@ function buildAllocationBreakdown(
   }));
 
   return { sortedAllocation };
+}
+
+/** The dates of the period up to and including today; the whole period when it lies entirely in the future. */
+export function elapsedDatesOf(datesInPeriod: string[], todayIso: string): string[] {
+  const past = datesInPeriod.filter(d => d <= todayIso);
+  return past.length > 0 ? past : datesInPeriod;
 }
 
 function calculateWorkdayAndHolidayStats(datesInPeriod: string[], totals: Totals) {
@@ -797,8 +909,12 @@ function createInitialAnalyticsState() {
   const dailyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
   const monthlyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
   const globalDailySum: Record<string, number> = {};
+  const globalNoRentDailySum: Record<string, number> = {};
+  const globalLivingDailySum: Record<string, number> = {};
+  const globalCatDailySum: Record<string, Record<string, number>> = {};
+  const rentCatIds = new Set<string>();
   const prevTotals = { income: 0, expense: 0, net: 0, txCount: 0 };
-  const forecastRef = { expenseUpToToday: 0, variableUpToToday: 0, foodUpToToday: 0, rentUpToToday: 0 };
+  const forecastRef = { expenseUpToToday: 0, fixedUpToToday: 0, fixedTotal: 0 };
 
   const stateRef = {
     totals,
@@ -838,6 +954,10 @@ function createInitialAnalyticsState() {
     dailyAllocMap,
     monthlyAllocMap,
     globalDailySum,
+    globalNoRentDailySum,
+    globalLivingDailySum,
+    globalCatDailySum,
+    rentCatIds,
     prevTotals,
     forecastRef,
     stateRef
@@ -858,11 +978,11 @@ function executeTransactionAggregation(
     if (!isoDate) return;
 
     const txContext = resolveTransactionContext(t, catMapLookup, opts.cashflowGroups, opts.groupMeta.fallbackExpId);
-    trackTrendAndGlobal(isoDate, txContext, startPrev, endPrev, state);
+    const kinds = classifyTx(txContext, opts.groupMeta);
+    trackTrendAndGlobal(isoDate, txContext, kinds, startPrev, endPrev, state);
 
-    const flags = processAnalyticsTx(t, isoDate, txContext, opts, state);
-    if (flags) {
-      trackForecastingUpToToday(isoDate, txContext, flags.isRent, flags.isFood, isCurrentMonth, todayStr, state.forecastRef);
+    if (processAnalyticsTx(t, isoDate, txContext, kinds, opts, state)) {
+      trackForecasting(isoDate, txContext, kinds, isCurrentMonth, todayStr, state.forecastRef);
     }
   });
 }
@@ -946,7 +1066,6 @@ export function computeCoreAnalytics({
   }, state);
 
   const { totals, cashflowMap, prevTotals, forecastRef, stateRef, uniqueMonthsSet } = state;
-  const { expenseUpToToday, rentUpToToday } = forecastRef;
   const chartTotal = stateRef.chartTotal;
   prevTotals.net = prevTotals.income - prevTotals.expense;
 
@@ -971,40 +1090,71 @@ export function computeCoreAnalytics({
 
   const globalMaxThreshold = calculateGlobalMaxThreshold(state.globalDailySum);
   const dayTypeCounts = calculateDayTypeCounts(datesInPeriod, dayTypes || {}, dayTypeConfig || []);
+  // Per-day averages divide by the days that have happened: the current month on day 6 is 6 days of spending, not 30.
+  const elapsedDates = elapsedDatesOf(datesInPeriod, stateRef.todayIso);
+  const elapsedDays = Math.max(1, elapsedDates.length);
   const {
     foodWorkdayAvg,
     foodHolidayAvg,
     dailyWorkdayAvg,
     dailyHolidayAvg,
     maxFoodDayAmount,
-  } = calculateWorkdayAndHolidayStats(datesInPeriod, totals);
+  } = calculateWorkdayAndHolidayStats(elapsedDates, totals);
 
   const topWantCategories = calculateTopWantCategories(state.wantCatMapData, catMapLookup, totals.variable);
   const topSubscriptionServices = calculateTopSubscriptionServices(totals.subscriptionItems, catMapLookup);
   const pcts = calculateFinancialPercentages(totals);
 
+  const expected = windowMeta.isCurrentMonth
+    ? findExpectedRows(transactions, catMapLookup, { filterPeriod, cashflowGroups, groupMeta })
+    : { fixed: 0, rent: 0, income: 0, fixedItems: [] };
+
   const {
     showForecasting,
-    effectiveDays,
     forecastingDetails,
     projectedExpense,
     safeToSpend,
     projectedSurplus,
+    committedExpense,
+    dailyPace,
   } = calculateForecastingDetails({
     isCurrentMonth: windowMeta.isCurrentMonth,
     datesInPeriod,
     totals,
-    expenseUpToToday,
-    rentUpToToday,
+    filterPeriod,
+    forecastRef,
+    expected,
     dailySumMap: state.globalDailySum,
+    livingDailySum: state.globalLivingDailySum,
   });
 
+  const categoryInfo = (id: string) => {
+    const cat = catMapLookup[id];
+    return { name: cat?.name || 'ไม่ระบุหมวด', icon: cat?.icon ?? undefined, color: cat?.color ?? undefined };
+  };
   const ghostPacerDetails = calculateGhostPacerData({
     globalDailySum: state.globalDailySum,
     filterPeriod,
     isCurrentMonth: windowMeta.isCurrentMonth,
     projectedExpense,
+    categoryDailySum: state.globalCatDailySum,
+    categoryInfo,
+    committedExpense,
+    dailyPace,
   });
+  const ghostPacerDetailsNoRent = {
+    ...calculateGhostPacerData({
+      globalDailySum: state.globalNoRentDailySum,
+      filterPeriod,
+      isCurrentMonth: windowMeta.isCurrentMonth,
+      projectedExpense: projectedExpense - totals.rent - expected.rent,
+      categoryDailySum: Object.fromEntries(Object.entries(state.globalCatDailySum).filter(([id]) => !state.rentCatIds.has(id))),
+      categoryInfo,
+      committedExpense: committedExpense - totals.rent - expected.rent,
+      dailyPace,
+    }),
+    hasData: ghostPacerDetails.hasData, // a month of nothing but rent still has a comparison to show
+  };
 
   const monthlyIncomeMap: Record<string, number> = {};
   Object.entries(cashflowMap).forEach(([m, data]) => {
@@ -1020,8 +1170,10 @@ export function computeCoreAnalytics({
     monthlyIncomeMap
   );
 
-  const adjustedDailyAvg = totals.expense / Math.max(1, effectiveDays);
-  const adjustedFoodDailyAvg = totals.food / Math.max(1, effectiveDays);
+  const adjustedDailyAvg = totals.expense / elapsedDays;
+  // Day-to-day spending: rent is a fixed lump, not something the day's choices move.
+  const livingDailyAvg = Math.max(0, totals.expense - totals.rent) / elapsedDays;
+  const adjustedFoodDailyAvg = totals.food / elapsedDays;
 
   return {
     catMapLookup, windowMeta, datesInPeriod, state, totals, prevTotals,
@@ -1032,8 +1184,8 @@ export function computeCoreAnalytics({
     foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
     topWantCategories, topSubscriptionServices, pcts,
     showForecasting, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus,
-    ghostPacerDetails, allocationEvolution,
-    adjustedDailyAvg, adjustedFoodDailyAvg,
+    ghostPacerDetails, ghostPacerDetailsNoRent, allocationEvolution,
+    adjustedDailyAvg, livingDailyAvg, adjustedFoodDailyAvg, elapsedDays,
     useBackendTotals,
   };
 }

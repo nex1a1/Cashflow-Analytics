@@ -54,6 +54,47 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('ForecastingTrajectoryChart: range', () => {
+  const cone = () => container.querySelector('path[data-range]');
+
+  it('fans out from today to both ends of the range, and the legend names it', () => {
+    mount({ projectedRange: { low: 15000, high: 27000 } } as Partial<Props>);
+    const y = (v: number) => BASE - (v / (30000 * 1.12)) * 156;
+    const x = dayX(10);
+    expect(cone()!.getAttribute('d')).toBe(`M ${x} ${y(7000)} L ${dayX(30)} ${y(27000)} L ${dayX(30)} ${y(15000)} Z`);
+    expect(container.textContent).toContain('ช่วงจาก 3 เดือนก่อน');
+  });
+
+  it('a high end above the ceiling still fits on the chart', () => {
+    mount({ projectedRange: { low: 15000, high: 40000 } } as Partial<Props>);
+    const top = BASE - (40000 / (40000 * 1.12)) * 156;
+    expect(cone()!.getAttribute('d')).toContain(`L ${dayX(30)} ${top}`);
+  });
+
+  it('no range: no fan and no legend entry', () => {
+    mount({ projectedRange: null } as Partial<Props>);
+    expect(cone()).toBeNull();
+    expect(container.textContent).not.toContain('ช่วงจาก 3 เดือนก่อน');
+  });
+});
+
+describe('ForecastingTrajectoryChart: 20% target line', () => {
+  it('draws the target with its amount and explains it in the legend', () => {
+    mount({ targetExpense: 24000 } as Partial<Props>);
+    expect(texts()).toContain('เป้าเหลือ 20% ฿24,000.00');
+    expect(container.textContent).toContain('เส้นเป้าเหลือ 20%');
+    const line = container.querySelector('line[data-target]')!;
+    // maxY = 30000 * 1.12 = 33600, plot height 156 → 24000 sits at 176 - (24000 / 33600) * 156
+    expect(Number(line.getAttribute('y1'))).toBeCloseTo(BASE - (24000 / 33600) * 156);
+  });
+
+  it('no income, no target: nothing to draw', () => {
+    mount({ targetExpense: 0 } as Partial<Props>);
+    expect(container.querySelector('line[data-target]')).toBeNull();
+    expect(container.textContent).not.toContain('เส้นเป้าเหลือ');
+  });
+});
+
 describe('ForecastingTrajectoryChart', () => {
   it('labels spend to date, the month-end projection and the ceiling, with quarter marks of the ceiling on the axis', () => {
     mount();

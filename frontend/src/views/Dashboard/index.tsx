@@ -113,7 +113,7 @@ export default function DashboardView(props: DashboardViewProps) {
           <ExpenseProportion />
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-stretch">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-stretch">
           <MainChart />
           <TopTransactions />
         </div>

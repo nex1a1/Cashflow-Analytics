@@ -59,6 +59,34 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('GhostPacerChart: finished month', () => {
+  const finished = { isCurrentMonth: false, currentDay: 31, currentDailySeries: cum(500, 31), projectedExpense: 15500 } as Partial<Props>;
+
+  it('labels the real total and does not call the last day today or this month', () => {
+    mount(finished);
+    expect(texts().some(t => t.startsWith('จบจริง'))).toBe(true);
+    expect(texts().some(t => t.includes('คาดจบ'))).toBe(false);
+    expect(texts().filter(t => t.includes('วันนี้'))).toEqual([]);
+    expect(container.textContent).toContain('เดือนที่ดู');
+    expect(container.textContent).not.toContain('เดือนนี้');
+  });
+
+  const forecastLines = () => [...container.querySelectorAll('path')].filter(p => p.getAttribute('stroke-dasharray') === '4 3');
+
+  it('a finished month has no forecast line', () => {
+    mount(finished);
+    expect(forecastLines()).toHaveLength(0);
+  });
+
+  it('the current month keeps today and the forecast', () => {
+    mount();
+    expect(forecastLines()).toHaveLength(1);
+    expect(texts().some(t => t.startsWith('คาดจบเดือนนี้'))).toBe(true);
+    expect(texts()).toContain('Day 10 (วันนี้)');
+    expect(container.textContent).toContain('(เดือนนี้)');
+  });
+});
+
 describe('GhostPacerChart', () => {
   it('names both months in the legend and labels how each month ends', () => {
     mount({ ghostTotalExpense: 12500 }); // the given total wins over the end of the daily series

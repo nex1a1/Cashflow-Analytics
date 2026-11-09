@@ -146,32 +146,34 @@ interface TimelineHeatmapLegendProps {
 
 const TimelineHeatmapLegend: React.FC<TimelineHeatmapLegendProps> = ({ globalMaxThreshold }) => {
   return (
-    <div className="flex items-center flex-wrap gap-1.5">
-      <div className="relative group/info cursor-help mr-1">
-        <Info className="w-3.5 h-3.5 text-slate-400" />
-        <div className="absolute bottom-full right-0 md:left-0 md:right-auto mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center md:items-start invisible group-hover/info:visible">
-          <div className="text-left rounded-none py-2 px-3 text-[11px] font-medium shadow-2xl w-[260px] leading-relaxed bg-surface text-white border border-line-strong">
-            <p className="font-bold mb-1 text-orange-400">สีเทียบกับวันที่จ่ายมากที่สุด</p>
-            <p className="text-slate-300">
-              สีเข้มสุดคือยอดจ่ายต่อวันสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿) 
-              สีจึงเทียบกันได้ทุกช่วงเวลา
-            </p>
-          </div>
-          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-surface md:ml-2 mr-2 md:mr-0" />
-        </div>
-      </div>
+    <div className="flex flex-col items-center gap-1">
       <span className="text-[11px] font-bold text-slate-400">น้อย</span>
       {[0, 1, 2, 3, 4, 5, 6].map((level) => (
-        <div 
-          key={level} 
-          className="w-3 h-3 rounded-none shrink-0 border" 
-          style={{ 
-            backgroundColor: getHeatmapColor(level), 
-            borderColor: level === 0 ? tc('line-strong') : 'transparent' 
-          }} 
+        <div
+          key={level}
+          className="w-3 h-3 rounded-none shrink-0 border"
+          style={{
+            backgroundColor: getHeatmapColor(level),
+            borderColor: level === 0 ? tc('line-strong') : 'transparent'
+          }}
         />
       ))}
-      <span className="text-[11px] font-bold text-slate-400">มาก</span>
+      <div className="flex items-center gap-1">
+        <span className="text-[11px] font-bold text-slate-400">มาก</span>
+        <div className="relative group/info cursor-help">
+          <Info className="w-3.5 h-3.5 text-slate-400" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-opacity z-50 flex flex-col items-center invisible group-hover/info:visible">
+            <div className="text-left rounded-none py-2 px-3 text-[11px] font-medium shadow-2xl w-[190px] leading-relaxed bg-surface text-white border border-line-strong">
+              <p className="font-bold mb-1 text-orange-400">สีเทียบกับวันที่จ่ายมากที่สุด</p>
+              <p className="text-slate-300">
+                สีเข้มสุดคือยอดจ่ายต่อวันสูงสุดของคุณ ({formatMoney(globalMaxThreshold)} ฿)
+                สีจึงเทียบกันได้ทุกช่วงเวลา
+              </p>
+            </div>
+            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-surface" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -269,7 +271,7 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
       type="button"
       tabIndex={0}
       aria-label={`${displayStr}, ${detailsText}`}
-      className={`${className} rounded-none cursor-pointer border transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink focus-visible:z-10 ${
+      className={`${className} rounded-none cursor-pointer border transition-[border-color,opacity] focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-ink focus-visible:z-10 ${
         isToday 
           ? 'ring-1 ring-accent-ink z-10' 
           : 'opacity-90 hover:opacity-100 hover:border-accent-ink hover:z-10'
@@ -294,6 +296,9 @@ const GITHUB_SIZES = {
   md: { cell: "w-5 h-5", row: "h-5" },
   sm: { cell: "w-4 h-4", row: "h-4" },
 } as const;
+// Above this many weeks (~7 months) the calendar layout wraps to two rows of cards, so the GitHub
+// layout splits into two strips to fill the same height instead of floating in empty space.
+const GITHUB_SPLIT_WEEKS = 30;
 
 // ─── SUB-COMPONENT: TimelineLayoutToggle ───────────────────────
 interface TimelineLayoutToggleProps {
@@ -340,21 +345,45 @@ export default function ActivityTimeline() {
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dayType');
   const [layoutMode, setLayoutMode] = useState<TimelineLayoutMode>('github');
 
-  // GitHub mode only: keep the legend rail (and, via flex-stretch, the grid) the same height
-  // whether dayType or heatmap is selected. Scoped to layoutMode === 'github' only — calendar
-  // mode stays fully independent, sized to its own content.
+  // The panel keeps one height whichever toggle is picked: the legend rail is pinned to the taller
+  // of its two modes (dayType / heatmap), and the grid to the taller of its two layouts
+  // (GitHub / calendar). Both measure invisible copies, never the pinned panels themselves.
   const legendRailRef = useRef<HTMLDivElement>(null);
   const hiddenLegendCloneRef = useRef<HTMLDivElement>(null);
-  const [githubLegendHeight, setGithubLegendHeight] = useState(0);
-  const otherViewMode: TimelineViewMode = viewMode === 'dayType' ? 'heatmap' : 'dayType';
+  const [legendHeight, setLegendHeight] = useState(0);
+
+  const gridPanelRef = useRef<HTMLDivElement>(null);
+  const liveGridRef = useRef<HTMLDivElement>(null);
+  const ghostGridRef = useRef<HTMLDivElement>(null);
+  const [gridHeight, setGridHeight] = useState(0);
+  const otherLayoutMode: TimelineLayoutMode = layoutMode === 'github' ? 'calendar' : 'github';
 
   useLayoutEffect(() => {
-    if (layoutMode !== 'github') return;
-    const liveHeight = legendRailRef.current?.offsetHeight || 0;
-    const otherHeight = hiddenLegendCloneRef.current?.offsetHeight || 0;
-    const tallest = Math.max(liveHeight, otherHeight);
-    if (tallest) setGithubLegendHeight(tallest);
-  }, [layoutMode, viewMode, showSkeleton, analytics.dayTypeCounts, dayTypeConfig]);
+    setLegendHeight(hiddenLegendCloneRef.current?.offsetHeight || 0);
+  }, [showSkeleton, analytics.dayTypeCounts, dayTypeConfig]);
+
+  // Measures the contents, not the pinned panel, so a shorter period can shrink it again.
+  // Re-runs on resize: calendar cards wrap by width.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const tallest = Math.max(liveGridRef.current?.offsetHeight || 0, ghostGridRef.current?.offsetHeight || 0);
+      // min-height is border-box: add the panel's own border so the contents get the full height
+      const css = panel ? getComputedStyle(panel) : null;
+      const border = css ? (Number.parseFloat(css.borderTopWidth) || 0) + (Number.parseFloat(css.borderBottomWidth) || 0) : 0;
+      setGridHeight(tallest ? tallest + border : 0);
+    };
+    const panel = gridPanelRef.current;
+    measure();
+    if (!panel || typeof ResizeObserver === 'undefined') return;
+    let lastWidth = panel.offsetWidth;
+    const ro = new ResizeObserver(() => {
+      if (panel.offsetWidth === lastWidth) return; // our own min-height change
+      lastWidth = panel.offsetWidth;
+      measure();
+    });
+    ro.observe(panel);
+    return () => ro.disconnect();
+  }, [layoutMode, showSkeleton, analytics.datesInPeriod]);
 
   const [tooltip, setTooltip] = useState<TimelineTooltipState>({
     active: false,
@@ -506,7 +535,9 @@ export default function ActivityTimeline() {
     return null;
   }
 
-  const renderTimelineContent = () => {
+  // `ghost` draws the same boxes as plain divs (no buttons, no hooks for tests or a11y): it only
+  // exists so the hidden copy of the other layout can be measured.
+  const renderTimelineContent = (layout: TimelineLayoutMode, ghost = false) => {
     if (showSkeleton) {
       return (
         <div className="py-12 px-3">
@@ -523,7 +554,7 @@ export default function ActivityTimeline() {
       );
     }
 
-    if (layoutMode === 'calendar') {
+    if (layout === 'calendar') {
       return (
         <div className="p-3.5 w-full flex items-center justify-center overflow-x-auto custom-scrollbar">
           <div className="flex flex-wrap items-start justify-center gap-2.5 max-w-[1022px] mx-auto">
@@ -556,6 +587,10 @@ export default function ActivityTimeline() {
                       return <div key={dateStr} className="w-[20px] h-[20px] bg-surface/40 border border-line/10 opacity-20" />;
                     }
 
+                    if (ghost) {
+                      return <div key={dateStr} className="w-[20px] h-[20px]" />;
+                    }
+
                     const isToday = dateStr === todayStr;
                     const { dayType, amount } = getDayDetails(dateStr);
 
@@ -583,12 +618,46 @@ export default function ActivityTimeline() {
       );
     }
 
+    // A long period (a year) would be one thin strip in a panel as tall as the wrapped calendar:
+    // split it into two strips at the month start nearest the middle, with bigger cells.
+    const split = weeks.length > GITHUB_SPLIT_WEEKS;
+    let strips = [weeks];
+    if (split) {
+      const mid = weeks.length / 2;
+      let cut = -1;
+      weeks.forEach((w, i) => {
+        if (i > 0 && w.monthLabel && (cut < 0 || Math.abs(i - mid) < Math.abs(cut - mid))) cut = i;
+      });
+      if (cut < 0) cut = Math.ceil(mid);
+      strips = [weeks.slice(0, cut), weeks.slice(cut)];
+    }
+
     // fewer weeks → bigger cells, so a single month fills the panel instead of sitting small in a corner
-    const size = weeks.length <= 6 ? GITHUB_SIZES.lg : weeks.length <= 14 ? GITHUB_SIZES.md : GITHUB_SIZES.sm;
+    const size = split ? GITHUB_SIZES.md
+      : weeks.length <= 6 ? GITHUB_SIZES.lg
+      : weeks.length <= 14 ? GITHUB_SIZES.md
+      : GITHUB_SIZES.sm;
 
     return (
-      <div className="w-full flex justify-[safe_center] overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <div className="flex w-max gap-x-px pr-3">
+      <div className="w-full flex justify-center-safe overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex flex-col gap-4 w-max">
+          {strips.map((stripWeeks, stripIndex) => (
+            <div key={stripWeeks[0]?.days.find(Boolean) || `strip-${stripIndex}`} data-github-strip className="flex w-max gap-x-px pr-3">
+              {renderGithubStrip(stripWeeks, size, ghost)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderGithubStrip = (
+    stripWeeks: typeof weeks,
+    size: (typeof GITHUB_SIZES)[keyof typeof GITHUB_SIZES],
+    ghost: boolean,
+  ) => {
+    return (
+        <>
           {/* Day Labels (Sticky) */}
           <div 
             className="flex flex-col gap-px shrink-0 sticky left-0 z-20 pl-3 pr-1.5 border-r border-line bg-surface select-none"
@@ -597,7 +666,7 @@ export default function ActivityTimeline() {
             {THAI_DAYS.map((day, i) => (
               <div
                 key={day}
-                data-day-label
+                data-day-label={ghost ? undefined : true}
                 className={`${size.row} flex items-center justify-end text-[11px] font-black ${
                   i === 0 || i === 6 ? 'text-weekend' : 'text-slate-500'
                 }`}
@@ -608,7 +677,7 @@ export default function ActivityTimeline() {
           </div>
 
           {/* Weeks & Days */}
-          {weeks.map((week, weekIndex) => {
+          {stripWeeks.map((week, weekIndex) => {
             const weekKey = week.days.find(Boolean) || `wk-${weekIndex}`;
             return (
               <div key={weekKey} className="flex flex-col gap-px shrink-0">
@@ -627,9 +696,12 @@ export default function ActivityTimeline() {
                 {/* Days in Week */}
                 {week.days.map((dateStr, dayIndex) => {
                   if (!dateStr) {
-                    return <div key={`empty-${weekKey}-${dayIndex}`} data-empty-cell className={`${size.cell} bg-transparent`} />;
+                    return <div key={`empty-${weekKey}-${dayIndex}`} data-empty-cell={ghost ? undefined : true} className={`${size.cell} bg-transparent`} />;
                   }
-                  
+                  if (ghost) {
+                    return <div key={dateStr} className={size.cell} />;
+                  }
+
                   const isToday = dateStr === todayStr;
                   const { dayType, amount } = getDayDetails(dateStr);
 
@@ -651,8 +723,7 @@ export default function ActivityTimeline() {
               </div>
             );
           })}
-        </div>
-      </div>
+        </>
     );
   };
 
@@ -696,22 +767,35 @@ export default function ActivityTimeline() {
 
       <div className="p-4 flex flex-col lg:flex-row lg:items-stretch gap-3">
         {/* Timeline Grid */}
-        <div className="flex-1 min-w-0 border rounded-none relative z-10 bg-surface border-line-strong flex flex-col justify-center min-h-[210px]">
-          {renderTimelineContent()}
+        <div
+          ref={gridPanelRef}
+          className="flex-1 min-w-0 border rounded-none relative z-10 bg-surface border-line-strong flex flex-col justify-center min-h-[210px]"
+          style={gridHeight ? { minHeight: gridHeight } : undefined}
+        >
+          {/* keyed by layout: switching remounts it, which replays the entrance animation */}
+          <div key={layoutMode} ref={liveGridRef} data-live-grid className="w-full min-w-0 m-in">
+            {renderTimelineContent(layoutMode)}
+          </div>
+          <div ref={ghostGridRef} aria-hidden="true" inert className="absolute inset-x-0 top-0 invisible pointer-events-none">
+            {renderTimelineContent(otherLayoutMode, true)}
+          </div>
         </div>
 
         {/* Legend Rail */}
         <div
           ref={legendRailRef}
           className="lg:w-[220px] shrink-0 border rounded-none relative bg-surface border-line-strong p-3 flex flex-col items-center justify-center gap-2 min-h-[210px] overflow-x-hidden"
-          style={layoutMode === 'github' && githubLegendHeight ? { minHeight: githubLegendHeight } : undefined}
+          style={legendHeight ? { minHeight: legendHeight } : undefined}
         >
           {renderLegendBody(viewMode)}
-          {layoutMode === 'github' && (
-            <div ref={hiddenLegendCloneRef} aria-hidden="true" className="absolute inset-x-0 top-0 invisible pointer-events-none flex flex-col items-center gap-2 p-3">
-              {renderLegendBody(otherViewMode)}
-            </div>
-          )}
+          {/* both modes stacked in one grid cell: its height is the taller of the two */}
+          <div ref={hiddenLegendCloneRef} aria-hidden="true" className="absolute inset-x-0 top-0 invisible pointer-events-none grid p-3">
+            {(['dayType', 'heatmap'] as const).map(mode => (
+              <div key={mode} className="[grid-area:1/1] flex flex-col items-center gap-2">
+                {renderLegendBody(mode)}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -2,10 +2,13 @@
 import { memo } from 'react';
 import { StrategicCardShellProps } from '../types';
 
+/**
+ * A rule / metric card. Its detail view covers the card on hover or keyboard focus.
+ * Hidden with `visibility` (not just opacity), so screen readers skip it until it shows.
+ */
 export const StrategicCardShell = memo(({
   icon: Icon,
-  borderColorClass,
-  hoverBgClass = 'hover:bg-surface-hover',
+  edgeClass,
   label,
   badge,
   thresholdRow,
@@ -15,46 +18,44 @@ export const StrategicCardShell = memo(({
   showOverlay = true,
   children,
 }: StrategicCardShellProps) => {
-  const isInteractive = showOverlay && Boolean(overlayBody);
-  return (
-    <div
-      className={`group relative overflow-hidden p-3 flex flex-col justify-between h-full min-h-[140px] bg-canvas ${hoverBgClass} transition-none border-l ${borderColorClass} ${
-        isInteractive ? 'cursor-help focus:outline-hidden focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white' : ''
-      }`}
-      tabIndex={isInteractive ? 0 : undefined}
-      role={isInteractive ? 'button' : undefined}
-      aria-label={isInteractive ? `${label}${overlayTitle ? ` — ${overlayTitle}` : ''}` : undefined}
-    >
-      <div className="absolute -right-3 -bottom-3 opacity-[0.03] pointer-events-none text-neutral-700">
-        <Icon size={72} />
-      </div>
+  const hasDetails = showOverlay && Boolean(overlayBody);
 
-      <div className="flex-1 flex flex-col justify-between w-full h-full transition-none gap-2">
-        {/* Top: Label + Tactical Badge */}
-        <div className="flex items-center justify-between gap-1.5 leading-none">
-          <span className="text-[11px] font-black uppercase text-neutral-400 truncate">
-            {label}
+  return (
+    <section
+      aria-label={label}
+      tabIndex={hasDetails ? 0 : undefined}
+      className={`group relative p-3 flex flex-col h-full min-h-[140px] bg-canvas hover:bg-surface-hover ${
+        hasDetails ? 'cursor-help focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-accent-ink' : ''
+      }`}
+    >
+      {edgeClass && <span aria-hidden="true" data-edge className={`absolute left-0 inset-y-0 w-0.5 ${edgeClass}`} />}
+      <div className="flex-1 flex flex-col justify-between w-full gap-2">
+        <div className="flex items-center justify-between gap-1.5 min-h-5">
+          <span className="flex items-center gap-1.5 min-w-0 text-[11px] font-semibold text-ink-muted">
+            <Icon size={13} className="shrink-0" />
+            <span className="truncate">{label}</span>
           </span>
           {badge}
         </div>
 
-        {/* Center: Hero Metric Area */}
-        <div className="my-auto z-10 flex flex-col justify-center">
+        <div className="my-auto flex flex-col justify-center">
           {children}
         </div>
 
-        {/* Bottom: Benchmark / Threshold / Context Footer */}
         {thresholdRow && (
-          <div className="mt-auto pt-1.5 border-t border-neutral-800/80">
+          <div className="mt-auto pt-1.5 border-t border-line">
             {thresholdRow}
           </div>
         )}
       </div>
 
-      {showOverlay && overlayBody && (
-        <div className="absolute inset-0 p-2.5 bg-canvas opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-none z-20 flex flex-col justify-between">
+      {hasDetails && (
+        <div
+          data-details
+          className="absolute inset-0 p-2.5 bg-canvas z-20 flex flex-col invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100"
+        >
           {overlayTitle && (
-            <div className="text-[11px] font-black uppercase text-neutral-400 border-b border-line pb-1.5 flex justify-between items-center shrink-0 gap-1">
+            <div className="text-[11px] font-semibold text-ink-muted border-b border-line pb-1.5 flex justify-between items-center shrink-0 gap-1">
               <span className="truncate">{overlayTitle}</span>
               {overlayBadge}
             </div>
@@ -62,7 +63,7 @@ export const StrategicCardShell = memo(({
           {overlayBody}
         </div>
       )}
-    </div>
+    </section>
   );
 });
 

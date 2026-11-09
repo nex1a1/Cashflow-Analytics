@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { computeCoreAnalytics } from '../analyticsAggregation';
+import { describe, it, expect, vi } from 'vitest';
+import { computeCoreAnalytics, elapsedDatesOf } from '../analyticsAggregation';
 import type { CashflowGroup, Category, TransactionDisplay } from '../../types';
 
 const groups: CashflowGroup[] = [
@@ -58,5 +58,59 @@ describe('computeCoreAnalytics', () => {
     expect(save.amount).toBe(29000); // 5,000 invested + 24,000 left over
     expect(save.percentage).toBe('96.7');
     expect(r.sortedGroups.map(g => g.id)).toEqual(['g_food', 'g_fun']);
+  });
+});
+
+describe('computeCoreAnalytics — rent stays out of the per-day figures', () => {
+  const rentGroups: CashflowGroup[] = [...groups, { id: 'g_rent', name: 'ภาระที่พักอาศัย', type: 'expense', allocation_type: 'need', order_index: 3 }];
+  const rentCats: Category[] = [...categories, { id: 'c_rent', name: 'ค่าเช่า/ค่าหอพัก', type: 'expense', cashflowGroup: 'g_rent' }];
+  const r = computeCoreAnalytics({
+    transactions: [...transactions, tx('7', '2026-03-02', 'c_rent', 6200)], // paid on a Monday
+    categories: rentCats, cashflowGroups: rentGroups, filterPeriod: '2026-03',
+    hideFixedExpenses: false, hideWantExpenses: false, dashboardCategory: 'ALL',
+  });
+
+  it('keeps the rent-inclusive average and adds one without rent', () => {
+    expect(r.totals.rent).toBe(6200);
+    expect(r.adjustedDailyAvg).toBeCloseTo(7200 / 31);
+    expect(r.livingDailyAvg).toBeCloseTo(1000 / 31);
+  });
+
+  it('leaves rent out of the work-day / day-off split, so the day it was paid does not look heavier', () => {
+    expect(r.dailyWorkdayAvg).toBeCloseTo(800 / 22);
+    expect(r.dailyHolidayAvg).toBeCloseTo(200 / 9);
+  });
+});
+
+describe('elapsedDatesOf', () => {
+  const nov = Array.from({ length: 30 }, (_, i) => `2026-11-${String(i + 1).padStart(2, '0')}`);
+
+  it('keeps the days up to and including today in the current month', () => {
+    expect(elapsedDatesOf(nov, '2026-11-06')).toEqual(nov.slice(0, 6));
+  });
+
+  it('keeps the whole period once it is over, and for a period that has not started yet', () => {
+    expect(elapsedDatesOf(nov, '2026-12-15')).toEqual(nov);
+    expect(elapsedDatesOf(nov, '2026-10-01')).toEqual(nov);
+  });
+});
+
+describe('computeCoreAnalytics — a month still in progress', () => {
+  it('per-day averages divide by the days so far, not the whole month', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 2, 10, 12)); // 10 March 2026, local time
+    try {
+      const r = computeCoreAnalytics({
+        transactions, categories, cashflowGroups: groups, filterPeriod: '2026-03',
+        hideFixedExpenses: false, hideWantExpenses: false, dashboardCategory: 'ALL',
+      });
+      expect(r.elapsedDays).toBe(10);
+      expect(r.adjustedDailyAvg).toBeCloseTo(1000 / 10);
+      // 1–10 March: 7 weekdays (2–6, 9, 10), 3 weekend days (1, 7, 8)
+      expect(r.dailyWorkdayAvg).toBeCloseTo(800 / 7);
+      expect(r.dailyHolidayAvg).toBeCloseTo(200 / 3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
