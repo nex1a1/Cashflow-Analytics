@@ -370,25 +370,85 @@ describe('forecast: fixed bills, missing rows and one-off days', () => {
   const normalAugust = Array.from({ length: 25 }, (_, i) => tx(`a${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_movie', 100));
   const septemberWithBigBuy = [100, 5000, 100, 100, 100].map((amt, i) => tx(`d${i}`, `2026-09-0${i + 1}`, 'c_movie', amt));
 
-  it('a big day counts as spent, but early in the month only the usual part of it carries on', () => {
+  it('a big day counts as spent, but only the usual part of it carries on', () => {
     const f = forecast([income, ...normalAugust, ...septemberWithBigBuy]);
-    const pace = 100 * (25 / 30) + 1080 * (5 / 30); // capped pace fading into the real one as the month passes
     expect(f.variableUpToToday).toBe(5400);
-    expect(f.actualDailyVariableAvg).toBeCloseTo(pace);
-    expect(f.oneOffExcluded).toBeCloseTo(5400 - pace * 5);
-    expect(f.projectedExpense).toBeCloseTo(5400 + pace * 25);
+    expect(f.actualDailyVariableAvg).toBe(100); // 4900 above a usual day (100) stays out of the pace
+    expect(f.oneOffExcluded).toBe(4900);
+    expect(f.projectedExpense).toBe(5400 + 100 * 25);
   });
 
-  it('on the last day the real pace is the whole story', () => {
+  it('a big day late in the month is not spread over the days left either', () => {
+    const lateBuy = [...[100, 100, 100, 100, 100].map((amt, i) => tx(`d${i}`, `2026-09-0${i + 1}`, 'c_movie', amt)), tx('ssd', '2026-09-18', 'c_movie', 8500)];
+    const f = forecast([income, ...normalAugust, ...lateBuy], 18);
+    expect(f.oneOffExcluded).toBe(8400);
+    expect(f.actualDailyVariableAvg).toBeCloseTo(600 / 18);
+    expect(f.projectedExpense).toBeCloseTo(9000 + (600 / 18) * 12);
+  });
+
+  it('on the last day nothing is left to project', () => {
     const f = forecast([income, ...normalAugust, ...septemberWithBigBuy], 30);
-    expect(f.actualDailyVariableAvg).toBeCloseTo(5400 / 30);
-    expect(f.oneOffExcluded).toBeCloseTo(0);
+    expect(f.projectedExpense).toBe(5400);
   });
 
   it('rent days do not raise the limit of a usual day', () => {
     const rentDays = Array.from({ length: 5 }, (_, i) => tx(`r${i}`, `2026-08-${26 + i}`, 'c_rent', 9000));
     const f = forecast([income, ...normalAugust, ...rentDays, ...septemberWithBigBuy]);
-    expect(f.actualDailyVariableAvg).toBeCloseTo(100 * (25 / 30) + 1080 * (5 / 30));
+    expect(f.actualDailyVariableAvg).toBe(100);
+  });
+
+  describe('daily habits and lumpy groups', () => {
+    const foodAugust = Array.from({ length: 25 }, (_, i) => tx(`fa${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_food', i % 2 ? 200 : 100)); // usual day up to 200
+    const foodSeptember = [1, 2, 3, 4, 5].map(d => tx(`fs${d}`, `2026-09-0${d}`, 'c_food', 100));
+    const rareFun = [tx('ma', '2026-08-10', 'c_movie', 300), tx('mb', '2026-08-20', 'c_movie', 300)]; // 2 of 25 spending days
+
+    it('a group seen on few days before is not multiplied by the days left', () => {
+      const f = forecast([income, ...foodAugust, ...rareFun, ...foodSeptember, tx('m', '2026-09-03', 'c_movie', 80)]); // a usual-sized day
+      expect(f.variableUpToToday).toBe(580);
+      expect(f.actualDailyVariableAvg).toBe(100);
+      expect(f.oneOffExcluded).toBe(80);
+      expect(f.projectedExpense).toBe(580 + 100 * 25);
+    });
+
+    it('a planned row of such a group is added in full, even a small one', () => {
+      const f = forecast([income, ...foodAugust, ...rareFun, ...foodSeptember, tx('m', '2026-09-18', 'c_movie', 60)]);
+      expect(f.projectedExpense).toBe(500 + 100 * 25 + 60);
+    });
+
+    it('a group seen on a quarter of the spending days or more is a habit: its pace carries on', () => {
+      const oftenFun = Array.from({ length: 10 }, (_, i) => tx(`mo${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_movie', 50));
+      const funSeptember = [1, 2, 3, 4, 5].map(d => tx(`ms${d}`, `2026-09-0${d}`, 'c_movie', 50));
+      const f = forecast([income, ...foodAugust, ...oftenFun, ...foodSeptember, ...funSeptember]);
+      expect(f.actualDailyVariableAvg).toBe(150);
+      expect(f.oneOffExcluded).toBe(0);
+    });
+  });
+
+  describe('rows planned ahead', () => {
+    const usualSeptember = [100, 100, 100, 100, 100].map((amt, i) => tx(`d${i}`, `2026-09-0${i + 1}`, 'c_movie', amt));
+
+    it('the big part of a planned day is added once on top of the usual pace', () => {
+      const f = forecast([income, ...normalAugust, ...usualSeptember, tx('bill', '2026-09-18', 'c_movie', 1000)]);
+      expect(f.variableUpToToday).toBe(500);
+      expect(f.projectedVariableRemaining).toBe(100 * 25 + 900);
+      expect(f.projectedExpense).toBe(500 + 100 * 25 + 900);
+      expect(f.safeToSpend).toBe((30000 - 500 - 900) / 25);
+    });
+
+    it('a small planned row is already inside the usual pace', () => {
+      const f = forecast([income, ...normalAugust, ...usualSeptember, tx('wash', '2026-09-18', 'c_movie', 80)]);
+      expect(f.projectedExpense).toBe(500 + 100 * 25);
+    });
+
+    it('planned rent is counted as fixed, not again as a big day', () => {
+      const f = forecast([income, ...normalAugust, ...usualSeptember, tx('r', '2026-09-30', 'c_rent', 4500)]);
+      expect(f.projectedExpense).toBe(4500 + 500 + 100 * 25);
+    });
+
+    it('with too little history a planned row adds nothing (no usual day to compare)', () => {
+      const f = forecast([income, ...normalAugust.slice(0, 19), ...usualSeptember, tx('bill', '2026-09-18', 'c_movie', 1000)]);
+      expect(f.projectedExpense).toBe(500 + 100 * 25);
+    });
   });
 
   it('with too little history every day counts in full', () => {
@@ -491,7 +551,7 @@ describe('forecast: fixed bills, missing rows and one-off days', () => {
   it('a usual day is set by the 90th percentile of the spending days before', () => {
     const history = Array.from({ length: 25 }, (_, i) => tx(`h${i}`, `2026-08-${String(i + 1).padStart(2, '0')}`, 'c_movie', i < 19 ? 100 : 300));
     const f = forecast([income, ...history, ...septemberWithBigBuy]); // 22nd of the 25 sorted days = 300, so 4700 of the big day is excess
-    expect(f.actualDailyVariableAvg).toBeCloseTo(1080 - (4700 / 5) * (25 / 30));
+    expect(f.actualDailyVariableAvg).toBe(1080 - 4700 / 5);
   });
 
   it('a big subscription day is fixed already: it is not a big living day too', () => {

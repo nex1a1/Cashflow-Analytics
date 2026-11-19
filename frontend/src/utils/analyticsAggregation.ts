@@ -45,13 +45,20 @@ type GroupMeta = ReturnType<typeof resolveCashflowGroups>;
 type TxKinds = ReturnType<typeof classifyTx>;
 
 /**
- * Forecast pace: a day above this share of the spending days of the 3 units before is "big", and early in the month only
- * its usual part carries over the remaining days. Chosen by backtest on real months (day-5 error 67% → 21%, later days no worse).
+ * Forecast pace: a day above this share of the spending days of the 3 units before is "big", and only its usual part
+ * carries over the remaining days. Percentile chosen by backtest on real months (day-5 error 67% → 21%).
  */
 const USUAL_DAY_PERCENTILE = 0.9;
 /** Fewer spending days than this say nothing about a usual day: every day then counts in full. */
 const USUAL_DAY_MIN_HISTORY = 20;
 const HISTORY_UNITS = 3;
+/**
+ * A group with spending on at least this share of the spending days of the units before is a daily habit (food, small
+ * errands): its pace carries over the days left. Rarer groups (gadgets, hobbies, family) come in lumps that are not
+ * multiplied: only what is spent and what is planned ahead counts. On real data food sits near 100%, errands near 40%,
+ * lumpy groups under 10%.
+ */
+const HABIT_DAY_SHARE = 0.25;
 /** One earlier month is a data point, not a range. */
 const RANGE_MIN_UNITS = 2;
 
@@ -247,6 +254,24 @@ function restOfUnitPaces(livingDailySum: Record<string, number>, filterPeriod: s
     .map(rest => rest.reduce((sum, d) => sum + (livingDailySum[d] || 0), 0) / rest.length);
 }
 
+/**
+ * Daily spend of the groups that are daily habits, split from the lumpy rest. Without enough history every group counts
+ * as a habit, so the forecast is the plain pace.
+ */
+function splitHabitSpend(livingDailySum: Record<string, number>, livingGroupDailySum: Record<string, Record<string, number>>, filterPeriod: string) {
+  const spendingDays = earlierUnits(filterPeriod).flat().filter(d => (livingDailySum[d] || 0) > 0);
+  const groupDays = Object.values(livingGroupDailySum);
+  const isHabit = (days: Record<string, number>) =>
+    spendingDays.length < USUAL_DAY_MIN_HISTORY || spendingDays.filter(d => (days[d] || 0) > 0).length / spendingDays.length >= HABIT_DAY_SHARE;
+  const habit: Record<string, number> = {};
+  const lumpy: Record<string, number> = {};
+  for (const days of groupDays) {
+    const into = isHabit(days) ? habit : lumpy;
+    for (const [d, amt] of Object.entries(days)) into[d] = (into[d] || 0) + amt;
+  }
+  return { habit, lumpy };
+}
+
 /** The most a usual day costs, from the units before this one; Infinity without enough history. */
 function usualDayLimit(livingDailySum: Record<string, number>, filterPeriod: string) {
   const spends = earlierUnits(filterPeriod)
@@ -266,6 +291,7 @@ function calculateForecastingDetails({
   expected,
   dailySumMap,
   livingDailySum,
+  livingGroupDailySum,
 }: {
   isCurrentMonth: boolean;
   datesInPeriod: string[];
@@ -275,6 +301,7 @@ function calculateForecastingDetails({
   expected: ReturnType<typeof findExpectedRows>;
   dailySumMap: Record<string, number>;
   livingDailySum: Record<string, number>;
+  livingGroupDailySum: Record<string, Record<string, number>>;
 }) {
   if (!isCurrentMonth || datesInPeriod.length === 0) {
     return { showForecasting: false, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0, committedExpense: 0, dailyPace: 0 };
@@ -290,13 +317,19 @@ function calculateForecastingDetails({
   const fixedCommitment = forecastRef.fixedTotal + expected.fixed;
   const dailyLivingUpToToday = Math.max(0, forecastRef.expenseUpToToday - forecastRef.fixedUpToToday);
 
-  // Pace carried over the remaining days: the big-day part fades in as the month shows whether such days keep coming.
-  const limit = usualDayLimit(livingDailySum, filterPeriod);
-  const bigDayExcess = datesInPeriod.slice(0, currentDay).reduce((sum, d) => sum + Math.max(0, (livingDailySum[d] || 0) - limit), 0);
-  const realPace = dailyLivingUpToToday / currentDay;
-  const dailyLivingRunRate = realPace - (bigDayExcess / currentDay) * (1 - currentDay / lastDayOfMonth);
-  const oneOffExcluded = dailyLivingUpToToday - dailyLivingRunRate * currentDay;
-  const projectedLivingRemaining = dailyLivingRunRate * remainingDays;
+  // Pace carried over the remaining days: only daily-habit groups, and only the usual part of each of their days. Lumpy
+  // groups and what a big day spent above a usual day are counted once (they were spent) but never multiplied by the
+  // days left, however late in the month they came.
+  const { habit, lumpy } = splitHabitSpend(livingDailySum, livingGroupDailySum, filterPeriod);
+  const limit = usualDayLimit(habit, filterPeriod);
+  const habitUsual = (d: string) => Math.min(habit[d] || 0, limit);
+  const spentDays = datesInPeriod.slice(0, currentDay);
+  const daysAhead = datesInPeriod.slice(currentDay);
+  const dailyLivingRunRate = spentDays.reduce((sum, d) => sum + habitUsual(d), 0) / currentDay;
+  const oneOffExcluded = Math.max(0, dailyLivingUpToToday - dailyLivingRunRate * currentDay);
+  // Rows planned ahead: the usual part of a habit day is already in the pace; the rest (a bill, a trip, a lumpy group) is added once.
+  const plannedBigAhead = daysAhead.reduce((sum, d) => sum + (habit[d] || 0) - habitUsual(d) + (lumpy[d] || 0), 0);
+  const projectedLivingRemaining = dailyLivingRunRate * remainingDays + plannedBigAhead;
 
   // Real per-day cumulative spend (day 1 -> today), sourced from actual transactions rather
   // than an interpolated shape — the trajectory chart plots what actually happened.
@@ -310,7 +343,8 @@ function calculateForecastingDetails({
   const projectedSurplus = income - projectedExpense;
   const projectedSurplusPct = income > 0 ? (projectedSurplus / income) * 100 : 0;
 
-  const remainingBudget = income - fixedCommitment - dailyLivingUpToToday;
+  const committedExpense = fixedCommitment + dailyLivingUpToToday + plannedBigAhead;
+  const remainingBudget = income - committedExpense;
   const daysToBudget = Math.max(1, remainingDays); // never divide by 0
   const safeToSpend = remainingBudget > 0 ? remainingBudget / daysToBudget : 0;
 
@@ -319,7 +353,7 @@ function calculateForecastingDetails({
   const target = BUDGET_RULES.surplus.min;
   const targetExpense = income - (income * target) / 100;
   const targetShortfall = Math.max(0, projectedExpense - targetExpense);
-  const safeToSpendForTarget = Math.max(0, targetExpense - fixedCommitment - dailyLivingUpToToday) / daysToBudget;
+  const safeToSpendForTarget = Math.max(0, targetExpense - committedExpense) / daysToBudget;
   let paceStatus = { code: 'ON_TRACK', label: 'คุมงบได้ดี', color: tc('income'), bg: 'bg-emerald-950/30' };
   if (projectedSurplus < 0) {
     paceStatus = { code: 'CRITICAL', label: 'เกินงบประมาณ', color: tc('danger'), bg: 'bg-danger/10' };
@@ -338,7 +372,6 @@ function calculateForecastingDetails({
     eomStatus = { code: 'STABLE', label: 'พอดีตัว', color: tc('info'), bg: 'bg-blue-950/40', border: 'border-blue-500' };
   }
 
-  const committedExpense = fixedCommitment + dailyLivingUpToToday;
   const paces = [dailyLivingRunRate, ...restOfUnitPaces(livingDailySum, filterPeriod, currentDay)];
   const projectedRange = remainingDays > 0 && paces.length > RANGE_MIN_UNITS
     ? { low: committedExpense + Math.min(...paces) * remainingDays, high: committedExpense + Math.max(...paces) * remainingDays }
@@ -372,6 +405,7 @@ function calculateForecastingDetails({
     pendingFixedItems: expected.fixedItems,
     estimatedIncome: expected.income,
     oneOffExcluded,
+    plannedAhead: plannedBigAhead,
     targetExpense,
     targetShortfall,
     safeToSpendForTarget,
@@ -386,15 +420,19 @@ function calculateForecastingDetails({
 }
 
 function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKinds, startPrev: string | null, endPrev: string | null, state: AnalyticsState) {
-  const { amt, catId, isExp, isInc } = txContext;
-  const { globalDailySum, globalNoRentDailySum, globalLivingDailySum, globalCatDailySum, rentCatIds, prevTotals } = state;
+  const { amt, catId, isExp, isInc, cGroupId } = txContext;
+  const { globalDailySum, globalNoRentDailySum, globalLivingDailySum, globalLivingGroupDailySum, globalCatDailySum, rentCatIds, prevTotals } = state;
   if (isExp) {
     globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
     const catDays = (globalCatDailySum[catId] ??= {});
     catDays[isoDate] = (catDays[isoDate] || 0) + amt;
     if (kinds.isRent) rentCatIds.add(catId);
     if (!kinds.isRent) globalNoRentDailySum[isoDate] = (globalNoRentDailySum[isoDate] || 0) + amt;
-    if (!kinds.isRent && !kinds.isSubscription) globalLivingDailySum[isoDate] = (globalLivingDailySum[isoDate] || 0) + amt;
+    if (!kinds.isRent && !kinds.isSubscription) {
+      globalLivingDailySum[isoDate] = (globalLivingDailySum[isoDate] || 0) + amt;
+      const groupDays = (globalLivingGroupDailySum[cGroupId || 'none'] ??= {});
+      groupDays[isoDate] = (groupDays[isoDate] || 0) + amt;
+    }
   }
   if (startPrev && endPrev && isoDate >= startPrev && isoDate <= endPrev) {
     prevTotals.txCount = (prevTotals.txCount || 0) + 1;
@@ -911,6 +949,7 @@ function createInitialAnalyticsState() {
   const globalDailySum: Record<string, number> = {};
   const globalNoRentDailySum: Record<string, number> = {};
   const globalLivingDailySum: Record<string, number> = {};
+  const globalLivingGroupDailySum: Record<string, Record<string, number>> = {};
   const globalCatDailySum: Record<string, Record<string, number>> = {};
   const rentCatIds = new Set<string>();
   const prevTotals = { income: 0, expense: 0, net: 0, txCount: 0 };
@@ -956,6 +995,7 @@ function createInitialAnalyticsState() {
     globalDailySum,
     globalNoRentDailySum,
     globalLivingDailySum,
+    globalLivingGroupDailySum,
     globalCatDailySum,
     rentCatIds,
     prevTotals,
@@ -1126,6 +1166,7 @@ export function computeCoreAnalytics({
     expected,
     dailySumMap: state.globalDailySum,
     livingDailySum: state.globalLivingDailySum,
+    livingGroupDailySum: state.globalLivingGroupDailySum,
   });
 
   const categoryInfo = (id: string) => {

@@ -65,6 +65,8 @@ export interface ForecastingDetails {
   estimatedIncome: number;
   /** Spent on unusually big days, left out of the pace carried over the remaining days (still counted as spent). */
   oneOffExcluded: number;
+  /** Rows planned ahead that the daily pace does not already cover (a bill, a trip, a lumpy group), counted once. */
+  plannedAhead: number;
   /** Expense that leaves the leftover target (BUDGET_RULES.surplus.min) of income. */
   targetExpense: number;
   /** How far the forecast is above targetExpense. */

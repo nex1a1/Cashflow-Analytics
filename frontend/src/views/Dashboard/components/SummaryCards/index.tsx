@@ -3,8 +3,12 @@ import { SummaryVitals } from './SummaryVitals';
 import { SummaryStrategic } from './Strategic/SummaryStrategic';
 import type { SummaryAnalytics } from './types';
 
-/** Both panels share one frame; the minimum height is what the overview tab needs at its tallest (rent and investing lines shown), so switching tabs never moves the page. */
-const PANEL_FRAME = 'flex flex-col rounded-none overflow-hidden border border-line bg-canvas shadow-xs min-h-[537px]';
+/**
+ * Both panels share one frame, and every tab of the analysis panel gets the same height: the minimum is the tallest tab,
+ * the forecast with all of its optional lines (a bill not logged yet, the pace / planned split, the range from earlier
+ * months), measured at 575px. The overview and month-comparison tabs stretch to it, so switching tabs never moves the page.
+ */
+const PANEL_FRAME = 'flex flex-col rounded-none overflow-hidden border border-line bg-canvas shadow-xs min-h-[575px]';
 
 export default function SummaryCards() {
   const { analytics, showSkeleton } = useDashboardContext();

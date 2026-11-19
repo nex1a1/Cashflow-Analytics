@@ -519,7 +519,7 @@ describe('SummaryForecasting — end of month forecast', () => {
     fixedTotal: 14_000, variableUpToToday: 3_000, projectedVariableRemaining: 3_000, actualDailyVariableAvg: 200,
     projectedSurplusPct: 33, maxAllowedExpense: 21_000, requiredReduction: 0, requiredDailyReduction: 0, actualDailySeries: [],
     projectedSurplus: 10_000,
-    pendingFixed: 0, pendingFixedItems: [], estimatedIncome: 0, oneOffExcluded: 0, targetExpense: 24_000, targetShortfall: 0, safeToSpendForTarget: 400, projectedRange: null,
+    pendingFixed: 0, pendingFixedItems: [], estimatedIncome: 0, oneOffExcluded: 0, plannedAhead: 0, targetExpense: 24_000, targetShortfall: 0, safeToSpendForTarget: 400, projectedRange: null,
     paceStatus: { label: 'คุมงบได้ดี', color: '#10B981', bg: 'bg-emerald-950/30' },
     eomStatus: { label: 'โซนปลอดภัยสูง', color: '#10B981', bg: 'bg-emerald-950/40', border: 'border-emerald-500' },
   } as ForecastingDetails & { projectedSurplus: number };
@@ -537,33 +537,35 @@ describe('SummaryForecasting — end of month forecast', () => {
     expect(t).toContain('คุมงบได้ดี');
     expect(t).toContain('15/30');
     expect(t).toContain('เหลือ 15 วัน');
-    expect(t).toContain('เพดาน ฿21,000.00');
-    expect(t).toContain('ใช้จริง ฿200.00/ว');
+    expect(t).toContain('รายรับ ฿21,000.00');
+    expect(t).toContain('ตอนนี้ใช้ ฿200.00/วัน');
     expect(t).toContain('+฿300.00/วัน'); // 500 allowed − 200 actual
-    expect(t).toContain('อัตราใช้จริง: 40% ของเพดาน');
-    expect(t).toContain('ภาระคงที่ 70%'); // 14,000 of the 20,000 projected
-    expect(t).toContain('จ่ายแล้ว 15%');
+    expect(t).toContain('ยังเหลือที่ว่าง:');
+    expect(t).toContain('ใช้อยู่ 40% ของที่ใช้ได้');
+    expect(t).toContain('บิลประจำ 70%'); // 14,000 of the 20,000 projected
+    expect(t).toContain('ใช้ไปแล้ว 15%');
     expect(t).toContain('+฿10,000.00');
     expect(t).toContain('คุมงบได้ตามเป้า');
-    expect(t).not.toContain('ต้องลดอีก');
+    expect(t).not.toContain('ขาดอีก');
     // the projected leftover is money left, not savings (SAVE means investing only)
     expect(t).toContain('เหลือ 33%');
+    expect(t).toContain('เป้า 20% = ฿4,200.00');
     expect(t).not.toContain('ออม 33%');
   });
 
   it('above the 20% target: every part of the card agrees it is on target', () => {
     forecast({}, { targetExpense: 24_000, targetShortfall: 0, safeToSpendForTarget: 700 });
     const t = text();
-    expect(t).toContain('ปลอดภัย');
+    expect(t).toContain('ถึงเป้าแล้ว');
     expect(t).toContain('คุมงบได้ตามเป้า');
-    expect(t).toContain('เพื่อเหลือตามเป้า 20%:');
-    expect(t).toContain('฿700.00/วัน');
+    expect(t).toContain('ถ้าจะให้เหลือ 20%:');
+    expect(t).toContain('ใช้ได้ ฿700.00/วัน');
     expect(t).not.toContain('ต่ำกว่าเป้า');
   });
 
   it('shows the range and says where it comes from', () => {
     forecast({}, { projectedRange: { low: 18_000, high: 21_000 } });
-    expect(text()).toContain('ช่วงจาก 3 เดือนก่อน:');
+    expect(text()).toContain('ถ้าใช้แบบ 3 เดือนก่อน:');
     expect(text()).toContain('฿18,000.00 – ฿21,000.00');
     expect(q('[title*="3 เดือนก่อน"]')?.getAttribute('title')).toBe('ถ้าวันที่เหลือใช้เท่าเดือนที่น้อยที่สุดหรือมากที่สุดใน 3 เดือนก่อน หรือเท่าตอนนี้');
   });
@@ -576,7 +578,7 @@ describe('SummaryForecasting — end of month forecast', () => {
 
   it('no range: no row', () => {
     forecast({}, { projectedRange: null });
-    expect(text()).not.toContain('ช่วงจาก 3 เดือนก่อน');
+    expect(text()).not.toContain('ถ้าใช้แบบ 3 เดือนก่อน');
   });
 
   it('exactly on the 20% target still counts as on target', () => {
@@ -593,15 +595,15 @@ describe('SummaryForecasting — end of month forecast', () => {
     });
     const t = text();
     expect(t).toContain('ต่ำกว่าเป้า 20%');
-    expect(t).toContain('ต้องลดอีก ฿3,000.00 ถึงเป้า');
-    expect(t).not.toContain('ปลอดภัย');
+    expect(t).toContain('ขาดอีก ฿3,000.00 ถึงเป้า');
+    expect(t).not.toContain('ถึงเป้าแล้ว');
     expect(t).not.toContain('คุมงบได้ตามเป้า');
     expect(byText('div', '+฿3,000.00')?.classList.contains('text-warn')).toBe(true);
   });
 
   it('names the bills that were expected but not logged yet', () => {
     forecast({}, { pendingFixed: 6_000, pendingFixedItems: [{ name: 'ค่าเช่า', amount: 4_500 }, { name: 'ค่าไฟ', amount: 1_500 }] });
-    expect(text()).toContain('รวมที่ยังไม่ลง:');
+    expect(text()).toContain('ในนี้ยังไม่ได้ลง (คาดจากเดือนก่อน):');
     expect(text()).toContain('฿6,000.00');
     expect(q('[title*="ค่าเช่า"]')?.getAttribute('title')).toContain('ค่าไฟ');
   });
@@ -616,21 +618,43 @@ describe('SummaryForecasting — end of month forecast', () => {
     expect(text()).not.toContain('ยังไม่ลง');
   });
 
-  it('after a big one-off day the pace is called usual, and the left-out amount is shown', () => {
+  it('after a lump the left-out amount is shown and says why', () => {
     forecast({}, { oneOffExcluded: 4_000 });
-    expect(text()).toContain('ใช้ปกติ ฿200.00/ว');
-    expect(text()).toContain('ของชิ้นใหญ่ไม่คูณต่อ:');
+    expect(text()).toContain('ของเป็นก้อน (นับครั้งเดียว):');
     expect(text()).toContain('฿4,000.00');
+    expect(q('[title*="นับว่าจ่ายแล้ว"]')).not.toBeNull();
+  });
+
+  it('splits what is still to come into the daily pace and the rows planned ahead', () => {
+    forecast({}, { remainingDays: 15, actualDailyVariableAvg: 200, projectedVariableRemaining: 4_000, plannedAhead: 1_000 });
+    const t = text();
+    expect(t).toContain('คาดว่าใช้อีก (15 วัน):');
+    expect(t).toContain('ค่ากินอยู่ ฿200.00 × 15 วัน:');
+    expect(t).toContain('฿3,000.00');
+    expect(t).toContain('รายการที่ลงแผนไว้:');
+    expect(t).toContain('฿1,000.00');
+  });
+
+  it('nothing planned ahead: no split', () => {
+    forecast();
+    expect(text()).not.toContain('รายการที่ลงแผนไว้');
+  });
+
+  it('when the 20% target is out of reach it says so instead of ฿0.00 a day', () => {
+    forecast({}, { safeToSpendForTarget: 0 });
+    expect(text()).toContain('เดือนนี้ไม่ทันแล้ว');
+    expect(text()).not.toContain('ใช้ได้ ฿0.00/วัน');
   });
 
   it('over the ceiling: says how much to cut per day and in total, and the surplus turns negative', () => {
     forecast({ safeToSpend: 100, projectedExpense: 31_500, projectedSurplus: -1_500 }, { actualDailyVariableAvg: 200, requiredDailyReduction: 100, requiredReduction: 1_500, projectedSurplusPct: -5 });
     const t = text();
     expect(t).toContain('−฿100.00/วัน');
-    expect(t).toContain('อัตราใช้จริง: 200% ของเพดาน');
-    expect(t).toContain('ต้องลดอีก ฿1,500.00');
+    expect(t).toContain('ต้องลดวันละ:');
+    expect(t).toContain('ใช้อยู่ 200% ของที่ใช้ได้');
+    expect(t).toContain('ใช้น้อยลงอีก ฿1,500.00 ถึงไม่ติดลบ');
     expect(t).toContain('−฿1,500.00');
-    expect(t).toContain('เฝ้าระวัง');
+    expect(t).toContain('ติดลบ');
   });
 
   it('skeleton hides the headline numbers', () => {
