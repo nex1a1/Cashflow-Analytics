@@ -55,6 +55,9 @@ export default function DailyForm({
       ...EMPTY_ENTRY,
       type: (defaultType as DailyFormValues['type']) || 'expense',
       categoryId: defaultCategoryId || '',
+      // start on the default category's NEED/WANT: the form remounts per day (key), and starting
+      // on EMPTY_ENTRY's 'want' made the toggle slide to NEED on every day change
+      allocation_type: categories.find(c => c.id === defaultCategoryId)?.allocation_type ?? EMPTY_ENTRY.allocation_type,
     }
   });
   const { register, handleSubmit, formState: { errors } } = form;

@@ -83,6 +83,9 @@ function BatchForm({
       type: (defaultType as BatchFormValues['type']) || 'expense',
       date: defaultDate || getLocalDateString(),
       categoryId: defaultCategoryId || '',
+      // start on the default category's NEED/WANT: the form mounts on every open, and starting on
+      // EMPTY_ENTRY's 'want' made the toggle slide to NEED each time
+      allocation_type: categories.find(c => c.id === defaultCategoryId)?.allocation_type ?? EMPTY_ENTRY.allocation_type,
     }
   });
   const { register, handleSubmit, watch, setValue, setFocus, formState: { errors } } = form;
