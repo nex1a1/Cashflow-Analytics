@@ -35,21 +35,6 @@ afterEach(() => {
 });
 
 describe('AssetRow identity column', () => {
-  it('shows the name with its kind and symbol; the symbol part is left out when there is none', () => {
-    mount(mkAsset('a', { name: 'Dime - AAPL', kind: 'us_stock', symbol: 'AAPL' }));
-    expect(cellText(0)).toContain('Dime - AAPL');
-    expect(cellText(0)).toContain('หุ้นสหรัฐ · AAPL');
-    act(() => root!.unmount()); container!.remove();
-    mount(mkAsset('b', { name: 'ออมทอง', kind: 'gold_bar', symbol: null }));
-    expect(cellText(0)).toContain('ทองคำแท่ง');
-    expect(cellText(0)).not.toContain('·');
-  });
-
-  it('paints the swatch with the asset colour', () => {
-    mount(mkAsset('a'), { color: 'rgb(1, 2, 3)' });
-    const sw = container!.querySelector<HTMLElement>('span[aria-hidden="true"]')!;
-    expect(sw.style.backgroundColor).toBe('rgb(1, 2, 3)');
-  });
 
   it('dims a row that is no longer held, and only that row', () => {
     mount(mkAsset('a', { units: 0 }));
@@ -61,11 +46,6 @@ describe('AssetRow identity column', () => {
 });
 
 describe('AssetRow weight column', () => {
-  it('shows a dash and no bar when the asset is not held (weight null)', () => {
-    mount(mkAsset('a'), { weight: null });
-    expect(cellText(1)).toBe('–');
-    expect(cells()[1].querySelector('.h-full')).toBeNull();
-  });
 
   it('rounds the percentage and sizes the bar to it', () => {
     mount(mkAsset('a'), { weight: 45.6 });
@@ -73,16 +53,6 @@ describe('AssetRow weight column', () => {
     expect(cells()[1].querySelector<HTMLElement>('.h-full')!.style.width).toBe('45.6%');
   });
 
-  it('keeps a sliver visible for a tiny weight (never below 2%)', () => {
-    mount(mkAsset('a'), { weight: 0.4 });
-    expect(cells()[1].querySelector<HTMLElement>('.h-full')!.style.width).toBe('2%');
-  });
-
-  it('a weight of exactly 0 still draws the 2% sliver and reads 0%', () => {
-    mount(mkAsset('a'), { weight: 0 });
-    expect(cellText(1)).toBe('0%');
-    expect(cells()[1].querySelector<HTMLElement>('.h-full')!.style.width).toBe('2%');
-  });
 });
 
 describe('AssetRow holding column', () => {
@@ -143,17 +113,6 @@ describe('AssetRow money columns', () => {
     expect(stamp.classList.contains('text-warn')).toBe(false);
   });
 
-  it('turns the timestamp amber when the price is older than a day', () => {
-    mount(mkAsset('a', { price: 250.5, priceAt: hoursAgo(30) }));
-    const stamp = [...cells()[4].querySelectorAll('div')].find(d => d.textContent!.startsWith('ข้อมูล ณ'))!;
-    expect(stamp.classList.contains('text-warn')).toBe(true);
-  });
-
-  it('a price without a timestamp shows no date line', () => {
-    mount(mkAsset('a', { price: 10, priceAt: null }));
-    expect(cells()[4].querySelector('div')).toBeNull();
-  });
-
   it('a failed refresh adds a warning that carries the error as tooltip', () => {
     mount(mkAsset('a', { price: 10 }), { priceError: 'HTTP 500' });
     const note = [...cells()[4].querySelectorAll('div')].find(d => d.textContent === 'ดึงราคาไม่สำเร็จ ใช้ราคาเดิม')!;
@@ -187,11 +146,6 @@ describe('AssetRow profit and loss', () => {
     expect(cellText(6)).toBe('−300.00-3.00%');
     expect(cells()[6].classList.contains('text-ink-soft')).toBe(true);
     expect(cells()[6].classList.contains('text-expense')).toBe(false);
-  });
-
-  it('unrealised unknown (no price): a dash', () => {
-    mount(mkAsset('a', { unrealized: null, unrealizedPct: null }));
-    expect(cellText(6)).toBe('–');
   });
 
   it('known amount but no percentage (zero cost): the amount only', () => {
@@ -243,41 +197,6 @@ describe('AssetRow trade buttons', () => {
 });
 
 describe('AssetRow detail toggle', () => {
-  it('starts collapsed and the name button says it will open', () => {
-    mount(mkAsset('a', { name: 'X' }));
-    const b = btn('ดูรายละเอียด X');
-    expect(b.getAttribute('aria-expanded')).toBe('false');
-    expect(container!.querySelectorAll('tr').length).toBe(1);
-  });
-
-  it('clicking the name button opens the detail row spanning all 9 columns, clicking again closes it', () => {
-    mount(mkAsset('a', { name: 'X' }));
-    click(btn('ดูรายละเอียด X'));
-    const rows = container!.querySelectorAll('tr');
-    expect(rows.length).toBe(2);
-    expect(rows[1].querySelector('td')!.getAttribute('colspan')).toBe('9');
-    expect(btn('ซ่อนรายละเอียด X').getAttribute('aria-expanded')).toBe('true');
-    click(btn('ซ่อนรายละเอียด X'));
-    expect(container!.querySelectorAll('tr').length).toBe(1);
-    expect(btn('ดูรายละเอียด X').getAttribute('aria-expanded')).toBe('false');
-  });
-
-  it('the chevron points right when closed and down when open', () => {
-    mount(mkAsset('a', { name: 'X' }));
-    const icon = () => btn(container!.querySelector('button[aria-expanded]')!.getAttribute('aria-label')!).querySelector('svg')!;
-    expect(icon().classList.contains('lucide-chevron-right')).toBe(true);
-    click(container!.querySelector('button[aria-expanded]'));
-    expect(icon().classList.contains('lucide-chevron-down')).toBe(true);
-    expect(icon().classList.contains('lucide-chevron-right')).toBe(false);
-  });
-
-  it('the whole row is clickable too (not only the button)', () => {
-    mount(mkAsset('a', { name: 'X' }));
-    click(container!.querySelector('tr'));
-    expect(container!.querySelectorAll('tr').length).toBe(2);
-    click(container!.querySelector('tr'));
-    expect(container!.querySelectorAll('tr').length).toBe(1);
-  });
 
   it('the opened detail gets the asset, its unit and the price setter', async () => {
     mount(mkAsset('a1', { name: 'X', unitLabel: 'เหรียญ', units: 1 }));

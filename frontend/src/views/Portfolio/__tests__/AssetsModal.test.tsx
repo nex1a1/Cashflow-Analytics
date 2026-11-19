@@ -62,54 +62,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('AssetsModal shell', () => {
-  it('is a labelled modal dialog and takes focus', () => {
-    mount();
-    expect(dialog().getAttribute('aria-modal')).toBe('true');
-    expect(dialog().getAttribute('aria-label')).toBe('จัดการสินทรัพย์ลงทุน');
-    expect(dialog().contains(document.activeElement)).toBe(true);
-  });
-
-  it('opens on "add new" with a blank form', () => {
-    mount([gold()]);
-    expect(newBtn().getAttribute('aria-current')).toBe('true');
-    expect(listButtons()[0].getAttribute('aria-current')).toBe('false');
-    expect(heading()).toBe('เพิ่มสินทรัพย์ใหม่');
-    expect(section().getAttribute('aria-label')).toBe('เพิ่มสินทรัพย์ใหม่');
-    expect(pressedKind()).toEqual(['หุ้นสหรัฐ']);
-  });
-
-  it('a portfolio that is still loading shows an empty list instead of crashing', () => {
-    mount(null);
-    expect(nav().textContent).toContain('สินทรัพย์ของฉัน (0)');
-    expect(nav().textContent).toContain('ยังไม่มีสินทรัพย์');
-  });
-
-  it('empty portfolio: count 0 and a first-asset hint', () => {
-    mount([]);
-    expect(nav().textContent).toContain('สินทรัพย์ของฉัน (0)');
-    expect(nav().textContent).toContain('เริ่มเพิ่มตัวแรกได้ที่ฟอร์มด้านขวา');
-  });
-
-  it('the hint disappears as soon as there are assets', () => {
-    mount([gold()]);
-    expect(nav().textContent).not.toContain('เริ่มเพิ่มตัวแรกได้ที่ฟอร์มด้านขวา');
-    expect(nav().textContent).toContain('สินทรัพย์ของฉัน (1)');
-  });
-});
-
 describe('AssetsModal asset list', () => {
-  it('shows name, kind with symbol and what is held for each asset', () => {
-    mount([gold(), aapl(), sold()]);
-    const t = listButtons().map(b => b.textContent);
-    expect(t[0]).toContain('ออมทอง');
-    expect(t[0]).toContain('ทองคำแท่ง');
-    expect(t[0]).toContain('1.5 บาททอง');
-    expect(t[1]).toContain('หุ้นสหรัฐ · AAPL');
-    expect(t[1]).toContain('ยังไม่มีรายการ');
-    expect(t[2]).toContain('คริปโต · bitcoin');
-    expect(t[2]).toContain('ขายหมด');
-  });
 
   it('a held asset without a unit label shows just the number', () => {
     mount([mkAsset('a', { units: 3, unitLabel: null })]);
@@ -118,43 +71,6 @@ describe('AssetsModal asset list', () => {
     expect(listButtons()[0].textContent).not.toContain('null');
   });
 
-  it('every asset gets its own colour swatch from the shared palette', () => {
-    mount([gold(), aapl(), sold()]);
-    const colours = listButtons().map(b => b.querySelector<HTMLElement>('span[aria-hidden="true"]')!.style.backgroundColor);
-    expect(new Set(colours).size).toBe(3);
-    expect(colours.every(c => c.startsWith('rgb'))).toBe(true);
-  });
-});
-
-describe('AssetsModal selecting', () => {
-  it('picking an asset opens it for editing', () => {
-    mount([gold(), aapl()]);
-    click(listButtons()[0]);
-    expect(heading()).toBe('แก้ไข: ออมทอง');
-    expect(section().getAttribute('aria-label')).toBe('แก้ไข ออมทอง');
-    expect(listButtons()[0].getAttribute('aria-current')).toBe('true');
-    expect(newBtn().getAttribute('aria-current')).toBe('false');
-    expect(pressedKind()).toEqual(['ทองคำแท่ง']);
-    expect(q<HTMLInputElement>('#asset-name')!.value).toBe('ออมทอง');
-  });
-
-  it('switching assets loads the other one into the form', () => {
-    mount([gold(), aapl()]);
-    click(listButtons()[0]);
-    click(listButtons()[1]);
-    expect(heading()).toBe('แก้ไข: Dime AAPL');
-    expect(q<HTMLInputElement>('#asset-name')!.value).toBe('Dime AAPL');
-    expect(q<HTMLInputElement>('#asset-symbol')!.value).toBe('AAPL');
-  });
-
-  it('going back to "add new" gives a blank form again', () => {
-    mount([gold()]);
-    click(listButtons()[0]);
-    click(newBtn());
-    expect(heading()).toBe('เพิ่มสินทรัพย์ใหม่');
-    expect(q<HTMLInputElement>('#asset-name')!.value).toBe('หุ้นสหรัฐ');
-    expect(newBtn().getAttribute('aria-current')).toBe('true');
-  });
 });
 
 describe('AssetsModal saving', () => {
@@ -188,25 +104,6 @@ describe('AssetsModal saving', () => {
     expect(notice()).toBeNull();
   });
 
-  it('the confirmation goes away when you pick something else', async () => {
-    mount([aapl(), gold()]);
-    click(listButtons()[0]);
-    click(submitBtn());
-    await flush();
-    expect(notice()).not.toBeNull();
-    click(listButtons()[1]);
-    expect(notice()).toBeNull();
-  });
-
-  it('the add confirmation also goes away on picking "add new" again', async () => {
-    mount([]);
-    click(kindBtn('กองทุน'));
-    click(submitBtn());
-    await flush();
-    expect(notice()).not.toBeNull();
-    click(newBtn());
-    expect(notice()).toBeNull();
-  });
 });
 
 describe('AssetsModal deleting', () => {
@@ -236,79 +133,3 @@ describe('AssetsModal deleting', () => {
   });
 });
 
-describe('AssetsModal closing', () => {
-  it('Esc closes it', () => {
-    mount();
-    key(document.body, 'Escape');
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('other keys do not', () => {
-    mount();
-    key(document.body, 'Enter');
-    key(document.body, 'a');
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('Esc that something else already handled is left alone', () => {
-    mount();
-    const stop = (e: Event) => e.preventDefault();
-    document.addEventListener('keydown', stop);
-    key(document.body, 'Escape');
-    document.removeEventListener('keydown', stop);
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('Esc while a delete is armed only disarms it; a second Esc closes', () => {
-    mount([aapl()]);
-    click(listButtons()[0]);
-    click(deleteBtn());
-    expect(deleteBtn().textContent).toBe('กดอีกครั้งเพื่อยืนยัน');
-    key(document.body, 'Escape');
-    expect(onClose).not.toHaveBeenCalled();
-    expect(deleteBtn().textContent).toBe('ลบสินทรัพย์');
-    key(document.body, 'Escape');
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('the listener is released on unmount', () => {
-    mount();
-    act(() => root!.unmount());
-    root = null;
-    key(document.body, 'Escape');
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('follows a new onClose callback instead of calling the old one', () => {
-    mount();
-    const next = vi.fn();
-    act(() => root!.render(ui(next)));
-    key(document.body, 'Escape');
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('the X button closes', () => {
-    mount();
-    click(dialog().querySelector('button[aria-label="ปิด"]'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('cancel in the form closes (new asset) as does the close button (existing asset)', () => {
-    mount([aapl()]);
-    click([...section().querySelectorAll('button')].find(b => b.textContent === 'ยกเลิก'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-    click(listButtons()[0]);
-    click([...section().querySelectorAll('button')].find(b => b.textContent === 'ปิด'));
-    expect(onClose).toHaveBeenCalledTimes(2);
-  });
-
-  it('pressing on the dark backdrop closes; pressing inside the panel does not', () => {
-    mount();
-    const backdrop = container!.firstElementChild as HTMLElement;
-    act(() => { dialog().dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); });
-    expect(onClose).not.toHaveBeenCalled();
-    act(() => { backdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-});

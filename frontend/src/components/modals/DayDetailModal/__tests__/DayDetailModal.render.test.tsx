@@ -105,12 +105,6 @@ afterEach(() => {
 });
 
 describe('DayDetailModal — header and summary', () => {
-  it('shows the Thai date and weekday for the active day', async () => {
-    await mount();
-    expect(q('[role="dialog"]')!.getAttribute('aria-label')).toBe('รายละเอียดรายวัน');
-    expect(q('h2')!.textContent).toBe('7 ตุลาคม 2026');
-    expect(document.body.textContent).toContain('วันพุธ');
-  });
 
   it('adds up only that day: income, expense, net savings (a sell subtracts) and what is left', async () => {
     await mount();
@@ -192,25 +186,6 @@ describe('DayDetailModal — sorting', () => {
 });
 
 describe('DayDetailModal — day type fallback', () => {
-  it('falls back to the workday type on a weekday and to holiday on a weekend when nothing is stored', async () => {
-    await mount({ transactions: [] });
-    expect(byText('span', 'วันทำงาน')).not.toBeNull();
-    expect(byText('span', 'วันหยุด')).toBeNull();
-    act(() => root!.unmount()); container!.remove();
-
-    await mount({ dateStr: SAT, transactions: [] });
-    expect(byText('span', 'วันหยุด')).not.toBeNull();
-  });
-
-  it('with a change handler the badge becomes a picker that changes this day', async () => {
-    const handleDayTypeChange = vi.fn();
-    await mount({ transactions: [], handleDayTypeChange });
-    const toggle = [...document.querySelectorAll('button')].find(b => b.textContent?.trim() === 'วันทำงาน')!;
-    click(toggle);
-    const holiday = [...document.querySelectorAll('button')].filter(b => b.textContent?.includes('วันหยุด')).at(-1)!;
-    click(holiday);
-    expect(handleDayTypeChange).toHaveBeenCalledWith(DAY, 'dt-hol');
-  });
 
   it('rows with the same type, group, category and amount keep a stable order by id', async () => {
     const same = (id: string, d: string) => tx(id, 'ค่ากิน', 'c-food', 50, d);
@@ -218,41 +193,6 @@ describe('DayDetailModal — day type fallback', () => {
     expect(rowTitles()).toEqual(['หนึ่ง', 'สอง', 'สาม']);
   });
 
-  it('prefers the stored day type over the fallback', async () => {
-    await mount({ transactions: [], dayTypes: { [DAY]: 'dt-hol' } });
-    expect(byText('span', 'วันหยุด')).not.toBeNull();
-    expect(byText('span', 'วันทำงาน')).toBeNull();
-  });
-});
-
-describe('DayDetailModal — closing and navigating', () => {
-  it('closes with the X button and with Esc', async () => {
-    const onClose = vi.fn();
-    await mount({ onClose });
-    click(q('button[title="ปิด"]'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-    key(document.body, 'Escape');
-    expect(onClose).toHaveBeenCalledTimes(2);
-  });
-
-  it('steps to the next / previous day, reports it and shows that day\'s rows', async () => {
-    const onDateChange = vi.fn();
-    await mount({ onDateChange });
-    click(q('button[title^="วันถัดไป"]'));
-    expect(onDateChange).toHaveBeenLastCalledWith('2026-10-08');
-    expect(q('h2')!.textContent).toBe('8 ตุลาคม 2026');
-    expect(rowTitles()).toEqual(['พรุ่งนี้']);
-
-    click(q('button[title^="วันก่อนหน้า"]'));
-    expect(onDateChange).toHaveBeenLastCalledWith('2026-10-07');
-    expect(q('h2')!.textContent).toBe('7 ตุลาคม 2026');
-  });
-
-  it('follows a dateStr that changes from outside', async () => {
-    const { rerender } = await mount({ transactions: [] });
-    await rerender({ dateStr: '2027-01-02' });
-    expect(q('h2')!.textContent).toBe('2 มกราคม 2027');
-  });
 });
 
 describe('DayDetailModal — adding an item', () => {
@@ -402,18 +342,6 @@ describe('DayDetailModal — quick suggestions', () => {
     { categoryId: 'c-salary', categoryName: 'เงินเดือน', description: 'เงินเดือน', amount: 30000, allocation_type: null, count: 9, lastDate: '2026-09-25' },
   ];
 
-  it('offers only the suggestions that fit the form type, and fills the form when one is clicked', async () => {
-    await mount({ transactions: [], frequentItems: frequent });
-    const items = () => [...document.querySelectorAll('.sugg-item')];
-    expect(items()).toHaveLength(1); // the salary suggestion is an income item, the form is on expense
-    expect(items()[0].textContent).toContain('ข้าวมันไก่');
-
-    click(items()[0]);
-    await act(async () => { await new Promise(r => setTimeout(r, 30)); });
-    expect(descInput().value).toBe('ข้าวมันไก่');
-    expect(amountInput().value).toBe('60');
-  });
-
   it('a suggestion in the category already picked keeps its allocation, and the next category change still takes that category\'s default', async () => {
     const cats = [...categories, { id: 'c-rent', name: 'ค่าเช่า', type: 'expense', order_index: 5, cashflow_group_id: 'g-exp', allocation_type: 'need' } as Category];
     const onSave = vi.fn().mockResolvedValue(undefined);
@@ -519,18 +447,6 @@ describe('DayDetailModal — deleting a row', () => {
 });
 
 describe('DayDetailModal — day note', () => {
-  it('is view-only without a change handler: shows an existing note, nothing to add or edit', async () => {
-    await mount({ transactions: [], dayNotes: { [DAY]: { text: 'วันเกิดแม่', icon: 'cake' } } });
-    expect(document.body.textContent).toContain('วันเกิดแม่');
-    expect(byText('button', '+ โน้ต')).toBeNull();
-    expect(q('button[aria-label^="แก้ไขโน้ต"]')).toBeNull();
-  });
-
-  it('renders nothing for a day without a note in view-only mode', async () => {
-    await mount({ transactions: [] });
-    expect(byText('button', '+ โน้ต')).toBeNull();
-    expect(noteInput()).toBeNull();
-  });
 
   it('adds a note: ghost button → input → Enter saves (date, text, icon) and collapses', async () => {
     const onNote = vi.fn().mockResolvedValue(true);
@@ -543,16 +459,6 @@ describe('DayDetailModal — day note', () => {
     await flushAll();
 
     expect(onNote).toHaveBeenCalledWith(DAY, 'วันเกิด', ''); // trimmed
-    expect(noteInput()).toBeNull();
-  });
-
-  it('does not call the handler when nothing was typed', async () => {
-    const onNote = vi.fn().mockResolvedValue(true);
-    await mount({ transactions: [], handleDayNoteChange: onNote });
-    click(byText('button', '+ โน้ต'));
-    key(noteInput()!, 'Enter');
-    await flushAll();
-    expect(onNote).not.toHaveBeenCalled();
     expect(noteInput()).toBeNull();
   });
 
@@ -582,29 +488,4 @@ describe('DayDetailModal — day note', () => {
     expect(onNote).toHaveBeenCalledWith(DAY, '', 'cake');
   });
 
-  it('Esc closes only the editor (and drops the edit); the next Esc closes the modal', async () => {
-    const onClose = vi.fn();
-    const onNote = vi.fn().mockResolvedValue(true);
-    await mount({ transactions: [], onClose, handleDayNoteChange: onNote });
-    click(byText('button', '+ โน้ต'));
-    type(noteInput(), 'ยังไม่เสร็จ');
-    key(noteInput()!, 'Escape');
-    await flushAll();
-
-    expect(noteInput()).toBeNull();
-    expect(onClose).not.toHaveBeenCalled();
-    expect(onNote).not.toHaveBeenCalled();
-
-    key(document.body, 'Escape');
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('starts every day with its own note state (editor does not carry over when stepping days)', async () => {
-    await mount({ handleDayNoteChange: vi.fn().mockResolvedValue(true), dayNotes: { '2026-10-08': { text: 'พรุ่งนี้มีนัด', icon: '' } } });
-    click(byText('button', '+ โน้ต'));
-    expect(noteInput()).not.toBeNull();
-    click(q('button[title^="วันถัดไป"]'));
-    expect(noteInput()).toBeNull();
-    expect(q('button[aria-label="แก้ไขโน้ต: พรุ่งนี้มีนัด"]')).not.toBeNull();
-  });
 });

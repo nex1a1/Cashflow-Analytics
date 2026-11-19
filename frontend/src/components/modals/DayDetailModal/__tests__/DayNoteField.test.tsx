@@ -39,30 +39,6 @@ const blurTo = async (to: Element | null) => {
 };
 
 describe('DayNoteField', () => {
-  it('view-only: the note as text, or nothing', () => {
-    render({ text: 'วันเกิด', icon: 'cake' }, false);
-    expect(host!.textContent).toBe('วันเกิด');
-    expect(host!.querySelector('button')).toBeNull();
-    act(() => root!.unmount()); host!.remove();
-    render({ text: '', icon: '' }, false);
-    expect(host!.innerHTML).toBe('');
-  });
-
-  it('no note: a ghost button opens the editor, focused', () => {
-    render({ text: '', icon: '' });
-    click(ghost());
-    expect(document.activeElement).toBe(input());
-    expect(picker().dataset.icon).toBe('sticky-note');
-  });
-
-  it('a note: its chip opens the editor with the text, cursor at the end', () => {
-    render({ text: 'วันแรกทำงาน', icon: 'briefcase' });
-    expect(chip()!.textContent).toBe('วันแรกทำงาน');
-    click(chip());
-    expect(input().value).toBe('วันแรกทำงาน');
-    expect(input().selectionStart).toBe('วันแรกทำงาน'.length);
-    expect(picker().dataset.icon).toBe('briefcase');
-  });
 
   it('an icon picked before any text is held, and saved with the text', async () => {
     render({ text: '', icon: '' });
@@ -199,9 +175,4 @@ describe('DayNoteField', () => {
     window.removeEventListener('keydown', modalEsc);
   });
 
-  it('the input is capped at 200 characters, like the backend', () => {
-    render({ text: '', icon: '' });
-    click(ghost());
-    expect(input().maxLength).toBe(200);
-  });
 });

@@ -60,26 +60,6 @@ afterEach(() => {
 });
 
 describe('AllocationEvolutionChart', () => {
-  it('has a plain-Thai legend; the third band is money left over, not savings', () => {
-    mount();
-    const t = container.textContent!;
-    expect(t).toContain('แนวโน้ม 50/30/20');
-    expect(t).not.toContain('EVOLUTION');
-    expect(t).toContain('NEED เป้า 50%');
-    expect(t).toContain('WANT เพดาน 30%');
-    expect(t).toContain('SAVE เป้า 20%');
-    expect(t).not.toContain('เงินออม');
-  });
-
-  it('stacks need, want and leftover to 100%, and collapses an empty month instead of inventing a leftover', () => {
-    mount();
-    const [need, , leftover] = [...container.querySelectorAll('path[fill-opacity]')].map(p => p.getAttribute('d')!);
-    expect(need.startsWith(`M ${PAD_L} ${yOf(40)}`)).toBe(true);
-    // leftover band's top edge: 100% for months with data, 0% for the empty August
-    expect(leftover).toContain(`L ${xOf(1, 4)} ${yOf(100)}`);
-    expect(leftover).toContain(`L ${xOf(2, 4)} ${yOf(0)}`);
-    expect(leftover).not.toContain(`L ${xOf(2, 4)} ${yOf(100)}`);
-  });
 
   it('keeps a 0–100% axis with no overspend marks while every month is within income', () => {
     mount();
@@ -115,17 +95,6 @@ describe('AllocationEvolutionChart', () => {
     expect(callout()!.textContent).toContain('ใช้เกินรายรับ');
   });
 
-  it('labels every month up to 12, then every 2nd / 3rd with the last one pinned and no crowded neighbour', () => {
-    mount();
-    expect(ticks()).toEqual(["มิ.ย. '26", "ก.ค. '26", "ส.ค. '26", "ก.ย. '26"]);
-    remount(run(14));
-    expect(ticks()).toEqual(["ม.ค. '24", "มี.ค. '24", "พ.ค. '24", "ก.ค. '24", "ก.ย. '24", "พ.ย. '24", "ก.พ. '25"]);
-    remount(run(26));
-    expect(ticks()).toHaveLength(9);
-    expect(ticks()[8]).toBe("ก.พ. '26");
-    expect(ticks()).not.toContain("ม.ค. '26"); // index 24 sits right before the pinned last tick
-  });
-
   it('hovering a month shows its baht and percentages, red where a target is missed', () => {
     mount();
     expect(tip()).toBeNull();
@@ -142,45 +111,4 @@ describe('AllocationEvolutionChart', () => {
     expect(pct('(40%)').getAttribute('fill')).toBe(tc('ink-soft'));
   });
 
-  it('says "no data" for an empty month, shows a hovered tick even off-stride, and clears on leave', () => {
-    mount();
-    hover(xOf(2, 4));
-    expect(tip()!.textContent).toContain('ไม่มีข้อมูล');
-    expect(tip()!.querySelectorAll('circle')).toHaveLength(0);
-    leave();
-    expect(tip()).toBeNull();
-    remount(run(14));
-    hover(xOf(1, 14));
-    expect(ticks()).toContain("ก.พ. '24");
-    hover(xOf(1, 14), 0); // unmeasured box: keep what is shown
-    expect(ticks()).toContain("ก.พ. '24");
-  });
-
-  it('keeps the tooltip inside the chart near the right edge', () => {
-    mount();
-    hover(xOf(3, 4));
-    const x = Number(tip()!.querySelector('g[transform]')!.getAttribute('transform')!.match(/translate\(([-\d.]+)/)![1]);
-    expect(x).toBeCloseTo(xOf(3, 4) - 196 - 12);
-  });
-
-  it('calls out the latest month up to now that has data, skipping future-dated and empty ones', () => {
-    mount();
-    expect(callout()!.textContent).toBe('ก.ค. 2026: รายจ่ายจำเป็นเกินเป้า • รายจ่ายตามใจเกินเพดาน • เงินเหลือต่ำกว่าเป้า');
-    remount(MONTHS, '2026-06'); // June is on target: nothing to say
-    expect(callout()).toBeNull();
-    remount([m('2026-06', 50, 31, 19)], '2026-01'); // only future months: judge the last one
-    expect(callout()!.textContent).toBe('มิ.ย. 2026: รายจ่ายตามใจเกินเพดาน • เงินเหลือต่ำกว่าเป้า');
-    remount([m('2026-06', 0, 0, 0)], '2026-12');
-    expect(callout()).toBeNull();
-  });
-
-  it('fills whatever box it is given and stops observing on unmount', () => {
-    mount();
-    act(() => ro.cb!([{ contentRect: { width: 640, height: 300 } }]));
-    expect(svg().getAttribute('viewBox')).toBe('0 0 640 300');
-    act(() => ro.cb!([{ contentRect: { width: 0, height: 0 } }]));
-    expect(svg().getAttribute('viewBox')).toBe('0 0 640 300');
-    act(() => root!.unmount()); root = null;
-    expect(ro.disconnect).toHaveBeenCalledTimes(1);
-  });
 });

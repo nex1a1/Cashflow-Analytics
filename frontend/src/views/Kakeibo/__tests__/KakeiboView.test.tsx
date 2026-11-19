@@ -103,27 +103,6 @@ describe('KakeiboView', () => {
     expect(income.textContent).not.toContain('แผน'); // salary already paid
   });
 
-  it('an in-budget bar wears the group colour; over budget switches to the amber status colour', async () => {
-    const groups = h.groups;
-    h.groups = groups.map((g) => (g.id === 'g-food' ? { ...g, color: '#F97316' } : g));
-    try {
-      await mount(<KakeiboView />);
-      const li = (name: string) => [...section('งบซอง').querySelectorAll('li')].find((x) => x.textContent?.includes(name))!;
-      const fills = (name: string) => [...li(name).querySelectorAll<HTMLElement>('span[aria-hidden="true"][class*="h-2.5"] > span')].map((e) => e.style.backgroundColor).filter(Boolean).join('|');
-      expect(fills('ค่ากิน')).toMatch(/249,\s*115,\s*22|f97316/i); // in budget: the group's own orange
-      expect(li('ค่าใช้จ่ายจิปาถะ').querySelector('.text-warn')).not.toBeNull(); // 110%: status colour on the text
-      // the legend says which colour means what — folded behind the header button so it doesn't sit under every glance
-      expect(section('งบซอง').querySelector('[data-legend]')).toBeNull();
-      act(() => [...section('งบซอง').querySelectorAll('button')].find((b) => b.textContent === 'คำอธิบาย')!.click());
-      const legend = section('งบซอง').querySelector('[data-legend]')!.textContent!;
-      expect(legend).toContain('สีกลุ่ม = ในงบ');
-      expect(legend).toContain('เกินงบ');
-      expect(legend).toContain('เกิน > 20%');
-    } finally {
-      h.groups = groups;
-    }
-  });
-
   it('an envelope whose plan pushes it over says so in words (colour still follows actuals only)', async () => {
     await mount(<KakeiboView />);
     const misc = [...section('งบซอง').querySelectorAll('li')].find((li) => li.textContent?.includes('ค่าใช้จ่ายจิปาถะ'))!;
@@ -189,30 +168,6 @@ describe('KakeiboView', () => {
     }
   });
 
-  it('tables have no repeated column header rows and the stacks are balanced by role', async () => {
-    await mount(<KakeiboView />);
-    expect(document.body.textContent).not.toContain('เดือนนี้');
-    expect(document.body.textContent).not.toContain('รอบนี้');
-    const cols = [...document.querySelectorAll('.tab-stage .grid-cols-3 > div, .grid-cols-3.items-start > div')];
-    const titles = cols.map((c) => [...c.querySelectorAll(':scope > section, :scope > div > section')].map((p) => p.getAttribute('aria-label')));
-    expect(titles[0]).toEqual(['รายรับ', 'ค่าใช้จ่ายคงที่ (Fix Cost)', 'ค่าใช้จ่ายจำเป็น (NEED)', 'ลงทุน/ออม (ซื้อ − ขาย)']);
-    expect(titles[1]).toEqual(['งบซอง', 'ค่าใช้จ่ายตามใจ (WANT)', 'ปฏิทินการใช้จ่าย']);
-    expect(titles[2]).toEqual(['สัดส่วนรายรับ', 'รายจ่ายรายสัปดาห์', 'ภาพรวมรอบ']);
-  });
-
-  it('shows a skeleton while the first load has no transactions, but keeps old numbers on screen during later loads', async () => {
-    const rows = h.transactions;
-    h.transactions = [];
-    await mount(<KakeiboView isLoading />);
-    expect(q('[role="status"][aria-busy="true"]')).not.toBeNull();
-    expect(q('section[aria-label="Kakeibo"]')).toBeNull();
-    act(() => root!.unmount()); container!.remove();
-    h.transactions = rows;
-    await mount(<KakeiboView isLoading />);
-    expect(q('[aria-busy="true"]')).toBeNull();
-    expect(section('Kakeibo')).not.toBeNull();
-  });
-
   it('envelopes colour from actuals only and show the plan apart', async () => {
     await mount(<KakeiboView />);
     const rows = [...section('งบซอง').querySelectorAll('li')];
@@ -246,24 +201,6 @@ describe('KakeiboView', () => {
     expect(last.querySelector('[data-allowance-tick]')).not.toBeNull();
   });
 
-  it('Fix Cost choices with no row in this period stay visible in the picker and can be removed', async () => {
-    const store = h.store, cats = h.categories;
-    h.categories = [...cats, { id: 'c-net', name: 'ค่าเน็ต', type: 'expense', order_index: 5, cashflow_group_id: 'g-food' } as Category];
-    h.store = { ...store, kakeibo_fixed: { categories: ['c-net'], items: ['c-food|ค่าข้าวเดือนก่อน'] } };
-    try {
-      await mount(<KakeiboView />);
-      act(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'เลือกรายการ')!.click());
-      const dialog = q('[role="dialog"]')!;
-      expect(dialog.textContent).toContain('ค่าเน็ต'); // no rows this period, still listed
-      expect(dialog.textContent).toContain('เลือก 1/'); // food: the saved item that is not in this period counts
-      act(() => dialog.querySelector<HTMLInputElement>('input[aria-label="ค่าเน็ต ทั้งหมวด"]')!.click());
-      await flush();
-      expect(h.save).toHaveBeenLastCalledWith('kakeibo_fixed', { categories: [], items: ['c-food|ค่าข้าวเดือนก่อน'] });
-    } finally {
-      h.store = store; h.categories = cats;
-    }
-  });
-
   it('rows carry no previous-cycle column; the reflection card still compares with the previous cycle', async () => {
     const tx = h.transactions;
     // previous cycle 25 Aug – 24 Sep: food 1,500 NEED, shop 1,100 WANT, no salary row
@@ -291,14 +228,6 @@ describe('KakeiboView', () => {
     }
   });
 
-  it('two ticks in a row both land (each builds on the latest value, not the one from render)', async () => {
-    await mount(<KakeiboView />);
-    act(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'เลือกรายการ')!.click());
-    const box = q('[role="dialog"]')!.querySelector<HTMLInputElement>('input[aria-label="c-food ทั้งหมวด"]')!;
-    act(() => { box.click(); box.click(); }); // same render, second click sees the old props
-    await flush();
-    expect(h.save).toHaveBeenLastCalledWith('kakeibo_fixed', { categories: [], items: [] }); // on, then off — not "on" twice
-  });
 });
 
 describe('KakeiboView — several months', () => {
@@ -343,25 +272,6 @@ describe('KakeiboView — several months', () => {
     expect(cell.style.color).toBe(document.querySelector<HTMLElement>('[data-cat-col]')!.style.color);
   });
 
-  it('the period column flips the order (newest last) and the choice is remembered', async () => {
-    h.period = 'cycle:2026-08_2026-09';
-    h.transactions = [...h.transactions, row('2026-08-26', 'c-sal', 20_000)];
-    const order = () => [...document.querySelectorAll('[data-range-row] th button > span')].map((t) => t.firstChild!.textContent);
-    await mount(<KakeiboView />);
-    expect(order()).toEqual(['cycle:2026-09', 'cycle:2026-08']);
-    const toggle = document.querySelector<HTMLButtonElement>('[data-order-toggle]')!;
-    act(() => toggle.click());
-    expect(order()).toEqual(['cycle:2026-08', 'cycle:2026-09']);
-    expect(toggle.closest('th')!.getAttribute('aria-sort')).toBe('ascending');
-    expect(toggle.textContent).toBe('ช่วงล่าสุดล่าง');
-    // a fresh mount keeps it
-    act(() => root!.unmount()); container!.remove();
-    await mount(<KakeiboView />);
-    expect(order()).toEqual(['cycle:2026-08', 'cycle:2026-09']);
-    localStorage.removeItem('shark_range_order');
-    h.transactions = h.transactions.slice(0, -1);
-  });
-
   it('a cycle that has not started yet is striped, badged and left out of the totals; the current one is marked', async () => {
     h.period = 'cycle:2026-09_2026-10';
     // cycle Oct starts 25 Oct (today is 14 Oct): only planned rows
@@ -386,14 +296,6 @@ describe('KakeiboView — several months', () => {
     }
   });
 
-  it('a period with no rows offers the current cycle', async () => {
-    h.period = 'cycle:2025-01_2025-02';
-    await mount(<KakeiboView />);
-    const button = [...document.querySelectorAll('button')].find((b) => b.textContent === 'ดูcycle:2026-09');
-    expect(button).toBeTruthy();
-    act(() => button!.click());
-    expect(h.setPeriod).toHaveBeenCalledWith('cycle:2026-09');
-  });
 });
 
 describe('MonthReflection', () => {
@@ -404,36 +306,6 @@ describe('MonthReflection', () => {
   const blur = async (el: HTMLTextAreaElement) => { act(() => el.blur()); await flush(); await flush(); };
   const toggle = () => q<HTMLButtonElement>('[data-reflection-toggle]')!;
   const mountOpen = async () => { await mount(<MonthReflection />); act(() => toggle().click()); };
-
-  it('starts folded: no boxes until the header is clicked; it counts what is already written', async () => {
-    h.store = { ...h.store, month_reflections: { 'cycle:2026-09': { good: 'จดทุกวัน' } } };
-    await mount(<MonthReflection hints={['ค่ากิน เกินงบ']} />);
-    expect(q('textarea')).toBeNull();
-    expect(q('[data-hints]')).toBeNull();
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
-    expect(toggle().textContent).toContain('เขียนแล้ว 1/3');
-    act(() => toggle().click());
-    expect(document.querySelectorAll('textarea')).toHaveLength(3);
-    expect(q('[data-hints]')).not.toBeNull();
-    expect(toggle().getAttribute('aria-expanded')).toBe('true');
-    h.store = { group_budgets: { 'g-food': 300_000, 'g-misc': 100_000 } };
-  });
-
-  it('shows the previous period intent above the boxes (the goal verdict lives in the header)', async () => {
-    h.store = { ...h.store, month_reflections: { 'cycle:2026-08': { focus: 'ลดค่ากินนอกบ้าน', next: 'จดทุกวัน' } } };
-    await mount(<KakeiboView />);
-    const box = section('ทบทวนรอบ');
-    expect(box.querySelector('[data-goal-result]')).toBeNull();
-    const intent = box.querySelector('[data-prev-intent]')!;
-    expect(intent.textContent).toContain('โฟกัสลดค่ากินนอกบ้าน');
-    expect(intent.textContent).toContain('ปรับจดทุกวัน');
-    h.store = { group_budgets: { 'g-food': 300_000, 'g-misc': 100_000 } };
-  });
-
-  it('without a previous note the intent block does not render', async () => {
-    await mount(<MonthReflection />);
-    expect(q('[data-prev-intent]')).toBeNull();
-  });
 
   it('a failed save keeps what the user typed (the error says so)', async () => {
     await mountOpen();

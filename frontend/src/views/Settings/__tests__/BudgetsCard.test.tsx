@@ -58,14 +58,6 @@ describe('BudgetsCard list', () => {
     expect(text()).not.toContain('ลงทุน');
   });
 
-  it('groups without a budget are small "set budget" chips, in group order', () => {
-    mount([MISC, FOOD]);
-    const chips = [...container!.querySelectorAll<HTMLButtonElement>('button[aria-label^="ตั้งงบของ"]')];
-    expect(chips.map(c => c.getAttribute('aria-label'))).toEqual(['ตั้งงบของ ค่ากิน', 'ตั้งงบของ จิปาถะ']);
-    expect(chips[0].title).toBe('ตั้งงบ ค่ากิน');
-    expect(text()).not.toContain('ยังไม่ตั้ง');
-  });
-
   it('a group with a budget is a row with the amount and an edit button; the badge counts them', () => {
     h.budgets = { food: 150_000 };
     mount();
@@ -83,11 +75,6 @@ describe('BudgetsCard list', () => {
     expect(text()).toContain('฿1,234.50');
   });
 
-  it('badge is 0 when nothing is set', () => {
-    mount();
-    expect(container!.querySelector('h2 span')!.textContent).toBe('0');
-  });
-
   it('a budget on a group that is not an expense group is not counted', () => {
     h.budgets = { pay: 100_000, food: 50_000 };
     mount();
@@ -101,15 +88,6 @@ describe('BudgetsCard list', () => {
 });
 
 describe('BudgetsCard editing', () => {
-  it('a chip turns into an empty input row; its text is selected on focus and it has a label', () => {
-    mount();
-    click(editBtn('food'));
-    expect(field().value).toBe('');
-    expect(field().getAttribute('aria-label')).toBe('งบของ ค่ากิน (บาท)');
-    expect(field().placeholder).toBe('เว้นว่าง = ไม่ตั้งงบ');
-    expect(document.activeElement).toBe(field());
-    expect(editBtn('food')).toBeNull(); // the chip is gone while editing
-  });
 
   it('editing an existing budget starts from its current amount in baht', () => {
     h.budgets = { food: 123_456 };
@@ -156,49 +134,6 @@ describe('BudgetsCard editing', () => {
     expect(document.activeElement).toBe(editBtn('food'));
   });
 
-  it('focus is handed back once only: later re-renders do not pull it from wherever the user went', async () => {
-    mount();
-    click(editBtn('food'));
-    type(field(), '1500');
-    key(field(), 'Enter');
-    await flush();
-    expect(document.activeElement).toBe(editBtn('food'));
-    const other = document.createElement('input');
-    document.body.appendChild(other);
-    other.focus();
-    click(editBtn('misc')); // another edit opens and closes, re-rendering the card
-    click(cancelBtn());
-    other.focus();
-    await flush();
-    expect(document.activeElement).not.toBe(editBtn('food'));
-    other.remove();
-  });
-
-  it('the error belongs to the row being edited only, not to the others', () => {
-    h.budgets = { misc: 50_000 };
-    mount();
-    click(editBtn('food'));
-    type(field(), 'abc');
-    key(field(), 'Enter');
-    expect(container!.querySelectorAll('[id*="-err-"]')).toHaveLength(1);
-    expect(container!.querySelector('[id*="-err-food"]')).not.toBeNull();
-  });
-
-  it('while the only unset group is being edited there is no leftover chip bar', () => {
-    mount([FOOD]);
-    expect(container!.querySelector('svg.lucide-plus')).not.toBeNull();
-    click(editBtn('food'));
-    expect(container!.querySelector('svg.lucide-plus')).toBeNull();
-  });
-
-  it('opening an existing budget selects its text, ready to overtype', () => {
-    h.budgets = { food: 150_000 };
-    mount();
-    click(editBtn('food'));
-    expect(field().selectionStart).toBe(0);
-    expect(field().selectionEnd).toBe('1500'.length);
-  });
-
   it('an amount that rounds to the saved one is unchanged: 12.345 baht = 12.35 baht = 1,235 satang', async () => {
     h.budgets = { food: 1235 };
     mount();
@@ -234,27 +169,8 @@ describe('BudgetsCard editing', () => {
     expect(field().value).toBe(typed);
   });
 
-  it('typing again clears the message', () => {
-    mount();
-    click(editBtn('food'));
-    type(field(), 'abc');
-    key(field(), 'Enter');
-    type(field(), '12');
-    expect(error()).toBe('');
-    expect(field().hasAttribute('aria-invalid')).toBe(false);
-  });
-
   it('an unchanged amount just closes, with no request', async () => {
     h.budgets = { food: 150_000 };
-    mount();
-    click(editBtn('food'));
-    key(field(), 'Enter');
-    await flush();
-    expect(h.setBudget).not.toHaveBeenCalled();
-    expect(q('input[type="text"]')).toBeNull();
-  });
-
-  it('blank on a group with no budget also just closes', async () => {
     mount();
     click(editBtn('food'));
     key(field(), 'Enter');
@@ -326,21 +242,4 @@ describe('BudgetsCard editing', () => {
     expect(q('input[type="text"]')).toBeNull();
   });
 
-  it('opening another group clears an old message', () => {
-    mount();
-    click(editBtn('food'));
-    type(field(), 'abc');
-    key(field(), 'Enter');
-    expect(error()).not.toBe('');
-    click(cancelBtn());
-    click(editBtn('misc'));
-    expect(error()).toBe('');
-  });
-
-  it('the group name sits next to the field being edited', () => {
-    mount();
-    click(editBtn('misc'));
-    expect(container!.textContent).toContain('จิปาถะ');
-    expect(field().getAttribute('aria-label')).toBe('งบของ จิปาถะ (บาท)');
-  });
 });

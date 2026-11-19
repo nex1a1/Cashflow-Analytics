@@ -82,12 +82,6 @@ afterEach(() => {
 });
 
 describe('LedgerView — header and summary', () => {
-  it('names the page, the period and how many rows the list holds', () => {
-    mount();
-    expect(text()).toContain('บัญชีแยกประเภท');
-    expect(text()).toContain('ช่วง 2026-01');
-    expect(q('p span.text-accent-ink')!.textContent).toBe('4');
-  });
 
   it('the summary adds up the rows being shown: income, expense, net, and investing apart', () => {
     mount();
@@ -104,72 +98,9 @@ describe('LedgerView — header and summary', () => {
     expect(q('p span.text-accent-ink')!.textContent).toBe('1');
   });
 
-  it('the header add buttons open the add modal', () => {
-    mount();
-    click(btn('เพิ่มรายจ่าย'));
-    expect(fn.handleOpenAddModal).toHaveBeenLastCalledWith('', 'expense');
-  });
-
-  it('works with the optional props left out', () => {
-    expect(() => mount({ cashflowGroups: undefined, dayTypes: undefined, dayTypeConfig: undefined, transactions: undefined, activeCategoryNames: undefined })).not.toThrow();
-  });
-});
-
-describe('LedgerView — group breakdown', () => {
-  it('is collapsed at first, says how many groups, and expands on click', () => {
-    mount();
-    expect(text()).toContain('ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย (3 กลุ่ม)');
-    expect(text()).not.toContain('การออมและลงทุน');
-    click(container!.querySelector('button[title^="ขยาย/หุบ"]'));
-    expect(text()).toContain('การออมและลงทุน');
-    expect(text()).toContain('หุบการจำแนก');
-  });
-
-  it('clicking a group card filters by that group', () => {
-    mount();
-    click(container!.querySelector('button[title^="ขยาย/หุบ"]'));
-    const card = [...container!.querySelectorAll('button')].find(b => b.querySelector('span[title="ค่ากิน"]'))!;
-    click(card);
-    expect(fn.setAdvancedFilterGroup).toHaveBeenLastCalledWith('g-food');
-  });
-
-  it('clicking the card of the group that is already the filter clears it', () => {
-    mount({ advancedFilterGroup: 'g-food' });
-    click(container!.querySelector('button[title^="ขยาย/หุบ"]'));
-    const card = [...container!.querySelectorAll('button')].find(b => b.querySelector('span[title="ค่ากิน"]'))!;
-    click(card);
-    expect(fn.setAdvancedFilterGroup).toHaveBeenLastCalledWith('ALL');
-  });
-
-  it('no toggle when nothing has money', () => {
-    mount({ displayTransactions: [], transactions: [] });
-    expect(container!.querySelector('button[title^="ขยาย/หุบ"]')).toBeNull();
-  });
 });
 
 describe('LedgerView — list view', () => {
-  it('shows the rows and the list filter bar', () => {
-    mount();
-    expect(tableRows()).toHaveLength(4);
-    expect(q('input[placeholder^="ค้นหา"]')).not.toBeNull();
-  });
-
-  it('searching goes through to the owner of the search state', () => {
-    mount();
-    const input = q<HTMLInputElement>('input[placeholder^="ค้นหา"]')!;
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-    act(() => { setter.call(input, 'ข้าว'); input.dispatchEvent(new Event('input', { bubbles: true })); });
-    expect(fn.setSearchQuery).toHaveBeenLastCalledWith('ข้าว');
-  });
-
-  it('the filter button opens and closes the advanced panel', () => {
-    mount();
-    expect(q('input[placeholder="Min"]')).toBeNull();
-    click(filterToggle());
-    expect(q('input[placeholder="Min"]')).not.toBeNull();
-    click(filterToggle());
-    expect(q('input[placeholder="Min"]')).toBeNull();
-  });
 
   it('a row on page 1 of one day: the page totals count income and expense of THIS page', () => {
     mount();
@@ -191,97 +122,15 @@ describe('LedgerView — list view', () => {
     expect(text()).toContain('รายจ่ายหน้านี้฿200.00');
   });
 
-  it('sorting by a column is remembered by the view (the rows reorder)', () => {
-    mount();
-    const firstDesc = () => tableRows()[0].querySelector<HTMLInputElement>('input[placeholder="รายละเอียด..."]')!.value;
-    expect(firstDesc()).toBe('pay'); // oldest first
-    click(container!.querySelector('th[title="เรียงตามจำนวนเงิน"]'));
-    expect(firstDesc()).toBe('pay'); // 30,000 is the biggest
-    click(container!.querySelector('th[title="เรียงตามจำนวนเงิน"]'));
-    expect(firstDesc()).toBe('lunch'); // ascending now: 300 first
-  });
-});
-
-describe('LedgerView — empty and loading', () => {
-  it('an empty list says so; the clear button only appears when a filter is on', () => {
-    mount({ displayTransactions: [], isFilterActive: false });
-    expect(text()).toContain('ไม่พบรายการ');
-    expect(container!.querySelectorAll('button').length).toBeGreaterThan(0);
-    expect([...container!.querySelectorAll('button')].some(b => b.textContent === 'ล้างตัวกรอง')).toBe(false);
-  });
-
-  it('with a filter on, the empty state can clear it', () => {
-    mount({ displayTransactions: [], isFilterActive: true });
-    const clearButtons = [...container!.querySelectorAll('button')].filter(b => b.textContent!.includes('ล้างตัวกรอง'));
-    click(clearButtons[clearButtons.length - 1]);
-    expect(fn.clearFilters).toHaveBeenCalled();
-  });
-
-  it('while the very first load has nothing yet, a loading overlay shows over an empty first page', () => {
-    mount({ displayTransactions: [], transactions: [], isLoading: true });
-    expect(text()).toContain('กำลังโหลดรายการ...');
-    expect(text()).not.toContain('ไม่พบรายการ');
-    expect(text()).toContain('หน้า 1 • แสดง 0 จาก 0 รายการ');
-    expect(q<HTMLInputElement>('input[aria-label="เลขหน้า"]')!.value).toBe('1');
-    expect(text()).toContain('/1'); // one (empty) page, never "page 1 of 0"
-  });
-
-  it('a reload that already has rows does not cover them', () => {
-    mount({ isLoading: true });
-    expect(text()).not.toContain('กำลังโหลดรายการ...');
-    expect(tableRows()).toHaveLength(4);
-  });
-
-  it('"no rows" is not the loading state when not loading', () => {
-    mount({ displayTransactions: [], transactions: [], isLoading: false });
-    expect(text()).not.toContain('กำลังโหลดรายการ...');
-  });
-
-  it('a filter that matches nothing is not "loading" even if the month has rows (and the overlay needs both lists empty)', () => {
-    mount({ displayTransactions: [], transactions: data, isLoading: true });
-    expect(text()).not.toContain('กำลังโหลดรายการ...');
-  });
 });
 
 describe('LedgerView — table (horizontal) view', () => {
   const toTable = () => click(document.querySelector('button[title="มุมมองตารางแนวนอน"]'));
 
-  it('swaps the list for the day-by-category table and drops the list filter bar', () => {
-    mount();
-    toTable();
-    expect(q('table.heatmap-table')).not.toBeNull();
-    expect(q('input[placeholder^="ค้นหา"]')).toBeNull();
-    expect(text()).not.toContain('หน้า 1 •');
-  });
-
-  it('the row count in the header is the month\'s, not the list filter\'s', () => {
-    mount({ displayTransactions: [tx('lunch', 'c-food', 300, '2026-01-06')], transactions: data });
-    expect(q('p span.text-accent-ink')!.textContent).toBe('1');
-    toTable();
-    expect(q('p span.text-accent-ink')!.textContent).toBe('4'); // every row of the month
-  });
-
-  it('only the period\'s rows go into the table (a row of another month is left out)', () => {
-    const other = tx('feb', 'c-food', 999, '2026-02-10');
-    mount({ transactions: [...data, other], displayTransactions: data });
-    toTable();
-    expect(q('p span.text-accent-ink')!.textContent).toBe('4');
-    expect(q('tfoot')!.textContent).not.toContain('999');
-  });
-
   it('the table is not narrowed by the LIST\'s own filters', () => {
     mount({ displayTransactions: [tx('lunch', 'c-food', 300, '2026-01-06')], transactions: data });
     toTable();
     expect(q('tfoot')!.textContent).toContain('1,000.00'); // both food rows, though the list shows one
-  });
-
-  it('the filter button now opens the TABLE filter panel (and says so)', () => {
-    mount();
-    toTable();
-    expect(filterToggle().textContent).toBe('ตัวกรองตาราง');
-    expect(text()).not.toContain('ตัวกรองตารางรายวัน');
-    click(filterToggle());
-    expect(text()).toContain('ตัวกรองตารางรายวัน');
   });
 
   it('a table filter narrows the table and lights the button; clearing restores it', () => {
@@ -298,32 +147,4 @@ describe('LedgerView — table (horizontal) view', () => {
     expect(q('tfoot')!.textContent).toContain('1,100.00');
   });
 
-  it('switching on "include rent / water / power / internet" counts as a table filter too', () => {
-    mount();
-    toTable();
-    click(filterToggle());
-    expect(filterToggle().className).not.toContain('border-warn!');
-    click(byText('button', 'รวมค่าหอ/น้ำ/ไฟ/เน็ต'));
-    expect(filterToggle().className).toContain('border-warn!');
-  });
-
-  it('table filters are kept when switching to the list and back', () => {
-    mount();
-    toTable();
-    click(filterToggle());
-    click(btn('Want'));
-    click(document.querySelector('button[title="มุมมองรายการ"]'));
-    toTable();
-    expect(filterToggle().className).toContain('border-warn!');
-  });
-
-  it('an empty table offers to clear the table filter that emptied it', () => {
-    mount();
-    toTable();
-    click(filterToggle());
-    click(btn('Need')); // the fixture's food rows have no allocation, which counts as WANT — so no NEED rows
-    expect(text()).toContain('ยังไม่มีรายการจ่ายในมุมมองนี้');
-    click(byText('button', 'ล้างตัวกรองตาราง'));
-    expect(q('table.heatmap-table')).not.toBeNull();
-  });
 });

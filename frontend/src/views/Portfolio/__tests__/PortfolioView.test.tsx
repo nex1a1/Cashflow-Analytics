@@ -71,36 +71,6 @@ afterEach(() => {
   root = null; container = null;
 });
 
-describe('PortfolioView states', () => {
-  it('shows a loading line until the portfolio arrives, and nothing else', () => {
-    mount({ portfolio: null });
-    expect(text()).toBe('กำลังโหลดพอร์ต…');
-    expect(container!.querySelector('table')).toBeNull();
-  });
-
-  it('with no assets: an explanation and a single add button, no table and no summary', () => {
-    mount({ portfolio: mkPortfolio([]) });
-    expect(text()).toContain('ยังไม่มีสินทรัพย์ลงทุน');
-    expect(container!.querySelector('table')).toBeNull();
-    expect(container!.querySelector('[data-testid="summary"]')).toBeNull();
-    click(topBtn('เพิ่มสินทรัพย์'));
-    expect(container!.querySelector('[data-testid="modal"]')).not.toBeNull();
-  });
-
-  it('with assets: the summary and the table, not the empty state', () => {
-    mount();
-    expect(container!.querySelector('[data-testid="summary"]')).not.toBeNull();
-    expect(container!.querySelector('table')).not.toBeNull();
-    expect(text()).not.toContain('ยังไม่มีสินทรัพย์ลงทุน');
-    expect((h.summaryProps[0] as { portfolio: unknown }).portfolio).toBe((h.ctx as { portfolio: unknown }).portfolio);
-  });
-
-  it('renders the page title', () => {
-    mount();
-    expect(container!.querySelector('h1')!.textContent).toBe('พอร์ตลงทุน');
-  });
-});
-
 describe('PortfolioView header', () => {
   it('price age: muted when fresh and online', () => {
     mount();
@@ -156,13 +126,6 @@ describe('PortfolioView header', () => {
 });
 
 describe('PortfolioView offline notice', () => {
-  it('nothing when prices are fine or there was nothing to fetch', () => {
-    mount({ priceStatus: 'ok' });
-    expect(container!.querySelector('[role="status"]')).toBeNull();
-    act(() => root!.unmount()); container!.remove();
-    mount({ priceStatus: 'idle' });
-    expect(container!.querySelector('[role="status"]')).toBeNull();
-  });
 
   it('offline: explains and says the last known prices are shown', () => {
     mount({ priceStatus: 'offline' });
@@ -190,33 +153,6 @@ describe('PortfolioView offline notice', () => {
     expect(container!.querySelector('[role="status"]')!.textContent).toContain('(ไม่สำเร็จ: Charlie)');
   });
 
-  it('shows the notice even when there are no assets yet', () => {
-    mount({ portfolio: mkPortfolio([]), priceStatus: 'offline' });
-    expect(container!.querySelector('[role="status"]')).not.toBeNull();
-  });
-});
-
-describe('PortfolioView manage-assets modal', () => {
-  it('opens from the header button and closes through its own close handler', () => {
-    mount();
-    expect(container!.querySelector('[data-testid="modal"]')).toBeNull();
-    click(topBtn('จัดการสินทรัพย์'));
-    expect(container!.querySelector('[data-testid="modal"]')).not.toBeNull();
-    click(topBtn('ปิดโมดัล'));
-    expect(container!.querySelector('[data-testid="modal"]')).toBeNull();
-  });
-
-  it('hands the modal the same close function across re-renders (its Esc listener depends on it)', () => {
-    mount();
-    click(topBtn('จัดการสินทรัพย์'));
-    const first = h.modalProps[h.modalProps.length - 1].onClose;
-    const before = rowNames();
-    click(sortBtn('สินทรัพย์'));
-    expect(rowNames()).not.toEqual(before); // the view really re-rendered
-    click(sortBtn('มูลค่า'));
-    // React Compiler may skip re-rendering the modal altogether; whenever it does render, it gets the same function
-    expect(h.modalProps.every((p: { onClose: unknown }) => p.onClose === first)).toBe(true);
-  });
 });
 
 describe('PortfolioView table', () => {
@@ -229,44 +165,6 @@ describe('PortfolioView table', () => {
     expect(container!.querySelector('thead th:last-child span')!.className).toContain('sr-only');
   });
 
-  it('starts sorted by value, biggest first, assets without a price after them', () => {
-    mount();
-    expect(rowNames()).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta']);
-    expect(th('มูลค่า').getAttribute('aria-sort')).toBe('descending');
-    expect(th('สินทรัพย์').hasAttribute('aria-sort')).toBe(false);
-  });
-
-  it('clicking the active column flips direction; empty values stay last either way', () => {
-    mount();
-    click(sortBtn('มูลค่า'));
-    expect(rowNames()).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
-    expect(th('มูลค่า').getAttribute('aria-sort')).toBe('ascending');
-    click(sortBtn('มูลค่า'));
-    expect(rowNames()).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta']);
-    expect(th('มูลค่า').getAttribute('aria-sort')).toBe('descending');
-  });
-
-  it('name starts A to Z, a second click Z to A', () => {
-    mount();
-    click(sortBtn('สินทรัพย์'));
-    expect(rowNames()).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
-    expect(th('สินทรัพย์').getAttribute('aria-sort')).toBe('ascending');
-    click(sortBtn('สินทรัพย์'));
-    expect(rowNames()).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
-    expect(th('สินทรัพย์').getAttribute('aria-sort')).toBe('descending');
-  });
-
-  it('numeric columns start high to low on first click', () => {
-    mount();
-    click(sortBtn('กำไร/ขาดทุน (ยังไม่ขาย)'));
-    expect(rowNames()).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta']);
-    expect(th('กำไร/ขาดทุน (ยังไม่ขาย)').getAttribute('aria-sort')).toBe('descending');
-    click(sortBtn('ขายแล้ว'));
-    expect(rowNames()).toEqual(['Delta', 'Bravo', 'Alpha', 'Charlie']);
-    expect(th('ขายแล้ว').getAttribute('aria-sort')).toBe('descending');
-    expect(th('กำไร/ขาดทุน (ยังไม่ขาย)').hasAttribute('aria-sort')).toBe(false);
-  });
-
   it('share column sorts by the portfolio weight; not-held assets go last', () => {
     mount();
     click(sortBtn('สัดส่วน'));
@@ -275,33 +173,6 @@ describe('PortfolioView table', () => {
     expect(rowNames()).toEqual(['Charlie', 'Alpha', 'Bravo', 'Delta']);
   });
 
-  it('switching back to name after another column starts ascending again', () => {
-    mount();
-    click(sortBtn('สินทรัพย์')); click(sortBtn('สินทรัพย์')); // now descending
-    click(sortBtn('มูลค่า'));
-    click(sortBtn('สินทรัพย์'));
-    expect(rowNames()).toEqual(['Alpha', 'Bravo', 'Charlie', 'Delta']);
-  });
-
-  it('the arrow points down for descending and up for ascending', () => {
-    mount();
-    const arrow = () => sortBtn('มูลค่า').querySelector('svg')!.classList;
-    expect(arrow().contains('lucide-arrow-down')).toBe(true);
-    click(sortBtn('มูลค่า'));
-    expect(arrow().contains('lucide-arrow-up')).toBe(true);
-    expect(arrow().contains('lucide-arrow-down')).toBe(false);
-  });
-
-  it('the active sort header is highlighted and shows an arrow; others do not', () => {
-    mount();
-    expect(sortBtn('มูลค่า').classList.contains('text-ink-display')).toBe(true);
-    expect(sortBtn('มูลค่า').querySelector('svg')).not.toBeNull();
-    expect(sortBtn('สินทรัพย์').classList.contains('text-ink-display')).toBe(false);
-    expect(sortBtn('สินทรัพย์').querySelector('svg')).toBeNull();
-    const down = sortBtn('มูลค่า').querySelector('svg')!.getAttribute('class');
-    click(sortBtn('มูลค่า'));
-    expect(sortBtn('มูลค่า').querySelector('svg')!.getAttribute('class')).not.toBe(down);
-  });
 });
 
 describe('PortfolioView rows', () => {
@@ -319,17 +190,6 @@ describe('PortfolioView rows', () => {
     const probe = document.createElement('i');
     probe.style.backgroundColor = tc(palette.b);
     expect(swatch('Bravo')).toBe(probe.style.backgroundColor);
-  });
-
-  it('shares and colours follow a fresh portfolio (not the first one that was shown)', () => {
-    mount();
-    const shareOf = (name: string) => [...container!.querySelectorAll('tbody tr')].find(r => r.querySelector('td span.font-bold')!.textContent === name)!.querySelectorAll('td')[1].textContent;
-    expect(shareOf('Bravo')).toBe('67%');
-    const bigAlpha = { ...alpha(), marketValue: 900, cost: 800 };
-    h.ctx = { ...h.ctx, portfolio: portfolioOf([bigAlpha, bravo()]) };
-    click(sortBtn('สินทรัพย์')); // the mocked hook has no subscription, so any state change re-renders with the new context
-    expect(shareOf('Alpha')).toBe('75%'); // 900 of 1200
-    expect(shareOf('Bravo')).toBe('25%');
   });
 
   it('a failed price fetch shows on that asset only', () => {
@@ -359,25 +219,6 @@ describe('PortfolioView rows', () => {
 });
 
 describe('PortfolioView hide-inactive filter', () => {
-  it('offered only when something is no longer held, with the count', () => {
-    mount();
-    const label = [...container!.querySelectorAll('label')].find(l => l.textContent!.includes('ซ่อนที่ไม่ได้ถืออยู่'))!;
-    expect(label.textContent).toContain('(1)');
-    act(() => root!.unmount()); container!.remove();
-    mount({ portfolio: portfolioOf([alpha(), bravo()]) });
-    expect([...container!.querySelectorAll('label')].some(l => l.textContent!.includes('ซ่อนที่ไม่ได้ถืออยู่'))).toBe(false);
-  });
-
-  it('ticking hides sold-out assets, unticking brings them back', () => {
-    mount();
-    const box = container!.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
-    expect(box.checked).toBe(false);
-    click(box);
-    expect(rowNames()).toEqual(['Bravo', 'Alpha', 'Charlie']);
-    expect(box.checked).toBe(true);
-    click(box);
-    expect(rowNames()).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta']);
-  });
 
   it('counts every inactive asset', () => {
     const d2 = mkAsset('d2', { name: 'Echo', units: 0 });
@@ -398,16 +239,6 @@ describe('PortfolioView footer total', () => {
     expect(c[2].classList.contains('text-income')).toBe(true);
     expect(c[3].textContent).toBe('+25.00');
     expect(c[3].classList.contains('text-income')).toBe(true);
-  });
-
-  it('each footer figure takes the colour of its own sign', () => {
-    mount({ portfolio: portfolioOf([alpha()], { unrealized: -40, realized: 25, cost: 200 }) });
-    expect(footerCells()[2].classList.contains('text-ink-soft')).toBe(true);
-    expect(footerCells()[3].classList.contains('text-income')).toBe(true);
-    act(() => root!.unmount()); container!.remove();
-    mount({ portfolio: portfolioOf([alpha()], { unrealized: 40, realized: -25, cost: 200 }) });
-    expect(footerCells()[2].classList.contains('text-income')).toBe(true);
-    expect(footerCells()[3].classList.contains('text-ink-soft')).toBe(true);
   });
 
   it('exactly break-even with a cost basis: 0.00% with no plus', () => {

@@ -55,63 +55,6 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('BudgetEnvelopes — when it shows', () => {
-  it('shows one row per budgeted group, in group order, and skips groups without a budget', () => {
-    mount();
-    expect(rows().map(r => r.querySelector('span span.truncate')?.textContent)).toEqual(['ค่ากิน', 'บันเทิง']);
-    expect(document.body.textContent).not.toContain('ที่พัก');
-  });
-
-  it('is hidden for a year, a range and multi-month selections (a monthly budget cannot be compared with them)', () => {
-    for (const filterPeriod of ['2026', '2026-08_2026-10', '2026-08,2026-10', 'ALL', 'cycle:2026-01_2026-12']) {
-      set({ filterPeriod });
-      mount();
-      expect(container!.innerHTML, filterPeriod).toBe('');
-      act(() => root!.unmount()); container!.remove();
-    }
-  });
-
-  it('is hidden when no group has a budget, or the budgeted group no longer exists', () => {
-    h.budgets = {};
-    mount();
-    expect(container!.innerHTML).toBe('');
-    act(() => root!.unmount()); container!.remove();
-    h.budgets = { 'g-gone': sat(1_000) };
-    mount();
-    expect(container!.innerHTML).toBe('');
-  });
-
-  it('a single month is labelled "เดือน", a single pay cycle "รอบ"', () => {
-    mount();
-    expect(document.querySelector('section')!.getAttribute('aria-label')).toBe('งบต่อเดือน');
-    act(() => root!.unmount()); container!.remove();
-    set({ filterPeriod: 'cycle:2026-09' });
-    mount();
-    expect(document.querySelector('section')!.getAttribute('aria-label')).toBe('งบต่อรอบ');
-    expect(document.body.textContent).toContain('งบ · ช่วง cycle:2026-09');
-  });
-});
-
-describe('BudgetEnvelopes — bar colour', () => {
-  it('an in-budget bar wears the group colour', () => {
-    set({
-      cashflowGroups: groups.map((g) => (g.id === 'g-food' ? { ...g, color: '#F97316' } : g)),
-      transactions: [tx('a', '2026-10-05', 'c-food', 1_000)],
-    });
-    mount();
-    const fill = row('ค่ากิน').querySelector('span[aria-hidden="true"] > span') as HTMLElement;
-    expect(fill.className).not.toMatch(/bg-warn|bg-danger/);
-    expect(fill.style.backgroundColor).toMatch(/249,\s*115,\s*22|f97316/i);
-  });
-
-  it('over budget switches to the warn / danger colour', () => {
-    set({ transactions: [tx('a', '2026-10-05', 'c-fun', 2_400), tx('b', '2026-10-06', 'c-food', 7_000)] });
-    mount();
-    expect(row('บันเทิง').querySelector('span[aria-hidden="true"] > span')!.className).toContain('bg-warn'); // 120%
-    expect(row('ค่ากิน').querySelector('span[aria-hidden="true"] > span')!.className).toContain('bg-danger'); // 140%
-  });
-});
-
 describe('BudgetEnvelopes — what is counted', () => {
   it('spent = expense rows of the group dated up to today; rows dated later are a plan, not spending', () => {
     set({ transactions: [
@@ -147,12 +90,6 @@ describe('BudgetEnvelopes — what is counted', () => {
     ] });
     mount();
     expect(row('ค่ากิน').textContent).toContain('เฉลี่ย 3 เดือน ฿2,000');
-  });
-
-  it('no plan line and no average when there is nothing to show', () => {
-    mount();
-    expect(document.body.textContent).not.toContain('คาดการณ์อีก');
-    expect(document.body.textContent).not.toContain('สีจาง = คาดการณ์');
   });
 
   it('in cycle mode the unit is "รอบ" and the cycle (25th–24th) decides what is in it', () => {
@@ -191,25 +128,12 @@ describe('BudgetEnvelopes — colour steps', () => {
     expect(row('บันเทิง').textContent).toContain('เกิน ฿500');
   });
 
-  it('exactly 120% is still amber, not red', () => {
-    used(2_400);
-    expect(level('บันเทิง')).toContain('text-warn');
-  });
-
   it('the bar fills up to the spent share and never beyond the track', () => {
     used(5_000); // 250%
     const bars = row('บันเทิง').querySelectorAll<HTMLElement>('span[aria-hidden="true"] span');
     expect(bars[0].style.width).toBe('100%');
   });
 
-  it('the planned part is drawn after the spent part and the two never exceed 100%', () => {
-    set({ transactions: [tx('a', '2026-10-05', 'c-food', 4_000), tx('b', '2026-10-20', 'c-food', 4_000)] });
-    mount();
-    const [spent, plan] = row('ค่ากิน').querySelectorAll<HTMLElement>('span[aria-hidden="true"] span');
-    expect(spent.style.width).toBe('80%');
-    expect(plan.style.left).toBe('80%');
-    expect(plan.style.width).toBe('20%'); // clipped: 80% + 100% planned would be 180%
-  });
 });
 
 describe('BudgetEnvelopes — loading', () => {

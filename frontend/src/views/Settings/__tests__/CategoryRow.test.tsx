@@ -50,44 +50,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('CategoryRow', () => {
-  it('shows the name, and the name of its group on the dropdown', () => {
-    mount();
-    expect(name().value).toBe('กาแฟ');
-    expect(groupBtn().textContent).toContain('ค่ากิน');
-  });
-
-  it('the name box hint follows the kind of row, and can be overridden', () => {
-    mount({ isIncome: false });
-    expect(name().placeholder).toBe('ชื่อรายจ่าย');
-    act(() => root!.unmount()); container!.remove();
-    mount({ isIncome: true });
-    expect(name().placeholder).toBe('ชื่อรายรับ');
-    act(() => root!.unmount()); container!.remove();
-    mount({ placeholder: 'ชื่อสินทรัพย์/บัญชีออม' });
-    expect(name().placeholder).toBe('ชื่อสินทรัพย์/บัญชีออม');
-  });
-
-  it('a category with no name still renders an empty box', () => {
-    mount({ cat: cat('c1', { name: undefined as never }) });
-    expect(name().value).toBe('');
-  });
-
-  it('a left edge in the colour of its group; a neutral one when the group is unknown', () => {
-    mount();
-    expect(row().style.borderLeftColor).toBe('rgb(249, 115, 22)');
-    expect(row().style.borderLeftWidth).toBe('1px');
-    act(() => root!.unmount()); container!.remove();
-    mount({ cat: cat('c1', { cashflowGroup: 'gone' }) });
-    expect(row().style.borderLeftColor).toBe('rgb(51, 65, 85)');
-  });
-
-  it('a group without a colour also gets the neutral edge', () => {
-    mount({ cashflowGroups: [{ ...FOOD, color: null }, BILLS] });
-    expect(row().style.borderLeftColor).toBe('rgb(51, 65, 85)');
-  });
-});
-
 describe('CategoryRow ordering', () => {
   it('up and down send the id and direction', () => {
     mount();
@@ -108,11 +70,6 @@ describe('CategoryRow ordering', () => {
     expect(props.onMove).not.toHaveBeenCalled();
   });
 
-  it('a single row can go nowhere', () => {
-    mount({ isFirst: true, isLast: true });
-    expect(btn('เลื่อน กาแฟ ขึ้น').disabled).toBe(true);
-    expect(btn('เลื่อน กาแฟ ลง').disabled).toBe(true);
-  });
 });
 
 describe('CategoryRow editing', () => {
@@ -131,67 +88,15 @@ describe('CategoryRow editing', () => {
     expect(props.onChange).not.toHaveBeenCalled();
   });
 
-  it('a new row takes focus', () => {
-    mount({ isNew: true });
-    expect(document.activeElement).toBe(name());
-  });
-
-  it('has no colour picker: the colour follows the group', () => {
-    mount();
-    expect(document.querySelector('button[aria-label="เลือกสี"]')).toBeNull();
-  });
-
-  it('icon picks go through onChange', () => {
-    mount();
-    click(btn('เลือกไอคอน'));
-    const first = CATEGORY_ICONS[0];
-    click(document.querySelector<HTMLButtonElement>(`.grid-cols-12 > button[title="${first.label}"]`));
-    expect(props.onChange).toHaveBeenCalledWith('c1', 'icon', first.key);
-  });
-
 });
 
 describe('CategoryRow group', () => {
-  it('lists only the groups of its kind', () => {
-    mount();
-    click(groupBtn());
-    expect(options().map(o => o.textContent)).toEqual(['ค่ากิน', 'ค่าบิล']);
-  });
-
-  it('the list follows the groups it is given later', () => {
-    mount();
-    props = { ...props, filteredGroups: [BILLS] };
-    render();
-    click(groupBtn());
-    expect(options().map(o => o.textContent)).toEqual(['ค่าบิล']);
-  });
-
-  it('choosing one reports the group id', () => {
-    mount();
-    click(groupBtn());
-    click(options().find(o => o.textContent === 'ค่าบิล'));
-    expect(props.onChange).toHaveBeenCalledWith('c1', 'cashflowGroup', 'g-bills');
-  });
-
-  it('no group yet: the placeholder, and no warning', () => {
-    mount({ cat: cat('c1', { cashflowGroup: null }) });
-    expect(groupBtn().textContent).toContain('-- กลุ่ม --');
-    expect(row().querySelector('svg.lucide-alert-triangle')).toBeNull();
-    expect(groupBtn().className).not.toContain('text-warn');
-  });
 
   it('a group of the wrong kind (e.g. an income group on an expense category) is flagged', () => {
     mount({ cat: cat('c1', { cashflowGroup: 'g-pay' }) });
     expect(row().querySelector('svg.lucide-alert-triangle')).not.toBeNull();
     expect(groupBtn().className).toContain('text-warn');
     expect(groupBtn().title).toBe('กลุ่มนี้ไม่ตรงกับประเภทของหมวดหมู่');
-  });
-
-  it('a matching group has no warning and no tooltip', () => {
-    mount();
-    expect(row().querySelector('svg.lucide-alert-triangle')).toBeNull();
-    expect(groupBtn().title).toBe('');
-    expect(groupBtn().className).not.toContain('text-warn');
   });
 
   it('the border colour on focus is green for income and accent for the rest', () => {

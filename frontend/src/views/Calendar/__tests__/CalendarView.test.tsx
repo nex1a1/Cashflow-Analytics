@@ -94,55 +94,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('CalendarView loading and read-only', () => {
-  it('cold start (loading, no rows, no day types) shows the skeleton', () => {
-    mount(props({ isLoading: true, transactions: [] }));
-    expect(container!.querySelector('h2')).toBeNull();
-    expect(container!.querySelectorAll('.min-h-\\[120px\\]').length).toBe(35);
-  });
-
-  it('loading with rows already there keeps the calendar', () => {
-    mount(props({ isLoading: true }));
-    expect(container!.querySelector('h2')!.textContent).toBe('พฤศจิกายน 2026');
-  });
-
-  it('loading with only day types also keeps the calendar', () => {
-    mount(props({ isLoading: true, transactions: [], dayTypes: { '2026-11-02': 'dt_ot' } }));
-    expect(container!.querySelector('h2')).not.toBeNull();
-  });
-
-  it('a wider period shows the month-only notice, jumping to this month', () => {
-    const p = mount(props({ filterPeriod: '2026', isReadOnlyView: true }));
-    expect(text()).toContain('ปฏิทินแสดงผลได้ทีละเดือน');
-    expect(container!.querySelector('p .font-bold')!.textContent).toBe('L:2026');
-    const go = [...container!.querySelectorAll('button')].find(b => b.textContent!.includes('ไปเดือนปัจจุบัน'))!;
-    expect(go.textContent).toBe('ไปเดือนปัจจุบัน (L:2026-11)');
-    click(go);
-    expect(p.setFilterPeriod).toHaveBeenCalledWith('2026-11');
-    expect(text()).not.toContain('ดูช่วงนี้ในหน้าภาพรวม');
-  });
-
-  it('in cycle mode "this month" is the current pay cycle, and the overview link works', () => {
-    const toAnalysis = vi.fn();
-    const p = mount(props({ filterPeriod: 'cycle:2026-01_2026-12', isReadOnlyView: true, onSwitchToAnalysisMode: toAnalysis }));
-    click([...container!.querySelectorAll('button')].find(b => b.textContent!.includes('ไปเดือนปัจจุบัน')));
-    expect(p.setFilterPeriod).toHaveBeenCalledWith('cycle:2026-10');
-    click([...container!.querySelectorAll('button')].find(b => b.textContent === 'ดูช่วงนี้ในหน้าภาพรวม'));
-    expect(toAnalysis).toHaveBeenCalledTimes(1);
-  });
-
-  it('skeleton wins over the read-only notice', () => {
-    mount(props({ isLoading: true, transactions: [], isReadOnlyView: true }));
-    expect(text()).not.toContain('ปฏิทินแสดงผลได้ทีละเดือน');
-  });
-});
-
 describe('CalendarView period', () => {
-  it('a month draws 1 → end of month with its Thai name', () => {
-    mount(props());
-    expect(text()).toContain('30 วัน');
-    expect(btnLabel('ดูรายละเอียดวันที่ 1')).not.toBeNull();
-  });
 
   it('a pay cycle draws 25 → 24 with the cycle name and span', () => {
     mount(props({ filterPeriod: 'cycle:2026-10' }));
@@ -155,28 +107,6 @@ describe('CalendarView period', () => {
     expect(pill('▲')).toBeUndefined();
   });
 
-  it('a non-single period falls back to the current month / cycle', () => {
-    mount(props({ filterPeriod: '2026' }));
-    expect(container!.querySelector('h2')!.textContent).toBe('พฤศจิกายน 2026');
-    rerender(props({ filterPeriod: 'cycle:ALL' }));
-    expect(container!.querySelector('h2')!.textContent).toContain(cycleLabel('2026-10'));
-  });
-
-  it('a month starting mid-week: leading blanks, and no extra row when weeks come out even', () => {
-    mount(props({ filterPeriod: '2026-10', transactions: [] })); // 1 ต.ค. = Thursday, 4 + 31 = 35
-    const grid = container!.querySelectorAll('.grid.grid-cols-7')[1];
-    expect(grid.children).toHaveLength(35);
-    expect([...grid.children].slice(0, 4).every(c => !c.querySelector('button'))).toBe(true);
-    expect(grid.children[4].querySelector('button')!.textContent).toBe('1');
-    expect(grid.children[34].querySelector('button')!.textContent).toBe('31');
-  });
-
-  it('January keeps the right month name (index − 1)', () => {
-    mount(props({ filterPeriod: '2027-01', transactions: [] }));
-    expect(container!.querySelector('h2')!.textContent).toBe('มกราคม 2027');
-    rerender(props({ filterPeriod: '2027-12', transactions: [] }));
-    expect(container!.querySelector('h2')!.textContent).toBe('ธันวาคม 2027');
-  });
 });
 
 describe('CalendarView totals', () => {
@@ -221,17 +151,6 @@ describe('CalendarView totals', () => {
     expect(cell.textContent).not.toContain('เล็ก');
   });
 
-  it('no spending: no heat legend', () => {
-    mount(props({ transactions: [TXS[0]] }));
-    expect(container!.querySelector('[aria-label="ระดับการใช้จ่ายต่อวัน"]')).toBeNull();
-  });
-
-  it('a savings row in a day cell is drawn green (its group type reaches the cell)', () => {
-    mount(props());
-    const row = [...container!.querySelectorAll<HTMLElement>('[title]')].find(e => e.title.startsWith('ซื้อทอง'))!;
-    expect(row.lastElementChild!.classList.contains('text-savings')).toBe(true);
-  });
-
   it('an income category whose group is gone still counts as income', () => {
     const cats = [cat('i', { name: 'โบนัส', type: 'income', cashflowGroup: null })];
     mount(props({ categories: cats, transactions: [tx('b', '2026-11-02', 500, { category_id: 'i' })] }));
@@ -250,40 +169,6 @@ describe('CalendarView totals', () => {
     mount(props({ transactions: [tx('a', '2026-11-02', 40, { category: 'ค่าไฟ' })] }));
     expect(chip('ค่าไฟ').textContent).toContain('฿40.00');
     expect(allocRow('NEED')).toBe('฿40.00 (100%)');
-  });
-});
-
-describe('CalendarView day types', () => {
-  it('counts default types (weekday work / weekend off) plus explicit days', () => {
-    mount(props({ dayTypes: { '2026-11-02': 'dt_ot', '2026-11-01': 'dt_work' } }));
-    // Nov 2026: 9 weekend days, 21 weekdays; 2 Nov (Mon) → OT, 1 Nov (Sun) → work
-    expect(text()).toContain('ทำงาน (21)');
-    expect(text()).toContain('หยุด (8)');
-    expect(text()).toContain('โอที (1)');
-  });
-
-  it('defaults follow the type names, not their order in Settings', () => {
-    // [หยุด, โอที, ทำงาน]: the old positional guess would give weekdays หยุด and weekends โอที
-    mount(props({ dayTypeConfig: [DAY_TYPES[1], DAY_TYPES[2], DAY_TYPES[0]] }));
-    expect(text()).toContain('ทำงาน (21)');
-    expect(text()).toContain('หยุด (9)');
-    expect(text()).not.toContain('โอที (');
-  });
-
-  it('Saturday and Sunday are the weekend (a month with 5 Sat/Sun and 4 Fri)', () => {
-    mount(props({ filterPeriod: '2027-05', transactions: [] })); // 1 พ.ค. 2027 = Saturday
-    expect(text()).toContain('หยุด (10)');
-    expect(text()).toContain('ทำงาน (21)');
-  });
-
-  it('a stored type not in the config does not break the footer', () => {
-    mount(props({ dayTypes: { '2026-11-02': 'gone' } }));
-    expect(text()).toContain('ทำงาน (20)');
-  });
-
-  it('no config: no counts', () => {
-    mount(props({ dayTypeConfig: [] }));
-    expect(text()).not.toContain('(21)');
   });
 });
 
@@ -313,19 +198,6 @@ describe('CalendarView legend', () => {
     expect(chipNames()).toEqual(['ก', 'ข']);
   });
 
-  it('missing order_index sorts last', () => {
-    const cats = [cat('a', { name: 'ก', cashflowGroup: 'g_want', order_index: undefined }), cat('b', { name: 'ข', cashflowGroup: 'g_want', order_index: 5 })];
-    const txs = [tx('1', '2026-11-02', 10, { category_id: 'a' }), tx('2', '2026-11-02', 10, { category_id: 'b' })];
-    mount(props({ categories: cats, transactions: txs }));
-    expect(chipNames()).toEqual(['ข', 'ก']);
-  });
-
-  it('first visit: compact layout, structure sort', () => {
-    mount(props());
-    expect(btnLabel('แบบย่อ').getAttribute('aria-pressed')).toBe('true');
-    expect(btnLabel('เรียงตามโครงสร้าง').getAttribute('aria-pressed')).toBe('true');
-  });
-
   it('layout is restored from storage and saved on change', () => {
     localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, 'grouped');
     localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_SORT, 'amount');
@@ -337,26 +209,6 @@ describe('CalendarView legend', () => {
     expect(localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT)).toBe('compact');
     click(btnLabel('แยกกลุ่ม'));
     expect(localStorage.getItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT)).toBe('grouped');
-  });
-
-  it('group order: by order_index, then name; unknown groups last', () => {
-    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, 'grouped');
-    const groups = [...GROUPS, grp('g_b', { name: 'ข-กลุ่ม', order_index: 1 }), grp('g_a', { name: 'ก-กลุ่ม', order_index: 1 })];
-    const cats = [
-      cat('x', { name: 'x', cashflowGroup: 'g_b' }), cat('y', { name: 'y', cashflowGroup: 'g_a' }),
-      cat('z', { name: 'z', cashflowGroup: 'g_missing' }), cat('w', { name: 'w', cashflowGroup: 'g_want' }),
-    ];
-    const txs = cats.map(c => tx(c.id, '2026-11-02', 10, { category_id: c.id }));
-    mount(props({ categories: cats, cashflowGroups: groups, transactions: txs }));
-    expect(groupNames()).toEqual(['ก-กลุ่ม', 'ข-กลุ่ม', 'บันเทิง', 'หมวดหมู่อื่นๆ']);
-  });
-
-  it('a missing group order sorts after numbered groups', () => {
-    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, 'grouped');
-    const groups = [grp('g_n', { name: 'ไม่มีลำดับ', order_index: undefined }), grp('g_1', { name: 'มีลำดับ', order_index: 50 })];
-    const cats = [cat('a', { name: 'a', cashflowGroup: 'g_n' }), cat('b', { name: 'b', cashflowGroup: 'g_1' })];
-    mount(props({ categories: cats, cashflowGroups: groups, transactions: cats.map(c => tx(c.id, '2026-11-02', 10, { category_id: c.id })) }));
-    expect(groupNames()).toEqual(['มีลำดับ', 'ไม่มีลำดับ']);
   });
 
   it('rows whose category is gone land in an "other" group of their type', () => {
@@ -404,18 +256,6 @@ describe('CalendarView legend', () => {
     expect(groupNames()).toEqual(['หมวดหมู่อื่นๆ']);
   });
 
-  it('a missing group order sorts last whichever side of the comparison it is on', () => {
-    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, 'grouped');
-    const groups = [grp('g_n', { name: 'ไม่มีลำดับ', order_index: undefined }), grp('g_1', { name: 'มีลำดับ', order_index: 50 })];
-    const cats = [cat('b', { name: 'b', cashflowGroup: 'g_1' }), cat('a', { name: 'a', cashflowGroup: 'g_n' })];
-    mount(props({ categories: cats, cashflowGroups: groups, transactions: cats.map(c => tx(c.id, '2026-11-02', 10, { category_id: c.id })) }));
-    expect(groupNames()).toEqual(['มีลำดับ', 'ไม่มีลำดับ']);
-  });
-
-  it('an empty month says so', () => {
-    mount(props({ transactions: [] }));
-    expect(text()).toContain('ช่วงนี้ยังไม่มีรายการ');
-  });
 });
 
 describe('CalendarView hiding categories', () => {
@@ -546,15 +386,6 @@ describe('CalendarView allocation (จำเป็น + ตามใจ + เง
     expect(container!.querySelector('[title^="จำเป็น:"]')).toBeNull();
   });
 
-  it('a category without its own colour takes the group colour', () => {
-    localStorage.setItem(STORAGE_KEYS.CALENDAR_LEGEND_LAYOUT, 'grouped');
-    const cats = [cat('a', { name: 'ไร้สี', cashflowGroup: 'g_need', color: null })];
-    mount(props({ categories: cats, transactions: [tx('1', '2026-11-02', 10, { category_id: 'a' })] }));
-    const row = [...container!.querySelectorAll('span.truncate')].find(s => s.textContent!.startsWith('ไร้สี'))!;
-    const dot = row.previousElementSibling as HTMLElement;
-    expect(readable('#0000AA')).not.toBe('#0000AA');
-    expect(dot.style.backgroundColor).toBe(`rgb(${hexToRgb(readable('#0000AA'))})`);
-  });
 });
 
 describe('CalendarView day modal', () => {

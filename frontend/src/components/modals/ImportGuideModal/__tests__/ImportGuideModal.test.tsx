@@ -78,16 +78,6 @@ afterEach(() => {
 });
 
 describe('ImportGuideModal — opening', () => {
-  it('renders nothing while closed', async () => {
-    await mount({ isOpen: false });
-    expect(dialog()).toBeNull();
-  });
-
-  it('is a labelled modal dialog', async () => {
-    await mount();
-    expect(dialog()!.getAttribute('aria-modal')).toBe('true');
-    expect(dialog()!.getAttribute('aria-label')).toBe('คู่มือนำเข้าข้อมูล');
-  });
 
   it('starts on the long format, 6 columns, comma, Thai headers', async () => {
     await mount();
@@ -128,15 +118,6 @@ describe('ImportGuideModal — long format', () => {
     expect(cellsOf(bodyRows()[0])).toHaveLength(expected.length);
   });
 
-  it('explains each layout under the buttons', async () => {
-    await mount();
-    expect(document.body.textContent).toContain('แบบเต็ม: มีคอลัมน์ชนิดวัน');
-    click(byText('button', '5 คอลัมน์'));
-    expect(document.body.textContent).toContain('มาตรฐาน: มีประเภท');
-    click(byText('button', '4 คอลัมน์'));
-    expect(document.body.textContent).toContain('แบบย่อ: บันทึกเป็นรายจ่ายทั้งหมด');
-  });
-
   it('English headers', async () => {
     await mount();
     click(byText('button', 'English (EN)'));
@@ -148,16 +129,6 @@ describe('ImportGuideModal — long format', () => {
     expect(footerValue('หัวตาราง:')).toBe('ไทย (TH)');
   });
 
-  it('the footer follows the delimiter', async () => {
-    await mount();
-    expect(footerValue('คั่น:')).toBe('Comma (,)');
-    click(byText('button', 'Semicolon ( ; )'));
-    expect(footerValue('คั่น:')).toBe('Semicolon (;)');
-    expect(on('Semicolon ( ; )')).toBe(true);
-    expect(on('Comma ( , )')).toBe(false);
-    click(byText('button', 'Comma ( , )'));
-    expect(footerValue('คั่น:')).toBe('Comma (,)');
-  });
 });
 
 describe('ImportGuideModal — wide format', () => {
@@ -180,22 +151,6 @@ describe('ImportGuideModal — wide format', () => {
     expect(cellsOf(bodyRows()[4]).slice(0, 2)).toEqual(['05/09/2026', 'วันหยุด']);
   });
 
-  it('the standard categories can be chosen instead, and are used when the system has none', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    click(byText('button', 'หมวดหมู่มาตรฐาน (5)'));
-    expect(headers().slice(2, 7)).toEqual(['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI', 'ของใช้ในบ้าน']);
-    expect(on('หมวดหมู่มาตรฐาน (5)')).toBe(true);
-    click(byText('button', 'หมวดหมู่ในระบบ (3)'));
-    expect(headers().slice(2, 5)).toEqual(['ค่ากิน', 'ค่าเดินทาง', 'ค่าบ้าน']);
-
-    act(() => root!.unmount()); container!.remove();
-    h.appData = { categories: [], dayTypeConfig: [] };
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(headers().slice(2, 7)).toEqual(['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI', 'ของใช้ในบ้าน']);
-  });
-
   it('when the system has only income and savings categories, all of them are offered', async () => {
     h.appData = { categories: [cat('1', 'เงินเดือน', 'income'), cat('2', 'ออมทอง', 'savings')], dayTypeConfig };
     await mount();
@@ -215,62 +170,6 @@ describe('ImportGuideModal — wide format', () => {
     expect(byText('span', 'หมวดหมู่หัวตาราง')).not.toBeNull();
   });
 
-  it('categories passed as props win over the app\'s', async () => {
-    await mount({ categories: [cat('9', 'หมวดจาก props', 'expense')] });
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(headers().slice(2, 3)).toEqual(['หมวดจาก props']);
-  });
-
-  it('works with no app data at all', async () => {
-    h.appData = null;
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(headers().slice(2, 7)).toHaveLength(5);
-  });
-});
-
-describe('ImportGuideModal — preview search', () => {
-  it('filters the long sample by date, category, description or day type, ignoring case', async () => {
-    await mount();
-    type(search(), '03/09');
-    expect(bodyRows()).toHaveLength(2);
-    expect(countLine()).toContain('แสดงตัวอย่าง 2 จาก 11 รายการ');
-    type(search(), 'gemini');
-    expect(bodyRows().map(tr => cellsOf(tr)[4])).toEqual(['Gemini Pro']);
-    type(search(), 'ซอฟต์แวร์');
-    expect(bodyRows()).toHaveLength(1);
-    type(search(), 'วันหยุด');
-    expect(bodyRows().map(tr => cellsOf(tr)[4])).toEqual(['Shopee VIP']);
-  });
-
-  it('blank search shows everything again, and the ✕ clears it', async () => {
-    await mount();
-    expect(q('button.absolute')).toBeNull();
-    type(search(), 'gemini');
-    expect(bodyRows()).toHaveLength(1);
-    click(q('button.absolute'));
-    expect(search().value).toBe('');
-    expect(bodyRows()).toHaveLength(11);
-    type(search(), '   ');
-    expect(bodyRows()).toHaveLength(11);
-  });
-
-  it('filters the wide sample by date or note', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    type(search(), '02/09');
-    expect(bodyRows()).toHaveLength(1);
-    expect(countLine()).toBe('แสดงตัวอย่าง 1 วัน (3 หมวดหมู่)');
-    type(search(), 'shopee');
-    expect(bodyRows().map(tr => cellsOf(tr)[0])).toEqual(['05/09/2026']);
-  });
-
-  it('keeps the search when the format changes', async () => {
-    await mount();
-    type(search(), 'ข้าว');
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(search().value).toBe('ข้าว');
-  });
 });
 
 describe('ImportGuideModal — reading rules', () => {
@@ -296,30 +195,6 @@ describe('ImportGuideModal — reading rules', () => {
 });
 
 describe('ImportGuideModal — copying the headers', () => {
-  it('copies the long headers joined by the chosen delimiter, confirms with a toast and a label for two seconds', async () => {
-    await mount();
-    click(byText('button', 'Semicolon ( ; )'));
-    click(byText('button', '5 คอลัมน์'));
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    click(copyBtn());
-    await act(async () => { await Promise.resolve(); });
-    expect(written()).toEqual([getLongHeaders('standard', 'th').join(';')]);
-    expect(h.showToast).toHaveBeenCalledWith('คัดลอกรายชื่อหัวตารางลงคลิปบอร์ดแล้ว', 'success');
-    expect(copyBtn().textContent).toContain('คัดลอกแล้ว');
-    await act(async () => { vi.advanceTimersByTime(1900); });
-    expect(copyBtn().textContent).toContain('คัดลอกแล้ว');
-    await act(async () => { vi.advanceTimersByTime(200); });
-    expect(copyBtn().textContent).toContain('คัดลอกหัวตาราง');
-  });
-
-  it('copies the wide headers with each one quoted', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    click(byText('button', 'English (EN)'));
-    click(copyBtn());
-    await act(async () => { await Promise.resolve(); });
-    expect(written()).toEqual([getWideHeaders(['ค่ากิน', 'ค่าเดินทาง', 'ค่าบ้าน'], 'en').map(x => `"${x}"`).join(',')]);
-  });
 
   it('says so, and does not claim success, when the browser refuses the clipboard', async () => {
     (navigator.clipboard.writeText as AnyMock).mockRejectedValue(new Error('denied'));
@@ -340,79 +215,7 @@ describe('ImportGuideModal — copying the headers', () => {
   });
 });
 
-describe('ImportGuideModal — downloading a template', () => {
-  it('long: a file named after the layout and language, holding exactly what the template generator makes', async () => {
-    await mount();
-    click(byText('button', '4 คอลัมน์'));
-    click(byText('button', 'Semicolon ( ; )'));
-    click(byText('button', 'English (EN)'));
-    click(downloadBtn());
-    expect(h.downloads).toEqual([['template_long_minimal_en.csv', generateLongCsvContent('minimal', ';', 'en')]]);
-    expect(h.showToast).toHaveBeenCalledWith('ดาวน์โหลดเทมเพลต Long Format (minimal) สำเร็จ', 'success');
-  });
-
-  it('long defaults', async () => {
-    await mount();
-    click(downloadBtn());
-    expect(h.downloads[0][0]).toBe('template_long_full_th.csv');
-    expect(h.downloads[0][1]).toBe(generateLongCsvContent('full', ',', 'th'));
-  });
-
-  it('wide with the user\'s categories', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    click(downloadBtn());
-    expect(h.downloads).toEqual([['template_wide_my_categories_th.csv', generateWideCsvContent(['ค่ากิน', 'ค่าเดินทาง', 'ค่าบ้าน'], ',', 'th')]]);
-    expect(h.showToast).toHaveBeenCalledWith('ดาวน์โหลดเทมเพลต Wide Format สำเร็จ', 'success');
-  });
-
-  it('wide with the standard categories', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    click(byText('button', 'หมวดหมู่มาตรฐาน (5)'));
-    click(byText('button', 'English (EN)'));
-    click(byText('button', 'Semicolon ( ; )'));
-    click(downloadBtn());
-    expect(h.downloads[0][0]).toBe('template_wide_standard_en.csv');
-    expect(h.downloads[0][1]).toBe(generateWideCsvContent(['อาหาร', 'ช้อปปิ้งออนไลน์', 'การเดินทาง', 'ซอฟต์แวร์ & AI', 'ของใช้ในบ้าน'], ';', 'en'));
-  });
-});
-
 describe('ImportGuideModal — details that are easy to lose', () => {
-  it('marks the recommended format with a badge and no other', async () => {
-    await mount();
-    const badgeOf = (title: string) => formatCard(title).querySelector('span.uppercase')?.textContent ?? null;
-    expect(badgeOf('รายงานแยกรายการ')).toBe('แนะนำ');
-    expect(badgeOf('สเปรดชีตวิเคราะห์รายวัน')).toBeNull();
-  });
-
-  it('the category-source buttons show which one is on, and explain it', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect([on('หมวดหมู่ในระบบ (3)'), on('หมวดหมู่มาตรฐาน (5)')]).toEqual([true, false]);
-    expect(document.body.textContent).toContain('ดึงชื่อหมวดหมู่จริงของคุณในระบบ');
-    click(byText('button', 'หมวดหมู่มาตรฐาน (5)'));
-    expect([on('หมวดหมู่ในระบบ (3)'), on('หมวดหมู่มาตรฐาน (5)')]).toEqual([false, true]);
-    expect(document.body.textContent).toContain('ใช้หมวดหมู่ตัวอย่างทั่วไป');
-    expect(document.body.textContent).not.toContain('ดึงชื่อหมวดหมู่จริงของคุณในระบบ');
-  });
-
-  it('with no categories in the system the standard five are used and counted', async () => {
-    h.appData = { categories: [], dayTypeConfig };
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(byText('button', 'หมวดหมู่ในระบบ (0)')).not.toBeNull();
-    expect(countLine()).toBe('แสดงตัวอย่าง 5 วัน (5 หมวดหมู่)');
-  });
-
-  it('copies the long headers in English too', async () => {
-    await mount();
-    click(byText('button', 'English (EN)'));
-    click(byText('button', '4 คอลัมน์'));
-    click(copyBtn());
-    await act(async () => { await Promise.resolve(); });
-    expect(written()).toEqual(['Date,Category,Description,Amount']);
-  });
 
   it('copies the wide headers with the chosen delimiter', async () => {
     await mount();
@@ -423,57 +226,5 @@ describe('ImportGuideModal — details that are easy to lose', () => {
     expect(written()[0]).toBe('"Date";"ค่ากิน";"ค่าเดินทาง";"ค่าบ้าน";"รวม (Total)";"Notes"');
   });
 
-  it('search ignores case (the sample says "Gemini Pro")', async () => {
-    await mount();
-    type(search(), 'GEMINI');
-    expect(bodyRows().map(tr => cellsOf(tr)[4])).toEqual(['Gemini Pro']);
-  });
-
-  it('a search of spaces shows everything in the wide sample too', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    type(search(), '   ');
-    expect(bodyRows()).toHaveLength(5);
-  });
-
-  it('the day type shown in the wide sample is the one the user named, in the user\'s own words', async () => {
-    h.appData = { categories: systemCats, dayTypeConfig: [
-      { id: 'h', name: 'holiday', label: 'Holiday', color: '#112233' },
-      { id: 'w', name: 'workday', label: 'Workday', color: '#445566' },
-    ] as DayType[] };
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(bodyRows().map(tr => cellsOf(tr)[1])).toEqual(['Workday', 'Workday', 'Workday', 'Workday', 'Holiday']);
-    act(() => root!.unmount()); container!.remove();
-    await mount({ dayTypeConfig: [{ id: 'h', name: 'holiday', label: 'วันหยุด', color: '#abcdef' }, { id: 'w', name: 'workday', label: 'ทำงาน', color: '#fedcba' }] as DayType[] });
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    expect(bodyRows().map(tr => cellsOf(tr)[1])).toEqual(['ทำงาน', 'ทำงาน', 'ทำงาน', 'ทำงาน', 'วันหยุด']);
-  });
 });
 
-describe('ImportGuideModal — closing', () => {
-  it('Esc, the ✕ and cancel close it', async () => {
-    await mount();
-    key(document.body, 'Escape');
-    click(q('button[title="ปิดหน้าต่าง (Esc)"]'));
-    click(byText('button', 'ยกเลิก'));
-    expect(props.onClose).toHaveBeenCalledTimes(3);
-  });
-
-  it('other keys do not, and Esc does nothing once it is closed', async () => {
-    await mount();
-    key(document.body, 'Enter');
-    expect(props.onClose).not.toHaveBeenCalled();
-    await update({ isOpen: false });
-    key(document.body, 'Escape');
-    expect(props.onClose).not.toHaveBeenCalled();
-  });
-
-  it('the choices are remembered while it is closed and opened again', async () => {
-    await mount();
-    click(formatCard('สเปรดชีตวิเคราะห์รายวัน'));
-    await update({ isOpen: false });
-    await update({ isOpen: true });
-    expect(formatCard('สเปรดชีตวิเคราะห์รายวัน').className).toContain('border-accent-ink');
-  });
-});

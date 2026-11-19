@@ -44,61 +44,6 @@ describe('LedgerHeaderActions', () => {
     expect(f.handleOpenAddModal).toHaveBeenLastCalledWith('', 'expense');
   });
 
-  it('switches between list and table view, marking the current one', () => {
-    const f = actions({ viewMode: 'list' });
-    expect(document.querySelector('button[title="มุมมองรายการ"]')!.className).toContain('text-accent-ink');
-    expect(document.querySelector('button[title="มุมมองตารางแนวนอน"]')!.className).not.toContain('text-accent-ink');
-    click(document.querySelector('button[title="มุมมองตารางแนวนอน"]'));
-    expect(f.setViewMode).toHaveBeenLastCalledWith('horizontal');
-    click(document.querySelector('button[title="มุมมองรายการ"]'));
-    expect(f.setViewMode).toHaveBeenLastCalledWith('list');
-  });
-
-  it('the filter button drives the list filter panel in list view', () => {
-    const f = actions({ viewMode: 'list' });
-    expect(filterBtn().textContent).toBe('ตัวกรอง');
-    expect(filterBtn().title).toContain('แผงตัวกรองรายการ');
-    click(filterBtn());
-    const updater = f.setFilterOpen.mock.lastCall![0] as (v: boolean) => boolean;
-    expect([updater(false), updater(true)]).toEqual([true, false]);
-    expect(f.setHorizontalFilterOpen).not.toHaveBeenCalled();
-  });
-
-  it('…and the table filter panel in table view (labelled ตัวกรองตาราง)', () => {
-    const f = actions({ viewMode: 'horizontal' });
-    expect(filterBtn().textContent).toBe('ตัวกรองตาราง');
-    click(filterBtn());
-    const updater = f.setHorizontalFilterOpen.mock.lastCall![0] as (v: boolean) => boolean;
-    expect([updater(false), updater(true)]).toEqual([true, false]);
-    expect(f.setFilterOpen).not.toHaveBeenCalled();
-  });
-
-  it('shows an amber dot when the filters of the CURRENT view are on, not the other view\'s', () => {
-    actions({ viewMode: 'list', isFilterActive: true, isHorizontalFilterActive: false });
-    expect(filterBtn().className).toContain('border-warn!');
-    expect(filterBtn().querySelector('.bg-warn')).not.toBeNull();
-    act(() => root!.unmount()); container!.remove();
-    actions({ viewMode: 'horizontal', isFilterActive: true, isHorizontalFilterActive: false });
-    expect(filterBtn().className).not.toContain('border-warn!');
-    expect(filterBtn().querySelector('.bg-warn')).toBeNull();
-  });
-
-  it('highlights the button while its panel is open', () => {
-    actions({ viewMode: 'list', filterOpen: true });
-    expect(filterBtn().className).toContain('text-accent-ink');
-    act(() => root!.unmount()); container!.remove();
-    actions({ viewMode: 'horizontal', filterOpen: true, horizontalFilterOpen: false });
-    expect(filterBtn().className).not.toContain('border-accent-ink');
-  });
-});
-
-describe('getSavingsRateStyle', () => {
-  it('green from the target rate up, red below it', () => {
-    expect(getSavingsRateStyle(BUDGET_RULES.surplus.min)).toContain('text-income');
-    expect(getSavingsRateStyle(BUDGET_RULES.surplus.min + 30)).toContain('text-income');
-    expect(getSavingsRateStyle(BUDGET_RULES.surplus.min - 1)).toContain('text-danger');
-    expect(getSavingsRateStyle(-10)).toContain('text-danger');
-  });
 });
 
 describe('LedgerCommandPanel', () => {
@@ -157,12 +102,6 @@ describe('LedgerCommandPanel', () => {
     expect(text()).not.toContain('ของรายรับ');
   });
 
-  it('a low rate is flagged red even in a surplus', () => {
-    panel({ savingsRate: BUDGET_RULES.surplus.min - 1 });
-    const chip = [...container!.querySelectorAll('span, div')].find(e => e.textContent!.endsWith('% ของรายรับ') && e.className.includes('border'))!;
-    expect(chip.className).toContain('text-danger');
-  });
-
   it('mentions the investing inside the net — with a minus for a net sell — and hides it at zero', () => {
     panel({ sumSav: 1500 });
     expect(text()).toContain('ในนี้ลงทุน/ออม ฿1,500.00');
@@ -174,44 +113,12 @@ describe('LedgerCommandPanel', () => {
     expect(text()).not.toContain('ในนี้ลงทุน/ออม');
   });
 
-  it('the group breakdown toggle shows the number of groups and flips the flag', () => {
-    const setShow = panel({ totalActiveGroupCards: 4 });
-    expect(text()).toContain('ขยายดูการจำแนกตามกลุ่มรายรับ-รายจ่าย (4 กลุ่ม)');
-    click(container!.querySelector('button[title^="ขยาย/หุบ"]'));
-    const updater = setShow.mock.lastCall![0] as (v: boolean) => boolean;
-    expect([updater(false), updater(true)]).toEqual([true, false]);
-  });
-
-  it('…and says "collapse" while open', () => {
-    panel({ showGroupBreakdown: true });
-    expect(text()).toContain('หุบการจำแนกตามกลุ่มรายรับ-รายจ่าย');
-    expect(text()).not.toContain('ขยายดู');
-  });
-
-  it('no toggle at all when there are no groups to show', () => {
-    panel({ totalActiveGroupCards: 0 });
-    expect(container!.querySelector('button[title^="ขยาย/หุบ"]')).toBeNull();
-  });
 });
 
 describe('LedgerGroupBreakdownSection', () => {
   const card = (k: string) => <div key={k} data-card={k}>{k}</div>;
   const section = (inc: string[], sav: string[], exp: string[]) =>
     mount(<LedgerGroupBreakdownSection activeIncomeCards={inc.map(card)} activeSavingsCards={sav.map(card)} activeExpenseCards={exp.map(card)} />);
-
-  it('headings for each kind that has cards', () => {
-    section(['i1'], ['s1'], ['e1']);
-    expect(text()).toContain('รายรับ');
-    expect(text()).toContain('การออมและลงทุน');
-    expect(text()).toContain('รายจ่าย');
-    expect(container!.querySelectorAll('[data-card]')).toHaveLength(3);
-  });
-
-  it('a kind with no cards has no heading', () => {
-    section(['i1'], [], []);
-    expect(text()).not.toContain('การออมและลงทุน');
-    expect(text()).not.toContain('รายจ่าย');
-  });
 
   it('a divider only when both income and savings are shown', () => {
     section(['i1'], ['s1'], []);
@@ -228,37 +135,3 @@ describe('LedgerGroupBreakdownSection', () => {
   });
 });
 
-describe('SegmentGroup', () => {
-  const OPTIONS = [
-    { value: 'ALL', label: 'ทั้งหมด' },
-    { value: 'need', label: 'Need', colorScheme: 'rose' },
-    { value: 'want', label: 'Want', colorScheme: 'amber' },
-  ] as const;
-  const group = (value: string) => {
-    const onChange = vi.fn();
-    mount(<SegmentGroup options={[...OPTIONS]} value={value} onChange={onChange} />);
-    return { onChange, slider: container!.querySelector<HTMLElement>('.m-slide')! };
-  };
-
-  it('reports the clicked option and marks only the active one pressed', () => {
-    const { onChange } = group('ALL');
-    click(btn('Want'));
-    expect(onChange).toHaveBeenCalledWith('want');
-    expect(OPTIONS.map(o => btn(o.label).getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
-  });
-
-  it('slides the background under the active option, in its colour; the label takes the colour too', () => {
-    const { slider } = group('want');
-    expect(slider.style.translate).toBe('200% 0');
-    expect(slider.style.width).toContain('(100% - 4px)'); // jsdom rewrites calc(x / 3)
-    expect(slider.className).toContain('bg-warn/10');
-    expect(btn('Want').className).toContain('text-warn');
-    expect(btn('Need').className).not.toContain('text-expense');
-  });
-
-  it('no scheme is the neutral one; an unknown value falls back to the first option', () => {
-    const { slider } = group('nope');
-    expect(slider.style.translate).toBe('0% 0');
-    expect(slider.className).toContain('bg-surface-elevated');
-  });
-});

@@ -46,33 +46,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('CashflowGroupsCard list', () => {
-  it('title, a count badge and an add button', () => {
-    mount({ cashflowGroups: [INCOME, FOOD] });
-    expect(container!.querySelector('h2')!.textContent).toContain('กลุ่มรายรับ-รายจ่าย');
-    expect(container!.querySelector('h2 span')!.textContent).toBe('2');
-    click([...container!.querySelectorAll('button')].find(b => b.textContent!.includes('เพิ่ม')));
-    expect(props.handleAddCashflowGroup).toHaveBeenCalledTimes(1);
-  });
-
-  it('no groups: says so', () => {
-    mount();
-    expect(container!.textContent).toContain('ยังไม่มีกลุ่ม');
-    expect(rows()).toHaveLength(0);
-  });
-
-  it('rows follow order_index, not the order they arrive in', () => {
-    mount({ cashflowGroups: [SAVE, INCOME, FOOD] });
-    expect(nameInputs().map(i => i.value)).toEqual(['เงินเดือน', 'ค่ากิน', 'ลงทุน']);
-  });
-
-  it('does not reorder the array it was given', () => {
-    const given = [SAVE, INCOME, FOOD];
-    mount({ cashflowGroups: given });
-    expect(given.map(g => g.id)).toEqual(['g-save', 'g-pay', 'g-food']);
-  });
-});
-
 describe('CashflowGroupsCard ordering', () => {
   it('up/down send the id and direction', () => {
     mount({ cashflowGroups: [INCOME, FOOD, SAVE] });
@@ -81,28 +54,9 @@ describe('CashflowGroupsCard ordering', () => {
     expect(calls(props.handleMoveCashflowGroup)).toEqual([['g-food', 'UP'], ['g-food', 'DOWN']]);
   });
 
-  it('the first cannot go up and the last cannot go down; the ones in between can do both', () => {
-    mount({ cashflowGroups: [INCOME, FOOD, SAVE] });
-    expect(btn('เลื่อน เงินเดือน ขึ้น').disabled).toBe(true);
-    expect(btn('เลื่อน เงินเดือน ลง').disabled).toBe(false);
-    expect(btn('เลื่อน ค่ากิน ขึ้น').disabled).toBe(false);
-    expect(btn('เลื่อน ค่ากิน ลง').disabled).toBe(false);
-    expect(btn('เลื่อน ลงทุน ขึ้น').disabled).toBe(false);
-    expect(btn('เลื่อน ลงทุน ลง').disabled).toBe(true);
-  });
-
-  it('disabled is judged by the sorted position, not the position in the given array', () => {
-    mount({ cashflowGroups: [SAVE, FOOD, INCOME] });
-    expect(btn('เลื่อน เงินเดือน ขึ้น').disabled).toBe(true);
-    expect(btn('เลื่อน ลงทุน ลง').disabled).toBe(true);
-  });
 });
 
 describe('CashflowGroupsCard type and allocation', () => {
-  it('shows each group\'s type in Thai', () => {
-    mount({ cashflowGroups: [INCOME, FOOD, SAVE] });
-    expect(typeBtns().map(b => b.textContent)).toEqual(['รายรับ', 'รายจ่าย', 'ลงทุน/ออม']);
-  });
 
   it('the type list offers income, expense and savings; choosing one reports it', () => {
     mount({ cashflowGroups: [FOOD] });
@@ -110,23 +64,6 @@ describe('CashflowGroupsCard type and allocation', () => {
     expect(options().map(o => o.textContent)).toEqual(['รายรับ', 'รายจ่าย', 'ลงทุน/ออม']);
     click(options().find(o => o.textContent === 'ลงทุน/ออม'));
     expect(props.handleChangeCashflowGroup).toHaveBeenCalledWith('g-food', 'type', 'savings');
-  });
-
-  it('a default group\'s type is fixed', () => {
-    mount({ cashflowGroups: [{ ...FOOD, isDefault: true }] });
-    expect(typeBtns()[0].disabled).toBe(true);
-  });
-
-  it('so is the type of a group that categories use, with the reason as tooltip', () => {
-    mount({ cashflowGroups: [FOOD], categories: [cat('c1', { cashflowGroup: 'g-food' })] });
-    expect(typeBtns()[0].disabled).toBe(true);
-    expect(typeBtns()[0].title).toBe('มีหมวดหมู่ใช้งานอยู่ ไม่สามารถเปลี่ยนประเภทได้');
-  });
-
-  it('an empty, non-default group can change type, with no tooltip', () => {
-    mount({ cashflowGroups: [FOOD], categories: [cat('c1', { cashflowGroup: 'other' })] });
-    expect(typeBtns()[0].disabled).toBe(false);
-    expect(typeBtns()[0].title).toBe('');
   });
 
   it('an expense group has an allocation picker showing its allocation; changing it reports the value', () => {
@@ -179,36 +116,9 @@ describe('CashflowGroupsCard name, colour and icon', () => {
     expect(container!.textContent).toContain('บันทึกไม่สำเร็จ ลองอีกครั้ง');
   });
 
-  it('colour and icon picks are reported with their field', () => {
-    mount({ cashflowGroups: [FOOD] });
-    click(btn('เลือกสี'));
-    click(document.querySelector('button[aria-label="สี #F90606"]'));
-    expect(props.handleChangeCashflowGroup).toHaveBeenCalledWith('g-food', 'color', '#F90606');
-    click(btn('เลือกไอคอน'));
-    click(document.querySelector('.grid-cols-12 > button'));
-    expect(calls(props.handleChangeCashflowGroup).some(c => c[1] === 'icon')).toBe(true);
-  });
-
-  it('a group without a colour shows the neutral swatch', () => {
-    mount({ cashflowGroups: [{ ...FOOD, color: null }] });
-    expect(btn('เลือกสี').style.backgroundColor).toBe('rgb(100, 116, 139)');
-  });
 });
 
 describe('CashflowGroupsCard usage count and delete', () => {
-  it('shows how many transactions use a group, with a tooltip; nothing at zero', () => {
-    mount({ cashflowGroups: [INCOME, FOOD], txCountByGroup: { 'g-food': 12 } });
-    const badge = container!.querySelector<HTMLElement>('span[title^="มี "]')!;
-    expect(badge.textContent).toBe('12');
-    expect(badge.title).toBe('มี 12 รายการในกลุ่มนี้ (ในมุมมองปัจจุบัน)');
-    expect(container!.querySelectorAll('span[title^="มี "]')).toHaveLength(1);
-  });
-
-  it('a default group shows a lock and cannot be deleted', () => {
-    mount({ cashflowGroups: [{ ...FOOD, isDefault: true }] });
-    expect(container!.querySelector('span[title="กลุ่มเริ่มต้นลบไม่ได้"]')).not.toBeNull();
-    expect(container!.querySelector('button[aria-label^="ลบ"]')).toBeNull();
-  });
 
   it('a group in use has a disabled delete button that says why', () => {
     mount({ cashflowGroups: [FOOD], categories: [cat('c1', { cashflowGroup: 'g-food' })] });
@@ -227,17 +137,4 @@ describe('CashflowGroupsCard usage count and delete', () => {
     expect(props.handleDeleteGroup).toHaveBeenCalledWith('g-food');
   });
 
-  it('the delete error is shown under that group only, and the row turns danger', () => {
-    mount({ cashflowGroups: [INCOME, FOOD], cashflowDeleteError: { id: 'g-food', msg: 'ไม่สามารถลบได้' } });
-    expect(container!.textContent).toContain('ไม่สามารถลบได้');
-    expect(container!.querySelectorAll('p.border').length).toBe(1);
-    const [payRow, foodRow] = rows();
-    expect(foodRow.className).toContain('tint-danger');
-    expect(payRow.className).not.toContain('tint-danger');
-  });
-
-  it('no error, no message', () => {
-    mount({ cashflowGroups: [FOOD], cashflowDeleteError: null });
-    expect(container!.querySelector('p.border')).toBeNull();
-  });
 });

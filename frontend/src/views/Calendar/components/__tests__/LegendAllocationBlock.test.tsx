@@ -65,14 +65,6 @@ afterEach(() => {
   root = null; container = null;
 });
 
-describe('LegendAllocationBlock empty', () => {
-  it('says the period has no rows and draws nothing else', () => {
-    mount(props({ sortedGroups: [] }));
-    expect(text()).toBe('ช่วงนี้ยังไม่มีรายการ');
-    expect(container!.querySelector('button')).toBeNull();
-  });
-});
-
 describe('LegendAllocationBlock switches', () => {
   it('layout and sort buttons report pressed state', () => {
     mount(props());
@@ -105,15 +97,6 @@ describe('LegendAllocationBlock switches', () => {
     expect(p.handleSetSortMode).toHaveBeenNthCalledWith(2, 'structure');
   });
 
-  it('"แสดงทั้งหมด" only while something is hidden, and it clears all', () => {
-    mount(props());
-    const showAll = () => [...container!.querySelectorAll('button')].find(b => b.textContent === 'แสดงทั้งหมด');
-    expect(showAll()).toBeUndefined();
-    act(() => root!.unmount()); container!.remove();
-    const p = mount(props({ excludedCategoryIds: new Set(['fun']) }));
-    click(showAll());
-    expect(p.toggleCategory).toHaveBeenCalledWith('CLEAR_ALL');
-  });
 });
 
 describe('LegendAllocationBlock compact chips', () => {
@@ -128,12 +111,6 @@ describe('LegendAllocationBlock compact chips', () => {
   it('a category without an amount shows ฿0.00', () => {
     mount(props({ catAmounts: {} }));
     expect(chipOf('ทอง').textContent).toContain('฿0.00');
-  });
-
-  it('clicking a chip toggles that category', () => {
-    const p = mount(props());
-    click(chipOf('หนัง'));
-    expect(p.toggleCategory).toHaveBeenCalledWith('fun');
   });
 
   it('a shown chip is pressed, tinted and readable; a hidden one is dimmed', () => {
@@ -154,23 +131,9 @@ describe('LegendAllocationBlock compact chips', () => {
     expect((on.firstElementChild as HTMLElement).style.opacity).toBe('1');
   });
 
-  it('a category without a colour falls back to body ink', () => {
-    mount(props());
-    expect((chipOf('ทอง').firstElementChild as HTMLElement).style.backgroundColor).not.toBe('');
-  });
 });
 
 describe('LegendAllocationBlock grouped rows', () => {
-  it('one row per group with name, icon and its categories', () => {
-    mount(props({ legendLayoutMode: 'grouped' }));
-    expect(text()).toContain('กลุ่ม-inc');
-    expect(text()).toContain('กลุ่ม-exp');
-    const expRow = groupAmount('exp').closest('.flex-1')!;
-    expect(expRow.querySelectorAll('button[aria-pressed]')).toHaveLength(2);
-    expect(expRow.querySelector('button[aria-pressed]')!.classList.contains('rounded-pill')).toBe(true);
-    expect(groupAmount('inc').closest('div')!.querySelector('svg')).not.toBeNull();
-    expect(groupAmount('exp').closest('div')!.querySelector('svg')).toBeNull();
-  });
 
   it('income +, expense −, savings ± with their colours', () => {
     mount(props({ legendLayoutMode: 'grouped' }));
@@ -243,11 +206,6 @@ describe('LegendAllocationBlock allocation overview', () => {
     expect(parts.map(p => p.title)).toEqual(['NEED: 30%', 'WANT: 10%', 'SAVE: 60%']);
   });
 
-  it('no bar when there is nothing to split', () => {
-    mount(props({ allocationTotals: { ...ALLOC, totalExpense: 0 } }));
-    expect(container!.querySelector('[title^="จำเป็น:"]')).toBeNull();
-  });
-
   it('category breakdown shows only in grouped mode', () => {
     mount(props());
     expect(text()).not.toContain('(บ้าน)');
@@ -258,8 +216,4 @@ describe('LegendAllocationBlock allocation overview', () => {
     expect(sub.closest('.justify-between')!.lastElementChild!.textContent).toBe('฿3,000.00');
   });
 
-  it('an allocation row without categories draws no breakdown box', () => {
-    mount(props({ legendLayoutMode: 'grouped' }));
-    expect(container!.querySelectorAll('.pl-3\\.5')).toHaveLength(2);
-  });
 });

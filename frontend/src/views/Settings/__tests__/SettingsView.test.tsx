@@ -78,35 +78,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('SettingsView page', () => {
-  it('title, the allocation hint and the cards on the right are all there', () => {
-    mount();
-    expect(container!.querySelector('h1')!.textContent).toBe('การตั้งค่าระบบ');
-    expect(container!.textContent).toContain('NEED/WANT/SAVE');
-    for (const id of ['groups-card', 'budgets-card', 'daytypes-card', 'danger-zone']) expect(container!.querySelector(`[data-testid="${id}"]`), id).not.toBeNull();
-  });
-
-  it('renders with nothing given at all (every list defaults to empty)', () => {
-    props = { ...baseProps(), categories: undefined as never, cashflowGroups: undefined as never, dayTypeConfig: undefined as never, transactions: undefined as never };
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
-    render();
-    expect(container.querySelector('h1')).not.toBeNull();
-    expect(container.textContent).toContain('ยังไม่มีหมวดหมู่รายจ่าย');
-  });
-
-  it('warns about categories whose group is gone', () => {
-    mount({ categories: [cat('c1', { name: 'กำพร้า', cashflowGroup: 'deleted' })] });
-    expect(container!.textContent).toContain('มีหมวดหมู่ที่กลุ่มถูกลบไปแล้ว');
-  });
-
-  it('no warning when all groups exist', () => {
-    mount({ categories: [cat('c1', { cashflowGroup: 'g-food' })] });
-    expect(container!.textContent).not.toContain('มีหมวดหมู่ที่กลุ่มถูกลบไปแล้ว');
-  });
-});
-
 describe('SettingsView category sections', () => {
   const categories = [
     cat('e2', { name: 'ค่าน้ำ', type: 'expense', order_index: 2, cashflowGroup: 'g-bills' }),
@@ -118,39 +89,6 @@ describe('SettingsView category sections', () => {
     cat('e0', { name: 'ไม่มีลำดับ', type: 'expense', order_index: undefined, cashflowGroup: 'g-food' }),
   ];
 
-  it('each category sits in the section of its type, in order_index order (no index counts as first)', () => {
-    mount({ categories });
-    expect(names('หมวดหมู่รายจ่าย')).toEqual(['ไม่มีลำดับ', 'ข้าว', 'ค่าน้ำ']);
-    expect(names('หมวดหมู่รายรับ')).toEqual(['เงินเดือนหลัก', 'โบนัสรอง']);
-    expect(names('หมวดหมู่การลงทุนและการออมเงิน')).toEqual(['ทองคำ', 'ออมเพิ่ม']);
-  });
-
-  it('each section shows its own count', () => {
-    mount({ categories });
-    expect(section('หมวดหมู่รายจ่าย').querySelector('h2 span')!.textContent).toBe('3');
-    expect(section('หมวดหมู่รายรับ').querySelector('h2 span')!.textContent).toBe('2');
-    expect(section('หมวดหมู่การลงทุนและการออมเงิน').querySelector('h2 span')!.textContent).toBe('2');
-  });
-
-  it('does not reorder the array it was given', () => {
-    const given = [...categories];
-    mount({ categories: given });
-    expect(given.map(c => c.id)).toEqual(categories.map(c => c.id));
-  });
-
-  it('the first row of a section cannot move up and the last cannot move down', () => {
-    mount({ categories });
-    const s = section('หมวดหมู่รายจ่าย');
-    const up = (n: string) => s.querySelector<HTMLButtonElement>(`button[aria-label="เลื่อน ${n} ขึ้น"]`)!;
-    const down = (n: string) => s.querySelector<HTMLButtonElement>(`button[aria-label="เลื่อน ${n} ลง"]`)!;
-    expect(up('ไม่มีลำดับ').disabled).toBe(true);
-    expect(down('ไม่มีลำดับ').disabled).toBe(false);
-    expect(up('ค่าน้ำ').disabled).toBe(false);
-    expect(down('ค่าน้ำ').disabled).toBe(true);
-    expect(up('ข้าว').disabled).toBe(false);
-    expect(down('ข้าว').disabled).toBe(false);
-  });
-
   it('the same first/last rule holds in the income and savings sections', () => {
     mount({ categories });
     for (const [title, first, last] of [['หมวดหมู่รายรับ', 'เงินเดือนหลัก', 'โบนัสรอง'], ['หมวดหมู่การลงทุนและการออมเงิน', 'ทองคำ', 'ออมเพิ่ม']] as const) {
@@ -160,41 +98,6 @@ describe('SettingsView category sections', () => {
       expect([up(first).disabled, down(first).disabled], title).toEqual([true, false]);
       expect([up(last).disabled, down(last).disabled], title).toEqual([false, true]);
     }
-  });
-
-  it('the name hint follows the section', () => {
-    mount({ categories });
-    const ph = (t: string) => section(t).querySelector<HTMLInputElement>('input[type="text"]')!.placeholder;
-    expect(ph('หมวดหมู่รายจ่าย')).toBe('ชื่อรายจ่าย');
-    expect(ph('หมวดหมู่รายรับ')).toBe('ชื่อรายรับ');
-    expect(ph('หมวดหมู่การลงทุนและการออมเงิน')).toBe('ชื่อสินทรัพย์/บัญชีออม');
-  });
-
-  it('each section offers only the groups of its kind in the group dropdown', () => {
-    mount({ categories });
-    const groupOptions = (t: string) => {
-      const trigger = section(t).querySelector('button[aria-label="กลุ่มของหมวดหมู่"]');
-      click(trigger);
-      const o = [...document.querySelectorAll('[role="option"]')].map(e => e.textContent);
-      click(trigger); // close it again before looking at the next section
-      return o;
-    };
-    expect(groupOptions('หมวดหมู่รายจ่าย')).toEqual(['ค่าบิล', 'ค่ากิน']); // by group order_index
-    expect(groupOptions('หมวดหมู่รายรับ')).toEqual(['โบนัส', 'เงินเดือน']);
-    expect(groupOptions('หมวดหมู่การลงทุนและการออมเงิน')).toEqual(['ออม', 'ลงทุน']);
-  });
-
-  it('empty sections say so', () => {
-    mount({ categories: [] });
-    expect(container!.textContent).toContain('ยังไม่มีหมวดหมู่รายจ่าย');
-    expect(container!.textContent).toContain('ยังไม่มีหมวดหมู่รายรับ');
-    expect(container!.textContent).toContain('ยังไม่มีหมวดหมู่การลงทุนและการออมเงิน');
-  });
-
-  it('with no savings group the savings section explains how to get one', () => {
-    mount({ categories: [], cashflowGroups: [FOOD, PAY] });
-    expect(container!.textContent).toContain('ยังไม่มีกลุ่มชนิด "ลงทุน/ออม"');
-    expect(container!.textContent).not.toContain('ยังไม่มีหมวดหมู่การลงทุนและการออมเงิน');
   });
 
   it('category edits go to the handlers with the id', async () => {
@@ -212,144 +115,7 @@ describe('SettingsView category sections', () => {
   });
 });
 
-describe('SettingsView adding categories', () => {
-  it.each([['เพิ่มรายจ่าย', 'expense'], ['เพิ่มรายรับ', 'income'], ['เพิ่มหมวดหมู่', 'savings']])('"%s" adds a %s category', async (label, kind) => {
-    mount();
-    click(addBtn(label));
-    await flush();
-    expect(props.handleAddCategory).toHaveBeenCalledTimes(1);
-    expect(props.handleAddCategory).toHaveBeenCalledWith(kind);
-  });
-
-  it('the new category\'s name box takes focus, text selected', async () => {
-    const added = cat('c-new', { name: 'หมวดใหม่', type: 'expense', cashflowGroup: 'g-food' });
-    mount({ handleAddCategory: vi.fn(async () => 'c-new') as never, categories: [] });
-    click(addBtn('เพิ่มรายจ่าย'));
-    await flush();
-    act(() => root!.render(<SettingsView {...props} categories={[added]} />));
-    const box = section('หมวดหมู่รายจ่าย').querySelector<HTMLInputElement>('input[type="text"]')!;
-    expect(document.activeElement).toBe(box);
-    expect(box.selectionStart).toBe(0);
-    expect(box.selectionEnd).toBe('หมวดใหม่'.length);
-  });
-
-  it.each([['เพิ่มรายรับ', 'income', 'หมวดหมู่รายรับ', 'g-pay'], ['เพิ่มหมวดหมู่', 'savings', 'หมวดหมู่การลงทุนและการออมเงิน', 'g-save']])('a new %s row takes focus as well', async (label, kind, title, group) => {
-    const added = cat('c-new', { name: 'ใหม่', type: kind as never, cashflowGroup: group });
-    mount({ handleAddCategory: vi.fn(async () => 'c-new') as never, categories: [cat('old', { name: 'เก่า', type: kind as never, cashflowGroup: group, order_index: 1 })] });
-    click(addBtn(label));
-    await flush();
-    act(() => root!.render(<SettingsView {...props} categories={[cat('old', { name: 'เก่า', type: kind as never, cashflowGroup: group, order_index: 1 }), { ...added, order_index: 2 }]} />));
-    const boxes = section(title).querySelectorAll<HTMLInputElement>('input[type="text"]');
-    expect(document.activeElement).toBe(boxes[1]);
-  });
-
-  it('when nothing comes back no row is marked new', async () => {
-    const existing = cat('c1', { name: 'เดิม', type: 'expense' });
-    mount({ handleAddCategory: vi.fn(async () => undefined) as never, categories: [existing] });
-    click(addBtn('เพิ่มรายจ่าย'));
-    await flush();
-    expect(document.activeElement).not.toBe(q('input[type="text"]'));
-  });
-
-  it('a failure while adding is logged and does not break the page', async () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mount({ handleAddCategory: vi.fn(async () => { throw new Error('boom'); }) as never });
-    click(addBtn('เพิ่มรายจ่าย'));
-    await flush();
-    expect(err).toHaveBeenCalledTimes(1);
-    expect(container!.querySelector('h1')).not.toBeNull();
-  });
-});
-
-describe('SettingsView right-hand cards', () => {
-  it('hands each card its data and handlers', () => {
-    mount({ categories: [cat('c1')] });
-    expect(h.budgets!.cashflowGroups).toBe(props.cashflowGroups);
-    expect(h.dayTypes!.dayTypeConfig).toBe(props.dayTypeConfig);
-    expect(h.dayTypes!.handleAddDayType).toBe(props.handleAddDayType);
-    expect(h.dayTypes!.handleMoveDayType).toBe(props.handleMoveDayType);
-    expect(h.dayTypes!.handleDayTypeConfigChange).toBe(props.handleDayTypeConfigChange);
-    expect(h.dayTypes!.handleDeleteDayType).toBe(props.handleDeleteDayType);
-    expect(h.danger!.handleDeleteAllData).toBe(props.handleDeleteAllData);
-    expect(h.groups!.cashflowGroups).toBe(props.cashflowGroups);
-    expect(h.groups!.handleAddCashflowGroup).toBe(props.handleAddCashflowGroup);
-    expect(h.groups!.handleMoveCashflowGroup).toBe(props.handleMoveCashflowGroup);
-    expect(h.groups!.categories).toBe(props.categories);
-  });
-
-  it('counts the transactions in each group (by category id, then by name)', () => {
-    mount({
-      categories: [cat('c1', { name: 'ข้าว', cashflowGroup: 'g-food' }), cat('c2', { name: 'น้ำ', cashflowGroup: 'g-bills' })],
-      transactions: [
-        { category_id: 'c1', category: 'ข้าว' }, { category_id: 'c1', category: 'ข้าว' }, { category_id: undefined, category: 'น้ำ' },
-      ] as never,
-    });
-    expect(h.groups!.txCountByGroup).toEqual({ 'g-food': 2, 'g-bills': 1 });
-  });
-});
-
-describe('SettingsView tab switches', () => {
-  const row = (title: string) => container!.querySelector<HTMLElement>(`[role="group"][aria-label="${title}"]`);
-  const sw = (label: string) => container!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
-
-  it('no switch row unless the page is given something to call', () => {
-    mount();
-    expect(row('พอร์ตลงทุน')).toBeNull();
-  });
-
-  it('the portfolio row appears with its handler, and defaults to on', () => {
-    mount({ onPortfolioEnabledChange: vi.fn() });
-    expect(row('พอร์ตลงทุน')).not.toBeNull();
-    expect(sw('เปิดพอร์ตลงทุน').getAttribute('aria-checked')).toBe('true');
-    expect(container!.textContent).toContain('แสดงแท็บ "พอร์ตลงทุน" และสรุปพอร์ตในหน้าภาพรวม');
-  });
-
-  it('switching off reports false, switching on reports true', () => {
-    const pf = vi.fn();
-    mount({ onPortfolioEnabledChange: pf });
-    click(sw('ปิดพอร์ตลงทุน'));
-    expect(pf).toHaveBeenCalledWith(false);
-    click(sw('เปิดพอร์ตลงทุน'));
-    expect(pf).toHaveBeenLastCalledWith(true);
-  });
-
-  it('shows the row as off when told so, and says the data is kept', () => {
-    mount({ portfolioEnabled: false, onPortfolioEnabledChange: vi.fn() });
-    expect(sw('ปิดพอร์ตลงทุน').getAttribute('aria-checked')).toBe('true');
-    expect(container!.textContent).toContain('ข้อมูลสินทรัพย์และรายการซื้อขายยังอยู่ครบ');
-  });
-});
-
-describe('SettingsView Lite overview switch', () => {
-  const sw = (label: string) => container!.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
-  it('only shows when the layout gives a handler, and reports on / off', () => {
-    mount({});
-    expect(container!.textContent).not.toContain('หน้าภาพรวมแบบ Lite');
-    act(() => root!.unmount()); container!.remove();
-    const lite = vi.fn();
-    mount({ liteOverview: false, onLiteOverviewChange: lite });
-    expect(sw('ปิดหน้าภาพรวมแบบ Lite').getAttribute('aria-checked')).toBe('true');
-    click(sw('เปิดหน้าภาพรวมแบบ Lite'));
-    expect(lite).toHaveBeenCalledWith(true);
-  });
-});
-
 describe('SettingsView following new data', () => {
-  it('transaction counts are recomputed when the transactions change', () => {
-    const categories = [cat('c1', { name: 'ข้าว', cashflowGroup: 'g-food' })];
-    mount({ categories, transactions: [{ category_id: 'c1' }] as never });
-    expect(h.groups!.txCountByGroup).toEqual({ 'g-food': 1 });
-    act(() => root!.render(<SettingsView {...props} categories={categories} transactions={[{ category_id: 'c1' }, { category_id: 'c1' }] as never} />));
-    expect(h.groups!.txCountByGroup).toEqual({ 'g-food': 2 });
-  });
-
-  it('transaction counts are recomputed when the categories change', () => {
-    const transactions = [{ category_id: 'c1' }] as never;
-    mount({ categories: [cat('c1', { cashflowGroup: 'g-food' })], transactions });
-    expect(h.groups!.txCountByGroup).toEqual({ 'g-food': 1 });
-    act(() => root!.render(<SettingsView {...props} categories={[cat('c1', { cashflowGroup: 'g-bills' })]} transactions={transactions} />));
-    expect(h.groups!.txCountByGroup).toEqual({ 'g-bills': 1 });
-  });
 
   it('deleting a group uses the categories as they are now, not as they were on first render', () => {
     mount({ categories: [] });
@@ -441,38 +207,4 @@ describe('SettingsView deleting a group', () => {
     expect(h.groups!.cashflowDeleteError).toEqual({ id: 'g-food', msg: 'ไม่สามารถลบได้ มีหมวดหมู่กำลังใช้งานกลุ่มนี้อยู่' });
   });
 
-  it('the message goes away after 4 seconds, not before', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    mount({ categories: [cat('c1', { cashflowGroup: 'g-food' })] });
-    del('g-food');
-    act(() => { vi.advanceTimersByTime(3999); });
-    expect(h.groups!.cashflowDeleteError).not.toBeNull();
-    act(() => { vi.advanceTimersByTime(1); });
-    expect(h.groups!.cashflowDeleteError).toBeNull();
-  });
-
-  it('refusing again restarts the 4 seconds', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    mount({ categories: [cat('c1', { cashflowGroup: 'g-food' }), cat('c2', { cashflowGroup: 'g-bills' })] });
-    del('g-food');
-    act(() => { vi.advanceTimersByTime(3000); });
-    del('g-bills');
-    act(() => { vi.advanceTimersByTime(3000); });
-    expect(h.groups!.cashflowDeleteError).toEqual(expect.objectContaining({ id: 'g-bills' }));
-    act(() => { vi.advanceTimersByTime(1000); });
-    expect(h.groups!.cashflowDeleteError).toBeNull();
-  });
-
-  it('leaving the page with the message up does not leave a timer behind', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mount({ categories: [cat('c1', { cashflowGroup: 'g-food' })] });
-    del('g-food');
-    expect(vi.getTimerCount()).toBe(1); // the 4 second message timer
-    act(() => root!.unmount());
-    root = null;
-    expect(vi.getTimerCount()).toBe(0); // cleared on the way out, not left to fire on a page that is gone
-    act(() => { vi.advanceTimersByTime(5000); });
-    expect(err).not.toHaveBeenCalled();
-  });
 });

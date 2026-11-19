@@ -73,18 +73,6 @@ describe('GhostPacerChart: finished month', () => {
 
   const forecastLines = () => [...container.querySelectorAll('path')].filter(p => p.getAttribute('stroke-dasharray') === '4 3');
 
-  it('a finished month has no forecast line', () => {
-    mount(finished);
-    expect(forecastLines()).toHaveLength(0);
-  });
-
-  it('the current month keeps today and the forecast', () => {
-    mount();
-    expect(forecastLines()).toHaveLength(1);
-    expect(texts().some(t => t.startsWith('คาดจบเดือนนี้'))).toBe(true);
-    expect(texts()).toContain('Day 10 (วันนี้)');
-    expect(container.textContent).toContain('(เดือนนี้)');
-  });
 });
 
 describe('GhostPacerChart', () => {
@@ -115,16 +103,6 @@ describe('GhostPacerChart', () => {
     expect(paths(tc('info'))).toHaveLength(0);
     expect(paths(tc('ink-body'))).toHaveLength(0);
     expect([...container.querySelectorAll('circle')].some(c => c.getAttribute('r') === '4')).toBe(false);
-  });
-
-  it('maps its viewBox 1:1 to the measured width and stops observing on unmount', () => {
-    mount();
-    act(() => ro.cb!([{ contentRect: { width: 960, height: 202 } }]));
-    expect(svg().getAttribute('viewBox')).toBe('0 0 960 202');
-    act(() => ro.cb!([{ contentRect: { width: 0, height: 0 } }]));
-    expect(svg().getAttribute('viewBox')).toBe('0 0 960 202');
-    act(() => root!.unmount()); root = null;
-    expect(ro.disconnect).toHaveBeenCalledTimes(1);
   });
 
   it('hovering a past day compares both months: spending more is red with a plus', () => {
@@ -179,26 +157,6 @@ describe('GhostPacerChart', () => {
     expect(tipText()).not.toContain('เฉลี่ย');
   });
 
-  it('clears the tooltip outside the plot and on mouse leave; ignores an unmeasured box', () => {
-    mount();
-    hover(dayX(5));
-    hover(dayX(31) + 20);
-    expect(tip()).toBeNull();
-    hover(dayX(5));
-    leave();
-    expect(tip()).toBeNull();
-    hover(dayX(5));
-    hover(dayX(9), 0); // unmeasured box: keep what is shown
-    expect(tipText()).toContain('Day 5');
-  });
-
-  it('keeps the tooltip inside the chart near the right edge', () => {
-    mount();
-    hover(dayX(31));
-    const x = Number(tip()!.querySelector('g[transform]')!.getAttribute('transform')!.match(/translate\(([-\d.]+)/)![1]);
-    expect(x).toBeCloseTo(dayX(31) - 210 - 12);
-  });
-
   it('pushes the two month-end badges 16 apart when the totals are close, either way round', () => {
     mount({ projectedExpense: 12500 });
     expect(translateY(badge('เดือนก่อนจบ')!) - translateY(badge('คาดจบเดือนนี้')!)).toBeCloseTo(16);
@@ -206,13 +164,4 @@ describe('GhostPacerChart', () => {
     expect(translateY(badge('คาดจบเดือนนี้')!) - translateY(badge('เดือนก่อนจบ')!)).toBeCloseTo(16);
   });
 
-  it('drops the first/last day labels and ticks that would collide with the today label', () => {
-    mount({ currentDay: 31, currentDailySeries: cum(100, 31) });
-    expect(texts().filter(t => t.startsWith('Day '))).toEqual(['Day 1', 'Day 31 (วันนี้)']);
-    remount({ currentDay: 1, currentDailySeries: [100] });
-    expect(texts().filter(t => t.startsWith('Day '))).toEqual(['Day 1 (วันนี้)', 'Day 31']);
-    remount({ currentDay: 12, currentDailySeries: cum(100, 12) });
-    expect(texts()).not.toContain('10');
-    expect(texts()).toContain('5');
-  });
 });

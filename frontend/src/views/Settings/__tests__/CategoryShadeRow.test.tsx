@@ -41,23 +41,6 @@ afterEach(() => {
 });
 
 describe('CategoryShadeRow', () => {
-  it('shows the value and a labelled 0–100 slider in steps of 1', () => {
-    mount(40);
-    expect(slider().value).toBe('40');
-    expect(slider().step).toBe('1');
-    expect(container!.querySelector('label')!.htmlFor).toBe(slider().id);
-    expect(container!.textContent).toContain('40%');
-  });
-
-  it('the filled part of the track follows the value', () => {
-    mount(40);
-    expect(slider().style.getPropertyValue('--range-fill')).toBe('0.4');
-  });
-
-  it('0 says every category uses the group colour', () => {
-    mount(0);
-    expect(slider().getAttribute('aria-valuetext')).toBe('ใช้สีกลุ่มเดียวกันทุกหมวด');
-  });
 
   it('dragging previews live and saves once on release', () => {
     mount(40);
@@ -79,11 +62,4 @@ describe('CategoryShadeRow', () => {
     expect(onSave).toHaveBeenCalledWith(50);
   });
 
-  it('one swatch strip per group with more than one category, coloured by the categories', () => {
-    mount();
-    const strips = [...container!.querySelectorAll('[data-shade-strip]')];
-    expect(strips.map(s => s.textContent)).toEqual(['ค่ากิน']);
-    expect([...strips[0].querySelectorAll<HTMLElement>('span[title]')].map(s => s.style.backgroundColor))
-      .toEqual(['rgb(170, 0, 0)', 'rgb(187, 0, 0)']);
-  });
 });

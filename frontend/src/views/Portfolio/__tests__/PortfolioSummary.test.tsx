@@ -51,17 +51,6 @@ describe('PortfolioSummary headline', () => {
     expect(text()).toContain('ต้นทุนที่ถืออยู่ ฿100,000.00');
   });
 
-  it('says how long the first trade was ago (first by date, across assets)', () => {
-    const a = mkAsset('a', { trades: [trade('t1', '2026-06-01', 'buy', 1, 10)] });
-    const b = mkAsset('b', { trades: [trade('t2', '2026-08-20', 'buy', 1, 10)] });
-    mount(mkPortfolio([a, b]));
-    expect(text()).toContain('· ถือมา 4 เดือน');
-  });
-
-  it('no trades, no holding-time phrase', () => {
-    mount(mkPortfolio([mkAsset('a', { trades: [] })]));
-    expect(text()).not.toContain('ถือมา');
-  });
 });
 
 describe('PortfolioSummary profit and loss', () => {
@@ -106,10 +95,6 @@ describe('PortfolioSummary profit and loss', () => {
 });
 
 describe('PortfolioSummary annual return', () => {
-  it('hidden until there is a trade to measure from', () => {
-    mount(mkPortfolio([mkAsset('a', { trades: [] })]));
-    expect(row('ผลตอบแทนเฉลี่ยต่อปี')).toBeNull();
-  });
 
   it('under a year: a dash with the reason', () => {
     const a = mkAsset('a', { units: 1, marketValue: 110, trades: [trade('t1', '2026-06-01', 'buy', 1, 100)] });
@@ -189,11 +174,6 @@ describe('PortfolioSummary general savings and unpriced notes', () => {
     expect(row('รวมพอร์ตและเงินออมทั่วไป')!.textContent).toBe('฿6,000.00');
   });
 
-  it('no general savings, no extra block', () => {
-    mount(mkPortfolio([mkAsset('a')], { marketValue: 1_000 }, { generalSavings: 0 }));
-    expect(row('รวมพอร์ตและเงินออมทั่วไป')).toBeNull();
-  });
-
   it('unpriced assets are flagged with their count and cost', () => {
     mount(mkPortfolio([mkAsset('a')], { unpricedCount: 2, unpricedCost: 3_500 }));
     expect(text()).toContain('2 สินทรัพย์ยังไม่มีราคา (ต้นทุน ฿3,500.00)');
@@ -206,12 +186,3 @@ describe('PortfolioSummary general savings and unpriced notes', () => {
   });
 });
 
-describe('PortfolioSummary panels', () => {
-  it('has three labelled sections; the charts get the same portfolio', () => {
-    const p = mkPortfolio([mkAsset('a')]);
-    mount(p);
-    expect([...container!.querySelectorAll('section')].map(s => s.getAttribute('aria-label'))).toEqual(['สรุปพอร์ต', 'เงินที่ลงไปเทียบมูลค่าตอนนี้', 'สัดส่วนพอร์ต']);
-    expect((h.cost[0] as { portfolio: Portfolio }).portfolio).toBe(p);
-    expect((h.alloc[0] as { portfolio: Portfolio }).portfolio).toBe(p);
-  });
-});

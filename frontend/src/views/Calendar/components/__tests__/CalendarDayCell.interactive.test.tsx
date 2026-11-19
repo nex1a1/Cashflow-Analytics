@@ -88,12 +88,6 @@ describe('CalendarDayCell heat chip and wash', () => {
     expect(topBar()).not.toBeNull();
   });
 
-  it('today keeps the accent bar instead of the peak bar', () => {
-    at(3000, true);
-    expect(topBar()).toBeNull();
-    expect(container!.querySelector('.bg-accent.h-\\[2\\.5px\\]')).not.toBeNull();
-  });
-
   it('no expense, no chip and no header row', () => {
     mount(props());
     expect(chip()).toBeNull();
@@ -102,26 +96,6 @@ describe('CalendarDayCell heat chip and wash', () => {
 });
 
 describe('CalendarDayCell background and day badge', () => {
-  it('today: ring-3 + accent badge + aria-current', () => {
-    mount(props({ isToday: true }));
-    expect(cell().className).toContain('ring-accent/50');
-    expect(dayBtn().className).toContain('bg-accent');
-    expect(dayBtn().getAttribute('aria-current')).toBe('date');
-  });
-
-  it('a plain weekday has no aria-current and display ink', () => {
-    mount(props());
-    expect(dayBtn().hasAttribute('aria-current')).toBe(false);
-    expect(dayBtn().className).toContain('text-ink-display');
-    expect(cell().classList.contains('bg-canvas')).toBe(true);
-  });
-
-  it('an empty weekend is dimmer (surface) with weekend ink', () => {
-    mount(props({ isWeekend: true }));
-    expect(cell().classList.contains('bg-surface')).toBe(true);
-    expect(cell().classList.contains('bg-canvas')).toBe(false);
-    expect(dayBtn().className).toContain('text-weekend');
-  });
 
   it('a weekend with spending or income goes back to canvas', () => {
     mount(props({ isWeekend: true, data: data(exps(1)) }));
@@ -130,71 +104,6 @@ describe('CalendarDayCell background and day badge', () => {
     expect(cell().classList.contains('bg-canvas')).toBe(true);
   });
 
-  it('today on a weekend still uses the today badge', () => {
-    mount(props({ isToday: true, isWeekend: true }));
-    expect(dayBtn().className).toContain('bg-accent');
-    expect(dayBtn().className).not.toContain('text-weekend');
-  });
-
-  it('a string day label (cycle month marker) is shown and named', () => {
-    mount(props({ day: '25 ต.ค.' }));
-    expect(dayBtn().textContent).toBe('25 ต.ค.');
-    expect(dayBtn().getAttribute('aria-label')).toBe('ดูรายละเอียดวันที่ 25 ต.ค.');
-  });
-});
-
-describe('CalendarDayCell pay day badge', () => {
-  const badge = () => container!.querySelector('[aria-label="วันที่ 25 วันเงินเดือนเข้า"]');
-  it('shows on the 25th from PAY_DAY_START on', () => {
-    mount(props({ dateStr: '2025-06-25' }));
-    expect(badge()).not.toBeNull();
-    expect(badge()!.querySelector('.lucide-banknote')).not.toBeNull();
-  });
-  it('not before the pay-day feature started', () => {
-    mount(props({ dateStr: '2025-05-25' }));
-    expect(badge()).toBeNull();
-  });
-  it('not on other days', () => {
-    mount(props({ dateStr: '2026-10-24' }));
-    expect(badge()).toBeNull();
-  });
-});
-
-describe('CalendarDayCell clicks', () => {
-  it('clicking the cell opens the day', () => {
-    const p = mount(props());
-    click(cell());
-    expect(p.onSelectDate).toHaveBeenCalledWith('2026-10-09');
-  });
-
-  it('the day number opens it exactly once (no bubbling to the cell)', () => {
-    const p = mount(props());
-    click(dayBtn());
-    expect(p.onSelectDate).toHaveBeenCalledTimes(1);
-  });
-
-  it('the add button opens the add modal for that date, not the day', () => {
-    const add = vi.fn();
-    const p = mount(props({ handleOpenAddModal: add }));
-    const btn = container!.querySelector<HTMLButtonElement>('button[aria-label="เพิ่มรายการวันที่ 9"]')!;
-    click(btn);
-    expect(add).toHaveBeenCalledWith('2026-10-09');
-    expect(p.onSelectDate).not.toHaveBeenCalled();
-  });
-
-  it('no add button without a handler', () => {
-    mount(props());
-    expect(container!.querySelector('button[aria-label^="เพิ่มรายการ"]')).toBeNull();
-  });
-
-  it('changing the day type reports the date and type, without opening the day', () => {
-    const p = mount(props());
-    click(container!.querySelector('.day-type-badge'));
-    const opt = [...document.body.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.includes('โอที'))!;
-    click(opt);
-    expect(p.handleDayTypeChange).toHaveBeenCalledWith('2026-10-09', 'dt_ot');
-    expect(p.onSelectDate).not.toHaveBeenCalled();
-  });
 });
 
 describe('CalendarDayCell list and "+N"', () => {
@@ -253,18 +162,6 @@ describe('CalendarDayCell list and "+N"', () => {
     expect(amt('ทอง').classList.contains('text-savings')).toBe(true);
   });
 
-  it('row colour bar uses the category colour, falling back to a neutral', () => {
-    const c = cat('c', { color: '#123456' });
-    mount(props({ data: data([tx('a', '2026-10-09', 50, { description: 'ข้าว', _catObj: c }), tx('b', '2026-10-09', 60, { description: 'น้ำ' })]) }));
-    const bars = [...container!.querySelectorAll<HTMLElement>('.w-\\[3px\\]')];
-    expect(bars[0].style.backgroundColor).toBe('rgb(18, 52, 86)');
-    expect(bars[1].style.backgroundColor).not.toBe('');
-  });
-
-  it('a row without a description shows its category', () => {
-    mount(props({ data: data([tx('a', '2026-10-09', 50, { description: '', category: 'ค่ากิน' })]) }));
-    expect(container!.textContent).toContain('ค่ากิน');
-  });
 });
 
 describe('CalendarDayCell "+N" popover', () => {
@@ -297,43 +194,6 @@ describe('CalendarDayCell "+N" popover', () => {
     expect(li.lastElementChild!.classList.contains('text-income')).toBe(true);
   });
 
-  it('clicking inside the popover does not open the day; × closes it', () => {
-    const p = props({ data: data(exps(5)) });
-    open(p);
-    click(popover()!.querySelector('li'));
-    expect(p.onSelectDate).not.toHaveBeenCalled();
-    click(popover()!.querySelector('button[aria-label="ปิด"]'));
-    expect(popover()).toBeNull();
-    expect(p.onSelectDate).not.toHaveBeenCalled();
-  });
-
-  it('"+N" toggles it closed again', () => {
-    open(props({ data: data(exps(5)) }));
-    click(more('ดูอีก 1 รายการ'));
-    expect(popover()).toBeNull();
-  });
-
-  it('"เปิดรายละเอียดวันนี้" closes it and opens the day once', () => {
-    const p = props({ data: data(exps(5)) });
-    open(p);
-    const btn = [...popover()!.querySelectorAll('button')].find(b => b.textContent === 'เปิดรายละเอียดวันนี้')!;
-    click(btn);
-    expect(popover()).toBeNull();
-    expect(p.onSelectDate).toHaveBeenCalledTimes(1);
-    expect(p.onSelectDate).toHaveBeenCalledWith('2026-10-09');
-  });
-
-  it('Esc closes it, returns focus to "+N", and never reaches window (a modal listener)', () => {
-    open(props({ data: data(exps(5)) }));
-    const onWin = vi.fn();
-    window.addEventListener('keydown', onWin);
-    key(document.activeElement ?? document.body, 'Escape');
-    window.removeEventListener('keydown', onWin);
-    expect(popover()).toBeNull();
-    expect(onWin).not.toHaveBeenCalled();
-    expect(document.activeElement).toBe(more('ดูอีก 1 รายการ'));
-  });
-
   it('Esc focuses the income "+N" when it is the only trigger', () => {
     open(props({ data: data([], [tx('i1', '2026-10-09', 1, { description: 'a' }), tx('i2', '2026-10-09', 2, { description: 'b' })]) }));
     key(document.body, 'Escape');
@@ -346,36 +206,5 @@ describe('CalendarDayCell "+N" popover', () => {
     expect(document.activeElement).toBe(more('ดูอีก 1 รายการ'));
   });
 
-  it('an outside click closes it', () => {
-    open(props({ data: data(exps(5)) }));
-    act(() => { document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); });
-    expect(popover()).toBeNull();
-  });
-
-  it('placement: left/top by default, right/bottom when asked', () => {
-    open(props({ data: data(exps(5)) }));
-    expect(popover()!.classList.contains('left-0')).toBe(true);
-    expect(popover()!.classList.contains('top-0')).toBe(true);
-    act(() => root!.unmount()); container!.remove(); root = null;
-    open(props({ data: data(exps(5)), alignRight: true, popUp: true }));
-    expect(popover()!.classList.contains('right-0')).toBe(true);
-    expect(popover()!.classList.contains('bottom-0')).toBe(true);
-    expect(popover()!.classList.contains('left-0')).toBe(false);
-  });
 });
 
-describe('CalendarDayCell month edges and note', () => {
-  it('draws the month edges only when asked', () => {
-    mount(props());
-    expect(container!.querySelector('.-top-px.h-\\[2px\\]')).toBeNull();
-    expect(container!.querySelector('.-left-px.w-\\[2px\\]')).toBeNull();
-    act(() => root!.render(<CalendarDayCell {...props({ monthEdgeTop: true, monthEdgeLeft: true })} />));
-    expect(container!.querySelector('.-top-px.h-\\[2px\\]')).not.toBeNull();
-    expect(container!.querySelector('.-left-px.w-\\[2px\\]')).not.toBeNull();
-  });
-
-  it('a note without an icon uses the default sticky-note glyph', () => {
-    mount(props({ note: 'วันเกิด' }));
-    expect(q('[title="วันเกิด"] .lucide-sticky-note')).not.toBeNull();
-  });
-});

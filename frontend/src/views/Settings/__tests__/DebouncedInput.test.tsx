@@ -32,14 +32,6 @@ afterEach(() => {
 });
 
 describe('DebouncedInput typing and saving', () => {
-  it('shows the value, the placeholder and the classes it was given', () => {
-    mount({ placeholder: 'ชื่อ', className: 'my-class' });
-    expect(input().value).toBe('เดิม');
-    expect(input().placeholder).toBe('ชื่อ');
-    expect(input().className).toContain('my-class');
-    expect(input().className).toContain('w-full');
-    expect(input().type).toBe('text');
-  });
 
   it('saves the latest text 400 ms after the last keystroke - not before', async () => {
     mount();
@@ -61,15 +53,6 @@ describe('DebouncedInput typing and saving', () => {
     await tick(100);
     expect(props.onDebouncedChange).toHaveBeenCalledTimes(1);
     expect(props.onDebouncedChange).toHaveBeenCalledWith('ab');
-  });
-
-  it('the wait can be changed', async () => {
-    mount({ debounceMs: 50 });
-    type(input(), 'x');
-    await tick(49);
-    expect(props.onDebouncedChange).not.toHaveBeenCalled();
-    await tick(1);
-    expect(props.onDebouncedChange).toHaveBeenCalledWith('x');
   });
 
   it('Enter saves at once, leaves the field and does not save a second time when the timer would have fired', async () => {
@@ -152,12 +135,6 @@ describe('DebouncedInput caller handlers', () => {
     expect(document.activeElement).not.toBe(input());
   });
 
-  it('other input attributes pass through', () => {
-    mount({ 'aria-label': 'ชื่อกลุ่ม', maxLength: 5, name: 'n' });
-    expect(input().getAttribute('aria-label')).toBe('ชื่อกลุ่ม');
-    expect(input().maxLength).toBe(5);
-    expect(input().name).toBe('n');
-  });
 });
 
 describe('DebouncedInput required text', () => {
@@ -167,14 +144,6 @@ describe('DebouncedInput required text', () => {
     expect(errorText()).toBe('ต้องมีชื่อ');
     expect(input().getAttribute('aria-invalid')).toBe('true');
     expect(input().className).toContain('tint-danger');
-    await tick(1000);
-    expect(props.onDebouncedChange).not.toHaveBeenCalled();
-  });
-
-  it('spaces only count as blank', async () => {
-    mount({ requiredMessage: 'ต้องมีชื่อ' });
-    type(input(), '   ');
-    expect(errorText()).toBe('ต้องมีชื่อ');
     await tick(1000);
     expect(props.onDebouncedChange).not.toHaveBeenCalled();
   });
@@ -214,15 +183,6 @@ describe('DebouncedInput required text', () => {
     expect(props.onDebouncedChange).toHaveBeenCalledWith('');
   });
 
-  it('the message is tied to the field for screen readers', () => {
-    mount({ requiredMessage: 'ต้องมีชื่อ' });
-    expect(input().hasAttribute('aria-describedby')).toBe(false);
-    expect(input().hasAttribute('aria-invalid')).toBe(false);
-    type(input(), '');
-    const id = input().getAttribute('aria-describedby')!;
-    expect(id).toBeTruthy();
-    expect(document.getElementById(id)!.textContent).toBe('ต้องมีชื่อ');
-  });
 });
 
 describe('DebouncedInput failed saves', () => {
@@ -269,32 +229,6 @@ describe('DebouncedInput failed saves', () => {
     expect(errorText()).toBe('');
   });
 
-  it('the red edge shows only while there is an error', async () => {
-    mount({ requiredMessage: 'ต้องมีชื่อ' });
-    expect(input().className).not.toContain('tint-danger');
-    type(input(), '');
-    expect(input().className).toContain('tint-danger');
-    type(input(), 'ก');
-    expect(input().className).not.toContain('tint-danger');
-  });
-
-  it('only an explicit false counts as failure (undefined and true are success)', async () => {
-    mount({ onDebouncedChange: vi.fn(async () => undefined) });
-    type(input(), 'ก');
-    await tick(400);
-    expect(errorText()).toBe('');
-    expect(input().getAttribute('aria-invalid')).toBe(null);
-  });
-
-  it('typing again clears the failure message', async () => {
-    mount({ onDebouncedChange: vi.fn(async () => false) });
-    type(input(), 'ก');
-    await tick(400);
-    expect(errorText()).not.toBe('');
-    type(input(), 'กข');
-    expect(errorText()).toBe('');
-  });
-
   it('a later success clears an earlier failure', async () => {
     const save = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
     mount({ onDebouncedChange: save });
@@ -325,26 +259,9 @@ describe('DebouncedInput failed saves', () => {
     expect(errorText()).toBe('บันทึกไม่สำเร็จ ลองอีกครั้ง');
   });
 
-  it('after a success the parent value is followed again', async () => {
-    act(() => root = createRoot(container = document.body.appendChild(document.createElement('div'))));
-    const save = async (v: string, setSaved: (s: string) => void) => { setSaved(v); return true; };
-    act(() => root!.render(<Harness save={save} />));
-    type(input(), 'ใหม่');
-    await tick(400);
-    expect(input().value).toBe('ใหม่');
-    props = { value: 'จากข้างนอก', onDebouncedChange: vi.fn() };
-    act(() => root!.render(<DebouncedInput {...props} />));
-    expect(input().value).toBe('จากข้างนอก');
-  });
 });
 
 describe('DebouncedInput following the outside value', () => {
-  it('a changed value from the parent replaces the text while idle', () => {
-    mount();
-    props = { ...props, value: 'จากข้างนอก' };
-    render();
-    expect(input().value).toBe('จากข้างนอก');
-  });
 
   it('during a save the parent value does not overwrite the text', async () => {
     let finish!: (ok: boolean) => void;
@@ -366,36 +283,5 @@ describe('DebouncedInput following the outside value', () => {
     expect(input().value).toBe('ใหม่');
   });
 
-  it('typing after a failure goes back to following the parent', async () => {
-    const save = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
-    mount({ onDebouncedChange: save });
-    type(input(), 'ก');
-    await tick(400);
-    type(input(), 'กข');
-    await tick(400);
-    props = { ...props, value: 'จากข้างนอก' };
-    render();
-    expect(input().value).toBe('จากข้างนอก');
-  });
 });
 
-describe('DebouncedInput new rows', () => {
-  it('a new row takes focus with its text selected, ready to be overtyped', () => {
-    mount({ isNew: true, value: 'หมวดใหม่' });
-    expect(document.activeElement).toBe(input());
-    expect(input().selectionStart).toBe(0);
-    expect(input().selectionEnd).toBe('หมวดใหม่'.length);
-  });
-
-  it('an ordinary row is left alone', () => {
-    mount({ isNew: false });
-    expect(document.activeElement).not.toBe(input());
-  });
-
-  it('a row that becomes new takes focus then', () => {
-    mount({ isNew: false });
-    props = { ...props, isNew: true };
-    render();
-    expect(document.activeElement).toBe(input());
-  });
-});

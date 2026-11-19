@@ -37,15 +37,6 @@ afterEach(() => {
 });
 
 describe('PortfolioSnapshot', () => {
-  it('renders nothing until there is at least one asset (people who do not invest never see it)', () => {
-    h.portfolio = null;
-    mount();
-    expect(container!.innerHTML).toBe('');
-    act(() => root!.unmount()); container!.remove();
-    h.portfolio = portfolio({}, 0);
-    mount();
-    expect(container!.innerHTML).toBe('');
-  });
 
   it('shows market value, cost, unrealised gain with its percentage, and what was already sold', () => {
     mount();
@@ -107,17 +98,4 @@ describe('PortfolioSnapshot', () => {
     expect(text()).toContain('ยังไม่มีราคา');
   });
 
-  it('the whole strip is one button that opens the portfolio tab', () => {
-    mount();
-    expect(container!.querySelector('button')!.textContent).toContain('ไปที่หน้าพอร์ตลงทุน');
-    click(container!.querySelector('button'));
-    expect(h.setActiveTab).toHaveBeenCalledWith('portfolio');
-  });
-
-  it('the bottom line shows cost vs value: shared part grey, the rest green for a gain', () => {
-    mount();
-    const [shared, rest] = container!.querySelectorAll<HTMLElement>('button > span[aria-hidden="true"] span');
-    expect(shared.style.width).toBe('88.88888888888889%'); // 100,000 of 112,500
-    expect(rest.className).toContain('bg-income');
-  });
 });

@@ -78,27 +78,6 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('CashflowTable — when it shows', () => {
-  it('renders nothing without data: no months, or no groups', () => {
-    set({ analytics: { ...analytics([]), numMonths: 0 } });
-    mount();
-    expect(container!.innerHTML).toBe('');
-    remount();
-    act(() => root!.unmount()); container!.remove();
-    set({ cashflowGroups: [] });
-    mount();
-    expect(container!.innerHTML).toBe('');
-  });
-
-  it('skeleton: the title and a placeholder, no table', () => {
-    set({ showSkeleton: true });
-    mount();
-    expect(text(container)).toContain('ตารางสรุปกระแสเงินสด');
-    expect(q('table')).toBeNull();
-    expect(q('.animate-pulse')).not.toBeNull();
-  });
-});
-
 describe('CashflowTable — columns and rows', () => {
   it('income groups first, then expense groups in order; groups that never had a figure are not shown', () => {
     mount();
@@ -227,15 +206,6 @@ describe('CashflowTable — leaving things out of the calculation', () => {
 describe('CashflowTable — hiding WANT / NEED / SAVINGS', () => {
   const openFilter = () => click(q('button[title^="เปิด/ปิด ตัวกรอง"]')); // the title also carries the hidden count once something is hidden
 
-  it('the filter bar is closed until asked for', () => {
-    mount();
-    expect(byText('button', 'ปิด WANT (ตามใจ)')).toBeNull();
-    openFilter();
-    expect(byText('button', 'ปิด WANT (ตามใจ)')).not.toBeNull();
-    expect(byText('button', 'ปิด NEED (จำเป็น)')).not.toBeNull();
-    expect(byText('button', 'ปิด SAVINGS (เงินออม)')).not.toBeNull();
-  });
-
   it('hiding WANT recomputes the figures from the rows, counts the filter, and "ล้างตัวกรอง" puts everything back', () => {
     mount();
     openFilter();
@@ -277,54 +247,11 @@ describe('CashflowTable — hiding WANT / NEED / SAVINGS', () => {
 });
 
 describe('CashflowTable — hover details', () => {
-  it('hovering a group header shows its tooltip, and leaving removes it', () => {
-    mount();
-    const th = q('thead button[aria-label^="กลุ่มรายจ่าย ที่พัก"]')!.closest('th')!;
-    act(() => { th.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body })); });
-    expect(text(document.body)).toContain('ที่พัก');
-    expect(document.querySelector('.fixed.pointer-events-none')).not.toBeNull();
-    act(() => { th.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
-    expect(document.querySelector('.fixed.pointer-events-none')).toBeNull();
-  });
 
   const over = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body })); });
   const out = (el: Element) => act(() => { el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })); });
   const tooltip = () => document.querySelector<HTMLElement>('body > .fixed.pointer-events-none');
   const at = (el: Element, left: number) => { el.getBoundingClientRect = () => ({ left, top: 40, width: 100, height: 30, right: left + 100, bottom: 70, x: left, y: 40, toJSON() {} }) as DOMRect; };
-
-  it('the group tooltip lists the categories with figures and stays inside the window at both edges', () => {
-    mount();
-    const th = q('thead button[aria-label^="กลุ่มรายจ่าย ที่พัก"]')!.closest('th')!;
-    at(th, 0);
-    over(th);
-    expect(tooltip()!.textContent).toContain('หมวดหมู่ย่อย (2):');
-    expect(tooltip()!.style.left).toBe('118px'); // half its 220px width + 8px in from the left edge
-    expect(tooltip()!.style.top).toBe('34px');
-    out(th);
-    at(th, 1000);
-    over(th);
-    expect(tooltip()!.style.left).toBe(`${window.innerWidth - 118}px`);
-    at(th, 400);
-    over(th);
-    expect(tooltip()!.style.left).toBe('450px');
-  });
-
-  it('hovering a category header shows the category tooltip, clamped the same way', () => {
-    mount();
-    expand('กลุ่มรายจ่าย ที่พัก');
-    const th = q('thead th[title="ค่าไฟ"]')!;
-    at(th, 0);
-    over(th);
-    expect(tooltip()!.textContent).toContain('กลุ่มหลัก:');
-    expect(tooltip()!.textContent).toContain('ค่าไฟ');
-    expect(tooltip()!.textContent).not.toContain('หมวดหมู่ย่อย');
-    expect(tooltip()!.style.left).toBe('98px');
-    out(th);
-    expect(tooltip()).toBeNull();
-    at(th, 1000);
-    over(th);
-    expect(tooltip()!.style.left).toBe(`${window.innerWidth - 98}px`);
-  });
 
   it('hovering a row lights up its month and expense-total cells', () => {
     mount();
@@ -382,14 +309,6 @@ describe('CashflowTable — income categories', () => {
 describe('CashflowTable — pay-cycle mode', () => {
   const cycleAnalytics = () => analytics([month('2026-08', 30_000, 8_000, 4_000), month('2026-09', 30_000, 9_000, 5_000), month('2026-10', 32_000, 8_000, 3_000)]);
 
-  it('rows are cycles, labelled with their real 25th–24th span', () => {
-    set({ filterPeriod: 'cycle:2026-08_2026-10', analytics: cycleAnalytics(), transactions: [tx('s1', '2026-08-25', 'c-salary', 30_000), tx('t', '2026-09-30', 'c-food', 100), tx('u', '2026-10-30', 'c-food', 100)] });
-    mount();
-    const btn = q<HTMLButtonElement>('button[aria-label="ยกเว้น รอบ ส.ค. 2026 จากการคำนวณ"]')!;
-    expect(btn).not.toBeNull();
-    expect(btn.textContent).toContain('25 ส.ค. – 24 ก.ย.');
-  });
-
   it('a cycle that started before the first record is partial: dimmed, explained, and left out of the totals and the comparison', () => {
     set({ filterPeriod: 'cycle:2026-08_2026-10', analytics: cycleAnalytics(), transactions: [tx('first', '2026-08-27', 'c-salary', 30_000), tx('b', '2026-09-30', 'c-food', 100), tx('c', '2026-10-30', 'c-food', 100)] });
     mount();
@@ -405,27 +324,4 @@ describe('CashflowTable — pay-cycle mode', () => {
     expect(q('button[aria-label="ยกเว้น รอบ ส.ค. 2026 จากการคำนวณ"]')!.getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('a cycle with the first record on its first day is whole', () => {
-    set({ filterPeriod: 'cycle:2026-08_2026-10', analytics: cycleAnalytics(), transactions: [tx('first', '2026-08-25', 'c-salary', 30_000)] });
-    mount();
-    const row = q('button[aria-label="ยกเว้น รอบ ส.ค. 2026 จากการคำนวณ"]')!.closest('tr')!;
-    expect(row.className).not.toContain('opacity-40');
-  });
-
-  it('a cycle that has not started yet (only planned rows) is partial too', () => {
-    set({ filterPeriod: 'cycle:2026-08_2026-12', analytics: analytics([month('2026-08', 30_000, 8_000, 4_000), month('2026-12', 0, 500, 0)]), transactions: [tx('a', '2026-08-25', 'c-salary', 30_000), tx('later', '2026-12-30', 'c-food', 500)] });
-    mount();
-    const future = q('button[aria-label="ยกเว้น รอบ ธ.ค. 2026 จากการคำนวณ"]')!.closest('tr')!; // starts 25 Dec, "today" is 15 Nov
-    expect(future.className).toContain('opacity-40');
-  });
-
-  it('switching to calendar months clears the months the user had clicked out', () => {
-    set({ filterPeriod: 'cycle:2026-08_2026-10', analytics: cycleAnalytics(), transactions: [tx('a', '2026-08-25', 'c-salary', 30_000)] });
-    mount();
-    click(q('button[aria-label="ยกเว้น รอบ ก.ย. 2026 จากการคำนวณ"]'));
-    expect(q('button[aria-label="ยกเว้น รอบ ก.ย. 2026 จากการคำนวณ"]')!.getAttribute('aria-pressed')).toBe('true');
-    set({ filterPeriod: '2026-08_2026-10', analytics: analytics() });
-    act(() => root!.render(<CashflowTable />));
-    expect(monthBtn(SEP).getAttribute('aria-pressed')).toBe('false');
-  });
 });

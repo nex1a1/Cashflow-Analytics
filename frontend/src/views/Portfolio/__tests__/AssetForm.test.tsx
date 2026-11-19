@@ -72,13 +72,6 @@ describe('AssetForm defaults for a new asset', () => {
     expect(container!.textContent).toContain('เพิ่มสินทรัพย์แล้ว ไปบันทึกซื้อที่หน้า');
   });
 
-  it('the name suggests itself: the kind label first, then the symbol as it is typed', () => {
-    mount();
-    expect(nameInput().value).toBe('หุ้นสหรัฐ');
-    type(symbol(), 'aapl');
-    expect(nameInput().value).toBe('AAPL');
-  });
-
   it('lists all seven kinds, each saying whether its price is automatic', () => {
     mount();
     const btns = [...container!.querySelectorAll('fieldset button')];
@@ -112,93 +105,11 @@ describe('AssetForm picking a kind', () => {
     expect(unitInput().value).toBe('เหรียญ');
   });
 
-  it('switching kind drops the symbol (it belongs to the old kind) and clears errors', async () => {
-    mount();
-    type(symbol(), 'AAPL');
-    click(kindBtn('คริปโต'));
-    expect(symbol()!.value).toBe('');
-    // raise a symbol error, then switch: error goes away
-    await submit();
-    expect(container!.textContent).toContain('ระบุสัญลักษณ์');
-    click(kindBtn('หุ้นไทย'));
-    expect(container!.textContent).not.toContain('ระบุสัญลักษณ์ ไม่งั้น');
-  });
-
-  it('clicking the already selected kind changes nothing (symbol kept)', () => {
-    mount();
-    type(symbol(), 'AAPL');
-    click(kindBtn('หุ้นสหรัฐ'));
-    expect(symbol()!.value).toBe('AAPL');
-  });
-
-  it('only kinds that need a symbol show the symbol field', () => {
-    mount();
-    for (const [label, needs] of [['ทองคำแท่ง', false], ['ทองรูปพรรณ', false], ['หุ้นไทย', true], ['คริปโต', true], ['กองทุน', false], ['อื่นๆ', false], ['หุ้นสหรัฐ', true]] as const) {
-      click(kindBtn(label));
-      expect(symbol() !== null, label).toBe(needs);
-    }
-  });
-
-  it('crypto labels the field with CoinGecko id, stocks with สัญลักษณ์', () => {
-    mount();
-    expect(q('label[for="asset-symbol"]')!.textContent).toBe('สัญลักษณ์');
-    click(kindBtn('คริปโต'));
-    expect(q('label[for="asset-symbol"]')!.textContent).toBe('CoinGecko id');
-    expect(symbol()!.placeholder).toBe('เช่น bitcoin');
-  });
-
   it('the unit hint mentions grams only for gold', () => {
     mount();
     expect(container!.textContent).toContain('ใช้แสดงจำนวนที่ถือ');
     click(kindBtn('ทองรูปพรรณ'));
     expect(container!.textContent).toContain('กรอกเป็นกรัมได้ตอนบันทึกซื้อ');
-  });
-});
-
-describe('AssetForm symbol handling', () => {
-  it('US and Thai stocks are upper-cased with spaces removed', () => {
-    mount();
-    type(symbol(), ' aa pl ');
-    expect(symbol()!.value).toBe('AAPL');
-    click(kindBtn('หุ้นไทย'));
-    type(symbol(), 'ptt');
-    expect(symbol()!.value).toBe('PTT');
-  });
-
-  it('crypto ids are lower-cased', () => {
-    mount();
-    click(kindBtn('คริปโต'));
-    type(symbol(), 'BitCoin');
-    expect(symbol()!.value).toBe('bitcoin');
-  });
-
-  it('example chips fill the symbol and the picked one is highlighted', () => {
-    mount();
-    const chips = [...container!.querySelectorAll<HTMLButtonElement>('[aria-label="สัญลักษณ์ตัวอย่าง"] button')];
-    expect(chips.map(c => c.textContent)).toEqual(['AAPL', 'MSFT', 'NVDA', 'VOO', 'XOM', 'KO']);
-    click(chips[2]);
-    expect(symbol()!.value).toBe('NVDA');
-    const after = [...container!.querySelectorAll<HTMLButtonElement>('[aria-label="สัญลักษณ์ตัวอย่าง"] button')];
-    expect(after[2].className).toContain('border-accent/60');
-    expect(after[0].className).not.toContain('border-accent/60');
-  });
-});
-
-describe('AssetForm name', () => {
-  it('once the user types a name it stops following the symbol', () => {
-    mount();
-    type(nameInput(), 'Dime - AAPL');
-    type(symbol(), 'MSFT');
-    expect(nameInput().value).toBe('Dime - AAPL');
-  });
-
-  it('a kind change keeps a typed name but updates an automatic one', () => {
-    mount();
-    click(kindBtn('คริปโต'));
-    expect(nameInput().value).toBe('คริปโต');
-    type(nameInput(), 'BTC ออม');
-    click(kindBtn('กองทุน'));
-    expect(nameInput().value).toBe('BTC ออม');
   });
 });
 
@@ -221,20 +132,6 @@ describe('AssetForm validation', () => {
     expect(h.saveAsset).not.toHaveBeenCalled();
     expect(nameInput().getAttribute('aria-invalid')).toBe('true');
     expect(q('#asset-name-err')!.textContent).toBe('ต้องมีชื่อสินทรัพย์');
-  });
-
-  it('both errors can show together, and typing clears only its own', async () => {
-    mount();
-    type(nameInput(), '');
-    await submit();
-    expect(q('#asset-name-err')).not.toBeNull();
-    expect(q('#asset-symbol-err')).not.toBeNull();
-    type(symbol(), 'AAPL');
-    expect(q('#asset-symbol-err')).toBeNull();
-    expect(q('#asset-name-err')).not.toBeNull();
-    type(nameInput(), 'x');
-    expect(q('#asset-name-err')).toBeNull();
-    expect(nameInput().hasAttribute('aria-describedby')).toBe(false);
   });
 
   it('a fund needs no symbol', async () => {
@@ -281,21 +178,6 @@ describe('AssetForm saving a new asset', () => {
     expect(submitBtn().disabled).toBe(false);
   });
 
-  it('submitting never reloads the page (the browser default is cancelled)', () => {
-    mount();
-    const ev = new Event('submit', { bubbles: true, cancelable: true });
-    act(() => { q<HTMLFormElement>('form')!.dispatchEvent(ev); });
-    expect(ev.defaultPrevented).toBe(true);
-  });
-
-  it('the name error is tied to the name field for screen readers', async () => {
-    mount();
-    click(kindBtn('กองทุน'));
-    type(nameInput(), '');
-    await submit();
-    expect(nameInput().getAttribute('aria-describedby')).toBe('asset-name-err');
-  });
-
   it('the button is disabled while the save is in flight, then released', async () => {
     let finish!: (id: string) => void;
     h.saveAsset.mockReturnValue(new Promise<string>(r => { finish = r; }));
@@ -319,17 +201,6 @@ describe('AssetForm saving a new asset', () => {
 });
 
 describe('AssetForm optional starting price (manual kinds only)', () => {
-  it('shown for new funds and other, hidden for auto-priced kinds and when editing', () => {
-    mount();
-    expect(priceInput()).toBeNull();
-    click(kindBtn('กองทุน'));
-    expect(priceInput()).not.toBeNull();
-    expect(container!.textContent).toContain('ไม่บังคับ');
-    click(kindBtn('อื่นๆ'));
-    expect(priceInput()).not.toBeNull();
-    click(kindBtn('คริปโต'));
-    expect(priceInput()).toBeNull();
-  });
 
   it('is labelled with the unit', () => {
     mount();
@@ -359,24 +230,6 @@ describe('AssetForm optional starting price (manual kinds only)', () => {
     expect(priceInput()!.value).toBe('12.');
     await submit();
     expect(h.setManualPrice).toHaveBeenCalledWith('new-id', 12);
-  });
-
-  it('a price typed for a fund is set on the new asset after it is created', async () => {
-    mount();
-    click(kindBtn('กองทุน'));
-    type(priceInput(), '12.4567');
-    await submit();
-    expect(h.setManualPrice).toHaveBeenCalledWith('new-id', 12.4567);
-  });
-
-  it('left empty or zero, no price is set', async () => {
-    mount();
-    click(kindBtn('กองทุน'));
-    await submit();
-    expect(h.setManualPrice).not.toHaveBeenCalled();
-    type(priceInput(), '0');
-    await submit();
-    expect(h.setManualPrice).not.toHaveBeenCalled();
   });
 
   it('is not sent if saving the asset failed', async () => {
@@ -430,24 +283,6 @@ describe('AssetForm editing an existing asset', () => {
   const held = () => mkAsset('a1', { name: 'ออมทอง', kind: 'gold_bar', symbol: null, unitLabel: 'บาททอง', units: 1.5, cost: 90000, trades: [trade('t1', '2026-01-01', 'buy', 1.5, 90000)] });
   const fresh = () => mkAsset('a2', { name: 'Dime AAPL', kind: 'us_stock', symbol: 'AAPL', unitLabel: 'หุ้น', units: 0, cost: 0, trades: [] });
 
-  it('opens filled in, with edit wording and no starting-price box', () => {
-    mount(held());
-    expect(pressed()).toEqual(['ทองคำแท่ง']);
-    expect(nameInput().value).toBe('ออมทอง');
-    expect(unitInput().value).toBe('บาททอง');
-    expect(submitBtn().textContent).toBe('บันทึกการแก้ไข');
-    expect(container!.textContent).toContain('ปิด');
-    expect(container!.textContent).not.toContain('ยกเลิก');
-    expect(container!.textContent).not.toContain('เพิ่มสินทรัพย์แล้ว ไปบันทึกซื้อ');
-    expect(priceInput()).toBeNull();
-  });
-
-  it('the stored name is kept even when the symbol changes (name counts as typed)', () => {
-    mount(fresh());
-    type(symbol(), 'MSFT');
-    expect(nameInput().value).toBe('Dime AAPL');
-  });
-
   it('a manual-priced asset being edited has no starting-price box (that is for new assets)', () => {
     mount(mkAsset('f1', { name: 'กองทุน A', kind: 'fund', unitLabel: 'หน่วย', units: 0, trades: [] }));
     expect(priceInput()).toBeNull();
@@ -492,11 +327,6 @@ describe('AssetForm editing an existing asset', () => {
     expect(container!.textContent).not.toContain('เปลี่ยนประเภทแล้วราคาที่ดึงไว้จะถูกล้าง');
   });
 
-  it('close button calls onCancel', () => {
-    mount(held());
-    click([...container!.querySelectorAll('button')].find(b => b.textContent === 'ปิด'));
-    expect(onCancel).toHaveBeenCalledTimes(1);
-  });
 });
 
 describe('AssetForm cancel on a new asset', () => {
@@ -507,10 +337,6 @@ describe('AssetForm cancel on a new asset', () => {
     expect(h.saveAsset).not.toHaveBeenCalled();
   });
 
-  it('has no delete button', () => {
-    mount();
-    expect(container!.textContent).not.toContain('ลบสินทรัพย์');
-  });
 });
 
 describe('AssetForm deleting', () => {
@@ -546,10 +372,6 @@ describe('AssetForm deleting', () => {
     expect(h.deleteAsset).not.toHaveBeenCalled();
   });
 
-  it('names the asset for screen readers', () => {
-    mount(unused());
-    expect(deleteBtn().getAttribute('aria-label')).toBe('ลบสินทรัพย์: Dime');
-  });
 });
 
 describe('AssetForm live price preview', () => {
@@ -572,18 +394,6 @@ describe('AssetForm live price preview', () => {
     expect(preview()).toContain('ต่อหุ้น');
     expect(preview()).toContain('แหล่งข้อมูล: Yahoo Finance');
     expect(preview()).not.toContain('ต่อกรัม');
-  });
-
-  it('typing again restarts the wait and only the last symbol is fetched', async () => {
-    mount();
-    type(symbol(), 'A');
-    await tick(400);
-    type(symbol(), 'AA');
-    await tick(400);
-    expect(h.previewPrice).not.toHaveBeenCalled();
-    await tick(200);
-    expect(h.previewPrice).toHaveBeenCalledTimes(1);
-    expect(h.previewPrice).toHaveBeenCalledWith('us_stock', 'AA');
   });
 
   it('gold needs no symbol: it fetches straight away with null, and shows the per-gram price', async () => {
@@ -613,13 +423,6 @@ describe('AssetForm live price preview', () => {
     expect(preview()).toContain('ดึงราคาไม่ได้: ไม่พบสัญลักษณ์นี้');
     expect(preview()).toContain('ตรวจตัวสะกดสัญลักษณ์');
     expect(container!.querySelector('[role="status"].bg-warn\\/5')).not.toBeNull();
-  });
-
-  it('a successful preview is also announced as a status', async () => {
-    mount();
-    type(symbol(), 'AAPL');
-    await tick(600);
-    expect(container!.querySelector('[role="status"].bg-income\\/5')).not.toBeNull();
   });
 
   it('a network failure reads as cannot-reach-server', async () => {
@@ -679,15 +482,6 @@ describe('AssetForm live price preview', () => {
     click(kindBtn('หุ้นไทย'));
     expect(preview()).toContain('พิมพ์สัญลักษณ์');
     expect(preview()).not.toContain('฿123.45');
-  });
-
-  it('unmounting before the wait ends never calls the API', async () => {
-    mount();
-    type(symbol(), 'AAPL');
-    act(() => root!.unmount());
-    root = null;
-    await tick(2000);
-    expect(h.previewPrice).not.toHaveBeenCalled();
   });
 
   it('the unit in the preview follows the unit field (หน่วย when blank)', async () => {

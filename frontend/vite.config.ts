@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
@@ -26,5 +27,10 @@ export default defineConfig({
     // หน้าเว็บเรียก /api แบบ relative: dev ส่งต่อไป backend (prod ให้ Express เสิร์ฟทั้งคู่ใน origin เดียว)
     // keepAlive: ใช้ connection เดิม ไม่ต้อง dns.lookup ทุก request (ใน Docker คิวรอหลัง stat ของ polling ~100ms ต่อ request)
     proxy: { '/api': { target: process.env.VITE_BACKEND_TARGET || 'http://localhost:3000', agent: new http.Agent({ keepAlive: true }) } },
-  }
+  },
+  test: {
+    // vmThreads ใช้ worker เดิมซ้ำ แต่ละไฟล์ยังได้ global ของตัวเอง (ต่างจาก isolate: false ที่ทำให้ state รั่วข้ามไฟล์)
+    // ตัดเวลาเตรียม jsdom ต่อไฟล์ลงมาก: ชุดเต็มจาก ~17.5s เหลือราว 7s
+    pool: 'vmThreads',
+  },
 });

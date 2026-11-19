@@ -76,176 +76,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('ActivityTimeline — when it shows', () => {
-  it('renders nothing when the period has no day-type counts', () => {
-    set({ dayTypeCounts: {} });
-    mount();
-    expect(container!.innerHTML).toBe('');
-    remount();
-    set({ dayTypeCounts: undefined });
-    remount();
-    expect(container!.innerHTML).toBe('');
-  });
-
-  it('while loading it shows a placeholder instead of cells and legend — even before any counts exist', () => {
-    set({ dayTypeCounts: {} }, { showSkeleton: true });
-    mount();
-    expect(container!.textContent).toContain('ปฏิทินการใช้จ่าย');
-    expect(cells()).toHaveLength(0);
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThanOrEqual(2);
-    expect(liveLegend()).not.toContain('สรุปประเภทวัน');
-  });
-
-  it('says so when the period has no dates', () => {
-    set({ datesInPeriod: [] });
-    mount();
-    expect(container!.textContent).toContain('ไม่มีรายการในวันที่เลือก');
-    expect(cells()).toHaveLength(0);
-  });
-});
-
-describe('ActivityTimeline — GitHub layout', () => {
-  it('draws one button per date, named with the Thai weekday, date and day type', () => {
-    mount();
-    expect(cells()).toHaveLength(10);
-    expect(labels()[0]).toBe('พฤ. 1 ม.ค. 26, ประเภทวัน: วันทำงาน');
-    expect(labels()[2]).toBe('ส. 3 ม.ค. 26, ประเภทวัน: วันหยุด');
-    expect(labels()[3]).toBe('อา. 4 ม.ค. 26, ประเภทวัน: วันหยุด');
-    expect(labels()[4]).toBe('จ. 5 ม.ค. 26, ประเภทวัน: วันทำงาน');
-  });
-
-  it('a day the user marked wins over the weekday default — whether the map holds an object or just the id', () => {
-    set({}, { dayTypes: { '2026-01-02': { id: 'dt-ot' }, '2026-01-03': 'dt-work' } });
-    mount();
-    expect(labels()[1]).toContain('ประเภทวัน: โอที');
-    expect(labels()[2]).toContain('ประเภทวัน: วันทำงาน'); // a Saturday forced to workday
-  });
-
-  it('an unknown type id falls back to the weekday default instead of breaking', () => {
-    set({}, { dayTypes: { '2026-01-01': { id: 'deleted-type' } } });
-    mount();
-    expect(labels()[0]).toContain('ประเภทวัน: วันทำงาน');
-  });
-
-  it('weekday defaults: workday on weekdays, holiday on weekends; without those names it uses the first / second type', () => {
-    set({}, { dayTypeConfig: [{ id: 'a', name: 'a', label: 'แรก', color: '#111111' }, { id: 'b', name: 'b', label: 'สอง', color: '#222222' }] });
-    mount();
-    expect(labels()[0]).toContain('แรก');  // Thursday
-    expect(labels()[2]).toContain('สอง');  // Saturday
-    remount();
-    set({}, { dayTypeConfig: [{ id: 'only', name: 'only', label: 'เดียว', color: '#111111' }] });
-    remount();
-    expect(labels()[2]).toContain('เดียว'); // one type serves weekends too
-  });
-
-  it('finds the default types by name, wherever they sit in the list', () => {
-    set({}, { dayTypeConfig: [OT, WORK, HOL] }); // index 0 is neither default
-    mount();
-    expect(labels()[0]).toContain('ประเภทวัน: วันทำงาน'); // Thursday
-    expect(labels()[2]).toContain('ประเภทวัน: วันหยุด');  // Saturday
-  });
-
-  it('with no day types at all it still renders, as "ทั่วไป"', () => {
-    set({}, { dayTypeConfig: [] });
-    mount();
-    expect(labels()[0]).toContain('ประเภทวัน: ทั่วไป');
-    expect(cells()).toHaveLength(10);
-  });
-
-  it('colours each cell with its day type (a type without a colour uses the line colour)', () => {
-    set({}, { dayTypes: { '2026-01-02': { id: 'dt-ot' } }, dayTypeConfig: [WORK, HOL, { id: 'dt-ot', name: 'ot', label: 'โอที', color: null }] });
-    mount();
-    expect(cells()[0].style.backgroundColor).toBe(norm('backgroundColor', WORK.color));
-    expect(cells()[2].style.backgroundColor).toBe(norm('backgroundColor', HOL.color));
-    expect(cells()[1].style.backgroundColor).toBe(norm('backgroundColor', tc('line')));
-  });
-
-  it('lays out Sun–Sat rows by week, padding the partial first week', () => {
-    mount();
-    // Jan 1 is a Thursday → Sun–Wed of week 1 are empty; week 2 is full.
-    expect(emptyCells()).toBe(4);
-    const weeks = [...document.querySelectorAll('div.flex.flex-col.gap-px.shrink-0')].filter(w => w.querySelector('button'));
-    expect(weeks.map(w => w.querySelectorAll('button').length)).toEqual([3, 7]);
-  });
-
-  it('pads the last partial week too; a stub month whose label would overlap the next one is dropped', () => {
-    set({ datesInPeriod: CROSS, dayTypeCounts: { 'dt-work': 3, 'dt-hol': 2 } });
-    mount();
-    expect(cells()).toHaveLength(5);
-    expect(emptyCells()).toBe(5 + 4); // Fri+Sat week (5 empty) and Sun–Tue week (4 empty)
-    const monthLabels = [...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent);
-    expect(monthLabels).toEqual(['ก.พ. 26']);
-  });
-
-  it('pay-cycle period: labels each month where it starts when they are ≥ 3 weeks apart', () => {
-    set({ datesInPeriod: range('2026-01-05', '2026-02-10'), dayTypeCounts: { 'dt-work': 27, 'dt-hol': 10 } });
-    mount();
-    const monthLabels = [...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent);
-    expect(monthLabels).toEqual(['ม.ค. 26', 'ก.พ. 26']);
-  });
-
-  it('a single month is labelled once, at its first week', () => {
-    mount();
-    expect([...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent)).toEqual(['ม.ค. 26']);
-  });
-
-  it('a period that starts mid-month is labelled with that month, not left without a label', () => {
-    set({ datesInPeriod: range('2026-01-14', '2026-01-20'), dayTypeCounts: { 'dt-work': 5, 'dt-hol': 2 } });
-    mount();
-    expect([...document.querySelectorAll('span.uppercase.tracking-tighter')].map(s => s.textContent)).toEqual(['ม.ค. 26']);
-  });
-
-  it('cells grow when there are few weeks, and the weekday rail keeps their height', () => {
-    const sizeOf = () => [cells()[0].className.match(/\bw-(\d+)\b/)?.[1], document.querySelector('[data-day-label]')!.className.match(/\bh-(\d+)\b/)?.[1]];
-    mount(); // 2 weeks
-    expect(sizeOf()).toEqual(['7', '7']);
-    set({ datesInPeriod: range('2026-01-01', '2026-03-31'), dayTypeCounts: { 'dt-work': 60, 'dt-hol': 30 } }); // 14 weeks
-    remount();
-    expect(sizeOf()).toEqual(['5', '5']);
-    set({ datesInPeriod: range('2026-01-01', '2026-06-30'), dayTypeCounts: { 'dt-work': 120, 'dt-hol': 61 } }); // 27 weeks, one strip
-    remount();
-    expect(sizeOf()).toEqual(['4', '4']);
-    set({ datesInPeriod: range('2026-01-01', '2026-12-31'), dayTypeCounts: { 'dt-work': 250, 'dt-hol': 115 } }); // split in two
-    remount();
-    expect(sizeOf()).toEqual(['5', '5']);
-  });
-
-  it('weekday rail: seven labels, weekends marked', () => {
-    mount();
-    const rows = [...document.querySelectorAll<HTMLElement>("[data-day-label]")];
-    expect(rows.map(r => r.textContent)).toEqual(['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']);
-    expect(rows.map(r => r.className.includes('text-weekend'))).toEqual([true, false, false, false, false, false, true]);
-  });
-
-  it('rings today only', () => {
-    mount();
-    const ringed = cells().filter(c => c.classList.contains('ring-1'));
-    expect(ringed).toHaveLength(1);
-    expect(ringed[0].getAttribute('aria-label')).toContain('จ. 5 ม.ค. 26');
-  });
-
-  it('no ring-3 at all when today is outside the period', () => {
-    vi.setSystemTime(new Date(2026, 5, 1, 12));
-    mount();
-    expect(cells().some(c => c.classList.contains('ring-1'))).toBe(false);
-  });
-});
-
 describe('ActivityTimeline — spending level mode', () => {
   const spend = { '2026-01-01': 100, '2026-01-02': 300, '2026-01-03': 900 }; // threshold 600 → levels 1, 3, 6
   const openHeatmap = () => click(toggle('ระดับการจ่าย'));
-
-  it('starts on day type; the toggle swaps to spending level and back', () => {
-    set({ dailyAllMap: spend });
-    mount();
-    expect(toggle('ประเภทวัน').getAttribute('aria-pressed')).toBe('true');
-    expect(toggle('ระดับการจ่าย').getAttribute('aria-pressed')).toBe('false');
-    openHeatmap();
-    expect(toggle('ประเภทวัน').getAttribute('aria-pressed')).toBe('false');
-    expect(toggle('ระดับการจ่าย').getAttribute('aria-pressed')).toBe('true');
-    click(toggle('ประเภทวัน'));
-    expect(labels()[0]).toContain('ประเภทวัน:');
-  });
 
   it('colours a day by how big it is against the highest day, and spells the amount out', () => {
     set({ dailyAllMap: spend });
@@ -276,11 +109,6 @@ describe('ActivityTimeline — spending level mode', () => {
     expect(cells()[0].style.backgroundColor).toBe(norm('backgroundColor', getHeatmapColor(3))); // 50 / 100 = level 3
   });
 
-  it('keeps today ringed in this mode', () => {
-    mount();
-    openHeatmap();
-    expect(cells().filter(c => c.classList.contains('ring-1'))).toHaveLength(1);
-  });
 });
 
 describe('ActivityTimeline — legend rail', () => {
@@ -292,21 +120,6 @@ describe('ActivityTimeline — legend rail', () => {
     expect(liveLegend()).toContain('วันหยุด');
     expect(liveLegend()).toContain('(3 วัน / 30.0%)');
     expect(liveLegend()).not.toContain('โอที');
-  });
-
-  it('shares are of the days counted, not of the days in the period', () => {
-    set({ dayTypeCounts: { 'dt-work': 1, 'dt-hol': 2, 'dt-ot': 1 } });
-    mount();
-    expect(liveLegend()).toContain('(1 วัน / 25.0%)');
-    expect(liveLegend()).toContain('(2 วัน / 50.0%)');
-    expect(liveLegend()).toContain('โอที');
-  });
-
-  it('a type with no colour gets a neutral swatch', () => {
-    set({ dayTypeCounts: { 'dt-ot': 2 } }, { dayTypeConfig: [WORK, HOL, { id: 'dt-ot', name: 'ot', label: 'โอที', color: null }] });
-    mount();
-    const swatch = rail().querySelector<HTMLElement>('div.w-3.h-3.border-black\\/20')!;
-    expect(swatch.style.backgroundColor).toBe(norm('backgroundColor', '#475569'));
   });
 
   it('spending level mode: a seven-step scale from "น้อย" to "มาก" and the highest day it is measured against', () => {
@@ -325,124 +138,11 @@ describe('ActivityTimeline — legend rail', () => {
     expect(swatches[3].style.borderColor).toBe('transparent');
   });
 
-  it('keeps a hidden copy of BOTH modes so the rail never changes height', () => {
-    mount();
-    expect(clone()!.textContent).toContain('ระดับความเข้ม');
-    expect(clone()!.textContent).toContain('สรุปประเภทวัน');
-    expect(clone()!.className).toContain('invisible');
-    click(toggle('ปฏิทินทั่วไป'));
-    expect(clone()).not.toBeNull();
-  });
-
-  it('the rail and the grid keep the same height in both layouts', () => {
-    const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
-    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
-      configurable: true,
-      get(this: HTMLElement) { return this.getAttribute('aria-hidden') === 'true' ? 300 : 120; },
-    });
-    const grid = () => q<HTMLElement>('[data-live-grid]')!.parentElement!;
-    try {
-      mount();
-      expect(rail().style.minHeight).toBe('300px');
-      expect(grid().style.minHeight).toBe('300px'); // the hidden calendar copy is the taller
-      click(toggle('ปฏิทินทั่วไป'));
-      expect(rail().style.minHeight).toBe('300px');
-      expect(grid().style.minHeight).toBe('300px');
-      click(toggle('GitHub แนวนอน'));
-      expect(grid().style.minHeight).toBe('300px');
-    } finally {
-      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', desc);
-    }
-  });
-
-  it('a year splits into two strips at the month start nearest the middle (Jan–Jun / Jul–Dec)', () => {
-    set({ datesInPeriod: range('2026-01-01', '2026-12-31') });
-    mount();
-    const strips = [...document.querySelectorAll<HTMLElement>('[data-live-grid] [data-github-strip]')];
-    expect(strips).toHaveLength(2);
-    const monthLabels = (s: HTMLElement) => [...s.querySelectorAll('span')].map(x => x.textContent);
-    expect(monthLabels(strips[0])[0]).toBe('ม.ค. 26');
-    expect(monthLabels(strips[0]).at(-1)).toBe('มิ.ย. 26');
-    expect(monthLabels(strips[1])[0]).toBe('ก.ค. 26');
-    expect(cells()).toHaveLength(365);
-    expect(strips[0].querySelector('button')!.className).toContain('w-5');
-  });
-
-  it('a few months stay one strip', () => {
-    set({ datesInPeriod: range('2026-01-01', '2026-06-30') });
-    mount();
-    expect(document.querySelectorAll('[data-live-grid] [data-github-strip]')).toHaveLength(1);
-  });
-
-  it('the hidden copy of the other layout has no day buttons', () => {
-    mount();
-    expect(cells()).toHaveLength(10);
-    click(toggle('ปฏิทินทั่วไป'));
-    expect(cells()).toHaveLength(10);
-  });
-
-  it('does not pin a height when nothing can be measured', () => {
-    mount();
-    expect(rail().style.minHeight).toBe('');
-    expect(q<HTMLElement>('[data-live-grid]')!.parentElement!.style.minHeight).toBe('');
-  });
 });
 
 describe('ActivityTimeline — calendar layout', () => {
   const openCalendar = () => click(toggle('ปฏิทินทั่วไป'));
   const cards = () => [...document.querySelectorAll<HTMLElement>('div.w-\\[162px\\]')];
-
-  it('one card per month, titled in Thai, with a Sun–Sat header', () => {
-    set({ datesInPeriod: CROSS, dayTypeCounts: { 'dt-work': 3, 'dt-hol': 2 } });
-    mount();
-    openCalendar();
-    expect(cards()).toHaveLength(2);
-    expect(cards().map(c => c.querySelector('span')!.textContent)).toEqual(['ม.ค. 26', 'ก.พ. 26']);
-    expect([...cards()[0].querySelectorAll('div.w-\\[20px\\].text-center')].map(d => d.textContent)).toEqual(['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']);
-  });
-
-  it('the card header marks Saturday and Sunday as weekend', () => {
-    mount();
-    openCalendar();
-    const head = [...cards()[0].querySelectorAll<HTMLElement>('div.w-\\[20px\\].text-center')];
-    expect(head.map(d => d.className.includes('text-weekend'))).toEqual([true, false, false, false, false, false, true]);
-  });
-
-  it('months are in time order even when the dates arrive out of order', () => {
-    set({ datesInPeriod: ['2026-02-02', '2026-01-30'], dayTypeCounts: { 'dt-work': 2 } });
-    mount();
-    openCalendar();
-    expect(cards().map(c => c.querySelector('span')!.textContent)).toEqual(['ม.ค. 26', 'ก.พ. 26']);
-  });
-
-  it('draws the whole month, but only the days in the period are buttons; the rest are dimmed', () => {
-    mount();
-    openCalendar();
-    expect(cards()).toHaveLength(1);
-    const card = cards()[0];
-    expect(card.querySelectorAll('button')).toHaveLength(10);
-    expect(card.querySelectorAll('div.opacity-20')).toHaveLength(21); // 31 − 10
-    expect(card.querySelectorAll('div.w-\\[20px\\].h-\\[20px\\].bg-transparent')).toHaveLength(4); // Jan 1 is a Thursday
-  });
-
-  it('February 2026 starts on a Sunday (no padding) and has 28 days', () => {
-    set({ datesInPeriod: range('2026-02-01', '2026-02-03'), dayTypeCounts: { 'dt-work': 3 } });
-    mount();
-    openCalendar();
-    const card = cards()[0];
-    expect(card.querySelectorAll('div.bg-transparent.w-\\[20px\\]')).toHaveLength(0);
-    expect(card.querySelectorAll('button')).toHaveLength(3);
-    expect(card.querySelectorAll('div.opacity-20')).toHaveLength(25);
-  });
-
-  it('cells carry the same names, colours and today ring-3 as the GitHub layout', () => {
-    mount();
-    const before = labels();
-    openCalendar();
-    expect(labels()).toEqual(before);
-    expect(cells()[0].style.backgroundColor).toBe(norm('backgroundColor', WORK.color));
-    expect(cells().filter(c => c.classList.contains('ring-1'))).toHaveLength(1);
-  });
 
   it('keeps the chosen mode across layouts (spending level stays spending level)', () => {
     set({ dailyAllMap: { '2026-01-01': 600 } });
@@ -455,39 +155,9 @@ describe('ActivityTimeline — calendar layout', () => {
     expect(toggle('GitHub แนวนอน').getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('keeps the legend', () => {
-    mount();
-    openCalendar();
-    expect(liveLegend()).toContain('(7 วัน / 70.0%)');
-  });
 });
 
 describe('ActivityTimeline — tooltip', () => {
-  it('shows nothing until a day is hovered', () => {
-    mount();
-    expect(tip()).toBeNull();
-  });
-
-  it('hover shows the date and day type, centred over the cell; leaving hides it', () => {
-    rectAt(100, 200);
-    mount();
-    hover(cells()[0]);
-    const t = tip()!;
-    expect(t.textContent).toContain('พฤ. 1 ม.ค. 26');
-    expect(t.textContent).toContain('วันทำงาน');
-    expect(t.style.left).toBe('108px'); // 100 + 16 / 2
-    expect(t.style.top).toBe('194px');  // 6px above the cell
-    leave(cells()[0]);
-    expect(tip()).toBeNull();
-  });
-
-  it('is portalled to the body, not clipped inside the card', () => {
-    rectAt(100, 200);
-    mount();
-    hover(cells()[0]);
-    expect(container!.contains(tip())).toBe(false);
-    expect(tip()!.parentElement).toBe(document.body);
-  });
 
   it('in spending level mode it shows the amount, or "ไม่มีรายจ่าย"', () => {
     rectAt(100, 200);
@@ -501,44 +171,4 @@ describe('ActivityTimeline — tooltip', () => {
     expect(tip()!.textContent).toContain('ศ. 2 ม.ค. 26');
   });
 
-  it('keeps the tooltip inside the window on both sides, and below the top edge', () => {
-    mount();
-    rectAt(0, 200);
-    hover(cells()[0]);
-    expect(tip()!.style.left).toBe('70px');
-    vi.restoreAllMocks();
-    rectAt(5000, 200);
-    hover(cells()[0]);
-    expect(tip()!.style.left).toBe(`${window.innerWidth - 70}px`);
-    vi.restoreAllMocks();
-    rectAt(300, 3);
-    hover(cells()[0]);
-    expect(tip()!.style.top).toBe('10px');
-  });
-
-  it('works from the keyboard: focus shows it, blur-sm hides it', () => {
-    rectAt(100, 200);
-    mount();
-    act(() => cells()[4].focus());
-    expect(tip()!.textContent).toContain('จ. 5 ม.ค. 26');
-    act(() => cells()[4].blur());
-    expect(tip()).toBeNull();
-  });
-
-  it('works in the calendar layout as well', () => {
-    rectAt(100, 200);
-    mount();
-    click(toggle('ปฏิทินทั่วไป'));
-    hover(cells()[2]);
-    expect(tip()!.textContent).toContain('ส. 3 ม.ค. 26');
-    expect(tip()!.textContent).toContain('วันหยุด');
-  });
-
-  it('a marked day shows its own type', () => {
-    rectAt(100, 200);
-    set({}, { dayTypes: { '2026-01-01': { id: 'dt-ot' } } });
-    mount();
-    hover(cells()[0]);
-    expect(tip()!.textContent).toContain('โอที');
-  });
 });

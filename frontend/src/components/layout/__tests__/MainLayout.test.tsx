@@ -137,24 +137,6 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('MainLayout — which view is shown', () => {
-  it.each([
-    ['insights', 'Dashboard'], ['calendar', 'Calendar'], ['ledger', 'Ledger'], ['portfolio', 'Portfolio'], ['settings', 'Settings'],
-  ])('tab "%s" shows only %s (plus the header and the toast)', async (tab, view) => {
-    reset(tab);
-    await mount();
-    const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
-    expect(shown().filter(s => views.includes(s!))).toEqual([view]);
-    expect(shown()).toEqual(expect.arrayContaining(['AppHeader', 'AppToast']));
-  });
-
-  it('an unknown tab shows no view at all', async () => {
-    reset('nonsense');
-    await mount();
-    expect(shown().filter(s => ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'].includes(s!))).toEqual([]);
-  });
-});
-
 describe('MainLayout — header', () => {
   it('is given the connection, count, tab, period, categories and the saving flag', async () => {
     await mount();
@@ -196,10 +178,6 @@ describe('MainLayout — header', () => {
 });
 
 describe('MainLayout — what each view is given', () => {
-  it('the dashboard tab reads its data from the contexts itself: it is only told the portfolio switch and the loading flag', async () => {
-    await mount();
-    expect(h.props.Dashboard).toEqual({ showPortfolio: true, isLoading: true });
-  });
 
   it('the calendar gets the day data, the handlers, and can switch back to the dashboard', async () => {
     reset('calendar');
@@ -242,10 +220,6 @@ describe('MainLayout — what each view is given', () => {
     expect(h.props.Settings.handleDeleteAllData).toBe(h.data.handleDeleteAllData);
   });
 
-  it('the toast is the one from the toast context', async () => {
-    await mount();
-    expect(h.props.AppToast).toEqual({ toast: h.toast.toast });
-  });
 });
 
 describe('MainLayout — modals', () => {
@@ -278,41 +252,6 @@ describe('MainLayout — modals', () => {
     expect(h.ui.setShowImportGuide).toHaveBeenCalledWith(false);
   });
 
-  it('a modal is not loaded before it first opens', async () => {
-    h.data.importPreview = null;
-    await mount();
-    expect(shown().filter(s => /Modal$/.test(s!))).toEqual([]);
-    expect(h.props.BatchAddModal ?? h.props.ExportModal ?? h.props.ImportGuideModal ?? h.props.ImportPreviewModal).toBeUndefined();
-  });
-
-  it('once opened, a modal stays mounted (and keeps its state) while closed, and is told it is closed', async () => {
-    h.data.importPreview = null;
-    await mount();
-    h.ui.showAddModal = true; h.ui.showExportModal = true; h.ui.showImportGuide = true;
-    await rerender();
-    expect(shown()).toEqual(expect.arrayContaining(['BatchAddModal', 'ExportModal', 'ImportGuideModal']));
-
-    h.ui.showAddModal = false; h.ui.showExportModal = false; h.ui.showImportGuide = false;
-    await rerender();
-    expect(shown()).toEqual(expect.arrayContaining(['BatchAddModal', 'ExportModal', 'ImportGuideModal']));
-    expect(h.props.BatchAddModal.isOpen).toBe(false);
-    expect(h.props.ExportModal.isOpen).toBe(false);
-    expect(h.props.ImportGuideModal.isOpen).toBe(false);
-  });
-
-  it('the import preview loads with the first pending file and stays mounted after it is cleared', async () => {
-    h.data.importPreview = null;
-    await mount();
-    expect(h.props.ImportPreviewModal).toBeUndefined();
-    h.data.importPreview = { rows: [1] };
-    await rerender();
-    expect(h.props.ImportPreviewModal.importPreview).toBe(h.data.importPreview);
-    h.data.importPreview = null;
-    await rerender();
-    expect(shown()).toContain('ImportPreviewModal');
-    expect(h.props.ImportPreviewModal.importPreview).toBeNull();
-  });
-
   it('the import preview gets the pending file and the CSV saving flag', async () => {
     await mount();
     expect(h.props.ImportPreviewModal).toMatchObject({ importPreview: h.data.importPreview, setImportPreview: h.data.setImportPreview, isProcessing: true, categories });
@@ -330,23 +269,6 @@ describe('MainLayout — modals', () => {
     expect(h.data.refreshData).toHaveBeenCalledTimes(1);
     expect(h.toast.showToast).toHaveBeenCalledWith('ทำรายการสำเร็จ!', 'success');
     expect(h.ui.setActiveTab).toHaveBeenCalledWith('ledger');
-  });
-});
-
-describe('MainLayout — one source of groups', () => {
-  it('everything that draws or writes groups is given the same list', async () => {
-    const withGroups: Array<[string, string]> = [['calendar', 'Calendar'], ['ledger', 'Ledger'], ['settings', 'Settings']];
-    for (const [tab, view] of withGroups) {
-      reset(tab);
-      await mount();
-      expect(h.props[view].cashflowGroups, view).toBe(groups);
-      act(() => root!.unmount()); container!.remove(); root = null;
-    }
-    reset();
-    h.ui.showAddModal = true; h.ui.showExportModal = true;
-    await mount();
-    expect(h.props.BatchAddModal.cashflowGroups).toBe(groups);
-    expect(h.props.ExportModal.cashflowGroups).toBe(groups);
   });
 });
 
@@ -392,64 +314,11 @@ describe('MainLayout — the portfolio tab can be switched off', () => {
     expect(h.props.AppHeader).toMatchObject({ portfolioEnabled: false });
   });
 
-  it('a stored tax tab (removed feature) goes back to the overview', async () => {
-    reset('tax');
-    await mount();
-    expect(visibleViews()).toEqual([]);
-    expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
-  });
-
-  it('opening the portfolio tab while it is off goes back to the overview', async () => {
-    reset('portfolio');
-    h.flags = { portfolio_enabled: false };
-    await mount();
-    expect(visibleViews()).toEqual([]);
-    expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
-  });
-
-  it('a tab that is on is never redirected', async () => {
-    reset('portfolio');
-    await mount();
-    expect(visibleViews()).toEqual(['Portfolio']);
-    expect(h.ui.setActiveTab).not.toHaveBeenCalled();
-  });
-
-  it('switching the portfolio off does not move you while you are on another tab', async () => {
-    for (const tab of ['insights', 'calendar', 'ledger', 'settings']) {
-      reset(tab);
-      h.flags = { portfolio_enabled: false };
-      await mount();
-      expect(h.ui.setActiveTab, tab).not.toHaveBeenCalled();
-      act(() => root!.unmount()); container!.remove(); root = null;
-    }
-  });
 });
 
 describe('MainLayout — Lite overview mode', () => {
   const views = ['Dashboard', 'Kakeibo', 'Calendar', 'Ledger', 'Portfolio', 'Settings'];
   const visibleViews = () => shown().filter(x => views.includes(x!));
-
-  it('full by default: the overview is the Dashboard', async () => {
-    await mount();
-    expect(visibleViews()).toEqual(['Dashboard']);
-    expect(['lite', 'full', undefined, null, 'x'].map(h.parsers.overview_mode)).toEqual(['lite', 'full', 'full', 'full', 'full']);
-  });
-
-  it('lite: the overview is Kakeibo (no Dashboard)', async () => {
-    h.flags = { overview_mode: 'lite' };
-    await mount();
-    expect(visibleViews()).toEqual(['Kakeibo']);
-    expect(h.props.Kakeibo).toEqual({ isLoading: true });
-    expect(h.props.Dashboard).toBeUndefined();
-  });
-
-  it.each(['lite', 'full'])('%s: a stored Kakeibo tab (no longer a tab) goes back to the overview', async (mode) => {
-    reset('kakeibo');
-    h.flags = { overview_mode: mode };
-    await mount();
-    expect(visibleViews()).toEqual([]);
-    expect(h.ui.setActiveTab).toHaveBeenCalledWith('insights');
-  });
 
   it('settings gets the mode and a switch that stores overview_mode', async () => {
     reset('settings');

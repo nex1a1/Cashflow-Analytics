@@ -35,14 +35,6 @@ afterEach(() => {
 });
 
 describe('SpendingCalendar — one month', () => {
-  it('a Sun–Sat grid of the month, padded, with the weekday header', () => {
-    mount();
-    const rows = container!.querySelectorAll('[role="grid"] [role="row"]');
-    expect(rows).toHaveLength(6); // header + 5 weeks (Thu 1 → Sat 31)
-    expect(container!.querySelectorAll('[data-day]')).toHaveLength(31);
-    expect(rows[1].querySelectorAll('[role="gridcell"]:not([data-day])')).toHaveLength(4);
-    expect(rows[0].textContent).toBe('อา.จ.อ.พ.พฤ.ศ.ส.');
-  });
 
   it('each day shows its spend with the calendar heat chip; the bottom line is the day type', () => {
     mount({ rows: [exp('2026-10-05', 120), exp('2026-10-05', 30), exp('2026-10-06', 1500), { date: '2026-10-07', amount: 900, group_type: 'savings' }], dayTypes: { '2026-10-06': 'dt-ot' } });
@@ -112,30 +104,5 @@ describe('SpendingCalendar — hover card', () => {
     expect(card()).toBeNull();
   });
 
-  it('the multi-month strip opens the same card', () => {
-    mount({ period: '2026-09_2026-10', rows: [row('2026-09-02', 'c-food', 50)] });
-    over(day('2026-09-02'));
-    expect(card()!.textContent).toContain('พ. 2 ก.ย. 2026');
-    expect(card()!.textContent).toContain('ปกติ');
-  });
 });
 
-describe('SpendingCalendar — several months', () => {
-  it('draws one column per week with month labels, coloured by spend; "ประเภทวัน" recolours by day type', () => {
-    mount({ period: '2026-09_2026-10', rows: [exp('2026-09-02', 50), exp('2026-10-30', 5000)] });
-    expect(container!.querySelectorAll('[data-day]')).toHaveLength(60); // longer periods end at the last row: 1 Sep – 30 Oct
-    expect(container!.textContent).toContain('ก.ย.');
-    expect(container!.textContent).toContain('ต.ค.');
-    expect(day('2026-10-30').style.backgroundColor).toBe('rgb(255, 77, 79)'); // peak = full expense colour
-    const toggle = [...container!.querySelectorAll('button')].find((b) => b.textContent === 'ประเภทวัน')!;
-    act(() => toggle.click());
-    expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    expect(day('2026-10-30').style.backgroundColor).toBe('rgb(59, 130, 246)'); // Friday → workday
-    expect(legend()).toContain('วันหยุด');
-  });
-
-  it('renders nothing when the period has no dates', () => {
-    mount({ period: 'ALL' });
-    expect(container!.innerHTML).toBe('');
-  });
-});

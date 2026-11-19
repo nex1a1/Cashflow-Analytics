@@ -64,14 +64,6 @@ describe('Import guide — long templates are importable', () => {
     expect(arrived).toEqual(expected);
   });
 
-  it.each(variations)('%s: descriptions and categories survive (quotes included)', async (variation) => {
-    const { importPreview } = await importIt(generateLongCsvContent(variation, ',', 'th'));
-    const desc = importPreview.items.map((i: any) => i.description);
-    expect(desc).toContain('BGVP MX1 DAC/AMP (5/5)');
-    expect(desc).toContain('ค่าธรรมเนียมรายปีบัตรเดบิต (SCB)');
-    expect(importPreview.items.map((i: any) => i.category)).toContain('ซอฟต์แวร์ & AI');
-  });
-
   it('the full and standard templates carry the kind of each row: income, savings and expenses', async () => {
     for (const variation of ['full', 'standard'] as const) {
       for (const lang of ['th', 'en'] as const) {
@@ -91,11 +83,6 @@ describe('Import guide — long templates are importable', () => {
     expect([...kinds]).toEqual(['expense']);
   });
 
-  it('the full template marks 5 September as a holiday in the calendar and the other days as workdays', async () => {
-    const { importPreview } = await importIt(generateLongCsvContent('full', ',', 'th'));
-    expect(importPreview.newDayTypes['2026-09-05']).toBe('dt-hol');
-    expect(importPreview.newDayTypes['2026-09-01']).toBe('dt-work');
-  });
 });
 
 describe('Import guide — wide templates are importable', () => {

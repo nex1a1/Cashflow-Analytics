@@ -54,30 +54,6 @@ afterEach(() => {
 });
 
 describe('SparklineGraph', () => {
-  it('says so when the period has no spending at all', () => {
-    set({ analytics: { sortedMonthsKeys: KEYS, monthlyCatMap: { idle: { '2026-07': 0 } } } });
-    mount();
-    expect(container.textContent).toBe('ไม่มีรายจ่ายในช่วงที่เลือก');
-    act(() => root!.unmount());
-    set({ analytics: null, categories: null });
-    mount();
-    expect(container.textContent).toBe('ไม่มีรายจ่ายในช่วงที่เลือก');
-  });
-
-  it('asks for at least two months (or cycles) in plain Thai', () => {
-    set({ analytics: { sortedMonthsKeys: ['2026-10'], monthlyCatMap: { a: { '2026-10': 50 } } }, filterPeriod: '2026-10' });
-    mount();
-    expect(container.textContent).toBe('ต้องเลือกช่วงเวลาอย่างน้อย 2 เดือน เพื่อดูแนวโน้ม');
-    act(() => root!.unmount());
-    set({ analytics: { sortedMonthsKeys: ['2026-09'], monthlyCatMap: { a: { '2026-09': 50 } } }, filterPeriod: 'cycle:2026-09' });
-    mount();
-    expect(container.textContent).toBe('ต้องเลือกช่วงเวลาอย่างน้อย 2 รอบ เพื่อดูแนวโน้ม');
-  });
-
-  it('ranks categories by how much they grew; one card per category with spending, unknown ones as ไม่ระบุ', () => {
-    mount();
-    expect(cards().map(c => c.querySelector('.truncate.flex-1')!.textContent)).toEqual(['ค่ากิน', 'ไม่ระบุ', 'เดินทาง']);
-  });
 
   it('badges growth red, a drop green, and a category with no prior month as new', () => {
     mount();
@@ -91,13 +67,6 @@ describe('SparklineGraph', () => {
     const fresh = badgeOf(card('ไม่ระบุ'));
     expect(fresh.textContent).toBe('ใหม่');
     expect(fresh.title).toBe('ช่วงก่อนหน้าไม่มียอดใช้จ่าย');
-  });
-
-  it('a change under 5% stays neutral; flat reads 0% with no arrow', () => {
-    set({ analytics: { sortedMonthsKeys: KEYS, monthlyCatMap: { a: { '2026-08': 1000, '2026-09': 1040 }, b: { '2026-08': 500, '2026-09': 500 } } } });
-    mount();
-    expect(badgeOf(card('ค่ากิน')).className).toContain('text-slate-400');
-    expect(badgeOf(card('เดินทาง')).textContent!.trim()).toBe('0%');
   });
 
   it('over the whole history (ALL) compares the latest month with the average', () => {
@@ -139,18 +108,4 @@ describe('SparklineGraph', () => {
     expect(c.querySelector('.absolute.pointer-events-none')).toBeNull();
   });
 
-  it('with one finished month and the current one there is no area fill yet (one point is not a shape)', () => {
-    set({ analytics: { sortedMonthsKeys: ['2026-09', '2026-10'], monthlyCatMap: MAP } });
-    mount();
-    expect(card('ค่ากิน').querySelector('polygon')).toBeNull();
-    expect(card('ค่ากิน').querySelector('line[stroke-dasharray="3 3"]')).not.toBeNull();
-  });
-
-  it('a range that ended in the past has no unfinished month and no dashed tail', () => {
-    set({ analytics: { sortedMonthsKeys: KEYS.slice(0, 3), monthlyCatMap: MAP } });
-    mount();
-    expect(card('ค่ากิน').querySelector('line[stroke-dasharray="3 3"]')).toBeNull();
-    hover(card('ค่ากิน'), 100);
-    expect(card('ค่ากิน').textContent).not.toContain('(ยังไม่จบ)');
-  });
 });

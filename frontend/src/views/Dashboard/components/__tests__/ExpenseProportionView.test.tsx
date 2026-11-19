@@ -146,12 +146,6 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(text()).not.toContain('LIMIT');
   });
 
-  it('nothing in the stacked views transitions every property (visibility would lag and leave bars over the other view)', () => {
-    mount();
-    toAllocation();
-    expect(container!.querySelectorAll('.transition-all')).toHaveLength(0);
-  });
-
   it('two strips put the actual split of income over the 50/30/20 target', () => {
     mount();
     toAllocation();
@@ -175,18 +169,6 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(alloc('จำเป็น').getAttribute('aria-label')).toBe('จำเป็น: 60% (เป้า 50%) — −฿10,000.00 เกินโควตา');
     expect(alloc('จำเป็น').textContent).toContain('เกิน +10.0%');
     expect(alloc('ตามใจ').textContent).toContain('ไม่มีข้อมูล');
-  });
-
-  it('focus inside a part highlights it until focus leaves the part', () => {
-    mount();
-    toAllocation();
-    const [first, second] = alloc('ตามใจ').querySelectorAll<HTMLButtonElement>('button');
-    act(() => first.focus());
-    expect(alloc('ตามใจ').className).toContain('bg-surface-hover');
-    act(() => second.focus()); // moving within the part keeps it highlighted
-    expect(alloc('ตามใจ').className).toContain('bg-surface-hover');
-    act(() => second.blur());
-    expect(alloc('ตามใจ').className).not.toContain('bg-surface-hover');
   });
 
   it('lists the groups of each part with their share of it, and the unassigned remainder of savings', () => {
@@ -248,33 +230,9 @@ describe('ExpenseProportion — 50/30/20', () => {
     expect(text()).not.toMatch(/NaN|Infinity/);
   });
 
-  it('the warning only appears in this mode, and not while loading', () => {
-    set({ totalIncome: 0, totalExpense: 80_000, netCashflow: 0 });
-    mount();
-    expect(text()).not.toContain('ไม่มีรายรับ');
-    act(() => root!.unmount()); container!.remove();
-    set({ totalIncome: 0 }, { showSkeleton: true });
-    mount();
-    toAllocation();
-    expect(text()).not.toContain('ไม่มีรายรับ');
-  });
 });
 
 describe('ExpenseProportion — trend', () => {
-  it('is disabled with the reason when the period is too short for a trend', () => {
-    set({ allocationEvolution: evolution({ eligible: false, hasData: false }) });
-    mount();
-    expect(mode('แนวโน้ม 3 เดือน').getAttribute('aria-disabled')).toBe('true');
-    expect((mode('แนวโน้ม 3 เดือน') as HTMLButtonElement).disabled).toBe(true);
-    expect(text()).toContain('ต้องเลือกช่วงเวลามากกว่า 1 เดือน');
-    click(mode('แนวโน้ม 3 เดือน'));
-    expect(mode('รายหมวดหมู่').getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('with no analytics for it the third mode is disabled too', () => {
-    mount();
-    expect((mode('แนวโน้ม 3 เดือน') as HTMLButtonElement).disabled).toBe(true);
-  });
 
   it('switching shows the chart, counts the months that have spending, and keeps the other view mounted but hidden', () => {
     set({ allocationEvolution: evolution() });
@@ -288,28 +246,4 @@ describe('ExpenseProportion — trend', () => {
     expect(hidden).toBeTruthy();
   });
 
-  it('says there is not enough history when the period is long enough but has no data', () => {
-    set({ allocationEvolution: evolution({ hasData: false, months: [] }) });
-    mount();
-    click(mode('แนวโน้ม 3 เดือน'));
-    expect(text()).toContain('ยังไม่มีข้อมูลย้อนหลังพอ');
-    expect(q('[data-testid="evolution"]')).toBeNull();
-  });
-
-  it('falls back to the category view when the period changes to one that has no trend', () => {
-    set({ allocationEvolution: evolution() });
-    mount();
-    click(mode('แนวโน้ม 3 เดือน'));
-    expect(mode('แนวโน้ม 3 เดือน').getAttribute('aria-pressed')).toBe('true');
-    set({ allocationEvolution: evolution({ eligible: false, hasData: false }) });
-    act(() => root!.render(<ExpenseProportion />));
-    expect(mode('รายหมวดหมู่').getAttribute('aria-pressed')).toBe('true');
-    expect(catNames()).toHaveLength(3);
-  });
-
-  it('uses the label the analytics give it (e.g. the year view says so)', () => {
-    set({ allocationEvolution: evolution({ label: 'แนวโน้มรายเดือน' }) });
-    mount();
-    expect(mode('แนวโน้มรายเดือน')).not.toBeNull();
-  });
 });

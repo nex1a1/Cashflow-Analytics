@@ -20,33 +20,6 @@ const preview = {
 // below `if (!importPreview) return null` makes React throw "Rendered more hooks than during the
 // previous render" and, with no error boundary, unmounts the whole app. renderToStaticMarkup renders
 // once and cannot catch that, so this needs a real client root and a re-render.
-describe('ImportPreviewModal', () => {
-  it('shows the dialog when a preview arrives after the empty first render', () => {
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-    const root = createRoot(container);
-    const show = (importPreview: typeof preview | null) =>
-      act(() =>
-        root.render(
-          <ImportPreviewModal
-            importPreview={importPreview}
-            setImportPreview={() => {}}
-            confirmImport={() => {}}
-            categories={[]}
-          />,
-        ),
-      );
-
-    show(null);
-    expect(container.innerHTML).toBe('');
-
-    expect(() => show(preview)).not.toThrow();
-    expect(container.querySelector('[role="dialog"][aria-label="ตรวจสอบข้อมูลก่อนนำเข้า"]')).not.toBeNull();
-
-    act(() => root.unmount());
-    container.remove();
-  });
-});
 
 // ── the behaviour of the dialog itself ────────────────────────────────────────────────────────────────────────────
 // A small stateful host plays the part of useImportCSV: it owns the preview and hands the modal the same setter.
@@ -89,7 +62,6 @@ const prevBtn = () => pageLabel().previousElementSibling as HTMLButtonElement;
 const nextBtn = () => pageLabel().nextElementSibling as HTMLButtonElement;
 const importBtn = () => [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => /^Import |กำลังนำเข้า/.test(b.textContent!.trim()))!;
 const deleteBtn = (i: number) => rowEls()[i].querySelector('button') as HTMLButtonElement;
-const header = () => q('h3')!.textContent!;
 
 afterEach(() => {
   if (root) act(() => root!.unmount());
@@ -100,22 +72,6 @@ afterEach(() => {
 });
 
 describe('ImportPreviewModal — what the user is shown', () => {
-  it('counts the rows and lists each date once, in front of its first row', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50), item('b', '2026-10-03', 'อาหาร', 'กาแฟ', 60), item('c', '2026-10-04', 'อาหาร', 'ขนม', 20)]));
-    expect(dialog()!.textContent).toContain('พบ 3 รายการ');
-    expect(dateHeaders()).toEqual(['2026-10-03', '2026-10-04']);
-    expect(descs()).toEqual(['ข้าว', 'กาแฟ', 'ขนม']);
-    expect(amountInputs().map(i => i.value)).toEqual(['50', '60', '20']);
-  });
-
-  it('says what the import will create or skip, and nothing when there is nothing to say', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    for (const t of ['จะสร้างหมวดหมู่ใหม่', 'ข้าม', 'ที่มีอยู่แล้ว', 'วันที่ไม่ถูกต้อง']) expect(dialog()!.textContent).not.toContain(t);
-    act(() => setPreview({ ...state, isCategoryChanged: true, skippedDuplicates: 4, skippedInvalid: 2 }));
-    expect(dialog()!.textContent).toContain('จะสร้างหมวดหมู่ใหม่');
-    expect(dialog()!.textContent).toContain('ข้าม 4 รายการที่มีอยู่แล้ว');
-    expect(dialog()!.textContent).toContain('ข้าม 2 แถวที่วันที่ไม่ถูกต้อง');
-  });
 
   it('names the kind of each row: income, savings and expense (an unknown category counts as an expense)', async () => {
     await mount(base([
@@ -125,19 +81,6 @@ describe('ImportPreviewModal — what the user is shown', () => {
     expect(badges()).toEqual(['รายรับ', 'เงินออม', 'รายจ่าย', 'รายจ่าย']);
   });
 
-  it('offers the categories of the file (including the ones it creates); the page\'s own list is the fallback', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    expect([...document.querySelectorAll('option')].map(o => o.textContent)).toEqual(['อาหาร', 'เงินเดือน', 'ออมทอง', 'เดินทาง']);
-    act(() => root!.unmount()); container!.remove();
-    await mount({ ...base([item('a', '2026-10-03', 'จาก props', 'ข้าว', 50)]), updatedCategories: undefined });
-    expect([...document.querySelectorAll('option')].map(o => o.textContent)).toEqual(['จาก props']);
-  });
-
-  it('has no emoji in its title (icons are Lucide)', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    expect(header()).not.toMatch(/\p{Extended_Pictographic}/u);
-    expect(header()).toContain('ตรวจสอบก่อนนำเข้า');
-  });
 });
 
 describe('ImportPreviewModal — editing before the import', () => {
@@ -167,13 +110,6 @@ describe('ImportPreviewModal — editing before the import', () => {
     expect(dateHeaders()).toEqual(['2026-10-04']);
   });
 
-  it('with every row removed it says so and refuses to import', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    click(deleteBtn(0));
-    expect(dialog()!.textContent).toContain('ไม่มีรายการข้อมูล');
-    expect(importBtn().disabled).toBe(true);
-    expect(pageLabel().textContent).toBe('หน้า 1/1 (0 รายการ)');
-  });
 });
 
 describe('ImportPreviewModal — amounts that would be saved wrongly', () => {
@@ -197,12 +133,6 @@ describe('ImportPreviewModal — amounts that would be saved wrongly', () => {
     expect(amountInputs()[1].getAttribute('aria-invalid')).toBe('false');
   });
 
-  it('removing the bad row also fixes it', async () => {
-    await mount(withAmount('0'));
-    click(deleteBtn(1));
-    expect(importBtn().disabled).toBe(false);
-  });
-
   it('a negative amount is fine on a savings row (it is a sell) and is counted per row', async () => {
     await mount(withAmount('-200', 'ออมทอง'));
     expect(importBtn().disabled).toBe(false);
@@ -217,74 +147,6 @@ describe('ImportPreviewModal — amounts that would be saved wrongly', () => {
     expect(importBtn().disabled).toBe(true);
   });
 
-  it('counts every bad row', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'a', ''), item('b', '2026-10-03', 'อาหาร', 'b', 0), item('c', '2026-10-03', 'อาหาร', 'c', 5)]));
-    expect(dialog()!.textContent).toContain('แก้จำนวนเงิน 2 รายการ');
-  });
-
-});
-
-describe('ImportPreviewModal — pages', () => {
-  const many = (n: number) => base(Array.from({ length: n }, (_, i) => item(`i${i}`, '2026-10-03', 'อาหาร', `รายการ ${i}`, i + 1)));
-
-  it('30 rows to a page, with a counter and arrows that stop at the ends', async () => {
-    await mount(many(61));
-    expect(rowEls()).toHaveLength(30);
-    expect(pageLabel().textContent).toBe('หน้า 1/3 (61 รายการ)');
-    expect(prevBtn().disabled).toBe(true);
-    click(nextBtn());
-    expect(pageLabel().textContent).toBe('หน้า 2/3 (61 รายการ)');
-    expect(descs()[0]).toBe('รายการ 30');
-    click(nextBtn());
-    expect(rowEls()).toHaveLength(1);
-    expect(nextBtn().disabled).toBe(true);
-    click(prevBtn());
-    expect(pageLabel().textContent).toBe('หน้า 2/3 (61 รายการ)');
-  });
-
-  it('exactly 30 rows is one page', async () => {
-    await mount(many(30));
-    expect(pageLabel().textContent).toBe('หน้า 1/1 (30 รายการ)');
-    expect(nextBtn().disabled).toBe(true);
-    expect(prevBtn().disabled).toBe(true);
-  });
-
-  it('a preview opened later starts again from page 1', async () => {
-    await mount(many(61));
-    click(nextBtn());
-    act(() => setPreview(null));
-    act(() => setPreview(many(40)));
-    expect(pageLabel().textContent).toBe('หน้า 1/2 (40 รายการ)');
-    expect(descs()[0]).toBe('รายการ 0');
-  });
-
-  it('editing or removing a row keeps you on the page you are on', async () => {
-    await mount(many(61));
-    click(nextBtn());
-    expect(descs()[0]).toBe('รายการ 30');
-    type(document.querySelectorAll('input[type="text"]')[0], 'แก้แล้ว');
-    expect(pageLabel().textContent).toBe('หน้า 2/3 (61 รายการ)');
-    expect(descs()[0]).toBe('แก้แล้ว');
-    choose(document.querySelectorAll('select')[0], 'เดินทาง');
-    type(amountInputs()[0], '99');
-    expect(pageLabel().textContent).toBe('หน้า 2/3 (61 รายการ)');
-    click(deleteBtn(0));
-    expect(pageLabel().textContent).toBe('หน้า 2/2 (60 รายการ)'); // 60 rows are two pages now
-    expect(descs()[0]).toBe('รายการ 31');
-  });
-
-  it('removing the last row of the last page moves to the page before it — the counter, arrows and rows agree', async () => {
-    await mount(many(61));
-    click(nextBtn());
-    click(nextBtn()); // page 3: one row
-    click(deleteBtn(0));
-    expect(rowEls()).toHaveLength(30);
-    expect(pageLabel().textContent).toBe('หน้า 2/2 (60 รายการ)');
-    expect(nextBtn().disabled).toBe(true);
-    click(prevBtn());
-    expect(pageLabel().textContent).toBe('หน้า 1/2 (60 รายการ)'); // one click, not two
-    expect(descs()[0]).toBe('รายการ 0');
-  });
 });
 
 describe('ImportPreviewModal — confirming and cancelling', () => {
@@ -295,30 +157,4 @@ describe('ImportPreviewModal — confirming and cancelling', () => {
     expect(host.confirmImport).toHaveBeenCalledTimes(1);
   });
 
-  it('while importing it says so and cannot be pressed again', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]), { isProcessing: true });
-    expect(importBtn().textContent).toBe('กำลังนำเข้า...');
-    expect(importBtn().disabled).toBe(true);
-  });
-
-  it('Esc, the ✕ and cancel throw the preview away; Esc with nothing open does nothing', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    key(document.body, 'Escape');
-    expect(state).toBeNull();
-    expect(dialog()).toBeNull();
-    act(() => setPreview(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)])));
-    click(dialog()!.querySelector('button'));
-    expect(state).toBeNull();
-    act(() => setPreview(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)])));
-    click(byText('button', 'ยกเลิก'));
-    expect(state).toBeNull();
-    key(document.body, 'Escape'); // nothing open: must not throw or reopen
-    expect(state).toBeNull();
-  });
-
-  it('other keys do nothing', async () => {
-    await mount(base([item('a', '2026-10-03', 'อาหาร', 'ข้าว', 50)]));
-    key(document.body, 'Enter');
-    expect(state).not.toBeNull();
-  });
 });

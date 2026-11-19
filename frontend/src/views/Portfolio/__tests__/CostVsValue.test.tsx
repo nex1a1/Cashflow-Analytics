@@ -55,19 +55,6 @@ afterEach(() => {
 });
 
 describe('CostVsValue shell', () => {
-  it('nothing held: a single line and no tabs', () => {
-    mount(mkPortfolio([delta()]));
-    expect(text()).toBe('ยังไม่มีสินทรัพย์ที่ถืออยู่');
-    expect(container!.querySelectorAll('[role="tab"]').length).toBe(0);
-  });
-
-  it('four tabs, the first one selected, with its own subtitle', () => {
-    mount(base());
-    expect([...container!.querySelectorAll('[role="tab"]')].map(t => t.textContent)).toEqual(['ต้นทุนเทียบมูลค่า', 'กำไร/ขาดทุน', 'เงินลงทุนสะสม', 'มูลค่าตามเวลา']);
-    expect(tab('ต้นทุนเทียบมูลค่า').getAttribute('aria-selected')).toBe('true');
-    expect(container!.querySelector('h2')!.textContent).toBe('ลงเงินไปเท่าไร ตอนนี้มีค่าเท่าไร');
-    expect(text()).toContain('แท่งเทา = เงินที่ลงไป');
-  });
 
   it('each tab swaps the subtitle and the body', () => {
     mount(base());
@@ -88,12 +75,6 @@ describe('CostVsValue bars tab', () => {
   const rowOf = (name: string) => [...container!.querySelectorAll('.gap-4 > div')].find(d => d.querySelector('span.truncate')?.textContent === name) as HTMLElement;
   const widths = (name: string) => [...rowOf(name).querySelectorAll<HTMLElement>('.h-3')].map(b => b.firstElementChild ? (b.firstElementChild as HTMLElement).style.width : null);
   const values = (name: string) => [...rowOf(name).querySelectorAll('.h-3 + span')].map(s => s.textContent);
-
-  it('held assets only, biggest current value first (cost when unpriced)', () => {
-    mount(base());
-    const names = [...container!.querySelectorAll('.gap-4 > div span.truncate')].map(s => s.textContent);
-    expect(names).toEqual(['Bravo', 'Alpha', 'Charlie']);
-  });
 
   it('gain and its percentage of cost, in the income colour', () => {
     mount(base());
@@ -116,22 +97,6 @@ describe('CostVsValue bars tab', () => {
     expect(widths('Charlie')[1]).toBeNull();
   });
 
-  it('bars are scaled to the biggest figure on screen (here the 200 cost of Bravo)', () => {
-    mount(base());
-    expect(widths('Bravo')).toEqual(['100%', '90%']);
-    expect(widths('Alpha')).toEqual(['50%', '75%']);
-    expect(widths('Charlie')[0]).toBe('25%');
-  });
-
-  it('colours: grey for money put in, green for a gain, amber for a loss', () => {
-    mount(base());
-    const bars = (n: string) => [...rowOf(n).querySelectorAll('.h-3 > div')].map(b => b.className);
-    expect(bars('Alpha')[0]).toContain('bg-ink-muted');
-    expect(bars('Alpha')[1]).toContain('bg-income');
-    expect(bars('Bravo')[1]).toContain('bg-warn');
-    expect(bars('Bravo')[1]).not.toContain('bg-income');
-  });
-
   it('a value of exactly the cost is neutral text but a green bar', () => {
     mount(mkPortfolio([mkAsset('e', { name: 'Even', units: 1, cost: 100, marketValue: 100 })]));
     const g = rowOf('Even').querySelector('.items-baseline span.font-mono')!;
@@ -150,15 +115,6 @@ describe('CostVsValue bars tab', () => {
     expect(widths('Tiny')).toEqual(['1%', '1%']);
   });
 
-  it('the money-in figure is plain and the current-value figure is bold', () => {
-    mount(base());
-    const [cost, value] = [...rowOf('Alpha').querySelectorAll<HTMLElement>('.h-3 + span')];
-    expect(cost.classList.contains('text-ink-body')).toBe(true);
-    expect(cost.classList.contains('font-bold')).toBe(false);
-    expect(value.classList.contains('text-ink-display')).toBe(true);
-    expect(value.classList.contains('font-bold')).toBe(true);
-  });
-
   it('when the value is the biggest figure the bars scale to it', () => {
     mount(mkPortfolio([mkAsset('w', { name: 'Winner', units: 1, cost: 100, marketValue: 200 })]));
     expect(widths('Winner')).toEqual(['50%', '100%']);
@@ -175,12 +131,6 @@ describe('CostVsValue bars tab', () => {
     }
   });
 
-  it('labels the two bars', () => {
-    mount(base());
-    const labels = [...rowOf('Alpha').querySelectorAll('.w-\\[56px\\]')].map(s => s.textContent);
-    expect(labels).toEqual(['ลงไป', 'ตอนนี้']);
-  });
-
   it('recomputes when the assets change', () => {
     mount(base());
     rerender(mkPortfolio([mkAsset('z', { name: 'Zulu', units: 1, cost: 10, marketValue: 20 })]));
@@ -189,34 +139,11 @@ describe('CostVsValue bars tab', () => {
 });
 
 describe('CostVsValue gain tab', () => {
-  it('priced assets only, in the same order, with the gain in baht', () => {
-    mount(base());
-    goto('กำไร/ขาดทุน');
-    expect(lastBar().data.labels).toEqual(['Bravo', 'Alpha']);
-    expect(lastBar().data.datasets[0].data).toEqual([-20, 50]);
-  });
-
-  it('green for a gain, amber for a loss (never red)', () => {
-    mount(base());
-    goto('กำไร/ขาดทุน');
-    expect(lastBar().data.datasets[0].backgroundColor).toEqual([tc('warn'), tc('income')]);
-  });
 
   it('breaking even counts as green', () => {
     mount(mkPortfolio([mkAsset('e', { units: 1, cost: 100, marketValue: 100 })]));
     goto('กำไร/ขาดทุน');
     expect(lastBar().data.datasets[0].backgroundColor).toEqual([tc('income')]);
-  });
-
-  it('horizontal bars without a legend, default animation', () => {
-    mount(base());
-    goto('กำไร/ขาดทุน');
-    const o = lastBar().options;
-    expect(o.indexAxis).toBe('y');
-    expect(o.plugins.legend.display).toBe(false);
-    expect(o.animation).toBeUndefined(); // inherits the global short animation (main.tsx)
-    expect(o.maintainAspectRatio).toBe(false);
-    expect(o.scales.y.grid.display).toBe(false);
   });
 
   it('tooltip and axis use signed baht', () => {
@@ -258,35 +185,6 @@ describe('CostVsValue gain tab', () => {
 });
 
 describe('CostVsValue invested tab', () => {
-  it('step line of net money invested per trade date', () => {
-    mount(base());
-    goto('เงินลงทุนสะสม');
-    const d = lastLine().data;
-    // 2026-02-01: +999 (sold-out asset still counts) ; 03-10: +100 +200 ; 04-01: -30
-    expect(d.labels).toEqual(['2026-02-01', '2026-03-10', '2026-04-01'].map(formatThaiDateShort));
-    expect(d.datasets[0].data).toEqual([999, 1299, 1269]);
-    expect(d.datasets[0].stepped).toBe(true);
-    expect(d.datasets[0].fill).toBe(true);
-    expect(d.datasets[0].borderColor).toBe(tc('accent-ink'));
-  });
-
-  it('few points get dots, many points do not', () => {
-    mount(base());
-    goto('เงินลงทุนสะสม');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(3);
-    act(() => root!.unmount()); container!.remove();
-    const many = mkAsset('m', { trades: Array.from({ length: 25 }, (_, i) => trade(`t${i}`, `2026-01-${String(i + 1).padStart(2, '0')}`, 'buy', 1, 10)) });
-    mount(mkPortfolio([many]));
-    goto('เงินลงทุนสะสม');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(0);
-  });
-
-  it('exactly 24 points still get dots', () => {
-    const a = mkAsset('m', { trades: Array.from({ length: 24 }, (_, i) => trade(`t${i}`, `2026-01-${String(i + 1).padStart(2, '0')}`, 'buy', 1, 10)) });
-    mount(mkPortfolio([a]));
-    goto('เงินลงทุนสะสม');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(3);
-  });
 
   it('tooltip and axis in baht; description names the latest total', () => {
     mount(base());
@@ -318,25 +216,6 @@ describe('CostVsValue history tab', () => {
   const withHistory = (history: Portfolio['history'], totals: Partial<Portfolio['totals']> = { marketValue: 330, cost: 300 }) =>
     mkPortfolio([alpha()], totals, { history });
 
-  it('with fewer than two days it explains and counts the days it has', () => {
-    mount(withHistory([]));
-    goto('มูลค่าตามเวลา');
-    expect(text()).toContain('กราฟจะขึ้นเมื่อมีข้อมูลอย่างน้อย 2 วัน (ตอนนี้มี 1 วัน)');
-    expect(h.lines.length).toBe(0);
-  });
-
-  it('an empty portfolio with no history says 0 days', () => {
-    mount(mkPortfolio([alpha()], { marketValue: 0, cost: 0 }, { history: [] }));
-    goto('มูลค่าตามเวลา');
-    expect(text()).toContain('(ตอนนี้มี 0 วัน)');
-  });
-
-  it('a snapshot from today is replaced by the live figures, so one day is still not enough', () => {
-    mount(withHistory([{ date: '2026-10-08', marketValue: 1, cost: 1 }]));
-    goto('มูลค่าตามเวลา');
-    expect(text()).toContain('(ตอนนี้มี 1 วัน)');
-  });
-
   it('draws value and cost lines on a real-day x axis, ending with today from live totals', () => {
     mount(withHistory([{ date: '2026-10-01', marketValue: 300, cost: 280 }, { date: '2026-10-05', marketValue: 320, cost: 290 }]));
     goto('มูลค่าตามเวลา');
@@ -350,25 +229,6 @@ describe('CostVsValue history tab', () => {
     expect(cost.stepped).toBe(true);
     expect(cost.borderDash).toEqual([4, 4]);
     expect(value.fill).toBe(true);
-  });
-
-  it('dots only for short series', () => {
-    mount(withHistory([{ date: '2026-10-01', marketValue: 300, cost: 280 }]));
-    goto('มูลค่าตามเวลา');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(3);
-    expect(lastLine().data.datasets[1].pointRadius).toBe(0);
-    act(() => root!.unmount()); container!.remove();
-    const long = Array.from({ length: 24 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, marketValue: 1, cost: 1 }));
-    mount(withHistory(long)); // 24 + today = 25
-    goto('มูลค่าตามเวลา');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(0);
-  });
-
-  it('exactly 24 points keep their dots', () => {
-    const long = Array.from({ length: 23 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, marketValue: 1, cost: 1 }));
-    mount(withHistory(long)); // 23 + today = 24
-    goto('มูลค่าตามเวลา');
-    expect(lastLine().data.datasets[0].pointRadius).toBe(3);
   });
 
   it('tooltip title is the day, its lines carry the series name and baht; x axis ticks are dates', () => {

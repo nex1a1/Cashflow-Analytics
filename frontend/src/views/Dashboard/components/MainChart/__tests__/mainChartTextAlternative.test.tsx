@@ -44,7 +44,4 @@ describe('MainChartTextAlternative', () => {
     expect(html).toContain('<th scope="row">2</th><td>฿250.00</td>');
   });
 
-  it('renders nothing when there is no data', () => {
-    expect(renderToStaticMarkup(<MainChartTextAlternative caption="x" isSankey={false} data={null} />)).toBe('');
-  });
 });

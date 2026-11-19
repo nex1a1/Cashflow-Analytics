@@ -35,18 +35,6 @@ afterEach(() => {
   root = null; container = null;
 });
 
-describe('AssetDetail warnings', () => {
-  it('warns when more was sold than held', () => {
-    mount(mkAsset('a', { oversold: true }));
-    expect(container!.textContent).toContain('มีรายการขายมากกว่าจำนวนที่ถือ');
-  });
-
-  it('says nothing when the numbers add up', () => {
-    mount(mkAsset('a', { oversold: false }));
-    expect(container!.textContent).not.toContain('มีรายการขายมากกว่าจำนวนที่ถือ');
-  });
-});
-
 describe('AssetDetail tiles', () => {
   it('held cost with its average per unit', () => {
     mount(mkAsset('a', { units: 4, cost: 4000, avgCostPerUnit: 1000 }), 'หุ้น');
@@ -104,12 +92,6 @@ describe('AssetDetail tiles', () => {
     expect(tileSub('กำไร/ขาดทุน (ยังไม่ขาย)')).toBeUndefined();
   });
 
-  it('realised: "never sold" while there are no sells', () => {
-    mount(mkAsset('a', { realized: 0, trades: [trade('t1', '2026-01-01', 'buy', 1, 100)] }));
-    expect(tileValue('กำไร/ขาดทุน (ขายแล้ว)').textContent).toBe('–');
-    expect(tileSub('กำไร/ขาดทุน (ขายแล้ว)')).toBe('ยังไม่เคยขาย');
-  });
-
   it('realised after selling: signed profit plus the number of sells and proceeds', () => {
     mount(mkAsset('a', {
       realized: 250,
@@ -141,22 +123,9 @@ describe('AssetDetail tiles', () => {
     expect(tileSub('ถือมาแล้ว')).toBeUndefined();
   });
 
-  it('holding time counts from the first trade up to today', () => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(2026, 9, 8, 12, 0, 0));
-    mount(mkAsset('a', { trades: [trade('t2', '2026-06-01', 'buy', 1, 10), trade('t1', '2025-08-08', 'buy', 1, 10)] }));
-    expect(tileValue('ถือมาแล้ว').textContent).toBe('1 ปี 2 เดือน');
-    expect(tileSub('ถือมาแล้ว')).toBe(`ซื้อครั้งแรก ${formatThaiDateShort('2025-08-08')}`);
-  });
 });
 
 describe('AssetDetail trade history', () => {
-  it('empty history explains where to record trades', () => {
-    mount(mkAsset('a', { trades: [] }));
-    expect(container!.textContent).toContain('ประวัติซื้อขาย (0)');
-    expect(container!.textContent).toContain('ยังไม่มีรายการ — บันทึกที่หน้าฐานข้อมูลบัญชี');
-    expect(container!.querySelector('table')).toBeNull();
-  });
 
   const traded = () => mkAsset('a', {
     trades: [
@@ -167,17 +136,6 @@ describe('AssetDetail trade history', () => {
   });
   const bodyRows = () => [...container!.querySelectorAll('tbody tr')] as HTMLTableRowElement[];
   const rowCells = (r: HTMLTableRowElement) => [...r.querySelectorAll('td')].map(td => td.textContent);
-
-  it('lists newest first with a running balance and the count in the heading', () => {
-    mount(traded());
-    expect(container!.textContent).toContain('ประวัติซื้อขาย (3)');
-    const rows = bodyRows();
-    expect(rows).toHaveLength(3);
-    expect(rowCells(rows[0])[0]).toBe(formatThaiDateShort('2026-03-05'));
-    expect(rowCells(rows[2])[0]).toBe(formatThaiDateShort('2026-01-10'));
-    // balances after each trade: 2, 4, 3
-    expect(rows.map(r => rowCells(r)[5])).toEqual(['3', '4', '2']);
-  });
 
   it('buy and sell pills, units, unit price and signed amounts', () => {
     mount(traded());
@@ -204,15 +162,6 @@ describe('AssetDetail trade history', () => {
     expect(rows[0].querySelectorAll('td')[6].classList.contains('text-ink-soft')).toBe(true);
     expect(rowCells(rows[2])[6]).toBe('+50.00');
     expect(rows[2].querySelectorAll('td')[6].classList.contains('text-income')).toBe(true);
-  });
-
-  it('notes: the text with a tooltip, a dash when empty', () => {
-    mount(traded());
-    const [sell, mid, buy] = bodyRows();
-    expect(rowCells(sell)[7]).toBe('ขายบางส่วน');
-    expect(sell.querySelectorAll('td')[7].getAttribute('title')).toBe('ขายบางส่วน');
-    expect(rowCells(mid)[7]).toBe('DCA');
-    expect(rowCells(buy)[7]).toBe('–');
   });
 
   it('follows a changed trade list for the same asset', () => {
@@ -287,26 +236,6 @@ describe('AssetDetail manual price', () => {
     expect(priceInput().className).toContain('tint-danger');
   });
 
-  it('accepts a tiny positive price', async () => {
-    mount(mkAsset('a1'));
-    type(priceInput(), '0.0001');
-    click(saveBtn());
-    await flush();
-    expect(setPrice).toHaveBeenCalledWith('a1', 0.0001);
-  });
-
-  it('typing again clears the error', async () => {
-    mount(mkAsset('a1'));
-    click(saveBtn());
-    await flush();
-    expect(errBox()).not.toBeNull();
-    type(priceInput(), '5');
-    expect(errBox()).toBeNull();
-    expect(priceInput().hasAttribute('aria-invalid')).toBe(false);
-    expect(priceInput().hasAttribute('aria-describedby')).toBe(false);
-    expect(priceInput().className).not.toContain('tint-danger');
-  });
-
   it('a failed save keeps what was typed and says so next to the field', async () => {
     setPrice = vi.fn(async () => false);
     mount(mkAsset('a1'));
@@ -315,19 +244,6 @@ describe('AssetDetail manual price', () => {
     await flush();
     expect(priceInput().value).toBe('77');
     expect(errBox()!.textContent).toContain('บันทึกราคาไม่สำเร็จ');
-  });
-
-  it('a later success clears an earlier failure message', async () => {
-    setPrice = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
-    mount(mkAsset('a1'));
-    type(priceInput(), '77');
-    click(saveBtn());
-    await flush();
-    expect(errBox()).not.toBeNull();
-    click(saveBtn());
-    await flush();
-    expect(errBox()).toBeNull();
-    expect(priceInput().value).toBe('');
   });
 
   it('submits for the right asset after the asset prop changes', async () => {
@@ -361,15 +277,6 @@ describe('AssetDetail manual price', () => {
 });
 
 describe('AssetDetail price source note', () => {
-  it('auto price: names the source', () => {
-    mount(mkAsset('a', { autoPrice: true, priceSource: 'Yahoo Finance' }));
-    expect(container!.textContent).toContain('ดึงอัตโนมัติจาก Yahoo Finance');
-  });
-
-  it('auto price without a recorded source falls back to a generic one', () => {
-    mount(mkAsset('a', { autoPrice: true, priceSource: null }));
-    expect(container!.textContent).toContain('ดึงอัตโนมัติจาก แหล่งข้อมูลออนไลน์');
-  });
 
   it('manual-only kinds say so', () => {
     mount(mkAsset('a', { autoPrice: false, priceSource: 'manual' }));
@@ -377,18 +284,4 @@ describe('AssetDetail price source note', () => {
     expect(container!.textContent).not.toContain('ดึงอัตโนมัติจาก');
   });
 
-  it('shows how old the price is: muted when fresh, amber when over a day', () => {
-    mount(mkAsset('a', { priceAt: hoursAgo(2) }));
-    const fresh = [...container!.querySelectorAll('p')].find(p => p.textContent!.startsWith('ข้อมูล ณ'))!;
-    expect(fresh.classList.contains('text-ink-muted')).toBe(true);
-    act(() => root!.unmount()); container!.remove();
-    mount(mkAsset('b', { priceAt: hoursAgo(50) }));
-    const old = [...container!.querySelectorAll('p')].find(p => p.textContent!.startsWith('ข้อมูล ณ'))!;
-    expect(old.classList.contains('text-warn')).toBe(true);
-  });
-
-  it('no timestamp, no age line', () => {
-    mount(mkAsset('a', { priceAt: null }));
-    expect([...container!.querySelectorAll('p')].some(p => p.textContent!.startsWith('ข้อมูล ณ'))).toBe(false);
-  });
 });

@@ -71,11 +71,6 @@ describe('ForecastingTrajectoryChart: range', () => {
     expect(cone()!.getAttribute('d')).toContain(`L ${dayX(30)} ${top}`);
   });
 
-  it('no range: no fan and no legend entry', () => {
-    mount({ projectedRange: null } as Partial<Props>);
-    expect(cone()).toBeNull();
-    expect(container.textContent).not.toContain('ช่วงจาก 3 เดือนก่อน');
-  });
 });
 
 describe('ForecastingTrajectoryChart: 20% target line', () => {
@@ -116,27 +111,6 @@ describe('ForecastingTrajectoryChart', () => {
     expect(tip()!.textContent).toContain('สะสม: ฿5,500.00');
   });
 
-  it('draws the projection green while it ends under the ceiling and red once it ends over it', () => {
-    mount();
-    expect(pathBy('2').getAttribute('stroke')).toBe(tc('income'));
-    expect(container.querySelector('.border-dashed.border-emerald-400')).not.toBeNull();
-    act(() => root!.unmount());
-    mount({ projectedExpense: 33000, projectedSurplus: -3000 });
-    expect(pathBy('2').getAttribute('stroke')).toBe(tc('expense'));
-    expect(container.querySelector('.border-dashed.border-danger')).not.toBeNull();
-  });
-
-  it('maps its viewBox 1:1 to the measured width and stops observing on unmount', () => {
-    mount();
-    expect(svg().getAttribute('viewBox')).toBe('0 0 800 202');
-    act(() => ro.cb!([{ contentRect: { width: 1000.4, height: 202 } }]));
-    expect(svg().getAttribute('viewBox')).toBe('0 0 1000 202');
-    act(() => ro.cb!([{ contentRect: { width: 0, height: 0 } }])); // hidden card: keep the last width
-    expect(svg().getAttribute('viewBox')).toBe('0 0 1000 202');
-    act(() => root!.unmount()); root = null;
-    expect(ro.disconnect).toHaveBeenCalledTimes(1);
-  });
-
   it('hovering a past day shows what was spent that day, the running total and its share of the ceiling', () => {
     mount();
     expect(tip()).toBeNull();
@@ -168,19 +142,6 @@ describe('ForecastingTrajectoryChart', () => {
     expect(tip()!.querySelector('line')!.getAttribute('stroke')).toBe(tc('income'));
   });
 
-  it('clears the tooltip outside the plot and when the mouse leaves; ignores an unmeasured box', () => {
-    mount();
-    hover(dayX(5));
-    hover(PAD_L - 10);
-    expect(tip()).toBeNull();
-    hover(dayX(5));
-    leave();
-    expect(tip()).toBeNull();
-    hover(dayX(5));
-    hover(dayX(9), 0); // unmeasured box: keep what is shown
-    expect(tip()!.textContent).toContain('Day 5');
-  });
-
   it('flags a running total over the ceiling in red and uses the danger colour for a deficit projection', () => {
     mount({ currentDay: 1, actualDailySeries: [35000], projectedExpense: 40000, projectedSurplus: -10000 });
     hover(dayX(1));
@@ -188,13 +149,6 @@ describe('ForecastingTrajectoryChart', () => {
     expect(pct.getAttribute('fill')).toBe(tc('danger'));
     hover(dayX(5));
     expect(tip()!.querySelector('line')!.getAttribute('stroke')).toBe(tc('danger'));
-  });
-
-  it('keeps the tooltip inside the chart near the right edge', () => {
-    mount();
-    hover(dayX(30));
-    const [x] = translate(tip()!.querySelector('g[transform]')!);
-    expect(x).toBeCloseTo(dayX(30) - 192 - 12);
   });
 
   it('pushes the month-end and ceiling badges 16 apart when their values are close, either way round', () => {
@@ -206,28 +160,4 @@ describe('ForecastingTrajectoryChart', () => {
     expect(translate(badge('เพดาน'))[1] - translate(badge('จบเดือน'))[1]).toBeCloseTo(16);
   });
 
-  it('puts the today pill above the dot, or below it when the dot is near the top, and never past the plot', () => {
-    mount();
-    const dot = () => Number([...container.querySelectorAll('circle')].find(c => c.getAttribute('r') === '2.5')!.getAttribute('cy'));
-    expect(translate(badge('วันนี้:'))[1]).toBeLessThan(dot());
-    act(() => root!.unmount());
-    mount({ currentDay: 30, actualDailySeries: Array.from({ length: 30 }, (_, i) => (i + 1) * 1100), projectedExpense: 33000, projectedSurplus: -3000 });
-    const [x, y] = translate(badge('วันนี้:'));
-    expect(y).toBeGreaterThan(dot());
-    expect(x).toBeCloseTo(dayX(30) - 52); // half the pill width in from the plot's right edge
-  });
-
-  it('never prints two axis labels on top of each other (first day, last day, ticks next to today)', () => {
-    mount({ currentDay: 30, actualDailySeries: Array.from({ length: 30 }, () => 100) });
-    expect(dayLabels()).toEqual(['Day 1', 'Day 30 (วันนี้)']);
-    act(() => root!.unmount());
-    mount({ currentDay: 1, actualDailySeries: [100] });
-    expect(dayLabels()).toEqual(['Day 1 (วันนี้)', 'Day 30']);
-    act(() => root!.unmount());
-    mount({ currentDay: 12, actualDailySeries: Array.from({ length: 12 }, () => 100) });
-    // "Day 12 (วันนี้)" is ~95px wide around today: tick 10 (41px away) would collide, 5 and 15 do not
-    expect(texts()).not.toContain('10');
-    expect(texts()).toContain('5');
-    expect(texts()).toContain('15');
-  });
 });

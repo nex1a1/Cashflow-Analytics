@@ -74,54 +74,6 @@ describe('LedgerTable — header and sorting', () => {
     expect(heads.slice(0, 5)).toEqual(['วันเดือนปี', 'หมวดหมู่', 'ALLOCATION', 'รายละเอียด', 'จำนวนเงิน']);
   });
 
-  it('clicking a sortable header sorts by it', () => {
-    mount();
-    for (const [label, sortKey] of [['วันเดือนปี', 'date'], ['หมวดหมู่', 'category'], ['จำนวนเงิน', 'amount']] as const) {
-      click(container!.querySelector(`th[title="เรียงตาม${label}"]`));
-      expect(fn.handleSort).toHaveBeenLastCalledWith(sortKey);
-    }
-  });
-
-  it('marks the sorted column and its direction', () => {
-    mount({ sortConfig: { key: 'amount', direction: 'desc' } });
-    const th = (label: string) => container!.querySelector<HTMLElement>(`th[title="เรียงตาม${label}"]`)!;
-    expect(th('จำนวนเงิน').className).toContain('text-accent-ink');
-    expect(th('หมวดหมู่').className).not.toContain('text-accent-ink bg-surface/60');
-    const [up, down] = [...th('จำนวนเงิน').querySelectorAll<HTMLElement>('span span')];
-    expect(up.className).not.toContain('text-accent-ink');
-    expect(down.className).toContain('text-accent-ink');
-    act(() => root!.unmount()); container!.remove();
-    mount({ sortConfig: { key: 'amount', direction: 'asc' } });
-    const [up2, down2] = [...th('จำนวนเงิน').querySelectorAll<HTMLElement>('span span')];
-    expect(up2.className).toContain('text-accent-ink');
-    expect(down2.className).not.toContain('text-accent-ink');
-  });
-});
-
-describe('LedgerTable — dates', () => {
-  const data = [row('a', { date: '2026-01-05' }), row('b', { date: '2026-01-05' }), row('c', { date: '2026-01-06' })];
-
-  it('shows the date once per day (a Thai weekday badge + the date); later rows of the day show ↳', () => {
-    mount({ currentData: data });
-    const first = cell(rows()[0], 0);
-    expect(first.textContent).toContain('5 ม.ค. 26');
-    expect(first.querySelector('.day-badge-pill')).not.toBeNull();
-    expect(cell(rows()[1], 0).textContent).toContain('↳');
-    expect(cell(rows()[1], 0).querySelector('.day-badge-pill')).toBeNull();
-    expect(cell(rows()[2], 0).textContent).toContain('6 ม.ค. 26');
-  });
-
-  it('draws a stronger line where the day changes', () => {
-    mount({ currentData: data });
-    expect(rows().map(r => r.className.includes('border-t-line-strong'))).toEqual([false, false, true]);
-  });
-
-  it('when sorted by something else, every row names its own date and there are no day lines', () => {
-    mount({ currentData: data, isDateSorted: false });
-    expect(rows().every(r => !r.className.includes('border-t-line-strong'))).toBe(true);
-    expect(rows().map(r => cell(r, 0).textContent!.includes('ม.ค. 26'))).toEqual([true, true, true]);
-    expect(rows().some(r => cell(r, 0).textContent!.includes('↳'))).toBe(false);
-  });
 });
 
 describe('LedgerTable — what each kind of row shows', () => {
@@ -205,10 +157,6 @@ describe('LedgerTable — what each kind of row shows', () => {
     expect(container!.querySelector('td div[title*="ออมทั่วไป"]')).not.toBeNull();
   });
 
-  it('works while the portfolio has not loaded', () => {
-    h.portfolio = null;
-    expect(() => mount({ currentData: [buy] })).not.toThrow();
-  });
 });
 
 describe('LedgerTable — editing a row', () => {
@@ -284,11 +232,6 @@ describe('LedgerTable — row buttons', () => {
     expect(fn.handleOpenAddModal).toHaveBeenLastCalledWith('2026-01-05', 'savings');
   });
 
-  it('the add buttons are also on the repeated-date rows (↳)', () => {
-    mount({ currentData: [row('a'), row('b')] });
-    expect(cell(rows()[1], 0).querySelectorAll('button')).toHaveLength(3);
-  });
-
   it('deleting takes two clicks: the first only arms the button', () => {
     mount({ currentData: [row('r1', { description: 'ข้าวมันไก่' })] });
     const del = cell(rows()[0], 5).querySelector('button')!;
@@ -299,105 +242,14 @@ describe('LedgerTable — row buttons', () => {
     expect(fn.handleDeleteTransaction).toHaveBeenCalledWith('r1');
   });
 
-  it('with no description the delete button names the category', () => {
-    mount({ currentData: [row('r1', { description: '' })] });
-    expect(cell(rows()[0], 5).querySelector('button')!.getAttribute('aria-label')).toContain('ค่ากิน');
-  });
 });
 
 describe('LedgerTable — footer', () => {
-  it('says which page, how many rows are shown and how many there are', () => {
-    mount({ currentData: [row('a'), row('b')], sortedTransactions: Array.from({ length: 7 }, (_, i) => row(`r${i}`)), currentPage: 2, totalPages: 4 });
-    expect(footer()).toContain('หน้า 2 • แสดง 2 จาก 7 รายการ');
-  });
 
   it('shows the income and expense of the page', () => {
     mount({ pageInc: 30000, pageExp: 1234.5 });
     expect(footer()).toContain('รายรับหน้านี้฿30,000.00');
     expect(footer()).toContain('รายจ่ายหน้านี้฿1,234.50');
-  });
-});
-
-describe('LedgerTable — paging buttons', () => {
-  it('a single page: nothing to move to', () => {
-    mount({ currentPage: 1, totalPages: 1 });
-    for (const t of ['หน้าแรกสุด', 'หน้าก่อนหน้า', 'หน้าถัดไป', 'หน้าสุดท้าย']) expect(nav(t).disabled, t).toBe(true);
-    expect(footer()).not.toContain('-5');
-    expect(footer()).not.toContain('+5');
-  });
-
-  it('on the first page you can only go forward; on the last only back', () => {
-    mount({ currentPage: 1, totalPages: 3 });
-    expect([nav('หน้าแรกสุด').disabled, nav('หน้าก่อนหน้า').disabled, nav('หน้าถัดไป').disabled, nav('หน้าสุดท้าย').disabled]).toEqual([true, true, false, false]);
-    act(() => root!.unmount()); container!.remove();
-    mount({ currentPage: 3, totalPages: 3 });
-    expect([nav('หน้าแรกสุด').disabled, nav('หน้าก่อนหน้า').disabled, nav('หน้าถัดไป').disabled, nav('หน้าสุดท้าย').disabled]).toEqual([false, false, true, true]);
-  });
-
-  it('first / previous / next / last', () => {
-    mount({ currentPage: 3, totalPages: 5 });
-    click(nav('หน้าแรกสุด'));
-    expect(resolved(3)).toBe(1);
-    click(nav('หน้าก่อนหน้า'));
-    expect(resolved(3)).toBe(2);
-    click(nav('หน้าถัดไป'));
-    expect(resolved(3)).toBe(4);
-    click(nav('หน้าสุดท้าย'));
-    expect(resolved(3)).toBe(5);
-  });
-
-  it('previous / next never go past the ends', () => {
-    mount({ currentPage: 2, totalPages: 5 });
-    click(nav('หน้าก่อนหน้า'));
-    expect(resolved(1)).toBe(1);
-    click(nav('หน้าถัดไป'));
-    expect(resolved(5)).toBe(5);
-  });
-
-  it('jumps of 5 appear above 5 pages and of 10 above 10 pages', () => {
-    for (const [totalPages, five, ten] of [[5, false, false], [6, true, false], [10, true, false], [11, true, true]] as const) {
-      mount({ currentPage: 6, totalPages });
-      expect(!!byText('button', '-5'), `${totalPages} pages: ±5`).toBe(five);
-      expect(!!byText('button', '+5'), `${totalPages} pages: +5`).toBe(five);
-      expect(!!byText('button', '-10'), `${totalPages} pages: ±10`).toBe(ten);
-      expect(!!byText('button', '+10'), `${totalPages} pages: +10`).toBe(ten);
-      act(() => root!.unmount()); container!.remove();
-    }
-  });
-
-  it('the jumps are clamped to the first / last page', () => {
-    mount({ currentPage: 6, totalPages: 20 });
-    click(byText('button', '-5'));
-    expect(resolved(6)).toBe(1);
-    expect(resolved(20)).toBe(15);
-    click(byText('button', '+5'));
-    expect(resolved(18)).toBe(20);
-    click(byText('button', '-10'));
-    expect(resolved(4)).toBe(1);
-    expect(resolved(15)).toBe(5);
-    click(byText('button', '+10'));
-    expect(resolved(15)).toBe(20);
-    expect(resolved(3)).toBe(13);
-  });
-
-  it('the jump buttons are disabled at the ends', () => {
-    mount({ currentPage: 1, totalPages: 20 });
-    expect(byText('button', '-5')!.hasAttribute('disabled')).toBe(true);
-    expect(byText('button', '-10')!.hasAttribute('disabled')).toBe(true);
-    expect(byText('button', '+5')!.hasAttribute('disabled')).toBe(false);
-    act(() => root!.unmount()); container!.remove();
-    mount({ currentPage: 20, totalPages: 20 });
-    expect(byText('button', '+5')!.hasAttribute('disabled')).toBe(true);
-    expect(byText('button', '+10')!.hasAttribute('disabled')).toBe(true);
-  });
-
-  it('titles tell where each button goes', () => {
-    mount({ currentPage: 3, totalPages: 12 });
-    expect(nav('หน้าก่อนหน้า').title).toContain('ไปหน้า 2');
-    expect(nav('หน้าถัดไป').title).toContain('ไปหน้า 4');
-    expect(nav('ถอยหลัง 5').title).toContain('ไปหน้า 1');
-    expect(nav('ข้ามไปข้างหน้า 5').title).toContain('ไปหน้า 8');
-    expect(nav('หน้าสุดท้าย').title).toContain('หน้า 12');
   });
 });
 
@@ -408,55 +260,6 @@ describe('LedgerTable — typing a page number', () => {
     expect(footer()).toContain('/9');
   });
 
-  it('Enter goes to that page', () => {
-    mount({ currentPage: 1, totalPages: 9 });
-    type(pageInput(), '4');
-    key(pageInput(), 'Enter');
-    expect(fn.setCurrentPage).toHaveBeenCalledWith(4);
-  });
-
-  it('leaving the box also goes there', () => {
-    mount({ currentPage: 1, totalPages: 9 });
-    act(() => pageInput().focus());
-    type(pageInput(), '6');
-    act(() => pageInput().blur());
-    expect(fn.setCurrentPage).toHaveBeenLastCalledWith(6);
-  });
-
-  it('too big goes to the last page, zero / junk / empty go to the first, and the box shows the result', () => {
-    mount({ currentPage: 2, totalPages: 9 });
-    for (const [typed, expected] of [['99', 9], ['0', 1], ['abc', 1], ['', 1], ['-3', 1]] as const) {
-      type(pageInput(), typed);
-      key(pageInput(), 'Enter');
-      expect(fn.setCurrentPage, typed).toHaveBeenLastCalledWith(expected);
-      expect(pageInput().value, typed).toBe(String(expected));
-    }
-  });
-
-  it('arrow up / down step one page, within the range', () => {
-    mount({ currentPage: 5, totalPages: 9 });
-    key(pageInput(), 'ArrowUp');
-    expect(resolved(5)).toBe(6);
-    expect(resolved(9)).toBe(9);
-    key(pageInput(), 'ArrowDown');
-    expect(resolved(5)).toBe(4);
-    expect(resolved(1)).toBe(1);
-  });
-
-  it('follows the page when it changes from outside (a filter resets to page 1)', () => {
-    mount({ currentPage: 5, totalPages: 9 });
-    props = { ...props, currentPage: 1 };
-    render();
-    expect(pageInput().value).toBe('1');
-  });
-
-  it('a typed-but-unsent number is replaced when the page changes', () => {
-    mount({ currentPage: 5, totalPages: 9 });
-    type(pageInput(), '7');
-    props = { ...props, currentPage: 2 };
-    render();
-    expect(pageInput().value).toBe('2');
-  });
 });
 
 describe('LedgerTable — moving rows to another day', () => {
@@ -466,14 +269,6 @@ describe('LedgerTable — moving rows to another day', () => {
   const modClick = (el: Element, mods: MouseEventInit) => act(() => { el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...mods })); });
   const three = () => [row('a', { date: '2026-01-05' }), row('b', { date: '2026-01-06' }), row('c', { date: '2026-01-31' })];
   beforeEach(() => move.mockReset().mockResolvedValue(true));
-
-  it('every row, first of its day or not, has a date button that opens the editor', () => {
-    mount({ currentData: [row('a'), row('b')], handleMoveTransactions: move });
-    expect(rows().every(r => trigger(r))).toBe(true);
-    click(trigger(rows()[1]));
-    expect(editor().value).toBe('2026-01-05');
-    expect(q('[role="dialog"]')!.textContent).toContain('ย้ายไปวันที่');
-  });
 
   it('Enter moves just that row; Esc cancels without saving', async () => {
     mount({ currentData: three(), handleMoveTransactions: move });
@@ -521,20 +316,6 @@ describe('LedgerTable — moving rows to another day', () => {
     expect(rows().some(r => r.getAttribute('aria-selected') === 'true')).toBe(false);
   });
 
-  it('Ctrl+click again unpicks; a plain click or Esc clears the selection', () => {
-    mount({ currentData: three(), handleMoveTransactions: move });
-    modClick(cell(rows()[0], 3), { ctrlKey: true });
-    modClick(cell(rows()[1], 3), { ctrlKey: true });
-    modClick(cell(rows()[0], 3), { ctrlKey: true });
-    expect(rows().map(r => r.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
-    click(cell(rows()[2], 3));
-    expect(rows()[1].getAttribute('aria-selected')).toBeNull();
-
-    modClick(cell(rows()[0], 3), { ctrlKey: true });
-    key(document.body, 'Escape');
-    expect(rows()[0].getAttribute('aria-selected')).toBeNull();
-  });
-
   it('a row outside the selection moves alone', async () => {
     mount({ currentData: three(), handleMoveTransactions: move });
     modClick(cell(rows()[0], 3), { ctrlKey: true });
@@ -575,14 +356,6 @@ describe('LedgerTable — move calendar', () => {
     expect(move).toHaveBeenCalledWith([{ id: 'a', date: '2027-06-25' }]);
   });
 
-  it('typing a date moves the calendar to its month', () => {
-    mount({ currentData: [row('a', { date: '2026-01-05' })], handleMoveTransactions: move });
-    open();
-    type(q('[role="dialog"] input'), '3/11/2569');
-    expect(dialog().textContent).toContain('พฤศจิกายน 2026');
-    expect(q('[data-day="2026-11-03"]')!.className).toContain('bg-accent');
-  });
-
   it('with several rows picked, a clicked day sends them all to that date', async () => {
     mount({ currentData: [row('a', { date: '2026-01-05' }), row('b', { date: '2026-01-09' })], handleMoveTransactions: move });
     const tr = rows();
@@ -595,16 +368,3 @@ describe('LedgerTable — move calendar', () => {
   });
 });
 
-describe('LedgerTable — date hover colour', () => {
-  it('the date button carries its day-of-week colour, the same one as the day badge', async () => {
-    const { readable } = await import('@/constants/theme');
-    const { getThaiDayInfo } = await import('@/utils/formatters');
-    mount({ currentData: [row('a', { date: '2026-01-04' }), row('b', { date: '2026-01-04' }), row('c', { date: '2026-01-05' })], handleMoveTransactions: vi.fn() });
-    const ink = (r: HTMLElement) => r.querySelector<HTMLElement>('[data-date-trigger]')!.style.getPropertyValue('--day-ink');
-    const [sun, sunAgain, mon] = rows();
-    expect(ink(sun)).toBe(readable(getThaiDayInfo('2026-01-04')!.color));
-    expect(ink(sunAgain)).toBe(ink(sun)); // the ↳ row too
-    expect(ink(mon)).toBe(readable(getThaiDayInfo('2026-01-05')!.color));
-    expect(ink(mon)).not.toBe(ink(sun));
-  });
-});

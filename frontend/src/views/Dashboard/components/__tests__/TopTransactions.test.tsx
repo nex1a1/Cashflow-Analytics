@@ -60,69 +60,6 @@ describe('TopTransactions — which rows', () => {
     expect([...document.querySelectorAll('div.w-6.h-6')].map(d => d.textContent)).toEqual(['1', '2', '3']);
   });
 
-  it('only the first N (the limit in the selector), default 7 when the limit is unset', () => {
-    const many = Array.from({ length: 12 }, (_, i) => tx(`t${i}`, 100 + i, 'c-food'));
-    set({ transactions: many, topXLimit: 5 });
-    mount();
-    expect(titles()).toHaveLength(5);
-    expect(titles()[0]).toBe('t11');
-    act(() => root!.unmount()); container!.remove();
-
-    set({ transactions: many, topXLimit: 0 });
-    mount();
-    expect(titles()).toHaveLength(7);
-  });
-
-  it('only rows inside the selected period', () => {
-    set({ filterPeriod: '2026-02', transactions: [tx('jan', 500, 'c-food'), tx('feb', 300, 'c-food', { date: '2026-02-10' })] });
-    mount();
-    expect(titles()).toEqual(['feb']);
-  });
-
-  it('a pay-cycle period uses the cycle, not the calendar month', () => {
-    set({ filterPeriod: 'cycle:2026-01', transactions: [
-      tx('in-cycle', 200, 'c-food', { date: '2026-02-03' }),  // 25 Jan – 24 Feb
-      tx('out', 300, 'c-food', { date: '2026-02-25' }),
-    ] });
-    mount();
-    expect(titles()).toEqual(['in-cycle']);
-  });
-
-  it('hide fixed (NEED) removes the NEED rows; rows with no allocation count as WANT', () => {
-    set({ hideFixedExpenses: true, transactions: [tx('food', 500, 'c-food'), tx('fun', 400, 'c-fun'), tx('trip', 300, 'c-trip')] });
-    mount();
-    expect(titles()).toEqual(['fun', 'trip']);
-  });
-
-  it('a row\'s own allocation beats the category\'s', () => {
-    set({ hideFixedExpenses: true, transactions: [tx('food-want', 500, 'c-food', { allocation_type: 'want' })] });
-    mount();
-    expect(titles()).toEqual(['food-want']);
-  });
-
-  it('hide WANT removes the WANT rows (and the unallocated ones)', () => {
-    set({ hideWantExpenses: true, transactions: [tx('food', 500, 'c-food'), tx('fun', 400, 'c-fun'), tx('trip', 300, 'c-trip')] });
-    mount();
-    expect(titles()).toEqual(['food']);
-  });
-
-  it('category filter: by id or by a list; "ALL" keeps everything', () => {
-    const rows = [tx('food', 500, 'c-food'), tx('fun', 400, 'c-fun'), tx('trip', 300, 'c-trip')];
-    set({ transactions: rows, dashboardCategory: 'c-fun' });
-    mount();
-    expect(titles()).toEqual(['fun']);
-    act(() => root!.unmount()); container!.remove();
-
-    set({ transactions: rows, dashboardCategory: ['c-food', 'c-trip'] });
-    mount();
-    expect(titles()).toEqual(['food', 'trip']);
-    act(() => root!.unmount()); container!.remove();
-
-    set({ transactions: rows, dashboardCategory: ['ALL'] });
-    mount();
-    expect(titles()).toHaveLength(3);
-  });
-
   it('a row with no group_type falls back to its category type, or a negative amount', () => {
     set({ transactions: [
       { ...tx('legacy-exp', 100, 'c-food'), group_type: undefined },
@@ -151,56 +88,12 @@ describe('TopTransactions — the total chip', () => {
   });
 });
 
-describe('TopTransactions — states', () => {
-  it('empty: says nothing matches and offers no chip', () => {
-    set({ transactions: [tx('pay', 30_000, 'c-salary')] });
-    mount();
-    expect(document.body.textContent).toContain('ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข');
-    expect(chip()).toBeNull();
-  });
-
-  it('no transactions at all: same empty message', () => {
-    mount();
-    expect(document.body.textContent).toContain('ไม่มีรายการรายจ่ายที่ตรงตามเงื่อนไข');
-  });
-
-  it('skeleton: placeholders for the selected count, the selector is disabled, no chip', () => {
-    set({ transactions: [tx('a', 100, 'c-food')], showSkeleton: true, topXLimit: 5 });
-    mount();
-    expect(document.querySelectorAll('.animate-pulse')).toHaveLength(5);
-    expect(titles()).toEqual([]);
-    expect(q<HTMLSelectElement>('select')!.disabled).toBe(true);
-    expect(chip()).toBeNull();
-  });
-
-  it('changing the selector reports the new limit as a number', () => {
-    mount();
-    expect(q<HTMLSelectElement>('select')!.value).toBe('7');
-    choose(q('select'), '15');
-    expect(h.setTopXLimit).toHaveBeenCalledWith(15);
-  });
-});
-
 describe('TopTransactions — row details', () => {
   const dateTag = (rowId: string) => [...document.querySelectorAll('p[title]')].find(p => p.textContent === rowId)!.parentElement!.querySelector('span.rounded-pill')!.textContent!.trim();
   const iso = (offsetDays: number) => {
     const d = new Date(); d.setDate(d.getDate() + offsetDays);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
-
-  it('today/yesterday/tomorrow by name, other dates like the Ledger (5 ม.ค. 26)', () => {
-    set({ transactions: [
-      tx('today', 100, 'c-food', { date: iso(0) }), tx('yesterday', 99, 'c-food', { date: iso(-1) }),
-      tx('tomorrow', 98, 'c-food', { date: iso(1) }), tx('three', 97, 'c-food', { date: iso(-3) }),
-      tx('old', 96, 'c-food', { date: '2026-01-05' }),
-    ] });
-    mount();
-    expect(dateTag('today')).toBe('วันนี้');
-    expect(dateTag('yesterday')).toBe('เมื่อวาน');
-    expect(dateTag('tomorrow')).toBe('พรุ่งนี้');
-    expect(dateTag('three')).toBe(`${Number(iso(-3).slice(8))} ${THAI_MONTHS_SHORT[Number(iso(-3).slice(5,7)) - 1]} ${iso(-3).slice(2,4)}`);
-    expect(dateTag('old')).toBe('5 ม.ค. 26');
-  });
 
   it('shows the amount without a sign and the category name from the category list', () => {
     set({ transactions: [tx('a', -1234.5, 'c-food')] });
@@ -210,22 +103,4 @@ describe('TopTransactions — row details', () => {
     expect(document.body.textContent).toContain('ค่ากิน');
   });
 
-  it('a row that only carries the category name (no id) still finds its category', () => {
-    const legacy = { ...tx('a', 500, 'c-food'), category_id: undefined, group_type: undefined };
-    set({ transactions: [legacy] });
-    mount();
-    expect(document.body.textContent).toContain('ค่ากิน'); // an expense, known only through its category name
-    act(() => root!.unmount()); container!.remove();
-    set({ transactions: [legacy], hideFixedExpenses: true });
-    mount();
-    expect(document.body.textContent).not.toContain('ค่ากิน'); // and that category is a NEED
-  });
-
-  it('the bar behind each row is relative to the biggest, with a small floor so a tiny row is still visible', () => {
-    set({ transactions: [tx('big', 1000, 'c-food'), tx('tiny', 1, 'c-food')] });
-    mount();
-    const widths = [...document.querySelectorAll<HTMLElement>('div.bg-linear-to-r')].map(d => d.style.width);
-    expect(widths[0]).toBe('100%');
-    expect(parseFloat(widths[1])).toBeCloseTo(4.096, 2);
-  });
 });

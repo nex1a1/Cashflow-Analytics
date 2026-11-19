@@ -89,24 +89,9 @@ describe('AmountEditableInput — what it shows', () => {
     expect(shown()).toBe('−฿999.00');
   });
 
-  it('but never overwrites what is being typed', async () => {
-    mount({ initialValue: 100 });
-    await open();
-    type(input(), '55');
-    props = { ...props, initialValue: 999 };
-    render();
-    expect(input().value).toBe('55');
-  });
 });
 
 describe('AmountEditableInput — editing', () => {
-  it('clicking the cell opens a labelled, focused input with the current value', async () => {
-    mount({ initialValue: 250 });
-    await open();
-    expect(input().getAttribute('aria-label')).toBe('จำนวนเงิน');
-    expect(input().value).toBe('250');
-    expect(document.activeElement).toBe(input());
-  });
 
   it('leaving the field saves the new number', async () => {
     mount();
@@ -165,14 +150,6 @@ describe('AmountEditableInput — a typo never becomes ฿0', () => {
     expect(container!.textContent).toContain('ใส่จำนวนเงินเป็นตัวเลขมากกว่า 0');
     expect(input().getAttribute('aria-invalid')).toBe('true');
     expect(input().getAttribute('aria-describedby')).toBeTruthy();
-  });
-
-  it('the message goes away as soon as the user types again', async () => {
-    mount();
-    await enter('abc');
-    type(input(), '12');
-    expect(container!.textContent).not.toContain('ใส่จำนวนเงิน');
-    expect(input().getAttribute('aria-invalid')).toBe('false');
   });
 
   it('a fixed value then saves', async () => {

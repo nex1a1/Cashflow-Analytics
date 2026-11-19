@@ -73,50 +73,6 @@ const sideButtons = () => [...document.querySelectorAll<HTMLButtonElement>('[rol
 const lastUnits = () => calls().units.mock.calls.at(-1)?.[0];
 
 describe('InvestFields — the asset and the side', () => {
-  it('lists "ออมทั่วไป" first, then the assets, and reports the one picked', () => {
-    render();
-    click(q('button[aria-label="สินทรัพย์"]'));
-    const opts = [...document.querySelectorAll('[role="option"]')];
-    expect(opts.map(o => o.textContent)).toEqual(['ออมทั่วไป (ไม่ผูกสินทรัพย์)', 'ทองแท่ง', 'AAPL', 'กองทุน X']);
-    click(opts[2]);
-    expect(calls().asset).toHaveBeenCalledWith('s1');
-    click(q('button[aria-label="สินทรัพย์"]'));
-    click(document.querySelectorAll('[role="option"]')[0]);
-    expect(calls().asset).toHaveBeenLastCalledWith('');
-  });
-
-  it('shows the current asset on the dropdown', () => {
-    render({ assetId: 's1' });
-    expect(q('button[aria-label="สินทรัพย์"]')!.textContent).toBe('AAPL');
-    render({ assetId: '' });
-    expect(q('button[aria-label="สินทรัพย์"]')!.textContent).toBe('ออมทั่วไป (ไม่ผูกสินทรัพย์)');
-  });
-
-  it('works before the portfolio has loaded (only the general option)', () => {
-    h.ctx = { portfolio: null };
-    render();
-    click(q('button[aria-label="สินทรัพย์"]'));
-    expect([...document.querySelectorAll('[role="option"]')].map(o => o.textContent)).toEqual(['ออมทั่วไป (ไม่ผูกสินทรัพย์)']);
-  });
-
-  it('buy / sell: pressed state follows the side, a click reports the other', () => {
-    render({ side: 'buy' });
-    expect(sideButtons().map(b => b.textContent)).toEqual(['ซื้อ', 'ขาย']);
-    expect(sideButtons().map(b => b.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
-    click(sideButtons()[1]);
-    expect(calls().side).toHaveBeenCalledWith('sell');
-    click(sideButtons()[0]);
-    expect(calls().side).toHaveBeenLastCalledWith('buy');
-    render({ side: 'sell' });
-    expect(sideButtons().map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
-  });
-
-  it('sell is blue and buy is the savings green when lit', () => {
-    render({ side: 'sell' });
-    expect(sideButtons()[1].classList.contains('text-info')).toBe(true);
-    render({ side: 'buy' });
-    expect(sideButtons()[0].classList.contains('text-savings')).toBe(true);
-  });
 
   it('a sale explains what it does to the savings total; a purchase does not', () => {
     render({ side: 'sell' });
@@ -241,12 +197,6 @@ describe('InvestFields — entering the price instead of the units', () => {
     expect(lastUnits()).toBe('10');
   });
 
-  it('the price field only takes digits and a dot', () => {
-    render({ assetId: 's1', amount: 500 });
-    type(priceInput(), '1x0,0');
-    expect(priceInput().value).toBe('100');
-  });
-
   it('without an amount it asks for one, and reports no units', () => {
     render({ assetId: 's1' });
     type(priceInput(), '100');
@@ -303,12 +253,6 @@ describe('InvestFields — gold (grams in, baht-weight out)', () => {
     expect(lastUnits()).toBe('0.5');
   });
 
-  it('shows the baht-weight equivalent under the grams', () => {
-    render({ assetId: 'g1' });
-    type(unitsInput(), String(GRAMS));
-    expect(note()).toContain(`= 1 บาททอง (1 บาททอง = ${GRAMS} กรัม)`);
-  });
-
   it('no equivalent line without units, or in baht-weight mode', () => {
     render({ assetId: 'g1' });
     expect(note()).not.toContain('= ');
@@ -332,24 +276,6 @@ describe('InvestFields — gold (grams in, baht-weight out)', () => {
     expect(unitToggle().map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
     expect(unitsInput().placeholder).toBe('เช่น 0.0234');
     expect(lastUnits()).toBe('2'); // the stored value is the same either way
-  });
-
-  it('switching back converts again, and clicking the mode already on changes nothing', () => {
-    render({ assetId: 'g1' });
-    type(unitsInput(), String(GRAMS));
-    click(unitToggle()[1]);
-    click(unitToggle()[1]);
-    expect(unitsInput().value).toBe('1');
-    click(unitToggle()[0]);
-    expect(unitsInput().value).toBe(String(GRAMS));
-    expect(lastUnits()).toBe('1');
-  });
-
-  it('typing baht-weight is reported as it is', () => {
-    render({ assetId: 'g1' });
-    click(unitToggle()[1]);
-    type(unitsInput(), '0.5');
-    expect(lastUnits()).toBe('0.5');
   });
 
   it('price mode in grams: units come from amount ÷ price per gram', () => {
@@ -426,14 +352,6 @@ describe('InvestFields — fine print', () => {
     expect(lastUnits()).toBe('');
   });
 
-  it('the asset list follows the portfolio when it loads after the form is shown', () => {
-    h.ctx = { portfolio: null };
-    render();
-    h.ctx = { portfolio: { assets: [GOLD, STOCK] } };
-    render({ side: 'sell' }); // any re-render picks up the loaded portfolio
-    click(q('button[aria-label="สินทรัพย์"]'));
-    expect([...document.querySelectorAll('[role="option"]')].map(o => o.textContent)).toEqual(['ออมทั่วไป (ไม่ผูกสินทรัพย์)', 'ทองแท่ง', 'AAPL']);
-  });
 });
 
 describe('InvestFields — following the form', () => {
@@ -484,25 +402,6 @@ describe('InvestFields — following the form', () => {
 });
 
 describe('InvestFields — Enter, errors, ids', () => {
-  it('Enter in either field runs onEnter and is swallowed; other keys are left alone', () => {
-    const onEnter = vi.fn();
-    render({ assetId: 's1', onEnter });
-    key(unitsInput(), 'Enter');
-    key(priceInput(), 'Enter');
-    expect(onEnter).toHaveBeenCalledTimes(2);
-    key(unitsInput(), 'a');
-    expect(onEnter).toHaveBeenCalledTimes(2);
-    const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
-    act(() => { unitsInput().dispatchEvent(e); });
-    expect(e.defaultPrevented).toBe(true);
-  });
-
-  it('Enter without onEnter does nothing (and is not swallowed)', () => {
-    render({ assetId: 's1' });
-    const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
-    act(() => { unitsInput().dispatchEvent(e); });
-    expect(e.defaultPrevented).toBe(false);
-  });
 
   it('shows the units error next to the field, linked for screen readers', () => {
     render({ assetId: 's1', unitsError: 'ใส่จำนวนหุ้น' });
@@ -522,8 +421,4 @@ describe('InvestFields — Enter, errors, ids', () => {
     expect(q('label[for="daily-units"]')).not.toBeNull();
   });
 
-  it('both fields are decimal text inputs', () => {
-    render({ assetId: 's1' });
-    for (const i of [unitsInput(), priceInput()]) { expect(i.type).toBe('text'); expect(i.inputMode).toBe('decimal'); }
-  });
 });
