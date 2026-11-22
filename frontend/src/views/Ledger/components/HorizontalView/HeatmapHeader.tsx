@@ -5,13 +5,15 @@ import CategoryGlyph from '../../../../components/shared/CategoryGlyph';
 import { tc, readable } from '@/constants/theme';
 interface HeatmapHeaderProps {
   activeCategories: Category[];
+  /** columns too narrow for names: icon only, the name moves to a tooltip and screen readers */
+  dense?: boolean;
   bgHead: string;
   border: string;
   border2: string;
 }
 
 const HeatmapHeader = memo(function HeatmapHeader({
-  activeCategories, bgHead, border, border2
+  activeCategories, dense = false, bgHead, border, border2
 }: HeatmapHeaderProps) {
   return (
     <thead>
@@ -31,7 +33,8 @@ const HeatmapHeader = memo(function HeatmapHeader({
         }}>DATE</th>
 
         {activeCategories.map((cat, idx) => (
-          <th key={cat.id} 
+          <th key={cat.id}
+            title={dense ? cat.name : undefined}
             className={`heatmap-header-cell col-idx-${idx}`}
             style={{
               position: 'sticky', top: 0, zIndex: 40,
@@ -64,8 +67,8 @@ const HeatmapHeader = memo(function HeatmapHeader({
                 margin: '0 auto',
               }}
             >
-              <CategoryGlyph icon={cat.icon} color={cat.color} size={16} />
-              <span style={{
+              <CategoryGlyph icon={cat.icon} color={cat.color} size={dense ? 18 : 16} />
+              {dense ? <span className="sr-only">{cat.name}</span> : <span style={{
                 fontSize: 11,
                 fontWeight: 900,
                 color: readable(cat.color),
@@ -78,7 +81,7 @@ const HeatmapHeader = memo(function HeatmapHeader({
                 textAlign: 'center',
                 letterSpacing: '-0.01em',
                 padding: '0 2px',
-              }} title={cat.name}>{cat.name}</span>
+              }} title={cat.name}>{cat.name}</span>}
             </div>
           </th>
         ))}

@@ -14,10 +14,17 @@ interface HeatmapRowProps {
   month: string;
   dayName: string;
   isWeekend: boolean;
+  isToday?: boolean;
+  /** not reached yet: an empty row here means "not yet", not "spent nothing", so the date dims */
+  isFuture?: boolean;
+  /** cycle mode: spending since the cycle started, up to and including this day */
+  sinceStart?: number;
   dailyTotal: Record<string, number>;
   grandTotal: number;
   cellMap: Record<string, Record<string, TransactionDisplay[]>>;
   activeCategories: Category[];
+  /** many narrow columns: smaller cell numbers */
+  dense?: boolean;
   dayTypes: Record<string, string>;
   dayTypeConfig: DayType[];
   handleCellLeave: () => void;
@@ -32,8 +39,8 @@ interface HeatmapRowProps {
 }
 
 const HeatmapRow = memo(function HeatmapRow({
-  date, rowIdx, day, month, dayName, isWeekend,
-  dailyTotal, grandTotal, cellMap, activeCategories,
+  date, rowIdx, day, month, dayName, isWeekend, isToday = false, isFuture = false, sinceStart,
+  dailyTotal, grandTotal, cellMap, activeCategories, dense = false,
   dayTypes, dayTypeConfig,
   handleCellLeave, handleCellHover, handleCellPin,
   bgBase, border, ROW_H, maxCellValue, maxDailyTotal, formatMoney
@@ -48,7 +55,8 @@ const HeatmapRow = memo(function HeatmapRow({
   const sparkPct  = total > 0 ? Math.max(4, Math.round((total / maxDailyTotal) * 100)) : 0;
 
   return (
-    <tr style={{ height: ROW_H }}
+    <tr className="group/row" style={{ height: ROW_H, background: isToday ? tc('accent', 0.07) : undefined }}
+      aria-current={isToday ? 'date' : undefined}
       onMouseLeave={handleCellLeave}
     >
       <td style={{
@@ -72,6 +80,9 @@ const HeatmapRow = memo(function HeatmapRow({
           background: `rgba(${typeRgb}, 0.08)`,
           borderLeft: `2.5px solid ${typeColor}`,
           padding: '2px 0',
+          opacity: isFuture ? 0.4 : undefined,
+          // box-shadow, not a border: the global border lock would turn a coloured border into a grey hairline
+          boxShadow: isToday ? `inset 0 0 0 1.5px ${tc('accent-ink')}` : undefined,
           '--type-rgb': typeRgb,
         } as React.CSSProperties} >
           <div style={{
@@ -131,7 +142,7 @@ const HeatmapRow = memo(function HeatmapRow({
             key={cat.id}
             idx={idx}
             date={date} cat={cat} items={items} cellSum={cellSum} intensity={intensity}
-            border={border} ROW_H={ROW_H} maxCellValue={maxCellValue}
+            border={border} ROW_H={ROW_H} maxCellValue={maxCellValue} dense={dense}
             handleCellHover={handleCellHover} handleCellPin={handleCellPin} handleCellLeave={handleCellLeave} formatMoney={formatMoney}
           />
         );
@@ -143,7 +154,7 @@ const HeatmapRow = memo(function HeatmapRow({
         borderBottom: `1px solid ${border}`,
         borderLeft: `1px solid ${border}`,
         boxShadow: '-2px 0 5px rgb(0 0 0 / calc(0.25 * var(--shadow-k)))',
-        padding: '0 6px',
+        padding: dense ? '0 4px' : '0 6px',
         height: ROW_H,
       }}>
         {total > 0 && (
@@ -152,10 +163,11 @@ const HeatmapRow = memo(function HeatmapRow({
             justifyContent: 'space-between',
             alignItems: 'baseline',
             width: '100%',
+            lineHeight: 1.1,
           }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: tc('expense') }}>฿</span>
+            <span style={{ fontSize: dense ? '11px' : '12px', fontWeight: 700, color: tc('expense') }}>฿</span>
             <span style={{
-              fontSize: '13px',
+              fontSize: dense ? '12px' : '13px',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
@@ -163,6 +175,24 @@ const HeatmapRow = memo(function HeatmapRow({
             }}>
               {formatMoney(total)}
             </span>
+          </div>
+        )}
+        {sinceStart !== undefined && sinceStart > 0 && (
+          // Shown only while the row is hovered or has focus (today's always shows), so the column stays
+          // clean. `invisible` keeps its line reserved: rows don't change height when it appears.
+          <div title="ใช้ไปแล้วตั้งแต่ต้นรอบ"
+            className={isToday ? undefined : 'invisible group-hover/row:visible group-focus-within/row:visible'}
+            style={{
+            // secondary to the day's own total: regular weight, the faintest colour that keeps 4.5:1
+            fontSize: 11,
+            fontWeight: 400,
+            lineHeight: 1.1,
+            textAlign: 'right',
+            color: tc('ink-muted'),
+            fontVariantNumeric: 'tabular-nums',
+            whiteSpace: 'nowrap',
+          }}>
+            สะสม {formatMoney(sinceStart)}
           </div>
         )}
       </td>

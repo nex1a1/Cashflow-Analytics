@@ -10,6 +10,8 @@ export interface TooltipData {
   x: number;
   y: number;
   bottom?: number;
+  /** Pinned tooltips keep the side they opened on, so scrolling doesn't flip them. */
+  below?: boolean;
   cat?: Category;
   date: string;
   items: TransactionDisplay[];
@@ -29,7 +31,7 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, pinned = false, o
   if (!isVisible || typeof document === 'undefined') return null;
 
   // Smart position: if cell is near the top of the viewport (< 220px), show tooltip below the cell
-  const isNearTop = tooltip.y < 220;
+  const isNearTop = tooltip.below ?? tooltip.y < 220;
   let topPos = `${tooltip.y - 8}px`;
   if (isNearTop) {
     topPos = tooltip.bottom ? `${tooltip.bottom + 8}px` : `${tooltip.y + 36}px`;
@@ -39,13 +41,17 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, pinned = false, o
   return createPortal(
     <div
       ref={panelRef}
+      data-heatmap-tip=""
       className={`fixed z-99999 ${pinned ? 'pointer-events-auto' : 'pointer-events-none'}`}
       {...(pinned ? { role: 'dialog', 'aria-label': ` ` } : {})}
       style={{ 
         left: `${tooltip.x}px`,
         top: topPos,
         transform: transformStyle,
-        position: 'fixed'
+        position: 'fixed',
+        // A pin always takes over a hover tooltip that is already on screen, so the global
+        // [role="dialog"] pop-in would make the box vanish and pop back: no entrance here.
+        animation: 'none',
       }}
     >
       <div style={{
@@ -74,14 +80,21 @@ const HeatmapTooltip = memo(function HeatmapTooltip({ tooltip, pinned = false, o
               {tooltip.date}
             </p>
           </div>
-          {pinned ? (
+          {/* Hint and close button share one grid cell, so pinning swaps them without changing the
+              box width (the box is centred on its cell, a width change would slide it sideways). */}
+          <div style={{ marginLeft: 'auto', display: 'grid', alignItems: 'center', justifyItems: 'end' }}>
+            <span aria-hidden={pinned || undefined}
+              style={{ gridArea: '1 / 1', fontSize: 11, color: tc('ink-muted'), whiteSpace: 'nowrap', visibility: pinned ? 'hidden' : 'visible' }}>
+              คลิกเพื่อค้างไว้
+            </span>
+            {/* Rendered (hidden) on the hover tooltip too, so the header height doesn't change either. */}
             <button type="button" onClick={onClose} aria-label="ปิด" title="ปิด (Esc)"
-              className="ml-auto p-1 text-ink-muted hover:text-ink-display hover:bg-surface-elevated">
+              tabIndex={pinned ? undefined : -1} aria-hidden={!pinned || undefined}
+              style={{ gridArea: '1 / 1', visibility: pinned ? 'visible' : 'hidden' }}
+              className="p-1 text-ink-muted hover:text-ink-display hover:bg-surface-elevated">
               <X className="w-3.5 h-3.5" />
             </button>
-          ) : (
-            <span style={{ marginLeft: 'auto', fontSize: 11, color: tc('ink-muted'), whiteSpace: 'nowrap' }}>คลิกเพื่อค้างไว้</span>
-          )}
+          </div>
         </div>
         <div style={{ maxHeight: 240, overflowY: 'auto' }} className="custom-scrollbar">
           {tooltip.items.map((item, i) => (

@@ -21,6 +21,8 @@ export interface LedgerContentAreaProps {
   dayTypes: Record<string, string>;
   dayTypeConfig: DayType[];
   allDatesInPeriod: string[];
+  /** the selected period string (`cycle:…` in pay-cycle mode) */
+  period?: string;
   currentData: TransactionDisplay[];
   sortedTransactions: TransactionDisplay[];
   sortConfig: { key: string; direction: 'asc' | 'desc' };
@@ -53,6 +55,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
   dayTypes,
   dayTypeConfig,
   allDatesInPeriod,
+  period,
   currentData,
   sortedTransactions,
   sortConfig,
@@ -78,6 +81,7 @@ export const LedgerContentArea: React.FC<LedgerContentAreaProps> = ({
           dayTypes={dayTypes}
           dayTypeConfig={dayTypeConfig}
           allDates={allDatesInPeriod}
+          period={period}
           filterOptions={horizontalFilters}
           clearFilters={clearHorizontalFilters}
           isFilterActive={isHorizontalFilterActive}

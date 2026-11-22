@@ -38,3 +38,25 @@ export function sumIncomeExpense(
   });
   return { inc, exp, sav };
 }
+
+/**
+ * Running total of each day's spending since the start of its group (pay cycle or month),
+ * restarting whenever `groupOf` changes. `dates` must be sorted ascending; days missing
+ * from `dailyTotal` add nothing but still carry the running total.
+ */
+export function runningTotals(
+  dates: string[],
+  dailyTotal: Record<string, number>,
+  groupOf: (iso: string) => string,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  let group: string | null = null;
+  let sum = 0;
+  for (const d of dates) {
+    const g = groupOf(d);
+    if (g !== group) { group = g; sum = 0; }
+    sum += dailyTotal[d] || 0;
+    out[d] = sum;
+  }
+  return out;
+}

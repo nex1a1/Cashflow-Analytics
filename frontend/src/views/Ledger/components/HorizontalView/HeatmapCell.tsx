@@ -13,6 +13,8 @@ interface HeatmapCellProps {
   border: string;
   ROW_H: number | string;
   maxCellValue: number;
+  /** narrow columns: 11–12px numbers instead of 12.5–14.5px */
+  dense?: boolean;
   handleCellHover: (e: React.SyntheticEvent<HTMLTableCellElement>, date: string, catId: string, cat: Category, items: TransactionDisplay[]) => void;
   handleCellLeave: () => void;
   /** Click / Enter / Space: keep the tooltip open so its list can be scrolled. */
@@ -44,16 +46,18 @@ const moveFocus = (e: React.KeyboardEvent<HTMLTableCellElement>) => {
 
 const HeatmapCell = memo(function HeatmapCell({
   idx, date, cat, items, cellSum, intensity,
-  border, ROW_H, maxCellValue,
+  border, ROW_H, maxCellValue, dense = false,
   handleCellHover, handleCellPin, handleCellLeave, formatMoney
 }: HeatmapCellProps) {
   const hasData = items.length > 0;
   const barW = hasData ? Math.max(8, Math.round(intensity * 125)) : 0;
-  const sz = Math.min(14.5, 12.5 + Math.round(intensity * 2));
+  // compact columns can be ~45px: one size, the cell's colour wash still shows how big it is
+  const sz = dense ? 11 : Math.min(14.5, 12.5 + Math.round(intensity * 2));
 
   return (
     <td
       className={`heatmap-cell col-idx-${idx}`}
+      data-cell-key={`${date}|${cat.id}`}
       style={{
         background: 'transparent',
         borderBottom: `1px solid ${border}`,
@@ -88,7 +92,7 @@ const HeatmapCell = memo(function HeatmapCell({
           alignItems: 'center',
           justifyContent: 'center',
           background: `rgba(${hexToRgb(cat.color || TOKENS['ink-muted'])}, ${intensity * 0.45})`,
-          padding: '2px 4px',
+          padding: dense ? '2px 1px' : '2px 4px',
         }}>
           {items.length > 1 && (
             <span style={{

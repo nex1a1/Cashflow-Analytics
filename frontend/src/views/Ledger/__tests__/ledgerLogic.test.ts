@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildCatTypeMap, resolveTxType, sumIncomeExpense } from '../ledgerMath';
+import { buildCatTypeMap, resolveTxType, sumIncomeExpense, runningTotals } from '../ledgerMath';
+import { toCycleKey } from '../../../utils/payCycle';
 import { compareTransactions, paginateTransactions } from '../hooks/useLedgerData';
 
 const tx = (over: Record<string, unknown>) => ({ id: String(Math.random()), date: '2026-09-01', category: '', amount: 0, ...over }) as any;
@@ -96,5 +97,16 @@ describe('paginateTransactions', () => {
   it('cuts at exactly the page size for non-date sorts', () => {
     const pages = paginateTransactions(day('2026-09-01', 120), 'amount');
     expect(pages.map(p => p.length)).toEqual([50, 50, 20]);
+  });
+});
+
+describe('runningTotals', () => {
+  it('adds up from the start of each pay cycle and restarts at the next one', () => {
+    const dates = ['2026-10-25', '2026-10-31', '2026-11-01', '2026-11-24', '2026-11-25', '2026-11-26'];
+    const daily = { '2026-10-25': 100, '2026-11-01': 50.5, '2026-11-24': 9.5, '2026-11-25': 30, '2026-11-26': 5 };
+    expect(runningTotals(dates, daily, toCycleKey)).toEqual({
+      '2026-10-25': 100, '2026-10-31': 100, '2026-11-01': 150.5, '2026-11-24': 160,
+      '2026-11-25': 30, '2026-11-26': 35,
+    });
   });
 });

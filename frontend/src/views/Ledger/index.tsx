@@ -291,6 +291,7 @@ function LedgerView({
         dayTypes={dayTypes}
         dayTypeConfig={dayTypeConfig}
         allDatesInPeriod={allDatesInPeriod}
+        period={filterPeriod}
         currentData={currentData}
         sortedTransactions={sortedTransactions}
         sortConfig={sortConfig as { key: string; direction: 'asc' | 'desc' }}
