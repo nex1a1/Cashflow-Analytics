@@ -87,7 +87,6 @@ function LedgerView({
   isLoading,
   transactions = []
 }: LedgerViewProps) {
-  const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'horizontal'>('list');
   const [showGroupBreakdown, setShowGroupBreakdown] = useState(false);
 
@@ -210,9 +209,6 @@ function LedgerView({
           <LedgerHeaderActions
             viewMode={viewMode}
             setViewMode={setViewMode}
-            filterOpen={filterOpen}
-            setFilterOpen={setFilterOpen}
-            isFilterActive={isFilterActive}
             horizontalFilterOpen={horizontalFilterOpen}
             setHorizontalFilterOpen={setHorizontalFilterOpen}
             isHorizontalFilterActive={isHorizontalFilterActive}
@@ -242,8 +238,6 @@ function LedgerView({
 
         {viewMode === 'list' && (
           <FilterBar
-            isExpanded={filterOpen}
-            setIsExpanded={setFilterOpen}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             advancedFilterDate={advancedFilterDate} setAdvancedFilterDate={setAdvancedFilterDate}
             advancedFilterGroup={advancedFilterGroup} setAdvancedFilterGroup={setAdvancedFilterGroup}

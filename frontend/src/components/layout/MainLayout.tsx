@@ -182,6 +182,7 @@ export default function MainLayout() {
                   transactions={transactions}
                   filterPeriod={filterPeriod}
                   rowsPending={calendarRowsPending}
+                  loadedRange={rowsRange}
                   setFilterPeriod={setFilterPeriod}
                   handleOpenAddModal={handleOpenAddModal}
                   categories={categories}

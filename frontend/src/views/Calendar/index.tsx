@@ -43,6 +43,8 @@ export interface CalendarViewProps {
   isLoading: boolean;
   /** the period's rows haven't arrived yet (stepping forward): cells show skeletons, not empty days */
   rowsPending?: boolean;
+  /** the date window `transactions` holds: while rows are pending, days inside it keep showing their rows */
+  loadedRange?: { start: string | null; end: string | null } | null;
   frequentItems?: FrequentItem[];
   onSwitchToAnalysisMode?: () => void;
 }
@@ -52,7 +54,7 @@ function CalendarView({
   handleOpenAddModal, categories, cashflowGroups, dayTypes,
   handleDayTypeChange, dayNotes, handleDayNoteChange, dayTypeConfig, getFilterLabel, isReadOnlyView,
   handleDeleteTransaction, onSaveTransaction,
-  isLoading, rowsPending = false, frequentItems = [], onSwitchToAnalysisMode
+  isLoading, rowsPending = false, loadedRange = null, frequentItems = [], onSwitchToAnalysisMode
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [excludedCategoryIds, setExcludedCategoryIds] = useState<Set<string>>(new Set());
@@ -412,6 +414,7 @@ function CalendarView({
           toggleCategory={toggleCategory}
           maxDailyExpense={maxDailyExpense}
           rowsPending={rowsPending}
+          loadedRange={loadedRange}
         />
 
         {/* 2. Legend & Allocation Block */}

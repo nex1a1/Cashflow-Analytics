@@ -168,10 +168,10 @@ export const getPeriodDateRange = (period: string): PeriodDateRange => {
   let fetchStartDate = startDate;
 
   if (isCyclePeriod(period) && /^\d{4}-\d{2}$/.test(stripCycle(period))) {
-    // Single Cycle -> 3 cycles back (Ghost Pacer benchmark)
+    // Single Cycle -> 3 cycles back (forecast range and last-unit comparison)
     fetchStartDate = cycleRange(shiftMonth(stripCycle(period), -3)).start;
   } else if (/^\d{4}-\d{2}$/.test(period)) {
-    // Single Month: YYYY-MM -> previous 3 months start (to support Ghost Pacer & benchmark)
+    // Single Month: YYYY-MM -> previous 3 months start (forecast range and last-month comparison)
     const [yStr, mStr] = period.split('-');
     const y = Number.parseInt(yStr, 10);
     const m = Number.parseInt(mStr, 10);
@@ -192,6 +192,18 @@ export const getPeriodDateRange = (period: string): PeriodDateRange => {
   }
 
   return { startDate, endDate, fetchStartDate };
+};
+
+/**
+ * Last day of the rows window to fetch for `period`. A pay cycle ends on the 24th, but switching it to
+ * calendar mode lands on the month it ends in (convertPeriodMode: cycle K → month K+1), so fetch to that
+ * month's end: the switch then has every row already and the Calendar doesn't flash skeletons.
+ */
+export const rowsFetchEnd = (period: string, endDate: string | null): string | null => {
+  if (!endDate || !isCyclePeriod(period)) return endDate;
+  const y = Number(endDate.slice(0, 4));
+  const m = Number(endDate.slice(5, 7));
+  return `${endDate.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
 };
 
 /** Are `period`'s rows inside the window `transactions` holds? (null = nothing loaded; null bounds = everything) */

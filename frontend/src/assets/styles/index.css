@@ -469,10 +469,18 @@ h1, h2, h3, h4, h5, h6 {
 /* A segmented control's active background glides to the picked option (set `translate` inline). */
 .m-slide { transition: translate 220ms var(--m-ease), background-color 220ms var(--m-ease); }
 
+/* Calendar period swap: the whole grid comes in at once, from a dimmed state (not blank, so quick
+   clicks don't blink), sliding a little from the side it came from. */
+@keyframes m-swap { from { opacity: 0.35; translate: var(--m-swap-x) 0; } }
+.m-swap { --m-swap-x: 0px; animation: m-swap 240ms var(--m-ease) backwards; }
+.m-swap-next { --m-swap-x: 14px; }
+.m-swap-prev { --m-swap-x: -14px; }
+
 /* 7. Reduced motion: keep fades and colour changes (they carry state), drop the movement and loops. */
 :root { --m-clip: 100%; --m-pick: 0.9; }
 @media (prefers-reduced-motion: reduce) {
   :root { --m-rise: 0px; --m-drop: 0px; --m-scale: 1; --m-press: 0px; --m-clip: 0%; --m-pick: 1; }
+  .m-swap-next, .m-swap-prev { --m-swap-x: 0px; }
   .animate-pulse { animation: none; }
   .m-slide { transition: none; }
 }

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { PlusCircle, Banknote, X } from 'lucide-react';
 import { useMenu } from '@/hooks/useMenu';
 import { PAY_DAY, PAY_DAY_START } from '@/utils/payCycle';
@@ -54,6 +54,10 @@ const CalendarDayCell = memo(function CalendarDayCell({
   const dayNum = Number(dateStr.slice(8, 10));
   const isPayDay = dayNum === PAY_DAY && dateStr >= PAY_DAY_START;
   const cellData = data || { exp: 0, inc: 0, items: [], incItems: [] };
+  // rows fade in only when they replace the skeleton. A cell that mounts with its data shows it as is:
+  // the grid's period swap (CalendarBlock) animates the whole month at once, so new cells don't blink alone
+  const [fadeRows, setFadeRows] = useState(loading);
+  if (loading && !fadeRows) setFadeRows(true);
 
   // ระดับความแพงของวัน (เกณฑ์ ฿ ตายตัว ดู calendarHeat.ts) — ไม่ย้อมสีเมื่อ < 2
   const heat = getCalendarHeatLevel(cellData.exp);
@@ -173,7 +177,7 @@ const CalendarDayCell = memo(function CalendarDayCell({
       ) : (
       <div
         key="rows"
-        className="flex flex-col grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none m-fade-in"
+        className={`flex flex-col grow gap-1 p-2 overflow-hidden z-10 text-left w-full min-w-0 font-normal select-none ${fadeRows ? 'm-fade-in' : ''}`}
       >
         {(cellData.exp > 0 || cellData.inc > 0 || hiddenExpCount > 0) && (
           <div className="flex justify-between items-center mb-0.5 text-[11px] font-black border-b border-line/20 pb-0.5">

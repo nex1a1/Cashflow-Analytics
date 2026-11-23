@@ -4,9 +4,6 @@ import { SlidersHorizontal, LayoutList, TableProperties, PlusCircle } from 'luci
 export interface LedgerHeaderActionsProps {
   viewMode: 'list' | 'horizontal';
   setViewMode: React.Dispatch<React.SetStateAction<'list' | 'horizontal'>>;
-  filterOpen: boolean;
-  setFilterOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isFilterActive: boolean;
   horizontalFilterOpen: boolean;
   setHorizontalFilterOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isHorizontalFilterActive: boolean;
@@ -16,40 +13,31 @@ export interface LedgerHeaderActionsProps {
 export const LedgerHeaderActions: React.FC<LedgerHeaderActionsProps> = ({
   viewMode,
   setViewMode,
-  filterOpen,
-  setFilterOpen,
-  isFilterActive,
   horizontalFilterOpen,
   setHorizontalFilterOpen,
   isHorizontalFilterActive,
   handleOpenAddModal
 }) => {
-  const isCurrentFilterOpen = viewMode === 'list' ? filterOpen : horizontalFilterOpen;
-  const toggleFilter = () => {
-    if (viewMode === 'list') {
-      setFilterOpen(v => !v);
-    } else {
-      setHorizontalFilterOpen(v => !v);
-    }
-  };
-  const isCurrentFilterActive = viewMode === 'list' ? isFilterActive : isHorizontalFilterActive;
-
   return (
     <div className="flex items-center gap-2 shrink-0 flex-wrap">
-      <button
-        type="button"
-        onClick={toggleFilter}
-        className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
-          isCurrentFilterOpen
-            ? 'bg-accent/10 border-accent-ink text-accent-ink'
-            : 'bg-surface border-line text-ink-body hover:bg-surface-elevated/40 hover:border-line-strong hover:text-ink-display'
-        } ${isCurrentFilterActive ? 'border-warn! text-warn! bg-warn/10!' : ''}`}
-        title={viewMode === 'list' ? 'เปิด/ปิด แผงตัวกรองรายการ' : 'เปิด/ปิด แผงตัวกรองตารางแนวนอน'}
-      >
-        <SlidersHorizontal className="w-3.5 h-3.5" />
-        <span>ตัวกรอง{viewMode === 'horizontal' ? 'ตาราง' : ''}</span>
-        {isCurrentFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-warn" />}
-      </button>
+      {/* The list view keeps its filters on one always-visible row; only the table view has a panel to open. */}
+      {viewMode === 'horizontal' && (
+        <button
+          type="button"
+          onClick={() => setHorizontalFilterOpen(v => !v)}
+          aria-expanded={horizontalFilterOpen}
+          className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-2 px-3 py-2 rounded-none border font-mono transition-all ${
+            horizontalFilterOpen
+              ? 'bg-accent/10 border-accent-ink text-accent-ink'
+              : 'bg-surface border-line text-ink-body hover:bg-surface-elevated/40 hover:border-line-strong hover:text-ink-display'
+          } ${isHorizontalFilterActive ? 'border-warn! text-warn! bg-warn/10!' : ''}`}
+          title="เปิด/ปิด แผงตัวกรองตารางแนวนอน"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>ตัวกรองตาราง</span>
+          {isHorizontalFilterActive && <span className="w-1.5 h-1.5 rounded-none bg-warn" />}
+        </button>
+      )}
 
       <div className="flex items-center rounded-none border border-line overflow-hidden bg-surface">
         <button

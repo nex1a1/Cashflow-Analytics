@@ -77,57 +77,6 @@ export interface ForecastingDetails {
   projectedRange: { low: number; high: number } | null;
 }
 
-export interface GhostPacerStatus {
-  code: 'LEAD' | 'TRAIL' | 'TIED';
-  label: string;
-  color: string;
-  bg: string;
-  border: string;
-}
-
-/** One category's share of the gap with last month, up to the same day. */
-export interface GapDriver {
-  id: string;
-  name: string;
-  icon?: string;
-  color?: string;
-  current: number;
-  previous: number;
-  delta: number;
-}
-
-export interface GhostPacerDetails {
-  hasData: boolean;
-  /** False for a finished month: projectedExpense is then its real total. */
-  isCurrentMonth: boolean;
-  currentPeriod: string;
-  prevPeriod: string;
-  currentDay: number;
-  lastDayOfMonth: number;
-  currentDailySeries: number[];
-  prevDailySeries: number[];
-  benchmarkDailySeries: number[];
-  currentSpendToDate: number;
-  ghostSpendToDate: number;
-  benchmarkSpendToDate: number;
-  deltaVsGhost: number;
-  deltaVsGhostPct: number;
-  deltaVsBenchmark: number;
-  deltaVsBenchmarkPct: number;
-  projectedExpense: number;
-  ghostTotalExpense: number;
-  deltaEom: number;
-  /** The biggest changes, either way; empty without a last month to compare with. */
-  gapDrivers: GapDriver[];
-  /** Every other category's change: with gapDrivers it adds up to deltaVsGhost. */
-  gapOthers: number;
-  /** Per-day spending that still ends under last month; null when there is nothing left to steer (finished month, last day, no last month). */
-  beatGhostDaily: number | null;
-  /** The pace the forecast carries over the remaining days. */
-  dailyPace: number;
-  paceStatus: GhostPacerStatus;
-}
-
 export interface SummaryAnalytics {
   // Vitals
   totalIncome: number;
@@ -174,9 +123,6 @@ export interface SummaryAnalytics {
   safeToSpend: number;
   projectedSurplus: number;
   forecastingDetails?: ForecastingDetails;
-  ghostPacerDetails?: GhostPacerDetails;
-  /** The same comparison without the rent group, whose pay day would otherwise swing the gap by the whole bill. */
-  ghostPacerDetailsNoRent?: GhostPacerDetails;
   isSingleMonthView?: boolean;
 }
 

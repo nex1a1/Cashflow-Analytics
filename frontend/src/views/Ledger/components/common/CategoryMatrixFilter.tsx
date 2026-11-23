@@ -24,8 +24,12 @@ interface CategoryMatrixFilterProps {
   selectedCategories?: 'ALL' | string[];
   onChange: (cats: 'ALL' | string[]) => void;
   activeCategoryNames?: Set<string> | null;
-  typeFilter?: string; // 'ALL' | 'INCOME' | 'EXPENSE'
+  typeFilter?: string; // 'ALL' | 'INCOME' | 'EXPENSE' | 'SAVINGS'
   className?: string;
+  /** Replaces the default full-width trigger (the Ledger filter row draws a chip). */
+  renderTrigger?: (p: { open: boolean; toggle: () => void; label: React.ReactNode; isActive: boolean; clear: () => void }) => React.ReactNode;
+  /** Where the panel sits and how wide it is; defaults to the trigger's width. */
+  popoverClassName?: string;
 }
 
 export default function CategoryMatrixFilter({
@@ -35,7 +39,9 @@ export default function CategoryMatrixFilter({
   onChange,
   activeCategoryNames = null,
   typeFilter = 'ALL',
-  className = ''
+  className = '',
+  renderTrigger,
+  popoverClassName = 'left-0 right-0'
 }: CategoryMatrixFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,6 +88,9 @@ export default function CategoryMatrixFilter({
     }
     if (typeFilter === 'EXPENSE') {
       return categories.filter(c => (c as any).type === 'expense');
+    }
+    if (typeFilter === 'SAVINGS') {
+      return categories.filter(c => (c as any).type === 'savings');
     }
     return categories;
   }, [categories, typeFilter]);
@@ -436,8 +445,8 @@ export default function CategoryMatrixFilter({
   };
 
   return (
-    <div ref={containerRef} className={`relative z-50 w-full ${className}`}>
-      
+    <div ref={containerRef} className={`relative z-50 ${renderTrigger ? '' : 'w-full'} ${className}`}>
+      {renderTrigger ? renderTrigger({ open: isOpen, toggle: () => setIsOpen(v => !v), label: triggerLabel, isActive, clear: () => onChange('ALL') }) : (<>
       {/* ── HUD Trigger Button (Matches DatePicker Style in Col 2) ── */}
       <button 
         type="button"
@@ -487,12 +496,13 @@ export default function CategoryMatrixFilter({
         )}
         <ChevronDown className={`w-3 h-3 transition-transform ${isActive ? 'text-accent-ink' : 'text-ink-muted'} ${isOpen ? 'rotate-180' : ''}`} />
       </div>
+      </>)}
 
       {/* ── Floating 2-Tier Chips Matrix Popover ── */}
       {isOpen && (
         <div
           ref={popoverRef}
-          className="animate-in zoom-in-95 absolute left-0 right-0 top-[calc(100%+6px)] z-999 rounded-none border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.7*var(--shadow-k)))] p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto"
+          className={`animate-in zoom-in-95 absolute ${popoverClassName} top-[calc(100%+6px)] z-999 rounded-none border border-line-strong shadow-[0_16px_40px_rgb(0_0_0/calc(0.7*var(--shadow-k)))] p-3 bg-canvas select-none flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}
         >
           {/* Section Header Bar */}
           <div className="flex items-center justify-between flex-wrap gap-1.5 pb-2 border-b border-line">

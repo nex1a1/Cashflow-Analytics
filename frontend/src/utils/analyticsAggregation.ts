@@ -3,7 +3,6 @@ import { TransactionDisplay, Category, CashflowGroup, DayType } from '../types';
 import { generateDatesForPeriod, isDateInFilter, parseDateStrToObj, periodUnitDates } from './dateHelpers';
 import { findRecurring, unitKeyOf } from './recurring';
 import { createCategoryMap, calculateDayTypeCounts, CashflowMonthData } from './analyticsHelpers';
-import { calculateGhostPacerData } from './ghostPacerHelpers';
 import { BUDGET_RULES, WARN_AT } from '../constants/budgetRules';
 import { RENT_KEYWORDS } from './kakeibo';
 import { calculateAllocationEvolution } from './allocationEvolutionHelpers';
@@ -304,7 +303,7 @@ function calculateForecastingDetails({
   livingGroupDailySum: Record<string, Record<string, number>>;
 }) {
   if (!isCurrentMonth || datesInPeriod.length === 0) {
-    return { showForecasting: false, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0, committedExpense: 0, dailyPace: 0 };
+    return { showForecasting: false, forecastingDetails: null, projectedExpense: 0, safeToSpend: 0, projectedSurplus: 0 };
   }
 
   // day N = N-th day of the month / pay cycle (datesInPeriod is the full unit for single-month views)
@@ -414,20 +413,14 @@ function calculateForecastingDetails({
 
   return {
     showForecasting: true, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus,
-    committedExpense,
-    dailyPace: dailyLivingRunRate,
   };
 }
 
 function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKinds, startPrev: string | null, endPrev: string | null, state: AnalyticsState) {
-  const { amt, catId, isExp, isInc, cGroupId } = txContext;
-  const { globalDailySum, globalNoRentDailySum, globalLivingDailySum, globalLivingGroupDailySum, globalCatDailySum, rentCatIds, prevTotals } = state;
+  const { amt, isExp, isInc, cGroupId } = txContext;
+  const { globalDailySum, globalLivingDailySum, globalLivingGroupDailySum, prevTotals } = state;
   if (isExp) {
     globalDailySum[isoDate] = (globalDailySum[isoDate] || 0) + amt;
-    const catDays = (globalCatDailySum[catId] ??= {});
-    catDays[isoDate] = (catDays[isoDate] || 0) + amt;
-    if (kinds.isRent) rentCatIds.add(catId);
-    if (!kinds.isRent) globalNoRentDailySum[isoDate] = (globalNoRentDailySum[isoDate] || 0) + amt;
     if (!kinds.isRent && !kinds.isSubscription) {
       globalLivingDailySum[isoDate] = (globalLivingDailySum[isoDate] || 0) + amt;
       const groupDays = (globalLivingGroupDailySum[cGroupId || 'none'] ??= {});
@@ -947,11 +940,8 @@ function createInitialAnalyticsState() {
   const dailyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
   const monthlyAllocMap: Record<string, Record<string, number>> = { need: {}, want: {}, savings: {} };
   const globalDailySum: Record<string, number> = {};
-  const globalNoRentDailySum: Record<string, number> = {};
   const globalLivingDailySum: Record<string, number> = {};
   const globalLivingGroupDailySum: Record<string, Record<string, number>> = {};
-  const globalCatDailySum: Record<string, Record<string, number>> = {};
-  const rentCatIds = new Set<string>();
   const prevTotals = { income: 0, expense: 0, net: 0, txCount: 0 };
   const forecastRef = { expenseUpToToday: 0, fixedUpToToday: 0, fixedTotal: 0 };
 
@@ -993,11 +983,8 @@ function createInitialAnalyticsState() {
     dailyAllocMap,
     monthlyAllocMap,
     globalDailySum,
-    globalNoRentDailySum,
     globalLivingDailySum,
     globalLivingGroupDailySum,
-    globalCatDailySum,
-    rentCatIds,
     prevTotals,
     forecastRef,
     stateRef
@@ -1155,8 +1142,6 @@ export function computeCoreAnalytics({
     projectedExpense,
     safeToSpend,
     projectedSurplus,
-    committedExpense,
-    dailyPace,
   } = calculateForecastingDetails({
     isCurrentMonth: windowMeta.isCurrentMonth,
     datesInPeriod,
@@ -1168,34 +1153,6 @@ export function computeCoreAnalytics({
     livingDailySum: state.globalLivingDailySum,
     livingGroupDailySum: state.globalLivingGroupDailySum,
   });
-
-  const categoryInfo = (id: string) => {
-    const cat = catMapLookup[id];
-    return { name: cat?.name || 'ไม่ระบุหมวด', icon: cat?.icon ?? undefined, color: cat?.color ?? undefined };
-  };
-  const ghostPacerDetails = calculateGhostPacerData({
-    globalDailySum: state.globalDailySum,
-    filterPeriod,
-    isCurrentMonth: windowMeta.isCurrentMonth,
-    projectedExpense,
-    categoryDailySum: state.globalCatDailySum,
-    categoryInfo,
-    committedExpense,
-    dailyPace,
-  });
-  const ghostPacerDetailsNoRent = {
-    ...calculateGhostPacerData({
-      globalDailySum: state.globalNoRentDailySum,
-      filterPeriod,
-      isCurrentMonth: windowMeta.isCurrentMonth,
-      projectedExpense: projectedExpense - totals.rent - expected.rent,
-      categoryDailySum: Object.fromEntries(Object.entries(state.globalCatDailySum).filter(([id]) => !state.rentCatIds.has(id))),
-      categoryInfo,
-      committedExpense: committedExpense - totals.rent - expected.rent,
-      dailyPace,
-    }),
-    hasData: ghostPacerDetails.hasData, // a month of nothing but rent still has a comparison to show
-  };
 
   const monthlyIncomeMap: Record<string, number> = {};
   Object.entries(cashflowMap).forEach(([m, data]) => {
@@ -1225,7 +1182,7 @@ export function computeCoreAnalytics({
     foodWorkdayAvg, foodHolidayAvg, dailyWorkdayAvg, dailyHolidayAvg, maxFoodDayAmount,
     topWantCategories, topSubscriptionServices, pcts,
     showForecasting, forecastingDetails, projectedExpense, safeToSpend, projectedSurplus,
-    ghostPacerDetails, ghostPacerDetailsNoRent, allocationEvolution,
+    allocationEvolution,
     adjustedDailyAvg, livingDailyAvg, adjustedFoodDailyAvg, elapsedDays,
     useBackendTotals,
   };

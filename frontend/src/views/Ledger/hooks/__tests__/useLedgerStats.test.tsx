@@ -151,16 +151,17 @@ describe('useLedgerStats — a group card', () => {
     return [...container!.querySelectorAll<HTMLElement>('button')].find(b => b.querySelector(`span[title="${name}"]`))!;
   };
 
-  /** The big share figure on the card (the % next to the amount), not any other number on it. */
-  const share = (c: HTMLElement) => c.querySelector('.text-\\[11\\.5px\\]')!.textContent;
+  /** The group's share figure (next to its bar), not any other number on the row. */
+  const share = (c: HTMLElement) => c.querySelector('[data-share]')!.textContent;
+  /** Category names on the row, as shown (the chips sit beside the filter button). */
+  const catNames = (c: HTMLElement) => [...c.parentElement!.querySelectorAll('[data-cat-name]')].map(e => e.textContent);
 
-  it('income: name, +amount, share of income, count, badge', () => {
+  it('income: name, +amount, share of income, count', () => {
     const s = stats();
     const c = card(s.activeIncomeCards, 'เงินเดือน');
     expect(c.textContent).toContain('+฿30,000.00');
     expect(share(c)).toBe('100.0%');
     expect(c.textContent).toContain('1 รายการ');
-    expect(c.textContent).toContain('IN');
   });
 
   it('expense: −amount and share of EXPENSE (not of income)', () => {
@@ -168,7 +169,6 @@ describe('useLedgerStats — a group card', () => {
     expect(c.textContent).toContain('−฿1,000.00');
     expect(share(c)).toBe('10.0%'); // 1,000 / 10,000 (of income it would be 3.3%)
     expect(c.textContent).toContain('3 รายการ');
-    expect(c.textContent).toContain('OUT');
   });
 
   it('savings: ±net amount and share of INCOME, with the buy / sell netted', () => {
@@ -176,7 +176,6 @@ describe('useLedgerStats — a group card', () => {
     expect(c.textContent).toContain('±฿1,500.00');
     expect(share(c)).toBe('5.0%'); // 1,500 / 30,000 (of expense it would be 15.0%)
     expect(c.textContent).toContain('2 รายการ');
-    expect(c.textContent).toContain('SAVE');
   });
 
   it('shares are 0.0% when there is nothing to compare with', () => {
@@ -190,10 +189,9 @@ describe('useLedgerStats — a group card', () => {
 
   it('lists categories biggest first with their share of the group', () => {
     const c = card(stats().activeExpenseCards, 'ค่ากิน');
-    const rows = [...c.querySelectorAll('.border-dashed .truncate.uppercase')].map(e => e.textContent);
-    expect(rows).toEqual(['กาแฟ', 'มื้อกลางวัน']);
-    expect(c.textContent).toContain('60%'); // coffee 600 / 1,000
-    expect(c.textContent).toContain('40%');
+    expect(catNames(c)).toEqual(['กาแฟ', 'มื้อกลางวัน']);
+    expect(c.parentElement!.textContent).toContain('60%'); // coffee 600 / 1,000
+    expect(c.parentElement!.textContent).toContain('40%');
   });
 
   it('a category whose rows net to nothing is not listed inside a group that still has money', () => {
@@ -203,7 +201,7 @@ describe('useLedgerStats — a group card', () => {
       displayTransactions: [tx('b', 'c-gold', 1000), tx('s', 'c-gold', -1000), { ...tx('f', 'c-fund', 800), category: 'กองทุน' } as TransactionDisplay],
     });
     const c = card(s.activeSavingsCards, 'ลงทุน/ออม');
-    expect([...c.querySelectorAll('.border-dashed .truncate.uppercase')].map(e => e.textContent)).toEqual(['กองทุน']);
+    expect(catNames(c)).toEqual(['กองทุน']);
   });
 
   it('a category linked to its group through the camel-case field is counted in that group', () => {
@@ -236,10 +234,10 @@ describe('useLedgerStats — a group card', () => {
 
     s = stats({ advancedFilterGroup: 'g-food', setAdvancedFilterGroup: setGroup });
     const active = card(s.activeExpenseCards, 'ค่ากิน');
-    expect(active.className).toContain('border-expense');
+    expect(active.getAttribute('aria-pressed')).toBe('true');
     click(active);
     expect(setGroup).toHaveBeenLastCalledWith('ALL');
-    expect(card(s.activeExpenseCards, 'ที่พัก').className).not.toContain('border-expense');
+    expect(card(s.activeExpenseCards, 'ที่พัก').getAttribute('aria-pressed')).toBe('false');
   });
 
   it('clicking is harmless without a handler', () => {

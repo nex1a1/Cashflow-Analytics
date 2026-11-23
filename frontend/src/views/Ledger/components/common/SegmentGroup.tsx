@@ -11,12 +11,14 @@ export type SegmentColorScheme = keyof typeof SCHEMES;
 export interface SegmentOption<T extends string> { value: T; label: string; colorScheme?: SegmentColorScheme }
 
 /** One-of-N filter: equal-width options, the active background glides to the picked one (`.m-slide`). */
-export default function SegmentGroup<T extends string>({ options, value, onChange }: {
+export default function SegmentGroup<T extends string>({ options, value, onChange, compact = false }: {
   options: SegmentOption<T>[]; value: T; onChange: (value: T) => void;
+  /** 28px tall, to line up with the Ledger filter row's inputs and chips. */
+  compact?: boolean;
 }) {
   const index = Math.max(0, options.findIndex(o => o.value === value));
   return (
-    <div className="relative grid rounded-none p-0.5 border bg-surface border-line [&>button+button]:border-l"
+    <div className={`relative grid rounded-none p-0.5 border bg-surface border-line [&>button+button]:border-l ${compact ? 'h-7' : ''}`}
       style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
       <span aria-hidden className={`m-slide absolute inset-y-0.5 left-0.5 ${SCHEMES[options[index].colorScheme ?? 'blue'].bg}`}
         style={{ width: `calc((100% - 4px) / ${options.length})`, translate: `${index * 100}% 0` }} />
@@ -24,7 +26,7 @@ export default function SegmentGroup<T extends string>({ options, value, onChang
         const on = o.value === value;
         return (
           <button key={o.value} type="button" aria-pressed={on} onClick={() => onChange(o.value)}
-            className={`relative px-2.5 py-1 text-[11px] font-black uppercase tracking-wider whitespace-nowrap rounded-none border-line transition-colors font-mono cursor-pointer ${
+            className={`relative ${compact ? 'px-3 py-0' : 'px-2.5 py-1'} text-[11px] font-black uppercase tracking-wider whitespace-nowrap rounded-none border-line transition-colors font-mono cursor-pointer ${
               on ? SCHEMES[o.colorScheme ?? 'blue'].text : 'text-ink-body hover:text-ink-display'
             }`}>
             {o.label}

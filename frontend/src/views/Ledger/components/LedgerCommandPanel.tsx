@@ -144,56 +144,25 @@ export const LedgerGroupBreakdownSection: React.FC<LedgerGroupBreakdownSectionPr
   activeSavingsCards,
   activeExpenseCards
 }) => {
-  const hasIncomeOrSavings = activeIncomeCards.length > 0 || activeSavingsCards.length > 0;
-  const hasBothIncomeAndSavings = activeIncomeCards.length > 0 && activeSavingsCards.length > 0;
+  const blocks = [
+    { key: 'inc', label: 'รายรับ', Icon: TrendingUp, tone: 'text-income', rows: activeIncomeCards },
+    { key: 'sav', label: 'การออมและลงทุน', Icon: Wallet, tone: 'text-savings', rows: activeSavingsCards },
+    { key: 'exp', label: 'รายจ่าย', Icon: TrendingDown, tone: 'text-expense', rows: activeExpenseCards },
+  ].filter(b => b.rows.length > 0);
 
   return (
-    <div className="m-reveal flex flex-col gap-4 pb-2 mt-2">
-      {hasIncomeOrSavings && (
-        <div className="flex flex-wrap justify-center items-stretch gap-6 pb-2">
-          {activeIncomeCards.length > 0 && (
-            <div className="flex flex-col gap-1.5 items-center">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-income font-sans justify-center">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>รายรับ</span>
-              </div>
-              <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3">
-                {activeIncomeCards}
-              </div>
-            </div>
-          )}
-
-          {hasBothIncomeAndSavings && (
-            <div className="flex items-center justify-center px-2 self-stretch shrink-0">
-              <div className="w-px h-full min-h-[48px] bg-line" />
-            </div>
-          )}
-
-          {activeSavingsCards.length > 0 && (
-            <div className="flex flex-col gap-1.5 items-center">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-warn font-sans justify-center">
-                <Wallet className="w-3.5 h-3.5" />
-                <span>การออมและลงทุน</span>
-              </div>
-              <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3">
-                {activeSavingsCards}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeExpenseCards.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-center gap-2 px-1 text-[11px] font-black uppercase tracking-wider text-expense font-sans">
-            <TrendingDown className="w-3.5 h-3.5" />
-            <span>รายจ่าย</span>
+    <div className="m-reveal flex flex-col border border-line bg-canvas">
+      {blocks.map(({ key, label, Icon, tone, rows }) => (
+        <section key={key} data-block={key} className="flex flex-col">
+          <div className={`flex items-center gap-1.5 px-3.5 py-1 bg-surface/50 border-y border-line/60 text-[11px] font-black uppercase tracking-wider font-sans ${tone}`}>
+            <Icon className="w-3.5 h-3.5" />
+            <span>{label}</span>
           </div>
-          <div className="m-stagger flex flex-wrap items-stretch justify-center gap-3 pb-1 px-1">
-            {activeExpenseCards}
+          <div className="m-stagger flex flex-col divide-y divide-line/40">
+            {rows}
           </div>
-        </div>
-      )}
+        </section>
+      ))}
     </div>
   );
 };

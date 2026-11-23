@@ -4,10 +4,9 @@ import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import SummaryCards from '..';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
-import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
 import { click, key, q, byText } from '@/test-utils/dom';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
-import type { SummaryAnalytics, ForecastingDetails, GhostPacerDetails } from '../types';
+import type { SummaryAnalytics, ForecastingDetails } from '../types';
 
 // Real cards, real thresholds. Only the dashboard context and the two Chart.js canvases (jsdom has no canvas) are replaced.
 const h = vi.hoisted(() => ({ analytics: null as unknown, skeleton: false, forecastChart: null as null | Record<string, unknown> }));
@@ -17,7 +16,6 @@ vi.mock('@/views/Dashboard/context/DashboardContext', () => ({
 vi.mock('@/views/Dashboard/components/SummaryCards/Forecasting/ForecastingTrajectoryChart', () => ({
   ForecastingTrajectoryChart: (props: Record<string, unknown>) => { h.forecastChart = props; return null; },
 }));
-vi.mock('@/views/Dashboard/components/SummaryCards/GhostPacer/GhostPacerChart', () => ({ GhostPacerChart: () => null }));
 
 const days = (n: number) => Array.from({ length: n }, (_, i) => `2026-09-${String(i + 1).padStart(2, '0')}`);
 
@@ -452,13 +450,11 @@ describe('SummaryStrategic — tabs', () => {
   const tab = (label: string) => byText('[role="tab"]', label)!;
   const panel = (id: string) => [...document.querySelectorAll<HTMLElement>('[role="tabpanel"]')].find(p => p.id.endsWith(`-panel-${id}`));
 
-  it('starts on the overview; forecast and month-comparison are disabled with the reason when they cannot apply', () => {
+  it('starts on the overview; forecast is disabled with the reason when it cannot apply', () => {
     show();
     expect(tab('ภาพรวมการใช้จ่าย').getAttribute('aria-selected')).toBe('true');
     expect(tab('พยากรณ์สิ้นเดือน').getAttribute('aria-disabled')).toBe('true');
-    expect(tab('เทียบเดือนที่แล้ว').getAttribute('aria-disabled')).toBe('true');
     expect(text()).toContain('ต้องเลือกเดือนปัจจุบันเท่านั้น');
-    expect(text()).toContain('ต้องเลือกมุมมองรายเดือนเท่านั้น');
     expect(panel('forecast')).toBeUndefined(); // not mounted at all
   });
 
@@ -469,16 +465,13 @@ describe('SummaryStrategic — tabs', () => {
   });
 
   it('enabled tabs switch the panel, and only the open one is mounted', () => {
-    show({ showForecasting: true, isSingleMonthView: true, forecastingDetails: {} as ForecastingDetails, ghostPacerDetails: { hasData: false } as GhostPacerDetails });
+    show({ showForecasting: true, forecastingDetails: {} as ForecastingDetails });
     expect(panel('strategic')).toBeDefined();
     expect(panel('forecast')).toBeUndefined();
     click(tab('พยากรณ์สิ้นเดือน'));
     expect(tab('พยากรณ์สิ้นเดือน').getAttribute('aria-selected')).toBe('true');
     expect(panel('forecast')).toBeDefined();
     expect(panel('strategic')).toBeUndefined();
-    click(tab('เทียบเดือนที่แล้ว'));
-    expect(panel('ghost')).toBeDefined();
-    expect(panel('forecast')).toBeUndefined();
   });
 
   it('falls back to the overview when the active tab stops being available', () => {
@@ -491,19 +484,20 @@ describe('SummaryStrategic — tabs', () => {
   });
 
   it('arrow keys, Home and End move focus along the tabs (roving tabindex)', () => {
-    show({ showForecasting: true, isSingleMonthView: true, forecastingDetails: {} as ForecastingDetails, ghostPacerDetails: { hasData: false } as GhostPacerDetails });
+    show({ showForecasting: true, forecastingDetails: {} as ForecastingDetails });
     const tabs = [...document.querySelectorAll<HTMLElement>('[role="tab"]')];
-    expect(tabs.map(t => t.tabIndex)).toEqual([0, -1, -1]);
+    expect(tabs.map(t => t.tabIndex)).toEqual([0, -1]);
     act(() => tabs[0].focus());
     key(tabs[0], 'ArrowRight');
     expect(document.activeElement).toBe(tabs[1]);
-    key(tabs[1], 'End');
-    expect(document.activeElement).toBe(tabs[2]);
-    key(tabs[2], 'ArrowRight'); // wraps
+    key(tabs[1], 'ArrowRight'); // wraps
     expect(document.activeElement).toBe(tabs[0]);
-    key(tabs[0], 'ArrowLeft');
-    expect(document.activeElement).toBe(tabs[2]);
-    key(tabs[2], 'Home');
+    key(tabs[0], 'End');
+    expect(document.activeElement).toBe(tabs[1]);
+    key(tabs[1], 'ArrowLeft');
+    expect(document.activeElement).toBe(tabs[0]);
+    key(tabs[0], 'End');
+    key(tabs[1], 'Home');
     expect(document.activeElement).toBe(tabs[0]);
     key(tabs[0], 'Enter'); // not a move key
     expect(document.activeElement).toBe(tabs[0]);
@@ -664,234 +658,3 @@ describe('SummaryForecasting — end of month forecast', () => {
   });
 });
 
-describe('SummaryGhostPacer — against last month', () => {
-  const ghost: GhostPacerDetails = {
-    hasData: true, isCurrentMonth: true, currentPeriod: 'ก.ย.', prevPeriod: 'ส.ค.', currentDay: 15, lastDayOfMonth: 30,
-    currentDailySeries: [], prevDailySeries: [], benchmarkDailySeries: [],
-    currentSpendToDate: 8_000, ghostSpendToDate: 10_000, benchmarkSpendToDate: 9_000,
-    deltaVsGhost: -2_000, deltaVsGhostPct: -20, deltaVsBenchmark: -1_000, deltaVsBenchmarkPct: -11.1,
-    projectedExpense: 18_000, ghostTotalExpense: 21_000, deltaEom: -3_000, gapDrivers: [], gapOthers: 0, beatGhostDaily: null, dailyPace: 0,
-    paceStatus: { code: 'LEAD', label: 'นำ', color: '#10B981', bg: 'bg-income/10', border: 'border-income' },
-  };
-  const pacer = (d: Partial<GhostPacerDetails> | null, skeleton = false) =>
-    mountNode(<SummaryGhostPacer analytics={withData({ ghostPacerDetails: d === null ? undefined : { ...ghost, ...d } })} showSkeleton={skeleton} />);
-
-  it('explains itself when there is no month to compare with', () => {
-    pacer(null);
-    expect(text()).toContain('การเทียบกับเดือนก่อนใช้ได้ในมุมมองรายเดือน');
-    pacer({ hasData: false });
-  });
-
-  it('spending less than last month at the same day: green wording, minus sign, savings at the end of month', () => {
-    pacer({});
-    const t = text();
-    expect(t).toContain('▼ ช้ากว่า ฿2,000 (20.0%)');
-    expect(t).toContain('ใช้น้อยกว่า');
-    expect(t).toContain('ควบคุมงบได้นิ่งกว่า');
-    expect(t).toContain('ประหยัดกว่าเดือนก่อน');
-    expect(t).toContain('ต่ำกว่าเกณฑ์เฉลี่ย');
-    expect(t).toContain('฿18,000.00');
-    expect(t).toContain('฿21,000.00'); // last month's final total
-    expect(q('.text-income')).not.toBeNull();
-  });
-
-  it('spending more by more than 5%: red wording and a plus sign', () => {
-    pacer({ deltaVsGhost: 1_500, deltaVsGhostPct: 15, deltaVsBenchmark: 1_000, deltaVsBenchmarkPct: 11.1, deltaEom: 2_000 });
-    const t = text();
-    expect(t).toContain('▲ เร็วกว่า ฿1,500 (15.0%)');
-    expect(t).toContain('ใช้มากกว่า');
-    expect(t).toContain('ใช้เร็วกว่าเดือนก่อน');
-    expect(t).toContain('ยอดจบสูงกว่าเดือนก่อน');
-    expect(q('.text-danger')).not.toBeNull();
-  });
-
-  describe('daily amount to end under last month', () => {
-    const LABEL = 'เพื่อจบต่ำกว่าเดือนก่อน:';
-
-    it('under the amount: green, with the current pace on hover', () => {
-      pacer({ beatGhostDaily: 400, dailyPace: 300 });
-      expect(byText('span', LABEL)).not.toBeNull();
-      expect(byText('span', '฿400.00/วัน')?.classList.contains('text-income')).toBe(true);
-      expect(q('[title*="ตอนนี้ใช้"]')?.getAttribute('title')).toBe('ตอนนี้ใช้เฉลี่ย ฿300.00/วัน');
-    });
-
-    it('within 5% of it: warn colour', () => {
-      pacer({ beatGhostDaily: 400, dailyPace: 410 });
-      expect(byText('span', '฿400.00/วัน')?.classList.contains('text-warn')).toBe(true);
-    });
-
-    it('clearly over it: red', () => {
-      pacer({ beatGhostDaily: 400, dailyPace: 500 });
-      expect(byText('span', '฿400.00/วัน')?.classList.contains('text-danger')).toBe(true);
-    });
-
-    it('already past last month: says so instead of ฿0 a day', () => {
-      pacer({ beatGhostDaily: 0, dailyPace: 300 });
-      expect(byText('span', 'เกินยอดเดือนก่อนแล้ว')?.classList.contains('text-danger')).toBe(true);
-      expect(text()).not.toContain('฿0.00/วัน');
-    });
-
-    it('nothing to say: no row', () => {
-      pacer({ beatGhostDaily: null });
-      expect(byText('span', LABEL)).toBeNull();
-    });
-  });
-
-  describe('why it differs', () => {
-    const drivers = [
-      { id: 'a', name: 'หนัง', icon: 'film', current: 300, previous: 1_000, delta: -700 },
-      { id: 'b', name: 'ข้าว', icon: 'utensils', current: 1_000, previous: 400, delta: 600 },
-    ];
-
-    it('lists the causes with their sign and colour in place of the repeated verdict', () => {
-      pacer({ gapDrivers: drivers, gapOthers: 30 });
-      const t = text();
-      expect(t).toContain('ต่างจากเดือนก่อนเพราะ:');
-      expect(t).toContain('หนัง');
-      expect(t).not.toContain('ควบคุมงบได้นิ่งกว่า');
-      expect(byText('span', '−฿700.00')?.classList.contains('text-income')).toBe(true);
-      expect(byText('span', '+฿600.00')?.classList.contains('text-danger')).toBe(true);
-      expect(byText('span', 'หมวดอื่นรวม:')).not.toBeNull();
-      expect(byText('span', '+฿30.00')?.classList.contains('text-danger')).toBe(true);
-    });
-
-    it('shows last month and this month for each cause on hover', () => {
-      pacer({ gapDrivers: drivers, gapOthers: 0 });
-      expect(q('[title*="หนัง"]')?.getAttribute('title')).toBe('หนัง: เดือนนี้ ฿300.00 · เดือนก่อน ฿1,000.00');
-    });
-
-    it('a finished month says "the month viewed" on hover too', () => {
-      pacer({ isCurrentMonth: false, gapDrivers: drivers, gapOthers: 0 });
-      expect(q('[title*="หนัง"]')?.getAttribute('title')).toBe('หนัง: เดือนที่ดู ฿300.00 · เดือนก่อน ฿1,000.00');
-    });
-
-    it('the causes take the place of the two bars, so the card does not grow', () => {
-      const bars = () => document.querySelectorAll('.h-1.w-full').length;
-      pacer({ gapDrivers: [], gapOthers: 0 });
-      expect(bars()).toBe(2);
-      act(() => root!.unmount());
-      pacer({ gapDrivers: drivers, gapOthers: 0 });
-      expect(bars()).toBe(0);
-    });
-
-    it('the headline keeps its satang, so the lines add up to it exactly', () => {
-      pacer({ deltaVsGhost: -585.39, gapDrivers: drivers, gapOthers: 0 });
-      expect(byText('div', '−฿585.39')).not.toBeNull();
-    });
-
-    it('no remainder, no remainder line', () => {
-      pacer({ gapDrivers: drivers, gapOthers: 0 });
-      expect(text()).not.toContain('หมวดอื่นรวม');
-    });
-
-    it('a negative remainder keeps the real minus and its colour', () => {
-      pacer({ gapDrivers: drivers, gapOthers: -30 });
-      expect(byText('span', '−฿30.00')?.classList.contains('text-income')).toBe(true);
-    });
-
-    it('nothing to explain: the verdict line stays', () => {
-      pacer({ gapDrivers: [], gapOthers: 0 });
-      expect(text()).not.toContain('ต่างจากเดือนก่อนเพราะ');
-      expect(text()).toContain('ควบคุมงบได้นิ่งกว่า');
-    });
-
-    it('skeleton hides the causes', () => {
-      pacer({ gapDrivers: drivers, gapOthers: 30 }, true);
-      expect(text()).not.toContain('ต่างจากเดือนก่อนเพราะ');
-    });
-  });
-
-  it('a finished month speaks of its real total, not of a forecast or of "this month"', () => {
-    pacer({ isCurrentMonth: false, currentDay: 30, projectedExpense: 19_000, deltaEom: -2_000, currentSpendToDate: 19_000 });
-    const t = text();
-    expect(t).toContain('ยอดจบเดือน');
-    expect(t).toContain('ยอดจบจริงเดือนที่ดู:');
-    expect(t).not.toContain('คาดการณ์');
-    expect(t).not.toContain('ประมาณการ');
-    expect(t).not.toContain('เดือนนี้');
-    expect(t).not.toContain('เป้าสิ้นเดือน');
-  });
-
-  it('the current month keeps its forecast wording', () => {
-    pacer({});
-    const t = text();
-    expect(t).toContain('คาดการณ์ยอดสิ้นเดือน');
-    expect(t).toContain('ประมาณการเดือนนี้:');
-    expect(t).toContain('ก.ย. (เดือนนี้):');
-  });
-
-  it('every headline shows real satang with a real sign', () => {
-    pacer({ deltaVsGhost: 1_500.5, deltaVsBenchmark: -1_252.75, projectedExpense: 9_480.98 });
-    expect(byText('div', '+฿1,500.50')).not.toBeNull();
-    expect(byText('div', '−฿1,252.75')).not.toBeNull();
-    expect(byText('div', '฿9,480.98')).not.toBeNull();
-  });
-
-  it('the 3-month benchmark is tagged as 3 months', () => {
-    pacer({});
-    expect(text()).toContain('3 เดือนก่อน');
-  });
-
-  describe('with or without rent', () => {
-    const withRent = { ...ghost, ghostSpendToDate: 14_000, ghostTotalExpense: 27_000, currentSpendToDate: 8_000, deltaVsGhost: -6_000 };
-    const noRent = { ...ghost, ghostSpendToDate: 8_100, currentSpendToDate: 8_000, deltaVsGhost: -100, deltaVsGhostPct: -1.2 };
-    const toggled = (details: GhostPacerDetails = noRent) =>
-      mountNode(<SummaryGhostPacer analytics={withData({ ghostPacerDetails: withRent, ghostPacerDetailsNoRent: details })} />);
-    const toggle = () => q('button[aria-pressed]') as HTMLButtonElement;
-
-    beforeEach(() => localStorage.removeItem(STORAGE_KEYS.GHOST_INCLUDE_RENT));
-
-    it('starts without rent', () => {
-      toggled();
-      expect(toggle().getAttribute('aria-pressed')).toBe('false');
-      expect(toggle().textContent).toContain('รวมค่าเช่า');
-      expect(text()).toContain('฿8,100.00');
-      expect(text()).not.toContain('฿14,000.00');
-    });
-
-    it('the switch brings rent in and is remembered', () => {
-      toggled();
-      click(toggle());
-      expect(toggle().getAttribute('aria-pressed')).toBe('true');
-      expect(text()).toContain('฿14,000.00');
-      expect(localStorage.getItem(STORAGE_KEYS.GHOST_INCLUDE_RENT)).toBe('1');
-      act(() => root!.unmount());
-      toggled();
-      expect(toggle().getAttribute('aria-pressed')).toBe('true');
-      click(toggle());
-      expect(localStorage.getItem(STORAGE_KEYS.GHOST_INCLUDE_RENT)).toBe('0');
-    });
-
-    it('no rent anywhere: nothing to switch', () => {
-      toggled(withRent);
-      expect(toggle()).toBeNull();
-    });
-
-    it('rent only in this month forecast still offers the switch', () => {
-      mountNode(<SummaryGhostPacer analytics={withData({ ghostPacerDetails: { ...ghost, projectedExpense: 22_500 }, ghostPacerDetailsNoRent: ghost })} />);
-      expect(toggle()).not.toBeNull();
-    });
-
-    it('a blocked localStorage does not break the card', () => {
-      const get = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
-      const set = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
-      toggled();
-      click(toggle());
-      expect(toggle().getAttribute('aria-pressed')).toBe('true');
-      get.mockRestore();
-      set.mockRestore();
-    });
-  });
-
-  it('within 5% either way counts as close, not a win or a loss (warn colour)', () => {
-    pacer({ deltaVsGhost: -300, deltaVsGhostPct: -3 }); // 300 of 10,000 = 3%
-    expect(text()).toContain('ใกล้เคียง');
-    expect(text()).toContain('ใกล้เคียงเดือนก่อน');
-    expect(q('.text-warn')).not.toBeNull();
-  });
-
-  it('skeleton hides the headline numbers', () => {
-    pacer({}, true);
-    expect(document.querySelectorAll('.animate-pulse').length).toBe(3);
-  });
-});

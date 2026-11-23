@@ -1,4 +1,4 @@
-// Small building blocks shared by the hand-drawn SVG charts (Ghost Pacer, Forecasting, Allocation trend).
+// Small building blocks shared by the hand-drawn SVG charts (Forecasting, Allocation trend).
 import React, { SVGProps, useEffect, useRef, useState } from 'react';
 import { FONT_MONO, tc } from '@/constants/theme';
 

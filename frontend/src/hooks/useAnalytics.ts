@@ -64,8 +64,6 @@ export default function useAnalytics({
       showForecasting: core.showForecasting, projectedExpense: core.projectedExpense,
       safeToSpend: core.safeToSpend, projectedSurplus: core.projectedSurplus,
       forecastingDetails: core.forecastingDetails,
-      ghostPacerDetails: core.ghostPacerDetails,
-      ghostPacerDetailsNoRent: core.ghostPacerDetailsNoRent,
       allocationEvolution: core.allocationEvolution,
       prevTotals: core.prevTotals, totalExpense: core.totals.expense, totalIncome: core.totals.income,
       totalSavings: core.totals.savings || 0,

@@ -290,15 +290,13 @@ const TimelineDayCell = React.memo<TimelineDayCellProps>(({
 
 TimelineDayCell.displayName = 'TimelineDayCell';
 
-/** GitHub layout cell + weekday-rail row sizes (the rail rows must match the cells) */
-const GITHUB_SIZES = {
-  lg: { cell: "w-7 h-7", row: "h-7" },
-  md: { cell: "w-5 h-5", row: "h-5" },
-  sm: { cell: "w-4 h-4", row: "h-4" },
-} as const;
-// Above this many weeks (~7 months) the calendar layout wraps to two rows of cards, so the GitHub
-// layout splits into two strips to fill the same height instead of floating in empty space.
-const GITHUB_SPLIT_WEEKS = 30;
+/** GitHub layout cell + weekday-rail row size (the rail rows must match the cells) */
+const GITHUB_SIZE = { cell: "w-7 h-7", row: "h-7" } as const;
+
+/** Opens a sideways-scrolling strip at its latest (right) end; a no-op when it fits. */
+const scrollToLatest = (el: HTMLDivElement | null) => {
+  if (el) el.scrollLeft = el.scrollWidth;
+};
 
 // ─── SUB-COMPONENT: TimelineLayoutToggle ───────────────────────
 interface TimelineLayoutToggleProps {
@@ -618,34 +616,16 @@ export default function ActivityTimeline() {
       );
     }
 
-    // A long period (a year) would be one thin strip in a panel as tall as the wrapped calendar:
-    // split it into two strips at the month start nearest the middle, with bigger cells.
-    const split = weeks.length > GITHUB_SPLIT_WEEKS;
-    let strips = [weeks];
-    if (split) {
-      const mid = weeks.length / 2;
-      let cut = -1;
-      weeks.forEach((w, i) => {
-        if (i > 0 && w.monthLabel && (cut < 0 || Math.abs(i - mid) < Math.abs(cut - mid))) cut = i;
-      });
-      if (cut < 0) cut = Math.ceil(mid);
-      strips = [weeks.slice(0, cut), weeks.slice(cut)];
-    }
-
-    // fewer weeks → bigger cells, so a single month fills the panel instead of sitting small in a corner
-    const size = split ? GITHUB_SIZES.md
-      : weeks.length <= 6 ? GITHUB_SIZES.lg
-      : weeks.length <= 14 ? GITHUB_SIZES.md
-      : GITHUB_SIZES.sm;
-
+    // One strip, always: a long period scrolls sideways (opened at its latest end) instead of wrapping.
     return (
-      <div className="w-full flex justify-center-safe overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-        <div className="flex flex-col gap-4 w-max">
-          {strips.map((stripWeeks, stripIndex) => (
-            <div key={stripWeeks[0]?.days.find(Boolean) || `strip-${stripIndex}`} data-github-strip className="flex w-max gap-x-px pr-3">
-              {renderGithubStrip(stripWeeks, size, ghost)}
-            </div>
-          ))}
+      <div
+        key={`${datesInPeriod[0]}_${datesInPeriod.length}`} // a new period remounts it, so it opens at its end again
+        ref={ghost ? undefined : scrollToLatest}
+        className="w-full flex justify-center-safe overflow-x-auto pb-4 pt-6 pr-3 custom-scrollbar"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        <div data-github-strip className="flex w-max gap-x-px pr-3">
+          {renderGithubStrip(weeks, GITHUB_SIZE, ghost)}
         </div>
       </div>
     );
@@ -653,7 +633,7 @@ export default function ActivityTimeline() {
 
   const renderGithubStrip = (
     stripWeeks: typeof weeks,
-    size: (typeof GITHUB_SIZES)[keyof typeof GITHUB_SIZES],
+    size: typeof GITHUB_SIZE,
     ghost: boolean,
   ) => {
     return (

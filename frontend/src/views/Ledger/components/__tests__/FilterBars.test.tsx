@@ -68,18 +68,17 @@ describe('FilterBar (list view)', () => {
   const bar = (over: Record<string, unknown> = {}) => {
     const spies = {
       setSearchQuery: vi.fn(), setTypeFilter: vi.fn(), setAllocationFilter: vi.fn(), setMinAmount: vi.fn(), setMaxAmount: vi.fn(),
-      setAdvancedFilterDate: vi.fn(), setDayTypeFilter: vi.fn(), clearFilters: vi.fn(), setIsExpanded: vi.fn(),
+      setAdvancedFilterDate: vi.fn(), setDayTypeFilter: vi.fn(), clearFilters: vi.fn(), setAdvancedFilterGroup: vi.fn(),
     };
-    mount(<FilterBar {...base} {...spies} isExpanded {...over} />);
+    mount(<FilterBar {...base} {...spies} {...over} />);
     return spies;
   };
   const search = () => q<HTMLInputElement>('input[placeholder^="ค้นหา"]')!;
-  const advancedToggle = () => [...document.querySelectorAll('button')].find(b => b.textContent!.includes('ตัวกรองขั้นสูง'))!;
 
   describe('the quick strip', () => {
 
     it('the type switch: all / income / expense, the current one lit', () => {
-      const s = bar({ isExpanded: false, typeFilter: 'INCOME' });
+      const s = bar({ typeFilter: 'INCOME' });
       expect(on(btn('รายรับ'))).toBe(true);
       expect(on(btn('ทั้งหมด'))).toBe(false);
       click(btn('รายจ่าย'));
@@ -88,17 +87,19 @@ describe('FilterBar (list view)', () => {
       expect(s.setTypeFilter).toHaveBeenLastCalledWith('ALL');
       click(btn('รายรับ'));
       expect(s.setTypeFilter).toHaveBeenLastCalledWith('INCOME');
+      click(btn('ลงทุน'));
+      expect(s.setTypeFilter).toHaveBeenLastCalledWith('SAVINGS');
     });
 
   });
 
-  describe('the advanced panel', () => {
+  describe('the second row', () => {
     it('min and max amount', () => {
       const s = bar({ minAmount: '5' });
-      expect(q<HTMLInputElement>('input[placeholder="Min"]')!.value).toBe('5');
-      type(q('input[placeholder="Min"]'), '10');
+      expect(q<HTMLInputElement>('input[aria-label="ยอดต่ำสุด"]')!.value).toBe('5');
+      type(q('input[aria-label="ยอดต่ำสุด"]'), '10');
       expect(s.setMinAmount).toHaveBeenLastCalledWith('10');
-      type(q('input[placeholder="Max"]'), '99');
+      type(q('input[aria-label="ยอดสูงสุด"]'), '99');
       expect(s.setMaxAmount).toHaveBeenLastCalledWith('99');
     });
 
@@ -112,6 +113,13 @@ describe('FilterBar (list view)', () => {
       expect(s.setAllocationFilter).toHaveBeenLastCalledWith('savings');
       click(btn('Want'));
       expect(s.setAllocationFilter).toHaveBeenLastCalledWith('want');
+    });
+
+    it('a group picked from the breakdown shows as a chip that clears it', () => {
+      const s = bar({ advancedFilterGroup: 'g-food', cashflowGroups: [{ id: 'g-food', name: 'ค่ากิน', type: 'expense' }] });
+      expect(text()).toContain('กลุ่ม: ค่ากิน');
+      click(q('button[title="ล้างตัวกรองกลุ่ม"]'));
+      expect(s.setAdvancedFilterGroup).toHaveBeenLastCalledWith('ALL');
     });
 
   });

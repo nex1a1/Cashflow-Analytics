@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import CalendarDayCell from './CalendarDayCell';
 import { CALENDAR_HEAT_CHIP, CALENDAR_HEAT_STEPS } from '../utils/calendarHeat';
@@ -38,6 +38,9 @@ export interface CalendarBlockProps {
   maxDailyExpense: number;
   /** rows for these dates are still loading: skeleton chips + cells instead of ฿0 / empty days */
   rowsPending?: boolean;
+  /** the window the loaded rows cover: while pending, only days outside it show skeletons
+      (switching month ↔ pay cycle misses a few days, and the rest must not blink to skeleton) */
+  loadedRange?: { start: string | null; end: string | null } | null;
 }
 
 const BLANK_CELL = 'min-h-[120px] 2xl:min-h-[145px] bg-surface bg-[radial-gradient(rgb(var(--accent)/0.06)_1px,transparent_1px)] bg-size-[10px_10px] opacity-40';
@@ -62,9 +65,22 @@ const CalendarBlock = React.memo(function CalendarBlock({
   excludedCategoryIds,
   toggleCategory,
   maxDailyExpense,
-  rowsPending = false
+  rowsPending = false,
+  loadedRange = null
 }: CalendarBlockProps): React.ReactElement {
   const today = useToday();
+  // Period swap: the grid remounts per period (keyed by its first date) and settles in as one piece.
+  // Next/previous slides in from that side; switching month ↔ pay cycle just fades (starts -01 vs -25).
+  // Before this, cells were keyed by date alone: dates in both periods jumped instantly while the new ones
+  // faded in from blank, so the grid blinked in patches.
+  const periodKey = dates[0];
+  const [swap, setSwap] = useState({ key: periodKey, cls: '' });
+  if (swap.key !== periodKey) {
+    const sameMode = swap.key.endsWith('-01') === periodKey.endsWith('-01');
+    let cls = 'm-swap';
+    if (sameMode) cls += periodKey > swap.key ? ' m-swap-next' : ' m-swap-prev';
+    setSwap({ key: periodKey, cls });
+  }
   const [stepMid, stepHigh, stepPeak] = CALENDAR_HEAT_STEPS.map(s => `฿${s.toLocaleString('en-US')}`);
 
   const prefixBlankKeys = ['b-sun', 'b-mon', 'b-tue', 'b-wed', 'b-thu', 'b-fri'].slice(0, firstDayOfMonth);
@@ -80,9 +96,9 @@ const CalendarBlock = React.memo(function CalendarBlock({
         <div className="flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-black flex items-center gap-2 tracking-wide text-ink-display">
             <CalendarIcon className="w-6 h-6 text-accent-ink" />
-            {title}
+            <span key={periodKey} className={swap.cls && 'm-fade-in'}>{title}</span>
           </h2>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div key={periodKey} className={`flex items-center gap-2 flex-wrap ${swap.cls && 'm-fade-in'}`}>
             {rowsPending && [0, 1, 2].map(i => (
               <span key={i} className="h-[22px] w-28 bg-surface-elevated animate-pulse" aria-hidden="true" />
             ))}
@@ -136,7 +152,7 @@ const CalendarBlock = React.memo(function CalendarBlock({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-px bg-line flex-1">
+        <div key={periodKey} className={`grid grid-cols-7 gap-px bg-line flex-1 ${swap.cls}`}>
           {prefixBlankKeys.map(blankKey => (
             <div key={blankKey} className={BLANK_CELL} />
           ))}
@@ -182,7 +198,9 @@ const CalendarBlock = React.memo(function CalendarBlock({
                 monthEdgeLeft={monthEdgeLeft}
                 popUp={popUp}
                 alignRight={alignRight}
-                loading={rowsPending}
+                loading={rowsPending && !(loadedRange
+                  && (loadedRange.start === null || loadedRange.start <= dateStr)
+                  && (loadedRange.end === null || dateStr <= loadedRange.end))}
               />
             );
           })}

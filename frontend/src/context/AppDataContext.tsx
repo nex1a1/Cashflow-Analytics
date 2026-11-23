@@ -2,7 +2,7 @@ import React, { createContext, use, useState, useEffect, useCallback, useMemo, u
 import { AppDataContextValue, CashflowGroup, DayNote, DayType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_DAY_TYPES } from '../constants';
 import { calendarService, groupService, dayTypeService } from '../services/api';
-import { getPeriodDateRange, parseDateStrToObj } from '../utils/dateHelpers';
+import { getPeriodDateRange, parseDateStrToObj, rowsFetchEnd } from '../utils/dateHelpers';
 import { latestOnly } from '../utils/latestOnly';
 import { parseShadeStrength, withGroupColors } from '../utils/categoryColors';
 import useJsonSetting from '../hooks/useJsonSetting';
@@ -107,7 +107,7 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
       // both loaders handle their own errors (offline status / no summary), so this never rejects
       await Promise.all([
         loadAnalytics(startDate, endDate),
-        loadData(fetchStartDate || startDate, endDate)
+        loadData(fetchStartDate || startDate, rowsFetchEnd(period, endDate))
       ]);
     } finally {
       // an older request finishing must not switch the spinner off while the newer one is still loading
@@ -115,8 +115,9 @@ export const AppDataProvider: React.FC<AppDataProviderProps> = ({ children }) =>
         setIsFetchingPeriod(false);
         // the next month/cycle is the likely next click and isn't in this window (only 3 back are): fetch it now
         if (isSingleUnitPeriod(period)) {
-          const next = getPeriodDateRange(`${isCyclePeriod(period) ? CYCLE_PREFIX : ''}${shiftMonth(stripCycle(period), 1)}`);
-          prefetchData(next.fetchStartDate || next.startDate, next.endDate);
+          const nextPeriod = `${isCyclePeriod(period) ? CYCLE_PREFIX : ''}${shiftMonth(stripCycle(period), 1)}`;
+          const next = getPeriodDateRange(nextPeriod);
+          prefetchData(next.fetchStartDate || next.startDate, rowsFetchEnd(nextPeriod, next.endDate));
         }
       }
     }

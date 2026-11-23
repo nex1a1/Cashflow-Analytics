@@ -6,7 +6,6 @@ import { StrategicFoodCard } from './StrategicFoodCard';
 import { StrategicDailyExpenseCard } from './StrategicDailyExpenseCard';
 import { StrategicVictoryCard } from './StrategicVictoryCard';
 import { SummaryForecasting } from '../Forecasting/SummaryForecasting';
-import { SummaryGhostPacer } from '../GhostPacer/SummaryGhostPacer';
 import { gradeBudget, PILL } from '../helpers';
 import { DisabledHint } from '../../panelParts';
 import type { SummaryAnalytics } from '../types';
@@ -14,7 +13,6 @@ import type { SummaryAnalytics } from '../types';
 export const ANALYSIS_TABS = [
   { id: 'strategic', label: 'ภาพรวมการใช้จ่าย' },
   { id: 'forecast', label: 'พยากรณ์สิ้นเดือน' },
-  { id: 'ghost', label: 'เทียบเดือนที่แล้ว' },
 ] as const;
 
 export type AnalysisTabId = typeof ANALYSIS_TABS[number]['id'];
@@ -165,7 +163,6 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
     </span>
   );
 
-  const isSingleMonthView = Boolean(analytics.isSingleMonthView);
   const tabItems: AnalysisTabItem[] = [
     { id: 'strategic', label: 'ภาพรวมการใช้จ่าย' },
     {
@@ -173,12 +170,6 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
       label: 'พยากรณ์สิ้นเดือน',
       disabled: !showForecasting,
       title: !showForecasting ? 'ต้องเลือกเดือนปัจจุบันเท่านั้น (เพื่อคำนวณวันคงเหลือในเดือน)' : undefined,
-    },
-    {
-      id: 'ghost',
-      label: 'เทียบเดือนที่แล้ว',
-      disabled: !isSingleMonthView,
-      title: !isSingleMonthView ? 'ต้องเลือกมุมมองรายเดือนเท่านั้น (เพื่อเทียบกับเดือนก่อนแบบวันต่อวัน)' : undefined,
     },
   ];
   const isTabAvailable = tabItems.some(t => t.id === activeTab && !t.disabled);
@@ -259,11 +250,6 @@ export const SummaryStrategic = memo(({ analytics, showSkeleton }: SummaryStrate
         {showForecasting && effectiveTab === 'forecast' && (
           <div className="flex-1" {...panelProps('forecast')}>
             <SummaryForecasting analytics={analytics} showSkeleton={showSkeleton} />
-          </div>
-        )}
-        {isSingleMonthView && effectiveTab === 'ghost' && (
-          <div className="flex-1" {...panelProps('ghost')}>
-            <SummaryGhostPacer analytics={analytics} showSkeleton={showSkeleton} />
           </div>
         )}
       </div>

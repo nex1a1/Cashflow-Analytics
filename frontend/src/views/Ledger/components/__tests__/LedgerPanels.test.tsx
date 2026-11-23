@@ -26,13 +26,12 @@ afterEach(() => {
 });
 
 describe('LedgerHeaderActions', () => {
-  const fns = () => ({ setViewMode: vi.fn(), setFilterOpen: vi.fn(), setHorizontalFilterOpen: vi.fn(), handleOpenAddModal: vi.fn() });
+  const fns = () => ({ setViewMode: vi.fn(), setHorizontalFilterOpen: vi.fn(), handleOpenAddModal: vi.fn() });
   const actions = (over: Partial<React.ComponentProps<typeof LedgerHeaderActions>> = {}) => {
     const f = fns();
-    mount(<LedgerHeaderActions viewMode="list" filterOpen={false} isFilterActive={false} horizontalFilterOpen={false} isHorizontalFilterActive={false} {...f} {...over} />);
+    mount(<LedgerHeaderActions viewMode="list" horizontalFilterOpen={false} isHorizontalFilterActive={false} {...f} {...over} />);
     return f;
   };
-  const filterBtn = () => [...document.querySelectorAll('button')].find(b => b.textContent!.startsWith('ตัวกรอง'))!;
 
   it('the add buttons open the modal for income, savings and expense with no date', () => {
     const f = actions();
@@ -120,12 +119,12 @@ describe('LedgerGroupBreakdownSection', () => {
   const section = (inc: string[], sav: string[], exp: string[]) =>
     mount(<LedgerGroupBreakdownSection activeIncomeCards={inc.map(card)} activeSavingsCards={sav.map(card)} activeExpenseCards={exp.map(card)} />);
 
-  it('a divider only when both income and savings are shown', () => {
-    section(['i1'], ['s1'], []);
-    expect(container!.querySelector('.w-px')).not.toBeNull();
+  it('a block per kind that has rows, income → savings → expense', () => {
+    section(['i1'], ['s1'], ['e1']);
+    expect([...container!.querySelectorAll('[data-block]')].map(e => e.getAttribute('data-block'))).toEqual(['inc', 'sav', 'exp']);
     act(() => root!.unmount()); container!.remove();
     section(['i1'], [], ['e1']);
-    expect(container!.querySelector('.w-px')).toBeNull();
+    expect([...container!.querySelectorAll('[data-block]')].map(e => e.getAttribute('data-block'))).toEqual(['inc', 'exp']);
   });
 
   it('expense-only still renders', () => {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TransactionDisplay, Category, CashflowGroup } from '../../../types';
 import CategoryGlyph from '../../../components/shared/CategoryGlyph';
 import { monthKeyOf } from '../../../utils/payCycle';
@@ -41,83 +41,51 @@ function resolveGroupPct(isIncome: boolean, isSavings: boolean, total: number, s
 function resolveCardTheme(g: CashflowGroup, isIncome: boolean, isSavings: boolean) {
   if (isIncome) {
     return {
-      activeBorderColor: 'border-income',
       activeBgColor: 'bg-income/5',
       defaultColor: tc('income'),
       amtColor: 'text-income',
       amtSign: '+',
-      badgeText: 'IN',
-      pulseClass: 'bg-income',
-      borderColorActive: tc('income', 0.4),
       iconFallback: 'coins'
     };
   }
   if (isSavings) {
     return {
-      activeBorderColor: 'border-savings',
       activeBgColor: 'bg-savings/10',
       defaultColor: tc('savings'),
       amtColor: 'text-savings',
       amtSign: '±',
-      badgeText: 'SAVE',
-      pulseClass: 'bg-savings',
-      borderColorActive: tc('savings', 0.4),
       iconFallback: 'piggy-bank'
     };
   }
   return {
-    activeBorderColor: 'border-expense',
     activeBgColor: 'bg-expense/5',
     defaultColor: g.color || tc('ink-muted'),
     amtColor: 'text-expense',
     amtSign: '−',
-    badgeText: 'OUT',
-    pulseClass: 'bg-expense',
-    borderColorActive: tc('expense', 0.4),
     iconFallback: 'trending-down'
   };
 }
 
-interface LedgerStatCategoryRowProps {
+/** Categories shown in a collapsed row; the rest sit behind a "+N" toggle. */
+const COLLAPSED_CATS = 4;
+
+interface LedgerStatCategoryChipProps {
   cat: GroupBreakdownCategory;
   total: number;
   defaultColor: string;
-  formatMoney: (val: number | string) => string;
 }
 
-const LedgerStatCategoryRow: React.FC<LedgerStatCategoryRowProps> = ({ cat, total, defaultColor, formatMoney }) => {
+const LedgerStatCategoryChip: React.FC<LedgerStatCategoryChipProps> = ({ cat, total, defaultColor }) => {
   const relativePct = total > 0 ? Math.round((cat.amount / total) * 100) : 0;
   const catColor = cat.color || defaultColor;
 
   return (
-    <div className="flex items-center justify-between gap-2 w-full font-bold transition-all duration-75">
-      <span className="truncate flex items-center gap-2 min-w-0">
-        <span 
-          className="w-[21px] h-[21px] flex items-center justify-center shrink-0 text-[11px] rounded-none border"
-          style={{ 
-            backgroundColor: `${catColor}15`, 
-            borderColor: `${catColor}30` 
-          }}
-        >
-          <CategoryGlyph icon={cat.icon} color={cat.color || defaultColor} size={11} fallbackEmoji="sparkles" />
-        </span>
-        <span 
-          className="truncate uppercase tracking-tight text-[11px] font-black"
-          style={{ color: catColor }}
-        >
-          {cat.name}
-        </span>
-      </span>
-      <div className="flex items-center gap-1.5 shrink-0 font-mono text-[11px]">
-        <span 
-          className="font-bold opacity-80 text-[11px]"
-          style={{ color: catColor }}
-        >
-          {relativePct}%
-        </span>
-        <span className="font-extrabold" style={{ color: catColor }}>{formatBaht(cat.amount)}</span>
-      </div>
-    </div>
+    <span data-cat className="inline-flex items-center gap-1.5 min-w-0 text-[11px] font-bold leading-none" style={{ color: catColor }}>
+      <CategoryGlyph icon={cat.icon} color={catColor} size={11} fallbackEmoji="sparkles" />
+      <span data-cat-name className="truncate max-w-[10rem] font-black">{cat.name}</span>
+      <span className="font-mono tabular-nums opacity-80">{relativePct}%</span>
+      <span className="font-mono tabular-nums font-extrabold">{formatBaht(cat.amount)}</span>
+    </span>
   );
 };
 
@@ -133,126 +101,107 @@ interface LedgerStatCardProps {
   onCardClick: () => void;
 }
 
+/** One cashflow group as a single table-like line: the button (name → count) filters the Ledger,
+ *  the category chips to its right fold behind "+N" when there are many. */
 const LedgerStatCard: React.FC<LedgerStatCardProps> = ({
   g,
   breakdown,
   sumInc,
   sumExp,
   uniqueMonths,
-  formatMoney,
   isActive,
   isSavings,
   onCardClick
 }) => {
+  const [showAllCats, setShowAllCats] = useState(false);
   const total = breakdown?.total || 0;
   const txCount = breakdown?.txCount || 0;
   const isIncome = g.type === 'income';
+  const perMonth = uniqueMonths > 1;
 
   const pctOfTotal = resolveGroupPct(isIncome, isSavings, total, sumInc, sumExp);
   const theme = resolveCardTheme(g, isIncome, isSavings);
+  const groupColor = g.color || theme.defaultColor;
+  const barWidth = Math.min(100, Math.max(0, Number(pctOfTotal)));
 
   const sortedCats = Object.values(breakdown?.categories || {})
     .filter(c => c.amount > 0)
     .sort((a, b) => b.amount - a.amount);
+  const hiddenCats = Math.max(0, sortedCats.length - COLLAPSED_CATS);
+  const shownCats = showAllCats ? sortedCats : sortedCats.slice(0, COLLAPSED_CATS);
 
   return (
-    <div className="w-[235px] shrink-0 flex flex-col">
-      <button 
+    <div
+      className={`group relative grid ${perMonth ? 'grid-cols-[minmax(0,12rem)_8rem_7.5rem_5rem_7.5rem_minmax(0,1fr)]' : 'grid-cols-[minmax(0,12rem)_8rem_7.5rem_5rem_minmax(0,1fr)]'} items-center gap-x-4 pl-3.5 pr-3 py-1.5 ${
+        isActive ? theme.activeBgColor : 'hover:bg-surface-hover'
+      }`}
+    >
+      <span
+        className={`absolute left-0 inset-y-0 w-[3px] ${isActive ? '' : 'opacity-60'}`}
+        style={{ backgroundColor: groupColor }}
+      />
+      <button
         type="button"
         onClick={onCardClick}
-        className={`text-left group flex flex-col flex-1 gap-2.5 p-3.5 border-2 rounded-none relative overflow-hidden cursor-pointer select-none transition-all duration-150 ${
-          isActive 
-            ? `${theme.activeBgColor} ${theme.activeBorderColor} z-10` 
-            : 'bg-surface hover:bg-canvas border-line hover:border-line-strong'
-        }`}
-        style={{ borderLeftColor: isActive ? undefined : theme.defaultColor }}
+        aria-pressed={isActive}
+        className={`${perMonth ? 'col-span-5' : 'col-span-4'} grid grid-cols-subgrid items-center text-left cursor-pointer select-none`}
       >
-        <div 
-          className="absolute inset-0 opacity-[0.015] group-hover:opacity-[0.04]"
-          style={{ backgroundColor: g.color || theme.defaultColor }}
-        />
-        
-        {/* Row 1: Icon + Name (left) & Badge (right) */}
-        <div className="flex items-center justify-between gap-2 w-full min-w-0 z-10">
-          <div className="flex items-center gap-2 min-w-0">
-            <div 
-              className="w-[26px] h-[26px] flex items-center justify-center text-[14px] rounded-none border shrink-0"
-              style={{ 
-                backgroundColor: `${g.color || theme.defaultColor}20`, 
-                color: readable(g.color || theme.defaultColor),
-                borderColor: isActive ? theme.borderColorActive : `${g.color || theme.defaultColor}30`
-              }}
-            >
-              <CategoryGlyph icon={g.icon} color={g.color || theme.defaultColor} size={14} fallbackEmoji={theme.iconFallback} />
-            </div>
-            <span 
-              className={`text-[12.5px] font-black uppercase tracking-wider truncate leading-none ${
-                isActive ? 'text-ink-display' : 'text-ink-soft'
-              }`}
-              title={g.name}
-            >
-              {g.name}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-1.5 shrink-0">
-            {isActive && (
-              <span className={`w-1.5 h-1.5 rounded-none ${theme.pulseClass} shrink-0`} />
-            )}
-            <span 
-              className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-pill border shrink-0 leading-none"
-              style={{ 
-                backgroundColor: `${g.color || theme.defaultColor}15`, 
-                color: readable(g.color || theme.defaultColor), 
-                borderColor: `${g.color || theme.defaultColor}30` 
-              }}
-            >
-              {theme.badgeText}
-            </span>
-          </div>
-        </div>
-        
-        {/* Row 2: Amounts */}
-        <div className="flex flex-col min-w-0 font-mono z-10">
-          <div className="flex items-baseline justify-between gap-1">
-            <span 
-              className={`text-[17px] font-black tabular-nums tracking-tight truncate ${theme.amtColor}`}
-              title={`${theme.amtSign}${formatBaht(total)}`}
-            >
-              {theme.amtSign}{formatBaht(total)}
-            </span>
-            <span className="text-[11.5px] font-black text-ink-body tabular-nums">
-              {pctOfTotal}%
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-[11px] text-ink-body mt-0.5 font-bold">
-            <span>{txCount} รายการ</span>
-            {uniqueMonths > 1 && (
-              <span 
-                className="truncate ml-1"
-                title={`${formatBaht(total / uniqueMonths)}/เดือน`}
-              >
-                {formatBaht(total / uniqueMonths)}/ด.
-              </span>
-            )}
-          </div>
-        </div>
+        <span className="flex items-center gap-2 min-w-0">
+          <span
+            className="w-[22px] h-[22px] flex items-center justify-center border shrink-0"
+            style={{ backgroundColor: `${groupColor}20`, borderColor: `${groupColor}30` }}
+          >
+            <CategoryGlyph icon={g.icon} color={groupColor} size={13} fallbackEmoji={theme.iconFallback} />
+          </span>
+          <span
+            className={`text-[12px] font-black truncate overflow-x-clip ${isActive ? 'text-ink-display' : 'text-ink-soft group-hover:text-ink-display'}`}
+            title={g.name}
+          >
+            {g.name}
+          </span>
+        </span>
 
-        {/* Row 3: Inline Category List (Always Visible with max height) */}
-        {sortedCats.length > 0 && (
-          <div className="mt-2.5 pt-2.5 border-t border-dashed border-line flex flex-col gap-2 z-10 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-            {sortedCats.map(cat => (
-              <LedgerStatCategoryRow
-                key={cat.id}
-                cat={cat}
-                total={total}
-                defaultColor={theme.defaultColor}
-                formatMoney={formatMoney}
-              />
-            ))}
-          </div>
+        <span
+          className={`text-right font-mono text-[13px] font-black tabular-nums tracking-tight truncate ${theme.amtColor}`}
+          title={`${theme.amtSign}${formatBaht(total)}`}
+        >
+          {theme.amtSign}{formatBaht(total)}
+        </span>
+
+        <span className="flex items-center gap-2">
+          <span className="relative h-1.5 flex-1 bg-line/40">
+            <span className="absolute inset-y-0 left-0" style={{ width: `${barWidth}%`, backgroundColor: groupColor }} />
+          </span>
+          <span data-share className="w-11 text-right font-mono text-[11px] font-black tabular-nums text-ink-body">
+            {pctOfTotal}%
+          </span>
+        </span>
+
+        <span className="text-right text-[11px] font-bold tabular-nums text-ink-muted">{txCount} รายการ</span>
+
+        {perMonth && (
+          <span className="text-right font-mono text-[11px] font-bold tabular-nums text-ink-muted truncate" title={`${formatBaht(total / uniqueMonths)}/เดือน`}>
+            {formatBaht(total / uniqueMonths)}/ด.
+          </span>
         )}
       </button>
+
+      <div data-cats className={`flex items-center gap-x-4 gap-y-1.5 min-w-0 ${showAllCats ? 'flex-wrap' : 'overflow-x-clip'}`}>
+        {shownCats.map(cat => (
+          <LedgerStatCategoryChip key={cat.id} cat={cat} total={total} defaultColor={readable(groupColor)} />
+        ))}
+        {hiddenCats > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAllCats(v => !v)}
+            aria-expanded={showAllCats}
+            className="shrink-0 px-1.5 py-0.5 rounded-pill border border-line text-[11px] font-black tabular-nums text-ink-muted hover:text-ink-display cursor-pointer"
+            title={showAllCats ? 'ย่อรายการหมวด' : `ดูอีก ${hiddenCats} หมวด`}
+          >
+            {showAllCats ? 'ย่อ' : `+${hiddenCats}`}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
