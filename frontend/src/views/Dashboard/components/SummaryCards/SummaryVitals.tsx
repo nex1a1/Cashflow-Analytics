@@ -1,7 +1,7 @@
 // src/views/Dashboard/components/SummaryCards/SummaryVitals.tsx
 import { memo } from 'react';
 import { Activity } from 'lucide-react';
-import { calculatePeriodDelta, formatBaht } from '@/utils/formatters';
+import { calculatePeriodDelta, formatBaht, formatBahtShort, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { Shimmer, SectionHeader, BUDGET_RULES, PILL, LEVEL_PILL, NEUTRAL_PILL } from './helpers';
 import { SummaryAnalytics } from './types';
 
@@ -11,6 +11,28 @@ interface SummaryVitalsProps {
 }
 
 type Delta = ReturnType<typeof calculatePeriodDelta>;
+
+const monthShort = (ym: string) => THAI_MONTHS_SHORT[Number(ym.slice(5, 7)) - 1];
+
+/** "มิ.ย.–พ.ย." for a run of months, otherwise each month listed. */
+const monthsLabel = (months: string[]) => {
+  if (months.length === 0) return '';
+  const toIdx = (ym: string) => Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7));
+  const contiguous = months.every((m, i) => i === 0 || toIdx(m) === toIdx(months[i - 1]) + 1);
+  return contiguous && months.length > 1
+    ? `${monthShort(months[0])}–${monthShort(months[months.length - 1])}`
+    : months.map(monthShort).join(', ');
+};
+
+/** Foot line: the per-day average, plus what was entered ahead for months that have not started. */
+const withPlan = (base: string, planned: number) => (
+  planned !== 0 ? (
+    <>
+      <span className="block truncate">{base}</span>
+      <span className="block truncate" title="ลงล่วงหน้าในเดือนที่ยังไม่ถึง ไม่นับในยอดนี้">+ แผน {formatBahtShort(planned)}</span>
+    </>
+  ) : base
+);
 
 interface VitalCellProps {
   label: string;
@@ -45,10 +67,10 @@ const VitalCell = ({ label, edgeClass, valueClass, value, pill, foot, footClass 
       {showSkeleton ? (
         <Shimmer className="h-4 w-24" />
       ) : (
-        <span className={`text-[11px] tabular-nums truncate ${footClass}`}>{foot}</span>
+        <span className={`text-[11px] tabular-nums truncate min-w-0 ${footClass}`}>{foot}</span>
       )}
       {!showSkeleton && (
-        <span className={`${PILL} cursor-default ${delta.cls}`} title={delta.tooltipText}>
+        <span className={`${PILL} shrink-0 cursor-default ${delta.cls}`} title={delta.tooltipText}>
           {delta.text}
         </span>
       )}
@@ -57,10 +79,13 @@ const VitalCell = ({ label, edgeClass, valueClass, value, pill, foot, footClass 
 );
 
 export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsProps) => {
-  const {
-    totalIncome, totalExpense, netCashflow, savingsRate, totalSavings,
-    datesInPeriod, elapsedDays, prevTotals, periodLabel
-  } = analytics;
+  const { datesInPeriod, elapsedDays, prevTotals, periodLabel, vitals } = analytics;
+  const totalIncome = vitals?.income ?? analytics.totalIncome;
+  const totalExpense = vitals?.expense ?? analytics.totalExpense;
+  const netCashflow = vitals?.net ?? analytics.netCashflow;
+  const savingsRate = vitals?.savingsRate ?? analytics.savingsRate;
+  const totalSavings = vitals?.savings ?? analytics.totalSavings;
+  const planned = vitals?.planned ?? { income: 0, expense: 0, savings: 0 };
 
   const days = Math.max(1, elapsedDays ?? datesInPeriod?.length ?? 1);
   const hasIncome = totalIncome > 0;
@@ -74,9 +99,17 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
   const hasPriorData = Boolean(prevTotals && prevTotals.txCount > 0);
   const curPeriodLabel = periodLabel || 'PoP';
 
-  const incomeDelta  = calculatePeriodDelta({ current: totalIncome,  prev: prevTotals?.income ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'income' });
-  const expenseDelta = calculatePeriodDelta({ current: totalExpense, prev: prevTotals?.expense ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'expense' });
-  const netDelta     = calculatePeriodDelta({ current: netCashflow,  prev: prevTotals ? (prevTotals.income - prevTotals.expense) : 0, hasPriorData, periodLabel: curPeriodLabel, type: 'net' });
+  // Quarter / half / year compare only the months both periods have: the delta reads those sums, not the card value.
+  const cmpIncome = prevTotals?.current?.income ?? totalIncome;
+  const cmpExpense = prevTotals?.current?.expense ?? totalExpense;
+  const scope = prevTotals?.months?.length
+    ? ` · เทียบเฉพาะ${prevTotals.cycle ? 'รอบ' : 'เดือน'} ${monthsLabel(prevTotals.months)} ที่มีข้อมูลทั้งสองช่วง`
+    : '';
+  const scoped = (d: Delta): Delta => (scope && d.hasDelta ? { ...d, tooltipText: d.tooltipText + scope } : d);
+
+  const incomeDelta  = scoped(calculatePeriodDelta({ current: cmpIncome,  prev: prevTotals?.income ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'income' }));
+  const expenseDelta = scoped(calculatePeriodDelta({ current: cmpExpense, prev: prevTotals?.expense ?? 0, hasPriorData, periodLabel: curPeriodLabel, type: 'expense' }));
+  const netDelta     = scoped(calculatePeriodDelta({ current: cmpIncome - cmpExpense, prev: prevTotals ? (prevTotals.income - prevTotals.expense) : 0, hasPriorData, periodLabel: curPeriodLabel, type: 'net' }));
 
   return (
     <div className="flex flex-col h-full">
@@ -86,7 +119,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
           label="รายรับรวม"
           valueClass="text-income"
           value={totalIncome}
-          foot={`เฉลี่ย ${formatBaht(totalIncome / days)} / วัน`}
+          foot={withPlan(`เฉลี่ย ${formatBaht(totalIncome / days)} / วัน`, planned.income)}
           delta={incomeDelta}
           showSkeleton={showSkeleton}
         />
@@ -105,7 +138,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
           ) : (
             <span className={`${PILL} ${NEUTRAL_PILL}`} title="ช่วงนี้ไม่มีรายรับ จึงเทียบเป็น % ไม่ได้">ไม่มีรายรับให้เทียบ</span>
           )}
-          foot={`เฉลี่ย ${formatBaht(totalExpense / days)} / วัน`}
+          foot={withPlan(`เฉลี่ย ${formatBaht(totalExpense / days)} / วัน`, planned.expense)}
           delta={expenseDelta}
           showSkeleton={showSkeleton}
         />
@@ -123,7 +156,7 @@ export const SummaryVitals = memo(({ analytics, showSkeleton }: SummaryVitalsPro
               เหลือ {savingsRate.toFixed(1)}%{surplusLevel === 'warn' && ' · ต่ำกว่าเกณฑ์'}
             </span>
           )}
-          foot={isDeficit ? 'ขาดดุล' : totalSavings > 0 ? `ในนั้นลงทุน ${formatBaht(totalSavings)}` : 'ยังไม่มีเงินลงทุน'}
+          foot={withPlan(isDeficit ? 'ขาดดุล' : totalSavings > 0 ? `ในนั้นลงทุน ${formatBaht(totalSavings)}` : 'ยังไม่มีเงินลงทุน', planned.income - planned.expense)}
           footClass={isDeficit ? 'text-danger font-semibold' : 'text-ink-muted'}
           delta={netDelta}
           showSkeleton={showSkeleton}

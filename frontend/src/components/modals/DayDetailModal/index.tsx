@@ -241,9 +241,10 @@ export default function DayDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+    // No backdrop-blur: behind 75% black it barely shows, and it made every hover repaint in the modal re-blur the whole screen
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-3 sm:p-4 bg-black/75 animate-in fade-in duration-150">
       <div ref={trapRef} role="dialog" aria-modal="true" aria-label="รายละเอียดรายวัน" tabIndex={-1} 
-        className={`${tokens.surface} shadow-[0_16px_48px_rgb(0_0_0/calc(0.6*var(--shadow-k)))] w-full max-w-6xl flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[780px] md:min-h-[650px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
+        className={`${tokens.surface} shadow-[0_16px_48px_rgb(0_0_0/calc(0.6*var(--shadow-k)))] w-full max-w-[1220px] flex flex-col md:flex-row animate-in zoom-in-95 duration-200 border-x border-b border-line-strong overflow-hidden relative md:h-[780px] md:min-h-[650px] md:max-h-[calc(100vh-2rem)] h-[90vh]`}
         style={{ borderTop: `4px solid ${tc('accent')}`, borderRadius: 0 }}
       >
 
@@ -251,7 +252,8 @@ export default function DayDetailModal({
           <X className="w-4 h-4" />
         </button>
 
-        <div className={`flex flex-col w-full md:w-[62%] border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-surface-hover`}>
+        {/* The day side keeps the ~700px its header row needs; every pixel past that goes to the suggestions */}
+        <div className={`flex flex-col w-full md:w-[700px] md:max-w-[62%] md:shrink-0 border-b md:border-b-0 md:border-r ${tokens.border} h-[55vh] md:h-full min-h-0 bg-surface-hover`}>
           <div className={`flex items-start justify-between gap-3 px-5 py-3.5 border-b ${tokens.border} shrink-0 pr-12 md:pr-5`}>
             <div className="min-w-0">
               {/* Header Date Navigation Bar */}

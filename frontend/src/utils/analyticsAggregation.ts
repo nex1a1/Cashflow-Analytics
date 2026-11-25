@@ -6,7 +6,7 @@ import { createCategoryMap, calculateDayTypeCounts, CashflowMonthData } from './
 import { BUDGET_RULES, WARN_AT } from '../constants/budgetRules';
 import { RENT_KEYWORDS } from './kakeibo';
 import { calculateAllocationEvolution } from './allocationEvolutionHelpers';
-import { isCyclePeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso } from './payCycle';
+import { isCyclePeriod, isSingleUnitPeriod, stripCycle, monthKeyOf, cycleRange, shiftMonth, localTodayIso, matchCyclePreset, PAY_DAY_START } from './payCycle';
 import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 
 /** Backend `/analytics/summary` answer (calendar-month grouped). */
@@ -416,7 +416,7 @@ function calculateForecastingDetails({
   };
 }
 
-function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKinds, startPrev: string | null, endPrev: string | null, state: AnalyticsState) {
+function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKinds, startPrev: string | null, endPrev: string | null, state: AnalyticsState, period: string) {
   const { amt, isExp, isInc, cGroupId } = txContext;
   const { globalDailySum, globalLivingDailySum, globalLivingGroupDailySum, prevTotals } = state;
   if (isExp) {
@@ -431,6 +431,10 @@ function trackTrendAndGlobal(isoDate: string, txContext: TxContext, kinds: TxKin
     prevTotals.txCount = (prevTotals.txCount || 0) + 1;
     if (isInc) prevTotals.income += amt;
     else if (isExp) prevTotals.expense += amt;
+    const m = (state.prevByMonth[monthKeyOf(isoDate, period)] ??= { income: 0, expense: 0, txCount: 0 });
+    m.txCount += 1;
+    if (isInc) m.income += amt;
+    else if (isExp) m.expense += amt;
   }
 }
 
@@ -528,6 +532,11 @@ function accumulateExpenseItem(
   }
 }
 
+/** First day of a row/bucket key: the pay day in cycle mode, the 1st otherwise. */
+function unitStartOf(key: string, period: string): string {
+  return isCyclePeriod(period) ? cycleRange(key).start : `${key}-01`;
+}
+
 function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: TxContext, kinds: TxKinds, opts: AggregationOptions, state: AnalyticsState) {
   if (!isDateInFilter(isoDate, opts.filterPeriod)) return false;
 
@@ -539,6 +548,14 @@ function processAnalyticsTx(t: TransactionDisplay, isoDate: string, txContext: T
   state.uniqueMonthsSet.add(ym);
 
   ensureCashflowMonth(cashflowMap, ym, opts.cashflowGroups);
+
+  // A month / pay cycle that has not started yet holds only rows entered ahead: kept apart so the headline totals
+  // match the cashflow table's footer, which leaves such units out.
+  if (unitStartOf(ym, opts.filterPeriod) > state.stateRef.todayIso) {
+    if (isInc) state.planTotals.income += amt;
+    else if (isSav) state.planTotals.savings += amt;
+    else state.planTotals.expense += amt;
+  }
 
   const cGroup = resolveFallbackGroupId(cGroupId, isInc, isSav, groupMeta);
   if (cashflowMap[ym].groups[cGroup] !== undefined) {
@@ -821,6 +838,14 @@ function calculatePeriodWindow(period: string, datesInPeriod: string[]) {
   } else if (isCycle && /^\d{4}-\d{2}$/.test(filterPeriod)) {
     ({ start: startPrev, end: endPrev } = cycleRange(shiftMonth(filterPeriod, -1)));
     periodLabel = 'MoM';
+  } else if (isCycle && matchCyclePreset(filterPeriod)) {
+    // ปี / ครึ่งปี / ไตรมาสโหมดรอบ (เก็บเป็นช่วงรอบ): เทียบช่วงรอบเดียวกันก่อนหน้า รอบต่อรอบ เหมือนโหมดปฏิทิน
+    const id = matchCyclePreset(filterPeriod)!.id;
+    periodLabel = id === 'Y' ? 'YoY' : id.startsWith('H') ? 'HoH' : 'QoQ';
+    const back = MONTHS_BACK[periodLabel];
+    const [fromKey, toKey] = filterPeriod.split('_');
+    startPrev = cycleRange(shiftMonth(fromKey, -back)).start;
+    endPrev = cycleRange(shiftMonth(toKey, -back)).end;
   } else if (/^\d{4}-\d{2}$/.test(filterPeriod)) {
     // 1. Single Month: YYYY-MM -> MoM
     const [yStr, mStr] = filterPeriod.split('-');
@@ -942,7 +967,9 @@ function createInitialAnalyticsState() {
   const globalDailySum: Record<string, number> = {};
   const globalLivingDailySum: Record<string, number> = {};
   const globalLivingGroupDailySum: Record<string, Record<string, number>> = {};
-  const prevTotals = { income: 0, expense: 0, net: 0, txCount: 0 };
+  const prevTotals: PrevTotalsOut = { income: 0, expense: 0, net: 0, txCount: 0 };
+  const prevByMonth: Record<string, MonthSums> = {};
+  const planTotals = { income: 0, expense: 0, savings: 0 };
   const forecastRef = { expenseUpToToday: 0, fixedUpToToday: 0, fixedTotal: 0 };
 
   const stateRef = {
@@ -986,6 +1013,8 @@ function createInitialAnalyticsState() {
     globalLivingDailySum,
     globalLivingGroupDailySum,
     prevTotals,
+    prevByMonth,
+    planTotals,
     forecastRef,
     stateRef
   };
@@ -1006,7 +1035,7 @@ function executeTransactionAggregation(
 
     const txContext = resolveTransactionContext(t, catMapLookup, opts.cashflowGroups, opts.groupMeta.fallbackExpId);
     const kinds = classifyTx(txContext, opts.groupMeta);
-    trackTrendAndGlobal(isoDate, txContext, kinds, startPrev, endPrev, state);
+    trackTrendAndGlobal(isoDate, txContext, kinds, startPrev, endPrev, state, opts.filterPeriod);
 
     if (processAnalyticsTx(t, isoDate, txContext, kinds, opts, state)) {
       trackForecasting(isoDate, txContext, kinds, isCurrentMonth, todayStr, state.forecastRef);
@@ -1056,6 +1085,73 @@ function calculateFinancialPercentages(totals: Totals) {
   };
 }
 
+interface MonthSums { income: number; expense: number; txCount: number }
+
+export interface PrevTotalsOut {
+  income: number; expense: number; net: number; txCount: number;
+  /** Like-for-like comparisons only: this period's sums over the months that are compared. */
+  current?: { income: number; expense: number };
+  /** The months of this period that are compared, when some had nothing to compare with. */
+  months?: string[];
+  /** `months` are pay-cycle keys. */
+  cycle?: boolean;
+}
+
+const MONTHS_BACK: Record<string, number> = { QoQ: 3, HoH: 6, YoY: 12 };
+
+/**
+ * Quarter / half / year: compare only the months (pay cycles in cycle mode) that have started in this period AND had
+ * rows in the period before. Otherwise a first year with half the months recorded reads as "↑ 72%".
+ */
+function compareLikeForLike(
+  periodLabel: string, prevTotals: PrevTotalsOut, prevByMonth: Record<string, MonthSums>,
+  cashflowMap: CashflowMap, todayIso: string, period: string,
+): PrevTotalsOut {
+  const back = MONTHS_BACK[periodLabel];
+  if (!back) return prevTotals;
+  const started = Object.keys(cashflowMap).filter(k => unitStartOf(k, period) <= todayIso).sort();
+  // before the first pay day there were no cycles: such a "cycle" holds spending but no salary (as budgetEnvelope)
+  const firstKey = isCyclePeriod(period) ? PAY_DAY_START.slice(0, 7) : '';
+  const matched = started.filter(k => shiftMonth(k, -back) >= firstKey && (prevByMonth[shiftMonth(k, -back)]?.txCount ?? 0) > 0);
+  const out: PrevTotalsOut = { income: 0, expense: 0, net: 0, txCount: 0, current: { income: 0, expense: 0 } };
+  for (const k of matched) {
+    const p = prevByMonth[shiftMonth(k, -back)];
+    out.income += p.income;
+    out.expense += p.expense;
+    out.txCount += p.txCount;
+    out.current!.income += cashflowMap[k].income || 0;
+    out.current!.expense += cashflowMap[k].totalExp || 0;
+  }
+  out.net = out.income - out.expense;
+  if (matched.length < started.length) out.months = matched;
+  if (isCyclePeriod(period)) out.cycle = true;
+  return out;
+}
+
+export interface VitalTotals {
+  income: number; expense: number; savings: number; net: number; savingsRate: number;
+  /** Rows entered ahead in months / cycles that have not started, left out of the figures above. */
+  planned: { income: number; expense: number; savings: number };
+}
+
+/**
+ * The headline cards over several months count what has happened (months that have started), like the table footer.
+ * A single month, or a period wholly in the future, keeps everything: there the rows ahead are the point.
+ */
+function buildVitalTotals(
+  totals: Totals, planTotals: VitalTotals['planned'], filterPeriod: string, datesInPeriod: string[], todayIso: string,
+): VitalTotals {
+  const hasPlan = planTotals.income !== 0 || planTotals.expense !== 0 || planTotals.savings !== 0;
+  const split = hasPlan && !isSingleUnitPeriod(filterPeriod) && datesInPeriod.length > 0 && datesInPeriod[0] <= todayIso;
+  const planned = split ? planTotals : { income: 0, expense: 0, savings: 0 };
+  const income = totals.income - planned.income;
+  const expense = totals.expense - planned.expense;
+  const savings = (totals.savings || 0) - planned.savings;
+  const net = income - expense;
+  const savingsRate = income > 0 ? Number.parseFloat(((net / income) * 100).toFixed(1)) : 0;
+  return { income, expense, savings, net, savingsRate, planned };
+}
+
 export interface CoreAnalyticsInput {
   transactions: TransactionDisplay[];
   categories: Category[];
@@ -1092,9 +1188,9 @@ export function computeCoreAnalytics({
     filterPeriod, cashflowGroups, groupMeta, hideFixedExpenses, hideWantExpenses, activeFilters,
   }, state);
 
-  const { totals, cashflowMap, prevTotals, forecastRef, stateRef, uniqueMonthsSet } = state;
+  const { totals, cashflowMap, forecastRef, stateRef, uniqueMonthsSet } = state;
   const chartTotal = stateRef.chartTotal;
-  prevTotals.net = prevTotals.income - prevTotals.expense;
+  state.prevTotals.net = state.prevTotals.income - state.prevTotals.expense;
 
   if (useBackendTotals && !windowMeta.isSingleMonthView) {
     applyBackendSummaryTotals(totals, summaryData);
@@ -1111,6 +1207,9 @@ export function computeCoreAnalytics({
   if (useBackendTotals && !windowMeta.isSingleMonthView) {
     applyBackendMonthlyCashflow(cashflowMap, summaryData);
   }
+
+  const prevTotals = compareLikeForLike(windowMeta.periodLabel, state.prevTotals, state.prevByMonth, cashflowMap, stateRef.todayIso, filterPeriod);
+  const vitals = buildVitalTotals(totals, state.planTotals, filterPeriod, datesInPeriod, stateRef.todayIso);
 
   const sortedCashflow = Object.values(cashflowMap).sort((a, b) => a.monthStr.localeCompare(b.monthStr));
   const sortedMonthsKeys = sortedCashflow.map(c => c.monthStr);
@@ -1174,7 +1273,7 @@ export function computeCoreAnalytics({
   const adjustedFoodDailyAvg = totals.food / elapsedDays;
 
   return {
-    catMapLookup, windowMeta, datesInPeriod, state, totals, prevTotals,
+    catMapLookup, windowMeta, datesInPeriod, state, totals, prevTotals, vitals,
     netCashflow, savingsRate, numMonths, chartTotal,
     sortedCats, sortedGroups, sortedAllocation,
     sortedCashflow, sortedMonthsKeys, cashflowMap,

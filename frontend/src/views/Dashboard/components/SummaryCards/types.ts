@@ -5,6 +5,22 @@ export interface PrevTotals {
   income: number;
   expense: number;
   txCount: number;
+  /** Like-for-like comparisons: this period's sums over the compared months (the delta uses these, not the card value). */
+  current?: { income: number; expense: number };
+  /** Compared months (YYYY-MM), set when some months of this period had nothing to compare with. */
+  months?: string[];
+  /** `months` are pay-cycle keys. */
+  cycle?: boolean;
+}
+
+/** Headline figures; over several months they leave out months that have not started (see buildVitalTotals). */
+export interface VitalTotals {
+  income: number;
+  expense: number;
+  savings: number;
+  net: number;
+  savingsRate: number;
+  planned: { income: number; expense: number; savings: number };
 }
 
 export interface RentSub {
@@ -88,6 +104,7 @@ export interface SummaryAnalytics {
   /** Days of the period up to today (the whole period once it is over): the divisor of every per-day average. */
   elapsedDays?: number;
   prevTotals?: PrevTotals;
+  vitals?: VitalTotals;
   periodLabel?: string;
   // Strategic
   /** All expense per day, rent included. */

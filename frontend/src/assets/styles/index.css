@@ -649,7 +649,8 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgb(var(--line-strong));
   background-color: rgb(var(--canvas));
 }
-.sugg-item:hover {
+/* the whole row, so hovering one of its other-price chips keeps the card lit */
+.sugg-row:hover > .sugg-item {
   border-color: rgba(var(--cat-rgb, 203, 213, 225), 0.45);
   background-color: rgba(var(--cat-rgb, 203, 213, 225), 0.04);
 }

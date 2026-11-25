@@ -573,18 +573,25 @@ describe('period-over-period window', () => {
     return [a.periodLabel, a.prevTotals.expense];
   };
 
+  // Quarter / half / year compare month by month, so the current period has rows in both edge months
+  // (past periods, so every month has started whatever today is).
   it('quarter: the previous quarter, wrapping to Q4 of last year', () => {
-    expect(label('2026-Q1', prevRows(['2025-09-30', '2025-10-01', '2025-12-31', '2026-01-01']))).toEqual(['QoQ', 20]);
-    expect(label('2026-Q3', prevRows(['2026-03-31', '2026-04-01', '2026-06-30', '2026-07-01']))).toEqual(['QoQ', 20]);
+    expect(label('2025-Q1', prevRows(['2024-09-30', '2024-10-01', '2024-12-31', '2025-01-01', '2025-03-31']))).toEqual(['QoQ', 20]);
+    expect(label('2025-Q3', prevRows(['2025-03-31', '2025-04-01', '2025-06-30', '2025-07-01', '2025-09-30']))).toEqual(['QoQ', 20]);
   });
 
   it('half year: H1 looks at last year\'s H2, H2 at H1', () => {
-    expect(label('2026-H1', prevRows(['2025-06-30', '2025-07-01', '2025-12-31', '2026-01-01']))).toEqual(['HoH', 20]);
-    expect(label('2026-H2', prevRows(['2025-12-31', '2026-01-01', '2026-06-30', '2026-07-01']))).toEqual(['HoH', 20]);
+    expect(label('2025-H1', prevRows(['2024-06-30', '2024-07-01', '2024-12-31', '2025-01-01', '2025-06-30']))).toEqual(['HoH', 20]);
+    expect(label('2025-H2', prevRows(['2024-12-31', '2025-01-01', '2025-06-30', '2025-07-01', '2025-12-31']))).toEqual(['HoH', 20]);
   });
 
   it('year: the year before', () => {
-    expect(label('2026', prevRows(['2024-12-31', '2025-01-01', '2025-12-31', '2026-01-01']))).toEqual(['YoY', 20]);
+    expect(label('2025', prevRows(['2023-12-31', '2024-01-01', '2024-12-31', '2025-01-01', '2025-12-31']))).toEqual(['YoY', 20]);
+  });
+
+  it('year: a month with nothing the year before is left out of the comparison', () => {
+    const a = run({ transactions: prevRows(['2024-12-31', '2025-01-01', '2025-12-31']), categories: cats, cashflowGroups: groups, filterPeriod: '2025' });
+    expect(a.prevTotals).toMatchObject({ expense: 10, months: ['2025-12'], current: { income: 0, expense: 10 } });
   });
 
   it('month: the month before, across a year end', () => {

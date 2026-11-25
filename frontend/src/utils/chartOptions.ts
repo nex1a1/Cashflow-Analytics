@@ -62,27 +62,27 @@ const getScaleOptions = (beginAtZero = false, yType = 'linear', autoSkip = true)
   },
 });
 
+// A derived metric (e.g. net Cashflow) plotted alongside its raw components (Income/Expense)
+// needs its own scale — sharing one axis flattens the derived line against the larger bars.
+// The Cashflow dataset always reads `yAxisID: 'y1'`: without this scale Chart.js adds a bare one on the left.
+const secondaryAxis = (color: string) => ({
+  type: 'linear',
+  position: 'right',
+  grace: '20%',
+  ticks: {
+    color,
+    font: { size: 11, weight: '500' },
+    padding: 8,
+    maxTicksLimit: 8,
+    callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,
+  },
+  grid: { drawOnChartArea: false },
+  border: { display: true, color: `${color}66`, dash: [4, 4] },
+});
+
 export const getComboChartOptions = (yType = 'linear', autoSkip = true, secondaryAxisColor?: string) => {
   const scales: any = getScaleOptions(false, yType, autoSkip);
-
-  // A derived metric (e.g. net Cashflow) plotted alongside its raw components (Income/Expense)
-  // needs its own scale — sharing one axis flattens the derived line against the larger bars.
-  if (secondaryAxisColor) {
-    scales.y1 = {
-      type: 'linear',
-      position: 'right',
-      grace: '20%',
-      ticks: {
-        color: secondaryAxisColor,
-        font: { size: 11, weight: '500' },
-        padding: 8,
-        maxTicksLimit: 8,
-        callback: (v: any) => typeof v === 'number' ? formatTickValue(v) : v,
-      },
-      grid: { drawOnChartArea: false },
-      border: { display: true, color: `${secondaryAxisColor}66`, dash: [4, 4] },
-    };
-  }
+  if (secondaryAxisColor) scales.y1 = secondaryAxis(secondaryAxisColor);
 
   return {
     maintainAspectRatio: false,
@@ -106,7 +106,7 @@ export const getComboChartOptions = (yType = 'linear', autoSkip = true, secondar
 export const getBarChartOptions = (yType = 'linear', autoSkip = true) =>
   getComboChartOptions(yType, autoSkip);
 
-export const getLineChartOptions = (yType = 'linear', autoSkip = true) => ({
+export const getLineChartOptions = (yType = 'linear', autoSkip = true, secondaryAxisColor?: string) => ({
   maintainAspectRatio: false,
   interaction: { mode: 'index' as const, intersect: false },
   plugins: {
@@ -118,5 +118,8 @@ export const getLineChartOptions = (yType = 'linear', autoSkip = true) => ({
       },
     },
   },
-  scales: getScaleOptions(true, yType, autoSkip),
+  scales: {
+    ...getScaleOptions(true, yType, autoSkip),
+    ...(secondaryAxisColor && { y1: secondaryAxis(secondaryAxisColor) }),
+  },
 });

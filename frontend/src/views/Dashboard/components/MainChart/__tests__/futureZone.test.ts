@@ -28,10 +28,15 @@ describe('resolveFutureZone', () => {
 describe('applyPlanStyle', () => {
   const zone = { currentIdx: 1, futureFrom: 2, unit: 'month' as const };
 
-  it('leaves a dataset alone when nothing is planned', () => {
+  // a plain colour would let Chart.js reuse its old shared options: past bars kept the plan hatch after a period switch
+  it('stays scripted when nothing is planned, every index solid', () => {
     const ds = { type: 'bar', data: [1, 2], backgroundColor: '#10B981' };
-    expect(applyPlanStyle(ds, { ...zone, futureFrom: 2 })).toBe(ds);
-    expect(applyPlanStyle(ds, null)).toBe(ds);
+    for (const z of [{ ...zone, futureFrom: 2 }, null]) {
+      const out = applyPlanStyle(ds, z);
+      expect([0, 1].map(dataIndex => out.backgroundColor({ dataIndex }))).toEqual(['#10B981', '#10B981']);
+    }
+    const line = applyPlanStyle({ type: 'line', data: [1, 2], borderColor: '#fff' }, null);
+    expect(line.segment.borderDash({ p1DataIndex: 1 })).toBeUndefined(); // replaces a stale dashed segment
   });
 
   it('bars: solid before the boundary, plan fill after', () => {

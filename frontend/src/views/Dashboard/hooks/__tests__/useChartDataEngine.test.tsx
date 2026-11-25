@@ -125,8 +125,9 @@ describe('useChartDataEngine — what the chart is fed', () => {
 
   it('bar colours: a solid fill comes from the border colour so a translucent fill does not wash the bars out', () => {
     const bar = run({}, { chartViewType: 'bar' }).displayChartData as any;
-    expect(bar.datasets.find((d: any) => d.label === 'Income').backgroundColor).toBe('#10B981'); // rgba(..0.6) → border colour
-    expect(bar.datasets.find((d: any) => d.label === 'Expense').backgroundColor).toBe('#EF4444');
+    const fill = (label: string) => bar.datasets.find((d: any) => d.label === label).backgroundColor({ dataIndex: 0 }); // per bar (plan hatch)
+    expect(fill('Income')).toBe('#10B981'); // rgba(..0.6) → border colour
+    expect(fill('Expense')).toBe('#EF4444');
   });
 
   it('smooth lines get curve tension, straight lines none', () => {

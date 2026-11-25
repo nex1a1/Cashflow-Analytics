@@ -8,6 +8,7 @@ import { formatMoney, formatBaht } from '@/utils/formatters';
 import { useDashboardContext } from '../context/DashboardContext';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { planTickStyle } from '../components/MainChart/futureZone';
+import { barTotals, resolveSpikeCap, spikeTagRoom } from '../components/MainChart/spikeCap';
 import { useFutureZone } from './useFutureZone';
 
 import { tc } from '@/constants/theme';
@@ -86,7 +87,8 @@ function resolveBaseChartOptions({ isBreakdown, chartViewType, mainChartType, yT
       : getBarChartOptions(yType, autoSkip);
   }
   if (chartViewType === 'line') {
-    return getLineChartOptions(yType, autoSkip);
+    // the combo data carries the Cashflow line on its own right-hand axis in either view
+    return getLineChartOptions(yType, autoSkip, mainChartType === 'combo' ? tc('ink-display') : undefined);
   }
   if (mainChartType === 'combo') {
     return getComboChartOptions(yType, autoSkip, tc('ink-display'));
@@ -159,8 +161,16 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
     });
 
     const planUnit = futureZone?.unit;
+    // Bars only: a line keeps its shape, and the log scale already tames a spike.
+    const spikeTotals = chartViewType === 'bar' && !isLogScale ? barTotals(analytics.mainChartData?.datasets, isStacked) : [];
+    const spikeCap = spikeTotals.length ? resolveSpikeCap(spikeTotals) : null;
+    const basePad = (baseOptions as any).layout?.padding;
     return {
       ...baseOptions,
+      // room above the plot for the tags of cut bars
+      ...(spikeCap && {
+        layout: { ...(baseOptions as any).layout, padding: { ...(typeof basePad === 'object' ? basePad : {}), top: spikeTagRoom(spikeTotals, spikeCap) } },
+      }),
       scales: {
         ...baseOptions.scales,
         x: {
@@ -176,12 +186,14 @@ export function useChartOptions({ chartViewType, isBreakdown, isLogScale }: Char
         y: { 
           ...baseOptions.scales?.y, 
           stacked: isStacked,
-          ...(isLogScale && { min: 1 })
+          ...(isLogScale && { min: 1 }),
+          ...(spikeCap && { max: spikeCap }),
         },
       },
       plugins: {
         ...baseOptions.plugins,
         futureZone: { zone: futureZone },
+        spikeCap: { cap: spikeCap, totals: spikeTotals, stacked: isStacked },
         tooltip: {
           ...baseOptions.plugins?.tooltip,
           mode: 'index', intersect: false,

@@ -41,10 +41,11 @@ describe('useChartOptions — which base options', () => {
     }
   });
 
-  it('the line view starts at zero and never has the secondary axis (even for a combo period)', () => {
+  // the Cashflow dataset reads yAxisID 'y1' in either view: without the scale Chart.js drew a bare axis on the left
+  it('the line view starts at zero and keeps the Cashflow axis on the right for a combo period', () => {
     const o = opts({ chartViewType: 'line' });
     expect(o.scales.y.beginAtZero).toBe(true);
-    expect(o.scales.y1).toBeUndefined();
+    expect(o.scales.y1.position).toBe('right');
   });
 
   it('a breakdown drops the secondary axis on bars too (there is no net line to scale)', () => {

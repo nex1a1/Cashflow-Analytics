@@ -65,7 +65,7 @@ export default function useAnalytics({
       safeToSpend: core.safeToSpend, projectedSurplus: core.projectedSurplus,
       forecastingDetails: core.forecastingDetails,
       allocationEvolution: core.allocationEvolution,
-      prevTotals: core.prevTotals, totalExpense: core.totals.expense, totalIncome: core.totals.income,
+      prevTotals: core.prevTotals, vitals: core.vitals, totalExpense: core.totals.expense, totalIncome: core.totals.income,
       totalSavings: core.totals.savings || 0,
       netCashflow: core.netCashflow, savingsRate: core.savingsRate, chartTotal: core.chartTotal, numMonths: core.numMonths,
       sortedCats: core.sortedCats,

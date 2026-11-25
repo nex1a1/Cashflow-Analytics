@@ -1,10 +1,10 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Star, Search, SlidersHorizontal, RotateCcw, X, ChevronDown, Check } from 'lucide-react';
-import { formatMoney, hexToRgb } from '../../utils/formatters';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Star, Search, X, Check, Repeat, Clock } from 'lucide-react';
+import { formatAmount, formatMoney, hexToRgb } from '../../utils/formatters';
 import { TransactionDisplay, Category, CashflowGroup, FrequentItem } from '../../types';
 import CategoryGlyph from './CategoryGlyph';
 
-import { tc, readable, ALLOCATION_COLORS } from '@/constants/theme';
+import { tc, ALLOCATION_COLORS } from '@/constants/theme';
 const ALLOC_COLORS: Record<string, string> = {
   need: ALLOCATION_COLORS.need,
   want: ALLOCATION_COLORS.want,
@@ -28,8 +28,42 @@ export interface QuickSuggestProps {
   headerSlot?: React.ReactNode;
 }
 
+export interface SuggestionGroup extends FrequentItem {
+  /** Times bought at any price */
+  totalCount: number;
+  /** Other prices of the same item, most used first */
+  variants: FrequentItem[];
+}
+
+/** Merge rows that differ only by price, keeping the order given (the first row of a group leads it). */
+export function groupSuggestions(items: FrequentItem[]): SuggestionGroup[] {
+  const byKey = new Map<string, SuggestionGroup>();
+  for (const it of items) {
+    const key = `${it.categoryId}|${(it.description || '').trim().toLowerCase()}`;
+    const g = byKey.get(key);
+    if (g) {
+      g.totalCount += it.count;
+      g.variants.push(it);
+    } else {
+      byKey.set(key, { ...it, totalCount: it.count, variants: [] });
+    }
+  }
+  for (const g of byKey.values()) g.variants.sort((a, b) => b.count - a.count);
+  return [...byKey.values()];
+}
+
+const MAX_PRICE_CHIPS = 3;
+
+type SortBy = 'frequent' | 'recent';
+const SORTS: { val: SortBy; label: string; Icon: typeof Repeat }[] = [
+  { val: 'frequent', label: 'บ่อยสุด', Icon: Repeat },
+  { val: 'recent', label: 'ล่าสุด', Icon: Clock },
+];
+
+const chipBase = 'px-2 py-0.5 text-[11px] font-bold border flex items-center gap-1 rounded-pill cursor-pointer active:scale-95';
+const chipIdle = 'border-line bg-canvas text-slate-400 hover:text-slate-200 hover:border-slate-500';
+
 function QuickSuggest({
-  transactions = [],
   categories = [],
   catMap = {},
   formType,
@@ -44,11 +78,9 @@ function QuickSuggest({
   headerSlot
 }: QuickSuggestProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Local category filter array for multi-category selection
+
+  // Categories picked inside the open group: owned by the parent when it passes suggCatFilter, else local
   const [localCatIds, setLocalCatIds] = useState<string[]>([]);
-  
-  // Normalize selected category IDs from prop or local state
   const selectedCatIds = useMemo(() => {
     const raw = suggCatFilter !== undefined ? suggCatFilter : localCatIds;
     if (Array.isArray(raw)) return raw;
@@ -68,92 +100,43 @@ function QuickSuggest({
   };
 
   const handleToggleCategory = (catId: string) => {
-    setSelectedCatIds((prev: string[]) => {
-      const exists = prev.some(id => String(id) === String(catId));
-      if (exists) {
-        return prev.filter(id => String(id) !== String(catId));
-      } else {
-        return [...prev, catId];
-      }
-    });
+    setSelectedCatIds((prev: string[]) =>
+      prev.some(id => String(id) === String(catId))
+        ? prev.filter(id => String(id) !== String(catId))
+        : [...prev, catId]);
   };
 
-  // Selected cashflow group in Tier 1 (null means no specific group expanded)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-
-  // Accordion / Modal drawer state and refs for click-outside
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const filterOverlayRef = useRef<HTMLDivElement | null>(null);
-  const filterButtonRef = useRef<HTMLButtonElement | null>(null);
-
   const [allocationFilter, setAllocationFilter] = useState('ALL');
-  const [amountFilter, setAmountFilter] = useState('ALL');
-  const [sortBy, setSortBy] = useState('frequent');
-  
-  // Default limitCount to defaultLimit
-  const [limitCount, setLimitCount] = useState(String(defaultLimit));
+  const [sortBy, setSortBy] = useState<SortBy>('frequent');
+  const [showAll, setShowAll] = useState(false);
 
-  // Amount range / sort / limit are secondary filters, collapsed by default to reduce controls visible at once
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
-
-  // Sync limitCount if defaultLimit changes
-  useEffect(() => {
-    setLimitCount(String(defaultLimit));
-  }, [defaultLimit]);
-
-  // Reset filters when formType (income/expense) changes
+  // A new form type (income / expense / savings) starts everything over
   useEffect(() => {
     setSelectedGroup(null);
     setSelectedCatIds([]);
     setSearchQuery('');
     setAllocationFilter('ALL');
-    setAmountFilter('ALL');
     setSortBy('frequent');
-    setLimitCount(String(defaultLimit));
-    setShowFilterMenu(false);
-  }, [formType, defaultLimit]);
+    setShowAll(false);
+  }, [formType]);
 
-  // Click-Outside Listener to close floating overlay filter
-  useEffect(() => {
-    if (!showFilterMenu) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        filterOverlayRef.current && 
-        !filterOverlayRef.current.contains(e.target as Node) &&
-        filterButtonRef.current &&
-        !filterButtonRef.current.contains(e.target as Node)
-      ) {
-        setShowFilterMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showFilterMenu]);
+  // Picking another group (or closing it) drops the categories picked in the old one
+  const pickGroup = (id: string) => {
+    setSelectedGroup(prev => (String(prev) === String(id) ? null : id));
+    setSelectedCatIds([]);
+  };
 
-  // Compute active filters count (excluding defaults)
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (selectedCatIds.length > 0) {
-      count += selectedCatIds.length;
-    } else if (selectedGroup !== null && selectedGroup !== 'ALL') {
-      count += 1;
-    }
-    if (allocationFilter !== 'ALL' && formType === 'expense') count++;
-    if (amountFilter !== 'ALL') count++;
-    if (sortBy !== 'frequent') count++;
-    if (limitCount !== String(defaultLimit)) count++;
-    return count;
-  }, [selectedGroup, selectedCatIds, allocationFilter, amountFilter, sortBy, limitCount, formType, defaultLimit]);
+  const hasFilter = selectedGroup !== null || selectedCatIds.length > 0 || allocationFilter !== 'ALL';
+  const handleResetAll = () => {
+    setSelectedGroup(null);
+    setSelectedCatIds([]);
+    setAllocationFilter('ALL');
+  };
 
-  // Keep an active secondary filter visible even if the "more filters" section is collapsed
-  const hasSecondaryFilterActive = amountFilter !== 'ALL' || sortBy !== 'frequent' || limitCount !== String(defaultLimit);
+  const activeCategories = useMemo(() => categories.filter(c => c.type === formType), [categories, formType]);
 
-  // Filter Categories by Form Type
-  const activeCategories = useMemo(() => {
-    return categories.filter(c => c.type === formType);
-  }, [categories, formType]);
-
-  // Derive active groups for Tier 1
+  // Groups of this form type; derived from the categories when no group list is given
   const activeGroups = useMemo<any[]>(() => {
     if (cashflowGroups && cashflowGroups.length > 0) {
       const filtered = cashflowGroups.filter(g => g.type === formType);
@@ -167,41 +150,19 @@ function QuickSuggest({
       if (g && g.id) {
         groupDict[g.id] = g;
       } else if (cat.cashflowGroup) {
-        groupDict[cat.cashflowGroup] = {
-          id: cat.cashflowGroup,
-          name: cat.cashflowGroup,
-          icon: '📁',
-          type: cat.type
-        };
+        groupDict[cat.cashflowGroup] = { id: cat.cashflowGroup, name: cat.cashflowGroup, type: cat.type };
       }
     });
     return (Object.values(groupDict) as any[]).sort((a, b) => (a.order_index ?? 999) - (b.order_index ?? 999));
   }, [cashflowGroups, activeCategories, catMap, formType]);
 
-  // Derive categories for Tier 2 based on selectedGroup
   const groupCategories = useMemo(() => {
-    if (!selectedGroup || selectedGroup === 'ALL') {
-      return [];
-    }
+    if (selectedGroup === null) return [];
     return activeCategories.filter(c => {
       const gId = c.cashflowGroup || catMap[c.id]?._group?.id || (c as any)._group?.id;
       return String(gId) === String(selectedGroup);
     });
   }, [activeCategories, selectedGroup, catMap]);
-
-  // Active Category Objects (for quick chip summary)
-  const selectedCatObjs = useMemo(() => {
-    return selectedCatIds.map(id => {
-      const found = catMap[id] || categories.find(c => String(c.id) === String(id));
-      return (found || { id, name: String(id), icon: '📌', color: tc('ink-muted') }) as Category;
-    });
-  }, [selectedCatIds, catMap, categories]);
-
-  // Active Group Name (for quick chip summary)
-  const activeGroupObj = useMemo(() => {
-    if (!selectedGroup || selectedGroup === 'ALL') return null;
-    return activeGroups.find((g: any) => String(g.id) === String(selectedGroup)) as CashflowGroup | undefined;
-  }, [selectedGroup, activeGroups]);
 
   // Fast O(1) category lookup map
   const catLookup = useMemo(() => {
@@ -214,32 +175,25 @@ function QuickSuggest({
     return map;
   }, [catMap, categories]);
 
-  // Handle suggestion filtering logic
-  const quickSuggestions = useMemo(() => {
-    let sourceItems: FrequentItem[] = [...frequentItems];
-
-    // 1. Filter by Form Type (Income/Expense/Savings)
-    sourceItems = sourceItems.filter(s => {
+  // Every matching row, one per item (other prices folded in); the list shows the first defaultLimit unless showAll
+  const allSuggestions = useMemo(() => {
+    let sourceItems: FrequentItem[] = frequentItems.filter(s => {
       const c = catLookup[s.categoryId] || catLookup[s.categoryName];
       return c?.type === formType;
     });
 
-    // 2. Filter by Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      sourceItems = sourceItems.filter(s => 
-        (s.description || '').toLowerCase().includes(q) || 
+      sourceItems = sourceItems.filter(s =>
+        (s.description || '').toLowerCase().includes(q) ||
         (s.categoryName || '').toLowerCase().includes(q) ||
         String(s.amount).includes(q)
       );
     }
 
-    // 3. Filter by Category or Group
     if (selectedCatIds.length > 0) {
-      sourceItems = sourceItems.filter(s => 
-        selectedCatIds.some(id => String(id) === String(s.categoryId))
-      );
-    } else if (selectedGroup !== null && selectedGroup !== 'ALL') {
+      sourceItems = sourceItems.filter(s => selectedCatIds.some(id => String(id) === String(s.categoryId)));
+    } else if (selectedGroup !== null) {
       sourceItems = sourceItems.filter(s => {
         const c = catLookup[s.categoryId] || catLookup[s.categoryName];
         const gId = c?.cashflowGroup || c?._group?.id || catLookup[s.categoryId]?._group?.id;
@@ -247,243 +201,163 @@ function QuickSuggest({
       });
     }
 
-    // 4. Filter by Allocation Type (Only relevant for expenses)
     if (formType === 'expense' && allocationFilter !== 'ALL') {
       sourceItems = sourceItems.filter(s => s.allocation_type === allocationFilter);
     }
 
-    // 5. Filter by Amount Range
-    if (amountFilter !== 'ALL') {
-      sourceItems = sourceItems.filter(s => {
-        const amt = Number(s.amount);
-        if (amountFilter === 'under100') return amt < 100;
-        if (amountFilter === '100to500') return amt >= 100 && amt <= 500;
-        if (amountFilter === '500to2000') return amt > 500 && amt <= 2000;
-        return amt > 2000; // 'over2000', the last option of the select
-      });
-    }
-
-    // 6. Apply Sorting
     sourceItems.sort((a, b) => {
-      if (sortBy === 'recent') {
-        return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
-      }
-      if (sortBy === 'amountDesc') {
-        return b.amount - a.amount;
-      }
-      if (sortBy === 'amountAsc') {
-        return a.amount - b.amount;
-      }
-      if (sortBy === 'alphabetical') {
-        return (a.description || '').localeCompare(b.description || '');
-      }
-      // Default: 'frequent' (by count descending, then by lastDate descending)
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
-      return new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
+      const byDate = new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime();
+      if (sortBy === 'recent') return byDate;
+      return b.count !== a.count ? b.count - a.count : byDate;
     });
 
-    // 7. Apply Limit
-    if (limitCount !== 'ALL') {
-      const limit = Number(limitCount);
-      return sourceItems.slice(0, limit);
-    }
+    return groupSuggestions(sourceItems);
+  }, [frequentItems, catLookup, formType, searchQuery, selectedCatIds, selectedGroup, allocationFilter, sortBy]);
 
-    return sourceItems;
-  }, [frequentItems, catLookup, formType, searchQuery, selectedCatIds, selectedGroup, allocationFilter, amountFilter, sortBy, limitCount]);
+  const quickSuggestions = showAll ? allSuggestions : allSuggestions.slice(0, defaultLimit);
+  const hiddenCount = allSuggestions.length - quickSuggestions.length;
 
   // Changes whenever a filter does (not the search box: re-animating on every keystroke would jitter).
-  const listKey = [formType, selectedGroup, selectedCatIds.join('|'), allocationFilter, amountFilter, sortBy, limitCount].join('~');
-
-  const handleResetAll = () => {
-    setSelectedGroup(null);
-    setSelectedCatIds([]);
-    setSearchQuery('');
-    setAllocationFilter('ALL');
-    setAmountFilter('ALL');
-    setSortBy('frequent');
-    setLimitCount(String(defaultLimit));
-  };
-
-  const limitOptions = useMemo(() => {
-    const opts = [
-      { val: String(defaultLimit), label: `${defaultLimit} รายการ` },
-      { val: '20', label: '20 รายการ' },
-      { val: '30', label: '30 รายการ' },
-      { val: 'ALL', label: 'ทั้งหมด' }
-    ];
-    return opts.filter((opt, idx, arr) => arr.findIndex(o => o.val === opt.val) === idx);
-  }, [defaultLimit]);
-
-  const tokens = {
-    input: "w-full px-3 py-0.5 text-xs leading-6 border rounded-sm outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30",
-    select: "w-full px-2 py-1.5 text-[11px] font-bold border rounded-sm outline-hidden bg-surface border-line text-slate-200 focus:border-accent-ink cursor-pointer",
-    searchIcon: "absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400",
-    label: "block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1",
-  };
+  const listKey = [formType, selectedGroup, selectedCatIds.join('|'), allocationFilter, sortBy].join('~');
 
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
       {/* Header */}
       <h4 className="shrink-0 font-bold text-sm flex items-center gap-2 mb-2 text-slate-300">
         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-        รายการแนะนำ {quickSuggestions.length > 0 && <span key={quickSuggestions.length} className="m-pop-in inline-block">({quickSuggestions.length})</span>}
+        รายการแนะนำ {allSuggestions.length > 0 && <span key={allSuggestions.length} className="m-pop-in inline-block">({allSuggestions.length})</span>}
       </h4>
 
       {/* own full-width row: the right end of the header sits under DayDetail's close button */}
       {headerSlot}
 
-      {/* Filtering Inputs Section */}
       <div className="space-y-2 mb-2 shrink-0">
-        {/* Search & In-line Toggle */}
+        {/* Search + sort */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <input 
-              type="text" 
-              placeholder="ค้นหาที่เคยบันทึก..." 
+            <input
+              type="text"
+              placeholder="ค้นหาที่เคยบันทึก..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className={tokens.input}
+              className="w-full px-3 py-0.5 text-xs leading-6 border rounded-sm outline-hidden focus:ring-1 transition-colors bg-canvas border-line-strong text-white focus:border-accent-ink focus:ring-accent/30"
             />
             {searchQuery ? (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setSearchQuery('')}
+                title="ล้างคำค้น"
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-surface-elevated text-slate-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <Search className={tokens.searchIcon} />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             )}
           </div>
 
-          <button
-            ref={filterButtonRef}
-            type="button"
-            onClick={() => setShowFilterMenu(!showFilterMenu)}
-            className={`px-3 py-1.5 flex items-center justify-center gap-1.5 border text-xs font-bold transition-all duration-75 rounded-none select-none cursor-pointer ${
-              showFilterMenu 
-                ? 'bg-surface-hover border-accent-ink text-white shadow-xs' 
-                : activeFiltersCount > 0
-                  ? 'bg-surface-hover border-accent/70 text-slate-200 hover:bg-surface-elevated'
-                  : 'bg-canvas border-line-strong text-slate-300 hover:bg-surface-elevated hover:text-white'
-            }`}
-            title="ตัวกรองเพิ่มเติม"
-          >
-            <SlidersHorizontal className={`w-3.5 h-3.5 ${showFilterMenu || activeFiltersCount > 0 ? 'text-accent-ink' : 'text-slate-400'}`} />
-            <span>ตัวกรอง</span>
-            {activeFiltersCount > 0 && (
-              <span key={activeFiltersCount} className="m-pop-in px-1.5 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent">
-                {activeFiltersCount}
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${showFilterMenu ? 'rotate-180 text-accent-ink' : 'text-slate-400'}`} />
-          </button>
+          <div role="group" aria-label="เรียงตาม" className="relative grid grid-cols-2 p-0.5 rounded-pill border border-line-strong bg-surface shrink-0">
+            <span aria-hidden className="m-slide absolute inset-y-0.5 left-0.5 w-[calc((100%-4px)/2)] rounded-pill bg-accent/15"
+              style={{ translate: sortBy === 'recent' ? '100% 0' : '0 0' }} />
+            {SORTS.map(({ val, label, Icon }) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setSortBy(val)}
+                aria-pressed={sortBy === val}
+                title={val === 'frequent' ? 'เรียงตามที่ใช้บ่อย' : 'เรียงตามที่ใช้ล่าสุด'}
+                className={`relative flex items-center justify-center gap-1 px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                  sortBy === val ? 'text-accent-ink' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-3 h-3 shrink-0" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Quick Filter Tag Summary (Shows when filter panel is closed but filters are active) */}
-        {!showFilterMenu && activeFiltersCount > 0 && (
-          <div className="flex items-center gap-1 flex-wrap pt-0.5">
-            {/* Multi-Category Chips */}
-            {selectedCatObjs.map(cat => (
-              <span 
-                key={cat.id} 
-                className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border text-[11px] font-bold"
-                style={{ 
-                  borderColor: `rgba(${hexToRgb(cat.color || tc('ink-muted'))}, 0.5)`, 
-                  color: readable(cat.color || tc('gray-200')) 
-                }}
+        {/* Groups (and NEED / WANT for expenses): one click filters, the list shows the result at once */}
+        <div role="group" aria-label="กรองตามกลุ่ม" className="flex flex-wrap items-center gap-1">
+          {activeGroups.map(g => {
+            const on = String(selectedGroup) === String(g.id);
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => pickGroup(g.id)}
+                aria-pressed={on}
+                className={`${chipBase} ${on ? 'border-accent-ink bg-accent/20 text-white m-pick' : chipIdle}`}
               >
-                <CategoryGlyph icon={cat.icon} color={cat.color} size={15} fallbackEmoji="📌" />
-                <span>{cat.name}</span>
-                <button 
-                  type="button" 
-                  onClick={() => handleToggleCategory(cat.id)}
-                  className="hover:text-danger ml-0.5 cursor-pointer"
-                  title={`ลบหมวด ${cat.name}`}
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </span>
-            ))}
-
-            {/* Active Group Chip (Only shown when no specific categories in this group are selected) */}
-            {selectedCatObjs.length === 0 && activeGroupObj && (
-              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
-                <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} fallbackEmoji="📁" />
-                <span>กลุ่ม: {activeGroupObj.name}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setSelectedGroup(null)}
-                  className="hover:text-danger ml-0.5 cursor-pointer"
-                  title="ลบตัวกรองกลุ่ม"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </span>
-            )}
-
-            {formType === 'expense' && allocationFilter !== 'ALL' && (
-              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300 uppercase">
-                <span>{allocationFilter}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setAllocationFilter('ALL')}
-                  className="hover:text-danger ml-0.5 cursor-pointer"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </span>
-            )}
-            {amountFilter !== 'ALL' && (
-              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
-                <span>ช่วงราคา</span>
-                <button 
-                  type="button" 
-                  onClick={() => setAmountFilter('ALL')}
-                  className="hover:text-danger ml-0.5 cursor-pointer"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </span>
-            )}
-            {limitCount !== String(defaultLimit) && (
-              <span className="m-pop-in inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-surface-hover border border-slate-700 text-[11px] font-bold text-slate-300">
-                <span>{limitCount === 'ALL' ? 'แสดงทั้งหมด' : `แสดง ${limitCount}`}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setLimitCount(String(defaultLimit))}
-                  className="hover:text-danger ml-0.5 cursor-pointer"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleResetAll}
-              className="text-[11px] text-accent-ink hover:underline font-bold ml-auto cursor-pointer"
-            >
-              ล้างทั้งหมด
+                {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={15} />}
+                <span>{g.name}</span>
+              </button>
+            );
+          })}
+          {formType === 'expense' && (
+            <>
+              <span aria-hidden className="w-px h-4 bg-line mx-0.5" />
+              {(['need', 'want'] as const).map(a => {
+                const on = allocationFilter === a;
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAllocationFilter(on ? 'ALL' : a)}
+                    aria-pressed={on}
+                    className={`${chipBase} uppercase ${on ? (a === 'need' ? 'border-rose-500/60 text-rose-400 bg-rose-950/30 m-pick' : 'border-amber-500/60 text-amber-400 bg-amber-950/30 m-pick') : chipIdle}`}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+            </>
+          )}
+          {hasFilter && (
+            <button type="button" onClick={handleResetAll} className="ml-auto text-[11px] font-bold text-accent-ink hover:underline cursor-pointer">
+              ล้างตัวกรอง
             </button>
+          )}
+        </div>
+
+        {/* Categories of the open group, several at a time */}
+        {groupCategories.length > 0 && (
+          <div role="group" aria-label="หมวดในกลุ่ม" className="m-reveal flex flex-wrap gap-1 pl-2 border-l border-line">
+            {groupCategories.map(c => {
+              const on = selectedCatIds.some(id => String(id) === String(c.id));
+              const rgb = hexToRgb(c.color || tc('ink-body'));
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handleToggleCategory(c.id)}
+                  aria-pressed={on}
+                  style={on
+                    ? { borderColor: c.color || tc('expense'), backgroundColor: `rgba(${rgb}, 0.25)`, color: tc('ink-display') }
+                    : ({ ['--chip-rgb' as any]: rgb } as React.CSSProperties)}
+                  className={`${chipBase} ${on ? 'm-pick' : 'cat-chip-btn'}`}
+                >
+                  {on && <Check className="m-pop-in w-2.5 h-2.5 shrink-0" />}
+                  {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={15} />}
+                  <span>{c.name}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Main Container for Suggestions List and Floating Overlay Filter Window */}
-      <div className="flex-1 min-h-0 relative flex flex-col">
-        {/* Suggestions List (Always full height, never pushed or shrunk!) */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 relative z-10">
-          {quickSuggestions.length === 0 ? (
-            <p key={listKey} className="m-fade-in text-xs text-center py-10 text-slate-500 font-medium">
-              ไม่พบคำแนะนำที่ตรงกับตัวกรอง
-            </p>
-          ) : (
-            // keyed by the filters: picking / removing a group, category or option re-mounts the list,
-            // so the rows under the filter panel rise back in one after another (m-stagger)
-            <div key={listKey} className="m-stagger flex flex-col gap-1">
+      <div className="@container flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+        {quickSuggestions.length === 0 ? (
+          <p key={listKey} className="m-fade-in text-xs text-center py-10 text-slate-500 font-medium">
+            ไม่พบคำแนะนำที่ตรงกับตัวกรอง
+          </p>
+        ) : (
+          // keyed by the filters: picking / removing a group, category or option re-mounts the list,
+          // so the rows rise back in one after another (m-stagger)
+          // one grid for the whole list (rows are subgrids of it): the price column is as wide as the widest row,
+          // so its divider runs in one straight line down the list
+          <div key={listKey} className="m-stagger grid grid-cols-[minmax(0,1fr)_auto] gap-y-1">
               {quickSuggestions.map((s, idx) => {
                 const catObj = catLookup[s.categoryId] || catLookup[s.categoryName];
                 const catColor = catObj?.color || tc('gray-300');
@@ -494,24 +368,30 @@ function QuickSuggest({
 
                 const itemKey = `${s.categoryId}-${s.description}-${s.amount}-${idx}`;
 
+                const sign = formType === 'savings' ? '฿' : formType === 'expense' ? '−฿' : '+฿';
+                const hasAlt = s.variants.length > 0;
+                // The card button is a subgrid over its row, so the other-price chips (buttons of their own, never nested
+                // in the card) can sit in the card's lower-right cell, right under the main price, when the list is wide
+                // enough (@md). Narrower, they drop to a line under the card.
+                // The press is on the row, card and chips together, eased like any button (the card's own nudge is off).
                 return (
+                  <div key={itemKey} className="sugg-row col-span-2 grid grid-cols-subgrid transition-[scale,translate] duration-150 ease-(--m-ease) has-[>.sugg-item:active]:scale-[0.985] has-[>.sugg-item:active]:translate-y-(--m-press) has-[>.sugg-item:active]:duration-[60ms]">
                   <button
                     type="button"
-                    key={itemKey}
-                    onClick={() => onApplySuggestion(s)}
+                    onClick={() => { const { totalCount: _n, variants: _v, ...plain } = s; onApplySuggestion(plain); }}
                     disabled={isProcessing}
                     style={{
                       ['--cat-rgb' as any]: hexToRgb(catColor),
                     }}
-                    className="sugg-item w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-none border active:scale-[0.985] relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
+                    className="sugg-item col-start-1 row-start-1 col-span-2 row-span-2 grid grid-cols-subgrid grid-rows-subgrid duration-75 active:translate-none rounded-none border relative overflow-hidden text-left text-slate-200 select-none group cursor-pointer"
                   >
                     {/* Left Color Accents: Category (wide) + Allocation (narrow) */}
                     <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: catColor }} />
                     {s.allocation_type && formType === 'expense' && (
                       <div className="absolute left-1 top-0 bottom-0 w-1" style={{ backgroundColor: allocColor }} title={s.allocation_type.toUpperCase()} />
                     )}
-                    
-                    <div className="flex items-center flex-1 min-w-0 pl-1.5 gap-2.5">
+
+                    <div className="row-span-2 flex items-center min-w-0 pl-4.5 pr-2 py-[5px] gap-2.5">
                       {/* Icon with colored background */}
                       <div 
                         className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] transition-transform duration-75 group-hover:scale-105"
@@ -538,302 +418,45 @@ function QuickSuggest({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-1.5 pl-2 shrink-0 border-l border-line/60">
+                    <div className={`row-span-2 flex items-center justify-end gap-1.5 pl-2 pr-3 border-l border-line/60 ${hasAlt ? '@md:row-span-1 @md:items-end @md:pt-1' : ''}`}>
                       <span className={`text-xs font-bold tabular-nums tracking-tight ${formType === 'expense' ? 'text-expense group-hover:text-red-300' : 'text-emerald-400 group-hover:text-emerald-300'} transition-colors`}>
-                        {formType === 'savings' ? '฿' : formType === 'expense' ? '−฿' : '+฿'}{formatMoney(s.amount)}
+                        {sign}{formatMoney(s.amount)}
                       </span>
-                      <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
-                        {s.count}x
+                      <span className="text-[11px] leading-4 font-bold text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
+                        {s.totalCount}x
                       </span>
                     </div>
                   </button>
+                  {hasAlt && (
+                    <div role="group" aria-label="ราคาอื่น" className="col-span-2 row-start-3 flex items-center gap-1 flex-wrap pl-10 pt-0.5 @md:relative @md:col-span-1 @md:col-start-2 @md:row-start-2 @md:flex-nowrap @md:justify-end @md:pl-2 @md:pr-3 @md:pt-0 @md:pb-1 @md:border-l @md:border-line/60">
+                      <span className="text-[11px] text-ink-muted @md:hidden">ราคาอื่น</span>
+                      {s.variants.slice(0, MAX_PRICE_CHIPS).map(v => (
+                        <button
+                          key={`${v.amount}`}
+                          type="button"
+                          onClick={() => onApplySuggestion(v)}
+                          disabled={isProcessing}
+                          title={`ใช้ราคา ${formatMoney(v.amount)} (${v.count} ครั้ง)`}
+                          className="px-1.5 rounded-pill border border-line text-[11px] leading-4 font-bold tabular-nums text-ink-body hover:text-ink-display hover:bg-surface-hover cursor-pointer"
+                        >
+                          {sign}{formatAmount(v.amount)}<span className="text-ink-muted @md:hidden"> {v.count}x</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  </div>
                 );
               })}
-            </div>
-          )}
-        </div>
-
-        {/* Floating Filter Overlay Modal (หน้าต่างทับมาอีกที ไม่ดันเนื้อหา) */}
-        {showFilterMenu && (
-          <div 
-            ref={filterOverlayRef}
-            className="m-reveal absolute top-0 left-0 right-0 z-30 bg-canvas border border-line-strong shadow-md shadow-black/40 p-3 flex flex-col justify-between max-h-[85%] overflow-hidden"
-          >
-            {/* Modal Header */}
-            <div className="pb-1.5 border-b border-line flex items-center justify-between text-slate-300 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-accent-ink" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-white">ตัวกรองคำแนะนำ</span>
-                {activeFiltersCount > 0 && (
-                  <span className="text-[11px] font-bold text-accent-ink bg-accent/10 border border-accent/30 px-1.5 py-0.2 rounded-none">
-                    {activeFiltersCount} ตัวกรอง
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFilterMenu(false)}
-                className="text-slate-400 hover:text-white p-1 hover:bg-surface-elevated border border-transparent hover:border-line-strong cursor-pointer"
-                title="ปิดหน้าต่างตัวกรอง"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Modal Content Scroll Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar py-2 space-y-2.5 pr-0.5">
-              {/* 2-Tier Grouped Categories */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className={tokens.label}>กลุ่ม & หมวดหมู่</span>
-                  {(selectedGroup !== null || selectedCatIds.length > 0) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedGroup(null);
-                        setSelectedCatIds([]);
-                      }}
-                      className="text-[11px] text-accent-ink hover:underline flex items-center gap-0.5 font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      <span>ล้างหมวด {selectedCatIds.length > 0 && `(${selectedCatIds.length})`}</span>
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Tier 1: Group Chips (Wrapped into lines, NO horizontal scrollbar, NO "ทุกกลุ่ม" button) */}
-                <div className="flex flex-wrap gap-1 text-slate-200">
-                  {activeGroups.map(g => {
-                    const isGrpActive = selectedGroup === g.id;
-                    const selectedCountInGroup = selectedCatIds.filter(catId => {
-                      const c = catMap[catId] || categories.find(cat => cat.id == catId);
-                      const gId = c?.cashflowGroup || c?._group?.id || catMap[catId]?._group?.id;
-                      return String(gId) === String(g.id);
-                    }).length;
-
-                    return (
-                      <button
-                        key={g.id}
-                        type="button"
-                        onClick={() => {
-                          if (selectedGroup === g.id) {
-                            setSelectedGroup(null);
-                          } else {
-                            setSelectedGroup(g.id);
-                          }
-                        }}
-                        className={`px-2 py-0.5 text-[11px] font-bold border transition-all flex items-center gap-1 rounded-pill cursor-pointer active:scale-95 ${
-                          isGrpActive
-                            ? 'border-accent-ink bg-accent/20 text-white font-black m-pick'
-                            : selectedCountInGroup > 0
-                              ? 'border-slate-500 bg-surface-hover text-slate-200 font-bold'
-                              : 'border-line bg-canvas text-slate-400 hover:text-slate-200 hover:border-slate-500'
-                        }`}
-                      >
-                        {g.icon && <CategoryGlyph icon={g.icon} color={g.color} size={16} />}
-                        <span>{g.name}</span>
-                        {selectedCountInGroup > 0 && (
-                          <span key={selectedCountInGroup} className="m-pop-in ml-0.5 px-1 py-0.2 rounded-pill text-[11px] font-black bg-accent text-on-accent leading-none">
-                            {selectedCountInGroup}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tier 2: Sub-categories ONLY when a specific group is selected (NO "ทุกหมวดในกลุ่มนี้" button) */}
-                {selectedGroup !== null && (
-                  <div className="m-reveal mt-1.5 p-1.5 bg-surface border border-line">
-                    <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-hairline text-[11px]">
-                      <span className="text-slate-400 font-bold flex items-center gap-1">
-                        {activeGroupObj?.icon && <CategoryGlyph icon={activeGroupObj.icon} color={activeGroupObj.color} size={15} />}
-                        <span>หมวดในกลุ่ม: <strong className="text-white">{activeGroupObj?.name}</strong></span>
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const groupCatIds = groupCategories.map(c => c.id);
-                            setSelectedCatIds((prev: string[]) => {
-                              const set = new Set([...prev.map(String), ...groupCatIds.map(String)]);
-                              return Array.from(set);
-                            });
-                          }}
-                          className="text-slate-400 hover:text-white hover:underline cursor-pointer"
-                        >
-                          เลือกทั้งหมดในกลุ่ม
-                        </button>
-                        <span className="text-slate-600">•</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const groupCatIdSet = new Set(groupCategories.map(c => String(c.id)));
-                            setSelectedCatIds((prev: string[]) => prev.filter((id: string) => !groupCatIdSet.has(String(id))));
-                          }}
-                          className="text-slate-400 hover:text-danger hover:underline cursor-pointer"
-                        >
-                          ยกเลิกในกลุ่ม
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar w-full">
-                      {groupCategories.map(c => {
-                        const isCatActive = selectedCatIds.some(id => String(id) === String(c.id));
-                        const rgb = hexToRgb(c.color || tc('ink-body'));
-
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => handleToggleCategory(c.id)}
-                            style={isCatActive ? {
-                              borderColor: c.color || tc('expense'),
-                              backgroundColor: `rgba(${rgb}, 0.25)`,
-                              color: tc('ink-display'),
-                            } : ({
-                              ['--chip-rgb' as any]: rgb,
-                            } as React.CSSProperties)}
-                            className={`px-2 py-0.5 text-[11px] font-bold border flex items-center gap-1 rounded-pill cursor-pointer active:scale-95 ${
-                              isCatActive ? 'font-black shadow-xs ring-1 ring-white/10 m-pick' : 'cat-chip-btn'
-                            }`}
-                          >
-                            {isCatActive && <Check className="m-pop-in w-2.5 h-2.5 text-white shrink-0" />}
-                            {c.icon && <CategoryGlyph icon={c.icon} color={c.color} size={15} />}
-                            <span>{c.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Allocation Type (Only Expense) */}
-              {formType === 'expense' && (
-                <div>
-                  <span className={tokens.label}>ประเภทการจัดสรร</span>
-                  <div className="grid grid-cols-3 gap-1 bg-surface border border-line p-0.5">
-                    {[
-                      { val: 'ALL', label: 'ทั้งหมด', color: 'border-slate-500 text-slate-200 bg-slate-800/30' },
-                      { val: 'need', label: 'NEED', color: 'border-rose-500/60 text-rose-400 bg-rose-950/30' },
-                      { val: 'want', label: 'WANT', color: 'border-amber-500/60 text-amber-400 bg-amber-950/30' },
-                    ].map(opt => {
-                      const isActive = allocationFilter === opt.val;
-                      return (
-                        <button
-                          key={opt.val}
-                          type="button"
-                          onClick={() => setAllocationFilter(opt.val)}
-                          className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
-                            isActive
-                              ? `${opt.color} font-black m-pick`
-                              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* More Filters Toggle (Amount Range / Sort / Limit are secondary, collapsed by default) */}
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters(v => !v)}
-                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 py-1 cursor-pointer"
-              >
-                <span>ตัวเลือกเพิ่มเติม (ช่วงราคา, การเรียง, จำนวน)</span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showMoreFilters || hasSecondaryFilterActive ? 'rotate-180' : ''}`} />
-              </button>
-
-              {(showMoreFilters || hasSecondaryFilterActive) && (
-                <>
-                  {/* Amount Range & Sort Order (2-Column Compact Row) */}
-                  <div className="m-reveal grid grid-cols-2 gap-2">
-                    <div>
-                      <span className={tokens.label}>ช่วงจำนวนเงิน</span>
-                      <select
-                        value={amountFilter}
-                        onChange={e => setAmountFilter(e.target.value)}
-                        className={tokens.select}
-                      >
-                        <option value="ALL">ทั้งหมด (ทุกช่วงราคา)</option>
-                        <option value="under100">&lt; 100 ฿</option>
-                        <option value="100to500">100 - 500 ฿</option>
-                        <option value="500to2000">500 - 2,000 ฿</option>
-                        <option value="over2000">&gt; 2,000 ฿</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <span className={tokens.label}>เรียงลำดับ</span>
-                      <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value)}
-                        className={tokens.select}
-                      >
-                        <option value="frequent">ยอดนิยม (ความถี่)</option>
-                        <option value="recent">ล่าสุด (วันที่)</option>
-                        <option value="amountDesc">แพง ➔ ถูก</option>
-                        <option value="amountAsc">ถูก ➔ แพง</option>
-                        <option value="alphabetical">ตามตัวอักษร</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Items Display Limit (10, 20, 30, ทั้งหมด) */}
-                  <div className="m-reveal">
-                    <span className={tokens.label}>จำนวนที่แสดงรายการ</span>
-                    <div className="grid grid-cols-4 gap-1 bg-surface border border-line p-0.5">
-                      {limitOptions.map(opt => {
-                        const isActive = limitCount === opt.val;
-                        return (
-                          <button
-                            key={opt.val}
-                            type="button"
-                            onClick={() => setLimitCount(opt.val)}
-                            className={`py-1 text-[11px] font-bold text-center border transition-all cursor-pointer rounded-none ${
-                              isActive
-                                ? 'border-accent-ink bg-accent/20 text-white font-black m-pick'
-                                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-surface-hover'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Bottom Action Bar */}
-            <div className="pt-2 border-t border-line flex items-center gap-2 shrink-0">
-              {activeFiltersCount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleResetAll}
-                  className="px-2.5 py-1.5 text-[11px] font-black uppercase text-slate-400 hover:text-white border border-line-strong bg-canvas hover:bg-surface-elevated flex items-center gap-1 cursor-pointer rounded-none"
-                  title="รีเซ็ตตัวกรองทั้งหมด"
-                >
-                  <RotateCcw className="w-3 h-3 text-danger" />
-                  <span>รีเซ็ต</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowFilterMenu(false)}
-                className="flex-1 py-1.5 px-3 text-xs font-black uppercase tracking-wider text-on-accent bg-accent hover:bg-accent-active border border-accent-ink shadow-xs flex items-center justify-center gap-1.5 cursor-pointer rounded-none transition-colors"
-              >
-                <span>แสดงผลลัพธ์ ({quickSuggestions.length} รายการ)</span>
-              </button>
-            </div>
           </div>
+        )}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="w-full mt-1 py-1.5 text-[11px] font-bold text-slate-400 hover:text-white hover:bg-surface-elevated border border-line cursor-pointer"
+          >
+            ดูทั้งหมด (อีก {hiddenCount} รายการ)
+          </button>
         )}
       </div>
     </div>

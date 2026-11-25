@@ -114,3 +114,76 @@ describe('computeCoreAnalytics — a month still in progress', () => {
     }
   });
 });
+
+describe('computeCoreAnalytics — a year with months still ahead', () => {
+  // Today 23 Nov 2026. 2025 has rows only from June; December 2026 holds only rows entered ahead.
+  const year = [
+    tx('a1', '2025-06-25', 'c_inc', 20000), tx('a2', '2025-06-10', 'c_food', 10000),
+    tx('a3', '2025-12-25', 'c_inc', 20000), tx('a4', '2025-12-10', 'c_food', 10000),
+    tx('b1', '2026-01-25', 'c_inc', 25000), tx('b2', '2026-01-10', 'c_food', 12000),
+    tx('b3', '2026-06-25', 'c_inc', 25000), tx('b4', '2026-06-10', 'c_food', 15000),
+    tx('b5', '2026-11-30', 'c_food', 4500), // later this month: still counted, like the table
+    tx('b6', '2026-12-25', 'c_inc', 25000), tx('b7', '2026-12-30', 'c_food', 7000), // not started
+  ];
+  const run = () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 23, 12));
+    try {
+      return computeCoreAnalytics({
+        transactions: year, categories, cashflowGroups: groups, filterPeriod: '2026',
+        hideFixedExpenses: false, hideWantExpenses: false, dashboardCategory: 'ALL',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  };
+
+  it('headline totals leave out the month that has not started, and keep it as plan', () => {
+    const r = run();
+    expect(r.vitals.income).toBe(50000);
+    expect(r.vitals.expense).toBe(31500);
+    expect(r.vitals.net).toBe(18500);
+    expect(r.vitals.planned).toEqual({ income: 25000, expense: 7000, savings: 0 });
+    expect(r.totals.income).toBe(75000); // the rest of the dashboard still sees the plan rows
+  });
+
+  it('compares only the months both years have', () => {
+    const r = run();
+    // June is the only started 2026 month whose 2025 month has rows (Dec 2026 has not started)
+    expect(r.prevTotals).toMatchObject({ income: 20000, expense: 10000, txCount: 2, months: ['2026-06'] });
+    expect(r.prevTotals.current).toEqual({ income: 25000, expense: 15000 });
+  });
+
+  it('a pay-cycle year compares with the cycle year before, cycle by cycle', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 23, 12));
+    try {
+      const r = computeCoreAnalytics({
+        transactions: year, categories, cashflowGroups: groups, filterPeriod: 'cycle:2026-01_2026-12',
+        hideFixedExpenses: false, hideWantExpenses: false, dashboardCategory: 'ALL',
+      });
+      expect(r.windowMeta.periodLabel).toBe('YoY');
+      // only cycle Jun 2026 has a cycle a year back: cycles Jan / May 2025 (food 10 Jun) began before the first
+      // pay day (25 Jun 2025), Nov / Dec 2026 have not started
+      expect(r.prevTotals).toMatchObject({ income: 20000, expense: 0, txCount: 1, months: ['2026-06'], cycle: true });
+      expect(r.prevTotals.current).toEqual({ income: 25000, expense: 0 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a single month keeps its rows entered ahead in the headline', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 23, 12));
+    try {
+      const r = computeCoreAnalytics({
+        transactions: year, categories, cashflowGroups: groups, filterPeriod: '2026-12',
+        hideFixedExpenses: false, hideWantExpenses: false, dashboardCategory: 'ALL',
+      });
+      expect(r.vitals.income).toBe(25000);
+      expect(r.vitals.planned.income).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

@@ -106,3 +106,24 @@ export function findRecurring(rows: RecurringRow[], targetIso: string, cycle: bo
 
 export const parseHiddenKeys = (raw: unknown): string[] =>
   Array.isArray(raw) ? raw.filter((k): k is string => typeof k === 'string') : [];
+
+/**
+ * Bills inside a period of several months: (category, description) pairs that show up in at least two months / cycles
+ * and never more than once in any of them (rent, power, Claude Pro). Daily food repeats inside a month, so it is not one.
+ */
+export function repeatingKeysInPeriod(rows: RecurringRow[], cycle: boolean): Set<string> {
+  const perKey = new Map<string, Map<string, number>>();
+  for (const r of rows) {
+    if (!r.category_id) continue;
+    const key = recurringKey(r.category_id, r.description);
+    const units = perKey.get(key) ?? new Map<string, number>();
+    const unit = unitKeyOf(r.date, cycle);
+    units.set(unit, (units.get(unit) ?? 0) + 1);
+    perKey.set(key, units);
+  }
+  const out = new Set<string>();
+  for (const [key, units] of perKey) {
+    if (units.size >= 2 && [...units.values()].every(n => n === 1)) out.add(key);
+  }
+  return out;
+}

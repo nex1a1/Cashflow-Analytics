@@ -9,6 +9,7 @@ import { useChartDataEngine } from '../../hooks/useChartDataEngine';
 import { useChartOptions } from '../../hooks/useChartOptions';
 import { useFutureZone } from '../../hooks/useFutureZone';
 import { futureZonePlugin } from './futureZone';
+import { spikeCapPlugin } from './spikeCap';
 import { isSingleUnitPeriod } from '@/utils/payCycle';
 import { MainChartHeader } from './MainChartHeader';
 import { MainChartToolbar } from './MainChartToolbar';
@@ -17,7 +18,7 @@ import { MainChartTextAlternative } from './MainChartTextAlternative';
 import { getMainChartTitle } from './helpers';
 import { SparklineGraph } from './SparklineGraph';
 
-const CHART_PLUGINS = [futureZonePlugin];
+const CHART_PLUGINS = [futureZonePlugin, spikeCapPlugin];
 
 export default function MainChart() {
   const {

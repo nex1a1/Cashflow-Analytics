@@ -75,19 +75,24 @@ export function withAlpha(color: string, alpha: number): string {
   return color;
 }
 
-/** Per-index styling of one dataset: solid up to today, plan look after it. */
+/**
+ * Per-index styling of one dataset: solid up to today, plan look after it.
+ * Scripted even when nothing is planned: Chart.js keeps a dataset's old shared-options object, so a switch from a
+ * period with a plan to one without would leave each bar its old hatch until hovered. react-chartjs-2 also merges
+ * the new dataset into the old one, so every key set here must be set every time (a dropped `segment` would stay).
+ */
 export function applyPlanStyle(ds: any, zone: FutureZone | null): any {
-  if (!zone || zone.futureFrom >= (ds.data?.length ?? 0)) return ds;
-  const { futureFrom } = zone;
   const base: string = ds.borderColor || ds.backgroundColor;
   if (typeof base !== 'string') return ds;
+  const futureFrom = zone?.futureFrom ?? Infinity;
 
   if (ds.type === 'bar') {
     const solid = ds.backgroundColor;
+    const hasPlan = futureFrom < (ds.data?.length ?? 0);
     return {
       ...ds,
       backgroundColor: (ctx: any) => (ctx.dataIndex >= futureFrom ? planFill(base) : solid),
-      borderWidth: ds.borderWidth || 1,
+      borderWidth: hasPlan ? ds.borderWidth || 1 : ds.borderWidth,
     };
   }
   // line dataset: dashed segments into the future, hollow points

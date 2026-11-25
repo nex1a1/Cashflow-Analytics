@@ -1,9 +1,11 @@
 // src/views/Dashboard/components/TopTransactions.tsx
-import React, { useMemo, memo } from 'react';
-import { AlertCircle, Calendar, ChevronDown, TrendingDown } from 'lucide-react';
+import React, { useMemo, memo, useState } from 'react';
+import { AlertCircle, Calendar, ChevronDown, Repeat, TrendingDown } from 'lucide-react';
 import { formatMoney, formatBaht, THAI_MONTHS_SHORT } from '@/utils/formatters';
 import { isDateInFilter, parseDateStrToObj } from '@/utils/dateHelpers';
 import useToday from '@/hooks/useToday';
+import { isCyclePeriod, isSingleUnitPeriod } from '@/utils/payCycle';
+import { recurringKey, repeatingKeysInPeriod } from '@/utils/recurring';
 import { withAlpha } from './MainChart/futureZone';
 import { useDashboardContext } from '../context/DashboardContext';
 import { TransactionDisplay, Category } from '@/types';
@@ -157,17 +159,21 @@ export default function TopTransactions() {
   } = useDashboardContext();
   
   const todayIso = useToday();
+  // Over several months the monthly bills (rent ×12) would fill the list; they are hidden until asked for.
+  const multiUnit = Boolean(filterPeriod) && !isSingleUnitPeriod(filterPeriod);
+  const [showBills, setShowBills] = useState(false);
   const cardStyles = 'rounded-none border shadow-xs h-full flex flex-col bg-canvas border-line';
 
   // Optimized useMemo with O(1) Map Lookups for Categories to maintain high performance
-  const { displayTransactions, maxAmount, topSum, allFilteredExpenseSum, topPctOfTotal } = useMemo(() => {
+  const { displayTransactions, maxAmount, topSum, allFilteredExpenseSum, topPctOfTotal, billCount } = useMemo(() => {
     if (!transactions || transactions.length === 0) {
       return { 
         displayTransactions: [], 
         maxAmount: 0, 
         topSum: 0, 
         allFilteredExpenseSum: 0, 
-        topPctOfTotal: 0 
+        topPctOfTotal: 0,
+        billCount: 0,
       };
     }
 
@@ -231,6 +237,15 @@ export default function TopTransactions() {
     // Calculate total expenses for current filtered set (Financial Intelligence / Pareto)
     const allFilteredExpenseSum = filtered.reduce((acc, tx) => acc + Math.abs(Number(tx.amount)), 0);
 
+    // Monthly bills: counted in the sum above, left out of the ranking unless asked for
+    let billCount = 0;
+    if (multiUnit) {
+      const bills = repeatingKeysInPeriod(filtered as Parameters<typeof repeatingKeysInPeriod>[0], isCyclePeriod(filterPeriod));
+      const isBill = (tx: TransactionDisplay) => Boolean(tx.category_id) && bills.has(recurringKey(tx.category_id!, tx.description));
+      billCount = filtered.filter(isBill).length;
+      if (!showBills) filtered = filtered.filter(tx => !isBill(tx));
+    }
+
     // Sort by descending absolute amount
     filtered.sort((a, b) => Math.abs(Number(b.amount)) - Math.abs(Number(a.amount)));
     
@@ -250,9 +265,10 @@ export default function TopTransactions() {
       maxAmount: max, 
       topSum: sum,
       allFilteredExpenseSum,
-      topPctOfTotal: topPct
+      topPctOfTotal: topPct,
+      billCount,
     };
-  }, [transactions, categories, hideFixedExpenses, hideWantExpenses, dashboardCategory, topXLimit, filterPeriod]);
+  }, [transactions, categories, hideFixedExpenses, hideWantExpenses, dashboardCategory, topXLimit, filterPeriod, multiUnit, showBills]);
 
   return (
     <div className={cardStyles}>
@@ -272,6 +288,20 @@ export default function TopTransactions() {
             </select>
             <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-white" />
           </div>
+          {multiUnit && billCount > 0 && !showSkeleton && (
+            <button
+              type="button"
+              aria-pressed={showBills}
+              onClick={() => setShowBills(v => !v)}
+              title={showBills ? 'ซ่อนรายการที่จ่ายทุกเดือน (ค่าหอ ค่าไฟ บริการรายเดือน)' : `แสดงรายการที่จ่ายทุกเดือนด้วย (${billCount} รายการ)`}
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded-pill border text-[11px] font-bold whitespace-nowrap transition-colors ${
+                showBills ? 'border-line bg-accent/10 text-accent-ink' : 'border-line text-ink-muted hover:text-ink-soft'
+              }`}
+            >
+              <Repeat className="w-3 h-3" />
+              {showBills ? 'รวมรายการประจำ' : `ซ่อนรายการประจำ ${billCount}`}
+            </button>
+          )}
         </div>
 
         {/* Real-time sum & Pareto indicator pill */}
